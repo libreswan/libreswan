@@ -46,6 +46,7 @@ typedef struct {
 	bool is_set;
 } deltatime_t;
 
+extern const deltatime_t unset_deltatime;
 extern const deltatime_t deltatime_zero;
 extern const deltatime_t one_day;
 extern const deltatime_t one_hour;
@@ -54,7 +55,7 @@ extern const deltatime_t one_second;
 
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), }, .is_set = true, }
 
-deltatime_t deltatime(time_t secs);
+deltatime_t deltatime_from_seconds(time_t secs);
 deltatime_t deltatime_from_milliseconds(intmax_t milliseconds);
 deltatime_t deltatime_from_microseconds(intmax_t microseconds);
 
@@ -101,13 +102,24 @@ deltatime_t deltatime_from_timeval(const struct timeval a);
 
 typedef struct {
 	/* slightly over size */
-	char buf[sizeof("-18446744073709551615.1000000000")+1/*canary*/]; /* true length ???? */
+	char buf[sizeof("-18446744073709551615.1000000000 long-milli-seconds!")+1/*canary*/]; /* true length ???? */
 } deltatime_buf;
 
+/* seconds */
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
 
-diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale);
+/* in specified unit; with unit appended */
+const char *str_deltatime_scaled(deltatime_t d, enum timescale unit, deltatime_buf *buf);
+size_t jam_deltatime_scaled(struct jambuf *buf, deltatime_t d, enum timescale unit);
+
+/* in most friendly unit; with unit appended */
+const char *str_deltatime_human(deltatime_t d, deltatime_buf *buf);
+size_t jam_deltatime_human(struct jambuf *buf, deltatime_t d);
+
+diag_t ttodeltatime(shunk_t t, deltatime_t *d);
+/* This has one call - retransmit-timeout :-( */
+diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_timescale);
 
 /*
  * Primitives used to implement times; try to avoid timeval

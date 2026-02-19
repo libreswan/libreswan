@@ -1,0 +1,18 @@
+IKEv2 with two template conns; each has different rightsubnet=; leftsubnet= is unset.
+
+both should establish
+
+Unlike ikev2-connswitch-06-dual-net-net, which has explicitly
+identical leftsubnet=, this test's leftsubnet= is identical implicitly
+- because it defaults to ${left}/32.
+
+The first connection will guess correctly during IKE_SA_INIT.
+
+The second connection will guess wrong, and then need to switch to and
+instantiate the second connection.
+
+The bug is because the code matching the template needs to account for
+an implicit leftsubnet=${left}/32.
+
+this is https://github.com/libreswan/libreswan/issues/2380
+see also https://github.com/libreswan/libreswan/issues/275

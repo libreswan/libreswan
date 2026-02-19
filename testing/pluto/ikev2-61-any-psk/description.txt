@@ -1,3 +1,6 @@
-A responder with %any IKEv2 using PSK. 
-ipsec.secrets file on east, no id specified. West has IP address as its id.
+A responder with %any IKEv2 using PSK and IPv4/IPv6 as the ID
 
+east/ipsec.secrets east as no ID specified (making it a wild card).
+west/ipsec.secrets has IDs for both IPv4 and IPv6 addresses + some bonuses
+
+(it needs to quote 8:: so that the parser isn't confused)

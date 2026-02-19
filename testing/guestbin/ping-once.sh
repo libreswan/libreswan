@@ -117,7 +117,7 @@ esac
 case ${ping} in
     fping )
 	interface=${interface:+--src ${interface}}
-	timeout=" --timeout ${wait}s"
+	timeout=" --timeout ${wait}000"
 	size=${size:+--size ${size}}
 	nodns=
 	;;

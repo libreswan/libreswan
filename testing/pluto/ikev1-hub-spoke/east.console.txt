@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-northnet-ipv4-psk
-"westnet-northnet-ipv4-psk": added IKEv1 connection
+"westnet-northnet-ipv4-psk": added oriented IKEv1 connection
 east #
  ipsec auto --add northnet-westnet-ipv4-psk
-"northnet-westnet-ipv4-psk": added IKEv1 connection
+"northnet-westnet-ipv4-psk": added oriented IKEv1 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm
@@ -34,7 +34,7 @@ sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
-ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -85,16 +85,17 @@ algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-algorithm IKE DH Key Exchange: name=DH19, bits=512
-algorithm IKE DH Key Exchange: name=DH20, bits=768
-algorithm IKE DH Key Exchange: name=DH21, bits=1056
-algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=MODP1536, bits=1536
+algorithm IKE Key Exchange Method (DH): name=MODP2048, bits=2048
+algorithm IKE Key Exchange Method (DH): name=MODP3072, bits=3072
+algorithm IKE Key Exchange Method (DH): name=MODP4096, bits=4096
+algorithm IKE Key Exchange Method (DH): name=MODP6144, bits=6144
+algorithm IKE Key Exchange Method (DH): name=MODP8192, bits=8192
+algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
+algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
+algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
+algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -102,13 +103,13 @@ Connection list:
  
 "northnet-westnet-ipv4-psk": 192.0.1.0/24===192.1.2.23[@east]...192.1.3.33[@north]===192.0.3.0/24; unrouted; my_ip=unset; their_ip=unset;
 "northnet-westnet-ipv4-psk":   host: oriented; local: 192.1.2.23; remote: 192.1.3.33;
-"northnet-westnet-ipv4-psk":   my_updown=ipsec _updown;
+"northnet-westnet-ipv4-psk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "northnet-westnet-ipv4-psk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "northnet-westnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "northnet-westnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-westnet-ipv4-psk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "northnet-westnet-ipv4-psk":   sec_label:unset;
-"northnet-westnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"northnet-westnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "northnet-westnet-ipv4-psk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "northnet-westnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "northnet-westnet-ipv4-psk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -123,13 +124,13 @@ Connection list:
 "northnet-westnet-ipv4-psk":   conn serial: $2;
 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-northnet-ipv4-psk":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
-"westnet-northnet-ipv4-psk":   my_updown=ipsec _updown;
+"westnet-northnet-ipv4-psk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-northnet-ipv4-psk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-northnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-northnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-northnet-ipv4-psk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-northnet-ipv4-psk":   sec_label:unset;
-"westnet-northnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-northnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-northnet-ipv4-psk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-northnet-ipv4-psk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -166,6 +167,7 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -176,12 +178,14 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -192,6 +196,7 @@ src 192.1.3.33 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.3.0/24

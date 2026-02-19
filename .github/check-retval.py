@@ -53,7 +53,10 @@ for command in cdb.getAllCompileCommands():
             if not arg:
                 break
             continue
-        elif arg == command.filename: # skip the source filename
+        elif arg in [
+                command.filename,
+                os.path.relpath(command.filename, command.directory),
+        ]: # skip the source filename
             continue
         clang_args.append(arg)
     if args.clang_resource_dir:

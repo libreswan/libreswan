@@ -3,24 +3,32 @@
 
 #include <stdbool.h>
 
+#include "verbose.h"
 #include "ip_address.h"
-#include "diag.h"
+#include "shunk.h"
 
 struct logger;
 struct event_base;
+struct ub_ctx;
+struct config_setup;
 
-extern void unbound_ctx_free(void);
-extern void unbound_sync_init(bool do_dnssec, const char *rootfile,
-			      const char *trusted, struct logger *logger);
+struct dnssec_config {
+	const char *disabled; /*when non-NULL string is why; clearly a hack*/
+	const char *rootkey_file;
+	const char *anchors;
+};
 
-extern diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
-				 const char *rootfile, const char *trusted,
-				 struct logger *logger);
+/* singleton */
+const struct dnssec_config *dnssec_config_singleton(struct logger *logger);
 
-extern bool unbound_resolve(const char *src, const struct ip_info *afi,
-			    ip_address *ipaddr, const struct logger *logger);
+void unbound_ctx_config(struct ub_ctx *dns_ctx,
+			const struct dnssec_config *config,
+			const struct logger *logger);
 
-extern struct ub_ctx *get_unbound_ctx(void);
+diag_t unbound_sync_resolve(const char *src,
+			    const struct ip_info *afi,
+			    ip_address *ipaddr,
+			    struct verbose verbose);
 
 /*
  * returned in callback of ub_resolve_event
@@ -37,5 +45,7 @@ enum lswub_resolve_event_secure_kind {
 	UB_EVENT_BOGUS		= 1,
 	UB_EVENT_SECURE		= 2,
 };
+
+extern const struct sparse_names dnssec_rcode_stories;
 
 #endif

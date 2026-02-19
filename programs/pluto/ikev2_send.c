@@ -48,8 +48,7 @@
 #endif
 
 bool send_recorded_v2_message(struct ike_sa *ike,
-			      const char *where,
-			      struct v2_outgoing_fragment *frags)
+			      struct v2_outgoing_fragments *frags)
 {
 	if (ike->sa.st_iface_endpoint == NULL) {
 		llog_sa(RC_LOG, ike, "cannot send packet - interface vanished!");
@@ -57,45 +56,35 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	}
 
 	if (frags == NULL) {
-		llog_sa(RC_LOG, ike, "no %s message to send", where);
+		llog_sa(RC_LOG, ike, "no message to send");
 		return false;
 	}
 
 #ifdef USE_XFRM_INTERFACE
-	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
+	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint,
+			 ike->sa.logger);
 #endif
 
 	unsigned nr_frags = 0;
-	for (struct v2_outgoing_fragment *frag = frags;
-	     frag != NULL; frag = frag->next) {
+	ITEMS_FOR_EACH(frag, frags) {
 		nr_frags++;
-		if (!send_hunk_using_state(&ike->sa, where, *frag)) {
-			dbg("send of %s fragment %u failed", where, nr_frags);
+		if (!send_hunk_using_state(&ike->sa, frags->story, frag)) {
+			ldbg(ike->sa.logger, "send of %s fragment %u failed",
+			     frags->story, nr_frags);
 			return false;
 		}
 	}
-	dbg("sent %u messages", nr_frags);
+	ldbg(ike->sa.logger, "sent %u messages", nr_frags);
 	return true;
 }
 
-void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what UNUSED,
-				 struct v2_outgoing_fragment **frags)
+void record_v2_outgoing_message(shunk_t message,
+				struct v2_outgoing_fragments **fragments,
+				struct logger *logger,
+				const char *story)
 {
-	pexpect(*frags == NULL);
-	shunk_t frag = pbs_out_all(pbs);
-	*frags = overalloc_thing(struct v2_outgoing_fragment, frag.len);
-	ldbg_alloc(&global_logger, "frags", *frags, HERE);
-	(*frags)->len = frag.len;
-	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
-}
-
-void record_v2_message(struct pbs_out *msg,
-		       const char *what,
-		       struct v2_outgoing_fragment **frags)
-{
-	free_v2_outgoing_fragments(frags);
-	record_v2_outgoing_fragment(msg, what, frags);
+	realloc_v2_outgoing_fragments(fragments, logger, 1, story);
+	(*fragments)->item[0] = clone_hunk_as_chunk(&message, "fragment");
 }
 
 /*
@@ -113,8 +102,8 @@ bool emit_v2UNKNOWN(const char *victim,
 	}
 
 	name_buf xb;
-	llog(RC_LOG, outs->logger,
-	     "IMPAIR: adding an unknown%s payload of type %d to %s %s message",
+	llog(IMPAIR_STREAM, outs->logger,
+	     "adding an unknown%s payload of type %d to %s %s message",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
 	     ikev2_unknown_payload_desc.pt,
 	     victim,
@@ -127,7 +116,7 @@ bool emit_v2UNKNOWN(const char *victim,
 		/* already logged */
 		return false; /*fatal*/
 	}
-	close_output_pbs(&pbs);
+	close_pbs_out(&pbs);
 	return true;
 }
 
@@ -135,7 +124,7 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 			      emit_v2_response_fn *emit_v2_response,
 			      struct emit_v2_response_context *context)
 {
-	passert(md != NULL); /* always a response */
+	PASSERT(md->logger, md != NULL); /* always a response */
 
 	enum ikev2_exchange exchange = md->hdr.isa_xchg;
 
@@ -192,18 +181,30 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 	return true;
 }
 
-void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
+void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **fragments,
+				   struct logger *logger,
+				   unsigned nfrags,
+				   const char *story)
 {
-	if (*frags != NULL) {
-		struct v2_outgoing_fragment *frag = *frags;
-		do {
-			struct v2_outgoing_fragment *next = frag->next;
-			ldbg_free(&global_logger, "frags", frag, HERE);
-			pfree(frag);
-			frag = next;
-		} while (frag != NULL);
-		*frags = NULL;
+	free_v2_outgoing_fragments(fragments, logger);
+	PASSERT(logger, nfrags > 0);
+	(*fragments) = alloc_items(struct v2_outgoing_fragments, nfrags);
+	(*fragments)->story = story;
+	ldbg_newref(logger, (*fragments));
+}
+
+void free_v2_outgoing_fragments(struct v2_outgoing_fragments **fragments,
+				struct logger *logger)
+{
+	if ((*fragments) == NULL) {
+		return;
 	}
+
+	ITEMS_FOR_EACH(fragment, (*fragments)) {
+		free_chunk_content(fragment);
+	}
+	ldbg_delref(logger, *fragments);
+	pfree(*fragments);
 }
 
 void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
@@ -223,6 +224,6 @@ void free_v2_message_queues(struct state *st)
 {
 	FOR_EACH_THING(window, &st->st_v2_msgid_windows.initiator, &st->st_v2_msgid_windows.responder) {
 		free_v2_incoming_fragments(&window->incoming_fragments);
-		free_v2_outgoing_fragments(&window->outgoing_fragments);
+		free_v2_outgoing_fragments(&window->outgoing_fragments, st->logger);
 	}
 }

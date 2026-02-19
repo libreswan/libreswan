@@ -38,7 +38,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -54,11 +54,12 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (IKE_AUTH_I) and sending notification
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"ikev2-westnet-eastnet-x509-cr" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "ikev2-westnet-eastnet-x509-cr" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  echo "done"
 done

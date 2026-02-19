@@ -1,10 +1,29 @@
 See also https://libreswan.org/
 
 v5.4 (unreleased)
+* IKEv2:
+  - update multiple key exchanges using IKE_INTERMEDIATE to RFC 9370 [Daiki Ueno, Andrew]
+  - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew]
+  - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir, Andrew, #2348]
+* X.509:
+  - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
+  - fix per-connection debug= option (experimental in v5.0) [Andrew]
+  - support lease subnets with syntax leftaddresspool=2025::/56/64 (experimental) [Andrew]
+* building:
+  - on Linux, prefer system's xfrm.h [Andrew, Antony, Vukasink, #2431 #2396 #2501]
+    Note: old Linux distros may need USE_XFRM_HEADER_COPY=true
+  - fix RPM package file/directory ownership [Joseph Marreo Corchado, Tuomo, #2167]
+  - fix seccomp rules to work with Bash 5.3 [Maciej S. Szmigiero, #2371]
+  - remove HAVE_BROKEN_POPEN=true needed by Angstrom linux [Andrew, #2588]
+    Angstrom's last release was 2017 or 8 years ago
 * testing:
-  - FreeBSD upgraded to 14.3 [Andrew #2341]
+  - Alpine test domain upgraded to 3.22.2 [Andrew]
+  - Debian test domain upgraded to 12.12 [Andrew]
+  - Fedora test domain upgraded to f43 [Andrew]
+  - FreeBSD test domain upgraded to 14.3 [Andrew, Ueno #2341]
+  - OpenBSD test domain upgraded to 7.8 [Andrew]
 
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)

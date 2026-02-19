@@ -24,6 +24,7 @@
 #include <stdio.h>		/* for FILE */
 #include <stddef.h>		/* for size_t */
 
+#include "refcnt.h"
 #include "lset.h"
 #include "lswcdefs.h"
 #include "jambuf.h"
@@ -102,24 +103,19 @@ enum rc_type {
 
 struct logger_object_vec {
 	const char *name;
-	bool free_object;
+	bool refcountable;
 	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
 };
 
-/* these omit ": " always */
-typedef struct {
-	char buf[100];/* completely made up size */
-} prefix_buf;
-const char *str_prefix(const struct logger *logger, prefix_buf *buf);
+/* this omits ": " always */
 size_t jam_prefix(struct jambuf *buf, const struct logger *logger);
 
 /* these include ": " when jam_prefix() is non-empty */
 size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
-void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum stream stream);
-
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
 struct logger {
+	refcnt_t refcnt;
 	/* support up to two whacks */
 	struct fd *whackfd[2];
 	const void *object;
@@ -129,6 +125,10 @@ struct logger {
 	int timing_level;
 	lset_t debugging;
 };
+
+/* primatives */
+void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum stream stream);
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream);
 
 #define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
 #define pri_logger(LOGGER)						\
@@ -141,8 +141,6 @@ void llog(enum stream stream, const struct logger *log,
 
 void llog_va_list(enum stream stream, const struct logger *logger,
 		  const char *message, va_list ap) VPRINTF_LIKE(3);
-
-void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream);
 
 #define LLOG_JAMBUF(STREAM, LOGGER, BUF)				\
 	/* create the buffer */						\
@@ -158,10 +156,12 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
-#define llog_hunk(STREAM, LOGGER, HUNK)				\
+#define llog_hunk(STREAM, LOGGER, HUNK)					\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(STREAM, LOGGER, hunk_->ptr, hunk_->len);	\
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_dump(STREAM, LOGGER,				\
+			  (h_ == NULL ? NULL : h_->ptr),		\
+			  (h_ == NULL ? 0 : h_->len));			\
 	}
 #define llog_thing(STREAM, LOGGER, THING)			\
 	llog_dump(STREAM, LOGGER, &(THING), sizeof(THING))
@@ -169,10 +169,12 @@ void llog_dump(enum stream stream,
 void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
-#define llog_base64_hunk(STREAM, LOGGER, HUNK)			\
+#define llog_base64_hunk(STREAM, LOGGER, HUNK)				\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_base64_bytes(STREAM, LOGGER, hunk_->ptr, hunk_->len); \
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_base64_bytes(STREAM, LOGGER,			\
+				  (h_ == NULL ? NULL : h_->ptr),	\
+				  (h_ == NULL ? 0 : h_->len));		\
 	}
 
 void llog_pem_bytes(enum stream stream,
@@ -181,8 +183,10 @@ void llog_pem_bytes(enum stream stream,
 		    const void *p, size_t len);
 #define llog_pem_hunk(STREAM, LOGGER, NAME, HUNK)			\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_pem_bytes(STREAM, LOGGER, NAME, hunk_->ptr, hunk_->len); \
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_pem_bytes(STREAM, LOGGER, NAME,			\
+			       (h_ == NULL ? NULL : h_->ptr),		\
+			       (h_ == NULL ? 0 : h_->len));		\
 	}
 
 /*
@@ -201,34 +205,19 @@ void llog_pem_bytes(enum stream stream,
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
-/*
- * XXX: The message format is:
- *   ERROR: <log-prefix><message...>[: <strerr> (errno)]
- * and not:
- *   <log-prefix>ERROR: <message...>...
- */
+void log_errno(enum stream stream, const struct logger *logger, int error,
+	       const char *message, ...) PRINTF_LIKE(4);
 
-void log_error(const struct logger *logger, int error,
-	       const char *message, ...) PRINTF_LIKE(3);
-
-#define llog_error(LOGGER, ERRNO, FMT, ...)			\
-	{							\
-		int e_ = ERRNO; /* save value across va args */	\
-		log_error(LOGGER, e_, FMT, ##__VA_ARGS__);	\
+#define llog_errno(STREAM, LOGGER, ERRNO, FMT, ...)			\
+	{								\
+		int errno_ = ERRNO;					\
+		log_errno(STREAM, LOGGER, errno_, FMT, ##__VA_ARGS__);	\
 	}
-
-/*
- * Unlike llog_error(), there's no "ERROR: " prefix and no ": "
- * separator.
- */
-
-void llog_errno(enum stream stream, const struct logger *logger, int error,
-		const char *message, ...) PRINTF_LIKE(4);
 
 #define LDBG_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		llog_errno(DEBUG_STREAM, LOGGER, e_, FMT, ##__VA_ARGS__); \
+		int errno_ = ERRNO; /* save value across va args */	\
+		log_errno(DEBUG_STREAM, LOGGER, errno_, FMT, ##__VA_ARGS__); \
 	}
 
 /*
@@ -250,15 +239,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 
 #define LDBGP(COND, LOGGER) (COND & (cur_debugging | (LOGGER)->debugging))
 
-#define dbg(MESSAGE, ...)						\
-	{								\
-		if (LDBGP(DBG_BASE, &global_logger)) {			\
-			LDBG_log(&global_logger, MESSAGE, ##__VA_ARGS__); \
-		}							\
-	}
-
 void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
-#define pdbg ldbg
 
 void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 
@@ -267,43 +248,28 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
 	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
-#define PDBGP_JAMBUF LDBGP_JAMBUF
 
-/* DBG_*() are unconditional */
-
-#define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)		\
-	{						\
-		LDBG_log(LOGGER, LABEL, ##__VA_ARGS__);	\
-		LDBG_hunk(LOGGER, HUNK);		\
+/*
+ * XXX: strange param order is so that the LABELS line up in the code
+ * vis:
+ *
+ *    LDBG_log_hunk(logger, "first label:", &hunk1)
+ *    LDBG_log_hunk(logger, "label two:", &hunk2)
+ */
+#define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)				\
+	{								\
+		LDBG_log(LOGGER, LABEL, ##__VA_ARGS__);			\
+		LDBG_hunk(LOGGER, HUNK);				\
 	}
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\
 	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
 
-#define LDBG_hunk(LOGGER, HUNK)				\
-	llog_hunk(DEBUG_STREAM, LOGGER, HUNK);
+#define LDBG_hunk(LOGGER, HUNK)			\
+	llog_hunk(DEBUG_STREAM, LOGGER, HUNK)
 
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);
-
-#define ldbg_dump(LOGGER, DATA, LEN)			\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_dump(LOGGER, DATA, LEN);	\
-		}					\
-	}
-#define ldbg_hunk(LOGGER, HUNK)				\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_hunk(LOGGER, HUNK);	\
-		}					\
-	}
-#define ldbg_thing(LOGGER, THING)			\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_thing(LOGGER, THING);	\
-		}					\
-	}
 
 /* LDBG_*(logger, ...) are unconditional wrappers */
 #define LDBG_log(LOGGER, FMT, ...) llog(DEBUG_STREAM, LOGGER, FMT, ##__VA_ARGS__)
@@ -372,19 +338,5 @@ void bad_sparse_where(const struct logger *logger,
 		      const struct sparse_names *sn,
 		      unsigned long val, where_t where) NEVER_RETURNS;
 #define bad_sparse(LOGGER, SPARSE_NAMES, VALUE) bad_sparse_where(LOGGER, SPARSE_NAMES, VALUE, HERE)
-
-#define impaired_passert(BEHAVIOUR, LOGGER, ASSERTION)			\
-	{								\
-		if (impair.BEHAVIOUR) {					\
-			bool assertion_ = ASSERTION;			\
-			if (!assertion_) {				\
-				llog(RC_LOG, LOGGER,		\
-					    "IMPAIR: assertion '%s' failed", \
-					    #ASSERTION);		\
-			}						\
-		} else {						\
-			passert(ASSERTION);				\
-		}							\
-	}
 
 #endif /* _LSWLOG_H_ */

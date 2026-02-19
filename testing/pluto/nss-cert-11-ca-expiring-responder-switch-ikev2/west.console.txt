@@ -37,62 +37,66 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add old-west
-"old-west": added IKEv2 connection
+"old-west": added oriented IKEv2 connection
 west #
  ipsec auto --add new-west
-"new-west": added IKEv2 connection
+"new-west": added oriented IKEv2 connection
 west #
- ipsec auto --up old-west
+ ipsec up old-west # sanitize-retransmits
 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "old-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'CN=old-west'; Child SA #2 {ESP <0xESPESP}
+"old-west" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "old-west" #1: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
-"old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --down old-west
+ ipsec down old-west
 "old-west": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "old-west" #1: sent INFORMATIONAL request to delete IKE SA
 "old-west" #2: ESP traffic information: in=0B out=0B
 "old-west" #1: deleting IKE SA (established IKE SA)
 west #
- ipsec auto --up new-west
+ ipsec up new-west # sanitize-retransmits
 "new-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "new-west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "new-west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'CN=new-west'; Child SA #4 {ESP <0xESPESP}
+"new-west" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "new-west" #3: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
-"new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --down new-west
+ ipsec down new-west
 "new-west": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "new-west" #3: sent INFORMATIONAL request to delete IKE SA
 "new-west" #4: ESP traffic information: in=0B out=0B
 "new-west" #3: deleting IKE SA (established IKE SA)
 west #
- ipsec auto --up old-west
+ ipsec up old-west # sanitize-retransmits
 "old-west" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "old-west" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "old-west" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'CN=old-west'; Child SA #6 {ESP <0xESPESP}
+"old-west" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "old-west" #5: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
-"old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --down old-west
+ ipsec down old-west
 "old-west": initiating delete of connection's IKE SA #5 (and Child SA #6)
 "old-west" #5: sent INFORMATIONAL request to delete IKE SA
 "old-west" #6: ESP traffic information: in=0B out=0B
 "old-west" #5: deleting IKE SA (established IKE SA)
 west #
- ipsec auto --up new-west
+ ipsec up new-west # sanitize-retransmits
 "new-west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "new-west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "new-west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'CN=new-west'; Child SA #8 {ESP <0xESPESP}
+"new-west" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "new-west" #7: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
-"new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --down new-west
+ ipsec down new-west
 "new-west": initiating delete of connection's IKE SA #7 (and Child SA #8)
 "new-west" #7: sent INFORMATIONAL request to delete IKE SA
 "new-west" #8: ESP traffic information: in=0B out=0B

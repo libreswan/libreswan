@@ -14,10 +14,11 @@
  */
 
 #include <stdlib.h>
+#include <net/if.h>
 
 #include "lswtool.h"
 #include "lswlog.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "optarg.h"
@@ -32,11 +33,14 @@ enum opt {
 
 static struct optarg_family family;
 
+static bool show_all = false;
+static int show_interface = false;
 static int show_source = false;
 static int show_gateway = false;
 static int show_destination = false;
 
 const struct option optarg_options[] = {
+	{ "interface\0", no_argument, &show_interface, true, },
 	{ "source\0", no_argument, &show_source, true, },
 	{ "gateway\0", no_argument, &show_gateway, true, },
 	{ "destination\0", no_argument, &show_destination, true, },
@@ -53,7 +57,7 @@ int main(int argc, char **argv)
 	struct logger *logger = tool_logger(argc, argv);
 
 	while (true) {
-		int c = optarg_getopt(logger, argc, argv, "vd46");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -74,7 +78,7 @@ int main(int argc, char **argv)
 			/* use stdout */
 			optarg_usage(progname, "<destination>",
 				     "Prints:\n"
-				     "  <source-address> <gateway-address> <destination-address>\n"
+				     "  <source-address>%%<interface> <gateway-address> <destination-address>\n"
 				     "for the given <destination>\n");
 		}
 		bad_case(c);
@@ -90,14 +94,19 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (!show_source && !show_gateway && !show_destination) {
-		show_source = show_gateway = show_destination = true;
+	/* default is show all */
+	if (!show_interface &&
+	    !show_source &&
+	    !show_gateway &&
+	    !show_destination) {
+		show_all = true;
 	}
 
 	ip_address dst;
-	err_t e = ttoaddress_dns(shunk1(argv[optind]), family.type, &dst);
-	if (e != NULL) {
-		llog(WHACK_STREAM, logger, "%s: %s", argv[1], e);
+	diag_t d = ttoaddress_dns(shunk1(argv[optind]), family.type, &dst);
+	if (d != NULL) {
+		llog(WHACK_STREAM, logger, "%s: %s", argv[1], str_diag(d));
+		pfree_diag(&d);
 		exit(1);
 	}
 
@@ -107,15 +116,22 @@ int main(int argc, char **argv)
 	{
 		LLOG_JAMBUF(PRINTF_STREAM, logger, buf) {
 			const char *sep = "";
-			if (show_source) {
+			if (show_source || show_all) {
 				jam_string(buf, sep); sep = " ";
 				jam_address(buf, &route.source);
 			}
-			if (show_gateway) {
+			if (show_interface ||
+			    (show_all && route.interface > 0)) {
+				jam_string(buf, "%"); sep = " ";
+				char name[IFNAMSIZ];
+				if_indextoname(route.interface, name);
+				jam_string(buf, name);
+			}
+			if (show_gateway || show_all) {
 				jam_string(buf, sep); sep = " ";
 				jam_address(buf, &route.gateway);
 			}
-			if (show_destination) {
+			if (show_destination || show_all) {
 				jam_string(buf, sep); sep = " ";
 				jam_address(buf, &dst);
 			}

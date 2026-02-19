@@ -64,16 +64,16 @@ static bool initiate_connection_4_fab(struct connection *c,
 bool initiate_connection(struct connection *c,
 			 const char *remote_host,
 			 bool background,
-			 struct logger *logger)
+			 const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	vdbg_connection(c, verbose, HERE,
 			"initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
 	verbose.level++;
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
-	connection_detach(c, logger);
+	whack_detach(c, logger);
 	return ok;
 }
 
@@ -86,10 +86,10 @@ static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,
 					 bool background)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	if (!oriented(c)) {
 		address_buf a;
@@ -122,10 +122,10 @@ static bool initiate_connection_2_address(struct connection *c,
 					  bool background,
 					  const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	if (remote_host != NULL && !address_is_specified(c->remote->host.addr)) {
 
@@ -142,11 +142,12 @@ static bool initiate_connection_2_address(struct connection *c,
 		}
 
 		ip_address remote_ip;
-		err_t e = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
-		if (e != NULL) {
+		diag_t diag = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
+		if (diag != NULL) {
 			llog_rc(RC_NOPEERIP, c->logger,
 				"cannot instantiate connection: resolution of \"%s\" failed: %s",
-				remote_host, e);
+				remote_host, str_diag(diag));
+			pfree_diag(&diag);
 			return false;
 		}
 
@@ -169,7 +170,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * connection?
 		 */
 
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 
 		address_buf ab;
 		llog(RC_LOG, d->logger,
@@ -178,7 +179,7 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		bool ok = initiate_connection_3_template(d, background, inception);
 
-		connection_detach(d, d->logger);
+		whack_detach(d, d->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -192,7 +193,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * a really detailed message!!!
 		 */
 
-		if (c->remote->config->host.host.name != NULL) {
+		if (c->remote->config->host.host.value != NULL) {
 			if (c->config->narrowing) {
 				name_buf b;
 				llog_rc(RC_NOPEERIP, c->logger,
@@ -232,17 +233,17 @@ static bool initiate_connection_3_template(struct connection *c,
 					    bool background,
 					    const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
-	passert(address_is_specified(c->remote->host.addr));
+	PASSERT(c->logger, address_is_specified(c->remote->host.addr));
 
 	if (is_labeled_template(c)) {
 		struct connection *d =
 			labeled_template_instantiate(c, c->remote->host.addr, HERE);
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -251,7 +252,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 
-		connection_detach(d, c->logger);
+		whack_detach(d, c->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -260,7 +261,7 @@ static bool initiate_connection_3_template(struct connection *c,
 	    c->config->ike_version == IKEv2 &&
 	    c->config->narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -269,7 +270,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 
-		connection_detach(d, c->logger);
+		whack_detach(d, c->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -281,10 +282,10 @@ static bool initiate_connection_4_fab(struct connection *c,
 				      bool background,
 				      const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	add_policy(c, policy.up);
 
@@ -325,7 +326,7 @@ void initiate(struct connection *c,
 			__func__,
 			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
 			str_child_policy(policy, &pb),
-			str_enum_short(&encap_proto_names, c->config->child_sa.encap_proto, &epb),
+			str_enum_short(&encap_proto_names, c->config->child.encap_proto, &epb),
 			pri_shunk(sec_label));
 	verbose.level++;
 
@@ -349,7 +350,7 @@ void initiate(struct connection *c,
 	 */
 	if (ike != NULL && impair.ignore_viable_parent) {
 		state_buf sb;
-		llog(RC_LOG, logger, "IMPAIR: ignoring viable %s "PRI_STATE,
+		llog(IMPAIR_STREAM, logger, "ignoring viable %s "PRI_STATE,
 		     ike->sa.st_connection->config->ike_info->parent_sa_name,
 		     pri_state(&ike->sa, &sb));
 		ike = NULL;
@@ -407,7 +408,7 @@ void initiate(struct connection *c,
 			connection_initiated_ike(ike, initiated_by, HERE);
 		}
 		if (detach_whack) {
-			state_detach(&ike->sa, c->logger);
+			whack_detach(&ike->sa, c->logger);
 		}
 		return;
 	}
@@ -441,19 +442,19 @@ void initiate(struct connection *c,
 				child = NULL;
 				break;
 			}
-			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+			ldbg(logger, "initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
 				cc = labeled_parent_instantiate(ike, sec_label, HERE);
 				/* propagate whack attached to C */
-				connection_attach(cc, c->logger);
+				whack_attach(cc, c->logger);
 			} else {
 				cc = connection_addref(c, c->logger);
 			}
 			child = submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
 								    detach_whack);
 			if (c != cc) {
-				connection_detach(cc, c->logger);
+				whack_detach(cc, c->logger);
 			}
 			connection_delref(&cc, cc->logger);
 			break;
@@ -478,7 +479,7 @@ void initiate(struct connection *c,
 			 * Caller will then detach whack from the
 			 * connection.
 			 */
-			state_detach(&child->sa, c->logger);
+			whack_detach(&child->sa, c->logger);
 		}
 		return;
 	}

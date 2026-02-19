@@ -30,7 +30,7 @@ Build-Depends:
  man2html,
  pkg-config,
  po-debconf,
- systemd,
+ systemd-dev,
  xmlto,
 Homepage: https://libreswan.org/
 

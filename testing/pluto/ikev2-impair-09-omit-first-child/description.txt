@@ -1,4 +1,0 @@
-Leave out the first CHILD SA payloads normally bundled with IKE_AUTH
-
-
-

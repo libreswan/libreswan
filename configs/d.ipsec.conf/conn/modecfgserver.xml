@@ -1,0 +1,18 @@
+<varlistentry id='conn.modecfgserver'>
+  <term>
+    <option>leftmodecfgserver=&yn_option;</option>
+  </term>
+  <term>
+    <option>rightmodecfgserver=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      The end is a Mode Config server. It can push network
+      configuration to the client.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>
+

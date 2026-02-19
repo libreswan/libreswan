@@ -54,6 +54,7 @@ OBJS += impair_message.o
 OBJS += ddos.o
 
 # exchanges
+OBJS += ikev2_helper.o
 OBJS += ikev2_unsecured.o
 OBJS += ikev2_ike_sa_init.o
 OBJS += ikev2_ike_session_resume.o
@@ -63,6 +64,7 @@ OBJS += ikev2_create_child_sa.o
 OBJS += ikev2_informational.o
 
 # payloads
+OBJS += ikev2_ke.o
 OBJS += ikev2_cert.o
 OBJS += ikev2_certreq.o
 OBJS += ikev2_notification.o
@@ -95,6 +97,7 @@ OBJS += whack_add.o
 OBJS += whack_briefconnectionstatus.o
 OBJS += whack_connectionstatus.o
 OBJS += whack_crash.o
+OBJS += whack_ddns.o
 OBJS += whack_debug.o
 OBJS += whack_delete.o
 OBJS += whack_deleteid.o
@@ -103,6 +106,7 @@ OBJS += whack_deleteuser.o
 OBJS += whack_down.o
 OBJS += whack_impair.o
 OBJS += whack_initiate.o
+OBJS += whack_listen.o
 OBJS += whack_pubkey.o
 OBJS += whack_route.o
 OBJS += whack_sa.o
@@ -110,18 +114,19 @@ OBJS += whack_showstates.o
 OBJS += whack_shutdown.o
 OBJS += whack_status.o
 OBJS += whack_suspend.o
+OBJS += whack_redirect.o
 OBJS += whack_trafficstatus.o
 OBJS += whack_unroute.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
-USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-copy
+USERLAND_INCLUDES += -I$(top_srcdir)/external/linux-xfrm-headers
 endif
 
 ifeq ($(USE_XFRM_INTERFACE), true)
 ifeq ($(USE_XFRM_INTERFACE_IFLA_HEADER), true)
 USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE_IFLA_HEADER
-USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link
+USERLAND_INCLUDES += -I$(top_srcdir)/external/linux-if-link-headers
 endif
 endif
 
@@ -223,6 +228,7 @@ LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
 USERLAND_LDFLAGS += $(UNBOUND_LDFLAGS)
+USERLAND_LDFLAGS += $(LDNS_LDFLAGS)
 USERLAND_LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 
 OBJS += linux_audit.o
@@ -230,6 +236,7 @@ OBJS += linux_audit.o
 USERLAND_LDFLAGS += $(LIBEVENT_LDFLAGS)
 
 OBJS += connections.o
+OBJS += extract.o
 OBJS += instantiate.o
 OBJS += connection_db.o
 OBJS += connection_event.o
@@ -256,13 +263,18 @@ OBJS += server.o
 OBJS += server_fork.o
 OBJS += server_pool.o
 OBJS += server_run.o
+
+OBJS += helper.o
+OBJS += resolve_helper.o
+
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
 OBJS += ikev2_host_pair.o
 OBJS += ikev2_retransmit.o
 OBJS += ipsec_doi.o
-ifeq ($(USE_DNSSEC),true)
-OBJS += ikev2_ipseckey.o ikev2_ipseckey_dnsr.o
+ifeq ($(ENABLE_IPSECKEY),true)
+OBJS += ikev2_ipseckey.o
+OBJS += ikev2_ipseckey_dnsr.o
 endif
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1.o ikev1_aggr.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o

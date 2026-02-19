@@ -54,10 +54,10 @@ void show_kernel_alg_status(struct show *s)
 		const struct encrypt_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack gives us no algos */
 			show(s,
-				"algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
-				alg->common.fqn,
-				encrypt_min_key_bit_length(alg),
-				encrypt_max_key_bit_length(alg));
+			     "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
+			     alg->common.fqn,
+			     encrypt_min_key_bit_length(alg),
+			     encrypt_max_key_bit_length(alg));
 	}
 
 	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
@@ -65,9 +65,30 @@ void show_kernel_alg_status(struct show *s)
 		const struct integ_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack doesn't give us algos */
 			show(s,
-				"algorithm AH/ESP auth: name=%s, key-length=%zu",
-				alg->common.fqn,
-				alg->integ_keymat_size * BITS_IN_BYTE);
+			     "algorithm AH/ESP auth: name=%s, key-length=%zu",
+			     alg->common.fqn,
+			     alg->integ_keymat_size * BITS_IN_BYTE);
+	}
+}
+
+void jam_ipsec_proto_info(struct jambuf *buf, const struct ipsec_proto_info *info)
+{
+	const char *sep = "";
+	const struct encrypt_desc *encrypt = info->trans_attrs.ta_encrypt;
+	if (encrypt != NULL) {
+		jam_string(buf, sep); sep = "-";
+		jam_string(buf, encrypt->common.fqn);
+		if (!encrypt->keylen_omitted ||
+		    (info->trans_attrs.enckeylen != 0 &&
+		     info->trans_attrs.enckeylen != encrypt->keydeflen)) {
+			jam(buf, "_%u", info->trans_attrs.enckeylen);
+		}
+	}
+	const struct integ_desc *integ = info->trans_attrs.ta_integ;
+	if (integ != NULL &&
+	    (integ != &ike_alg_integ_none || !encrypt_desc_is_aead(encrypt))) {
+		jam_string(buf, sep); sep = "-";
+		jam_string(buf, integ->common.fqn);
 	}
 }
 
@@ -76,7 +97,7 @@ void show_kernel_alg_connection(struct show *s,
 {
 	const char *satype;
 
-	switch (c->config->child_sa.encap_proto) {
+	switch (c->config->child.encap_proto) {
 	case ENCAP_PROTO_UNSET:
 		satype = "noESPnoAH";
 		break;
@@ -89,12 +110,12 @@ void show_kernel_alg_connection(struct show *s,
 		satype = "AH";
 		break;
 	default:
-		bad_case(c->config->child_sa.encap_proto);
+		bad_case(c->config->child.encap_proto);
 	}
 
 	const char *pfsbuf;
 
-	if (c->config->child_sa.pfs) {
+	if (c->config->child.pfs) {
 		/*
 		 * Get the DH algorithm specified for the child (ESP or AH).
 		 *
@@ -105,7 +126,7 @@ void show_kernel_alg_connection(struct show *s,
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
-			const struct dh_desc *dh = ikev1_quick_pfs(c->config->child_sa.proposals);
+			const struct kem_desc *dh = ikev1_quick_pfs(c->config->child.proposals);
 			if (dh != NULL) {
 				pfsbuf = dh->common.fqn;
 			} else {
@@ -128,8 +149,8 @@ void show_kernel_alg_connection(struct show *s,
 	 * known).  Mainly so that test output doesn't get churned
 	 * (originally it wasn't shown because it wasn't known).
 	 */
-	if (c->config->child_sa.proposals.p != NULL &&
-	    !default_proposals(c->config->child_sa.proposals.p)) {
+	if (c->config->child.proposals.p != NULL &&
+	    !default_proposals(c->config->child.proposals.p)) {
 		SHOW_JAMBUF(s, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
@@ -152,33 +173,27 @@ void show_kernel_alg_connection(struct show *s,
 			jam_string(buf, ":  ");
 			/* algs */
 			jam(buf, " %s algorithms: ", satype);
-			jam_proposals(buf, c->config->child_sa.proposals.p);
+			jam_proposals(buf, c->config->child.proposals.p);
 		}
 	}
 
-	const struct state *st = state_by_serialno(c->established_child_sa);
-
-	if (st != NULL && st->st_esp.protocol == &ip_protocol_esp) {
-		SHOW_JAMBUF(s, buf) {
-			jam_string(buf, c->name);
-			jam_string(buf, ":  ");
-			jam(buf, " %s algorithm newest: %s_%03d-%s;",
-			    satype,
-			    st->st_esp.trans_attrs.ta_encrypt->common.fqn,
-			    st->st_esp.trans_attrs.enckeylen,
-			    st->st_esp.trans_attrs.ta_integ->common.fqn);
-			jam(buf, " pfsgroup=%s", pfsbuf);
-		}
-	}
-
-	if (st != NULL && st->st_ah.protocol == &ip_protocol_ah) {
-		SHOW_JAMBUF(s, buf) {
-			jam_string(buf, c->name);
-			jam_string(buf, ":  ");
-			jam(buf, " %s algorithm newest: %s;",
-			    satype,
-			    st->st_ah.trans_attrs.ta_integ->common.fqn);
-			jam(buf, " pfsgroup=%s", pfsbuf);
+	const struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
+	if (child != NULL) {
+		const struct ipsec_proto_info *outer = outer_ipsec_proto_info(child);
+		if (outer != NULL ) {
+			SHOW_JAMBUF(s, buf) {
+				jam_string(buf, c->name);
+				jam_string(buf, ":  ");
+				jam_string(buf, " ");
+				jam_string(buf, outer->protocol->name);
+				jam_string(buf, " algorithm newest: ");
+				jam_ipsec_proto_info(buf, outer);
+				jam_string(buf, ";");
+				if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
+					jam_string(buf, " IPCOMP;");
+				}
+				jam(buf, " pfsgroup=%s", pfsbuf);
+			}
 		}
 	}
 }

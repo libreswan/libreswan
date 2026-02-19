@@ -15,7 +15,7 @@ west #
 "addconn-narrowing=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--narrowing=     --narrowing     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-ipsec whack: option --narrowing '--encrypt' invalid, '--encrypt' is not recognised; valid arguments are: yes, no
+"whack--narrowing=": failed to add connection: narrowing=--encrypt is invalid, valid options are "yes", and "no"
 west #
  ipsec whack --name whack--narrowing=no   --narrowing no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 "whack--narrowing=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
@@ -28,6 +28,5 @@ west #
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ALLOW_NARROWING.*/\1 ALLOW_NARROWING/p'
 "addconn-narrowing=yes":   policy: ALLOW_NARROWING
-"whack--allow-narrowing":   policy: ALLOW_NARROWING
 "whack--narrowing=yes":   policy: ALLOW_NARROWING
 west #

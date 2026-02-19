@@ -20,6 +20,8 @@ OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
+USERLAND_LDFLAGS += $(UNBOUND_LDFLAGS)
+
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else

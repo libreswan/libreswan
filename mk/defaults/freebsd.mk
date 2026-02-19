@@ -22,7 +22,6 @@ USE_PFKEYV2 = true
 USE_LIBCAP_NG = false
 USE_PTHREAD_SETSCHEDPRIO = false
 
-USE_DNSSEC = false
 DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/local/etc/unbound/root.key
 
 INITSYSTEM=rc.d

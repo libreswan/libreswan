@@ -1,0 +1,20 @@
+<varlistentry id='conn.rekeyfuzz'>
+  <term>
+    <option>rekeyfuzz=&percent;</option>
+  </term>
+  <listitem>
+    <para>
+      Maximum percentage by which <option>rekeymargin</option> should
+      be randomly increased to randomize rekeying intervals (important
+      for hosts with many connections); acceptable values are an
+      integer, which may exceed 100, followed by a `%'.  The value of
+      <option>rekeymargin</option>, after this random increase, must
+      not exceed <option>salifetime</option>.  The value
+      <option>0%</option> will suppress time randomization.  Relevant
+      only locally, other end need not agree on it.
+    </para>
+    <para>
+      The default is <literal>100%</literal>.
+    </para>
+  </listitem>
+</varlistentry>

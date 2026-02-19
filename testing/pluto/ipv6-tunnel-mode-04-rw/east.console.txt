@@ -7,18 +7,18 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add v6-tunnel-east-road
-"v6-tunnel-east-road": added IKEv1 connection
+"v6-tunnel-east-road": added oriented IKEv1 connection
 east #
  ipsec auto --status | grep v6-tunnel-east-road
 "v6-tunnel-east-road": 2001:db8:1:2::23[@east]---2001:db8:1:2::45...2001:db8:1:3::209[@road]; unrouted; my_ip=unset; their_ip=unset;
 "v6-tunnel-east-road":   host: oriented; local: 2001:db8:1:2::23; nexthop: 2001:db8:1:2::45; remote: 2001:db8:1:3::209;
-"v6-tunnel-east-road":   my_updown=ipsec _updown;
+"v6-tunnel-east-road":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "v6-tunnel-east-road":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "v6-tunnel-east-road":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "v6-tunnel-east-road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "v6-tunnel-east-road":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "v6-tunnel-east-road":   sec_label:unset;
-"v6-tunnel-east-road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"v6-tunnel-east-road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "v6-tunnel-east-road":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "v6-tunnel-east-road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "v6-tunnel-east-road":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -42,6 +42,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -52,6 +53,7 @@ src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135

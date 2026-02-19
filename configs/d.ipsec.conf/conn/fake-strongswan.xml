@@ -1,0 +1,28 @@
+<varlistentry id='conn.fake-strongswan'>
+  <term>
+    <option>fake-strongswan=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to send a fake &strongSwan; Vendor ID payload to the
+      peer.
+    </para>
+    <para>
+      &strongSwan; enables some non-standard features and private
+      algorithms only when it detects the &strongSwan; Vendor ID. The
+      exact capabilities depend on the &strongSwan; version.  At the
+      time of writing this entry this option can enable negotiation of
+      &BEET; mode (until the &IETF; assigns a code point), enable some
+      private algorithms (eg some experimental post-quantum
+      algorithms) and enables forwarding &RADIUS; attributes (which
+      should not have any affects with the current &EAP; support in
+      libreswan). Note that experimental algorithms on &strongSwan;
+      can also be enabled using
+      <option>charon.accept_private_algs</option> and then this option
+      is not needed.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

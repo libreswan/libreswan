@@ -6,4 +6,4 @@
 # - *.console.txt should only contain useful stuff
 
 # only used because the responder is being a little slow.
-/: IMPAIR: suppressing retransmits; scheduling timeout in/ d
+/IMPAIR: .*: suppressing retransmits; scheduling timeout in/ d

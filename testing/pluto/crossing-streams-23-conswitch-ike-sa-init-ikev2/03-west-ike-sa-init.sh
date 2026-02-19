@@ -4,7 +4,7 @@
 
 ipsec whack --impair block_outbound:yes
 ipsec up a --asynchronous
-../../guestbin/wait-for-pluto.sh --match '"a" #1: IMPAIR: blocking outbound message 1'
+../../guestbin/wait-for-pluto.sh --match 'IMPAIR: "a" #1: blocking outbound message 1'
 ../../guestbin/wait-for-pluto.sh --match '"a" #1: sent IKE_SA_INIT request'
 
 # With connection "a"'s IKE SA #1 stuck, unblock so that the peer's

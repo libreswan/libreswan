@@ -25,45 +25,57 @@
 #include "refcnt.h"
 #include "lswlog.h"		/* for pexpect() */
 
+static refcnt_discard_content_fn discard_fd_content;
+static refcnt_jam_fn jam_fd;
+
 struct fd {
-#define FD_MAGIC 0xf00d1e
-	unsigned magic;
+	refcnt_t refcnt;	/* must be first */
 	int fd;
-	refcnt_t refcnt;
 };
 
-struct fd *fd_addref_where(struct fd *fd, const struct where *where)
+size_t jam_fd(struct jambuf *buf, const void *pointer)
 {
-	struct logger *logger = &global_logger;
-	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	return addref_where(fd, logger, where);
+	const struct fd *fd = pointer;
+	return jam(buf, "%d", fd->fd);
 }
 
-void fd_delref_where(struct fd **fdp, where_t where)
+static const struct refcnt_base fd_refcnt_base = {
+	.what = "fd",
+	.discard_content = discard_fd_content,
+	.jam = jam_fd,
+};
+
+struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
 {
-	const struct logger *logger = &global_logger;
-	struct fd *fd = delref_where(fdp, logger, where);
-	if (fd != NULL) {
-		pexpect(fd->magic == FD_MAGIC);
-		if (close(fd->fd) != 0) {
-			if (LDBGP(DBG_BASE, logger)) {
-				llog_errno(DEBUG_STREAM, logger, errno,
-					   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
-					   pri_fd(fd), pri_where(where));
-			}
-		} else {
-			ldbg(logger, "freeref "PRI_FD" "PRI_WHERE"",
-			     pri_fd(fd), pri_where(where));
+	return refcnt_addref(fd, new_owner, where);
+}
+
+void fd_delref_where(struct fd **fdp, const struct logger *owner, where_t where)
+{
+	struct fd *fd = refcnt_delref(fdp, owner, where);
+	PASSERT(owner, fd == NULL);
+}
+
+void discard_fd_content(void *pointer, const struct logger *owner, where_t where)
+{
+	struct fd *fd = pointer;
+	if (close(fd->fd) != 0) {
+		int error = errno;
+		if (LDBGP(DBG_BASE, owner)) {
+			LDBG_errno(owner, error,
+				   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
+				   pri_fd(fd), pri_where(where));
 		}
-		fd->magic = ~FD_MAGIC;
-		pfree(fd);
+	} else {
+		ldbg(owner, "freeref "PRI_FD" "PRI_WHERE"",
+		     pri_fd(fd), pri_where(where));
 	}
 }
 
-void fd_leak(struct fd *fd, where_t where)
+void fd_leak(struct fd *fd, struct logger *logger, where_t where)
 {
-	dbg("leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
-	    pri_fd(fd), pri_where(where));
+	ldbg(logger, "leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
+	     pri_fd(fd), pri_where(where));
 	/* leave the old underlying file descriptor open */
 	if (fd != NULL) {
 		fd->fd = dup(fd->fd);
@@ -72,50 +84,41 @@ void fd_leak(struct fd *fd, where_t where)
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
 {
-	if (fd == NULL || fd->magic != FD_MAGIC) {
-		/*
-		 * XXX: passert() / pexpect() would be recursive -
-		 * they will call this function when trying to write
-		 * to whack.
-		 */
-		return -EFAULT;
-	}
 	ssize_t s = sendmsg(fd->fd, msg, flags);
 	return s < 0 ? -errno : s;
 }
 
-struct fd *fd_accept(int socket, const struct where *where, struct logger *logger)
+struct fd *fd_accept(int socket, const struct logger *owner, where_t where)
 {
 	struct sockaddr_un addr;
 	socklen_t addrlen = sizeof(addr);
 
 	int fd = accept(socket, (struct sockaddr *)&addr, &addrlen);
 	if (fd < 0) {
-		llog_error(logger, errno, "accept() failed in "PRI_WHERE"",
+		llog_errno(ERROR_STREAM, owner, errno,
+			   "accept() failed in "PRI_WHERE": ",
 			   pri_where(where));
 		return NULL;
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
-		llog_error(logger, errno, "failed to set CLOEXEC in "PRI_WHERE"",
-			   pri_where(where));
+		llog_errno(ERROR_STREAM, owner, errno,
+			   "failed to set CLOEXEC in "PRI_WHERE": ", pri_where(where));
 		close(fd);
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, logger, where);
+	struct fd *fdt = alloc_thing(struct fd, "fd");
+	refcnt_init(fdt, &fdt->refcnt, &fd_refcnt_base, owner, where);
+
 	fdt->fd = fd;
-	fdt->magic = FD_MAGIC;
-	dbg("%s: new "PRI_FD" "PRI_WHERE"",
-	    __func__, pri_fd(fdt), pri_where(where));
+	ldbg(owner, "%s: new "PRI_FD" "PRI_WHERE"",
+	     __func__, pri_fd(fdt), pri_where(where));
 	return fdt;
 }
 
 ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes)
 {
-	if (fd == NULL || fd->magic != FD_MAGIC) {
-		return -EFAULT;
-	}
 	ssize_t s = read(fd->fd, buf, nbytes);
 	return s < 0 ? -errno : s;
 }
@@ -123,11 +126,6 @@ ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes)
 bool fd_p(const struct fd *fd)
 {
 	if (fd == NULL) {
-		return false;
-	}
-	if (fd->magic != FD_MAGIC) {
-		llog_pexpect(&global_logger, HERE,
-			     "wrong magic for "PRI_FD"", pri_fd(fd));
 		return false;
 	}
 	return true;

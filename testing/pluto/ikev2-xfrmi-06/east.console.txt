@@ -10,7 +10,7 @@ east #
 east #
  ipsec auto --add eastnet-road
 "eastnet-road": created ipsec-interface ipsec1@NONE
-"eastnet-road": added IKEv2 connection
+"eastnet-road": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -24,8 +24,9 @@ east #
  ../../guestbin/ip.sh address show dev eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-    altname enp0s6
-    altname ens6
+    altname enp0s5
+    altname ens5
+    altname enx120000dcbcff
     inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
 east #

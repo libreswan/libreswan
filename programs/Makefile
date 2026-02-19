@@ -26,17 +26,25 @@ SUBDIRS += _import_crl
 SUBDIRS += _plutorun
 SUBDIRS += _unbound-hook
 SUBDIRS += _updown
+SUBDIRS += add
 SUBDIRS += addconn
 SUBDIRS += algparse
 SUBDIRS += cavp
-SUBDIRS += ecdsasigkey
+
 SUBDIRS += ipsec
 SUBDIRS += letsencrypt
+SUBDIRS += readwriteconf
+SUBDIRS += setup
 
 SUBDIRS += newhostkey
-SUBDIRS += readwriteconf
+
+SUBDIRS += ecdsasigkey
+
+ifeq ($(USE_EDDSA),true)
+SUBDIRS += eddsasigkey
+endif
+
 SUBDIRS += rsasigkey
-SUBDIRS += setup
 
 SUBDIRS += showhostkey
 SUBDIRS += showroute

@@ -39,7 +39,7 @@ static struct state *find_impaired_state(so_serial_t so, struct logger *logger)
 {
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		llog(RC_LOG, logger, "state #%lu not found", so);
+		llog(RC_LOG, logger, "state "PRI_SO" not found", pri_so(so));
 		return NULL;
 	}
 	return st;
@@ -54,22 +54,6 @@ static struct connection *find_impaired_connection(co_serial_t co,
 		return NULL;
 	}
 	return c;
-}
-
-static struct logger *merge_loggers(struct logger *o_logger,
-				   bool background,
-				   struct logger *g_logger)
-{
-	/*
-	 * Create a logger that looks like the object; but also has
-	 * whack attached.
-	 */
-	struct logger *logger = clone_logger(o_logger, HERE);
-	whack_attach(logger, g_logger);
-	if (!background) {
-		whack_attach(o_logger, g_logger);
-	}
-	return logger;
 }
 
 static void whack_impair_action(enum impair_action impairment_action,
@@ -115,7 +99,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		free_logger(&loggers, HERE);
 		/* release whack, possibly attached to C by
 		 * merge_loggers */
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		connection_delref(&c, logger);
 		break;
 	}
@@ -133,7 +117,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		struct logger *loggers = merge_loggers(ike->sa.logger, detach_whack, logger);
-		llog(RC_LOG, loggers, "IMPAIR: initiating liveness");
+		llog(IMPAIR_STREAM, loggers, "initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
 		break;
@@ -148,7 +132,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger,
 						       true/*detach_whack*/, logger);
-		llog(RC_LOG, loggers, "IMPAIR: sending keepalive");
+		llog(IMPAIR_STREAM, loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		free_logger(&loggers, HERE);
 		break;
@@ -169,7 +153,7 @@ void whack_impair(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name == NULL) {
-		FOR_EACH_ITEM(impairment, &m->impairments) {
+		FOR_EACH_ITEM(impairment, &m->whack.impair) {
 			/* ??? what should we do with return value? */
 			process_impair(impairment,
 				       whack_impair_action,

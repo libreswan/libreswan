@@ -1,0 +1,17 @@
+<varlistentry id='conn.intermediate'>
+  <term>
+    <option>intermediate=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to enable the INTERMEDIATE exchange in IKEv2 (RFC 9242).
+      Currently the accepted values are: &yes;, signifying we propose
+      to use the INTERMEDIATE exchange for this connection; and &no;,
+      signifying we will not use the INTERMEDIATE exchange for this
+      connection.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

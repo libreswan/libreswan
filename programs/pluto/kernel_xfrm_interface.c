@@ -179,8 +179,8 @@ static bool xfrm_ipsec_interface_up(const char *if_name, struct verbose verbose)
 	req.i.ifi_flags |= IFF_UP;
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		llog_error(verbose.logger, errno,
-			   "%s() cannot find index of xfrm interface %s",
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "%s() cannot find index of xfrm interface %s: ",
 			   __func__, if_name);
 		return false;
 	}
@@ -199,8 +199,8 @@ static bool xfrm_ipsec_interface_del(const char *if_name, struct verbose verbose
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		llog_error(verbose.logger, errno,
-			   "%s() cannot find index of interface %s",
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "%s() cannot find index of interface %s: ",
 			   __func__, if_name);
 		return false;
 	}
@@ -244,8 +244,9 @@ static bool nl_newlink(const char *ipsec_if_name,
 				/* e.g link id of the interface, eth0 */
 				unsigned physical_if_index = if_nametoindex(physical_if_name);
 				if (physical_if_index == 0) {
-					llog_error(verbose.logger, errno,
-							"cannot find interface index for physical interface device %s", physical_if_name);
+					llog_errno(ERROR_STREAM, verbose.logger, errno,
+						   "cannot find interface index for physical interface device %s: ",
+						   physical_if_name);
 					return false;
 				}
 
@@ -709,8 +710,8 @@ static bool xfrm_ipsec_interface_has_cidr(const char *ipsec_if_name,
 				 parse_getaddr_response,
 				 &ctx, verbose)) {
 		/* netlink error */
-		llog_error(verbose.logger, 0/*no-errno*/,
-			   "%s() request for all IPs failed", __func__);
+		llog(ERROR_STREAM, verbose.logger,
+		     "%s() request for all IPs failed: ", __func__);
 		return false;
 	}
 
@@ -784,8 +785,8 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 
 	if (e != ENXIO && e != ENODEV) {
 		/* The device lookup failed!?! */
-		llog_error(verbose.logger, e,
-			   "unexpected error in %s() while checking device %s",
+		llog_errno(ERROR_STREAM, verbose.logger, e,
+			   "unexpected error in %s() while checking device %s: ",
 			   __func__, ipsec_if_name);
 		return "cannot decide xfrmi support. assumed no.";
 	}
@@ -805,9 +806,9 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	vdbg("trying to create the XFRMi ipsec-interface %s bound to %s",
 	     ipsec_if_name, physical_if_name);
 	if (!nl_newlink(ipsec_if_name, ipsec_if_id, physical_if_name, verbose)) {
-		llog_error(verbose.logger, 0/*lost-error*/,
-			   "xfrmi is not supported, failed to create ipsec-interface %s bound to %s",
-			   ipsec_if_name, physical_if_name);
+		llog(ERROR_STREAM, verbose.logger,
+		     "xfrmi is not supported, failed to create ipsec-interface %s bound to %s: ",
+		     ipsec_if_name, physical_if_name);
 		/* xfrm_interface_support = -1; */
 		return "xfrmi is not supported";
 	}
@@ -815,7 +816,7 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	vdbg("checking the ipsec-interface %s bound to %s was created",
 	     ipsec_if_name, physical_if_name);
 	if (if_nametoindex(ipsec_if_name) == 0) {
-		llog_error(verbose.logger, errno,
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
 			   "cannot find test ipsec-interface %s bound to %s: ",
 			   ipsec_if_name, physical_if_name);
 		/*
@@ -862,7 +863,7 @@ static void xfrm_check_stale(struct verbose verbose)
 	}
 
 	if (e != ENXIO && e != ENODEV) {
-		llog_error(verbose.logger, e,
+		llog_errno(ERROR_STREAM, verbose.logger, e,
 			   "in %s() if_nametoindex('%s') failed: ",
 			   __func__, if_name);
 		return;
@@ -884,7 +885,9 @@ static err_t xfrm_ipsec_interface_init(struct verbose verbose)
 }
 
 
-void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
+void set_ike_mark_out(const struct connection *c,
+		      ip_endpoint *ike_remote,
+		      struct logger *logger)
 {
 	bool set_mark = false;
 	const struct spds *spds = &c->child.spds;
@@ -908,7 +911,7 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 		mark_out = c->ipsec_interface->if_id;
 
 	if (ike_remote->mark_out != 0)
-		passert(ike_remote->mark_out == mark_out);
+		PASSERT(logger, ike_remote->mark_out == mark_out);
 
 	ike_remote->mark_out = mark_out;
 }

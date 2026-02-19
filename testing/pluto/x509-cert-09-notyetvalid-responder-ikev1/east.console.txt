@@ -41,7 +41,7 @@ east #
  ipsec add nss-cert
 "nss-cert": WARNING: right is a groundhog
 "nss-cert": WARNING: groundhog right certificate 'east-notyetvalid' is not yet valid
-"nss-cert": added IKEv1 connection
+"nss-cert": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

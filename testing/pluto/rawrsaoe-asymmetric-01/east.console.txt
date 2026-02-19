@@ -28,7 +28,7 @@ east #
  # A tunnel should have established
 east #
  hostname | grep east > /dev/null && grep "^[^|].* established Child SA" /tmp/pluto.log
-"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #
  # you should see both RSA and NULL
 east #

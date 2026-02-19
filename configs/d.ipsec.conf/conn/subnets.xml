@@ -1,0 +1,23 @@
+<varlistentry id='conn.subnets'>
+  <term>
+    <option>leftsubnets=&ip_subnet;,...</option>
+  </term>
+  <term>
+    <option>rightsubnets=&ip_subnet;,...</option>
+  </term>
+  <listitem>
+    <para>
+      Specify multiple private subnets behind the participant,
+      expressed as
+      <option>networkA</option><option>/</option><option>netmaskA</option>,<option>networkB</option><option>/</option><option>netmaskB</option><option>,...</option>.
+      If both a <option>leftsubnets=</option> and
+      <option>rightsubnets=</option> are defined, all combinations of
+      subnet tunnels will be established as separate IPsec tunnels.
+      You cannot use <option>leftsubnet=</option> and
+      <option>leftsubnets=</option> together. For examples see
+      <option>testing/pluto/multinet-*</option>.  Be aware that when
+      using spaces as separator, that the entire option value needs to
+      be in double quotes.
+    </para>
+  </listitem>
+</varlistentry>

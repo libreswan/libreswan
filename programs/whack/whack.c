@@ -82,11 +82,10 @@ static void help(void)
 		"	[--vti <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
-		"	[--autheap <none | tls>] \\\n"
-		"	[--groups <access control groups>] \\\n"
+		"	[--autheap {none,tls} \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
-		"	[--sendca no|issuer|all] [--sendcert yes|always|no|never|ifasked] \\\n"
+		"	[--sendca {no,issuer,all} [--sendcert {yes,always,no,never,ifasked} \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
@@ -94,23 +93,24 @@ static void help(void)
 		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | \\\n"
 		"		[--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | \\\n"
 		"		[ --auth-null] | [--auth-never] \\\n"
-		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
-		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] \\\n"
-		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
+		"	[--encrypt] [--authenticate] [--compress[={yes,no}]] [--sha2-truncbug[={yes,no}]] \\\n"
+		"	[--ms-dh-downgrade[={yes,no}]] \\\n"
+		"	[--overlapip[={yes,no}]] [--tunnel] \\\n"
+		"	[--allow-cert-without-san-id] [--dns-match-id[={yes,no}]] \\\n"
 		"	[--ike-lifetime <seconds>] [--ipsec-lifetime <seconds>] \\\n"
 		"	[--ipsec-max-bytes <num>] [--ipsec-max-packets <num>] \\\n"
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
-		"	[--send-redirect] [--redirect-to <ip>] \\\n"
-		"	[--accept-redirect] [--accept-redirect-to <ip>] \\\n"
+		"	[--send-redirect {yes,no,auto}] [--redirect-to <ip>] \\\n"
+		"	[--accept-redirect {yes,no}] [--accept-redirect-to <ip>] \\\n"
 		"	[--replay-window <num>] \\\n"
 		"	[--esp <esp-algos>] \\\n"
 		"	[--remote-peer-type <cisco>] \\\n"
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
-		"	[--tfc <size>] [--send-esp-tfc-padding-not-supported] \\\n"
+		"	[--tfc <size>] [--send-esp-tfc-padding-not-supported[={yes,no}] \\\n"
+		"	[--reject-simultaneous-ike-auth[={yes,no}]] \\\n"
 		"	[--iptfs[={yes,no}] \\\n"
 		"         [--iptfs-fragmentation[={yes,no}]] \\\n"
 		"         [--iptfs-packet-size <size>] \\\n"
@@ -120,18 +120,18 @@ static void help(void)
 		"	  [--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
-		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
+		"	[--fragmentation {yes,no,force}] [--ikepad[={yes,no,auto}]  \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
-		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp[={yes,no}]] [--encap-dscp[={yes,no}]] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
 		"	[--nm-configured] \\\n"
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
 #endif
 		"	[--dontrekey] [--dont-share-lease] [--aggressive] \\\n"
 		"	[--initial-contact[={yes,no}]] [--cisco-unity[={yes,no}]] [--fake-strongswan] \\\n"
-		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
+		"	[--encapsulation[={yes,no,auto}] [--nat-keepalive {yes,no}] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
@@ -171,7 +171,7 @@ static void help(void)
 		"active redirect: whack [--name <connection_name>] \\\n"
 		"	--redirect-to <ip-address(es)> \n"
 		"\n"
-		"global redirect: whack --global-redirect yes|no|auto\n"
+		"global redirect: whack --global-redirect {yes,no,auto}\n"
 		"	--global-redirect-to <ip-address, dns-domain, ..> \n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
@@ -229,7 +229,7 @@ static void help(void)
 		"shutdown: whack --shutdown [--leave-state]\n"
 		"\n"
 		"Libreswan %s\n",
-		ipsec_version_code());
+		libreswan_version);
 }
 
 /* --label operand, saved for diagnostics */
@@ -237,8 +237,6 @@ static const char *label = NULL;
 
 /* --name operand, saved for diagnostics */
 static const char *name = NULL;
-
-static const char *remote_host = NULL;
 
 /*
  * Print a string as a diagnostic, then exit whack unhappily
@@ -338,10 +336,6 @@ enum opt_seen_ix {
 
 enum opt {
 
-	OPT_HELP = 'h',
-	OPT_VERSION = 'v',
-	OPT_LABEL = 'l',
-
 /*
  * Start the the non-ASCIC options at 256 so that they can't clash
  * with ASCII options.
@@ -359,6 +353,10 @@ enum opt {
 	OPT_STATUS = OPT_START,
 	OPT_SHUTDOWN,
 
+	OPT_HELP,
+	OPT_VERSION,
+	OPT_LABEL,
+
 	OPT_ASYNC,
 
 	OPT_RUNDIR,
@@ -367,7 +365,7 @@ enum opt {
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
-	OPT_DELETECRASH,
+	OPT_CRASH,
 	OPT_USERNAME,
 	OPT_XAUTHPASS,
 
@@ -413,7 +411,6 @@ enum opt {
 	OPT_DDNS,
 
 	OPT_REREADSECRETS,
-	OPT_REREADCRLS,
 	OPT_FETCHCRLS,
 	OPT_REREADCERTS,
 	OPT_REREADALL,
@@ -446,14 +443,15 @@ enum opt {
 
 	/* List options */
 
-	LST_UTC,
-	LST_CHECKPUBKEYS,
-	LST_PUBKEYS = LST_CHECKPUBKEYS + 1 + LIST_PUBKEYS,
-	LST_CERTS =   LST_CHECKPUBKEYS + 1 + LIST_CERTS,
-	LST_CACERTS = LST_CHECKPUBKEYS + 1 + LIST_CACERTS,
-	LST_CRLS =    LST_CHECKPUBKEYS + 1 + LIST_CRLS,
-	LST_PSKS =    LST_CHECKPUBKEYS + 1 + LIST_PSKS,
-	LST_EVENTS =  LST_CHECKPUBKEYS + 1 + LIST_EVENTS,
+	OPT_UTC,
+	OPT_CHECKPUBKEYS,
+
+	LST_PUBKEYS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PUBKEYS,
+	LST_CERTS =   OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CERTS,
+	LST_CACERTS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CACERTS,
+	LST_CRLS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CRLS,
+	LST_PSKS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PSKS,
+	LST_EVENTS =  OPT_CHECKPUBKEYS + 1 + WHACK_LIST_EVENTS,
 	LST_ALL,
 
 #define LAST_NORMAL_OPT		LST_ALL		/* last "normal" option */
@@ -473,7 +471,6 @@ enum opt {
 	END_CERT,
 	END_CKAID,
 	END_CA,
-	END_GROUPS,
 	END_IKEPORT,
 	END_NEXTHOP,
 	END_SUBNET,
@@ -516,6 +513,7 @@ enum opt {
 	CD_PRIORITY,
 	CD_TFC,
 	CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
+	CD_REJECT_SIMULTANEOUS_IKE_AUTH,
 	CD_PFS,
 	CD_REQID,
 	CD_NFLOG_GROUP,
@@ -604,7 +602,6 @@ enum opt {
 	CD_TRANSPORT,
 	CD_ENCRYPT,
 	CD_AUTHENTICATE,
-	CD_INITIATEONTRAFFIC,
 
 	/*
 	 * Connection proof-of-identity options that set .auth and
@@ -630,8 +627,8 @@ enum opt {
 	 * Connection shunt policies.
 	 */
 
-	CDS_NEVER_NEGOTIATE_PASS,
-	CDS_NEVER_NEGOTIATE_DROP,
+	CDS_PASS,
+	CDS_DROP,
 	CDS_NEGOTIATION_PASS,
 	CDS_NEGOTIATION_HOLD,
 	CDS_FAILURE_NONE,
@@ -695,7 +692,7 @@ const struct option optarg_options[] = {
 	{ "deleteid\0", no_argument, NULL, OPT_DELETEID },
 	{ "deletestate\0", required_argument, NULL, OPT_DELETESTATE },
 	{ "deleteuser\0", no_argument, NULL, OPT_DELETEUSER },
-	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
+	{ "crash\0", required_argument, NULL, OPT_CRASH },
 
 	{ OPT("listen"), no_argument, NULL, OPT_LISTEN },
 	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
@@ -715,7 +712,7 @@ const struct option optarg_options[] = {
 	{ "ddns\0", no_argument, NULL, OPT_DDNS },
 
 	{ "rereadsecrets\0", no_argument, NULL, OPT_REREADSECRETS },
-	{ "rereadcrls\0", no_argument, NULL, OPT_REREADCRLS }, /* obsolete */
+	{ FATAL_OPT("rereadcrls", "5.0"), no_argument, NULL, 0, }, /* obsolete */
 	{ "rereadcerts\0", no_argument, NULL, OPT_REREADCERTS },
 	{ "fetchcrls\0", no_argument, NULL, OPT_FETCHCRLS },
 	{ "rereadall\0", no_argument, NULL, OPT_REREADALL },
@@ -754,7 +751,7 @@ const struct option optarg_options[] = {
 	{ OPT("oppodport", "<destination-port> (8)"), required_argument, NULL, OPT_OPPO_DPORT },
 	{ OPT("oppolabel", "<security-label>"), required_argument, NULL, OPT_OPPO_LABEL },
 
-	{ "asynchronous\0", no_argument, NULL, OPT_ASYNC },
+	ASYNC_OPTS,
 
 	{ "rekey-ike\0", no_argument, NULL, OPT_REKEY_IKE },
 	{ "rekey-child\0", no_argument, NULL, OPT_REKEY_CHILD },
@@ -764,12 +761,14 @@ const struct option optarg_options[] = {
 	{ "down-child\0", no_argument, NULL, OPT_DOWN_CHILD },
 
 	{ "suspend\0", no_argument, NULL, OPT_SUSPEND, },
+
 	{ "session-resumption\0", optional_argument, NULL, CD_SESSION_RESUMPTION, },
 
 	/* list options */
 
-	{ "utc\0", no_argument, NULL, LST_UTC },
-	{ "checkpubkeys\0", no_argument, NULL, LST_CHECKPUBKEYS },
+	{ "utc\0", no_argument, NULL, OPT_UTC },
+	{ "checkpubkeys\0", no_argument, NULL, OPT_CHECKPUBKEYS },
+
 	{ "listpubkeys\0", no_argument, NULL, LST_PUBKEYS },
 	{ "listcerts\0", no_argument, NULL, LST_CERTS },
 	{ "listcacerts\0", no_argument, NULL, LST_CACERTS },
@@ -785,15 +784,13 @@ const struct option optarg_options[] = {
 	{ "cert\0", required_argument, NULL, END_CERT },
 	{ "ckaid\0", required_argument, NULL, END_CKAID },
 	{ "ca\0", required_argument, NULL, END_CA },
-	{ "groups\0", required_argument, NULL, END_GROUPS },
+	{ IGNORE_OPT("groups", "5.4"), required_argument, NULL, 0 },
 	{ "ikeport\0", required_argument, NULL, END_IKEPORT },
 	{ "nexthop\0", required_argument, NULL, END_NEXTHOP },
 	{ "client\0", required_argument, NULL, END_SUBNET },	/* alias / backward compat */
 	{ "subnet\0", required_argument, NULL, END_SUBNET },
 	{ "clientprotoport\0", required_argument, NULL, END_CLIENTPROTOPORT },
-#ifdef USE_DNSSEC
 	{ "dnskeyondemand\0", no_argument, NULL, END_DNSKEYONDEMAND },
-#endif
 	{ "sourceip\0",  required_argument, NULL, END_SOURCEIP },
 	{ "srcip\0",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
 	{ "interface-ip\0", required_argument, NULL, END_INTERFACE_IP },	/* match config */
@@ -824,15 +821,15 @@ const struct option optarg_options[] = {
 	{ "allow-cert-without-san-id\0", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
 	{ "sha2-truncbug\0", optional_argument, NULL, CD_SHA2_TRUNCBUG },
 	{ "sha2_truncbug\0", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
-	{ "dont-share-lease\0", optional_argument, NULL, CD_DONT_SHARE_LEASE },
+	{ "dont-share-lease\0", no_argument, NULL, CD_DONT_SHARE_LEASE },
 	{ "aggressive\0", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode\0", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
-	{ "initiateontraffic\0", no_argument, NULL, CD_INITIATEONTRAFFIC }, /* obsolete */
+	{ FATAL_OPT("initiateontraffic", ""), no_argument, NULL, 0, }, /* obsolete */
 
-	{ "drop\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
-	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
-	{ "reject\0>drop", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
+	{ "drop\0", no_argument, NULL, CDS_DROP },
+	{ "pass\0", no_argument, NULL, CDS_PASS },
+	{ REPLACE_OPT("reject", "drop", "5.3"), no_argument, NULL, CDS_DROP },
 
 	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negohold\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
@@ -898,6 +895,7 @@ const struct option optarg_options[] = {
 	{ "tfc\0", required_argument, NULL, CD_TFC },
 	{ "send-esp-tfc-padding-not-supported\0yes|no", optional_argument, NULL, CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED },
 	{ "send-no-esp-tfc\0", no_argument, NULL, CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED },
+	{ "reject-simultaneous-ike-auth\0yes|no", optional_argument, NULL, CD_REJECT_SIMULTANEOUS_IKE_AUTH },
 	{ "pfs\0", optional_argument, NULL, CD_PFS },
 	{ "reqid\01-65535", required_argument, NULL, CD_REQID },
 #ifdef USE_NFLOG
@@ -959,13 +957,13 @@ const struct option optarg_options[] = {
 	{ "ikev2-allow\0", no_argument, NULL, CD_IKEv2 }, /* obsolete name */
 	{ "ikev2-propose\0", no_argument, NULL, CD_IKEv2 }, /* obsolete, map onto allow */
 
-	{ "allow-narrowing\0", optional_argument, NULL, CD_NARROWING, }, /* undocumented but tested name */
 	{ "narrowing\0", required_argument, NULL, CD_NARROWING, },
+	{ "allow-narrowing\0", optional_argument, NULL, CD_NARROWING, }, /* undocumented but tested name */
 	{ "ikefrag-allow\0", no_argument, NULL, CD_IKEFRAG_ALLOW }, /* obsolete name */
 	{ "ikefrag-force\0", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation\0", required_argument, NULL, CD_FRAGMENTATION },
 
-	{ "ikepad\0", no_argument, NULL, CD_IKEPAD },
+	{ "ikepad\0", optional_argument, NULL, CD_IKEPAD },
 
 	{ "no-esn\0", no_argument, NULL, CD_NO_ESN }, /* obsolete */
 	{ "esn\0", optional_argument, NULL, CD_ESN },
@@ -1009,28 +1007,18 @@ int main(int argc, char **argv)
 	int usernamelen = 0;	/* includes '\0' */
 	int xauthpasslen = 0;	/* includes '\0' */
 	bool ignore_errors = false;
+	struct whack_pubkey pubkey = {0};
 
 	struct optarg_family child_family = { 0, };
 
+	/* used to accumulate authby options such as --psk, et.al. */
 	char *authby = NULL;
+	enum yne_options esn = YNE_UNSET;
+	/* --redirect-to or --global-redirect-to */
+	const char *redirect_to = NULL;
 
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_WHACK,
-
-		/*
-		 * XXX: gcc (nb3 20231008) 10.5.0 is convinced that
-		 * the shorter:
-		 *
-		 *   .end[LEFT_END].leftright = "left",
-		 *
-		 * leaves the .id field uninitialized.
-		 */
-		.end = {
-			[LEFT_END] = { .leftright = "left", },
-			[RIGHT_END] = { .leftright = "right", },
-		},
-
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_WHACK);
 
 	struct whack_end *end = &msg.end[LEFT_END];
 
@@ -1041,7 +1029,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -1125,9 +1113,7 @@ int main(int argc, char **argv)
 			exit(0);
 
 		case OPT_VERSION:	/* --version */
-			printf("%s\n", ipsec_version_string());
-			/* GNU coding standards say to stop here */
-			exit(0);
+			optarg_version("");
 
 		case OPT_LABEL:	/* --label <string> */
 			label = optarg;	/* remember for diagnostics */
@@ -1151,37 +1137,40 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REMOTE_HOST:	/* --remote-host <ip or hostname> */
-			remote_host = optarg;
-			msg.remote_host = optarg;
+			whack_command(&msg, WHACK_INITIATE);
+			msg.whack.initiate.remote_host = optarg;
 			continue;
 
 		case OPT_CONNALIAS:	/* --connalias name */
-			msg.connalias = optarg;
+			msg.wm_connalias = optarg;
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
-			msg.whack_key = true;
-			msg.keyid = optarg;	/* decoded by Pluto */
+			/* either WHACK_KEY or WHACK_ACQUIRE */
+			pubkey.id = optarg;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
-			msg.whack_addkey = true;
+			whack_command(&msg, WHACK_PUBKEY);
+			pubkey.add = true;
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-			if (msg.pubkey != NULL) {
+			/* either WHACK_PUBKEY or WHACK_ACQUIRE */
+			if (pubkey.key != NULL) {
 				diagq("only one RSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
+			pubkey.key = optarg;
+			pubkey.alg = IPSECKEY_ALGORITHM_RSA;
 			continue;
 
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-			if (msg.pubkey != NULL) {
+			/* either WHACK_PUBKEY or WHACK_ACQUIRE */
+			if (pubkey.key != NULL) {
 				diagq("only one ECDSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
+			pubkey.key = optarg;
+			pubkey.alg = IPSECKEY_ALGORITHM_ECDSA;
 			continue;
 
 		case OPT_ROUTE:	/* --route */
@@ -1224,8 +1213,9 @@ int main(int argc, char **argv)
 		case OPT_SUSPEND: /* --suspend */
 			whack_command(&msg, WHACK_SUSPEND);
 			continue;
-		case CD_SESSION_RESUMPTION:
-			msg.session_resumption = optarg_yn(logger, YN_YES);
+
+		case CD_SESSION_RESUMPTION:	/* --session-resumption[={yes,no}] */
+			msg.wm_session_resumption = (optarg == NULL ? "yes" : optarg);
 			break;
 
 		case OPT_DELETE:	/* --delete */
@@ -1238,20 +1228,20 @@ int main(int argc, char **argv)
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			whack_command(&msg, WHACK_DELETESTATE);
-			msg.whack_deletestateno = optarg_uintmax(logger);
+			msg.whack.deletestate.state_nr = optarg_uintmax(logger);
 			continue;
 
-		case OPT_DELETECRASH:	/* --crash <ip-address> */
+		case OPT_CRASH:	/* --crash <ip-address> */
 		{
 			struct optarg_family any_family = { 0, };
 			whack_command(&msg, WHACK_CRASH);
-			msg.whack_crash_peer = optarg_address_dns(logger, &any_family);
-			if (!address_is_specified(msg.whack_crash_peer)) {
+			msg.whack.crash.peer = optarg_address_dns(logger, &any_family);
+			if (!address_is_specified(msg.whack.crash.peer)) {
 				/* either :: or 0.0.0.0; unset already
 				 * rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.whack_crash_peer, &ab));
+					     str_address(&msg.whack.crash.peer, &ab));
 			}
 			continue;
 		}
@@ -1261,20 +1251,20 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_DELETEUSER);
 			continue;
 
-		case OPT_REDIRECT_TO:	/* --redirect-to */
-			/* either active, or or add */
+		case OPT_REDIRECT_TO:	/* --redirect-to <ip> */
+			/* either active, global, or or add */
 			/* .whack_command deciphered below */
-			msg.redirect_to = optarg;
+			redirect_to = optarg;
 			continue;
 
-		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect  {yes,no,auto} */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.global_redirect = optarg_sparse(logger, 0, &global_redirect_names);
+			msg.whack.global_redirect.kind = optarg_sparse(logger, 0, &global_redirect_names);
 			continue;
 
-		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to <ip> */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.redirect_to = optarg; /* could be empty string */
+			redirect_to = optarg;
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -1329,9 +1319,6 @@ int main(int argc, char **argv)
 			continue;
 		case OPT_REREADALL:	/* --rereadall */
 			whack_command(&msg, WHACK_REREADALL);
-			continue;
-		case OPT_REREADCRLS:	/* --rereadcrls */
-			fprintf(stderr, "whack warning: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls\n");
 			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
@@ -1442,20 +1429,19 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.remote.port = optarg_port(logger);
 			continue;
-		case OPT_OPPO_LABEL:
+		case OPT_OPPO_LABEL:	/* --oppolabel <security-label> */
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.label = optarg;
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
-			msg.whack_async = true;
+			msg.whack_async = optarg_bool(logger);
+			continue;
+		case OPT_UTC:	/* --utc */
+			msg.whack_utc = true;
 			continue;
 
 		/* List options */
-
-		case LST_UTC:	/* --utc */
-			msg.whack_utc = true;
-			continue;
 
 		case LST_CERTS:	/* --listcerts */
 		case LST_CACERTS:	/* --listcacerts */
@@ -1464,69 +1450,69 @@ int main(int argc, char **argv)
 		case LST_EVENTS:	/* --listevents */
 		case LST_PUBKEYS:	/* --listpubkeys */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list |= LELEM(c - LST_PUBKEYS);
-			ignore_errors = true;
-			continue;
-
-		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			whack_command(&msg, WHACK_CHECKPUBKEYS);
+			passert((size_t)c - LST_PUBKEYS < elemsof(msg.whack.list.list));
+			msg.whack.list.list[c - LST_PUBKEYS] = true;
 			ignore_errors = true;
 			continue;
 
 		case LST_ALL:	/* --listall */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list = LIST_ALL; /* most!?! */
+			/* most */
+			for (enum whack_lists o = WHACK_LIST_FLOOR; o < WHACK_LIST_EVENTS; o++) {
+				msg.whack.list.list[o] = true;
+			}
+			ignore_errors = true;
+			continue;
+
+		case OPT_CHECKPUBKEYS:	/* --checkpubkeys */
+			whack_command(&msg, WHACK_CHECKPUBKEYS);
 			ignore_errors = true;
 			continue;
 
 		/* Connection Description options */
 
 		case END_HOST:	/* --host <ip-address> */
-			end->host = optarg;
+			end->we_host = optarg;
 			continue;
 
 		case END_ID:	/* --id <identity> */
-			end->id = optarg;	/* decoded by Pluto */
+			end->we_id = optarg;	/* decoded by Pluto */
 			continue;
 
-		case END_SENDCERT:	/* --sendcert */
-			end->sendcert = optarg;
+		case END_SENDCERT:	/* --sendcert {yes,always,no,never,ifasked} */
+			end->we_sendcert = optarg;
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			end->cert = optarg;	/* decoded by Pluto */
+			end->we_cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			end->ckaid = optarg;	/* decoded by Pluto */
+			end->we_ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
-			end->ca = optarg;	/* decoded by Pluto */
-			continue;
-
-		case END_GROUPS:	/* --groups <access control groups> */
-			end->groups = optarg;	/* decoded by Pluto */
+			end->we_ca = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
-			end->ikeport = optarg;
+			end->we_ikeport = optarg;
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
-			end->nexthop = optarg;
+			end->we_nexthop = optarg;
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
-			end->sourceip = optarg;
+			end->we_sourceip = optarg;
 			continue;
 
 		case END_INTERFACE_IP:	/* --interface-ip <ip-address/mask> */
-			end->interface_ip = optarg;
+			end->we_interface_ip = optarg;
 			continue;
 
 		case END_VTI:	/* --vti <ip-address/mask> */
-			end->vti = optarg;
+			end->we_vti = optarg;
 			continue;
 
 		/*
@@ -1534,39 +1520,34 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTH:
-			end->auth = optarg;
+			end->we_auth = optarg;
 			continue;
 
-		case END_AUTHEAP:
-			end->autheap = optarg;
+		case END_AUTHEAP:	/* --autheap {none,tls} */
+			end->we_autheap = optarg;
 			continue;
 
-		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
-			if (startswith(optarg, "vhost:") ||
-			    startswith(optarg, "vnet:")) {
-				end->virt = optarg;
-			} else {
-				end->subnet = optarg;	/* decoded by Pluto */
-			}
-			msg.type = KS_TUNNEL;	/* client => tunnel */
+		case END_SUBNET:	/* --subnet <subnet> | --client <subnet> */
+			end->we_subnet = optarg;	/* decoded by Pluto */
+			msg.wm_type = "tunnel";	/* client => tunnel */
 			continue;
 
-		/* --clientprotoport <protocol>/<port> */
-		case END_CLIENTPROTOPORT:
-			end->protoport = optarg;
+		case END_CLIENTPROTOPORT:	/* --clientprotoport <protocol>/<port> */
+			end->we_protoport = optarg;
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
 		{
+			/* map PUBKEY_DNSONDEMAND to %<ondemand> */
 			name_buf sb;
 			passert(sparse_short(&keyword_pubkey_names, PUBKEY_DNSONDEMAND, &sb));
 			passert(sb.buf != sb.tmp);
-			end->pubkey = sb.buf; /* points into keyword_pubkey_names */
+			end->we_pubkey = sb.buf; /* points into keyword_pubkey_names */
 			continue;
 		}
 
 		case END_UPDOWN:	/* --updown <updown> */
-			end->updown = optarg;
+			end->we_updown = optarg;
 			continue;
 
 		case CD_TO:	/* --to */
@@ -1588,283 +1569,271 @@ int main(int argc, char **argv)
 
 		/* --ikev1 --ikev2 --ikev2-propose */
 		case CD_IKEv1:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv1";
+			msg.wm_keyexchange = "IKEv1";
 			continue;
 		case CD_IKEv2:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv2";
+			msg.wm_keyexchange = "IKEv2";
 			continue;
 
-		/* --allow-narrowing */
-		case CD_NARROWING:
-			msg.narrowing = optarg_yn(logger, YN_YES);
+		case CD_NARROWING:		/* --narrowing={yes,no} */
+			msg.wm_narrowing = (optarg = NULL ? "yes" : optarg);
 			continue;
 
 		/* --dontrekey */
 		case CD_DONT_REKEY:
-			msg.rekey = YN_NO;
+			msg.wm_rekey = "no";
 			continue;
 
 		/* --rekey */
 		case CD_REAUTH:
-			msg.reauth = YN_YES;
+			msg.wm_reauth = "yes";
 			continue;
 
-		case CD_IPTFS: /* --iptfs[={yes,no}] */
-			msg.iptfs = optarg_yn(logger, YN_YES);
+		case CD_IPTFS:			/* --iptfs[={yes,no}] */
+			msg.wm_iptfs = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
-			msg.iptfs_fragmentation = optarg_yn(logger, YN_YES);
+		case CD_IPTFS_FRAGMENTATION:	/* --iptfs-fragmentation={yes,no} */
+			msg.wm_iptfs_fragmentation = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_packet_size = optarg;
+		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size <size> */
+			msg.wm_iptfs_packet_size = optarg;
 			continue;
-		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_queue_size = optarg;
+		case CD_IPTFS_MAX_QUEUE_SIZE:	/* --iptfs-max-queue-size <size> */
+			msg.wm_iptfs_max_queue_size = optarg;
 			continue;
-		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
-			msg.iptfs_drop_time = optarg_deltatime(logger, TIMESCALE_SECONDS);
+		case CD_IPTFS_DROP_TIME:	/* --iptfs-drop-time <seconds> */
+			msg.wm_iptfs_drop_time = optarg;
 			continue;
-		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
-			msg.iptfs_init_delay = optarg_deltatime(logger, TIMESCALE_SECONDS);
+		case CD_IPTFS_INIT_DELAY:	/* --iptfs-init-delay <seconds> */
+			msg.wm_iptfs_init_delay = optarg;
 			continue;
-		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
-			msg.iptfs_reorder_window = optarg;
+		case CD_IPTFS_REORDER_WINDOW:	/* --iptfs-reorder-window <window-size> */
+			msg.wm_iptfs_reorder_window = optarg;
 			continue;
 
-		case CD_COMPRESS:	/* --compress */
-			msg.compress = optarg_yn(logger, YN_YES);
+		case CD_COMPRESS:	/* --compress[={yes,no}] */
+			msg.wm_compress = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
-			msg.type = KS_TUNNEL;
+			msg.wm_type = "tunnel";
 			continue;
 
 		case CD_TRANSPORT:	/* --transport */
-			msg.type = KS_TRANSPORT;
+			msg.wm_type = "transport";
 			continue;
 
 		case CD_ENCRYPT:	/* --encrypt */
-			msg.phase2 = ENCAP_PROTO_ESP;
+			msg.wm_phase2 = "esp";
 			continue;
 
 		case CD_AUTHENTICATE:	/* --authenticate */
-			msg.phase2 = ENCAP_PROTO_AH;
+			msg.wm_phase2 = "ah";
 			continue;
 
-		/* --no-esn */
-		case CD_NO_ESN:
-			msg.esn = (msg.esn == YNE_EITHER ? YNE_EITHER :
-				   msg.esn == YNE_YES ? YNE_EITHER : YNE_NO);
+		case CD_NO_ESN:		/* --no-esn */
+			esn = (esn == YNE_EITHER ? YNE_EITHER :
+			       esn == YNE_YES ? YNE_EITHER :
+			       YNE_NO);
+			msg.wm_esn = (esn == YNE_EITHER ? "either" :
+				      esn == YNE_NO ? "no" :
+				      esn == YNE_YES ? "yes" :
+				      NULL);
 			continue;
-		/* --esn */
-		case CD_ESN:
-			msg.esn = optarg_yne(logger, (msg.esn == YNE_EITHER ? YNE_EITHER :
-						      msg.esn == YNE_NO ? YNE_EITHER :
-						      YNE_YES));
+		case CD_ESN:		/* --esn */
+			esn = optarg_yne(logger, (esn == YNE_EITHER ? YNE_EITHER :
+						  esn == YNE_NO ? YNE_EITHER :
+						  YNE_YES));
+			msg.wm_esn = (esn == YNE_EITHER ? "either" :
+				      esn == YNE_NO ? "no" :
+				      esn == YNE_YES ? "yes" :
+				      NULL);
 			continue;
 
 		/* --ikefrag-allow */
 		case CD_IKEFRAG_ALLOW: /* obsolete name */
-			if (msg.fragmentation == YNF_UNSET) {
-				msg.fragmentation = YNF_YES;
-			} else {
-				passert(msg.fragmentation == YNF_YES ||
-					msg.fragmentation == YNF_FORCE);
-			}
+			msg.wm_fragmentation = "yes";
 			continue;
 		/* --ikefrag-force */
 		case CD_IKEFRAG_FORCE: /* obsolete name */
-			msg.fragmentation = YNF_FORCE;
+			msg.wm_fragmentation = "force";
 			continue;
 
 		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
-			msg.fragmentation = optarg_sparse(logger, YNF_YES, &ynf_option_names);
+			msg.wm_fragmentation = optarg;
 			continue;
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = optarg_yn(logger, YN_YES);
+			msg.wm_nopmtudisc = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = optarg_yn(logger, YN_YES);
+			msg.wm_decap_dscp = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = optarg_yn(logger, YN_YES);
+			msg.wm_encap_dscp = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --aggressive | --aggrmode */
-		case CD_AGGRESSIVE:
-			msg.aggressive = optarg_yn(logger, YN_YES);
+		case CD_AGGRESSIVE:	/* --aggressive[={yes,no} */
+			msg.wm_aggressive = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --allow-cert-without-san-id */
 		case CD_ALLOW_CERT_WITHOUT_SAN_ID:
-			msg.require_id_on_certificate = YN_NO;
+			msg.wm_require_id_on_certificate = "yes";
 			continue;
 
-		/* --no-ikepad */
-		case CD_IKEPAD:
-			msg.ikepad = optarg_yna(logger, YNA_YES);
+		case CD_IKEPAD:		/* --ikepad[={yes,no,auto}] */
+			msg.wm_ikepad = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --ignore-peer-dns */
-		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = optarg_yn(logger, YN_YES);
+		case CD_IGNORE_PEER_DNS:	/* --ignore-peer-dns[={yes,no}] */
+			msg.wm_ignore_peer_dns = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --dns-match-id */
-		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = optarg_yn(logger, YN_YES);
+		case CD_DNS_MATCH_ID:		/* --dns-match-id[={yes,no}] */
+			msg.wm_dns_match_id = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --ms-dh-downgrade */
-		case CD_MS_DH_DOWNGRADE:
-			msg.ms_dh_downgrade = optarg_yn(logger, YN_YES);
+		case CD_MS_DH_DOWNGRADE:	/* --ms-dh-downgrade[={yes,no}] */
+			msg.wm_ms_dh_downgrade = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
-			msg.pfs_rekey_workaround = optarg_yn(logger, YN_YES);
+		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[={yes,no}] */
+			msg.wm_pfs_rekey_workaround = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --overlapip */
-		case CD_OVERLAPIP:
-			msg.overlapip = optarg_yn(logger, YN_YES);
+		case CD_OVERLAPIP:		/* --overlapip[={yes,no}] */
+			msg.wm_overlapip = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --sha2-truncbug or --sha2_truncbug */
-		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = optarg_yn(logger, YN_YES);
+		case CD_SHA2_TRUNCBUG:		/* --sha2-truncbug[={yes,no}] */
+			msg.wm_sha2_truncbug = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --dont-share-lease */
-		case CD_DONT_SHARE_LEASE:
-			msg.share_lease = YN_NO;
+		case CD_DONT_SHARE_LEASE:		/* --dont-share-lease */
+			msg.wm_share_lease = "no";
 			continue;
 
-		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
-			msg.intermediate = optarg_yn(logger, YN_YES);
+		case CD_INTERMEDIATE:		/* --intermediate[={yes,no}] */
+			msg.wm_intermediate = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --mobike */
-		case CD_MOBIKE:
-			msg.mobike = optarg_yn(logger, YN_YES);
+		case CD_MOBIKE:		/* --mobike[={yes,no}] */
+			msg.wm_mobike = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
-			fprintf(stderr, "whack warning: --initiateontraffic is obsolete, did you mean --ondemand");
+		case CDS_PASS:	/* --pass */
+			msg.wm_type = "pass";
 			continue;
-
-		case CDS_NEVER_NEGOTIATE_PASS:	/* --pass */
-			msg.never_negotiate_shunt = SHUNT_PASS;
-			continue;
-		case CDS_NEVER_NEGOTIATE_DROP:	/* --drop */
-			msg.never_negotiate_shunt = SHUNT_DROP;
+		case CDS_DROP:	/* --drop */
+			msg.wm_type = "drop";
 			continue;
 
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
-			msg.negotiation_shunt = SHUNT_PASS;
+			msg.wm_negotiationshunt = "pass";
 			continue;
 		case CDS_NEGOTIATION_HOLD:	/* --negohold */
-			msg.negotiation_shunt = SHUNT_DROP;
+			msg.wm_negotiationshunt = "drop";
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */
-			msg.failure_shunt = SHUNT_NONE;
+			msg.wm_failureshunt = "none";
 			continue;
 		case CDS_FAILURE_PASS:		/* --failpass */
-			msg.failure_shunt = SHUNT_PASS;
+			msg.wm_failureshunt = "pass";
 			continue;
 		case CDS_FAILURE_DROP:		/* --faildrop */
-			msg.failure_shunt = SHUNT_DROP;
+			msg.wm_failureshunt = "drop";
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
-			msg.retransmit_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.wm_retransmit_timeout = optarg;
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg;
+			msg.wm_retransmit_interval = optarg;
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			msg.ikelifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.wm_ikelifetime = optarg;
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			msg.ipsec_lifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.wm_ipsec_lifetime = optarg;
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.ipsec_max_bytes = optarg;
+			msg.wm_ipsec_max_bytes = optarg;
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
+			msg.wm_ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
-			msg.rekeymargin = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.wm_rekeymargin = optarg;
 			continue;
 
 		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.rekeyfuzz = optarg;
+			msg.wm_rekeyfuzz = optarg;
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
-			msg.replay_window = optarg;
+			msg.wm_replay_window = optarg;
 			continue;
 
-		case CD_SENDCA:	/* --sendca */
-			msg.sendca = optarg;
+		case CD_SENDCA:		/* --sendca {no,issuer,all} */
+			msg.wm_sendca = optarg;
 			continue;
 
-		case CD_ENCAPSULATION:	/* --encapsulation */
-			msg.encapsulation = optarg_yna(logger, YNA_YES);
+		case CD_ENCAPSULATION:	/* --encapsulation[={yes,no,auto}] */
+			msg.wm_encapsulation = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
-			msg.nic_offload = optarg_sparse(logger, 0, &nic_offload_option_names);
+			msg.wm_nic_offload = optarg;
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat-keepalive */
-			msg.nat_keepalive = YN_NO;
+			msg.wm_nat_keepalive = "no";
 			continue;
 		case CD_NAT_KEEPALIVE:	/* --nat-keepalive {yes,no} */
-			msg.nat_keepalive = optarg_yn(logger, YN_YES);
+			msg.wm_nat_keepalive = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(logger, 0, &nat_ikev1_method_option_names);
+			msg.wm_nat_ikev1_method = optarg;
 			continue;
 
-		case CD_INITIAL_CONTACT:	/* --initial-contact */
-			msg.initial_contact = optarg_yn(logger, YN_YES);
+		case CD_INITIAL_CONTACT:	/* --initial-contact[={yes,no}] */
+			msg.wm_initial_contact = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = (optarg == NULL ? "yes" : optarg);
+			msg.wm_cisco_unity = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
-			msg.fake_strongswan = optarg_yn(logger, YN_YES);
+			msg.wm_fake_strongswan = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			msg.dpddelay = optarg;
+			msg.wm_dpddelay = optarg;
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			msg.dpdtimeout = optarg;
+			msg.wm_dpdtimeout = optarg;
 			continue;
 
 		case CD_OBSOLETE:
@@ -1872,55 +1841,47 @@ int main(int argc, char **argv)
 			     "obsolete --%s option ignored", optarg_options[optarg_index].name);
 			continue;
 
-		case CD_SEND_REDIRECT:	/* --send-redirect */
-			msg.send_redirect = optarg_yna(logger, 0/*no-default*/);
+		case CD_SEND_REDIRECT:		/* --send-redirect {yes,no,auto} */
+			msg.wm_send_redirect = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-			msg.accept_redirect = optarg_yn(logger, 0/*no-default*/);
+		case CD_ACCEPT_REDIRECT:	/* --accept-redirect {yes,no} */
+			msg.wm_accept_redirect = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
-			msg.accept_redirect_to = optarg;
+		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to <ip> */
+			msg.wm_accept_redirect_to = optarg;
 			continue;
 
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
-			msg.ike = optarg;
+			msg.wm_ike = optarg;
 			continue;
 
 		case CD_ESP:	/* --esp <esp_alg1,esp_alg2,...> */
-			msg.esp = optarg;
+			msg.wm_esp = optarg;
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
-			msg.remote_peer_type = optarg;
+			msg.wm_remote_peer_type = optarg;
 			continue;
 
 		case CD_NM_CONFIGURED:		/* --nm-configured[=yes|no] */
-			msg.nm_configured = (optarg == NULL ? "yes" : optarg);
+			msg.wm_nm_configured = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TCP: /* --tcp */
-			if (streq(optarg, "yes"))
-				msg.enable_tcp = IKE_TCP_ONLY;
-			else if (streq(optarg, "no"))
-				msg.enable_tcp = IKE_TCP_NO;
-			else if (streq(optarg, "fallback"))
-				msg.enable_tcp = IKE_TCP_FALLBACK;
-			else
-				diagw("--tcp-options are 'yes', 'no' or 'fallback'");
+			msg.wm_enable_tcp = optarg;
 			continue;
 		case CD_TCP_REMOTE_PORT:
-			msg.tcp_remoteport = optarg_uintmax(logger);
+			msg.wm_tcp_remoteport = optarg;
 			continue;
 
 		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */
 			/* ignore */
 			continue;
 
-		case CD_SEC_LABEL:	/* --sec-label */
-			/* we only support symmetric labels but put it in struct end */
-			msg.sec_label = optarg;
+		case CD_SEC_LABEL:	/* --sec-label <label> */
+			msg.wm_sec_label = optarg;
 			continue;
 
 
@@ -1949,11 +1910,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
-			msg.hostaddrfamily = "ipv4";
+			msg.wm_hostaddrfamily = "ipv4";
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
-			msg.hostaddrfamily = "ipv6";
+			msg.wm_hostaddrfamily = "ipv6";
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
@@ -1979,20 +1940,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver[={yes,no}] */
-			end->xauthserver = optarg_yn(logger, YN_YES);
+			end->we_xauthserver = (optarg == NULL ? "yes" : optarg);
 			continue;
-
 		case END_XAUTHCLIENT:	/* --xauthclient[={yes,no}] */
-			end->xauthclient =  optarg_yn(logger, YN_YES);
+			end->we_xauthclient = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case OPT_USERNAME:	/* --username, was --xauthname */
+		case OPT_USERNAME:	/* --username <name>, was --xauthname */
 			/*
 			 * we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			end->xauthusername = optarg;
+			end->we_xauthusername = optarg;
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;
@@ -2004,97 +1964,100 @@ int main(int argc, char **argv)
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
 			continue;
 
-		case END_CAT:		/* --cat */
-			end->cat = optarg_yn(logger, YN_YES);
+		case END_CAT:		/* --cat[={yes,no}] */
+			end->we_cat = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case END_ADDRESSPOOL:	/* --addresspool */
-			end->addresspool = optarg;
+		case END_ADDRESSPOOL:	/* --addresspool <range> */
+			end->we_addresspool = optarg;
 			continue;
 
-		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->modecfgclient = optarg_yn(logger, YN_YES);
+		case END_MODECFGCLIENT:	/* --modeconfigclient[={yes,no}] */
+			end->we_modecfgclient = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->modecfgserver = optarg_yn(logger, YN_YES);
+		case END_MODECFGSERVER:	/* --modeconfigserver[={yes,no}] */
+			end->we_modecfgserver = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_MODECFGPULL:	/* --modecfgpull */
-			msg.modecfgpull = optarg_yn(logger, YN_YES);
-			continue;
-
-		case CD_MODECFGDNS:	/* --modecfgdns */
-			msg.modecfgdns = optarg;
-			continue;
-		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
-			msg.modecfgdomains = optarg;
-			continue;
-		case CD_MODECFGBANNER:	/* --modecfgbanner */
-			msg.modecfgbanner = optarg;
+		case CD_MODECFGPULL:	/* --modecfgpull[={yes,no}] */
+			msg.wm_modecfgpull = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_CONN_MARK:      /* --conn-mark */
-			msg.mark = optarg;
+		case CD_MODECFGDNS:	/* --modecfgdns <address> */
+			msg.wm_modecfgdns = optarg;
 			continue;
-		case CD_CONN_MARK_IN:      /* --conn-mark-in */
-			msg.mark_in = optarg;
+		case CD_MODECFGDOMAINS:	/* --modecfgdomains <domain>,... */
+			msg.wm_modecfgdomains = optarg;
 			continue;
-		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
-			msg.mark_out = optarg;
+		case CD_MODECFGBANNER:	/* --modecfgbanner <banner> */
+			msg.wm_modecfgbanner = optarg;
 			continue;
 
-		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
-			msg.vti_interface = optarg;
+		case CD_CONN_MARK:	/* --conn-mark <mark/mask> */
+			msg.wm_mark = optarg;
+			continue;
+		case CD_CONN_MARK_IN:	/* --conn-mark-in <mark/mask> */
+			msg.wm_mark_in = optarg;
+			continue;
+		case CD_CONN_MARK_OUT:	/* --conn-mark-out <mark/mask> */
+			msg.wm_mark_out = optarg;
+			continue;
+
+		case CD_VTI_INTERFACE:      /* --vti-interface <iface> */
+			msg.wm_vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.vti_routing = optarg_yn(logger, YN_YES);
+			msg.wm_vti_routing = (optarg == NULL ? "yes" : optarg);
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.vti_shared = optarg_yn(logger, YN_YES);
+			msg.wm_vti_shared = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
-			msg.ipsec_interface = optarg;
+		case CD_IPSEC_INTERFACE:      /* --ipsec-interface <number> */
+			msg.wm_ipsec_interface = optarg;
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
-			msg.xauthby = optarg_sparse(logger, 0, &xauthby_names);
+			msg.wm_xauthby = optarg;
 			continue;
 
 		case CD_XAUTHFAIL:	/* --xauthfail */
-			msg.xauthfail = optarg_sparse(logger, 0, &xauthfail_names);
+			msg.wm_xauthfail = optarg;
 			continue;
 
 		case CD_METRIC:	/* --metric */
-			msg.metric = optarg_uintmax(logger);
+			msg.wm_metric = optarg;
 			continue;
 
-		case CD_MTU:	/* --mtu */
-			msg.mtu = optarg;
+		case CD_MTU:	/* --mtu <mtu> */
+			msg.wm_mtu = optarg;
 			continue;
 
-		case CD_PRIORITY:	/* --priority */
-			msg.priority = optarg;
+		case CD_PRIORITY:	/* --priority <prio> */
+			msg.wm_priority = optarg;
 			continue;
 
-		case CD_TFC:	/* --tfc */
-			msg.tfc = optarg;
+		case CD_TFC:	/* --tfc <size> */
+			msg.wm_tfc = optarg;
 			continue;
 
-		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
-			msg.send_esp_tfc_padding_not_supported =
-				optarg_yn(logger, YN_YES);
+		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported[={yes,no} */
+			msg.wm_send_esp_tfc_padding_not_supported = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_PFS:	/* --pfs */
-			msg.pfs = optarg_yn(logger, YN_YES);
+		case CD_REJECT_SIMULTANEOUS_IKE_AUTH: /* --reject-simultaneous-ike-auth[={yes,no}] */
+			msg.wm_reject_simultaneous_ike_auth = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_NFLOG_GROUP:	/* --nflog-group */
-			msg.nflog_group = optarg;
+		case CD_PFS:	/* --pfs[={yes,no} */
+			msg.wm_pfs = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_REQID:	/* --reqid */
-			msg.reqid = optarg;
+		case CD_NFLOG_GROUP:	/* --nflog-group <groupnum> */
+			msg.wm_nflog_group = optarg;
+			continue;
+
+		case CD_REQID:	/* --reqid <reqid> */
+			msg.wm_reqid = optarg;
 			continue;
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
@@ -2110,7 +2073,8 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
+			whack_command(&msg, WHACK_DEBUG);
+			msg.whack.debug.debugging = lmod_clr(msg.whack.debug.debugging, DBG_mask);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all (obsolete) */
@@ -2118,34 +2082,29 @@ int main(int argc, char **argv)
 			 * Set most debug options ('all' does not
 			 * include PRIVATE which is cleared) and clear
 			 * all impair options.
-			 *
-			 * This preserves existing behaviour where
-			 * sequences like:
-			 *
-			 *     --debug-all
-			 *     --debug-all --impair something
-			 *
-			 * force all debug/impair options to values
-			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
-			msg.whack_debugging = lmod_set(msg.whack_debugging, DBG_all);
+			whack_command(&msg, WHACK_DEBUG);
+			msg.whack.debug.debugging = lmod_clr(msg.whack.debug.debugging, DBG_mask);
+			msg.whack.debug.debugging = lmod_set(msg.whack.debug.debugging, DBG_all);
 			continue;
 		case DBGOPT_DEBUG:	/* --debug */
-			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack_debugging);
+			whack_command(&msg, WHACK_DEBUG);
+			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack.debug.debugging);
 			continue;
 		case DBGOPT_NO_DEBUG:	/* --no-debug */
-			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack_debugging);
+			whack_command(&msg, WHACK_DEBUG);
+			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack.debug.debugging);
 			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
+			whack_command(&msg, WHACK_IMPAIR);
 			bool enable = (c == DBGOPT_IMPAIR);
-			unsigned old_len = msg.impairments.len++;
-			realloc_things(msg.impairments.list,
-				       old_len, msg.impairments.len, "impairments");
-			switch (parse_impair(optarg, &msg.impairments.list[old_len],
+			unsigned old_len = msg.whack.impair.len++;
+			realloc_things(msg.whack.impair.list,
+				       old_len, msg.whack.impair.len, "impairments");
+			switch (parse_impair(optarg, &msg.whack.impair.list[old_len],
 					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
@@ -2190,7 +2149,7 @@ int main(int argc, char **argv)
 		diagq("unexpected argument", argv[optind]);
 	}
 
-	msg.authby = authby;
+	msg.wm_authby = authby;
 
 	/*
 	 * For each possible form of the command, figure out if an argument
@@ -2232,17 +2191,37 @@ int main(int argc, char **argv)
 	 * --to sets WHACK_ADD and global-redirect-to sets
 	 * --WHACK_GLOBAL_REDIRECT.
 	 */
-	if (msg.redirect_to != NULL) {
+	if (redirect_to != NULL) {
 		switch (msg.whack_command) {
 		case 0:
+		case WHACK_ACTIVE_REDIRECT:
 			whack_command(&msg, WHACK_ACTIVE_REDIRECT);
+			msg.whack.active_redirect.to = redirect_to;
+			break;
+		case WHACK_GLOBAL_REDIRECT:
+			msg.whack.global_redirect.to = redirect_to;
 			break;
 		case WHACK_ADD:
-		case WHACK_ACTIVE_REDIRECT:
-		case WHACK_GLOBAL_REDIRECT:
+			msg.wm_redirect_to = redirect_to;
 			break;
 		default:
 			diagw("unexpected --redirect-to");
+		}
+	}
+
+	if (pubkey.id != NULL) {
+		switch (msg.whack_command) {
+		case WHACK_ACQUIRE:
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.pubkey = pubkey;
+			break;
+		case 0:
+		case WHACK_PUBKEY:
+			whack_command(&msg, WHACK_PUBKEY);
+			msg.whack.pubkey = pubkey;
+			break;
+		default:
+			diagw("unexpected --keyid");
 		}
 	}
 
@@ -2271,6 +2250,7 @@ int main(int argc, char **argv)
 		   !seen[OPT_TRAFFICSTATUS] &&
 		   !seen[OPT_CONNECTIONSTATUS] &&
 		   !seen[OPT_BRIEFCONNECTIONSTATUS] &&
+		   !seen[OPT_DDNS] &&
 		   !seen[OPT_SHOW_STATES] &&
 		   !seen[OPT_REDIRECT_TO]) {
 		diagw("no reason for --name");
@@ -2288,10 +2268,7 @@ int main(int argc, char **argv)
 
 	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
-	      msg.whack_command != 0 ||
-	      msg.whack_key ||
-	      !lmod_empty(msg.whack_debugging) ||
-	      msg.impairments.len > 0)) {
+	      msg.whack_command != 0)) {
 		diagw("no action specified; try --help for hints");
 	}
 
@@ -2304,7 +2281,7 @@ int main(int argc, char **argv)
 					 (ctlsocket == NULL ? DEFAULT_CTL_SOCKET : ctlsocket),
 					 xauthusername, xauthpass,
 					 usernamelen, xauthpasslen,
-					 logger);
+					 logger, NOISY_WHACK);
 
 	if (ignore_errors)
 		return 0;

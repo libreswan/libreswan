@@ -23,18 +23,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add tfc
-"tfc": added IKEv2 connection
+"tfc": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep tfc
 "tfc": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "tfc":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"tfc":   my_updown=ipsec _updown;
+"tfc":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "tfc":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "tfc":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "tfc":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "tfc":   sec_label:unset;
-"tfc":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"tfc":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "tfc":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "tfc":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "tfc":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -59,8 +59,9 @@ west #
 "tfc" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "tfc" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "tfc" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"tfc" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "tfc" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -82,5 +83,5 @@ west #
 | netlink_add_sa() setting TFC to 1500 (up to PMTU)
 west #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #

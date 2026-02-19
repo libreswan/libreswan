@@ -1,0 +1,112 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec certutil -D -n west
+east #
+ mkdir /tmp/tmpnss-east
+east #
+ export NSS_DISABLE_UNLOAD=no
+east #
+ export NSS_SDB_USE_CACHE=yes
+east #
+ export TMPDIR=/tmp/tmpnss-east
+east #
+ export NSS_DEBUG_PKCS11_MODULE="NSS Internal PKCS #11 Module"
+east #
+ export LOGGING=1
+east #
+ export SOCKETTRACE=1
+east #
+ export NSPR_LOG_FILE=/tmp/nspr.log
+east #
+ export NSS_OUTPUT_FILE=/tmp/nss.log
+east #
+ # 2 3 and 4 are more verbose
+east #
+ export NSPR_LOG_MODULES="nss_mod_log:4"
+east #
+ ipsec pluto --config /etc/ipsec.conf
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-westnet-eastnet-x509-cr
+"ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+XFRM policy:
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CT,, 
+east                                                         u,u,u
+hashsha1                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         P,,  
+west-ec                                                      P,,  
+east #
+ grep Totals /tmp/nss.log
+                   Totals       6855         76ms
+east #
+ cat /tmp/nss.log | grep C_ | sort -n -r -k 5
+C_Sign                             6         39ms    6500.00us     51.32%
+C_GetAttributeValue              538       8000us      14.87us     10.53%
+C_DeriveKey                      558       8000us      14.34us     10.53%
+C_GenerateKeyPair                  6       6000us    1000.00us      7.89%
+C_FindObjectsInit                137       3000us      21.90us      3.95%
+C_Initialize                       1       2000us    2000.00us      2.63%
+C_DestroyObject                  885       2000us       2.26us      2.63%
+C_DecryptInit                    206       2000us       9.71us      2.63%
+C_Verify                           6       1000us     166.67us      1.32%
+C_SignUpdate                     132       1000us       7.58us      1.32%
+C_SignInit                        66       1000us      15.15us      1.32%
+C_SignFinal                       60       1000us      16.67us      1.32%
+C_FindObjectsFinal               137       1000us       7.30us      1.32%
+C_CreateObject                   315       1000us       3.17us      1.32%
+C_WrapKey                        138          0 z       0.00us      0.00%
+C_VerifyRecoverInit                1          0 z       0.00us      0.00%
+C_VerifyRecover                    1          0 z       0.00us      0.00%
+C_VerifyInit                       6          0 z       0.00us      0.00%
+C_SetAttributeValue                6          0 z       0.00us      0.00%
+C_OpenSession                    937          0 z       0.00us      0.00%
+C_GetTokenInfo                     2          0 z       0.00us      0.00%
+C_GetSlotList                      2          0 z       0.00us      0.00%
+C_GetSlotInfo                      2          0 z       0.00us      0.00%
+C_GetSessionInfo                   1          0 z       0.00us      0.00%
+C_GetMechanismList                 4          0 z       0.00us      0.00%
+C_GetMechanismInfo                13          0 z       0.00us      0.00%
+C_GetInfo                          1          0 z       0.00us      0.00%
+C_GenerateRandom                  56          0 z       0.00us      0.00%
+C_GenerateKey                      1          0 z       0.00us      0.00%
+C_FindObjects                    137          0 z       0.00us      0.00%
+C_EncryptUpdate                    8          0 z       0.00us      0.00%
+C_EncryptInit                    269          0 z       0.00us      0.00%
+C_Encrypt                        261          0 z       0.00us      0.00%
+C_DigestUpdate                   332          0 z       0.00us      0.00%
+C_DigestKey                       12          0 z       0.00us      0.00%
+C_DigestInit                     236          0 z       0.00us      0.00%
+C_DigestFinal                    236          0 z       0.00us      0.00%
+C_DecryptUpdate                    8          0 z       0.00us      0.00%
+C_Decrypt                        198          0 z       0.00us      0.00%
+C_CloseSession                   933          0 z       0.00us      0.00%
+C_CloseAllSessions                 1          0 z       0.00us      0.00%
+east #
+ echo "for nspr logs, look at the verbose console log in OUTPUT"
+for nspr logs, look at the verbose console log in OUTPUT
+east #

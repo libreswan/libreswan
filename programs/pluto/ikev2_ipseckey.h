@@ -1,13 +1,7 @@
-#ifndef _IKEV2_IPSECKEY_H
-#define _IKEV2_IPSECKEY_H
+#ifndef IKEV2_IPSECKEY_H
+#define IKEV2_IPSECKEY_H
 
-#ifdef USE_DNSSEC
-# define LSW_LIBUNBOUND_ENABLED true
-#else
-# define LSW_LIBUNBOUND_ENABLED false
-#endif
-
-#define IS_LIBUNBOUND LSW_LIBUNBOUND_ENABLED
+struct dnssec_config;
 
 struct ike_sa;
 
@@ -22,5 +16,9 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 							       struct msg_digest *md,
 							       bool err));
 bool initiator_fetch_idr_ipseckey(struct ike_sa *ike);
+
+void init_ikev2_ipseckey(struct event_base *event_base,
+			 struct logger *logger);
+void shutdown_ikev2_ipseckey(const struct logger *logger);
 
 #endif

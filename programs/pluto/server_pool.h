@@ -51,7 +51,8 @@ typedef stf_status task_completed_cb(struct state *st,
 				     struct msg_digest *md,
 				     struct task *task);
 /* always called */
-typedef void task_cleanup_cb(struct task **task);
+typedef void task_cleanup_cb(struct task **task,
+			     struct logger *logger);
 
 struct task_handler {
 	const char *name;
@@ -67,10 +68,5 @@ extern void submit_task(struct state *callback_sa,
 			struct task *task,
 			const struct task_handler *handler,
 			where_t where);
-
-void start_server_helpers(uintmax_t nhelpers, struct logger *logger);
-void stop_server_helpers(void (*all_server_helpers_stopped)(void));
-void free_server_helper_jobs(struct logger *logger);
-unsigned server_nhelpers(void);
 
 #endif

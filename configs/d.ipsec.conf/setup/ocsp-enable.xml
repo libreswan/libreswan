@@ -1,0 +1,14 @@
+<varlistentry id='setup.ocsp-enable'>
+  <term>
+    <option>ocsp-enable=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to perform Online Certificate Store Protocol ("OCSP")
+      checks on those certificates that have an OCSP URI defined.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

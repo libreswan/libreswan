@@ -9,7 +9,7 @@ east #
  ipsec whack --impair major_version_bump
 east #
  ipsec auto --add westnet-eastnet-ikev2-major
-"westnet-eastnet-ikev2-major": added IKEv2 connection
+"westnet-eastnet-ikev2-major": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

@@ -92,14 +92,13 @@ static void confwrite_value(FILE *out,
 
 		switch (k->type) {
 		case kt_also:
-		case kt_appendlist:
 			if (values[k->field].set)
 				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
 					values[k->field].string);
 			break;
 
 		case kt_string:
-		case kt_appendstring:
+		case kt_appendstrings:
 			/* these are strings */
 
 			if (values[k->field].set) {
@@ -201,83 +200,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("auto", str_sparse_long(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
-	if (conn->values[KNCF_PPK].option != NPPI_UNSET) {
-		name_buf sb;
-		cwf("ppk", str_sparse_long(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
-	}
-
-	if (conn->never_negotiate_shunt != SHUNT_UNSET) {
-		name_buf nb;
-		cwf("type", str_sparse_long(&never_negotiate_shunt_names,
-					    conn->never_negotiate_shunt,
-					    &nb));
-	} else if (conn->values[KNCF_PHASE2].option != 0) {
-		enum encap_proto encap_proto = conn->values[KNCF_PHASE2].option;
-		enum type_options satype = conn->values[KNCF_TYPE].option;
-		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
-		/*
-		 * config-write-yn: for writing out optional
-		 * yn_options fields.
-		 */
-#define cwyn(NAME, KNCF)						\
-		{							\
-			if (conn->values[KNCF].option != YN_UNSET)	\
-				cwf(NAME, noyes[conn->values[KNCF].option == YN_YES]); \
-		}
-		switch (satype) {
-		case KS_TUNNEL:
-			cwf("type", "tunnel");
-			break;
-		case KS_TRANSPORT:
-			cwf("type", "transport");
-			break;
-		default:
-			break;
-		}
-
-		cwyn("compress", KWYN_COMPRESS);
-		cwyn("pfs", KWYN_PFS);
-		cwyn("ikepad", KNCF_IKEPAD);
-		ckws("auth", AUTH);
-
-		if (encap_proto != ENCAP_PROTO_UNSET) {
-			/* story is lower-case */
-			name_buf eb;
-			cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
-		}
-
-		/* key-exchange= */
-
-		if (conn->values[KWS_KEYEXCHANGE].string != NULL) {
-			cwf("keyexchange", conn->values[KWS_KEYEXCHANGE].string);
-		} else if (conn->values[KWS_IKEv2].string != NULL) {
-			cwf("ikev2", conn->values[KWS_IKEv2].string);
-		}
-
-		/* esn= */
-		if (conn->values[KNCF_ESN].option != YNE_UNSET) {
-			name_buf nb;
-			cwf("esn", str_sparse_long(&yne_option_names,
-					      conn->values[KNCF_ESN].option, &nb));
-		}
-
-		switch (conn->values[KNCF_FRAGMENTATION].option) {
-		case YNF_UNSET:
-			/* it's the default, do not print anything */
-			break;
-		case YNF_FORCE:
-			cwf("fragmentation", "force");
-			break;
-		case YNF_NO:
-			cwf("fragmentation", "no");
-			break;
-		case YNF_YES:
-			cwf("fragmentation", "yes");
-		}
-
-#undef cwyn
-	}
-
 	if (verbose)
 		fprintf(out, "# end conn %s\n\n", conn->name);
 #	undef cwf
@@ -290,9 +212,9 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 
 	/* output config setup section */
 	if (setup) {
-		const struct config_setup *setup = config_setup_singleton();
+		const struct config_setup *updates = config_setup_updates();
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", &config_setup_keywords, ARRAY_REF(setup->values));
+		confwrite_value(out, "", &config_setup_keywords, ARRAY_REF(updates->values));
 		fprintf(out, "\n");
 	}
 

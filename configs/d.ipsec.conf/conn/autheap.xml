@@ -1,0 +1,24 @@
+<varlistentry id='conn.autheap'>
+  <term>
+    <option>leftautheap=&autheap_option;</option>
+  </term>
+  <term>
+    <option>rightautheap=&autheap_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether the security gateways will authenticate uing an EAP
+      method.  Acceptable values are &none; and &tls; for EAPTLS. If
+      EAP is the only authentication method, set
+      <option>leftauth=&none;</option> in addition to
+      <option>leftautheap=&tls;</option>.
+    </para>
+    <para>
+      The default is &none;.
+    </para>
+    <para>
+      The EAP authentication mechanisms are only available for IKEv2
+      based connections.
+    </para>
+  </listitem>
+</varlistentry>

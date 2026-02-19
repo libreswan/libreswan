@@ -17,7 +17,7 @@
 
 #include "lswalloc.h"
 #include "passert.h"
-#include "lswlog.h"		/* for dbg() */
+#include "lswlog.h"		/* for ldbg() */
 #include "ip_address.h"
 #include "ip_info.h"
 
@@ -31,7 +31,7 @@ diag_t ttoaddresses_num(shunk_t input, const char *delims,
 		return NULL;
 	}
 
-	dbg("%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
+	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
 	struct shunks *tokens = ttoshunks(input, delims, EAT_EMPTY_SHUNKS); /* must free */
 
@@ -42,15 +42,15 @@ diag_t ttoaddresses_num(shunk_t input, const char *delims,
 		return NULL;
 	}
 
-	dbg("%s() nr tokens %u", __func__, tokens->len);
+	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
 	output->list = alloc_things(ip_address, tokens->len, "addresses");
 
 	ITEMS_FOR_EACH(token, tokens) {
-		err_t e = ttoaddress_num(*token, input_afi,
-					 &output->list[output->len]);
-		if (e != NULL) {
-			diag_t d = diag(PRI_SHUNK" invalid, %s",
-					pri_shunk(*token), e);
+		diag_t d = ttoaddress_num(*token, input_afi,
+					  &output->list[output->len]);
+		if (d != NULL) {
+			diag_t d = diag_diag(&d, PRI_SHUNK" invalid, ",
+					     pri_shunk(*token));
 			pfree(tokens);
 			pfree(output->list);
 			zero(output);

@@ -9,7 +9,7 @@ west #
  ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet-ah
-"westnet-eastnet-ah": added IKEv1 connection
+"westnet-eastnet-ah": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -26,9 +26,9 @@ west #
 "westnet-eastnet-ah" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ah" #2: initiating Quick Mode IKEv1+RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=HMAC_MD5_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-ah" #2: sent Quick Mode request
-"westnet-eastnet-ah" #2: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ah" #2: retransmit so timing out SA (may retry)
 "westnet-eastnet-ah" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ah" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ah" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ah" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

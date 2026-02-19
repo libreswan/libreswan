@@ -15,19 +15,22 @@
 include ../../mk/dirs.mk
 include $(top_srcdir)/mk/config.mk
 
+SUBDIRS += asn1check
+SUBDIRS += authbycheck
+SUBDIRS += dncheck
 SUBDIRS += enumcheck
+SUBDIRS += flagscheck
+SUBDIRS += hunkcheck
 SUBDIRS += ipcheck
 SUBDIRS += jambufcheck
-SUBDIRS += timecheck
-SUBDIRS += hunkcheck
-SUBDIRS += dncheck
+SUBDIRS += kernel
 SUBDIRS += keyidcheck
+SUBDIRS += timecheck
 SUBDIRS += ttodatacheck
+SUBDIRS += vendoridcheck
+
 ifeq ($(USE_LABELED_IPSEC),true)
 SUBDIRS += getpeercon_server
 endif
-SUBDIRS += asn1check
-SUBDIRS += vendoridcheck
-SUBDIRS += kernel
 
 include $(top_srcdir)/mk/targets.mk

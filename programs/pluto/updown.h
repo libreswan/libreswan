@@ -31,8 +31,10 @@
 
 #include <stdbool.h>
 
+struct jambuf;
 struct state;
 struct connection;
+struct connection_end;
 struct spd;
 struct spds;
 struct logger;
@@ -48,18 +50,57 @@ enum updown {
 	UPDOWN_UNROUTE,
 	UPDOWN_UP,
 	UPDOWN_DOWN,
-	UPDOWN_DISCONNECT_NM,
-#define UPDOWN_ROOF (UPDOWN_DISCONNECT_NM+1)
+#define UPDOWN_ROOF (UPDOWN_DOWN+1)
 };
 
 extern const struct enum_names updown_stories;
 extern const struct enum_names updown_names;
 
-bool do_updown(enum updown updown_verb,
-	       const struct connection *c, const struct spd *sr,
-	       struct child_sa *child, struct logger *logger);
+enum updown_configs {
+	UPDOWN_CONFIG_ASYNC,
+	UPDOWN_CONFIG_EXEC,
+#define UPDOWN_CONFIG_ROOF (UPDOWN_CONFIG_EXEC+1)
+};
 
-void do_updown_child(enum updown updown_verb, struct child_sa *child);
+#define updown_config_async updown_config[UPDOWN_CONFIG_ASYNC]
+#define updown_config_exec updown_config[UPDOWN_CONFIG_EXEC]
+
+extern const struct enum_names updown_config_names;
+
+bool updown_connection_spd(enum updown updown_verb,
+			   const struct connection *c,
+			   const struct spd *spd,
+			   struct logger *logger/*state-or-connection*/);
+
+/*
+ * Tweak UPDOWN's behaviour.
+ *
+ * These are hacks to mimic current behaviour.
+ */
+struct updown_config {
+	/*
+	 * Abort, returning false, when updown fails.  By default
+	 * errors are ignored, and updown stumbles onto the next SPD.
+	 */
+	bool return_error;
+	/*
+	 * Skip conflicting.  Skip over SPDs that have a conflict
+	 * according to ...
+	 */
+	bool skip_wip_conflicting_owner_bare_route;
+	/*
+	 * Only run command on SPDs that are UP, and then clear up
+	 * bit.
+	 */
+	bool down_wip_installed_up;
+};
+
+bool updown_child_spds(enum updown updown_verb,
+		       struct child_sa *child,
+		       struct updown_config config);
+
+bool updown_async_child(bool prepare, bool route, bool up,
+			struct child_sa *child);
 
 /*
  * Value of some environment variables passed down to updown.
@@ -76,5 +117,10 @@ struct updown_env {
 void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger,
 			   struct updown_env);
+
+extern const char *pluto_dns_resolver;
+
+void jam_updown_status(struct jambuf *buf, const char *prefix,
+		       const struct connection_end *end);
 
 #endif

@@ -22,10 +22,10 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add tcp
-"tcp": added IKEv2 connection
+"tcp": added oriented IKEv2 connection
 west #
  ipsec add udp
-"udp": added IKEv2 connection
+"udp": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -39,6 +39,6 @@ west #
 "udp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "udp" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "udp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"udp" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "udp" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "udp" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #

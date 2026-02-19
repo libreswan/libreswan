@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -33,6 +33,7 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
@@ -49,6 +50,7 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -59,6 +61,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src 192.0.1.0/24 dst 192.0.2.0/24

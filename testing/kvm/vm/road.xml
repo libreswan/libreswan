@@ -1,5 +1,6 @@
 <!--
-./kvm install-linux will transmogrify and then load this .xml file
+    ./kvm transmogrify will transmogrify and then load this .xml file using
+    sudo virsh define east.xmk
 -->
 
 <domain type='kvm'>
@@ -8,14 +9,16 @@
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
-    <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
-    <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
-    <cmdline>root=/dev/vda2 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=road</cmdline>
+    <!--linux?--> <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
+    <!--linux?--> <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
+    <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@DOMAIN_HOSTNAME@@</cmdline>
+    <!--bsd?--> <boot dev='hd'/>
   </os>
+  <!--override default of mode=host-model -->
+  <cpu mode='host-passthrough'/>
   <features>
     <acpi/>
     <apic/>
-    <pae/>
   </features>
   <clock offset='utc'/>
   <on_poweroff>destroy</on_poweroff>
@@ -23,15 +26,17 @@
   <on_crash>restart</on_crash>
   <devices>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='writeback'/>
-      <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
+      <source file='@@LOCALDIR@@/@@PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
-    <controller type='usb' index='0'>
-    </controller>
-    <controller type='virtio-serial' index='0'>
-    </controller>
+    <!--
+	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
+	Debian uses p9fs.  Hence keep these mount points.  Include
+	/source as it is needed when debugging; and /pool as it is
+	used when installing packages.
+    -->
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
@@ -44,26 +49,29 @@
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
+    <!-- eth0: ROAD-NIC-NORTH -->
     <interface type='bridge'>
       <mac address='12:00:00:AB:CD:02'/>
-      <source bridge='@@TEST_PREFIX@@192_1_3'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
-    <serial type='pty'>
-      <target port='0'/>
-    </serial>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
-    <memballoon model='virtio'>
-    </memballoon>
+    <!-- eth2: dhcp -->
+    <!--bsd?--> <interface type='bridge'>
+      <!--bsd?--> <source bridge='swandefault'/>
+      <!--bsd?--> <model type='virtio'/>
+    <!--bsd?--> </interface>
+    <!-- serial console -->
+    <console type='pty'/>
+    <!-- memory -->
+    <memballoon model='virtio'/>
+    <!-- randomness -->
     <rng model='virtio'>
-      <backend model='random'>/dev/random</backend>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
+  <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
-   <label>@@USER@@:@@GROUP@@</label>
-   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@USER@@:@@GROUP@@</label>
+    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
   </seclabel>
 </domain>

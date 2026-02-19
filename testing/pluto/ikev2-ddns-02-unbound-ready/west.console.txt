@@ -1,0 +1,55 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ # need to disable ipv6 and activate auto-interface
+west #
+ cp resolv.conf /etc
+west #
+ cp west-unbound.conf /etc/unbound/unbound.conf
+west #
+ unbound-control-setup > /dev/null 2>&1
+west #
+ # use modified service file that skips ICANN root key checks
+west #
+ cat /lib/systemd/system/unbound.service | grep -v ExecStartPre > /etc/systemd/system/unbound.service
+west #
+ systemctl daemon-reload
+west #
+ systemctl start unbound.service
+west #
+ unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
+ok
+west #
+ dig +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ dig +dnssec +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec add named
+"named": added oriented IKEv2 connection
+west #
+ ipsec up named
+"named" #1: initiating IKEv2 connection to 192.1.2.23 (right.libreswan.org) using UDP
+"named" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"named" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"named" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"named" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"named" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"named" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec whack --trafficstatus
+#2: "named", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ # clean up after ourselves
+west #
+ rm -f /etc/systemd/system/unbound.service
+west #

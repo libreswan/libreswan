@@ -13,9 +13,11 @@ tcpdump started
 road #
  ipsec whack --impair revival
 road #
+ ipsec whack --impair suppress_retransmits
+road #
  ipsec auto --add road
 "road": created ipsec-interface ipsec1@NONE
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -25,8 +27,9 @@ road #
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP}
+"road" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  # Monitor the XFRMI ipsec1 interface
 road #
@@ -38,7 +41,7 @@ road #
  ipsec whack --rekey-child --name road
 "road" #3: initiating rekey to replace Child SA #2 using IKE SA #1
 "road" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP}
-"road" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"road" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 "road" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "road" #2: ESP traffic information: in=0B out=0B
 road #
@@ -47,7 +50,7 @@ road #
  ipsec whack --rekey-child --name road
 "road" #4: initiating rekey to replace Child SA #3 using IKE SA #1
 "road" #4: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #1 {ESP <0xESPESP}
-"road" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"road" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 "road" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "road" #3: ESP traffic information: in=0B out=0B
 road #
@@ -70,15 +73,16 @@ road #
 "road" #4: ESP traffic information: in=0B out=0B
 "road": delete ipsec-interface ipsec1@NONE added by pluto
 "road": created ipsec-interface ipsec1@NONE
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  ipsec auto --up road
 "road" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #6 {ESP <0xESPESP}
+"road" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"road" #6: initiator established Child SA using #5; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road" #6: initiator established Child SA using #5; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  echo done
 done

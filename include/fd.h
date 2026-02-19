@@ -40,15 +40,15 @@ struct fd;
  */
 #define null_fd ((struct fd *) NULL)
 
-struct fd *fd_accept(int socket, const struct where *where, struct logger *logger);
+struct fd *fd_accept(int socket, const struct logger *logger, const struct where *where);
 
-struct fd *fd_addref_where(struct fd *fd, const struct where *where);
-void fd_delref_where(struct fd **fd, const struct where *where);
+struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, const struct where *where);
+void fd_delref_where(struct fd **fd, const struct logger *ex_owner, const struct where *where);
 
-#define fd_addref(FD) fd_addref_where(FD, HERE)
-#define fd_delref(FD) fd_delref_where(FD, HERE)
+#define fd_addref(FD, NEW_OWNER) fd_addref_where(FD, NEW_OWNER, HERE)
+#define fd_delref(FD, EX_OWNER) fd_delref_where(FD, EX_OWNER, HERE)
 
-void fd_leak(struct fd *fd, const struct where *where);
+void fd_leak(struct fd *fd, struct logger *logger, const struct where *where);
 
 /* return nr-bytes, or -ERRNO */
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags);
@@ -65,7 +65,7 @@ bool fd_p(const struct fd *fd);
 bool same_fd(const struct fd *l, const struct fd *r);
 
 /*
- * dbg("fd "PRI_FD, pri_fd(whackfd))
+ * ldbg(logger, "fd "PRI_FD, pri_fd(whackfd))
  *
  * PRI_... names are consistent with shunk_t and hopefully avoid
  * clashes with reserved PRI* names.

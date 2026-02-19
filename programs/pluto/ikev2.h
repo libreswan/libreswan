@@ -30,11 +30,13 @@ struct state;
 struct ike_sa;
 struct child_sa;
 struct pbs_in;
-struct dh_desc;
+struct kem_desc;
 struct connection;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
+typedef void ikev2_llog_success_fn(struct ike_sa *ike,
+				   const struct msg_digest *md);
 
 void ikev2_process_packet(struct msg_digest *mdp);
 
@@ -80,14 +82,15 @@ struct v2_transition {
 	} flags;
 
 	/*
-	 * The message type being exchanged.
+	 * The exchange being processed (type is in exchange->type).
+	 * There can be multiple exchanges with the same .type.
 	 *
 	 * Incoming message must match RECV_ROLE.
 	 *
 	 * When RECV_ROLE is NO_MESSAGE, the transition is for a new
 	 * exchange.
 	 */
-	const enum ikev2_exchange exchange;
+	const struct v2_exchange *exchange;
 	enum message_role recv_role;
 
 	/*
@@ -106,8 +109,15 @@ struct v2_transition {
 	/*
 	 * When non-NULL, use this to log the IKE SA's successful
 	 * state transition.
+	 *
+	 * Caution! MD is NULL for initiator; then non-NULL for the
+	 * responder, and the response.
 	 */
-	void (*llog_success)(struct ike_sa *ike);
+	ikev2_llog_success_fn *llog_success;
+	/*
+	 * Log the start of the transition.
+	 */
+	bool log_transition_start;
 };
 
 struct v2_transitions {
@@ -116,37 +126,44 @@ struct v2_transitions {
 };
 
 struct v2_exchange {
+	/*
+	 * Note: there can be multiple exchanges with the same type
+	 * (such as variants on CREATE_CHILD_SA and INFORMATIONAL).
+	 */
 	const enum ikev2_exchange type;
-	const char *subplot;
+	const char *name; /* e.g., IKE_AUTH (EAP) */
 	bool secured;
+
+	/*
+	 * Force a "processing ..." message at the start of all
+	 * transitions handling a packet in this exchange.
+	 *
+	 * When set, the transitions do not need (should not have)
+	 * their .log_transition_state bit set.
+	 */
+	bool log_transition_start;
+
 	struct {
 		const struct v2_transition *transition;
 		const struct finite_state *from[3];	/* grow as needed */
 	} initiate;
-	const struct v2_transitions *responder;
-	const struct v2_transitions *response;
+	struct {
+		struct v2_transitions responder;
+		struct v2_transitions response;
+	} transitions;
 };
 
-struct v2_exchanges {
-	const struct v2_exchange *const *list;
-	size_t len;
-};
-
-#define V2_EXCHANGE(KIND, SUBPLOT, NEXT_STORY, I_CAT, IR_CAT, SECURED, ...) \
-									\
-	static const struct v2_transitions v2_##KIND##_response_transitions = { \
-		ARRAY_REF(v2_##KIND##_response_transition),		\
-	};								\
-									\
-	static const struct v2_transitions v2_##KIND##_responder_transitions = { \
-		ARRAY_REF(v2_##KIND##_responder_transition),		\
-	};								\
+#define V2_EXCHANGE(KIND, SUBPLOT,					\
+		    I_CAT, IR_CAT,					\
+		    SECURED,						\
+		    LOG_TRANSITION_START,				\
+		    ...)						\
 									\
 	const struct finite_state state_v2_##KIND##_I = {		\
 		.kind = STATE_V2_##KIND##_I,				\
 		.name = #KIND"_I",					\
 		.short_name = #KIND"_I",				\
-		.story = "sent "#KIND" request",			\
+		.story = "sent "#KIND""SUBPLOT" request",		\
 		.category = I_CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.secured = SECURED,					\
@@ -156,7 +173,7 @@ struct v2_exchanges {
 		.kind = STATE_V2_##KIND##_IR,				\
 		.name = #KIND"_IR",					\
 		.short_name = #KIND"_IR",				\
-		.story = "processed "#KIND" response"NEXT_STORY,	\
+		.story = "processed "#KIND""SUBPLOT " response",	\
 		.category = IR_CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.secured = SECURED,					\
@@ -164,22 +181,25 @@ struct v2_exchanges {
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
-		.subplot = SUBPLOT,					\
+		.name = #KIND SUBPLOT,					\
 		.secured = SECURED,					\
+		.log_transition_start = LOG_TRANSITION_START,		\
 		.initiate.transition = &v2_##KIND##_initiate_transition, \
 		.initiate.from = { __VA_ARGS__ },			\
-		.responder = &v2_##KIND##_responder_transitions,	\
-		.response = &v2_##KIND##_response_transitions,		\
+		.transitions.responder = {				\
+			ARRAY_REF(v2_##KIND##_responder_transition),	\
+		},							\
+		.transitions.response = {				\
+			ARRAY_REF(v2_##KIND##_response_transition),	\
+		},							\
 	}
 
-#define V2_STATE(KIND, STORY, CAT, SECURED, ...)			\
+#define V2_STATE(KIND, STORY,						\
+		 CATEGORY, SECURED,					\
+		 ...)							\
 									\
 	static const struct v2_exchange *v2_##KIND##_responder_exchange[] = { \
 		__VA_ARGS__						\
-	};								\
-									\
-	static const struct v2_exchanges v2_##KIND##_responder_exchanges = { \
-		ARRAY_REF(v2_##KIND##_responder_exchange),		\
 	};								\
 									\
 	const struct finite_state state_v2_##KIND = {			\
@@ -187,9 +207,11 @@ struct v2_exchanges {
 		.name = #KIND,						\
 		.short_name = #KIND,					\
 		.story = STORY,						\
-		.category = CAT,					\
+		.category = CATEGORY,					\
 		.ike_version = IKEv2,					\
-		.v2.ike_exchanges = &v2_##KIND##_responder_exchanges,	\
+		.v2.ike_responder_exchanges = {				\
+			ARRAY_REF(v2_##KIND##_responder_exchange),	\
+		},							\
 		.v2.secured = SECURED,					\
 	}
 
@@ -197,7 +219,7 @@ extern void init_ikev2(void);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
-					     struct pbs_in *in_pbs,
+					     struct pbs_in in_pbs,
 					     enum next_payload_types_ikev2 np);
 
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
@@ -206,7 +228,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
-			       const struct dh_desc *accepted_dh,
+			       const struct kem_desc *accepted_dh,
 			       enum payload_security security);
 /*
  * See 2.21. Error Handling.  In particular the IKE_AUTH discussion.
@@ -216,11 +238,13 @@ bool v2_notification_fatal(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
-void llog_v2_success_exchange_sent_to(struct ike_sa *ike);
-void llog_v2_success_exchange_processed(struct ike_sa *ike);
-void llog_v2_success_state_story(struct ike_sa *ike);
-void ldbg_v2_success(struct ike_sa *ike);
-void llog_v2_success_state_story_to(struct ike_sa *ike);
+ikev2_llog_success_fn llog_success_ikev2_exchange_initiator;
+ikev2_llog_success_fn llog_success_ikev2_exchange_responder;
+ikev2_llog_success_fn llog_success_ikev2_exchange_response;
+
+ikev2_llog_success_fn ldbg_success_ikev2;
+
+void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges);
 
 bool accept_v2_notification(v2_notification_t n,
 			    struct logger *logger,

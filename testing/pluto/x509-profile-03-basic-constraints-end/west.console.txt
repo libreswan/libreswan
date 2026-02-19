@@ -54,14 +54,15 @@ Certificate:
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name west-bc-ca-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-missing --to --host=192.1.2.23 --id=%any
-"west-bc-ca-missing": added IKEv2 connection
+"west-bc-ca-missing": added oriented IKEv2 connection
  ipsec up west-bc-ca-missing
 "west-bc-ca-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-ca-missing" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-missing" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-missing" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-missing.testing.libreswan.org, E=user-west-bc-ca-missing@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-missing" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-missing" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-bc-ca-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-bc-ca-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
  ipsec stop
 Redirecting to: [initsystem]
 west #
@@ -109,14 +110,15 @@ Certificate:
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name west-bc-ca-n --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n --to --host=192.1.2.23 --id=%any
-"west-bc-ca-n": added IKEv2 connection
+"west-bc-ca-n": added oriented IKEv2 connection
  ipsec up west-bc-ca-n
 "west-bc-ca-n" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-ca-n" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-n" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-n" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-n.testing.libreswan.org, E=user-west-bc-ca-n@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-n" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-n" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-bc-ca-n" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-bc-ca-n" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
  ipsec stop
 Redirecting to: [initsystem]
 west #
@@ -165,14 +167,15 @@ Certificate:
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name west-bc-ca-n-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n-critical --to --host=192.1.2.23 --id=%any
-"west-bc-ca-n-critical": added IKEv2 connection
+"west-bc-ca-n-critical": added oriented IKEv2 connection
  ipsec up west-bc-ca-n-critical
 "west-bc-ca-n-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-ca-n-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-n-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-n-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-n-critical.testing.libreswan.org, E=user-west-bc-ca-n-critical@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-n-critical" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-n-critical" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-bc-ca-n-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-bc-ca-n-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
  ipsec stop
 Redirecting to: [initsystem]
 west #
@@ -220,7 +223,7 @@ Certificate:
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name west-bc-ca-y --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y --to --host=192.1.2.23 --id=%any
-"west-bc-ca-y": added IKEv2 connection
+"west-bc-ca-y": added oriented IKEv2 connection
  ipsec up west-bc-ca-y
 "west-bc-ca-y" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-ca-y" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -229,7 +232,7 @@ Redirecting to: [initsystem]
 "west-bc-ca-y" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west-bc-ca-y" #1: encountered fatal error in state IKE_AUTH_I
 "west-bc-ca-y" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-bc-ca-y" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-bc-ca-y" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-bc-ca-y" #1: deleting IKE SA (sent IKE_AUTH request)
  ipsec stop
 Redirecting to: [initsystem]
@@ -279,7 +282,7 @@ Certificate:
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name west-bc-ca-y-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y-critical --to --host=192.1.2.23 --id=%any
-"west-bc-ca-y-critical": added IKEv2 connection
+"west-bc-ca-y-critical": added oriented IKEv2 connection
  ipsec up west-bc-ca-y-critical
 "west-bc-ca-y-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-ca-y-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -288,7 +291,7 @@ Redirecting to: [initsystem]
 "west-bc-ca-y-critical" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west-bc-ca-y-critical" #1: encountered fatal error in state IKE_AUTH_I
 "west-bc-ca-y-critical" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-bc-ca-y-critical" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-bc-ca-y-critical" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-bc-ca-y-critical" #1: deleting IKE SA (sent IKE_AUTH request)
  ipsec stop
 Redirecting to: [initsystem]

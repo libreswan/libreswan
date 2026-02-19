@@ -46,7 +46,7 @@ generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
-selected proposal: ESP:AES_CBC_128/HMAC_SHA1_96/MODP_2048/NO_EXT_SEQ
+selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/ECP_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev1' established successfully
 west #

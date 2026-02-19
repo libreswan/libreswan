@@ -34,13 +34,12 @@
 #include "diag.h"
 
 struct payload_digest;
-struct dh_desc;
+struct kem_desc;
 struct id;
 
-bool unpack_KE(chunk_t *dest, const char *val_name,
-	       const struct dh_desc *gr,
-	       struct payload_digest *ke_pd,
-	       struct logger *logger);
+bool extract_KE(struct state *st/*ike-or-child*/,
+		const struct kem_desc *kem,
+		struct msg_digest *md);
 
 void unpack_nonce(chunk_t *n, chunk_t *nonce);
 

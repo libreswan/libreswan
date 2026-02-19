@@ -14,8 +14,8 @@
  * for more details.
  */
 
-#ifndef crypt_symkey_h
-#define crypt_symkey_h
+#ifndef CRYPT_SYMKEY_H
+#define CRYPT_SYMKEY_H
 
 #include <stdio.h>
 #include <pk11pub.h>
@@ -44,11 +44,14 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
  * Add/delete references to a reference-countered PK11SymKey.
  */
 
+void symkey_newref_where(struct logger *logger, const char *name,
+			 PK11SymKey *key, where_t where);
 PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
 				PK11SymKey *key, where_t where);
-void symkey_delref_where(struct logger *logger, const char *name,
+void symkey_delref_where(const struct logger *logger, const char *name,
 			 PK11SymKey **key, where_t where);
 
+#define symkey_newref(LOGGER, NAME, KEY) symkey_newref_where(LOGGER, NAME, KEY, HERE)
 #define symkey_addref(LOGGER, NAME, KEY) symkey_addref_where(LOGGER, NAME, KEY, HERE)
 #define symkey_delref(LOGGER, NAME, KEY) symkey_delref_where(LOGGER, NAME, KEY, HERE)
 
@@ -146,6 +149,13 @@ PK11SymKey *symkey_from_bytes(const char *name,
 #define symkey_from_hunk(NAME, HUNK, LOGGER)		\
 	symkey_from_bytes(NAME, (HUNK).ptr, (HUNK).len, LOGGER)
 
+PK11SymKey *symkey_from_symkey(const char *result_name,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t key_offset, size_t key_size,
+			       where_t where, struct logger *logger);
+
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
 				   const uint8_t *bytes, size_t sizeof_bytes,
@@ -175,12 +185,6 @@ PK11SymKey *key_from_symkey_bytes(const char *result_name,
 				  PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key,
 				  where_t where, struct logger *logger);
-
-/*
- * XOR a symkey with a chunk.
- */
-PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs,
-			     struct logger *logger);
 
 /*
  * Generic operation.

@@ -15,6 +15,6 @@ include /tmp/file-not-found.*
 west #
  # expect no complaints
 west #
- ipsec auto --add west
-"west": added IKEv1 connection
+ ipsec add west
+"west": added oriented IKEv1 connection
 west #

@@ -29,6 +29,7 @@
 static bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike,
 				      struct msg_digest *md, struct pbs_out *pbs);
 
+static ikev2_llog_success_fn llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request;
 static emit_v2_INFORMATIONAL_request_payload_fn emit_v2DELETE;
 static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_v2DELETE_request;
 static ikev2_state_transition_fn process_v2_INFORMATIONAL_v2DELETE_request;
@@ -48,8 +49,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 	if (impair.v2_delete_protoid.enabled) {
 		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id new_protoid = impair.v2_delete_protoid.value;
-		llog(RC_LOG, ike->sa.logger,
-		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+		llog(IMPAIR_STREAM, ike->sa.logger, "changing Delete payload Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebo),
 		     str_enum_short(&ikev2_delete_protocol_id_names, new_protoid, &ebn),
 		     protoid);
@@ -76,7 +76,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 		}
 	}
 
-	close_output_pbs(&spi_pbs);
+	close_pbs_out(&spi_pbs);
 
 	return true;
 }
@@ -139,7 +139,7 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 							    struct child_sa *null_child,
 							    struct msg_digest *md)
 {
-	dbg("an informational request needing a response");
+	ldbg(ike->sa.logger, "an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(null_child == NULL);
 
@@ -209,8 +209,10 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void llog_v2_success_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike)
+void llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
+							     const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	/*
 	 * XXX: should this, when there are children, also mention
 	 * that they are being deleted?
@@ -234,7 +236,7 @@ static void llog_v2_success_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_v2DELETE_exchange;
-	pexpect(exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange->type == ISAKMP_v2_INFORMATIONAL);
 	if (child == NULL) {
 		/*
 		 * IKE SA is no longer viable - reviving Child SA's
@@ -428,10 +430,9 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 
 			/* Emit delete payload header and SPI values */
 			struct pbs_out del_pbs;	/* output stream */
-			if (!out_struct(&v2del_tmp,
-					&ikev2_delete_desc,
-					pbs,
-					&del_pbs))
+			if (!pbs_out_struct(pbs, v2del_tmp,
+					    &ikev2_delete_desc,
+					    &del_pbs))
 				return false;
 			if (!pbs_out_raw(&del_pbs, spi_buf,
 					 j * sizeof(spi_buf[0]), "local SPIs")) {
@@ -439,7 +440,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 				return false;
 			}
 
-			close_output_pbs(&del_pbs);
+			close_pbs_out(&del_pbs);
 			break;
 		}
 
@@ -539,68 +540,62 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	}
 
 	if (impair.send_no_delete) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		llog(IMPAIR_STREAM, ike->sa.logger, "send_no_delete set - not sending Delete/Notify");
 		return;
 	}
 
 	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_v2DELETE_exchange);
 	/* hack; this call records the delete */
 	initiate_v2_INFORMATIONAL_v2DELETE_request(ike, /*child*/NULL, /*md*/NULL);
-	send_recorded_v2_message(ike, "delete notification",
-				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+	send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	v2_msgid_finish(ike, NULL/*MD*/, HERE);
 }
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition = {
 	.story = "initiate Informational Delete IKE or Child SA",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
-	.llog_success = llog_v2_success_v2_INFORMATIONAL_v2DELETE_request,
+	.llog_success = llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition[] = {
 	{ .story      = "process Informational Delete IKE or Child SA request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(D),
 	  .processor  = process_v2_INFORMATIONAL_v2DELETE_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_responder_transition),
 };
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[] = {
 
 	{ .story      = "process Informational Delete IKE or Child SA response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(D),
 	  .processor = process_v2_INFORMATIONAL_v2DELETE_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_response_transitions =
-{
-	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "delete IKE or Child SA",
+	.name = "INFORMATIONAL (delete IKE or Child SA)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_v2DELETE_initiate_transition,
-	.responder = &v2_INFORMATIONAL_v2DELETE_responder_transitions,
-	.response = &v2_INFORMATIONAL_v2DELETE_response_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_v2DELETE_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_v2DELETE_response_transition),
+	},
 };

@@ -1,0 +1,21 @@
+<varlistentry id='conn.cisco-unity'>
+  <term>
+    <option>cisco-unity=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      whether to send a CISCO_UNITY payload to the peer.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+    <para>
+      It is recommended to leave this option unset, unless the remote
+      peer (Cisco client or server) requires it. This option does not
+      modify local behaviour. It can be needed to connect as a client
+      to a Cisco server. It can also be needed to act as a server for
+      a Cisco client, which otherwise might send back an error
+      DEL_REASON_NON_UNITY_PEER.
+    </para>
+  </listitem>
+</varlistentry>

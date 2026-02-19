@@ -1,7 +1,7 @@
 /* low-level ip_byte ugliness
  *
  * Copyright (C) 2000  Henry Spencer.
- * Copyright (C) 2018, 2021  Andrew Cagney.
+ * Copyright (C) 2018, 2021, 2025  Andrew Cagney.
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -114,24 +114,119 @@ struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
  * Calculate l-r using unsigned arithmetic
  */
 
-struct ip_bytes ip_bytes_sub(const struct ip_info *afi,
-			     const struct ip_bytes l,
-			     const struct ip_bytes r)
+err_t ip_bytes_sub(const struct ip_info *afi,
+		   struct ip_bytes *sub_out,
+		   const struct ip_bytes l,
+		   const struct ip_bytes r)
 {
-	struct ip_bytes diff = unset_ip_bytes;
+	zero(sub_out);
 
 	/* subtract: diff = hi - lo */
 	unsigned borrow = 0;
+	struct ip_bytes sub = {0};
 	for (int j = afi->ip_size - 1; j >= 0; j--) {
 		unsigned val = l.byte[j] - r.byte[j] - borrow;
-		diff.byte[j] = val;
+		sub.byte[j] = val;
 		borrow = (val >> 8) & 1u;
 	}
 
 	/* ??? what should happen if l > r?  borrow will be 1. */
-	pexpect(borrow == 0);
+	if (borrow != 0) {
+		return "underflow";
+	}
 
-	return diff;
+	*sub_out = sub;
+	return NULL;
+}
+
+/*
+ * Calculate l+r using unsigned arithmetic.
+ */
+
+err_t ip_bytes_add(const struct ip_info *afi,
+		   struct ip_bytes *add_out,
+		   const struct ip_bytes l,
+		   const struct ip_bytes r)
+{
+	zero(add_out);/*be safe*/
+
+	unsigned carry = 0;
+	struct ip_bytes add = {0};
+	for (int j = afi->ip_size - 1; j >= 0; j--) {
+		/* update */
+		unsigned val = l.byte[j] + r.byte[j] + carry;
+		carry = val > 0xff;
+		add.byte[j] = val; /* truncates */
+	}
+
+	if (carry != 0) {
+		return "overflow";
+	}
+
+	*add_out = add;
+	return NULL;
+}
+
+err_t uintmax_to_ip_bytes(const struct ip_info *afi,
+			  uintmax_t bit_length,
+			  uintmax_t uintmax,
+			  struct ip_bytes *bytes_out)
+{
+	*bytes_out = unset_ip_bytes;
+
+	if (bit_length > afi->mask_cnt) {
+		return "bit overflow";
+	}
+
+	/* byte(0)|..|byte(nr_bytes)|nr_bits */
+	int nr_bits = bit_length % 8;
+	int nr_bytes = bit_length / 8;
+	struct ip_bytes bytes = unset_ip_bytes;
+
+	if (nr_bits != 0) {
+		bytes.byte[nr_bytes] = (uintmax << (8 - nr_bits));
+		uintmax >>= nr_bits;
+	}
+
+	for (int j = nr_bytes - 1; j >= 0; j--) {
+		/* extract the next byte to add */
+		bytes.byte[j] = uintmax & 0xff;
+		uintmax >>= 8;
+	}
+
+	if (uintmax != 0) {
+		return "offset overflow";
+	}
+
+	*bytes_out = bytes;
+	return NULL;
+}
+
+err_t ip_bytes_to_uintmax(const struct ip_info *afi,
+			  uintmax_t bit_length,
+			  struct ip_bytes bytes,
+			  uintmax_t *uintmax_out)
+{
+	*uintmax_out = 0;
+
+	if (bit_length > afi->mask_cnt) {
+		return "bit overflow";
+	}
+
+	int nr_bits = bit_length % 8;
+	int nr_bytes = bit_length / 8;
+	uintmax_t uintmax = raw_ntoh(bytes.byte, nr_bytes);
+	if (uintmax == UINTMAX_MAX) {
+		return "offset overflow";
+	}
+
+	if (nr_bits > 0) {
+		uintmax <<= nr_bits;
+		uintmax |= (bytes.byte[nr_bytes] >> (8 - nr_bits));
+	}
+
+	*uintmax_out = uintmax;
+	return NULL;
 }
 
 int ip_bytes_first_set_bit(const struct ip_info *afi, const struct ip_bytes bytes)

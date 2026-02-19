@@ -1,4 +1,9 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ cp ../../guestbin/updown.sh /tmp
+west #
+ chmod a+x /tmp/updown.sh
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -30,7 +35,7 @@ west #
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--leftupdown=left
-"addconn--type=passthrough--leftupdown=left": warning: leftupdown=left ignored for never-negotiate (type=passthrough) connection
+warning: "addconn--type=passthrough--leftupdown=left": leftupdown=left ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
@@ -43,20 +48,40 @@ west #
 "whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass--updown=from": warning: leftupdown=from ignored for never-negotiate (type=passthrough) connection
+warning: "whack--pass--updown=from": leftupdown=from ignored for never-negotiate (type=pass) connection
 "whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
-"addconn--leftupdown=%disabled": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
-"addconn--leftupdown=left": leftupdown=left; rightupdown=ipsec _updown;
-"addconn--leftupdown=": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn--leftupdown=quotes": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn--rightupdown=right": leftupdown=ipsec _updown; rightupdown=right;
-"addconn--type=passthrough": leftupdown=<disabled>; rightupdown=<disabled>;
-"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
-"whack--pass": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack--pass--updown=from": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack--updown=from": leftupdown=from; rightupdown=ipsec _updown;
+"addconn--leftupdown=%disabled": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=left": leftupdown=left; leftupdown-config=noasync,noexec; rightupdown=left; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=quotes": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn--rightupdown=right": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"addconn--type=passthrough": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"whack--pass": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack--pass--updown=from": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack--updown=from": leftupdown=from; leftupdown-config=noasync,noexec; rightupdown=from; rightupdown-config=noasync,noexec;
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add --auto=route addconn--updown-config=exec
+"addconn--updown-config=exec": added oriented IKEv2 connection
+west #
+ grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
+PLUTO_CONNECTION=addconn--updown-config=exec
+PLUTO_VERB=route-client
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/silly/path
+west #
+ ipsec delete addconn--updown-config=exec
+west #
+ ipsec stop
+Redirecting to: [initsystem]
 west #

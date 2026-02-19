@@ -68,10 +68,10 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
 		 * packet on the client interface.  Even though it is
-		 * UNSPEC.
+		 * ZERO aka UNSPEC.
 		 */
-		.local.host = child_afi->address.unspec,
-		.remote.host = child_afi->address.unspec,
+		.local.host = child_afi->address.zero,
+		.remote.host = child_afi->address.zero,
 		/* what will capture packets */
 		.local.client = local,
 		.local.route = local,
@@ -171,7 +171,7 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 		.sa_marks = &spd->connection->sa_marks,
 		.ipsec_interface = spd->connection->ipsec_interface,
 		.id = DEFAULT_KERNEL_POLICY_ID,
-		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
+		.sec_label = HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 		.nr_rules = 0,
 	};
 
@@ -279,21 +279,21 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 	const struct connection *c = spd->connection;
 	PASSERT(logger, c->config->sec_label.len > 0);
 	enum kernel_mode kernel_mode =
-		(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		(c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 KERNEL_MODE_TRANSPORT);
 
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
 
 	struct kernel_policy_encap policy = {
-		.ipcomp = c->config->child_sa.ipcomp,
-		.esp = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+		.ipcomp = c->config->child.ipcomp,
+		.esp = (c->config->child.encap_proto == ENCAP_PROTO_ESP),
+		.ah = (c->config->child.encap_proto == ENCAP_PROTO_AH),
 	};
 
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(policy, spd, kernel_mode,
-				       c->config->child_sa.iptfs.enabled,
+				       c->config->child.iptfs.enabled,
 				       direction,
 				       &nic_offload,
 				       logger, where);
@@ -301,7 +301,7 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
-				   deltatime(0),
+				   deltatime_from_seconds(0),
 				   logger, where, what)) {
 		return false;
 	}
@@ -355,7 +355,7 @@ bool add_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 
@@ -363,7 +363,7 @@ bool add_spd_kernel_policy(const struct spd *spd,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
-				   deltatime(0),
+				   deltatime_from_seconds(0),
 				   logger, where, what)) {
 		return false;
 	}
@@ -447,14 +447,14 @@ bool replace_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
 				 &spd->remote->client,
 				 &kernel_policy,
-				 deltatime(0),
+				 deltatime_from_seconds(0),
 				 logger, where, what);
 
 }
@@ -482,14 +482,14 @@ static bool restore_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
 				 &spd->remote->client,
 				 &kernel_policy,
-				 deltatime(0),
+				 deltatime_from_seconds(0),
 				 logger, where, what);
 
 }
@@ -559,7 +559,7 @@ bool delete_spd_kernel_policy(const struct spd *spd,
 				    &spd->connection->sa_marks,
 				    spd->connection->ipsec_interface,
 				    DEFAULT_KERNEL_POLICY_ID,
-				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				    HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 				    logger, where, story);
 }
 
@@ -601,7 +601,7 @@ bool add_cat_kernel_policy(const struct connection *c,
 	ip_selector local_client = selector_from_address(kernel_policy->local.host);
 	if (!add_kernel_policy(KERNEL_POLICY_OP_ADD, direction,
 			       &local_client, &kernel_policy->remote.route,
-			       kernel_policy, deltatime(0),
+			       kernel_policy, deltatime_from_seconds(0),
 			       logger, where, reason)) {
 		llog(RC_LOG, logger, "%s failed", reason);
 		return false;
@@ -642,7 +642,7 @@ static void delete_cat_kernel_policy(const struct spd *spd,
 				  &local_client, &spd->remote->client,
 				  &c->sa_marks, c->ipsec_interface,
 				  DEFAULT_KERNEL_POLICY_ID,
-				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				  HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 				  logger, where, story)) {
 		llog(RC_LOG, logger, "%s failed", story);
 	}
@@ -702,7 +702,7 @@ bool install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   &kernel_policy.src.route,	/* src_client */
 				   &kernel_policy.dst.route,	/* dst_client */
 				   &kernel_policy,			/* " */
-				   deltatime(0),		/* lifetime */
+				   deltatime_from_seconds(0),		/* lifetime */
 				   child->sa.logger, where, "add inbound Child SA")) {
 		selector_buf sb, db;
 		llog_sa(RC_LOG, child,
@@ -749,7 +749,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
-					     deltatime(0),
+					     deltatime_from_seconds(0),
 					     logger, where,
 					     "CAT: add client->client kernel policy");
 	} else {
@@ -760,7 +760,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
-					     deltatime(0),
+					     deltatime_from_seconds(0),
 					     logger, where,
 					     "install IPsec policy");
 	}
@@ -870,7 +870,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	 */
 
 	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
@@ -878,7 +878,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		selector_buf sb, db;
 		name_buf eb;
-		pdbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
+		ldbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
 		     __func__,
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
@@ -892,7 +892,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	if (impair.install_ipsec_sa_inbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
+		llog(IMPAIR_STREAM, logger, "kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
 		return false;
 	}
 
@@ -900,20 +900,26 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 }
 
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-						   enum routing new_routing,
-						   struct do_updown updown)
+					    enum routing new_routing,
+					    struct do_updown updown)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
 	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
 
-	/* clear the deck */
+	/*
+	 * clear the deck.
+	 */
 	clear_connection_spd_conflicts(c);
+	if (!get_connection_spd_conflicts(c, new_routing)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
 
 	bool ok = true;	/* sticky: once false, stays false */
 
@@ -923,9 +929,10 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
+		/* computed above */
 		selector_buf sb, db;
 		name_buf eb;
-		pdbg(logger,
+		ldbg(logger,
 		     "kernel: %s() installing SPD for %s=>%s %s route=%s up=%s",
 		     __func__,
 		     /* outbound */
@@ -934,14 +941,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		     str_enum_short(&routing_names, c->routing.state, &eb),
 		     bool_str(updown.route),
 		     bool_str(updown.up));
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.bare_shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
 
 		spd->wip.ok = true;
 
@@ -963,60 +962,60 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		if (!ok) {
 			break;
 		}
+	}
 
-		/*
-		 * Do we have to make a mess of the routing?
-		 *
-		 * Probably.  This code path needs a re-think.
-		 */
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && (updown.route || updown.up) &&
+	    !c->local->config->child.updown.updown_config_async) {
+		updown_child_spds(UPDOWN_PREPARE, child,
+				  (struct updown_config) {
+					  .return_error = false,
+					  .skip_wip_conflicting_owner_bare_route = true,
+				  });
+	}
 
-		PEXPECT(logger, spd->wip.ok);
-		if ((updown.route || updown.up) && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
-				ldbg(logger, "kernel: prepare command returned an error");
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
-		}
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && updown.route &&
+	    !c->local->config->child.updown.updown_config_async) {
+		ok = updown_child_spds(UPDOWN_ROUTE, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = true,
+				       });
+	}
 
-		PEXPECT(logger, spd->wip.ok);
-		if (updown.route && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			ok = spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
-		}
-		if (!ok) {
-			break;
-		}
+	/*
+	 * Do we have to notify the firewall?
+	 *
+	 * Yes if this is the first time that the tunnel is
+	 * established (rekeys do not need to re-UP).
+	 *
+	 * Yes, if we are installing a tunnel eroute and the firewall
+	 * wasn't notified for a previous tunnel with the same
+	 * clients.  Any Previous tunnel would have to be for our
+	 * connection, so the actual test is simple.
+	 */
+	if (ok && updown.up &&
+	    !c->local->config->child.updown.updown_config_async) {
+		ok = updown_child_spds(UPDOWN_UP, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = false,
+				       });
+	}
 
-		/*
-		 * Do we have to notify the firewall?
-		 *
-		 * Yes if this is the first time that the tunnel is
-		 * established (rekeys do not need to re-UP).
-		 *
-		 * Yes, if we are installing a tunnel eroute and the
-		 * firewall wasn't notified for a previous tunnel with
-		 * the same clients.  Any Previous tunnel would have
-		 * to be for our connection, so the actual test is
-		 * simple.
-		 */
-
-		if (updown.up) {
-			PEXPECT(logger, spd->wip.ok);
-			ok = spd->wip.installed.up =
-				do_updown(UPDOWN_UP, c, spd, child, logger);
-		}
-
-		if (!ok) {
-			break;
-		}
+	if (ok && (updown.route || updown.up) &&
+	    c->local->config->child.updown.updown_config_async) {
+		ok = updown_async_child(/*prepare*/(updown.route || updown.up),
+					updown.route, updown.up, child);
 	}
 
 	if (impair.install_ipsec_sa_outbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
+		llog(IMPAIR_STREAM, logger, "kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
 		return false;
 	}
 
@@ -1030,6 +1029,15 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 			struct spd_owner owner = spd_owner(spd, c->routing.state,
 							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
+		}
+
+		updown_child_spds(UPDOWN_DOWN, child,
+				  (struct updown_config) {
+					  .down_wip_installed_up = true,
+				  });
+
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* go back to old routing */
 			revert_kernel_policy(spd, child, logger);
 		}
 		return false;
@@ -1040,7 +1048,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		PEXPECT(logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
-			free_bare_shunt(bspp, c->logger);
+			free_bare_shunt(bspp, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 		}
 		/* clear host shunts that clash with freshly installed route */
 		clear_narrow_holds(&spd->local->client, &spd->remote->client, logger);

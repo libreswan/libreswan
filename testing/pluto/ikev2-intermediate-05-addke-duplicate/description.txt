@@ -1,0 +1,5 @@
+test ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21
+
+WEST proposes same; EAST should choose KEM=19, ADDKE1=20, ADDKE2=21
+
+WEST proposes dh19 all the way; EAST should reject

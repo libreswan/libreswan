@@ -1,0 +1,64 @@
+/* default route lookup, for libreswan
+ *
+ * Copyright (C) 2018,2022 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#ifndef DEFAULTROUTE_H
+#define DEFAULTROUTE_H
+
+#include <stdbool.h>
+
+#include "verbose.h"
+#include "ip_address.h"
+
+struct starter_end;
+struct logger;
+
+struct route_addr {
+	enum keyword_host type;
+	ip_address addr;
+	const char *key;
+	const char *value;
+	unsigned interface;		/* 0 invalid? for if_indextoname() */
+};
+
+struct route_addrs {
+	const char *leftright;
+	struct route_addr host;
+	struct route_addr nexthop; /* aka gateway */
+};
+
+bool route_addr_needs_dns(const struct route_addr *addr);
+bool route_addrs_need_dns(const struct route_addrs *addrs);
+
+void resolve_default_route(struct route_addrs *host,
+			   struct route_addrs *peer,
+			   const struct ip_info *host_afi,
+			   struct verbose verbose);
+
+enum route_status {
+	ROUTE_SUCCESS,
+	ROUTE_GATEWAY_FAILED,
+	ROUTE_SOURCE_FAILED,
+	ROUTE_FATAL, /* already logged */
+};
+
+struct ip_route {
+	unsigned interface;	/* feed to if_indextoname () */
+	ip_address source;
+	ip_address gateway;
+};
+
+enum route_status get_route(ip_address dest, struct ip_route *route, struct logger *logger);
+
+#endif

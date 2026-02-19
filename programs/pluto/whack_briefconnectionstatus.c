@@ -73,11 +73,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 		/* note: this mutates *st by calling
 		 * get_sa_bundle_info */
 		struct child_sa *child = pexpect_child_sa(st);
-		struct ipsec_proto_info *first_ipsec_proto =
-		    (child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
-		     child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		     child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		     NULL);
+		struct ipsec_proto_info *first_ipsec_proto = outer_ipsec_proto_info(child);
 		passert(first_ipsec_proto != NULL);
 
 		// direction should be one of [DIRECTION_INBOUND, DIRECTION_OUTBOUND]
@@ -176,8 +172,9 @@ static void show_brief_connection_statuses(struct show *s)
 
 /* Callback function from whack_briefconnectionstatus() -> walk_connection_tree() */
 static unsigned whack_briefconnectionstatus_cb(const struct whack_message *m UNUSED,
-					struct show *s,
-					struct connection *c)
+					       struct show *s,
+					       struct connection *c,
+					       struct connection_visitor_context *context UNUSED)
 {
 	show_brief_connection_status(s, c);
 	return 1; /* the connection counts */
@@ -198,8 +195,9 @@ void whack_briefconnectionstatus(const struct whack_message *m, struct show *s)
 	 * callback if found, which directly calls
 	 * show_brief_connection_status().
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_briefconnectionstatus_cb, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

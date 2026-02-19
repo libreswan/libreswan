@@ -1,59 +1,60 @@
-east# /testing/guestbin/swan-prep --46
+linuxeast# /testing/guestbin/swan-prep --46
 
-east# ipsec start
+linuxeast# ipsec start
 
 Redirecting to: systemctl start ipsec.service
 
-east# ../../guestbin/wait-until-pluto-started
+linuxeast# ../../guestbin/wait-until-pluto-started
 
 
-east# ipsec auto --add eastnet-westnet-ikev2
+linuxeast# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
-"eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-east# ipsec whack --impair suppress_retransmits
+linuxeast# ipsec whack --impair suppress_retransmits
 
-east# echo "initdone"
+linuxeast# echo "initdone"
 
 initdone
 
-netbsdw# ../../guestbin/prep.sh
+netbsdwest# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-netbsdw# ipsec start
+netbsdwest# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-netbsdw# ipsec auto --add eastnet-westnet-ikev2
+netbsdwest# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
-"eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdw# echo "initdone"
+netbsdwest# echo "initdone"
 
 initdone
 
-netbsdw# ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 
 down
 
-netbsdw# ipsec auto --up eastnet-westnet-ikev2
+netbsdwest# ipsec auto --up eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-westnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}, initiating IKE_AUTH
 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"eastnet-westnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 
-netbsdw# ipsec _kernel policy
+netbsdwest# ipsec _kernel policy
 
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
 	in ipsec
@@ -66,11 +67,11 @@ netbsdw# ipsec _kernel policy
 	spid=2 seq=0 pid=PID
 	refcnt=0
 
-netbsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 
 up
 
-netbsdw# ipsec _kernel state
+netbsdwest# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -95,11 +96,11 @@ netbsdw# ipsec _kernel state
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdw# ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 
 up
 
-netbsdw# ipsec _kernel state
+netbsdwest# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -124,5 +125,5 @@ netbsdw# ipsec _kernel state
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdw# dmesg | grep ipsec
+netbsdwest# dmesg | grep ipsec
 

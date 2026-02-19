@@ -95,7 +95,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	return true;
 }
 
-bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
+void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* TODO: This use must be allowed even with USE_SHA1=false */
 	static const struct hash_desc *hasher = &ike_alg_hash_sha1;
@@ -103,61 +103,81 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	passert(ike != NULL);
 	passert(md->iface != NULL);
 
-	/* must have both */
-	if (md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
-	    md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
-		return false;
-	}
-	/* table of both */
-	const struct pbs_in *(detection_payloads[]) = {
-		&md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP]->pbs,
-		&md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP]->pbs,
+	enum { SOURCE, DESTINATION, };
+
+	struct detection {
+		const enum v2_notification n;
+		const ip_endpoint endpoint;
+		const struct payload_digest *pd;
+		bool matched;
+	} detect[] = {
+		[SOURCE] = {
+			/* the peer sent from this source address */
+			.n = v2N_NAT_DETECTION_SOURCE_IP,
+			.endpoint = md->sender,
+		},
+		[DESTINATION] = {
+			/* ... to this destination address */
+			.n = v2N_NAT_DETECTION_DESTINATION_IP,
+			.endpoint = md->iface->local_endpoint,
+		},
 	};
 
-	/*
-	 * XXX: use the the IKE SPIs from the message header.
-	 *
-	 * The IKE_SA_INIT initiator doesn't know the responder's SPI
-	 * so will have sent hashes using a responder SPI of 0.
-	 *
-	 * On the other hand, the responder does no its own SPI and so
-	 * hashes against that.
-	 */
+	/* check both payloads are present */
 
-	/* First: one with my IP & port. */
-	struct crypt_mac hash_local = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						md->iface->local_endpoint,
-						ike->sa.logger);
-	/* Second: one with sender IP & port */
-	struct crypt_mac hash_remote = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						 md->sender, ike->sa.logger);
-
-	bool found_local = false;
-	bool found_remote = false;
-
-	for (const struct pbs_in **p = detection_payloads;
-	     p < detection_payloads + elemsof(detection_payloads);
-	     p++) {
-		passert(*p != NULL);
-		shunk_t hash = pbs_in_left(*p);
-		/* redundant, also checked by hunk_eq() */
-		if (hash.len != hasher->hash_digest_size)
-			continue;
-		/* ??? do we know from the isan_type which of these to test? */
-		/* XXX: should this check pbs_left(), see other code */
-		if (hunk_eq(hash, hash_local)) {
-			found_local = true;
-		}
-		if (hunk_eq(hash, hash_remote)) {
-			found_remote = true;
+	FOR_EACH_ELEMENT(d, detect) {
+		enum v2_pd pd = v2_pd_from_notification(d->n);
+		d->pd = md->pd[pd];
+		if (d->pd == NULL) {
+			name_buf nb;
+			ldbg(ike->sa.logger, "NAT: missing %s payload, NAT ignored",
+			     str_enum_short(&v2_notification_names, d->n, &nb));
+			return;
 		}
 	}
 
-	natd_lookup_common(&ike->sa, md->sender, found_local, found_remote);
-	return nat_traversal_detected(&ike->sa);
+	FOR_EACH_ELEMENT(d, detect) {
+
+		/*
+		 * XXX: use the the IKE SPIs from the message header.
+		 *
+		 * The IKE_SA_INIT initiator doesn't know the
+		 * responder's SPI so will use 0 for the responder's
+		 * SPI when computing the hash (which is what is in
+		 * the HEADER).
+		 *
+		 * The IKE_SA_INIT responder does know its own (and
+		 * peer) hash, hence, will use that when computing the
+		 * hash (again found in the header).
+		 */
+		struct crypt_mac computed_hash = natd_hash(hasher, &md->hdr.isa_ike_spis,
+							   d->endpoint, ike->sa.logger);
+		/*
+		 * Now extract what the peer sent over the wire.
+		 */
+		const struct pbs_in *pbs = &d->pd->pbs;
+		shunk_t wire_hash = pbs_in_left(pbs);
+		if (wire_hash.len != hasher->hash_digest_size) {
+			/* should this give up instead?  */
+			continue;
+		}
+
+		/*
+		 * Does what what the peer used for source /
+		 * destination address match what is found in the
+		 * message header?
+		 *
+		 * A mismatch indicates that the end is behind NAT.
+		 */
+		d->matched = hunk_eq(wire_hash, computed_hash);
+	}
+
+	detect_nat_common(ike, md->sender,
+			  /*found_me*/detect[DESTINATION].matched,
+			  /*found_peer*/detect[SOURCE].matched);
 }
 
-bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
+bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 {
 	/*
 	 * Float the local port to :PLUTO_NAT_PORT (:4500).  This
@@ -165,10 +185,11 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 */
 	if (ike->sa.st_iface_endpoint->esp_encapsulation_enabled) {
 		endpoint_buf b1;
-		dbg("NAT: #%lu not floating local port; interface %s supports encapsulated ESP "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating local port; interface %s supports encapsulated ESP "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     pri_where(where));
 	} else if (ike->sa.st_iface_endpoint->float_nat_initiator) {
 		/*
 		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
@@ -188,11 +209,12 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 			return false; /* must enable NAT */
 		}
 		endpoint_buf b1, b2;
-		dbg("NAT: #%lu floating local port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
-		    str_endpoint(&new_local_endpoint, &b2),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" floating local port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     str_endpoint(&new_local_endpoint, &b2),
+		     pri_where(where));
 		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
 		ike->sa.st_iface_endpoint = i;
 	} else {
@@ -212,13 +234,15 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 */
 	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint);
 	if (port_is_specified(ike->sa.st_connection->remote->host.config->ikeport)) {
-		dbg("NAT: #%lu not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
+		     pri_where(where));
 	} else if (remote_hport != IKE_UDP_PORT) {
-		dbg("NAT: #%lu not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
-		    ike->sa.st_serialno, remote_hport, pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno), remote_hport, pri_where(where));
 	} else {
 		pexpect(remote_hport == IKE_UDP_PORT);
 		/* same address+protocol; change port */
@@ -235,4 +259,125 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	}
 
 	return true;
+}
+
+/*
+ * this should only be called after packet has been
+ * verified/authenticated! (XXX: IKEv1?)
+ *
+ * Only called by IKE_AUTH.  Should IKE_SA_INIT have done this?
+ */
+
+void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
+{
+	struct logger *logger = ike->sa.logger;
+
+	if (ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
+	    md->iface->io->protocol == &ip_protocol_tcp) {
+		return;
+	}
+
+	/*
+	 * If source port/address has changed, update the IKE SA.
+	 */
+	if (!endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
+
+		endpoint_buf b1;
+		endpoint_buf b2;
+		ldbg(logger, "new NAT mapping for "PRI_SO", was %s, now %s",
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_remote_endpoint, &b1),
+		     str_endpoint(&md->sender, &b2));
+
+		/* update it */
+		ike->sa.st_remote_endpoint = md->sender;
+		ike->sa.hidden_variables.st_natd = endpoint_address(md->sender);
+		struct connection *c = ike->sa.st_connection;
+		if (is_instance(c)) {
+			/* update remote */
+			c->remote->host.addr = endpoint_address(md->sender);
+		}
+	}
+
+	/*
+	 * If interface type has changed, update local port (500/4500)
+	 */
+	if (md->iface != ike->sa.st_iface_endpoint) {
+		endpoint_buf b1, b2;
+		ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+		ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
+	}
+}
+
+/*
+ * see https://tools.ietf.org/html/rfc7296#section-2.23
+ *
+ * [...] SHOULD store this as the new address and port combination
+ * for the SA (that is, they SHOULD dynamically update the address).
+ * A host behind a NAT SHOULD NOT do this type of dynamic address
+ * update if a validated packet has different port and/or address
+ * values because it opens a possible DoS attack (such as allowing
+ * an attacker to break the connection with a single packet).
+ *
+ * The probe bool is used to signify we are answering a MOBIKE
+ * probe request (basically a informational without UPDATE_ADDRESS
+ */
+
+void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
+					  const struct msg_digest *md)
+{
+	struct logger *logger = ike->sa.logger;
+
+	/*
+	 * Only message responder.
+	 */
+	if (PBAD(logger, v2_msg_role(md) != MESSAGE_REQUEST)) {
+		return;
+	}
+
+	if (ike->sa.hidden_variables.st_nated_host) {
+		ldbg(logger, "NAT: skip update, IKE SA responder is behind NAT");
+	}
+
+	/* is there something to change? */
+	if (endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
+	    ike->sa.st_iface_endpoint == md->iface) {
+		ldbg(logger, "NAT: skip update, nothing changed");
+		return;
+	}
+
+	/* is the change allowed? */
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+		ldbg(logger, "NAT: can update, IKE SA responder hasn't yet established");
+	} else if (IS_IKE_SA_ESTABLISHED(&ike->sa) &&
+		   ike->sa.st_v2_mobike.enabled &&
+		   md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL) {
+		ldbg(logger, "NAT: can update, established MOBIKE responder");
+	} else {
+		/*
+		 * See above; would need to also update all SAs like
+		 * MOBIKE.
+		 */
+		llog_pexpect(logger, HERE, "NAT: can not update, established non-MOBIKE IKE SA isn't implemented");
+		return;
+	}
+
+	endpoint_buf osb, odb, nsb, ndb;
+	llog(RC_LOG, logger, "updating IKE SA endpoint from %s:%s->%s to %s:%s->%s",
+	     /*old*/
+	     ike->sa.st_iface_endpoint->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&ike->sa.st_iface_endpoint->local_endpoint, &osb),
+	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &odb),
+	     /*new*/
+	     md->iface->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&md->iface->local_endpoint, &nsb),
+	     str_endpoint_sensitive(&md->sender, &ndb));
+
+	ike->sa.st_remote_endpoint = md->sender;
+	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 }

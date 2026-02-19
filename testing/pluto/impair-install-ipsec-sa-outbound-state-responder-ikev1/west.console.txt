@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-east
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -68,8 +68,8 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
-timeout waiting 30 seconds for cat /tmp/pluto.log to match #3: IMPAIR: revival
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #3: revival'
+timeout waiting 30 seconds for cat /tmp/pluto.log to match IMPAIR: .* #3: revival
 output: |   a2 20 41 bf  60 3c eb f3  38 c2 94 76                . A.`<..8..v
 output: | **parse ISAKMP Message:
 output: |    initiator SPI: 7c 74 e1 e0  da 5c 55 9e

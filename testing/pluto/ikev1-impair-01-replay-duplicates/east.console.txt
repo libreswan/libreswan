@@ -11,7 +11,7 @@ IMPAIR: recording all inbound messages
 IMPAIR: replay duplicate of all inbound messages: no -> yes
 east #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -20,24 +20,24 @@ east #
 east #
  ipsec _kernel policy
 east #
- sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 1
+ sed -n -e '/IMPAIR: .*: start processing inbound duplicate/,/IMPAIR: .*: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 1
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 2
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 2
 "westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_R1
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 2
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 3
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 2
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 3
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 3
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 4
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 3
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 4
 "westnet-eastnet" #2: discarding packet received during asynchronous work (DNS or crypto) in STATE_QUICK_R0
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 4
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 5
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 5
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 6
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 4
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 5
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 5
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 6
 "westnet-eastnet" #1: ignoring Delete SA payload: IPsec PROTO_IPSEC_ESP SA with SPI SPISPI not found (maybe expired)
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 6
-packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 7
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound duplicate packet 7
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 6
+IMPAIR: packet from 192.1.2.45:500: start processing inbound duplicate packet 7
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound duplicate packet 7
 east #

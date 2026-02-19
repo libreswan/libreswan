@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-"north-east": added IKEv1 connection
+"north-east": added oriented IKEv1 connection
 north #
  ipsec whack --impair suppress_retransmits
 north #
@@ -48,7 +48,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add north-east
-"north-east": added IKEv1 connection
+"north-east": added oriented IKEv1 connection
 north #
  ipsec auto --up north-east
 "north-east" #1: initiating IKEv1 Aggressive Mode connection

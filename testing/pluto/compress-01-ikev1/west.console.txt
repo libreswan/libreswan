@@ -23,18 +23,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-compress
-"westnet-eastnet-compress": added IKEv1 connection
+"westnet-eastnet-compress": added oriented IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-compress
 "westnet-eastnet-compress": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-compress":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-compress":   my_updown=ipsec _updown;
+"westnet-eastnet-compress":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-compress":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-compress":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-compress":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-compress":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-compress":   sec_label:unset;
-"westnet-eastnet-compress":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-compress":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-compress":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-compress":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-compress":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -59,7 +59,7 @@ west #
 "westnet-eastnet-compress" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-compress" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-compress" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-compress" #2: sent Quick Mode request
 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #

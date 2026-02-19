@@ -46,7 +46,7 @@
 #include "lswalloc.h"
 
 #include "sysdep.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 #include "constants.h"
 
 #include "defs.h"
@@ -96,7 +96,7 @@ static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 static char *cisco_stringify(shunk_t str, bool *ok);
 
-/* see emit_mode_cfg_attrs() */
+/* see emit_mode_cfg_attr() */
 
 struct attrs {
 	bool ikev1_internal_ip4_address;
@@ -451,8 +451,10 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 			llog(RC_LOG, ike->sa.logger, "sending CISCO_SPLIT %s/%s",
 			     str_address(&addr, &ab), str_address(&mask, &mb));
 			struct CISCO_split_item i = {0};
-			memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
-			memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
+			shunk_t addr_buf = address_as_shunk(&addr);
+			shunk_t mask_buf = address_as_shunk(&mask);
+			memcpy_hunk(&i.cs_addr, addr_buf, sizeof(i.cs_addr));
+			memcpy_hunk(&i.cs_mask, mask_buf, sizeof(i.cs_mask));
 			if (!pbs_out_struct(&attrval, i, &CISCO_split_desc, NULL)) {
 				return false;
 			}
@@ -572,6 +574,7 @@ static bool emit_empty_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 
 static bool get_internal_address(struct ike_sa *ike)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
 	struct connection *c = ike->sa.st_connection;
 	/* our IKEv1 doesn't do IPv6 */
 	const struct ip_info *afi = &ipv4_info;
@@ -579,22 +582,14 @@ static bool get_internal_address(struct ike_sa *ike)
 	const char *from;
 	if (c->pool[afi->ip.version] != NULL) {
 
-		ip_address assigned_address;
-		diag_t d = assign_remote_lease(c, ike->sa.st_xauth_username, afi,
-					       /*preferred-address*/unset_address,
-					       &assigned_address,
-					       ike->sa.logger);
+		diag_t d = assign_remote_ikev1_lease(c, ike->sa.st_xauth_username, afi,
+						     /*preferred-address*/unset_address,
+						     verbose);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "leasing %s address failed: %s",
 			     afi->ip_name, str_diag(d));
 			pfree_diag(&d);
 			return false;
-		}
-
-		ldbg(c->logger, "another hack to get the SPD in sync");
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			spd->remote->client = selector_from_address(assigned_address);
-			spd_db_rehash_remote_client(spd);
 		}
 
 		from = "lease";
@@ -932,7 +927,7 @@ stf_status xauth_send_request(struct ike_sa *ike)
 			send_pbs_out_using_state(&ike->sa, "XAUTH: req (unrecorded)", &reply);
 		}
 	} else {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: Skipped sending XAUTH user/pass packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "skipped sending XAUTH user/pass packet");
 		if (p_state == STATE_AGGR_R2) {
 			/* record-only so we properly emulate packet drop */
 			record_outbound_v1_ike_msg(&ike->sa, &reply, "XAUTH: req");
@@ -1085,10 +1080,11 @@ static bool add_xauth_addresspool(struct connection *c,
 	 * Allows <address>, <address>-<address> and <address>/bits.
 	 */
 	ip_range pool_range;
-	err_t err = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
-	if (err != NULL) {
+	diag_t d = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
+	if (d != NULL) {
 		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
-		     addresspool, userid, err);
+		     addresspool, userid, str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -1116,7 +1112,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		addresspool_delref(&c->pool[IPv4], logger);
 	}
 
-	diag_t d = install_addresspool(pool_range, c->pool, logger);
+	d = install_addresspool(pool_from_range(pool_range), c->pool, logger);
 	if (d != NULL) {
 		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
 		     addresspool, userid, str_diag(d));
@@ -1132,7 +1128,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	selector_buf sb;
 	vdbg("%s selector formed from address pool %s",
 	     c->remote->config->leftright, str_selector(&selector, &sb));
-	append_end_selector(c->remote, selector, verbose.logger, HERE);
+	append_end_selector(c->remote, selector, verbose);
 
 	discard_connection_spds(c);
 	build_connection_spds_from_proposals(c);
@@ -1415,8 +1411,8 @@ static void xauth_launch_authent(struct ike_sa *ike,
 		return;
 #endif
 
-	char *arg_name = clone_hunk_as_string(*name, "NUL-terminated XAUTH name");
-	char *arg_password = clone_hunk_as_string(*password, "NUL-terminated XAUTH password");
+	char *arg_name = clone_hunk_as_string(name, "NUL-terminated XAUTH name");
+	char *arg_password = clone_hunk_as_string(password, "NUL-terminated XAUTH password");
 
 	/*
 	 * For XAUTH, we're flipping between retransmitting the packet
@@ -1693,7 +1689,6 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	struct attrs recv;
 
 	ldbg(ike->sa.logger, "arrived in modecfg_inR0");
 
@@ -1702,6 +1697,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	switch (ma->isama_type) {
 
 	case ISAKMP_CFG_REQUEST:
+	{
+		struct attrs recv = {0};
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			/* ??? this looks kind of fishy:
 			 * - what happens if attributes are repeated (resp cannot record that)?
@@ -1745,6 +1742,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 		zero(&ike->sa.st_v1_phase_2_iv);
 		break;
+	}
 
 	default:
 	{
@@ -1905,6 +1903,8 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 	struct logger *logger = ike->sa.logger;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 
 	struct attrs resp = {0};
 
@@ -1928,10 +1928,9 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			}
 
 			set_child_has_client(c, local, true);
-			ike->sa.hidden_variables.st_lease_ip = a;
-
 			const struct ip_info *afi = address_info(a);
-			c->local->child.lease[afi->ip.version] = a;
+			c->local->child.lease[IPv4] = cidr_from_address(a);
+			set_child_has_client(c, local, true);
 
 #if 0
 /*
@@ -2047,7 +2046,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 			/* potentially over-allocate */
 			discard_connection_spds(c);
-			alloc_connection_spds(c, nr_splits);
+			alloc_connection_spds(c, nr_splits, verbose);
 
 			unsigned split_nr = 0;
 			while (pbs_in_left(&split_attr).len > 0) {
@@ -2478,12 +2477,14 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 					if (ike->sa.st_xauth_password.ptr == NULL) {
 						const struct secret_preshared_stuff *pks =
-							xauth_secret_by_xauthname(ike->sa.st_xauth_username);
+							xauth_secret_by_xauthname(ike->sa.st_xauth_username,
+										  ike->sa.logger);
 						ldbg(ike->sa.logger, "looked up username=%s, got=%p",
 						    ike->sa.st_xauth_username,
 						    pks);
 						if (pks != NULL) {
-							ike->sa.st_xauth_password = clone_hunk(*pks, "saved xauth password");
+							ike->sa.st_xauth_password =
+								clone_hunk_as_chunk(pks, "saved xauth password");
 						}
 					}
 
@@ -2607,7 +2608,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: drop XAUTH R0 message ");
+		llog(IMPAIR_STREAM, ike->sa.logger, "drop XAUTH R0 message ");
 		return STF_FAIL_v1N;
 	}
 

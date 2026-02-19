@@ -229,14 +229,13 @@ void pfree(void *ptr)
 
 bool report_leaks(struct logger *logger)
 {
-	union mhdr *p,
-		*pprev = NULL;
+	union mhdr *pprev = NULL;
 	unsigned long n = 0;
 	unsigned long numleaks = 0;
 	unsigned long total = 0;
 
 	pthread_mutex_lock(&leak_detective_mutex);
-	p = allocs;
+	union mhdr *p = allocs;
 	while (p != NULL) {
 		passert(p->i.magic == LEAK_MAGIC);
 		passert(pprev == p->i.newer);
@@ -247,19 +246,21 @@ bool report_leaks(struct logger *logger)
 		    pprev->i.name != p->i.name ||
 		    pprev->i.size != p->i.size) {
 			/* filter out one-time leaks we prefer to not fix */
-			if (strstr(pprev->i.name, "(ignore)") == NULL) {
-				if (n != 1)
-					llog(RC_LOG, logger, "leak: %lu * %s, item size: %lu",
-						    n, pprev->i.name, pprev->i.size);
-				else
-					llog(RC_LOG, logger, "leak: %s, item size: %lu",
-						    pprev->i.name, pprev->i.size);
-				numleaks += n;
-				total += pprev->i.size;
+			if (strstr(pprev->i.name, "(ignore)") != NULL) {
 				n = 0;
-			} else {
-				n = 0;
+				continue;
 			}
+			if (n != 1)
+				llog(RC_LOG, logger, "leak: %lu * %s, item size: %lu; %p ...",
+				     n, pprev->i.name, pprev->i.size,
+				     /*public-pointer*/(pprev + 1));
+			else
+				llog(RC_LOG, logger, "leak: %s, item size: %lu; %p",
+				     pprev->i.name, pprev->i.size,
+				     /*public-pointer*/(pprev + 1));
+			numleaks += n;
+			total += pprev->i.size * n;
+			n = 0;
 		}
 	}
 	pthread_mutex_unlock(&leak_detective_mutex);

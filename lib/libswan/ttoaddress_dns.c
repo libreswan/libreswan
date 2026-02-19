@@ -23,25 +23,81 @@
  */
 
 #include <string.h>
+
+#ifdef USE_UNBOUND
+#include "dnssec.h"	/* for unbound_sync_resolve() et.al. */
+#else
 #include <netdb.h>		/* for freeaddrinfo(), getaddrinfo() */
 #include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
+#endif
 
 #include "passert.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "lswalloc.h"
+#include "lswlog.h"
 
 /*
  * ttoaddress_dns
  *
- * ??? numeric addresses are handled by getaddrinfo; perhaps the hex form is lost.
- * ??? change: we no longer filter out bad characters.  Surely getaddrinfo(3) does.
+ * ??? numeric addresses are handled by getaddrinfo; perhaps the hex
+ * form is lost.
+ *
+ * ??? change: we no longer filter out bad characters.  Surely
+ * getaddrinfo(3) does.
  */
-err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
+
+diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	*dst = unset_address;
 
-	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
+	/*
+	 * Try dotted IP first.
+	 *
+	 * While getaddrinfo() can handle a dotted IP, libunbound does
+	 * not.  More consistent to always try.
+	 */
+
+	diag_t d;
+	d = ttoaddress_num(src, afi, dst);
+	if (d == NULL) {
+		return NULL;
+	}
+	pfree_diag(&d);
+
+#ifdef USE_UNBOUND
+
+	char *name = clone_hunk_as_string(&src, __func__); /* must free */
+	d = NULL;
+
+	if (afi == NULL) {
+		/*
+		 * Unbound requires two explicit queries to implement
+		 * a wildcard family lookup.
+		 *
+		 * A better implementation needs to return multiple
+		 * addresses which would fit the
+		 * unimplemented-implemented ttoaddresses_dns().
+		 */
+		FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+			pfree_diag(&d);
+			d = unbound_sync_resolve(name, afi, dst,
+						 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+			if (d == NULL) {
+				break;
+			}
+		}
+	} else {
+		d = unbound_sync_resolve(name, afi, dst,
+					 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+	}
+
+	pfreeany(name);
+	return d;
+
+#else
+
+	char *name = clone_hunk_as_string(&src, "ttoaddress_dns"); /* must free */
 	struct addrinfo *res = NULL; /* must-free when EAI==0 */
 	int family = afi == NULL ? AF_UNSPEC : afi->af;
 	const struct addrinfo hints = (struct addrinfo) {
@@ -66,11 +122,11 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		/* RES is not defined */
 		switch (family) {
 		case AF_INET6:
-			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv6 address and name lookup failed (no validation performed)");
 		case AF_INET:
-			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv4 address and name lookup failed (no validation performed)");
 		default:
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)");
 		}
 	}
 
@@ -104,5 +160,6 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 
 	freeaddrinfo(res);
 	pfree(name);
-	return err;
+	return (err != NULL ? diag("%s", err) : NULL);
+#endif
 }

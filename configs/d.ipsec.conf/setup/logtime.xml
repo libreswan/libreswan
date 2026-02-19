@@ -1,0 +1,21 @@
+<varlistentry id='setup.logtime'>
+  <term>
+    <option>logtime=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      When pluto is directed to log to a file using
+      <option>logfile=</option>, this option determines whether or not
+      to log the current timestamp as prefix.  The &no; value can be
+      used to create logs without ephemeral timestamps, such as those
+      created when running the test suite.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+    <para>
+      Prior to &Libreswan; version 3.14, this option was called
+      <option>plutostderrlogtime</option>
+    </para>
+  </listitem>
+</varlistentry>

@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -37,7 +37,7 @@ west #
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
@@ -48,14 +48,15 @@ west #
  # TCP will succeed
 west #
  ipsec whack --impair trigger_revival:1
-"west": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
+IMPAIR: "west": dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 "west": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using TCP
 "west" #2: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "west" #2: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #2: sent IKE_AUTH request to 192.1.2.23:TCP/4500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESPinTCP <0xESPESP}
+"west" #2: processing IKE_AUTH response from 192.1.2.23:TCP/4500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west" #2: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west" #3: initiator established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #3: initiator established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -75,6 +76,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -85,6 +87,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24

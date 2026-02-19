@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk": added IKEv1 connection
+"westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
 west #
@@ -23,12 +23,12 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
-"westnet-eastnet-ipv4-psk" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending bogus KE (g^x) == 0 value to break DH calculations
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode I2
 "westnet-eastnet-ipv4-psk" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -40,7 +40,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk": added IKEv1 connection
+"westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection
@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ipv4-psk" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  echo done

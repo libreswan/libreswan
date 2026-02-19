@@ -53,7 +53,8 @@ extern bool match_v1_requested_ca(const struct ike_sa *ike,
 
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 			  const struct cert *end_cert,
-			  enum send_ca_policy send_policy);
+			  enum send_ca_policy send_policy,
+			  struct logger *logger);
 
 extern void free_auth_chain(chunk_t *chain, int chain_len);
 

@@ -104,7 +104,7 @@ bool ttolmod(shunk_t args, lmod_t *mod,
 			}
 			/* try bit mask second */
 			if (bits == LEMPTY) {
-				int ix = enum_match(info->names, arg);
+				int ix = enum_byname(info->names, arg);
 				if (ix >= 0) {
 					bits = LELEM(ix);
 				}

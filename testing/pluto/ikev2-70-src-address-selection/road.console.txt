@@ -26,7 +26,7 @@ road #
 opening file: /etc/ipsec.conf
 loading conns matching road:
   sending to pluto
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -36,9 +36,10 @@ road #
 "road"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP}
+"road"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
 "road"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.1
-"road"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.1/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.1/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ping6 -n -q -w 4 -c 2 192.0.2.254
 ping6: 192.0.2.254: Address family for hostname not supported
@@ -70,7 +71,7 @@ road #
 opening file: /etc/ipsec.conf
 loading conns matching road:
   sending to pluto
-ERROR: ipsec addconn: Pluto is not running (no "/run/pluto/foo"): No such file or directory (errno 2)
+ipsec addconn: ERROR: Pluto is not running (no "/run/pluto/foo"): No such file or directory (errno 2)
 road #
  echo done
 done
@@ -83,6 +84,7 @@ src 192.1.3.209 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -91,6 +93,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src 0.0.0.0/0 dst 192.0.3.1/32

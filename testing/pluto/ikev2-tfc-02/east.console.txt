@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add tfc
-"tfc": added IKEv2 connection
+"tfc": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -17,5 +17,5 @@ east #
  grep "setting TFC to" /tmp/pluto.log
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"tfc" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"tfc" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #

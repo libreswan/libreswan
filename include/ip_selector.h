@@ -25,6 +25,7 @@
 #include "ip_protocol.h"
 #include "ip_cidr.h"
 #include "ip_range.h"
+#include "ip_pool.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
 
@@ -61,18 +62,16 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u>"
-#define pri_selector(S)						\
-		((S)->ip.is_set ? "set" : "unset"),		\
-			(S)->ip.version,			\
-		((S)->ipproto > 255 ? "IPPROTO>255" :		\
-		 protocol_from_ipproto((S)->ipproto)->name),	\
-		pri_ip_bytes((S)->lo),				\
-		pri_ip_bytes((S)->hi),				\
+#define PRI_IP_SELECTOR "<selector-%s:"PRI_IP_VERSION"["PRI_IP_BYTES".."PRI_IP_BYTES"]//"PRI_IP_PROTOCOL"/%u>"
+#define pri_ip_selector(S)				\
+	((S)->ip.is_set ? "set" : "unset"),		\
+		pri_ip_version((S)->ip.version),	\
+		pri_ip_bytes((S)->lo),			\
+		pri_ip_bytes((S)->hi),			\
+		pri_ip_protocol((S)->ipproto),		\
 		(S)->hport
 
 void pexpect_selector(const ip_selector *s, where_t where);
-#define pselector(S) pexpect_selector(S, HERE)
 
 ip_selector selector_from_raw(where_t where, const struct ip_info *afi,
 			      const struct ip_bytes lo,
@@ -95,6 +94,8 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port);
 
+ip_selector selector_from_pool(const ip_pool pool);
+
 ip_selector selector_from_range(const ip_range range);
 ip_selector selector_from_range_protocol_port(const ip_range range,
 					      const struct ip_protocol *protocol,
@@ -105,8 +106,9 @@ ip_selector selector_from_address_protoport(const ip_address address,
 ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 					   const ip_protoport protoport);
 
-err_t ttoselector_num(shunk_t src, const struct ip_info *afi,
-		      ip_selector *dst, ip_address *nonzero_host);
+MUST_USE_RESULT
+diag_t ttoselector_num(shunk_t src, const struct ip_info *afi,
+		       ip_selector *dst, ip_address *nonzero_host);
 
 /* comma/space separated list */
 

@@ -8,18 +8,18 @@ west #
 west #
  ipsec auto --add west-east-ikev2
 "west-east-ikev2": adding interface eth1 192.1.2.45:UDP/2500 (NAT fixed)
-"west-east-ikev2": added IKEv2 connection
+"west-east-ikev2": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep west-east-ikev2
 "west-east-ikev2": 192.1.2.45:2500[@west]...192.1.2.23:4500[@east]; unrouted; my_ip=unset; their_ip=unset;
 "west-east-ikev2":   host: oriented; local: 192.1.2.45:2500; remote: 192.1.2.23:4500;
-"west-east-ikev2":   my_updown=ipsec _updown;
+"west-east-ikev2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "west-east-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "west-east-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "west-east-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "west-east-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "west-east-ikev2":   sec_label:unset;
-"west-east-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "west-east-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "west-east-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "west-east-ikev2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -44,8 +44,9 @@ west #
 "west-east-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/4500
 "west-east-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-east-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"west-east-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/4500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-east-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"west-east-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.1.2.23
 up
@@ -58,7 +59,7 @@ west #
  ipsec whack --rekey-child --name west-east-ikev2
 "west-east-ikev2" #3: initiating rekey to replace Child SA #2 using IKE SA #1
 "west-east-ikev2" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP}
-"west-east-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-east-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 "west-east-ikev2" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-east-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
@@ -73,6 +74,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -81,6 +83,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32

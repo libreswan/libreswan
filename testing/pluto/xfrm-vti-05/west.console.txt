@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti
-"westnet-eastnet-vti": added IKEv1 connection
+"westnet-eastnet-vti": added oriented IKEv1 connection
 west #
  # remove the regular route for 192.0.2.0/24
 west #
@@ -42,12 +42,12 @@ west #
 "westnet-eastnet-vti" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-vti" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-vti" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 0.0.0.0/0===0.0.0.0/0}
+"westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 0.0.0.0/0===0.0.0.0/0}
 "westnet-eastnet-vti" #2: sent Quick Mode request
-"westnet-eastnet-vti" #2: prepare-client output: net.ipv4.conf.vti0.disable_policy = 1
-"westnet-eastnet-vti" #2: prepare-client output: net.ipv4.conf.vti0.rp_filter = 0
-"westnet-eastnet-vti" #2: prepare-client output: net.ipv4.conf.vti0.forwarding = 1
-"westnet-eastnet-vti" #2: up-client output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
+"westnet-eastnet-vti" #2: command "prepare" output: net.ipv4.conf.vti0.disable_policy = 1
+"westnet-eastnet-vti" #2: command "prepare" output: net.ipv4.conf.vti0.rp_filter = 0
+"westnet-eastnet-vti" #2: command "prepare" output: net.ipv4.conf.vti0.forwarding = 1
+"westnet-eastnet-vti" #2: command "up" output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
 "westnet-eastnet-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # Without the sleep, XfrmInNoPols shows first packet sometimes goes out before policy is in place?

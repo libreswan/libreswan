@@ -34,7 +34,7 @@
 static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    const chunk_t Ni,
 				    const chunk_t Nr,
-				    /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
+				    /*const*/ PK11SymKey *ke_secret /* NSS doesn't do const */,
 				    struct logger *logger)
 {
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
@@ -51,7 +51,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
+	return crypt_derive(ke_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
 			    /*key,flags*/ 0, 0,
 			    HERE, logger);
@@ -98,14 +98,14 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *dh_secret,
+			    PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_FALSE,
-		.hKeygxy = PK11_GetSymKeyHandle(dh_secret),
+		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
 		.pCKYi = cky_i.ptr,
 		.ulCKYiLen = cky_i.len,
 		.pCKYr = cky_r.ptr,
@@ -128,14 +128,14 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
+			    PK11SymKey *skeyid_d, PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_TRUE,
-		.hKeygxy = PK11_GetSymKeyHandle(dh_secret),
+		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
 		.hPrevKey = PK11_GetSymKeyHandle(skeyid_d),
 		.pCKYi = cky_i.ptr,
 		.ulCKYiLen = cky_i.len,
@@ -159,14 +159,14 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
+			    PK11SymKey *skeyid_a, PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
 	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_TRUE,
-		.hKeygxy = PK11_GetSymKeyHandle(dh_secret),
+		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
 		.hPrevKey = PK11_GetSymKeyHandle(skeyid_a),
 		.pCKYi = cky_i.ptr,
 		.ulCKYiLen = cky_i.len,

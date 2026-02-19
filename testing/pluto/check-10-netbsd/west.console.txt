@@ -1,0 +1,20 @@
+ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:0:1::254/64 flags 0
+	inet 192.0.1.254/24 broadcast 192.0.1.255 flags 0
+west #
+ ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:1:2::45/64 flags 0
+	inet 192.1.2.45/24 broadcast 192.1.2.255 flags 0
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east_pubnet
+up
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_pubnet
+up
+west #
+ ../../guestbin/ping-once.sh --up 192.1.3.33 # north_nicnet
+up
+west #
+ ../../guestbin/ping-once.sh --up 192.0.1.15 # set_westnet
+up
+west #

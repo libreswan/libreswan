@@ -45,8 +45,9 @@ conn hostkey
 	rightsubnet=192.0.2.0/24
 	authby=ecdsa
 	rightckaid=<<CKAID#2>>
+	# left keyid: <<KEYID#1>>
 	leftpubkey=<<PEM-PUBKEY#1>>
 east #
  ipsec auto --add hostkey
-"hostkey": added IKEv2 connection
+"hostkey": added oriented IKEv2 connection
 east #

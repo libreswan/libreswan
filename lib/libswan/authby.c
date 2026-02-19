@@ -14,6 +14,7 @@
  */
 
 #include "authby.h"
+#include "auth.h"
 
 #include "constants.h"		/* for enum keyword_auth */
 #include "jambuf.h"
@@ -25,6 +26,7 @@
 	 (LHS).psk OP				\
 	 (LHS).rsasig OP			\
 	 (LHS).rsasig_v1_5 OP			\
+	 (LHS).eddsa OP				\
 	 (LHS).ecdsa)
 
 #define OP(LHS, OP, RHS)						\
@@ -34,6 +36,7 @@
 			.never = (LHS).never OP (RHS).never,		\
 			.psk = (LHS).psk OP (RHS).psk,			\
 			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
+			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
 			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
 			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
 		};							\
@@ -77,25 +80,23 @@ bool authby_le(struct authby lhs, struct authby rhs)
 	return REDUCE(le, &&);
 }
 
-bool authby_has_rsasig(struct authby lhs)
+bool auth_in_authby(enum auth auth, struct authby authby)
 {
-	return lhs.rsasig || lhs.rsasig_v1_5;
+	struct authby auth_bit = authby_from_auth(auth);
+	/* auth bit must be set */
+	return authby_is_set(authby_and(auth_bit, authby));
 }
 
-bool authby_has_ecdsa(struct authby lhs)
+bool digital_signature_in_authby(struct authby authby)
 {
-	return lhs.ecdsa;
+	return authby_is_set(authby_and(AUTHBY_DIGITAL_SIGNATURE, authby));
 }
 
-bool authby_has_digsig(struct authby lhs)
-{
-	return authby_has_ecdsa(lhs) || authby_has_rsasig(lhs);
-}
-
-enum keyword_auth auth_from_authby(struct authby authby)
+enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
 		authby.ecdsa ? AUTH_ECDSA :
+		authby.eddsa ? AUTH_EDDSA :
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
@@ -103,22 +104,17 @@ enum keyword_auth auth_from_authby(struct authby authby)
 		AUTH_UNSET);
 }
 
-struct authby authby_from_auth(enum keyword_auth auth)
+struct authby authby_from_auth(enum auth auth)
 {
 	switch (auth) {
-	case AUTH_RSASIG:
-		return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
-	case AUTH_ECDSA:
-		return (struct authby) { .ecdsa = true, };
-	case AUTH_PSK:
-		return (struct authby) { .psk = true, };
-	case AUTH_NULL:
-		return (struct authby) { .null = true, };
-	case AUTH_NEVER:
 	case AUTH_UNSET:
-		return (struct authby) { .never = true, };
-	case AUTH_EAPONLY:
-		return (struct authby) {0};
+	case AUTH_NEVER: return (struct authby) { .never = true, };
+	case AUTH_NULL: return (struct authby) { .null = true, };
+	case AUTH_PSK: return (struct authby) { .psk = true, };
+	case AUTH_ECDSA: return (struct authby) { .ecdsa = true, };
+	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
+	case AUTH_RSASIG: return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
+	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
 }
@@ -138,6 +134,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(psk, PSK);
 	JAM_AUTHBY(rsasig, RSASIG);
 	JAM_AUTHBY(ecdsa, ECDSA);
+	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
 	JAM_AUTHBY(rsasig_v1_5, RSASIG_v1_5);

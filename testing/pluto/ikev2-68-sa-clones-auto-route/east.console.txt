@@ -33,24 +33,24 @@ Mar 29 20:38:04 east pluto[675]: leak: string logger, item size: 56
 Mar 29 20:38:04 east pluto[675]: leak: string logger prefix, item size: 12
 Mar 29 20:38:04 east pluto[675]: leak detective found 30 leaks, total size 1166
 Mar 29 20:38:04 east systemd[1]: ipsec.service: Main process exited, code=exited, status=1/FAILURE
-Mar 29 20:38:04 east ipsec[679]: FATAL ERROR: ipsec addconn: /etc/ipsec.conf:16: unrecognized keyword 'clones'
+Mar 29 20:38:04 east ipsec[679]: ipsec addconn: FATAL ERROR: /etc/ipsec.conf:16: unrecognized keyword 'clones'
 Mar 29 20:38:04 east systemd[1]: ipsec.service: Failed with result 'exit-code'.
 Mar 29 20:38:04 east systemd[1]: Failed to start ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec.
 east #
  ipsec auto --add eastnet
-FATAL ERROR: ipsec addconn: /etc/ipsec.conf:16: unrecognized keyword 'clones'
+ipsec addconn: FATAL ERROR: /etc/ipsec.conf:16: unrecognized keyword 'clones'
 east #
  ipsec auto --status | grep eastnet
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 east #
  ipsec whack --impair suppress_retransmits
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 east #
  # policies and state should be multiple
 east #
@@ -59,5 +59,5 @@ east #
  ipsec _kernel policy
 east #
  ipsec auto --status | grep westnet-eastnet
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 east #

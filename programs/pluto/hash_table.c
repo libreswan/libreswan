@@ -24,6 +24,7 @@ const hash_t zero_hash = { 0 };
 
 void init_hash_table(struct hash_table *table, struct logger *logger)
 {
+	PEXPECT(logger, in_main_thread());
 	ldbg(logger, "initialize %s hash table", table->info->name);
 	for (unsigned i = 0; i < table->nr_slots; i++) {
 		struct list_head *slot = &table->slots[i];
@@ -47,11 +48,13 @@ hash_t hash_bytes(const void *ptr, size_t len, hash_t hash)
 
 struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
 {
+	PEXPECT(&global_logger, in_main_thread());
 	return &table->slots[hash.hash % table->nr_slots];
 }
 
 void init_hash_table_entry(struct hash_table *table, void *data)
 {
+	PEXPECT(&global_logger, in_main_thread());
 	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
@@ -63,6 +66,7 @@ void init_hash_table_entry(struct hash_table *table, void *data)
 
 void add_hash_table_entry(struct hash_table *table, void *data)
 {
+	PEXPECT(&global_logger, in_main_thread());
 	struct list_entry *entry = table->entry(data);
 	hash_t hash = table->hasher(data);
 	struct list_head *bucket = hash_table_bucket(table, hash);
@@ -77,6 +81,7 @@ void add_hash_table_entry(struct hash_table *table, void *data)
 
 void del_hash_table_entry(struct hash_table *table, void *data)
 {
+	PEXPECT(&global_logger, in_main_thread());
 	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
@@ -96,7 +101,7 @@ void del_hash_table_entry(struct hash_table *table, void *data)
  */
 
 static void check_hash_table_entry(struct hash_table *table, void *data,
-				   struct logger *logger, where_t where)
+				   const struct logger *logger, where_t where)
 {
 	hash_t hash = table->hasher(data);
 	/* not inserted (might passert) */
@@ -135,14 +140,15 @@ static void check_hash_table_entry(struct hash_table *table, void *data,
 	}
 }
 
-void check_hash_table(struct hash_table *table, struct logger *logger)
+void check_hash_table(struct hash_table *table, const struct logger *logger, where_t where)
 {
+	PEXPECT(logger, in_main_thread());
 	for (unsigned n = 0; n < table->nr_slots; n++) {
 		const struct list_head *table_bucket = &table->slots[n];
 		void *bucket_data;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, table_bucket) {
 			/* overkill */
-			check_hash_table_entry(table, bucket_data, logger, HERE);
+			check_hash_table_entry(table, bucket_data, logger, where);
 		}
 	}
 }

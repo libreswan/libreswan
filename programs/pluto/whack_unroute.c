@@ -23,14 +23,15 @@
 #include "connections.h"
 
 static unsigned whack_unroute_connections(const struct whack_message *m UNUSED,
-					  struct show *s, struct connection *c)
+					  struct show *s, struct connection *c,
+					  struct connection_visitor_context *context UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	connection_addref(c, logger);
 	{
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		terminate_and_down_and_unroute_connections(c, HERE);
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 	}
 	connection_delref(&c, logger);
 	return 1;
@@ -45,9 +46,9 @@ void whack_unroute(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	visit_root_connection(m, s, whack_unroute_connections,
-			      /*alias_order*/NEW2OLD,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
+			       whack_unroute_connections, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

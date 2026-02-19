@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -22,12 +22,12 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending an empty KE value
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: sending an empty KE value
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
@@ -41,10 +41,10 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #2: KE has 0 byte DH public value; 64 required
+"westnet-eastnet-ipv4-psk-ikev2" #2: responder IKE_SA_INIT KE payload is 0 bytes; 64 required
 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state IKE_SA_INIT_I
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done

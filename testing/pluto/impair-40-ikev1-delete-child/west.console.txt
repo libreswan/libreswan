@@ -8,7 +8,7 @@ west #
 west #
  ipsec auto --add west-east
 "west-east": ikev2=no has been replaced by keyexchange=ikev1
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -21,7 +21,7 @@ west #
 "west-east" #1: Peer ID is FQDN: '@east'
 "west-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
+"west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -34,8 +34,8 @@ west #
  ipsec auto --delete west-east
 "west-east": terminating SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"west-east" #2: IMPAIR: emitting duplicate IPsec delete payloads
+IMPAIR: "west-east" #2: emitting duplicate IPsec delete payloads
 "west-east" #2: ESP traffic information: in=0B out=0B
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-"west-east" #1: IMPAIR: emitting duplicate ISKMP delete payloads
+IMPAIR: "west-east" #1: emitting duplicate ISKMP delete payloads
 west #

@@ -1,0 +1,19 @@
+<varlistentry id='conn.retransmit-interval'>
+  <term>
+    <option>retransmit-interval=&milliseconds;</option>
+  </term>
+  <listitem>
+    <para>
+      the initial interval time period, specified in msecs, that pluto
+      waits before retransmitting an IKE packet. This interval is
+      doubled for each attempt (exponential back-off).  The default
+      set by
+      &ipsec-pluto.8;,
+      currently is <option>500</option>.
+    </para>
+    <para>
+      See also: <option>retransmit-timeout</option> and
+      <option>rekey</option>
+    </para>
+  </listitem>
+</varlistentry>

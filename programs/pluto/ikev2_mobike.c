@@ -39,7 +39,7 @@
 #include "ikev2_send.h"
 #include "iface.h"
 #include "kernel.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "ipsecconf/confread.h"
 #include "ikev2_message.h"
 #include "routing.h"
@@ -61,6 +61,7 @@ static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
  */
 static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
 	const struct ip_info *afi = endpoint_info(md->iface->local_endpoint);
 
@@ -127,8 +128,10 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		 str_endpoint_sensitive(&old_endpoint, &old),
 		 str_endpoint_sensitive(&new_endpoint, &new));
 
-	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
-	    ike->sa.st_serialno, buf);
+	ldbg(ike->sa.logger, PRI_SO" pst="PRI_SO" %s",
+	     pri_so(child->sa.st_serialno),
+	     pri_so(ike->sa.st_serialno),
+	     buf);
 
 	if (endpoint_eq_endpoint(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
@@ -153,16 +156,16 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_v2_mobike.local_endpoint);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
-		    c->local->host.port, endpoint_hport(child->sa.st_v2_mobike.local_endpoint));
+		ldbg(logger, "%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
+		     c->local->host.port, endpoint_hport(child->sa.st_v2_mobike.local_endpoint));
 		c->local->host.port = endpoint_hport(child->sa.st_v2_mobike.local_endpoint);
 		c->local->host.nexthop = child->sa.st_v2_mobike.host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
-		    c->remote->host.port, endpoint_hport(md->sender));
+		ldbg(logger, "%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
+		     c->remote->host.port, endpoint_hport(md->sender));
 		c->remote->host.port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
@@ -183,9 +186,10 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	 *
 	 * Since IKE holds a reference to C, C can't be deleted.
 	 */
-	if (!orient(c, ike->sa.logger)) {
+	orient(c, VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+	if (!oriented(c)) {
 		llog_pexpect(ike->sa.logger, HERE,
-			     "%s after mobike failed", "orient");
+			     "orient() after mobike failed");
 		return false;
 	}
 
@@ -196,8 +200,9 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		child->sa.st_v2_mobike.deleted_local_addr = unset_address;
 		if (dpd_active_locally(child->sa.st_connection) &&
 		    child->sa.st_v2_liveness_event == NULL) {
-			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
-			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay, deltatime(MIN_LIVENESS));
+			ldbg(logger, "dpd re-enabled after mobike, scheduling ikev2 liveness checks");
+			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay,
+							  deltatime_from_seconds(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 		}
 	}
@@ -258,11 +263,11 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	if (md->pd[PD_v2N_COOKIE2] != NULL) {
 		shunk_t tmp = pbs_in_left(&md->pd[PD_v2N_COOKIE2]->pbs);
 		if (tmp.len > IKEv2_MAX_COOKIE_SIZE) {
-			dbg("MOBIKE COOKIE2 notify payload too big - ignored");
+			ldbg(logger, "MOBIKE COOKIE2 notify payload too big - ignored");
 		} else {
 			cookie2 = tmp;
 			if (LDBGP(DBG_BASE, logger)) {
-				LDBG_log_hunk(logger, "MOBIKE COOKIE2 received:", cookie2);
+				LDBG_log_hunk(logger, "MOBIKE COOKIE2 received:", &cookie2);
 			}
 		}
 	}
@@ -274,7 +279,8 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			if (!update_mobike_endpoints(ike, md))
 				ntfy_natd = false;
-			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+			/* update state sender so we can find it for IPsec SA */
+			natify_ikev2_ike_responder_endpoints(ike, md);
 		}
 	}
 
@@ -292,7 +298,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		llog_sa(RC_LOG, ike,
 			  "MOBIKE request: updating IPsec SA by request");
 	} else {
-		dbg("MOBIKE request: not updating IPsec SA");
+		ldbg(logger, "MOBIKE request: not updating IPsec SA");
 	}
 
 	if (ntfy_natd) {
@@ -305,9 +311,10 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	bool may_mobike = mobike_check_established(ike);
 	if (!may_mobike) {
-		dbg("MOBIKE response: not updating IPsec SA");
+		ldbg(logger, "MOBIKE response: not updating IPsec SA");
 		return;
 	}
 
@@ -318,20 +325,19 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 
 	/* XXX: keep testsuite happy */
 	if (natd_s) {
-		dbg("TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response ");
+		ldbg(logger, "TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response ");
 	}
 	if (natd_d) {
-		dbg("TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
-	}
-
-	if (ret && !update_mobike_endpoints(ike, md)) {
-		/* IPs already updated from md */
-		dbg("MOBIKE response: update MOBIKE failed; not updating IPsec SA");
-		return;
+		ldbg(logger, "TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
 	}
 
 	llog_sa(RC_LOG, ike, "MOBIKE response: updating IPsec SA");
-	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+	if (ret && !update_mobike_endpoints(ike, md)) {
+		/* IPs already updated from md */
+		ldbg(logger, "MOBIKE response: update MOBIKE failed; not updating IPsec SA");
+		return;
+	}
+
 	return;
 }
 
@@ -350,8 +356,7 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 		 * XXX: hopefully this call doesn't muddle the IKE
 		 * Message IDs.
 		 */
-		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* restore established address and interface */
 		ike->sa.st_remote_endpoint = old_remote;
 		ike->sa.st_iface_endpoint = old_interface; /* restore-old */
@@ -361,8 +366,9 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 				  struct pbs_out *pbs, struct ike_sa *ike)
 {
-	dbg("adding NATD%s payloads to MOBIKE response",
-	    cookie2.len != 0 ? " and cookie2" : "");
+	struct logger *logger = ike->sa.logger;
+	ldbg(logger, "adding NATD%s payloads to MOBIKE response",
+	     cookie2.len != 0 ? " and cookie2" : "");
 	/* assumptions from ikev2_out_nat_v2n() and caller */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
@@ -388,15 +394,15 @@ static bool add_mobike_payloads(struct ike_sa *ike,
 	return true;
 }
 
-void record_newaddr(ip_address *ip, char *a_type)
+void record_newaddr(ip_address *ip, char *a_type, struct logger *logger)
 {
 	address_buf ip_str;
-	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
+	ldbg(logger, "XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
@@ -423,22 +429,22 @@ void record_newaddr(ip_address *ip, char *a_type)
 					       &ike->sa);
 			} else {
 				address_buf b;
-				dbg(PRI_SO" MOBIKE ignore address %s change pending previous",
-				    ike->sa.st_serialno, str_address_sensitive(ip, &b));
+				ldbg(ike->sa.logger, PRI_SO" MOBIKE ignore address %s change pending previous",
+				     pri_so(ike->sa.st_serialno), str_address_sensitive(ip, &b));
 			}
 		}
 	}
 }
 
-void record_deladdr(ip_address *ip, char *a_type)
+void record_deladdr(ip_address *ip, char *a_type, struct logger *logger)
 {
 	address_buf ip_str;
-	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
+	ldbg(logger, "XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
@@ -482,13 +488,13 @@ void record_deladdr(ip_address *ip, char *a_type)
 		event_delete(EVENT_v2_LIVENESS, &child->sa);
 
 		if (ike->sa.st_v2_addr_change_event == NULL) {
-			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), &ike->sa);
+			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime_from_seconds(0), &ike->sa);
 		} else {
 			address_buf o, n;
-			dbg(PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
-			    ike->sa.st_serialno,
-			    str_address(ip, &n),
-			    str_address(&ip_p, &o));
+			ldbg(ike->sa.logger, PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
+			     pri_so(ike->sa.st_serialno),
+			     str_address(ip, &n),
+			     str_address(&ip_p, &o));
 		}
 	}
 }
@@ -518,26 +524,24 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = 
 static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_mobike_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_mobike_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_mobike_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
 };
 
 const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "MOBIKE probe",
+	.name = "INFORMATIONAL (MOBIKE probe)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_mobike_initiate_transition,
-	.response = &v2_INFORMATIONAL_mobike_response_transitions,
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
+	},
 };
 
 static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
@@ -588,8 +592,7 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	}
 
 	v2_msgid_finish(ike, NULL/*md*/, HERE);
-	send_recorded_v2_message(ike, "mobike informational request",
-				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+	send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 }
 
 static void initiate_mobike_probe(struct ike_sa *ike,
@@ -603,11 +606,11 @@ static void initiate_mobike_probe(struct ike_sa *ike,
 
 	address_buf g;
 	endpoint_buf lb, rb;
-	dbg(PRI_SO" MOBIKE new local %s remote %s and gateway %s",
-	    ike->sa.st_serialno,
-	    str_endpoint(&new_iface->local_endpoint, &lb),
-	    str_endpoint(&ike->sa.st_remote_endpoint, &rb),
-	    str_address(&new_nexthop, &g));
+	ldbg(ike->sa.logger, PRI_SO" MOBIKE new local %s remote %s and gateway %s",
+	     pri_so(ike->sa.st_serialno),
+	     str_endpoint(&new_iface->local_endpoint, &lb),
+	     str_endpoint(&ike->sa.st_remote_endpoint, &rb),
+	     str_address(&new_nexthop, &g));
 	/*
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
@@ -638,8 +641,8 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 		find_iface_endpoint_by_local_endpoint(local_endpoint); /* must delref */
 	if (iface == NULL) {
 		endpoint_buf b;
-		dbg(PRI_SO" no interface for %s try to initialize",
-		    ike->sa.st_serialno, str_endpoint(&local_endpoint, &b));
+		ldbg(ike->sa.logger, PRI_SO" no interface for %s try to initialize",
+		     pri_so(ike->sa.st_serialno), str_endpoint(&local_endpoint, &b));
 		find_ifaces(false, ike->sa.logger);
 		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
@@ -683,8 +686,8 @@ void ikev2_addr_change(struct state *ike_sa)
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
-		dbg(PRI_SO" no local gateway to reach %s",
-		    ike->sa.st_serialno, str_address(&dest, &b));
+		ldbg(ike->sa.logger, PRI_SO" no local gateway to reach %s",
+		     pri_so(ike->sa.st_serialno), str_address(&dest, &b));
 		break;
 	}
 	case ROUTE_SOURCE_FAILED:

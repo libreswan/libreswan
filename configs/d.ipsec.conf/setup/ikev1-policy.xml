@@ -1,0 +1,52 @@
+<varlistentry id='setup.ikev1-policy'>
+  <term>
+    <option>ikev1-policy={drop,accept,reject}</option>
+  </term>
+  <listitem>
+    <para>
+      What to do with received &IKEv1; packets.
+    </para>
+    <para>
+      Valid options are:
+      <variablelist>
+	<varlistentry>
+	  <term>
+	    <option>drop</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      silently drop any received IKEv1 packet
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>accept</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      accept &IKEv1; connections
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>reject</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      reply with an error.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+      If this option is set to drop or reject, an attempt to load an
+      IKEv1 connection will fail, as these connections would never be
+      able to receive a packet for processing.
+    </para>
+    <para>
+      The default is <literal>drop</literal>.
+    </para>
+  </listitem>
+</varlistentry>
+

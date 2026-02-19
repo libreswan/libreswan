@@ -50,7 +50,7 @@ typedef struct { struct timeval rt; } realtime_t;
 
 extern const realtime_t realtime_epoch;
 
-realtime_t realtime(time_t seconds);
+realtime_t realtime_from_seconds(time_t seconds);
 diag_t ttorealtime(const char *time, realtime_t *rt);
 
 /*

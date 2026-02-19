@@ -19,12 +19,14 @@
  * for more details.
  */
 
-#ifndef USE_DNSSEC
-# error this file should only be compiled when DNSSEC is defined
-#endif
-
 #include <arpa/inet.h>	/* for inet_ntop */
 #include <arpa/nameser.h>
+
+#ifndef USE_UNBOUND
+# error this file should only be compiled when USE_UNBOUND
+#endif
+#include <unbound.h>
+#include <unbound-event.h>
 
 #include "ttodata.h"
 #include "ip_address.h"
@@ -47,6 +49,8 @@
 
 #define LDNS_RR_TYPE_A 1
 #define LDNS_RR_TYPE_IPSECKEY 45
+
+static struct ub_ctx *ipseckey_unbound_ctx;
 
 static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 				       struct p_dns_req *dnsr,
@@ -113,7 +117,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		diag_t d = unpack_dns_pubkey(keyid, /*dns_auth_level*/al,
 					     dns_pubkey->algorithm_type,
 					     install_time,
-					     realtime_add(install_time, deltatime(ttl_used)),
+					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
 					     ttl,
 					     dns_pubkey->pubkey,
 					     &pubkey,
@@ -266,7 +270,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	ike->sa.ipseckey_fwd_dnsr = NULL;
 
 	if (ike->sa.ipseckey_dnsr != NULL) {
-		dbg("wait for IPSECKEY DNS response %s", dnsr->qname);
+		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;
@@ -325,7 +329,7 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	ike->sa.ipseckey_dnsr = NULL;
 
 	if (ike->sa.ipseckey_fwd_dnsr != NULL) {
-		dbg("wait for additional DNS A/AAAA check %s", dnsr->qname);
+		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;
@@ -396,6 +400,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	}
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
+	p->ctx = ipseckey_unbound_ctx;
 	p->so_serial = ike->sa.st_serialno;
 	p->md = md_addref(md);
 	p->callback = callback;
@@ -531,4 +536,24 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	}
 
 	return DNS_FATAL;
+}
+
+void init_ikev2_ipseckey(struct event_base *event_base,
+			 struct logger *logger)
+{
+	ldbg(logger, "allocating ipseckey's unbound ctx");
+	ipseckey_unbound_ctx = ub_ctx_create_event(event_base);
+	if (ipseckey_unbound_ctx == NULL) {
+		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0,
+		      "failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_UNBOUND");
+	}
+
+	unbound_ctx_config(ipseckey_unbound_ctx, dnssec_config_singleton(logger), logger);
+}
+
+void shutdown_ikev2_ipseckey(const struct logger *logger)
+{
+	ldbg(logger, "freeing ipseckey's unbound ctx");
+	ub_ctx_delete(ipseckey_unbound_ctx);
+	ipseckey_unbound_ctx = NULL;
 }

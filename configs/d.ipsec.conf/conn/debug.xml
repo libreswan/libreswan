@@ -1,0 +1,19 @@
+<varlistentry id='conn.debug'>
+  <term>
+    <option>debug=<replaceable>option</replaceable></option>
+  </term>
+  <listitem>
+    <para>
+      A comma separated list of options that enable internal debug
+      logs of the connection.  For more information see the global
+      <option>plutodebug=</option> option.
+    </para>
+    <note>
+      <para>
+	This feature is used by &Libreswan;
+	developers.  The default logs should provide sufficient
+	information to diagnose configuration and connection problems.
+      </para>
+    </note>
+  </listitem>
+</varlistentry>

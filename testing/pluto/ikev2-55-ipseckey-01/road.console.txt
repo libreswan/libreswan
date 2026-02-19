@@ -11,7 +11,7 @@ road #
 10 0 2 . AwEAAasDxPUyLuhFFZlzgCej1aRIIWI5ht+oiNbOiy1bzvtNHlc7+HNd F6R6MoAcOmaLTCcX5m6srseCyjmcdUF9S926OEv+f4k9Um3Iux30nZ6N C1AJ0P5MIbsCxMf9FyDwYjtYRuA82vy71ekGA6SPklU/K6uV35iGvOgA lTH8lbovm1ZDTWbGSowA+ZXnug4YAz7i/PRQ2oa9iZLwurf+lqqLZgNb 4zrAqLGxrygcNSZOIv22rBdAnOr/T2Op1gBSjNkQ/9dFGpAtD6bJb4Uy B+538334R7xyQfURvcK+lq1eICdC7GecQzECuS3AfHvwuDkkqQ+/ml2p GSp3UbiYmcxyFnhmf6SRfuwOO+tZz6W/MGW4OCRjWTANIpBMAMKIZH60 z2xVDiBSHUvjTBqysepn/4qiEWPmBP02Wu/tHqRwuZHMaaZ7CS6jEzBn QSW95OBmcfDO1DevxrE6aXh+GpNHB8pNxAhFk+0rXgMnKsDX4mjO7neq Z/rOLGIjMONksddkKu84B3BLizD6nFtX
 road #
  ipsec auto --add road-east-ikev2
-"road-east-ikev2": added IKEv2 connection
+"road-east-ikev2": added oriented IKEv2 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #
@@ -34,8 +34,9 @@ road #
 "road-east-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-east-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@road.testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"road-east-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road-east-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"road-east-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-east-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  # there should be two public keys. including road
 road #

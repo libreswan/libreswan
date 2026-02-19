@@ -48,7 +48,7 @@
 #include "pluto_x509.h"
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "packet.h"
@@ -75,7 +75,7 @@
 #include "ikev2_send.h"
 #include "pluto_stats.h"
 #include "ipsecconf/confread.h"		/* for struct starter_end */
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "impair.h"
 #include "ikev2_message.h"
 #include "ikev2_notification.h"
@@ -160,11 +160,11 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 
 		lset_t hash_bit = LELEM(h_value);
 		if (!(sighash_policy & hash_bit)) {
-			dbg("digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
+			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
 			continue;
 		}
 
-		dbg("digsig: received and accepted hash algorithm %s", hash->common.fqn);
+		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s", hash->common.fqn);
 		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
 	}
 	return true;
@@ -204,22 +204,22 @@ void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
-			       const struct dh_desc *accepted_dh,
+			       const struct kem_desc *accepted_kem,
 			       enum payload_security security)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
+	int ke_kem = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_kem;
 
-	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
+	if (accepted_kem->ikev2_alg_id != ke_kem) {
 		name_buf ke_esb;
 		llog(RC_LOG, st->logger,
 		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-		     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
-		     accepted_dh->common.fqn);
-		pstats(invalidke_sent_u, ke_group);
-		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+		     str_enum_short(&ikev2_trans_type_kem_names, ke_kem, &ke_esb),
+		     accepted_kem->common.fqn);
+		pstats(invalidke_sent_u, ke_kem);
+		pstats(invalidke_sent_s, accepted_kem->ikev2_alg_id);
 		/* convert group to a raw buffer */
-		uint16_t gr = htons(accepted_dh->group);
+		uint16_t gr = htons(accepted_kem->ikev2_alg_id);
 		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_KE_PAYLOAD, THING_AS_SHUNK(gr),
 				    security);
@@ -227,8 +227,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	}
 
 	/* ike sa init */
-	if (!unpack_KE(&st->st_gi, "Gi", accepted_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], st->logger)) {
+	if (!extract_KE(st, accepted_kem, md)) {
 		/* already logged? */
 		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_SYNTAX, empty_shunk,
@@ -282,8 +281,8 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 
 		id_buf thatid;
 		endpoint_buf ra;
-		LDBG_log(logger, "%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
-			 c->name, ike->sa.st_serialno,
+		LDBG_log(logger, "%s "PRI_SO" not fetching ipseckey %s%s remote=%s thatid=%s",
+			 c->name, pri_so(ike->sa.st_serialno),
 			 err1, err2,
 			 str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 			 str_id(&id, &thatid));
@@ -291,56 +290,12 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	return false;
 }
 
-/*
- * package up the calculated KE value, and emit it as a KE payload.
- * used by IKEv2: parent, child (PFS)
- */
-bool emit_v2KE(chunk_t g, const struct dh_desc *group,
-	       struct pbs_out *outs)
-{
-	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting KE payload");
-		return true;
-	}
-
-	struct pbs_out kepbs;
-
-	struct ikev2_ke v2ke = {
-		.isak_group = group->common.id[IKEv2_ALG_ID],
-	};
-
-	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
-		return false;
-
-	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
-		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
-		/* Only used to test sending/receiving bogus g^x */
-		if (!pbs_out_repeated_byte(&kepbs, byte, g.len, "ikev2 impair KE (g^x) == 0")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		llog(RC_LOG, outs->logger, "IMPAIR: sending an empty KE value");
-		if (!pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	} else {
-		if (!out_hunk(g, &kepbs, "ikev2 g^x"))
-			return false;
-	}
-
-	close_output_pbs(&kepbs);
-	return true;
-}
-
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t pred)
 {
 	struct state *rst = state_by_serialno(pred);
 	if (rst == NULL) {
-		ldbg_sa(larval, "rekeyed #%lu; the state is already is gone", pred);
+		ldbg_sa(larval, "rekeyed "PRI_SO"; the state is already is gone",
+			pri_so(pred));
 		return;
 	}
 
@@ -349,14 +304,15 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	 */
 
 	const struct state_event *lifetime_event = st_v2_lifetime_event(rst);
-	deltatime_t lifetime = deltatime(0);
+	deltatime_t lifetime = deltatime_from_seconds(0);
 	if (lifetime_event != NULL) {
 		lifetime = monotime_diff(lifetime_event->ev_time, mononow());
 	}
 
 	deltatime_buf lb;
-	ldbg_sa(larval, "rekeyed #%lu; expire it remaining life %ss",
-		pred, (lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
+	ldbg_sa(larval, "rekeyed "PRI_SO"; expire it remaining life %ss",
+		pri_so(pred),
+		(lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		/* replace the REPLACE/EXPIRE event */
@@ -419,16 +375,16 @@ void schedule_v2_replace_event(struct state *st)
 			rekey_delay = deltatime_sub(lifetime, marg);
 		} else {
 			rekey_delay = lifetime;
-			marg = deltatime(0);
+			marg = deltatime_from_seconds(0);
 		}
 		st->st_replace_margin = marg;
 
 		/* Time to rekey/reauth; scheduled once during a state's lifetime.*/
 		deltatime_buf rdb, lb;
-		dbg(PRI_SO" will start re-keying in %s seconds (replace in %s seconds)",
-		    st->st_serialno,
-		    str_deltatime(rekey_delay, &rdb),
-		    str_deltatime(lifetime, &lb));
+		ldbg(st->logger, PRI_SO" will start re-keying in %s seconds (replace in %s seconds)",
+		     pri_so(st->st_serialno),
+		     str_deltatime(rekey_delay, &rdb),
+		     str_deltatime(lifetime, &lb));
 		event_schedule(EVENT_v2_REKEY, rekey_delay, st);
 		pexpect(st->st_v2_rekey_event->ev_type == EVENT_v2_REKEY);
 		story = "attempting re-key";
@@ -441,10 +397,10 @@ void schedule_v2_replace_event(struct state *st)
 	 */
 	passert(kind == EVENT_v2_REPLACE || kind == EVENT_v2_EXPIRE);
 	deltatime_buf lb;
-	dbg(PRI_SO" will %s in %s seconds (%s)",
-	    st->st_serialno,
-	    kind == EVENT_v2_EXPIRE ? "expire" : "be replaced",
-	    str_deltatime(lifetime, &lb), story);
+	ldbg(st->logger, PRI_SO" will %s in %s seconds (%s)",
+	     pri_so(st->st_serialno),
+	     kind == EVENT_v2_EXPIRE ? "expire" : "be replaced",
+	     str_deltatime(lifetime, &lb), story);
 
 	/*
 	 * Schedule the lifetime (death) event.  Only happens once
@@ -461,8 +417,8 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(unused_md) == NO_MESSAGE);
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculating g^{xy}, sending R2",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	/* * Since UNUSED_MD is a request. */
 	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
@@ -476,7 +432,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		 * encrypted.  Try to send back a clear text notify
 		 * and then abandon the connection.
 		 */
-		dbg("aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
+		ldbg(ike->sa.logger, "aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
 		send_v2N_response_from_md((*frags)->md, v2N_INVALID_SYNTAX, NULL,
 					  "DH failed");
 		return STF_FATAL;
@@ -505,12 +461,36 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 			/* could free FRAGS */
 			return STF_SKIP_COMPLETE_STATE_TRANSITION;
 		}
-		md = reassemble_v2_incoming_fragments(frags);
+		md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
+		if (md == NULL) {
+			return STF_FATAL;
+		}
 	}
 
 	process_protected_v2_message(ike, md);
 	md_delref(&md);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+PRINTF_LIKE(3)
+static void llog_v2_first_encrypted_request_starts_skeyseed(struct ike_sa *ike,
+							    const struct msg_digest *md,
+							    const char *content, ...)
+{
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "received first encrypted ");
+		jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
+		jam_string(buf, " message containing ");
+		{
+			va_list ap;
+			va_start(ap, content);
+			jam_va_list(buf, content, ap);
+			va_end(ap);
+		}
+		jam_string(buf, " from ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
+		jam_string(buf, ", completing Key Exchange computation (SKEYSEED) in the background");
+	}
 }
 
 void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
@@ -567,11 +547,11 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		 * Already accumulating fragments, keep going?
 		 */
 		if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
-			dbg("received IKE encrypted message");
+			ldbg(ike->sa.logger, "received IKE encrypted message");
 			if ((*frags)->total == 0) {
-				dbg("  ignoring message; collecting fragments");
+				ldbg(ike->sa.logger, "  ignoring message; collecting fragments");
 			} else {
-				dbg("  ignoring message; already collected");
+				ldbg(ike->sa.logger, "  ignoring message; already collected");
 			}
 			pexpect((*frags)->md != NULL);
 		} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
@@ -592,28 +572,22 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
-		name_buf xb;
-		llog(RC_LOG, ike->sa.logger,
-		     "received %s request, computing DH in the background",
-		     str_enum_short(&ikev2_exchange_names, ix, &xb));
+		llog_v2_first_encrypted_request_starts_skeyseed(ike, md, "SK payload");
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
-			dbg("no fragments accumulated; skipping SKEYSEED");
+			ldbg(ike->sa.logger, "no fragments accumulated; skipping SKEYSEED");
 			return;
 		case FRAGMENTS_MISSING:
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
-		name_buf xb;
-		llog(RC_LOG, ike->sa.logger,
-		     "received %s request fragment %u (1 of %u), computing DH in the background",
-		     str_enum_short(&ikev2_exchange_names, ix, &xb),
-		     skf->isaskf_number, (*frags)->total);
+		llog_v2_first_encrypted_request_starts_skeyseed(ike, md, "SKF fragment %u of %u",
+								skf->isaskf_number,
+								(*frags)->total);
 	} else {
-		llog_pexpect(ike->sa.logger, HERE,
-			     "message has neither SK nor SKF payload");
+		llog_pexpect(ike->sa.logger, HERE, "message has neither SK nor SKF payload");
 		return;
 	}
 
@@ -632,8 +606,18 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 				process_v2_request_no_skeyseed_continue, HERE);
 }
 
-void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
-			    where_t where)
+void save_first_outbound_ikev2_packet(const char *why UNUSED,
+				      struct ike_sa *ike,
+				      const struct v2_message *message)
+{
+	shunk_t shunk = pbs_out_all(&message->message);
+	struct ro_hunk *packet = clone_hunk_as_ro_hunk(&shunk, ike->sa.logger, HERE);
+	replace_ro_hunk(&ike->sa.st_firstpacket_me, packet, ike->sa.logger, HERE);
+	ro_hunk_delref(&packet, ike->sa.logger);
+}
+
+void save_first_inbound_ikev2_packet(const char *why UNUSED,
+				     struct ike_sa *ike, struct msg_digest *md)
 {
 	/*
 	 * Record first packet for later checking of signature.
@@ -654,7 +638,7 @@ void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
 	 * "trim padding (not actually legit)".
 	 */
 	PEXPECT(ike->sa.logger, md->message_pbs.cur == md->message_pbs.roof);
-	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      pbs_in_to_cursor(&md->message_pbs),
-		      where->func);
+	struct ro_hunk *packet = clone_hunk_as_ro_hunk(&md->packet, ike->sa.logger, HERE);
+	replace_ro_hunk(&ike->sa.st_firstpacket_peer, packet, ike->sa.logger, HERE);
+	ro_hunk_delref(&packet, ike->sa.logger);
 }

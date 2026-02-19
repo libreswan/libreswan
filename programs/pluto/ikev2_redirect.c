@@ -48,12 +48,6 @@ static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type ch
 
 static enum global_redirect global_redirect; /* see config_setup.[hc] and init_global_redirect() */
 
-struct redirect_dests {
-	char *whole;
-	unsigned next;	/* points into whole */
-	struct shunks *splits;
-};
-
 static struct redirect_dests global_dests = {0};
 
 static const char *global_redirect_to(void)
@@ -63,7 +57,7 @@ static const char *global_redirect_to(void)
 	return global_dests.whole;
 }
 
-static void free_redirect_dests(struct redirect_dests *dests)
+void free_redirect_dests(struct redirect_dests *dests)
 {
 	pfreeany(dests->whole);
 	dests->next = 0;
@@ -75,7 +69,7 @@ void free_global_redirect_dests(void)
 	free_redirect_dests(&global_dests);
 }
 
-static bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
+bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
 {
 	free_redirect_dests(dests);
 
@@ -113,7 +107,7 @@ static bool set_global_redirect_dests(const char *grd_str)
  * @return shunk_t string to be shipped.
  */
 
-static shunk_t next_redirect_dest(struct redirect_dests *rl)
+shunk_t next_redirect_dest(struct redirect_dests *rl)
 {
 	if (rl->next >= rl->splits->len) {
 		rl->next = 0;
@@ -190,10 +184,11 @@ static bool emit_redirect_ip(struct pbs_out *pbs,
 			     const ip_address *dest_ip,
 			     shunk_t nonce)
 {
+	struct logger *logger = pbs->logger;
 	enum gw_identity_type gwit;
 
 	const struct ip_info *afi = address_type(dest_ip);
-	passert(afi != NULL);
+	PASSERT(logger, afi != NULL);
 	switch (afi->af) {
 	case AF_INET:
 		gwit = GW_IPV4;
@@ -213,13 +208,13 @@ static bool emit_redirect_destination(struct pbs_out *pbs,
 				      shunk_t nonce)
 {
 	ip_address ip_addr;
-	err_t ugh = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
-
-	if (ugh != NULL) {
+	diag_t d = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
+	if (d != NULL) {
 		/*
 		* ttoaddr_num failed: just ship dest_str as a FQDN
 		* ??? it may be a bogus string
 		*/
+		pfree_diag(&d);
 		return emit_redirect_common(pbs, GW_FQDN, dest, nonce);
 	}
 
@@ -244,7 +239,7 @@ bool emit_v2N_REDIRECT_response(struct pbs_out *pbs,
 		return false;
 	}
 
-	close_output_pbs(&redirect);
+	close_pbs_out(&redirect);
 	return true;
 }
 
@@ -266,28 +261,28 @@ bool redirect_global(struct msg_digest *md)
 
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
 		/* Ni is used as cookie to protect REDIRECT in IKE_SA_INIT */
-		dbg("Ni payload required for REDIRECT is missing");
+		ldbg(logger, "Ni payload required for REDIRECT is missing");
 		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	if (md->pd[PD_v2N_REDIRECTED_FROM] == NULL &&
 	    md->pd[PD_v2N_REDIRECT_SUPPORTED] == NULL) {
-		dbg("peer didn't indicate support for redirection");
+		ldbg(logger, "peer didn't indicate support for redirection");
 		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len == 0) {
-		dbg("Initiator nonce should not be zero length");
+		ldbg(logger, "Initiator nonce should not be zero length");
 		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t dest = next_redirect_dest(&global_dests);
 	if (dest.len == 0) {
-		dbg("no (meaningful) destination for global redirection has been specified");
+		ldbg(logger, "no (meaningful) destination for global redirection has been specified");
 		pstats_ikev2_redirect_failed++;
 		return true;
 	}
@@ -321,7 +316,7 @@ bool emit_v2N_REDIRECT(const char *destination, struct pbs_out *outs)
 		return false;
 	}
 
-	close_output_pbs(&redirect);
+	close_pbs_out(&redirect);
 	return true;
 }
 
@@ -336,7 +331,7 @@ bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway, struct pbs_out *out
 		return false;
 	}
 
-	close_output_pbs(&redirected_from);
+	close_pbs_out(&redirected_from);
 	return true;
 }
 
@@ -345,7 +340,9 @@ bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway, struct pbs_out *out
  * specified addresses matches the one from REDIRECT
  * payload, return FALSE
  */
-static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address *dest_ip)
+static bool allow_to_be_redirected(const char *allowed_targets_list,
+				   ip_address dest_ip,
+				   struct logger *logger)
 {
 	if (allowed_targets_list == NULL || streq(allowed_targets_list, "%any"))
 		return true;
@@ -357,19 +354,20 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 			break;	/* no more */
 
 		ip_address ip_addr;
-		err_t ugh = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
+		diag_t d = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
 
-		if (ugh != NULL) {
-			dbg("address %.*s isn't a valid address", len, t);
-		} else if (sameaddr(dest_ip, &ip_addr)) {
-			dbg("address %.*s is a match to received GW identity", len, t);
+		if (d != NULL) {
+			ldbg(logger, "address %.*s isn't a valid address", len, t);
+			pfree_diag(&d);
+		} else if (address_eq_address(dest_ip, ip_addr)) {
+			ldbg(logger, "address %.*s is a match to received GW identity", len, t);
 			return true;
 		} else {
-			dbg("address %.*s is not a match to received GW identity", len, t);
+			ldbg(logger, "address %.*s is not a match to received GW identity", len, t);
 		}
 		t += len;	/* skip name */
 	}
-	dbg("we did not find suitable address in the list specified by accept-redirect-to option");
+	ldbg(logger, "we did not find suitable address in the list specified by accept-redirect-to option");
 	return false;
 }
 
@@ -391,11 +389,11 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
  * XXX: this logs and returns err_t; sometimes.
  */
 
-static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
-				    const char *allowed_targets_list,
-				    const chunk_t *nonce,
-				    ip_address *redirect_ip /* result */,
-				    struct logger *logger)
+static diag_t parse_redirect_payload(const struct pbs_in *notify_pbs,
+				     const char *allowed_targets_list,
+				     const chunk_t *nonce,
+				     ip_address *redirect_ip /* result */,
+				     struct logger *logger)
 {
 	struct pbs_in input_pbs = *notify_pbs;
 	struct ikev2_redirect_part gw_info;
@@ -405,7 +403,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	if (d != NULL) {
 		llog(RC_LOG, logger, "%s", str_diag(d));
 		pfree_diag(&d);
-		return "received malformed REDIRECT payload";
+		return diag("received malformed REDIRECT payload");
 	}
 
 	const struct ip_info *af;
@@ -421,7 +419,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		af = NULL;
 		break;
 	default:
-		return "bad GW Ident Type";
+		return diag("bad GW Ident Type");
 	}
 
 	/* extract actual GW Identity */
@@ -433,53 +431,53 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		 * larger than 0xFF.
 		 * Some helpful compilers moan about this test being always true
 		 * so I eliminated it:
-		 *	passert(gw_info.gw_identity_len <= 0xFF);
+		 *	PASSERT(gw_info.gw_identity_len <= 0xFF);
 		 */
 		shunk_t gw_str;
 		diag_t d = pbs_in_shunk(&input_pbs, gw_info.gw_identity_len, &gw_str, "GW Identity");
 		if (d != NULL) {
 			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
+			return diag("error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload");
 		}
 
-		err_t ugh = ttoaddress_dns(gw_str, NULL/*UNSPEC*/, redirect_ip);
-		if (ugh != NULL)
-			return ugh;
+		d = ttoaddress_dns(gw_str, NULL/*UNSPEC*/, redirect_ip);
+		if (d != NULL)
+			return d;
 	} else {
 		if (gw_info.gw_identity_len < af->ip_size) {
-			return "transferred GW Identity Length is too small for an IP address";
+			return diag("transferred GW Identity Length is too small for an IP address");
 		}
 		diag_t d = pbs_in_address(&input_pbs, redirect_ip, af, "REDIRECT address");
 		if (d != NULL) {
 			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			return "variable part of payload does not match transferred GW Identity Length";
+			return diag("variable part of payload does not match transferred GW Identity Length");
 		}
 		address_buf b;
-		dbg("   GW Identity IP: %s", str_address(redirect_ip, &b));
+		ldbg(logger, "   GW Identity IP: %s", str_address(redirect_ip, &b));
 	}
 
 	/*
 	 * now check the list of allowed targets to
 	 * see if parsed address matches any in the list
 	 */
-	if (!allow_to_be_redirected(allowed_targets_list, redirect_ip))
-		return "received GW Identity is not listed in accept-redirect-to conn option";
+	if (!allow_to_be_redirected(allowed_targets_list, (*redirect_ip), logger))
+		return diag("received GW Identity is not listed in accept-redirect-to conn option");
 
 	size_t len = pbs_left(&input_pbs);
 
 	if (nonce == NULL) {
 		if (len > 0)
-			return "unexpected extra bytes in Notify data after GW data - nonce should have been omitted";
+			return diag("unexpected extra bytes in Notify data after GW data - nonce should have been omitted");
 	} else if (nonce->len != len || !memeq(nonce->ptr, input_pbs.cur, len)) {
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "expected nonce");
-			LDBG_hunk(logger, *nonce);
+			LDBG_hunk(logger, nonce);
 			LDBG_log(logger, "received nonce");
 			LDBG_dump(logger, input_pbs.cur, len);
 		}
-		return "received nonce does not match our expected nonce Ni (spoofed packet?)";
+		return diag("received nonce does not match our expected nonce Ni (spoofed packet?)");
 	}
 
 	return NULL;
@@ -487,6 +485,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 
 static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address to)
 {
+	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
 	name_buf xchg;
 	enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xchg);
@@ -495,8 +494,8 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 
 	c->redirect.attempt++;
 	if (c->redirect.attempt > MAX_REDIRECTS) {
-		llog_sa(RC_LOG, ike, "%s redirect exceeds limit; assuming redirect loop",
-			xchg.buf);
+		llog(RC_LOG, logger, "%s redirect exceeds limit; assuming redirect loop",
+		     xchg.buf);
 		/*
 		 * Clear redirect.counter, revival code will see this
 		 * and, instead, schedule a revival.
@@ -505,7 +504,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 		 */
 		c->redirect.attempt = 0;
 		c->revival.delay = deltatime_min(REVIVE_CONN_DELAY_MAX,
-						 deltatime(REDIRECT_LOOP_DETECT_PERIOD));
+						 deltatime_from_seconds(REDIRECT_LOOP_DETECT_PERIOD));
 		return;
 	}
 
@@ -516,31 +515,34 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 	ike->sa.st_skip_revival_as_redirecting = true;
 
 	address_buf b;
-	llog_sa(RC_LOG, ike, "%s response redirects to new gateway %s",
-		xchg.buf, str_address_sensitive(&to, &b));
+	llog(RC_LOG, logger, "%s response redirects to new gateway %s",
+	     xchg.buf, str_address_sensitive(&to, &b));
 }
 
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *redirect_status)
 {
+	struct logger *logger = ike->sa.logger;
+
 	if (md->pd[PD_v2N_REDIRECT] == NULL) {
-		dbg("redirect: no redirect payload in IKE_AUTH reply");
+		ldbg(logger, "redirect: no redirect payload in IKE_AUTH reply");
 		return false;
 	}
 
-	dbg("redirect: received v2N_REDIRECT in authenticated IKE_AUTH reply");
+	ldbg(logger, "redirect: received v2N_REDIRECT in authenticated IKE_AUTH reply");
 	if (!ike->sa.st_connection->config->redirect.accept) {
-		dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
+		ldbg(logger, "ignoring v2N_REDIRECT, we don't accept being redirected");
 		return false;
 	}
 
 	ip_address redirect_ip;
-	err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
-					   ike->sa.st_connection->config->redirect.accept_to,
-					   NULL,
-					   &redirect_ip,
-					   ike->sa.logger);
-	if (err != NULL) {
-		dbg("redirect: warning: parsing of v2N_REDIRECT payload failed: %s", err);
+	diag_t d = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
+					  ike->sa.st_connection->config->redirect.accept_to,
+					  NULL,
+					  &redirect_ip,
+					  ike->sa.logger);
+	if (d != NULL) {
+		ldbg(logger, "redirect: warning: parsing of v2N_REDIRECT payload failed: %s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -577,8 +579,10 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *i
 								struct child_sa *null_child,
 								struct msg_digest *md)
 {
-	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	pexpect(null_child == NULL);
+	struct logger *logger = ike->sa.logger;
+
+	PASSERT(logger, v2_msg_role(md) == MESSAGE_REQUEST);
+	PEXPECT(logger, null_child == NULL);
 
 	/*
 	 * This happens when we are original initiator, and we
@@ -592,13 +596,13 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *i
 
 	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 	ip_address redirect_to;
-	err_t e = parse_redirect_payload(&redirect_pbs,
+	diag_t d = parse_redirect_payload(&redirect_pbs,
 					 ike->sa.st_connection->config->redirect.accept_to,
 					 NULL, &redirect_to, ike->sa.logger);
-	if (e != NULL) {
+	if (d != NULL) {
 		/* XXX: parse_redirect_payload() also often logs! */
-		llog_sa(RC_LOG, ike,
-			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
+		llog(WARNING_STREAM, logger, "parsing of v2N_REDIRECT payload failed: %s", str_diag(d));
+		pfree_diag(&d);
 #if 0
 		record_v2N_response(ike->sa.logger, ike, md,
 
@@ -662,136 +666,78 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_response(struct ike_sa *
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition = {
 	.story = "redirect IKE SA",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.exchange = &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
 	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
-	.llog_success = ldbg_v2_success,
+	.llog_success = ldbg_success_ikev2,
 	.timeout_event =  EVENT_RETAIN,
 };
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transition[] = {
 	{ .story      = "Informational Request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(N),
 	  .encrypted_payloads.notification = v2N_REDIRECT,
 	  .processor = process_v2_INFORMATIONAL_v2N_REDIRECT_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
 };
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_INFORMATIONAL_v2N_REDIRECT_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
 };
 
 const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "redirect IKE SA",
+	.name = "INFORMATIONAL (redirect IKE SA)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
-	.responder = &v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions,
-	.response = &v2_INFORMATIONAL_v2N_REDIRECT_response_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
+	},
 };
-
-void find_and_active_redirect_states(const char *conn_name,
-				     const char *active_redirect_dests,
-				     struct logger *logger)
-{
-	passert(active_redirect_dests != NULL);
-	struct redirect_dests active_dests = {0};
-	if (!set_redirect_dests(active_redirect_dests, &active_dests)) {
-		llog(RC_LOG, logger, "redirect-to='%s' is empty", active_redirect_dests);
-		return;
-	}
-
-	int cnt = 0;
-
-	struct state_filter sf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
-			.where = HERE,
-		},
-	};
-	while (next_state(&sf)) {
-		struct state *st = sf.st;
-		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    (conn_name == NULL || streq(conn_name, st->st_connection->base_name))) {
-			struct ike_sa *ike = pexpect_ike_sa(st);
-			/* cycle through the list of redirects */
-			shunk_t active_dest = next_redirect_dest(&active_dests);
-			/* not whack; there could be thousands? */
-			llog_sa(LOG_STREAM/*not-whack*/, ike, "redirecting to: "PRI_SHUNK,
-				pri_shunk(active_dest));
-			pfreeany(ike->sa.st_active_redirect_gw);
-			ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
-			cnt++;
-			pexpect(v2_INFORMATIONAL_v2N_REDIRECT_exchange.initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
-			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
-		}
-	}
-
-	if (cnt == 0) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "no active tunnels found");
-			if (conn_name != NULL) {
-				jam(buf, " for connection \"%s\"", conn_name);
-			}
-		}
-	} else {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "redirections sent for %d tunnels", cnt);
-			if (conn_name != NULL) {
-				jam(buf, " of connection \"%s\"", conn_name);
-			}
-		}
-	}
-	free_redirect_dests(&active_dests);
-}
 
 stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							struct child_sa *child,
 							struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
-	pexpect(child == NULL);
-	if (!pexpect(md->pd[PD_v2N_REDIRECT] != NULL)) {
+	PEXPECT(logger, child == NULL);
+	if (!PEXPECT(logger, md->pd[PD_v2N_REDIRECT] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 	if (!ike->sa.st_connection->config->redirect.accept) {
-		llog_sa(RC_LOG, ike,
-			"ignoring v2N_REDIRECT, we don't accept being redirected");
+		llog(RC_LOG, logger,
+		     "ignoring v2N_REDIRECT, we don't accept being redirected");
 		return STF_IGNORE;
 	}
 
 	ip_address redirect_ip;
-	err_t err = parse_redirect_payload(&redirect_pbs,
-					   c->config->redirect.accept_to,
-					   &ike->sa.st_ni,
-					   &redirect_ip,
-					   ike->sa.logger);
-	if (err != NULL) {
-		llog_sa(RC_LOG, ike,
-			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
+	diag_t d = parse_redirect_payload(&redirect_pbs,
+					  c->config->redirect.accept_to,
+					  &ike->sa.st_ni,
+					  &redirect_ip,
+					  ike->sa.logger);
+	if (d != NULL) {
+		llog(WARNING_STREAM, logger,
+		     "parsing of v2N_REDIRECT payload failed: %s", str_diag(d));
+		pfree_diag(&d);
 		return STF_IGNORE;
 	}
 
@@ -811,12 +757,12 @@ void show_global_redirect(struct show *s)
 	}
 }
 
-void whack_global_redirect(const struct whack_message *wm, struct show *s)
+void set_global_redirect(enum global_redirect redirect, const char *dests,
+			 struct logger *logger)
 {
-	struct logger *logger = show_logger(s);
-	if (wm->redirect_to != NULL) {
-		if (set_global_redirect_dests(wm->redirect_to)) {
-			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
+	if (dests != NULL) {
+		if (set_global_redirect_dests(dests)) {
+			llog(RC_LOG, logger, "set global redirect target to %s", dests);
 		} else {
 			global_redirect = GLOBAL_REDIRECT_NO;
 			llog(RC_LOG, logger,
@@ -824,7 +770,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 		}
 	}
 
-	switch (wm->global_redirect) {
+	switch (redirect) {
 	case GLOBAL_REDIRECT_NO:
 		global_redirect = GLOBAL_REDIRECT_NO;
 		llog(RC_LOG, logger, "set global redirect to 'no'");
@@ -836,7 +782,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
-			global_redirect = wm->global_redirect;
+			global_redirect = redirect;
 			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",
@@ -856,7 +802,8 @@ void init_global_redirect(enum global_redirect redirect, const char *redirect_to
 	switch (redirect) {
 	case GLOBAL_REDIRECT_NO:
 		if (redirect_to != NULL) {
-			llog(RC_LOG, logger, "warning: ignoring global-redirect-to='%s' as global-redirect=no",
+			llog(WARNING_STREAM, logger,
+			     "ignoring global-redirect-to='%s' as global-redirect=no",
 			     redirect_to);
 		}
 		return;
@@ -866,7 +813,8 @@ void init_global_redirect(enum global_redirect redirect, const char *redirect_to
 		if (redirect_to == NULL ||
 		    !set_global_redirect_dests(redirect_to)) {
 			name_buf rb;
-			llog(RC_LOG, logger, "warning: ignoring global-redirect=%s as global-redirect-to= is empty",
+			llog(WARNING_STREAM, logger,
+			     "ignoring global-redirect=%s as global-redirect-to= is empty",
 			     str_sparse_short(&global_redirect_names, redirect, &rb));
 			global_redirect = GLOBAL_REDIRECT_NO;
 			return;

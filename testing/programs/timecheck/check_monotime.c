@@ -41,8 +41,8 @@ static void check_mmm_op(const struct test_op *tests,
 {
 	for (unsigned i = 0; i < nr_tests; i++) {
 		const struct test_op *t = &tests[i];
-		monotime_t l = monotime(t->l);
-		monotime_t r = monotime(t->r);
+		monotime_t l = monotime_from_seconds(t->l);
+		monotime_t r = monotime_from_seconds(t->r);
 		intmax_t o = monosecs(op(l, r));
 		FILE *out = (o == t->o) ? stdout : stderr;
 		fprintf(out, "monosecs(monotime_%s(%jd, %jd)) == %jd",
@@ -67,8 +67,8 @@ static void check_mmd_op(const struct test_op *tests,
 {
 	for (unsigned i = 0; i < nr_tests; i++) {
 		const struct test_op *t = &tests[i];
-		monotime_t l = monotime(t->l);
-		deltatime_t r = deltatime(t->r);
+		monotime_t l = monotime_from_seconds(t->l);
+		deltatime_t r = deltatime_from_seconds(t->r);
 		intmax_t o = monosecs(op(l, r));
 		FILE *out = (o == t->o) ? stdout : stderr;
 		fprintf(out, "monosecs(monotime_%s(%jd, %jd)) == %jd",
@@ -97,13 +97,13 @@ void check_monotime(void)
 	};
 	for (unsigned i = 0; i < elemsof(test_monotime_diff); i++) {
 		const struct test_monotime_diff *t = &test_monotime_diff[i];
-		monotime_t l = monotime(t->l);
-		monotime_t r = monotime(t->r);
+		monotime_t l = monotime_from_seconds(t->l);
+		monotime_t r = monotime_from_seconds(t->r);
 		deltatime_t d = monotime_diff(l, r);
 		deltatime_buf buf;
 		const char *str = str_deltatime(d, &buf);
 
-		snprintf(what, sizeof(what), "monotime(%jd) - monotime(%jd) = %s", t->l, t->r, t->diff);
+		snprintf(what, sizeof(what), "monotime(%jds) - monotime(%jds) = %s", t->l, t->r, t->diff);
 		if (strcmp(str, t->diff) != 0) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
 			fails++;

@@ -37,12 +37,12 @@ struct prf_ikev2_ops {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
 	PK11SymKey *(*ike_sa_skeyseed)(const struct prf_desc *prf_desc,
 				       const chunk_t Ni, const chunk_t Nr,
-				       PK11SymKey *dh_secret,
+				       PK11SymKey *ke_secret,
 				       struct logger *logger);
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *(*ike_sa_rekey_skeyseed)(const struct prf_desc *prf_desc,
 					     PK11SymKey *old_SK_d,
-					     PK11SymKey *new_dh_secret,
+					     PK11SymKey *new_ke_secret,
 					     const chunk_t Ni, const chunk_t Nr,
 					     struct logger *logger);
 	/*
@@ -63,21 +63,22 @@ struct prf_ikev2_ops {
 	/* KEYMAT = prf+(SK_d, [ g^ir (new) | ] Ni | Nr) */
 	PK11SymKey *(*child_sa_keymat)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_d,
-				       PK11SymKey *new_dh_secret,
+				       PK11SymKey *new_ke_secret,
 				       const chunk_t Ni, const chunk_t Nr,
 				       size_t required_bytes,
 				       struct logger *logger);
 	/* AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <{Initiator,Responder}SignedOctets>) */
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc,
-				     shunk_t pss,
-				     chunk_t first_packet, chunk_t nonce,
+				     PK11SymKey *psk,
+				     shunk_t first_packet,
+				     chunk_t nonce,
 				     const struct crypt_mac *id_hash,
 				     chunk_t intermediate_packet,
 				     struct logger *logger);
 	/* AUTH = prf(SK_px, <message octets>) */
 	struct crypt_mac (*psk_resume)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_px,
-				       chunk_t first_packet,
+				       shunk_t first_packet,
 				       struct logger *logger);
 };
 

@@ -1,0 +1,59 @@
+<varlistentry id='conn.addresspool'>
+  <term>
+    <option>leftaddresspool=&ip_pool;,...</option>
+  </term>
+  <term>
+    <option>rightaddresspool=&ip_pool;...</option>
+  </term>
+  <listitem>
+    <para>
+      Comma separated list of address pools from where the IKEv1 (IPv4
+      Mode Config server) and IKEv2 (IPv4 and IPv6 configuration
+      payload server) can assign IP addresses to clients.  At most one
+      one IPv4 and one IPv6 pool may be specified.  The
+      <option>leftaddresspool=</option> option can not be combined
+      with with either the <option>leftsubnet=</option> or
+      <option>leftsubnets=</option> options.
+    </para>
+    <para>
+      A pool is specified using either an address range (for instance,
+      <option>leftaddresspool=192.168.1.100-192.168.1.200</option> or
+      CIDR (for instance,
+      <option>leftaddresspool=2001:db8:0:3:1::/97)</option> syntax.
+      For IPv6, the CIDR syntax has been extended to also allow the
+      specification of a subnet, for instance
+      <option>leftaddresspool=2001:db8:0:3:1::/60/64</option> will
+      allocate <option>/64</option> leases.  While address pools are
+      grown as required and leases are reclaimed, the size of an
+      address pool should be reasonable.  For instance, the pool
+      <option>leftaddresspool=10.0.0.0-11.0.0.0</option> will
+      eventually result in an in-memory structure containing 16
+      million leases.
+    </para>
+    <para>
+      Address pools specifying the exact same range are shared between
+      connections.  Different addresspools cannot partially overlap.
+    </para>
+    <para>
+      For IKEv1, when <option>right</option> is configured as a server
+      using <option>rightxauthserver=&yes;</option>, this option
+      specifies the address pool from which IP addresses are taken to
+      assign the <option>left</option> clients during the Mode Config
+      exchange.  Generally, the <option>leftaddresspool=</option>
+      option will be accompanied by
+      <option>leftxauthclient=&yes;</option>,
+      <option>rightxauthserver=&yes;</option> and
+      <option>rightsubnet=0.0.0.0/0</option> option.
+    </para>
+    <para>
+      History: &Libreswan; version 3.30 added support for IPv6
+      addresses, and replaced a static table with dynamic O(1)
+      structures; &Libreswan; 5.0 added support for combined IPv4 and
+      IPv6 address pools; &Libreswan; 5.4 added support for IPv6
+      subnets.  &Libreswan; should allow the combination of
+      <option>addresspool</option> and <option>subnet</option>,
+      patches would be welcome.
+    </para>
+
+  </listitem>
+</varlistentry>

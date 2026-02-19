@@ -58,7 +58,7 @@
 #include "lswtool.h"
 #include "lswnss.h"
 #include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #ifndef DEVICE
 # define DEVICE  "/dev/random"
@@ -81,14 +81,14 @@ static const struct curve curves[] = {
 };
 
 enum opt {
-	OPT_VERSION = 'V',
-	OPT_VERBOSE = 'v',
-	OPT_SEEDDEV = 'S',
-	OPT_NSSDIR = 'd',
-	OPT_PASSWORD = 'P',
-	OPT_SEEDBITS = 's',
-	OPT_HELP = 'h',
 	OPT_DEBUG = 256,
+	OPT_VERSION,
+	OPT_VERBOSE,
+	OPT_SEEDDEV,
+	OPT_NSSDIR,
+	OPT_PASSWORD,
+	OPT_SEEDBITS,
+	OPT_HELP,
 };
 
 const struct option optarg_options[] = {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
 	while (true) {
 
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -169,9 +169,8 @@ int main(int argc, char *argv[])
 			optarg_usage("ipsec ecdsasigkey", "[<curve-name>]", "");
 
 		case OPT_VERSION:       /* version */
-			printf("%s %s\n", progname, ipsec_version_code());
-			exit(0);
-			continue;
+			optarg_version("");
+
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
 			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;

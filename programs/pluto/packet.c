@@ -1014,18 +1014,18 @@ struct_desc ikev2_trans_attr_desc = {
  *              Figure 10:  Key Exchange Payload Format
  *
  */
-static field_desc ikev2ke_fields[] = {
+static field_desc ikev2_ke_fields[] = {
 	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
-	{ ft_enum, 16 / BITS_IN_BYTE, "DH group", &oakley_group_names },
+	{ ft_enum, 16 / BITS_IN_BYTE, "KEM", &ikev2_trans_type_kem_names },
 	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
 struct_desc ikev2_ke_desc = {
 	.name = "IKEv2 Key Exchange Payload",
-	.fields = ikev2ke_fields,
+	.fields = ikev2_ke_fields,
 	.size = sizeof(struct ikev2_ke),
 	.pt = ISAKMP_NEXT_v2KE,
 };
@@ -1661,15 +1661,15 @@ struct_desc ikev2_redirect_desc = {
 	.size = sizeof(struct ikev2_redirect_part),
 };
 
-static field_desc suggested_group_fields[] = {
-	{ ft_enum, 16 / BITS_IN_BYTE, "suggested DH Group", &oakley_group_names },
+static field_desc ikev2_suggested_kem_fields[] = {
+	{ ft_enum, 16 / BITS_IN_BYTE, "suggested KEM", &ikev2_trans_type_kem_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc suggested_group_desc = {
-	.name = "Suggested Group",
-	.fields = suggested_group_fields,
-	.size = sizeof(struct suggested_group),
+struct_desc ikev2_suggested_kem_desc = {
+	.name = "Suggested KEM",
+	.fields = ikev2_suggested_kem_fields,
+	.size = sizeof(struct ikev2_suggested_kem),
 	.pt = ISAKMP_NEXT_v2NONE,
 };
 
@@ -1839,6 +1839,14 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 	 * share same structure.
 	 */
 	struct pbs_in pbs = PBS_INIT((void*)shunk.ptr, shunk.len, name);
+	/*
+	 * XXX: start level off at 2.  Level 1 is the raw packet.
+	 *
+	 * At least that is how I'm retro-engineering the previous
+	 * behaviour (while the comment indicated that the levels
+	 * started at one, the code said otherwise).
+	 */
+	pbs.level = 2;
 	return pbs;
 }
 
@@ -1857,13 +1865,13 @@ shunk_t pbs_out_all(const struct pbs_out *pbs)
 chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
 {
 	shunk_t all = pbs_in_all(pbs);
-	return clone_hunk(all, name);
+	return clone_hunk_as_chunk(&all, name);
 }
 
 chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name)
 {
 	shunk_t all = pbs_out_all(pbs);
-	return clone_hunk(all, name);
+	return clone_hunk_as_chunk(&all, name);
 }
 
 /* start - cursor */
@@ -1890,9 +1898,9 @@ shunk_t pbs_in_left(const struct pbs_in *pbs)
  * network-byte-order appended.
  */
 
-static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
+static void LDBG_print_nat(struct logger *logger, const field_desc *fp, uintmax_t nat)
 {
-	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "   %s: %ju", fp->name, nat);
 		jam(buf, " (");
 		/*
@@ -1901,10 +1909,10 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 		 * decimal it should be clear.
 		 *
 		 * XXX: the same conversion code appears in
-		 * out_struct() and probably elsewhere?
+		 * pbs_out_struct() and probably elsewhere?
 		 */
-		passert(fp->size > 0);
-		passert(fp->size <= sizeof(nat));
+		PASSERT(logger, fp->size > 0);
+		PASSERT(logger, fp->size <= sizeof(nat));
 		uint8_t bytes[sizeof(nat)];
 		uint8_t *cur = bytes + fp->size;
 		uintmax_t n = nat;
@@ -1926,32 +1934,32 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
  * explicit.
  */
 
-static void DBG_print_struct(const char *label, unsigned level,
-			     const void *struct_ptr,
-			     struct_desc *sd, bool len_meaningful)
+static void LDBG_print_struct(struct logger *logger,
+			      const char *label, unsigned level,
+			      const void *struct_ptr,
+			      struct_desc *sd, bool len_meaningful)
 {
-	struct logger *logger = &global_logger;
-
 	bool immediate = false;
 	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
 	uintmax_t last_enum = 0;
 
 	char stars[40]; /* arbitrary limit on label+flock-of-* */
-	for (unsigned s = 0; s < level && s < elemsof(stars)-2; s++) {
-		stars[s+0] = '*';
-		stars[s+1] = '\0';
+	unsigned s;
+	for (s = 0; s < level && s < elemsof(stars)-2; s++) {
+		stars[s] = '*';
 	}
+	stars[s] = '\0';
 
 	LDBG_log(logger, "%s%s%s:", stars, label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
-		int i = fp->size;
+
 		uintmax_t n = 0;
 
 		switch (fp->field_type) {
 		case ft_zig:		/* zero (ignore violations) */
-			inp += i;
+			inp += fp->size;
 			break;
 		case ft_nat:            /* natural number (may be 0) */
 		case ft_len:            /* length of this struct and any following crud */
@@ -1966,7 +1974,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_lset:           /* bits representing set */
 			/* grab bytes in host-byte-order */
-			switch (i) {
+			switch (fp->size) {
 			case 8 / BITS_IN_BYTE:
 				n = *(const uint8_t *)inp;
 				break;
@@ -1977,7 +1985,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 				n = *(const uint32_t *)inp;
 				break;
 			default:
-				bad_case(i);
+				bad_case(fp->size);
 			}
 
 			/* display the result */
@@ -1987,11 +1995,11 @@ static void DBG_print_struct(const char *label, unsigned level,
 			case ft_lv:     /* length/value field of attribute */
 				if (!immediate && !len_meaningful)
 					break;
-				DBG_print_nat(fp, n);
+				LDBG_print_nat(logger, fp, n);
 				break;
 
 			case ft_nat: /* natural number (may be 0) */
-				DBG_print_nat(fp, n);
+				LDBG_print_nat(logger, fp, n);
 				break;
 
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -2034,7 +2042,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 			case ft_loose_enum_enum:
 			{
 				name_buf buf;
-				const char *name = str_enum_enum(fp->desc, last_enum, n, &buf);
+				const char *name = str_enum_enum_long(fp->desc, last_enum, n, &buf);
 				LDBG_log(logger, "   %s: %s (0x%jx)",
 					 fp->name, name, n);
 				break;
@@ -2051,15 +2059,15 @@ static void DBG_print_struct(const char *label, unsigned level,
 			default:
 				bad_case(fp->field_type);
 			}
-			inp += i;
+			inp += fp->size;
 			break;
 
 		case ft_raw:            /* bytes to be left in network-order */
 			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				jam(buf, "   %s: ", fp->name);
-				jam_dump_bytes(buf, inp, i);
+				jam_dump_bytes(buf, inp, fp->size);
 			}
-			inp += i;
+			inp += fp->size;
 			break;
 
 		default:
@@ -2068,9 +2076,9 @@ static void DBG_print_struct(const char *label, unsigned level,
 	}
 }
 
-static void DBG_prefix_print_pbs_out_struct(const struct pbs_out *pbs,
-					    const char *label, const void *struct_ptr,
-					    struct_desc *sd, bool len_meaningful)
+static void LDBG_prefix_print_pbs_out_struct(const struct pbs_out *pbs,
+					     const char *label, const void *struct_ptr,
+					     struct_desc *sd, bool len_meaningful)
 {
 	/*
 	 * Print out a title, with a prefix of asterisks to show the
@@ -2080,7 +2088,7 @@ static void DBG_prefix_print_pbs_out_struct(const struct pbs_out *pbs,
 	for (const struct pbs_out *p = pbs; p != NULL; p = p->container) {
 		level++;
 	}
-	DBG_print_struct(label, level, struct_ptr, sd, len_meaningful);
+	LDBG_print_struct(pbs->logger, label, level, struct_ptr, sd, len_meaningful);
 }
 
 static void DBG_prefix_print_pbs_in_struct(const struct pbs_in *pbs,
@@ -2091,11 +2099,8 @@ static void DBG_prefix_print_pbs_in_struct(const struct pbs_in *pbs,
 	 * Print out a title, with a prefix of asterisks to show the
 	 * nesting level; minimum of one star.
 	 */
-	unsigned level = 1;
-	for (const struct pbs_in *p = pbs; p != NULL; p = p->container) {
-		level++;
-	}
-	DBG_print_struct(label, level, struct_ptr, sd, len_meaningful);
+	unsigned level = pbs->level;
+	LDBG_print_struct(&global_logger, label, level, struct_ptr, sd, len_meaningful);
 }
 
 /* "parse" a network struct into a host struct.
@@ -2125,7 +2130,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			    sd->size);
 	}
 
-	passert(dest_size >= sd->size);
+	PASSERT(logger, dest_size >= sd->size);
 	const uint8_t *roof = cur + sd->size; /* may be changed by a length field */
 	bool length_field_found = false;
 	uint8_t *dest = dest_start;
@@ -2135,17 +2140,17 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 	for (field_desc *fp = sd->fields; fp->field_type != ft_end; fp++) {
 
 		/* field ends within PBS? */
-		passert(cur + fp->size <= ins->roof);
+		PASSERT(logger, cur + fp->size <= ins->roof);
 		/* field ends within struct? */
-		passert(cur + fp->size <= ins->cur + sd->size);
+		PASSERT(logger, cur + fp->size <= ins->cur + sd->size);
 		/* field ends within dest */
-		passert(dest + fp->size <= dest_end);
+		PASSERT(logger, dest + fp->size <= dest_end);
 
 #if 0
-		dbg("%td (%td) '%s'.'%s' %d bytes ",
-		    (cur - ins->cur), (cur - ins->start),
-		    sd->name, fp->name,
-		    fp->size);
+		ldbg(logger, "%td (%td) '%s'.'%s' %d bytes ",
+		     (cur - ins->cur), (cur - ins->start),
+		     sd->name, fp->name,
+		     fp->size);
 #endif
 
 		switch (fp->field_type) {
@@ -2161,11 +2166,11 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 					 * XXX: bytes used for hashing
 					 * can't be zero/ignore.
 					 */
-					dbg("byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
-					    (cur - ins->cur),
-					    (cur - ins->start),
-					    sd->name, fp->name,
-					    byte);
+					ldbg(logger, "byte at offset %td (%td) of '%s'.'%s' is 0x%02"PRIx8" but should have been zero (ignored)",
+					     (cur - ins->cur),
+					     (cur - ins->start),
+					     sd->name, fp->name,
+					     byte);
 				}
 				cur++;
 				*dest++ = '\0';
@@ -2195,7 +2200,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			case ft_len:    /* length of this struct and any following crud */
 			case ft_lv:     /* length/value field of attribute */
 			{
-				passert(!length_field_found && obj_pbs != NULL);
+				PASSERT(logger, !length_field_found && obj_pbs != NULL);
 				length_field_found = true;
 				size_t len = fp->field_type ==
 					ft_len ? n :
@@ -2302,9 +2307,9 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		}
 	}
 
-	passert(cur == ins->cur + sd->size);
+	PASSERT(logger, cur == ins->cur + sd->size);
 	if (obj_pbs != NULL) {
-		passert(length_field_found);
+		PASSERT(logger, length_field_found);
 		/*
 		 * It starts at the same origin; but is truncated and
 		 * cursor skips header
@@ -2312,7 +2317,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		*obj_pbs = pbs_in_from_shunk(shunk2(ins->cur/*not CUR*/, roof - ins->cur), sd->name);
 		obj_pbs->cur = cur; /* skip header */
 		/* back link */
-		obj_pbs->container = ins;
+		obj_pbs->level = ins->level + 1;
 		obj_pbs->desc = sd;
 	}
 	ins->cur = roof;
@@ -2346,7 +2351,7 @@ diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "parsing %zu raw bytes of %s into %s",
 			 len, ins->name, name);
-		LDBG_hunk(logger, *shunk);
+		LDBG_hunk(logger, shunk);
 	}
 	ins->cur += len;
 	return NULL;
@@ -2366,6 +2371,47 @@ diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *nam
 	return NULL;
 }
 
+static void save_fixup_1(struct logger *logger, const char *name,
+			 struct fixup *fixup,
+			 void *loc,
+			 struct_desc *sd,
+			 field_desc *fp)
+{
+	ldbg(logger, "%s: %p: saving location '%s'.'%s'",
+	     name, fixup,
+	     sd->name, fp->name);
+	fixup->name = name;
+	fixup->fp = fp;
+	fixup->sd = sd;
+	fixup->loc = loc;
+}
+
+#define save_fixup(OUTS, FIELD, LOC, SD, FP) \
+	save_fixup_1((OUTS)->logger, #FIELD, &(OUTS)->FIELD, LOC, SD, FP)
+
+void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value)
+{
+	unsigned size = fixup->fp->size;
+	ldbg(logger, "%s: %p: storing %u byte value %ju in fixup %s.%s",
+	     fixup->name, fixup, size, value,
+	     fixup->sd->name, fixup->fp->name);
+	PASSERT(logger, size > 0);
+	raw_hton(value, fixup->loc, size);
+}
+
+uintmax_t fixup_value(struct logger *logger, const struct fixup *fixup)
+{
+	PASSERT(logger, fixup->name != NULL);
+	PASSERT(logger, fixup->sd != NULL);
+	PASSERT(logger, fixup->fp != NULL);
+	PASSERT(logger, fixup->fp->size > 0);
+	uintmax_t value = raw_ntoh(fixup->loc, fixup->fp->size);
+	ldbg(logger, "%s: %p: %zu byte value at fixup %s.%s is %ju",
+	     fixup->name, fixup,
+	     fixup->fp->size, fixup->sd->name, fixup->fp->name, value);
+	return value;
+}
+
 /*
  * Check IKEv2's Last Substructure field.
  */
@@ -2377,10 +2423,10 @@ static void update_last_substructure(struct pbs_out *outs,
 	/*
 	 * The containing structure should be expecting substructures.
 	 */
-	passert(fp->size == 1);
-	pexpect(outs->desc->nsst != 0);
+	PASSERT(outs->logger, fp->size == 1);
+	PEXPECT(outs->logger, outs->desc->nsst != 0);
 	uint8_t n = *inp;
-	pexpect(n == 0 || n == outs->desc->nsst);
+	PEXPECT(outs->logger, n == 0 || n == outs->desc->nsst);
 	*cur = n;
 	/*
 	 * Since there's a previous substructure, it can no longer be
@@ -2389,44 +2435,40 @@ static void update_last_substructure(struct pbs_out *outs,
 	if (outs->last_substructure.loc != NULL) {
 		name_buf locb;
 		name_buf nsstb;
-		dbg("last substructure: checking '%s'.'%s'.'%s' containing %s (0x%x) is %s (0x%x)",
-		    /* '%s'.'%s'.'%s' */
-		    outs->desc->name,
-		    outs->last_substructure.sd->name,
-		    outs->last_substructure.fp->name,
-		    /* containing ... */
-		    str_enum_long(outs->last_substructure.fp->desc,
-			      outs->last_substructure.loc[0], &locb),
-		    outs->last_substructure.loc[0],
-		    /* is ... */
-		    str_enum_long(outs->last_substructure.fp->desc,
-			      outs->desc->nsst, &nsstb),
-		    outs->desc->nsst);
-		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
+		ldbg(outs->logger, "last substructure: checking '%s'.'%s'.'%s' containing %s (0x%x) is %s (0x%x)",
+		     /* '%s'.'%s'.'%s' */
+		     outs->desc->name,
+		     outs->last_substructure.sd->name,
+		     outs->last_substructure.fp->name,
+		     /* containing ... */
+		     str_enum_long(outs->last_substructure.fp->desc,
+				   outs->last_substructure.loc[0], &locb),
+		     outs->last_substructure.loc[0],
+		     /* is ... */
+		     str_enum_long(outs->last_substructure.fp->desc,
+				   outs->desc->nsst, &nsstb),
+		     outs->desc->nsst);
+		PEXPECT(outs->logger, outs->last_substructure.loc[0] == outs->desc->nsst);
 	}
 	/*
 	 * Now save the location of this Last Substructure.
 	 */
-	dbg("last substructure: saving location '%s'.'%s'.'%s'",
-	     outs->desc->name, sd->name, fp->name);
-	outs->last_substructure.loc = cur;
-	outs->last_substructure.sd = sd;
-	outs->last_substructure.fp = fp;
+	save_fixup(outs, last_substructure, cur, sd, fp);
 }
 
 static void close_last_substructure(struct pbs_out *pbs)
 {
 	if (pbs->last_substructure.loc != NULL) {
-		dbg("last substructure: checking '%s'.'%s'.'%s' is 0",
+		ldbg(pbs->logger, "last substructure: checking '%s'.'%s'.'%s' is 0",
 		     pbs->desc->name,
 		     pbs->last_substructure.sd->name,
 		     pbs->last_substructure.fp->name);
-		pexpect(pbs->desc->nsst != 0);
-		pexpect(pbs->last_substructure.loc[0] == 0);
+		PEXPECT(pbs->logger, pbs->desc->nsst != 0);
+		PEXPECT(pbs->logger, pbs->last_substructure.loc[0] == 0);
 #if 0
 	} else {
 		/* XXX: too strong, rejects empty? */
-		pexpect(pbs->desc->nsst == 0);
+		PEXPECT(pbs->logger, pbs->desc->nsst == 0);
 #endif
 	}
 }
@@ -2439,12 +2481,8 @@ static void start_next_payload_chain(struct pbs_out *outs,
 				     struct_desc *sd, field_desc *fp,
 				     const uint8_t *inp, uint8_t *cur)
 {
-	passert(fp->size == 1);
-	dbg("next payload chain: saving message location '%s'.'%s'",
-	     sd->name, fp->name);
-	outs->next_payload_chain.loc = cur;
-	outs->next_payload_chain.sd = sd;
-	outs->next_payload_chain.fp = fp;
+	PASSERT(outs->logger, fp->size == 1);
+	save_fixup(outs, next_payload_chain, cur, sd, fp);
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		name_buf npb;
@@ -2457,12 +2495,36 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 }
 
+struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs)
+{
+	/*
+	 * Find the message (packet) PBS containing the next payload
+	 * chain pointers initialized by start_next_payload_chain().
+	 * Since there is a single chain, running through the message,
+	 * this is stored in the outermost PBS.
+	 *
+	 * XXX: don't try to be all fancy and copy back values; could
+	 * use an outs->message pointer; but since nesting is minimal
+	 * this isn't really urgent
+	 */
+	struct pbs_out *outer = outs;
+	while (outer->container != NULL) {
+		outer = outer->container;
+	}
+
+	struct fixup *next_payload_chain = &outer->next_payload_chain;
+	PASSERT(outs->logger, next_payload_chain->loc != NULL);
+	PASSERT(outs->logger, next_payload_chain->sd != NULL);
+	PASSERT(outs->logger, next_payload_chain->fp != NULL);
+	return next_payload_chain;
+}
+
 static void update_next_payload_chain(struct pbs_out *outs,
 				      struct_desc *sd, field_desc *fp,
 				      const uint8_t *inp, uint8_t *cur)
 {
-	passert(fp->size == 1);
-	passert(sd->pt != ISAKMP_NEXT_NONE);
+	PASSERT(outs->logger, fp->size == 1);
+	PASSERT(outs->logger, sd->pt != ISAKMP_NEXT_NONE);
 
 	/*
 	 * Normally only comes after the header and ft_mnpc.  However,
@@ -2471,8 +2533,8 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	 */
 	if (outs->container == NULL) {
 		name_buf npb;
-		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
-		    sd->name, sd->pt, str_enum_long(fp->desc, sd->pt, &npb));
+		ldbg(outs->logger, "next payload chain: no previous for current %s (%d:%s); assumed to be fake",
+		     sd->name, sd->pt, str_enum_long(fp->desc, sd->pt, &npb));
 		return;
 	}
 
@@ -2486,15 +2548,9 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	 * use an outs->message pointer; but since nesting is minimal
 	 * this isn't really urgent
 	 */
-	struct pbs_out *message = outs->container;
-	passert(message != NULL);
-	while (message->container != NULL) {
-		message = message->container;
-	}
-	passert(message->next_payload_chain.loc != NULL);
-	passert(message->next_payload_chain.sd != NULL);
-	passert(message->next_payload_chain.fp != NULL);
-	pexpect(*message->next_payload_chain.loc == ISAKMP_NEXT_NONE);
+	struct fixup *next_payload_chain = pbs_out_next_payload_chain(outs);
+	/* not yet patched */
+	PEXPECT(outs->logger, next_payload_chain->loc[0] == ISAKMP_NEXT_NONE);
 
 	/*
 	 * Initialize this payload's next payload chain
@@ -2512,7 +2568,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 		 * than one payload.
 		 */
 		name_buf npb;
-		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
+		ldbg(outs->logger, "next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     str_enum_long(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
@@ -2526,19 +2582,10 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	name_buf npb;
-	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
-	     message->next_payload_chain.sd->name,
-	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, str_enum_long(fp->desc, sd->pt, &npb));
-	*message->next_payload_chain.loc = sd->pt;
+	apply_fixup(outs->logger, next_payload_chain, sd->pt);
 
 	/* save new */
-	dbg("next payload chain: saving location '%s'.'%s' in '%s'",
-	    sd->name, fp->name, message->name);
-	message->next_payload_chain.loc = cur;
-	message->next_payload_chain.sd = sd;
-	message->next_payload_chain.fp = fp;
+	save_fixup_1(outs->logger, "next_payload_chain", next_payload_chain, cur, sd, fp);
 }
 
 /* "emit" a host struct into a network packet.
@@ -2601,7 +2648,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				llog_pexpect(outs->logger, HERE, MSG);
 				return false;
 			}
-			llog(RC_LOG, outs->logger, "IMPAIR: emitting "MSG);
+			llog(IMPAIR_STREAM, outs->logger, "emitting "MSG);
 		}
 		break;
 	}
@@ -2617,8 +2664,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 					     n, n);
 				return false;
 			}
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 			     fp->name, sd->name, n, n);
 		}
 		break;
@@ -2642,8 +2689,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				return false;
 			}
 			lset_buf lb;
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 			     fp->name, sd->name,
 			     str_lset(fp->desc, n, &lb),
 			     n);
@@ -2672,10 +2719,10 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 	u_int8_t *cur = outs->cur;
 	struct logger *logger = outs->logger;
 
-	passert(struct_size == 0 || struct_size >= sd->size);
+	PASSERT(outs->logger, struct_size == 0 || struct_size >= sd->size);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		DBG_prefix_print_pbs_out_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
+		LDBG_prefix_print_pbs_out_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
@@ -2706,16 +2753,15 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 	};
 
 	for (field_desc *fp = sd->fields; ; fp++) {
-		size_t i = fp->size;
 
 		/* make sure that there is space for the next structure element */
-		passert(outs->roof - cur >= (ptrdiff_t)i);
+		PASSERT(outs->logger, outs->roof - cur >= (ptrdiff_t)fp->size);
 
 		/* verify that the spot is correct in the offset */
-		passert(cur - outs->cur <= (ptrdiff_t)(sd->size - i));
+		PASSERT(outs->logger, cur - outs->cur <= (ptrdiff_t)(sd->size - fp->size));
 
 		/* verify that we are at the right place in the input structure */
-		passert(inp - (cur - outs->cur) == struct_ptr);
+		PASSERT(outs->logger, inp - (cur - outs->cur) == struct_ptr);
 
 		ldbgf(DBG_TMI, outs->logger, "out_struct: %d %s",
 		      (int) (cur - outs->cur),
@@ -2727,14 +2773,15 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
-				llog(RC_LOG, outs->logger,
-				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(IMPAIR_STREAM, outs->logger,
+				     "setting %zu byte zero/ignore field to %"PRIu8" (0x%"PRIx8", '%c')",
+				     fp->size, byte, byte, (char_isprint(byte) ? byte : '.'));
 			} else {
 				byte = 0;
 			}
-			memset(cur, byte, i);
-			inp += i;
-			cur += i;
+			memset(cur, byte, fp->size);
+			inp += fp->size;
+			cur += fp->size;
 			break;
 		}
 
@@ -2767,15 +2814,14 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 				 * We do record where this is so that it can be
 				 * filled in by a subsequent close_pbs_out().
 				 */
-				passert(obj.lenfld == NULL);    /* only one ft_len allowed */
-				obj.lenfld = cur;
-				obj.lenfld_desc = fp;
+				PASSERT(outs->logger, obj.header_length_field.loc == NULL);    /* only one ft_len allowed */
+				save_fixup(&obj, header_length_field, cur, sd, fp);
 
 				/* fill with crap so failure to overwrite will be noticed */
-				memset(cur, 0xFA, i);
+				memset(cur, 0xFA, fp->size);
 
-				inp += i;
-				cur += i;
+				inp += fp->size;
+				cur += fp->size;
 				break;
 			}
 
@@ -2800,12 +2846,12 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			break;
 
 		case ft_raw: /* bytes to be left in network-order */
-			for (; i != 0; i--)
+			for (size_t i = fp->size; i != 0; i--)
 				*cur++ = *inp++;
 			break;
 
 		case ft_end: /* end of field list */
-			passert(cur == outs->cur + sd->size);
+			PASSERT(outs->logger, cur == outs->cur + sd->size);
 
 			obj.start = outs->cur;
 			obj.cur = cur;
@@ -2836,12 +2882,12 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 bool ikev1_out_generic(struct_desc *sd,
 		       struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
-	passert(sd->fields == isag_fields);
-	passert(sd->pt != ISAKMP_NEXT_NONE);
+	PASSERT(outs->logger, sd->fields == isag_fields);
+	PASSERT(outs->logger, sd->pt != ISAKMP_NEXT_NONE);
 	struct isakmp_generic gen = {
 		.isag_np = 0,
 	};
-	return out_struct(&gen, sd, outs, obj_pbs);
+	return pbs_out_struct(outs, gen, sd, obj_pbs);
 }
 
 bool ikev1_out_generic_raw(struct_desc *sd,
@@ -2877,7 +2923,7 @@ static bool space_for(struct pbs_out *outs, size_t len, const char *what, const 
 		/*
 		 * Overflowing.
 		 */
-		pexpect(pbs_left(outs) <= len);
+		PEXPECT(outs->logger, pbs_left(outs) <= len);
 		llog_pexpect(outs->logger, where,
 			     "buffer is full; unable to emit %zu %s bytes of %s into %s",
 			     len, what, name, outs->name);
@@ -2889,7 +2935,7 @@ static bool space_for(struct pbs_out *outs, size_t len, const char *what, const 
 	/*
 	 * Already overflowing.
 	 */
-	pexpect(pbs_left(outs) == 0);
+	PEXPECT(outs->logger, pbs_left(outs) == 0);
 	llog_pexpect(outs->logger, where,
 		     "buffer is overflowing; unable to emit %zu %s bytes of %s into %s",
 		     len, what, name, outs->name);
@@ -2930,7 +2976,7 @@ bool pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const
 		return false;
 	}
 
-	dbg("emitting %"PRIu8" as %zu bytes of %s into %s", byte, len, name, outs->name);
+	ldbg(outs->logger, "emitting %"PRIu8" as %zu bytes of %s into %s", byte, len, name, outs->name);
 	memset(outs->cur, byte, len);
 	outs->cur += len;
 	return true;
@@ -2943,7 +2989,7 @@ bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 		return false;
 	}
 
-	dbg("emitting %zu zero bytes of %s into %s", len, name, outs->name);
+	ldbg(outs->logger, "emitting %zu zero bytes of %s into %s", len, name, outs->name);
 	memset(outs->cur, 0, len);
 	outs->cur += len;
 	return true;
@@ -2986,10 +3032,10 @@ bool close_pbs_out(struct pbs_out *pbs)
 {
 	PASSERT(pbs->logger, pbs->logger != NULL);
 
-	if (pbs->lenfld != NULL) {
+	if (pbs->header_length_field.loc != NULL) {
 		size_t len = (pbs->cur - pbs->start);
 
-		if (pbs->lenfld_desc->field_type == ft_lv)
+		if (pbs->header_length_field.fp->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
 		ldbg(pbs->logger, "emitting length of %s: %zu", pbs->name, len);
@@ -2997,9 +3043,7 @@ bool close_pbs_out(struct pbs_out *pbs)
 		/*
 		 * Emit SIZE octets of (host) length in network order.
 		 */
-		unsigned size = pbs->lenfld_desc->size;
-		PASSERT(pbs->logger, size > 0);
-		raw_hton(len, pbs->lenfld, size);
+		apply_fixup(pbs->logger, &pbs->header_length_field, len);
 	}
 
 	/* if there is one */

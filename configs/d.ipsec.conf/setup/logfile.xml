@@ -1,0 +1,11 @@
+<varlistentry id='setup.logfile'>
+  <term>
+    <option>logfile=&filename;</option>
+  </term>
+  <listitem>
+    <para>
+      Instead of logging using &syslog.2; log to the specified
+      &filename;.
+    </para>
+  </listitem>
+</varlistentry>

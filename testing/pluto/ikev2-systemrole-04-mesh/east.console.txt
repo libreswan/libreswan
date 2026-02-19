@@ -66,7 +66,7 @@ sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=yes, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
-ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -117,16 +117,17 @@ algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-algorithm IKE DH Key Exchange: name=DH19, bits=512
-algorithm IKE DH Key Exchange: name=DH20, bits=768
-algorithm IKE DH Key Exchange: name=DH21, bits=1056
-algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=MODP1536, bits=1536
+algorithm IKE Key Exchange Method (DH): name=MODP2048, bits=2048
+algorithm IKE Key Exchange Method (DH): name=MODP3072, bits=3072
+algorithm IKE Key Exchange Method (DH): name=MODP4096, bits=4096
+algorithm IKE Key Exchange Method (DH): name=MODP6144, bits=6144
+algorithm IKE Key Exchange Method (DH): name=MODP8192, bits=8192
+algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
+algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
+algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
+algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -134,13 +135,13 @@ Connection list:
  
 "clear": 192.1.2.23---192.1.2.254...%group; unrouted; my_ip=unset; their_ip=unset;
 "clear":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %group;
-"clear":   my_updown=<disabled>;
+"clear":   my_updown=<disabled>; my_updown-config=noasync,noexec;
 "clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear":   sec_label:unset;
-"clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
+"clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%; clones: no (unset);
 "clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -156,13 +157,13 @@ Connection list:
 "clear":   conn serial: $3;
 "clear#192.1.2.254/32": 192.1.2.23---192.1.2.254...%any===192.1.2.254/32; routed-never-negotiate; my_ip=unset; their_ip=unset;
 "clear#192.1.2.254/32":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %any;
-"clear#192.1.2.254/32":   my_updown=<disabled>;
+"clear#192.1.2.254/32":   my_updown=<disabled>; my_updown-config=noasync,noexec;
 "clear#192.1.2.254/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.2.254/32":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear#192.1.2.254/32":   sec_label:unset;
-"clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
+"clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%; clones: no (unset);
 "clear#192.1.2.254/32":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear#192.1.2.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear#192.1.2.254/32":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -178,14 +179,14 @@ Connection list:
 "clear#192.1.2.254/32":   conn serial: $6, instantiated from: $3;
 "private": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
 "private":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunisticgroup;
-"private":   mycert=east; my_updown=ipsec _updown;
+"private":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private":   sec_label:unset;
 "private":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "private":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -201,14 +202,14 @@ Connection list:
 "private":   conn serial: $1;
 "private#10.1.0.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "private#10.1.0.0/24":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunistic;
-"private#10.1.0.0/24":   mycert=east; my_updown=ipsec _updown;
+"private#10.1.0.0/24":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private#10.1.0.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private#10.1.0.0/24":   sec_label:unset;
 "private#10.1.0.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"private#10.1.0.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"private#10.1.0.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "private#10.1.0.0/24":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private#10.1.0.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private#10.1.0.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -224,14 +225,14 @@ Connection list:
 "private#10.1.0.0/24":   conn serial: $4, instantiated from: $1;
 "private-or-clear": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
 "private-or-clear":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunisticgroup;
-"private-or-clear":   mycert=east; my_updown=ipsec _updown;
+"private-or-clear":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear":   sec_label:unset;
 "private-or-clear":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "private-or-clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -247,14 +248,14 @@ Connection list:
 "private-or-clear":   conn serial: $2;
 "private-or-clear#192.1.2.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "private-or-clear#192.1.2.0/24":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunistic;
-"private-or-clear#192.1.2.0/24":   mycert=east; my_updown=ipsec _updown;
+"private-or-clear#192.1.2.0/24":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear#192.1.2.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;
 "private-or-clear#192.1.2.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "private-or-clear#192.1.2.0/24":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear#192.1.2.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

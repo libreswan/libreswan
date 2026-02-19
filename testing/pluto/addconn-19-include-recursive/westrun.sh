@@ -5,4 +5,4 @@ ipsec start
 grep include /etc/ipsec.conf
 
 # expect the add to fail as recursive
-ipsec auto --add west
+ipsec add west

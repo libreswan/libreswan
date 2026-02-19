@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -39,28 +39,28 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 1
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: blocking outbound message 1
 west #
  ipsec whack --impair drip_outbound:1
 IMPAIR: start processing outbound drip packet 1
 IMPAIR: stop processing outbound drip packet 1
 west #
  ../../guestbin/wait-for-inbound.sh 1
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 west #
  ipsec whack --impair drip_inbound:1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 west #
  ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 2'
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 2
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: blocking outbound message 2
 west #
  ipsec whack --impair drip_outbound:2
 IMPAIR: start processing outbound drip packet 2
 IMPAIR: stop processing outbound drip packet 2
 west #
  ../../guestbin/wait-for-inbound.sh 2
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 west #
  ipsec whack --impair drip_inbound:2
 IMPAIR: start processing inbound drip packet 2
@@ -87,6 +87,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -96,6 +97,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main

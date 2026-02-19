@@ -51,26 +51,26 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
  *
  *
  */
-PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
-				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *dh_secret,
-				  struct logger *logger)
+PK11SymKey *ikev2_IKE_SA_INIT_skeyseed(const struct prf_desc *prf_desc,
+				       const chunk_t Ni, const chunk_t Nr,
+				       PK11SymKey *ke_secret,
+				       struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr,
-							dh_secret, logger);
+							ke_secret, logger);
 }
 
 /*
  * SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)
  */
-PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
-					PK11SymKey *SK_d_old,
-					PK11SymKey *new_dh_secret,
-					const chunk_t Ni, const chunk_t Nr,
-					struct logger *logger)
+PK11SymKey *ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(const struct prf_desc *prf_desc,
+						     PK11SymKey *SK_d_old,
+						     PK11SymKey *new_ke_secret,
+						     const chunk_t Ni, const chunk_t Nr,
+						     struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
-							      new_dh_secret,
+							      new_ke_secret,
 							      Ni, Nr, logger);
 }
 
@@ -91,10 +91,13 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 						      logger);
 }
 
-PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
-					     PK11SymKey *old_SK_d,
-					     shunk_t ppk,
-					     struct logger *logger)
+/*
+ * Compute: SKEYSEED = prf+(PPK, SK_d)
+ */
+PK11SymKey *ikev2_IKE_INTERMEDIATE_ppk_skeyseed(const struct prf_desc *prf_desc,
+						shunk_t ppk,
+						PK11SymKey *old_SK_d,
+						struct logger *logger)
 {
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk, logger);
 	PK11SymKey *skeyseed = prf_desc->prf_ikev2_ops->prfplus(prf_desc, ppk_key,
@@ -106,27 +109,43 @@ PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
 }
 
 /*
+ * Compute: SKEYSEED = prf(SK_d(N-1), SK(N), Ni, Nr)
+ */
+PK11SymKey *ikev2_IKE_INTERMEDIATE_kem_skeyseed(const struct prf_desc *prf_desc,
+						PK11SymKey *old_SK_d,
+						PK11SymKey *new_ke_secret,
+						const chunk_t Ni, const chunk_t Nr,
+						struct logger *logger)
+{
+	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, old_SK_d,
+							      new_ke_secret,
+							      Ni, Nr, logger);
+}
+
+/*
  * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr)
  */
 PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_d,
-				  PK11SymKey *new_dh_secret,
+				  PK11SymKey *new_ke_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes,
 				  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_dh_secret,
+	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_ke_secret,
 							Ni, Nr, required_bytes,
 							logger);
 }
 
-struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, shunk_t pss,
-				chunk_t first_packet, chunk_t nonce,
+struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,
+				PK11SymKey *psk,
+				shunk_t first_packet,
+				chunk_t nonce,
 				const struct crypt_mac *id_hash,
 				chunk_t intermediate_packet,
 				struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet, nonce,
+	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, psk, first_packet, nonce,
 						 id_hash, intermediate_packet, logger);
 }
 
@@ -137,10 +156,10 @@ struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, shunk_t pss,
  * vector (as it was on the branch).
  */
 
-PK11SymKey *ikev2_ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
-					 PK11SymKey *SK_d_old,
-					 const chunk_t Ni, const chunk_t Nr,
-					 struct logger *logger)
+PK11SymKey *ikev2_IKE_SESSION_RESUME_skeyseed(const struct prf_desc *prf_desc,
+					      PK11SymKey *SK_d_old,
+					      const chunk_t Ni, const chunk_t Nr,
+					      struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_resume_skeyseed(prf_desc,
 							       SK_d_old,
@@ -155,7 +174,7 @@ PK11SymKey *ikev2_ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
 
 struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_px,
-				  chunk_t first_packet,
+				  shunk_t first_packet,
 				  struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->psk_resume(prf_desc, SK_px,

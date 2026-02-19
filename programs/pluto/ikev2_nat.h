@@ -17,15 +17,21 @@
 #define IKEV2_NAT_H
 
 /*
- * NAT-D
+ * Detect IKEv2 NAT.
+ *
+ * Call nat_traversal_detected() to determine if there's a NAT.
+ *
+ * XXX: while the probe for nat can happen early, the address float
+ * should happen late, after the packet has been fully processed.
  */
-
-extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
+void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md);
 
 /*
  * move initiator endpoints (src, dst) to NAT ports.
  */
-bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
+
+void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike);
+bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
 
 bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    const ip_endpoint *remote_endpoint,
@@ -35,6 +41,6 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 bool ikev2_out_nat_v2n(struct pbs_out *outs, struct state *st,
 		       const ike_spi_t *ike_responder_spi);
 
+void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike, const struct msg_digest *md);
+
 #endif
-
-

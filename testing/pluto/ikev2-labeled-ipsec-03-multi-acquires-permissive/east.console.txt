@@ -16,7 +16,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add labeled
-"labeled": added IKEv2 connection
+"labeled": added oriented IKEv2 connection
 east #
  ipsec getpeercon_server -d 4300
 PATH/sbin/ipsec: unknown IPsec command "getpeercon_server" ("ipsec help" for list)
@@ -36,6 +36,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -46,6 +47,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -56,6 +58,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -66,6 +69,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32

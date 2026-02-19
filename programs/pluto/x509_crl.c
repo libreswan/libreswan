@@ -36,7 +36,7 @@
 #include "timer.h"
 #include "keys.h"		/* for pluto_pubkeys; */
 #include "server_fork.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 struct crl_distribution_point;
 
@@ -93,6 +93,8 @@ static void free_crl_distribution_point(struct crl_distribution_point **tbd)
 
 static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	/*
 	 * Find the distribution point.
 	 */
@@ -108,7 +110,7 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 		 * No distribution point found, add one.
 		 */
 		*dp = alloc_thing(struct crl_distribution_point, "add distribution point");
-		(*dp)->url = clone_hunk_as_string(url, "dp url");
+		(*dp)->url = clone_hunk_as_string(&url, "dp url");
 		(*dp)->first_request = realnow();
 		static unsigned count;
 		(*dp)->nr = ++count;
@@ -118,13 +120,13 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 	 */
 	struct crl_issuer **issuer;
 	for (issuer = &(*dp)->issuers; (*issuer) != NULL; issuer = &(*issuer)->next) {
-		if (same_dn(issuer_dn, ASN1((*issuer)->dn))) {
+		if (same_dn(issuer_dn, ASN1((*issuer)->dn), verbose)) {
 			break;
 		}
 	}
 	if ((*issuer) == NULL) {
 		(*issuer) = alloc_thing(struct crl_issuer, "add distribution point issuer");
-		(*issuer)->dn = clone_hunk(issuer_dn, "crl issuer dn");
+		(*issuer)->dn = clone_hunk_as_chunk(&issuer_dn, "crl issuer dn");
 	}
 }
 
@@ -186,7 +188,7 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 	SECItem issuer_secitem = same_shunk_as_secitem(issuer_dn, siBuffer);
 	CERTCertificate *ca = CERT_FindCertByName(handle, &issuer_secitem); /* must free */
 	if (ca == NULL) {
@@ -218,7 +220,7 @@ void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
 	add_crl_fetch_request(issuer_dn, /*URL*/null_shunk, logger);
 
 	if (impair.event_check_crls) {
-		llog(RC_LOG, logger, "IMPAIR: not initiating FETCH_CRL");
+		llog(IMPAIR_STREAM, logger, "not initiating FETCH_CRL");
 		return;
 	}
 
@@ -299,14 +301,21 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 	}
 
 	/*
-	 * Is there a next distribution point?
+	 * Is there a next distribution point?  No!  Then go back to
+	 * sleep.
 	 */
 
 	if ((*current) == NULL) {
 		ldbg(logger, "CRL: the sleeping dragon snores");
 		current = NULL; /* idle */
-		/* schedule the next probe */
-		schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval);
+		/*
+		 * Schedule the next probe when the check interval is
+		 * set / non-zero.  When unset, `ipsec fetchcrls` does
+		 * a single probe.
+		 */
+		if (deltasecs(x509_crl.check_interval) > 0) {
+			schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval, logger);
+		}
 		return;
 	}
 
@@ -341,30 +350,34 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 			    struct logger *logger)
 {
 	if (!WIFEXITED(wstatus)) {
-		llog_error(logger, 0,
-			   "CRL: importing %s failed, helper aborted with waitpid status %d",
-			   dp->url, wstatus);
-		llog_hunk(RC_LOG, logger, output);
+		llog(ERROR_STREAM, logger,
+		     "CRL: importing %s failed, helper aborted with waitpid status %d",
+		     dp->url, wstatus);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 
 	int ret = WEXITSTATUS(wstatus);
 	if (ret != 0) {
-		llog_error(logger, 0,
-			   "CRL: importing %s failed, helper exited with non-zero status %d",
-			   dp->url, ret);
-		llog_hunk(RC_LOG, logger, output);
+		llog(ERROR_STREAM, logger,
+		     "CRL: importing %s failed, helper exited with non-zero status %d",
+		     dp->url, ret);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 
-	ldbg(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
-	     dp->url, output.len);
-	ldbg_hunk(logger, output);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
+			 dp->url, output.len);
+		LDBG_hunk(logger, &output);
+	}
 
-	chunk_t sign_dn = clone_hunk(output, "signer");		/* must free */
+	chunk_t sign_dn = clone_hunk_as_chunk(&output, "signer");		/* must free */
 	pemtobin(&sign_dn);
-	ldbg(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
-	ldbg_hunk(logger, sign_dn);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
+		LDBG_hunk(logger, &sign_dn);
+	}
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -373,7 +386,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 	SECItem name = {
 		.type = siBuffer,
 		.data = sign_dn.ptr,
@@ -423,8 +436,10 @@ stf_status fork_cb(struct state *st UNUSED,
  * when it merges these requests with any still unprocessed requests.
  */
 
-static void event_check_crls(struct logger *logger)
+static void event_check_crls(struct verbose verbose)
 {
+	struct logger *logger = verbose.logger;
+
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -432,7 +447,7 @@ static void event_check_crls(struct logger *logger)
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 
 	/*
 	 * Add NSS's CRLs.
@@ -451,7 +466,7 @@ static void event_check_crls(struct logger *logger)
 			}
 		}
 
-		dbg("CRL: releasing crl list in %s()", __func__);
+		ldbg(logger, "CRL: releasing crl list in %s()", __func__);
 		PORT_FreeArena(crl_list->arena, PR_FALSE);
 	}
 
@@ -492,7 +507,7 @@ static void event_check_crls(struct logger *logger)
 
 void fetch_x509_crls(struct show *s)
 {
-	event_check_crls(show_logger(s));
+	event_check_crls(VERBOSE(DEBUG_STREAM, show_logger(s), NULL));
 }
 
 /*
@@ -507,14 +522,14 @@ bool init_x509_crl_queue(struct logger *logger)
 	 * further fetches are defined by the config(?) file (is that
 	 * loaded before this function was called? yes).
 	 */
-	init_oneshot_timer(EVENT_CHECK_CRLS, event_check_crls);
+	init_oneshot_timer(EVENT_CHECK_CRLS, event_check_crls, logger);
 	if (deltasecs(x509_crl.check_interval) <= 0) {
 		ldbg(logger, "CRL: checking disabled as check-interval is zero");
 		return false;
 	}
 
 	if (impair.event_check_crls) {
-		llog(RC_LOG, logger, "IMPAIR: not scheduling EVENT_CHECK_CRLS");
+		llog(IMPAIR_STREAM, logger, "not scheduling EVENT_CHECK_CRLS");
 		return true; /*technically still enabled*/
 	}
 
@@ -525,7 +540,7 @@ bool init_x509_crl_queue(struct logger *logger)
 	 * before the CRL fetch list has been refreshed (for the
 	 * latter, use impair.event_check_crls).
 	 */
-	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime_from_seconds(5), logger);
 	return true;
 }
 

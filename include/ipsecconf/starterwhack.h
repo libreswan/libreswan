@@ -19,12 +19,15 @@
 struct starter_conn;
 struct starter_config;
 struct logger;
+enum whack_noise;
+enum yn_options;
 
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
-			   struct logger *logger);
-extern int starter_whack_listen(const char *ctlsocket,
-				struct logger *logger);
+			   struct logger *logger,
+			   bool dry_run,
+			   enum yn_options async,
+			   enum whack_noise noise);
 
 #endif /* _STARTER_WHACK_H_ */
 

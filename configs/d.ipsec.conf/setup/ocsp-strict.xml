@@ -1,0 +1,24 @@
+<varlistentry id='setup.ocsp-strict'>
+  <term>
+    <option>ocsp-strict=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      if set to no, pluto is tolerant about failing to obtain an OCSP
+      responses and a certificate is not rejected when the OCSP
+      request fails, only when the OCSP request succeeds and lists the
+      certificate as revoked.  If set to yes, any failure on obtaining
+      an OCSP status for a certificate will be fatal and the
+      certificate will be rejected.
+    </para>
+    <para>
+      The strict mode refers to the NSS
+      ocspMode_FailureIsVerificationFailure mode, while non-strict
+      mode refers to the NSS ocspMode_FailureIsNotAVerificationFailure
+      mode.
+    </para>
+    <para>
+        The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

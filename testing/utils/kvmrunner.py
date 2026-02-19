@@ -32,7 +32,6 @@ from fab import timing
 from fab import publish
 from fab import argutil
 
-
 def main():
 
     # If SIGUSR1, backtrace all threads; hopefully this is early
@@ -45,8 +44,6 @@ def main():
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--pid-file", default="", help="file to store process id of KVMRUNNER");
 
-    parser.add_argument("directories", metavar="DIRECTORY", nargs="*", default=".",
-                        help="a testsuite directory, a TESTLIST file, or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
     logutil.add_arguments(parser)
@@ -70,9 +67,6 @@ def main():
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
                                               log_level=logutil.INFO)
-    if not tests:
-        logger.error("test or testsuite directory invalid: %s", args.directories)
-        return 1
 
     if len(tests) == 1 and args.run_post_mortem is None:
         logger.warning("disabling post-mortem.sh as only one test; use --run-post-mortem true to override this")

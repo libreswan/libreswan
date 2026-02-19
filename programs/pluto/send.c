@@ -162,14 +162,14 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		endpoint_buf lb;
 		endpoint_buf rb;
 		llog(DEBUG_STREAM, logger,
-		     "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
+		     "sending %zu bytes for %s through %s from %s to %s using %s (for "PRI_SO")",
 		     packet.len, where,
 		     interface->ip_dev->real_device_name,
 		     str_endpoint(&interface->local_endpoint, &lb),
 		     str_endpoint(&remote_endpoint, &rb),
 		     interface->io->protocol->name,
-		     serialno);
-		llog_hunk(DEBUG_STREAM, logger, packet);
+		     pri_so(serialno));
+		llog_hunk(DEBUG_STREAM, logger, &packet);
 	}
 
 	if (!impair_outbound(interface, packet, &remote_endpoint, logger)) {
@@ -179,8 +179,8 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 			if (!just_a_keepalive) {
 				endpoint_buf lb;
 				endpoint_buf rb;
-				llog_error(logger, errno,
-					   "send on %s from %s to %s using %s failed in %s",
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "send on %s from %s to %s using %s failed in %s: ",
 					   interface->ip_dev->real_device_name,
 					   str_endpoint(&interface->local_endpoint, &lb),
 					   str_endpoint_sensitive(&remote_endpoint, &rb),
@@ -203,8 +203,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		usleep(500000);
 		endpoint_buf b;
 		endpoint_buf ib;
-		llog(RC_LOG, logger,
-		     "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
+		llog(IMPAIR_STREAM, logger, "JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
 		     len, where,
 		     interface->ip_dev->real_device_name,
 		     str_endpoint(&interface->local_endpoint, &ib),
@@ -214,8 +213,8 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		ssize_t wlen = sendto(interface->fd, packet.ptr, packet.len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
-				llog_error(logger, errno,
-					   "sendto on %s to %s failed in %s",
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "sendto on %s to %s failed in %s: ",
 					   interface->ip_dev->real_device_name,
 					   str_endpoint(&remote_endpoint, &b),
 					   where);

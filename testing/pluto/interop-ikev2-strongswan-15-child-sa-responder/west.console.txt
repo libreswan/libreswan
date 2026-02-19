@@ -21,13 +21,13 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2a
-"westnet-eastnet-ikev2a": added IKEv2 connection
+"westnet-eastnet-ikev2a": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2b
-"westnet-eastnet-ikev2b": added IKEv2 connection
+"westnet-eastnet-ikev2b": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2c
-"westnet-eastnet-ikev2c": added IKEv2 connection
+"westnet-eastnet-ikev2c": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -39,6 +39,7 @@ west #
 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2a" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}, initiating IKE_AUTH
 "westnet-eastnet-ikev2a" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ikev2a" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2a" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
@@ -66,13 +67,13 @@ west #
  ipsec status | grep westnet-eastnet-ikev2
 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
-"westnet-eastnet-ikev2a":   my_updown=ipsec _updown;
+"westnet-eastnet-ikev2a":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2a":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2a":   sec_label:unset;
-"westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
+"westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ikev2a":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2a":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ikev2a":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -92,13 +93,13 @@ west #
 "westnet-eastnet-ikev2a":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
 "westnet-eastnet-ikev2b": 192.0.100.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ikev2b":   my_updown=ipsec _updown;
+"westnet-eastnet-ikev2b":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2b":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2b":   sec_label:unset;
-"westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
+"westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ikev2b":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ikev2b":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -117,13 +118,13 @@ west #
 "westnet-eastnet-ikev2b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=<N/A>
 "westnet-eastnet-ikev2c": 192.0.101.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ikev2c":   my_updown=ipsec _updown;
+"westnet-eastnet-ikev2c":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2c":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2c":   sec_label:unset;
-"westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
+"westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ikev2c":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ikev2c":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

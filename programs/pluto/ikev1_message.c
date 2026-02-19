@@ -35,15 +35,6 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *
 	return id_hd;
 }
 
-bool out_raw(const void *bytes, size_t len, struct pbs_out *outs, const char *name)
-{
-	if (!pbs_out_raw(outs, bytes, len, name)) {
-		/* already logged */
-		return false;
-	}
-	return true;
-}
-
 bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)
 {
@@ -85,21 +76,21 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
 					       "keyex value");
 	case IMPAIR_EMIT_OMIT:
-		llog(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
+		llog(IMPAIR_STREAM, logger, "sending no KE (g^x) payload");
 		return true;
 	case IMPAIR_EMIT_EMPTY:
-		llog(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
+		llog(IMPAIR_STREAM, logger, "sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
 	default:
 	{
 		struct pbs_out z;
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
+		llog(IMPAIR_STREAM, logger, "sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			pbs_out_repeated_byte(&z, byte, g->len, "fake g^x") &&
-			(close_output_pbs(&z), true);
+			(close_pbs_out(&z), true);
 	}
 	}
 }
@@ -167,7 +158,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 	return true;
 }
 
@@ -214,7 +205,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * Fortunately, everything ignores that byte.
 	 */
 	shunk_t message = pbs_out_all(pbs);
-	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
+	shunk_t unpadded_encrypt = shunk_slice(message, sizeof(struct isakmp_hdr), message.len);
 	size_t encrypt_padding = pad_up(unpadded_encrypt.len, e->enc_blocksize);
 	if (encrypt_padding != 0) {
 		if (!pbs_out_zero(pbs, encrypt_padding, "encryption padding")) {
@@ -230,9 +221,9 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * vaguely similar.
 	 */
 	chunk_t padded_message = chunk2(pbs->start, pbs_out_all(pbs).len);
-	chunk_t padded_encrypt = hunk_slice(padded_message,
-					    sizeof(struct isakmp_hdr),
-					    padded_message.len);
+	chunk_t padded_encrypt = chunk_slice(padded_message,
+					     sizeof(struct isakmp_hdr),
+					     padded_message.len);
 
 	/*
 	 * Finally, re-pad the entire message (header and body) to
@@ -252,16 +243,16 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 
 	/* XXX: not ldbg(pbs->logger) as can be NULL */
-	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
-	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
+	ldbg(ike->sa.logger, "encrypt unpadded %zu padding %zu padded %zu bytes",
+	     unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "encrypting:");
-		LDBG_hunk(logger, padded_encrypt);
+		LDBG_hunk(logger, &padded_encrypt);
 		LDBG_log(logger, "IV:");
-		LDBG_hunk(logger, *iv);
+		LDBG_hunk(logger, iv);
 	}
 
 	/*
@@ -275,7 +266,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "next IV:");
-		LDBG_hunk(logger, *iv);
+		LDBG_hunk(logger, iv);
 	}
 
 	return true;
@@ -294,7 +285,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
-	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
+	ldbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
 
 	const struct hash_desc *h = ike->sa.st_oakley.ta_prf->hasher;
 	PASSERT_WHERE(logger, where, h != NULL);

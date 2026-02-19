@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
-"rw-east-pool-x509-ipv4": added IKEv2 connection
+"rw-east-pool-x509-ipv4": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

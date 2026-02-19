@@ -130,17 +130,17 @@ static void update_quick_iv(struct child_sa *child,
 	child->sa.st_v1_phase_2_iv = iv;
 }
 
-const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
+const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
 		return NULL;
 	}
 	struct proposal *proposal = next_proposal(proposals.p, NULL);
-	struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
-	if (dh == NULL) {
+	const struct transform *kem = first_proposal_transform(proposal, transform_type_kem);
+	if (kem == NULL) {
 		return NULL;
 	}
-	return dh_desc(dh->desc);
+	return kem_desc(kem->desc);
 }
 
 /* accept_PFS_KE
@@ -150,20 +150,18 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  */
 
 static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest *md,
-				       chunk_t *dest, const char *val_name,
 				       const char *msg_name)
 {
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
-
 	if (ke_pd == NULL) {
-		if (child->sa.st_pfs_group != NULL) {
+		if (child->sa.st_pfs_kem != NULL) {
 			llog(RC_LOG, child->sa.logger,
 			     "missing KE payload in %s message", msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
 	} else {
-		if (child->sa.st_pfs_group == NULL) {
+		if (child->sa.st_pfs_kem == NULL) {
 			llog(RC_LOG, child->sa.logger,
 			     "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
 			     msg_name);
@@ -175,8 +173,8 @@ static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest
 			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!unpack_KE(dest, val_name, child->sa.st_pfs_group,
-			       ke_pd, child->sa.logger)) {
+		if (!extract_KE(&child->sa, child->sa.st_pfs_kem, md)) {
+			/* already logged */
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
@@ -307,9 +305,9 @@ static bool compute_proto_keymat(struct ike_sa *ike,
 	if (LDBGP(DBG_CRYPT, child->sa.logger)) {
 		LDBG_log(child->sa.logger, "%s KEYMAT", satypename);
 		LDBG_log(child->sa.logger, "  inbound:");
-		LDBG_hunk(child->sa.logger, pi->inbound.keymat);
+		LDBG_hunk(child->sa.logger, &pi->inbound.keymat);
 		LDBG_log(child->sa.logger, "  outbound:");
-		LDBG_hunk(child->sa.logger, pi->outbound.keymat);
+		LDBG_hunk(child->sa.logger, &pi->outbound.keymat);
 	}
 
 	return true;
@@ -585,42 +583,23 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 	child->sa.st_v1_msgid.id = generate_msgid(&ike->sa);
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
-	/* if not forbidden by config, try to re-use a given lease */
-	if (c->config->share_lease && ike->sa.hidden_variables.st_lease_ip.ip.is_set) {
-		ip_address lease = ike->sa.hidden_variables.st_lease_ip;
-
-		if (!c->local->child.has_client) {
-			const struct ip_info *afi = address_info(lease);
-			if (c->local->child.config->selectors.len <= 0) {
-				c->local->child.lease[afi->ip.version] = lease;
-				update_end_selector(c, c->local->config->index,
-					selector_from_address(lease),
-					"^*(&^(* IKEv1 mangling lease IP onto local subnet");
-				subnet_buf caddr;
-				str_selector_range(&c->child.spds.list->local->client, &caddr);
-				llog(RC_LOG, ike->sa.logger, "overwriting lease IP over subnet: %s",
-					caddr.buf);
-			}
-		}
-	}
-
 	binlog_refresh_state(&child->sa);
 
 	/* figure out PFS group, if any */
 
-	if (child->sa.st_connection->config->child_sa.pfs) {
+	if (child->sa.st_connection->config->child.pfs) {
 		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child_sa.proposals);
+		child->sa.st_pfs_kem = ikev1_quick_pfs(c->config->child.proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
 		 */
-		if (child->sa.st_pfs_group == NULL)
-			child->sa.st_pfs_group = ike->sa.st_oakley.ta_dh;
+		if (child->sa.st_pfs_kem == NULL)
+			child->sa.st_pfs_kem = ike->sa.st_oakley.ta_dh;
 	}
 
 	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
@@ -632,14 +611,14 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		}
 		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
 		    pri_so(ike->sa.st_serialno), child->sa.st_v1_msgid.id);
-		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
-			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
+		if (child->sa.st_connection->config->child.proposals.p != NULL) {
+			jam_proposals(buf, child->sa.st_connection->config->child.proposals.p);
 		} else {
 			jam(buf, "defaults");
 		}
 		jam(buf, " pfsgroup=");
-		if (child->sa.st_pfs_group != NULL) {
-			jam_string(buf, child->sa.st_pfs_group->common.fqn);
+		if (child->sa.st_pfs_kem != NULL) {
+			jam_string(buf, child->sa.st_pfs_kem->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
 		}
@@ -656,7 +635,7 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 	submit_ke_and_nonce(/*callback*/&child->sa,
 			    /*task*/&child->sa,
 			    /*no-md*/NULL,
-			    child->sa.st_pfs_group/*could-be-null*/,
+			    child->sa.st_pfs_kem/*could-be-null*/,
 			    quick_outI1_continue,
 			    /*detach_whack*/false, HERE);
 	return child;
@@ -728,7 +707,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* Duplicate nat_traversal status in new state */
 		child->sa.hidden_variables.st_nat_traversal =
 			ike->sa.hidden_variables.st_nat_traversal;
-		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
+		ikev1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
 		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
 	}
@@ -768,8 +747,8 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	 */
 	{
 		struct ipsec_db_policy pm = {
-			.encrypt = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.encrypt = (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_AH),
 			.compress = child->sa.st_policy.compress,
 		};
 
@@ -792,7 +771,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		if (!ikev1_ship_KE(&child->sa, local_secret, &child->sa.st_gi, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -803,7 +782,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* IDci (we are initiator) followed by ... */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 1) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
+			llog(IMPAIR_STREAM, child->sa.logger, "skipping Quick Mode client initiator ID (IDci)");
 		} else {
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->child.spds.list->local->client),
@@ -815,7 +794,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* ... IDcr (peer is responder) */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 2) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+			llog(IMPAIR_STREAM, child->sa.logger, "skipping Quick Mode client responder ID (IDcr)");
 		} else if (c->child.spds.len > 1) {
 			/*
 			 * Multiple SPDs means that CISCO_SPLIT was
@@ -849,7 +828,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* bonus? */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value > 2) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: adding bonus Quick Mode client ID");
+			llog(IMPAIR_STREAM, child->sa.logger, "adding bonus Quick Mode client ID");
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->child.spds.list->local->client),
 					    c->child.spds.list->local->client.ipproto,
@@ -859,7 +838,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		}
 	}
 
-	if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	if (c->config->child.encap_mode == ENCAP_MODE_TRANSPORT &&
 	    (child->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    child->sa.hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
@@ -1081,7 +1060,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * For instance: ikev1-l2tp-02 and ikev1-nat-transport-02.
 	 */
 	if (p == NULL &&
-	    c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	    c->config->child.encap_mode == ENCAP_MODE_TRANSPORT &&
 	    nat_traversal_detected(&ike->sa)) {
 		p = c;
 		vdbg("using existing connection; nothing better and current is NAT'ed and transport mode");
@@ -1094,7 +1073,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * is not IFF transport-mode.
 	 */
 	if (p == NULL &&
-	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
+	    /* c->config->child.encap_mode == ENCAP_MODE_TRANSPORT && */
 	    is_virtual_remote(c, verbose)) {
 		p = c;
 		vdbg("using existing connection; nothing better and current is virtual-private");
@@ -1197,14 +1176,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		vdbg("connection already has a lease");
 	} else {
 		ip_address preferred_address = selector_prefix(remote_client);
-		ip_address assigned_address;
-
-		assigned_address = preferred_address; // ikev1 mandatory
-		diag_t d = assign_remote_lease(c, ike->sa.st_xauth_username,
-					       address_info(preferred_address),
-					       preferred_address,
-					       &assigned_address,
-					       ike->sa.logger);
+		diag_t d = assign_remote_ikev1_lease(c, ike->sa.st_xauth_username,
+						     address_info(preferred_address),
+						     preferred_address,
+						     verbose);
 		if (d != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, ike->sa.logger,
@@ -1215,20 +1190,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 
-		if (!vexpect(address_eq_address(preferred_address, assigned_address))) {
-			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
-		}
-
 		selector_buf sb;
 		llog(RC_LOG, ike->sa.logger,
 		     "Quick Mode without mode-config, assigned lease %s",
 		     str_selector(&remote_client, &sb));
-
-		vdbg("another hack to get the SPD in sync");
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			spd->remote->client = selector_from_address(assigned_address);
-			spd_db_rehash_remote_client(spd);
-		}
 	}
 
 	/* fill in the client's true ip address/subnet */
@@ -1240,14 +1205,14 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 	selector_buf csb;
 	selector_buf rcb;
-	address_buf lb;
+	cidr_buf lb;
 	vdbg("%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
 	     str_selector(&c->child.spds.list->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
-	     str_address(&c->remote->child.lease[client_afi->ip.version], &lb),
+	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
 	     c->remote->child.selectors.proposed.len,
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 
@@ -1278,8 +1243,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			set_child_has_client(c, remote, false);
 		}
 
-		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-			jam(buf, PRI_VERBOSE, pri_verbose);
+		VDBG_JAMBUF(buf) {
 			jam(buf, "setting phase 2 virtual values to ");
 			jam_spd_ends(buf, c, c->child.spds.list->remote, "...", c->child.spds.list->local);
 		}
@@ -1359,8 +1323,8 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal =
 			ike->sa.hidden_variables.st_nat_traversal;
-		nat_traversal_change_port_lookup(md, md->v1_st);
-		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
+		ikev1_nat_change_port_lookup(md, md->v1_st);
+		ikev1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
@@ -1385,7 +1349,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		 * tail(). XXX: Huh, this is the tail
 		 * function!
 		 */
-		child->sa.st_pfs_group = &unset_group;
+		child->sa.st_pfs_kem = &unset_group;
 		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&in_pbs,
 							   &sapd->payload.
 							   sa,
@@ -1398,13 +1362,12 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_ni, "Ni"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gi,
-					     "Gi", "Quick Mode I1"));
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, "Quick Mode I1"));
 
-	passert(child->sa.st_pfs_group != &unset_group);
+	passert(child->sa.st_pfs_kem != &unset_group);
 
 	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, md,
-			    child->sa.st_pfs_group/*possibly-null*/,
+			    child->sa.st_pfs_kem/*possibly-null*/,
 			    quick_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
@@ -1437,7 +1400,7 @@ static stf_status quick_inI1_outR1_continue1(struct state *child_sa,
 	/* we always calculate a nonce */
 	unpack_nonce(&child->sa.st_nr, nonce);
 
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(&child->sa, local_secret, &child->sa.st_gr);
 		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
@@ -1513,11 +1476,11 @@ static bool echo_id(struct pbs_out *outs,
 	 *
 	 * There's code using id_pd.pbs to read the payload breaking
 	 * that assumption.  Hence, the need to re-compute the
-	 * location of the Identifier Data using hunk_slice().  See
+	 * location of the Identifier Data using shunk_slice().  See
 	 * decode_net_id().
 	 */
 	shunk_t id_all = pbs_in_all(&id_pd->pbs);
-	shunk_t id_data = hunk_slice(id_all, sizeof(id_header), id_all.len);
+	shunk_t id_data = shunk_slice(id_all, sizeof(id_header), id_all.len);
 
 	if (!pbs_out_hunk(&id_body, id_data, "ID body")) {
 		return false;
@@ -1643,9 +1606,9 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 					       &r_sa_pbs,
 					       false, child));
 
-	passert(child->sa.st_pfs_group != &unset_group);
+	passert(child->sa.st_pfs_kem != &unset_group);
 
-	if (child->sa.st_connection->config->child_sa.pfs && child->sa.st_pfs_group == NULL) {
+	if (child->sa.st_connection->config->child.pfs && child->sa.st_pfs_kem == NULL) {
 		llog(RC_LOG, child->sa.logger,
 		     "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
@@ -1670,7 +1633,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (child->sa.st_pfs_group != NULL && child->sa.st_gr.ptr != NULL) {
+	if (child->sa.st_pfs_kem != NULL && child->sa.st_gr.ptr != NULL) {
 		if (!ikev1_justship_KE(child->sa.logger, &child->sa.st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1757,10 +1720,9 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gr, "Gr",
-					     "Quick Mode R1"));
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, "Quick Mode R1"));
 
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		/* set up DH calculation */
 		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
 					child->sa.st_gr,
@@ -2107,21 +2069,21 @@ static struct connection *fc_try(const struct connection *c,
 		 * from a file.
 		 */
 		if (c->pool[IPv4] != NULL) {
-			ip_range pool_range = addresspool_range(c->pool[IPv4]);
+			ip_pool pool = addresspool_pool(c->pool[IPv4]);
 			if (!selector_is_address(*remote_client)) {
-				range_buf rb;
+				pool_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not an address",
-				     str_range(&pool_range, &rb),
+				     str_pool(&pool, &rb),
 				     str_selector(remote_client, &cb));
 				continue;
 			}
 			ip_address remote_address = selector_prefix(*remote_client);
-			if (!address_in_range(remote_address, pool_range)) {
-				range_buf rb;
+			if (!address_in_pool(remote_address, pool)) {
+				pool_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not in range",
-				     str_range(&pool_range, &rb),
+				     str_pool(&pool, &rb),
 				     str_selector(remote_client, &cb));
 				continue;
 			}

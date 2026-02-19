@@ -6,56 +6,78 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec add addconn
-"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name iptfs=    #iptfs=
+"iptfs=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--iptfs=no
-"addconn--iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name iptfs=no  iptfs=no
+"iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--iptfs=yes
-"addconn--iptfs=yes": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
+ ipsec addconn --name iptfs=yes iptfs=yes
+"iptfs=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--type=passthrough
-"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name type=passthrough-iptfs=    type=passthrough #iptfs=
+"type=passthrough-iptfs=": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--type=passthrough--iptfs=no
-"addconn--type=passthrough--iptfs=no": warning: iptfs=no ignored for never-negotiate (type=passthrough) connection
-"addconn--type=passthrough--iptfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name type=passthrough-iptfs=no  type=passthrough iptfs=no
+warning: "type=passthrough-iptfs=no": iptfs=no ignored for never-negotiate (type=passthrough) connection
+"type=passthrough-iptfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--type=passthrough--iptfs=yes
-"addconn--type=passthrough--iptfs=yes": warning: iptfs=yes ignored for never-negotiate (type=passthrough) connection
-"addconn--type=passthrough--iptfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name type=passthrough-iptfs=yes type=passthrough iptfs=yes
+warning: "type=passthrough-iptfs=yes": iptfs=yes ignored for never-negotiate (type=passthrough) connection
+"type=passthrough-iptfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name type=transport-iptfs=    type=transport #iptfs=
+"type=transport-iptfs=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name type=transport-iptfs=no  type=transport iptfs=no
+"type=transport-iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name type=transport-iptfs=yes type=transport iptfs=yes
+"type=transport-iptfs=yes": failed to add connection: IPTFS is not compatible with type=transport, either omit option or specify type=tunnel
+west #
+ ipsec addconn --name type=tunnel-iptfs=    type=tunnel #iptfs=
+"type=tunnel-iptfs=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name type=tunnel-iptfs=no  type=tunnel iptfs=no
+"type=tunnel-iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name type=tunnel-iptfs=yes type=tunnel iptfs=yes
+"type=tunnel-iptfs=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name keyexchange=ikev1-iptfs=    keyexchange=ikev1 #iptfs=
+"keyexchange=ikev1-iptfs=": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name keyexchange=ikev1-iptfs=no  keyexchange=ikev1 iptfs=no
+"keyexchange=ikev1-iptfs=no": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name keyexchange=ikev1-iptfs=yes keyexchange=ikev1 iptfs=yes
+"keyexchange=ikev1-iptfs=yes": failed to add connection: IPTFS is not compatible with keyexchange=IKEv1, either omit option or specify keyexchange=IKEv2
 west #
  ipsec whack --name whack                     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--iptfs      --iptfs     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--iptfs": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
+"whack--iptfs": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--iptfs=no   --iptfs=no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 "whack--iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--iptfs=yes  --iptfs=yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--iptfs=yes": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
-west #
- ipsec whack --name whack--passthrough                     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
-west #
- ipsec whack --name whack--passthrough--iptfs      --iptfs     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--iptfs": warning: iptfs=yes ignored for never-negotiate (type=passthrough) connection
-"whack--passthrough--iptfs": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
-west #
- ipsec whack --name whack--passthrough--iptfs=no   --iptfs=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--iptfs=no": warning: iptfs=no ignored for never-negotiate (type=passthrough) connection
-"whack--passthrough--iptfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
-west #
- ipsec whack --name whack--passthrough--iptfs=yes  --iptfs=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--iptfs=yes": warning: iptfs=yes ignored for never-negotiate (type=passthrough) connection
-"whack--passthrough--iptfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--iptfs=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p' | sort
-"addconn--iptfs=no":   policy: PFS
-"addconn":   policy: PFS
+"iptfs=no":   policy: PFS
+"iptfs=":   policy: PFS
+"iptfs=yes":   policy: PFS
+"keyexchange=ikev1-iptfs=no":   policy: PFS
+"keyexchange=ikev1-iptfs=":   policy: PFS
+"type=transport-iptfs=no":   policy: PFS
+"type=transport-iptfs=":   policy: PFS
+"type=tunnel-iptfs=no":   policy: PFS
+"type=tunnel-iptfs=":   policy: PFS
+"type=tunnel-iptfs=yes":   policy: PFS
 "whack--iptfs=no":   policy: PFS
+"whack--iptfs":   policy: PFS
+"whack--iptfs=yes":   policy: PFS
 "whack":   policy: PFS
 west #

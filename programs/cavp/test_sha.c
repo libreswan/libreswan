@@ -38,7 +38,7 @@ static struct cavp_entry config[] = {
 struct hash_desc ike_alg_hash_sha2_224 = {
 	.common = {
 		.fqn = "SHA2_224",
-		.algo_type = IKE_ALG_HASH,
+		.type = &ike_alg_hash,
 		.fips.approved = true,
 	},
 	.hash_digest_size = 28, /* 224/8 */

@@ -2,13 +2,13 @@
 west #
  # Run the parser tests.
 west #
- ipsec algparse -tp -v1
+ ipsec algparse --tp --v1
 algparse -v1 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
-	AES_GCM_16_128-NONE
-	AES_GCM_16_256-NONE
+	AES_GCM_16_128
+	AES_GCM_16_256
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_512_256
 	3DES_CBC-HMAC_SHA2_256_128
@@ -19,9 +19,9 @@ algparse -v1 'esp=aes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
@@ -30,37 +30,39 @@ algparse -v1 'esp=aes-sha1' (expect SUCCESS)
 algparse -v1 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v1 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 	AES_CBC_128-HMAC_SHA2_512_256
 	AES_CBC_128-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=3des-sha1;modp1024' (expect ERROR)
-	ERROR: ESP DH algorithm 'modp1024' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v1 'esp=3des-sha1;modp1536' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP1536' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
-algparse -v1 'esp=3des-sha1;dh21' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1
-algparse -v1 'esp=3des-sha1;ecp_521' (expect ERROR)
-	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
+algparse -v1 'esp=3des-sha1;dh21' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -v1 'esp=3des-sha1;ecp_521' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1;dh23' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh23' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -v1 'esp=3des-sha1;dh24' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh24' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh24' is not supported
 algparse -v1 'esp=3des-sha1' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=null-sha1' (expect SUCCESS)
@@ -116,105 +118,105 @@ algparse -v1 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 	CAMELLIA_CBC_256-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v1 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v1 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v1 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v1 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v1 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v1 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v1 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v1 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v1 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v1 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v1 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA1_96
 	AES_CTR-HMAC_SHA2_512_256
@@ -236,39 +238,41 @@ algparse -v1 'esp=aes_ctr256' (expect SUCCESS)
 	AES_CTR_256-HMAC_SHA2_512_256
 	AES_CTR_256-HMAC_SHA2_256_128
 algparse -v1 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 algparse -v1 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	NULL_AUTH_AES_GMAC_256-NONE
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+	NULL_AUTH_AES_GMAC_256
 algparse -v1 'esp=3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1,3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes;none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'esp=aes;none,aes' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'esp=aes;none,aes;modp2048' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'esp=aes-sha1-none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'esp=aes-sha1;none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'esp=3des168-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
 algparse -v1 'esp=3des-null' (expect ERROR)
@@ -286,35 +290,35 @@ algparse -v1 'esp=aes-0-sha1' (expect ERROR)
 algparse -v1 'esp=aes512-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -v1 'esp=aes-sha1555' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha1555' is not recognized
 algparse -v1 'esp=camellia666-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm CAMELLIA_CBC with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v1 'esp=blowfish' (expect ERROR)
-	ERROR: ESP encryption algorithm 'blowfish' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'blowfish' is not supported
 algparse -v1 'esp=des-sha1' (expect ERROR)
-	ERROR: ESP encryption algorithm 'des' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'des' is not supported
 algparse -v1 'esp=aes_ctr666' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v1 'esp=aes128-sha2_128' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha2_128' is not recognized
 algparse -v1 'esp=aes256-sha2_256-4096' (expect ERROR)
-	ERROR: ESP DH algorithm '4096' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '4096' is not recognized
 algparse -v1 'esp=aes256-sha2_256-128' (expect ERROR)
-	ERROR: ESP DH algorithm '128' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '128' is not recognized
 algparse -v1 'esp=vanitycipher' (expect ERROR)
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'vanitycipher' is not recognized
 algparse -v1 'esp=ase-sah' (expect ERROR)
-	ERROR: ESP encryption algorithm 'ase' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'ase' is not recognized
 algparse -v1 'esp=aes-sah1' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sah1' is not recognized
+	ERROR: ESP Integrity Algorithm 'sah1' is not recognized
 algparse -v1 'esp=id3' (expect ERROR)
-	ERROR: ESP encryption algorithm 'id3' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'id3' is not recognized
 algparse -v1 'esp=aes-id3' (expect ERROR)
-	ERROR: ESP integrity algorithm 'id3' is not recognized
+	ERROR: ESP Integrity Algorithm 'id3' is not recognized
 algparse -v1 'esp=aes_gcm-md5' (expect ERROR)
 	ERROR: AEAD ESP encryption algorithm AES_GCM_16 must have 'NONE' as the integrity algorithm
 algparse -v1 'esp=mars' (expect ERROR)
-	ERROR: ESP encryption algorithm 'mars' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'mars' is not supported
 algparse -v1 'esp=aes_gcm-16' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -v1 'esp=aes_gcm-0' (expect ERROR)
@@ -322,40 +326,53 @@ algparse -v1 'esp=aes_gcm-0' (expect ERROR)
 algparse -v1 'esp=aes_gcm-123456789012345' (expect ERROR)
 	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -v1 'esp=3des-sha1;dh22' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh22' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh22' is not supported
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
+algparse -v1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 'esp=kem=modp8192' (expect ERROR)
+	ERROR: ESP proposal missing encrypt transform
+algparse -v1 'esp=aes;sn=yes' (expect ERROR)
+	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
+algparse -v1 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -v1 'esp=aes;ECP_256,aes;none' (expect ERROR)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -367,7 +384,7 @@ algparse -v1 'ah=md5' (expect SUCCESS)
 algparse -v1 'ah=sha' (expect SUCCESS)
 	HMAC_SHA1_96
 algparse -v1 'ah=sha;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v1 'ah=sha1' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -388,30 +405,38 @@ algparse -v1 'ah=sha2_512' (expect SUCCESS)
 algparse -v1 'ah=aes_xcbc' (expect SUCCESS)
 	AES_XCBC_96
 algparse -v1 'ah=sha2-none' (expect ERROR)
-	ERROR: AH DH algorithm 'none' is not supported by IKEv1
+	ERROR: AH Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ah=sha2;none' (expect ERROR)
-	ERROR: AH DH algorithm 'none' is not supported by IKEv1
+	ERROR: AH Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v1 'ah=aes-sha1' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes' is not recognized
+	ERROR: AH Integrity Algorithm 'aes' is not recognized
 algparse -v1 'ah=vanityhash1' (expect ERROR)
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
+	ERROR: AH Integrity Algorithm 'vanityhash1' is not recognized
 algparse -v1 'ah=aes_gcm_c-256' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm_c' is not recognized
 algparse -v1 'ah=id3' (expect ERROR)
-	ERROR: AH integrity algorithm 'id3' is not recognized
+	ERROR: AH Integrity Algorithm 'id3' is not recognized
 algparse -v1 'ah=3des' (expect ERROR)
-	ERROR: AH integrity algorithm '3des' is not recognized
+	ERROR: AH Integrity Algorithm '3des' is not recognized
 algparse -v1 'ah=null' (expect ERROR)
 	ERROR: AH cannot have 'none' as the integrity algorithm
 algparse -v1 'ah=aes_gcm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm' is not recognized
 algparse -v1 'ah=aes_ccm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_ccm' is not recognized
 algparse -v1 'ah=ripemd' (expect ERROR)
-	ERROR: AH integrity algorithm 'ripemd' is not recognized
+	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
+algparse -v1 'ah=sha2;modp2048-modp2048' (expect ERROR)
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 'ah=kem=modp8192' (expect ERROR)
+	ERROR: AH proposal missing integ transform
+algparse -v1 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v1 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -460,72 +485,80 @@ algparse -v1 'ike=3des-sha1;dh21' (expect SUCCESS)
 algparse -v1 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -v1 'ike=3des+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm '3des+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' is not supported by IKEv1
+	ERROR: IKE Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ike=id2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'id2' is not recognized
+	ERROR: IKE Encryption Algorithm (cipher) 'id2' is not recognized
 algparse -v1 'ike=3des-id2' (expect ERROR)
-	ERROR: IKE PRF algorithm 'id2' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'id2' is not recognized
 algparse -v1 'ike=aes_ccm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported by IKEv1
 algparse -v1 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v1 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v1 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 'ike=aes-sha2_256+sha1_96' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 'ike=aes-sha2_256+sha1_96-sha2_512' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm '3des+aes+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+3des+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes+3des' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes+aes128+aes256' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes128+aes256' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes128+aes+aes256' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes128+aes+aes256' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes128+aes256+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes128+aes256+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v1 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 	AES_CBC-HMAC_SHA2_256-MODP8192
 algparse -v1 'ike=aes_gcm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha2-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha2;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none-sha2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none-sha2-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none-sha2;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-none;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes+aes_gcm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes_gcm' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=,' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 'ike=aes,' (expect ERROR)
@@ -537,35 +570,50 @@ algparse -v1 'ike=,aes' (expect ERROR)
 algparse -v1 'ike=-' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 'ike=+' (expect ERROR)
-	ERROR: IKE encryption algorithm '+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 'ike=aes-' (expect ERROR)
-	ERROR: IKE PRF algorithm '' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -v1 'ike=aes+' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes;' (expect ERROR)
-	ERROR: IKE DH algorithm '' is not recognized
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -v1 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 'ike=+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm '+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=;aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 'ike=aes+-' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes+;' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes++' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes++' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v1 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
+	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
+algparse -v1 'ike=kem=modp8192' (expect ERROR)
+	ERROR: IKE proposal missing encrypt transform
+algparse -v1 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
+algparse -v1 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP2048
+	AES_CBC-HMAC_SHA1-MODP1536
+	AES_CBC-HMAC_SHA1-DH19
+	AES_CBC-HMAC_SHA1-DH31
 west #
- ipsec algparse -tp -v1 -pfs
+ ipsec algparse --tp --v1 --pfs
 algparse -v1 -pfs 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
-	AES_GCM_16_128-NONE
-	AES_GCM_16_256-NONE
+	AES_GCM_16_128
+	AES_GCM_16_256
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_512_256
 	3DES_CBC-HMAC_SHA2_256_128
@@ -596,21 +644,21 @@ algparse -v1 -pfs 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256
 	AES_CBC_128-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
-	ERROR: ESP DH algorithm 'modp1024' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v1 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP1536
 algparse -v1 -pfs 'esp=3des-sha1;modp2048' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP2048
-algparse -v1 -pfs 'esp=3des-sha1;dh21' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1
-algparse -v1 -pfs 'esp=3des-sha1;ecp_521' (expect ERROR)
-	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
+algparse -v1 -pfs 'esp=3des-sha1;dh21' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
+algparse -v1 -pfs 'esp=3des-sha1;ecp_521' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
 algparse -v1 -pfs 'esp=3des-sha1;dh23' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh23' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -v1 -pfs 'esp=3des-sha1;dh24' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh24' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh24' is not supported
 algparse -v1 -pfs 'esp=3des-sha1' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=null-sha1' (expect SUCCESS)
@@ -666,105 +714,105 @@ algparse -v1 -pfs 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 	CAMELLIA_CBC_256-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v1 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v1 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v1 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v1 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v1 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v1 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v1 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v1 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v1 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v1 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA1_96
 	AES_CTR-HMAC_SHA2_512_256
@@ -788,28 +836,28 @@ algparse -v1 -pfs 'esp=aes_ctr256' (expect SUCCESS)
 algparse -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
+	NULL_AUTH_AES_GMAC_256-MODP8192
 algparse -v1 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v1 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'esp=aes;none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'esp=aes;none,aes' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'esp=aes;none,aes;modp2048' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'esp=aes-sha1-none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'esp=aes-sha1;none' (expect ERROR)
-	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'esp=3des168-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
 algparse -v1 -pfs 'esp=3des-null' (expect ERROR)
@@ -827,35 +875,35 @@ algparse -v1 -pfs 'esp=aes-0-sha1' (expect ERROR)
 algparse -v1 -pfs 'esp=aes512-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -v1 -pfs 'esp=aes-sha1555' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha1555' is not recognized
 algparse -v1 -pfs 'esp=camellia666-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm CAMELLIA_CBC with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v1 -pfs 'esp=blowfish' (expect ERROR)
-	ERROR: ESP encryption algorithm 'blowfish' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'blowfish' is not supported
 algparse -v1 -pfs 'esp=des-sha1' (expect ERROR)
-	ERROR: ESP encryption algorithm 'des' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'des' is not supported
 algparse -v1 -pfs 'esp=aes_ctr666' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v1 -pfs 'esp=aes128-sha2_128' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha2_128' is not recognized
 algparse -v1 -pfs 'esp=aes256-sha2_256-4096' (expect ERROR)
-	ERROR: ESP DH algorithm '4096' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '4096' is not recognized
 algparse -v1 -pfs 'esp=aes256-sha2_256-128' (expect ERROR)
-	ERROR: ESP DH algorithm '128' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '128' is not recognized
 algparse -v1 -pfs 'esp=vanitycipher' (expect ERROR)
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'vanitycipher' is not recognized
 algparse -v1 -pfs 'esp=ase-sah' (expect ERROR)
-	ERROR: ESP encryption algorithm 'ase' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'ase' is not recognized
 algparse -v1 -pfs 'esp=aes-sah1' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sah1' is not recognized
+	ERROR: ESP Integrity Algorithm 'sah1' is not recognized
 algparse -v1 -pfs 'esp=id3' (expect ERROR)
-	ERROR: ESP encryption algorithm 'id3' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'id3' is not recognized
 algparse -v1 -pfs 'esp=aes-id3' (expect ERROR)
-	ERROR: ESP integrity algorithm 'id3' is not recognized
+	ERROR: ESP Integrity Algorithm 'id3' is not recognized
 algparse -v1 -pfs 'esp=aes_gcm-md5' (expect ERROR)
 	ERROR: AEAD ESP encryption algorithm AES_GCM_16 must have 'NONE' as the integrity algorithm
 algparse -v1 -pfs 'esp=mars' (expect ERROR)
-	ERROR: ESP encryption algorithm 'mars' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'mars' is not supported
 algparse -v1 -pfs 'esp=aes_gcm-16' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -v1 -pfs 'esp=aes_gcm-0' (expect ERROR)
@@ -863,11 +911,11 @@ algparse -v1 -pfs 'esp=aes_gcm-0' (expect ERROR)
 algparse -v1 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
 	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -v1 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh22' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh22' is not supported
 algparse -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -881,7 +929,17 @@ algparse -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv1 ESP DH algorithm (MODP8192, MODP2048) is not allowed in quick mode
+	ERROR: more than one IKEv1 ESP Key Exchange algorithm (MODP8192, MODP2048) is not allowed in quick mode
+algparse -v1 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 -pfs 'esp=kem=modp8192' (expect ERROR)
+	ERROR: ESP proposal missing encrypt transform
+algparse -v1 -pfs 'esp=aes;sn=yes' (expect ERROR)
+	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
+algparse -v1 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -v1 -pfs 'esp=aes;ECP_256,aes;none' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -913,29 +971,35 @@ algparse -v1 -pfs 'ah=sha2_512' (expect SUCCESS)
 algparse -v1 -pfs 'ah=aes_xcbc' (expect SUCCESS)
 	AES_XCBC_96
 algparse -v1 -pfs 'ah=sha2-none' (expect ERROR)
-	ERROR: AH DH algorithm 'none' is not supported by IKEv1
+	ERROR: AH Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'ah=sha2;none' (expect ERROR)
-	ERROR: AH DH algorithm 'none' is not supported by IKEv1
+	ERROR: AH Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
 	HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'ah=aes-sha1' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes' is not recognized
+	ERROR: AH Integrity Algorithm 'aes' is not recognized
 algparse -v1 -pfs 'ah=vanityhash1' (expect ERROR)
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
+	ERROR: AH Integrity Algorithm 'vanityhash1' is not recognized
 algparse -v1 -pfs 'ah=aes_gcm_c-256' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm_c' is not recognized
 algparse -v1 -pfs 'ah=id3' (expect ERROR)
-	ERROR: AH integrity algorithm 'id3' is not recognized
+	ERROR: AH Integrity Algorithm 'id3' is not recognized
 algparse -v1 -pfs 'ah=3des' (expect ERROR)
-	ERROR: AH integrity algorithm '3des' is not recognized
+	ERROR: AH Integrity Algorithm '3des' is not recognized
 algparse -v1 -pfs 'ah=null' (expect ERROR)
 	ERROR: AH cannot have 'none' as the integrity algorithm
 algparse -v1 -pfs 'ah=aes_gcm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm' is not recognized
 algparse -v1 -pfs 'ah=aes_ccm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_ccm' is not recognized
 algparse -v1 -pfs 'ah=ripemd' (expect ERROR)
-	ERROR: AH integrity algorithm 'ripemd' is not recognized
+	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
+algparse -v1 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 -pfs 'ah=kem=modp8192' (expect ERROR)
+	ERROR: AH proposal missing integ transform
+algparse -v1 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v1 -pfs 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -984,72 +1048,80 @@ algparse -v1 -pfs 'ike=3des-sha1;dh21' (expect SUCCESS)
 algparse -v1 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -v1 -pfs 'ike=3des+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm '3des+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' is not supported by IKEv1
+	ERROR: IKE Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 -pfs 'ike=id2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'id2' is not recognized
+	ERROR: IKE Encryption Algorithm (cipher) 'id2' is not recognized
 algparse -v1 -pfs 'ike=3des-id2' (expect ERROR)
-	ERROR: IKE PRF algorithm 'id2' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'id2' is not recognized
 algparse -v1 -pfs 'ike=aes_ccm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v1 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v1 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE PRF algorithm 'sha1_96' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect ERROR)
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm '3des+aes+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+3des+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes+3des' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes+aes128+aes256' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes128+aes256' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes128+aes+aes256' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes128+aes+aes256' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes128+aes256+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes128+aes256+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 	AES_CBC-HMAC_SHA2_256-MODP8192
 algparse -v1 -pfs 'ike=aes_gcm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha2-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha2;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none-sha2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none-sha2-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none-sha2;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-none;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes+aes_gcm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+aes_gcm' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=,' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 -pfs 'ike=aes,' (expect ERROR)
@@ -1061,33 +1133,48 @@ algparse -v1 -pfs 'ike=,aes' (expect ERROR)
 algparse -v1 -pfs 'ike=-' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 -pfs 'ike=+' (expect ERROR)
-	ERROR: IKE encryption algorithm '+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 -pfs 'ike=aes-' (expect ERROR)
-	ERROR: IKE PRF algorithm '' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -v1 -pfs 'ike=aes+' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes;' (expect ERROR)
-	ERROR: IKE DH algorithm '' is not recognized
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -v1 -pfs 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 -pfs 'ike=+aes' (expect ERROR)
-	ERROR: IKE encryption algorithm '+aes' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=;aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v1 -pfs 'ike=aes+-' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes+;' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes+' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes++' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes++' is not recognized
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
+algparse -v1 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v1 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v1 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
+	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
+algparse -v1 -pfs 'ike=kem=modp8192' (expect ERROR)
+	ERROR: IKE proposal missing encrypt transform
+algparse -v1 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
+algparse -v1 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP2048
+	AES_CBC-HMAC_SHA1-MODP1536
+	AES_CBC-HMAC_SHA1-DH19
+	AES_CBC-HMAC_SHA1-DH31
 west #
- ipsec algparse -tp -v2
+ ipsec algparse --tp --v2
 algparse -v2 'esp' (expect SUCCESS)
-	AES_GCM_16_256-NONE
-	AES_GCM_16_128-NONE
-	CHACHA20_POLY1305-NONE
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=' (expect ERROR)
@@ -1095,44 +1182,44 @@ algparse -v2 'esp=' (expect ERROR)
 algparse -v2 'esp=aes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -v2 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=3des-sha1;modp1024' (expect ERROR)
-	ERROR: ESP DH algorithm 'modp1024' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v2 'esp=3des-sha1;modp1536' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP1536 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP1536' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des-sha1;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des-sha1;dh21' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des-sha1;ecp_521' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des-sha1;dh23' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh23' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -v2 'esp=3des-sha1;dh24' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh24' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh24' is not supported
 algparse -v2 'esp=3des-sha1' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=null-sha1' (expect SUCCESS)
@@ -1178,105 +1265,105 @@ algparse -v2 'esp=camellia192' (expect SUCCESS)
 algparse -v2 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v2 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v2 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v2 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v2 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v2 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v2 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v2 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v2 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v2 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v2 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v2 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aesctr' (expect SUCCESS)
@@ -1288,46 +1375,46 @@ algparse -v2 'esp=aes_ctr192' (expect SUCCESS)
 algparse -v2 'esp=aes_ctr256' (expect SUCCESS)
 	AES_CTR_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 algparse -v2 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-	NULL_AUTH_AES_GMAC_256-NONE
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+	NULL_AUTH_AES_GMAC_256
 algparse -v2 'esp=3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1,3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes;none,aes' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes;none,aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes-sha1-none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=3des168-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
@@ -1346,35 +1433,35 @@ algparse -v2 'esp=aes-0-sha1' (expect ERROR)
 algparse -v2 'esp=aes512-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -v2 'esp=aes-sha1555' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha1555' is not recognized
 algparse -v2 'esp=camellia666-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm CAMELLIA_CBC with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v2 'esp=blowfish' (expect ERROR)
-	ERROR: ESP encryption algorithm 'blowfish' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'blowfish' is not supported
 algparse -v2 'esp=des-sha1' (expect ERROR)
-	ERROR: ESP encryption algorithm 'des' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'des' is not supported
 algparse -v2 'esp=aes_ctr666' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v2 'esp=aes128-sha2_128' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha2_128' is not recognized
 algparse -v2 'esp=aes256-sha2_256-4096' (expect ERROR)
-	ERROR: ESP DH algorithm '4096' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '4096' is not recognized
 algparse -v2 'esp=aes256-sha2_256-128' (expect ERROR)
-	ERROR: ESP DH algorithm '128' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '128' is not recognized
 algparse -v2 'esp=vanitycipher' (expect ERROR)
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'vanitycipher' is not recognized
 algparse -v2 'esp=ase-sah' (expect ERROR)
-	ERROR: ESP encryption algorithm 'ase' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'ase' is not recognized
 algparse -v2 'esp=aes-sah1' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sah1' is not recognized
+	ERROR: ESP Integrity Algorithm 'sah1' is not recognized
 algparse -v2 'esp=id3' (expect ERROR)
-	ERROR: ESP encryption algorithm 'id3' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'id3' is not recognized
 algparse -v2 'esp=aes-id3' (expect ERROR)
-	ERROR: ESP integrity algorithm 'id3' is not recognized
+	ERROR: ESP Integrity Algorithm 'id3' is not recognized
 algparse -v2 'esp=aes_gcm-md5' (expect ERROR)
 	ERROR: AEAD ESP encryption algorithm AES_GCM_16 must have 'NONE' as the integrity algorithm
 algparse -v2 'esp=mars' (expect ERROR)
-	ERROR: ESP encryption algorithm 'mars' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'mars' is not supported
 algparse -v2 'esp=aes_gcm-16' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -v2 'esp=aes_gcm-0' (expect ERROR)
@@ -1382,40 +1469,52 @@ algparse -v2 'esp=aes_gcm-0' (expect ERROR)
 algparse -v2 'esp=aes_gcm-123456789012345' (expect ERROR)
 	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -v2 'esp=3des-sha1;dh22' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh22' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh22' is not supported
 algparse -v2 'esp=3des-sha1;modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1-modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
+algparse -v2 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 'esp=kem=modp8192' (expect ERROR)
+	ERROR: ESP proposal missing encrypt transform
+algparse -v2 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -v2 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 'esp=aes;ECP_256,aes;none' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -1426,7 +1525,7 @@ algparse -v2 'ah=md5' (expect SUCCESS)
 algparse -v2 'ah=sha' (expect SUCCESS)
 	HMAC_SHA1_96
 algparse -v2 'ah=sha;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v2 'ah=sha1' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -1447,32 +1546,41 @@ algparse -v2 'ah=sha2_512' (expect SUCCESS)
 algparse -v2 'ah=aes_xcbc' (expect SUCCESS)
 	AES_XCBC_96
 algparse -v2 'ah=sha2-none' (expect SUCCESS)
-ipsec algparse: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant AH Key Exchange algorithm 'NONE' as PFS policy is disabled
 	HMAC_SHA2_256_128
 algparse -v2 'ah=sha2;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant AH Key Exchange algorithm 'NONE' as PFS policy is disabled
 	HMAC_SHA2_256_128
 algparse -v2 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v2 'ah=aes-sha1' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes' is not recognized
+	ERROR: AH Integrity Algorithm 'aes' is not recognized
 algparse -v2 'ah=vanityhash1' (expect ERROR)
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
+	ERROR: AH Integrity Algorithm 'vanityhash1' is not recognized
 algparse -v2 'ah=aes_gcm_c-256' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm_c' is not recognized
 algparse -v2 'ah=id3' (expect ERROR)
-	ERROR: AH integrity algorithm 'id3' is not recognized
+	ERROR: AH Integrity Algorithm 'id3' is not recognized
 algparse -v2 'ah=3des' (expect ERROR)
-	ERROR: AH integrity algorithm '3des' is not recognized
+	ERROR: AH Integrity Algorithm '3des' is not recognized
 algparse -v2 'ah=null' (expect ERROR)
 	ERROR: AH cannot have 'none' as the integrity algorithm
 algparse -v2 'ah=aes_gcm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm' is not recognized
 algparse -v2 'ah=aes_ccm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_ccm' is not recognized
 algparse -v2 'ah=ripemd' (expect ERROR)
-	ERROR: AH integrity algorithm 'ripemd' is not recognized
+	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
+algparse -v2 'ah=sha2;modp2048-modp2048' (expect ERROR)
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 'ah=kem=modp8192' (expect SUCCESS)
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+	HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v2 'ike' (expect SUCCESS)
 	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -1496,47 +1604,55 @@ algparse -v2 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 algparse -v2 'ike=3des+aes' (expect SUCCESS)
 	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -v2 'ike=id2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'id2' is not recognized
+	ERROR: IKE Encryption Algorithm (cipher) 'id2' is not recognized
 algparse -v2 'ike=3des-id2' (expect ERROR)
-	ERROR: IKE PRF algorithm 'id2' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'id2' is not recognized
 algparse -v2 'ike=aes_ccm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
 algparse -v2 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v2 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v2 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -v2 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v2 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	3DES_CBC+AES_CBC-HMAC_SHA2_256+HMAC_SHA1-MODP4096+MODP8192
 algparse -v2 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
 algparse -v2 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
 algparse -v2 'ike=aes+aes128+aes256' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_128
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_128
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
 	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 'ike=aes128+aes+aes256' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
 	AES_CBC_128+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 'ike=aes128+aes256+aes' (expect SUCCESS)
 	AES_CBC_128+AES_CBC_256+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -1554,7 +1670,7 @@ algparse -v2 'ike=aes_gcm-sha2-modp2048' (expect SUCCESS)
 algparse -v2 'ike=aes_gcm-sha2;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_256-MODP2048
 algparse -v2 'ike=aes_gcm-modp2048' (expect ERROR)
-	ERROR: IKE PRF algorithm 'modp2048' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
 algparse -v2 'ike=aes_gcm;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 'ike=aes_gcm-none' (expect SUCCESS)
@@ -1566,13 +1682,13 @@ algparse -v2 'ike=aes_gcm-none-sha2-modp2048' (expect SUCCESS)
 algparse -v2 'ike=aes_gcm-none-sha2;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_256-MODP2048
 algparse -v2 'ike=aes_gcm-none-modp2048' (expect ERROR)
-	ERROR: IKE PRF algorithm 'modp2048' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
 algparse -v2 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected 'modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected 'modp2048'
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 'ike=,' (expect ERROR)
@@ -1590,11 +1706,11 @@ algparse -v2 'ike=+' (expect ERROR)
 algparse -v2 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=aes-' (expect ERROR)
-	ERROR: IKE PRF algorithm is empty
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -v2 'ike=aes+' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=aes;' (expect ERROR)
-	ERROR: IKE DH algorithm is empty
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -v2 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=+aes' (expect ERROR)
@@ -1607,12 +1723,24 @@ algparse -v2 'ike=aes+;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
+algparse -v2 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
+algparse -v2 'ike=kem=modp8192' (expect ERROR)
+	ERROR: IKE proposal missing encrypt transform
+algparse -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -v2 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
- ipsec algparse -tp -v2 -pfs
+ ipsec algparse --tp --v2 --pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
-	AES_GCM_16_256-NONE
-	AES_GCM_16_128-NONE
-	CHACHA20_POLY1305-NONE
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=' (expect ERROR)
@@ -1636,9 +1764,9 @@ algparse -v2 -pfs 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
 algparse -v2 -pfs 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
-	ERROR: ESP DH algorithm 'modp1024' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v2 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP1536
 algparse -v2 -pfs 'esp=3des-sha1;modp2048' (expect SUCCESS)
@@ -1648,9 +1776,9 @@ algparse -v2 -pfs 'esp=3des-sha1;dh21' (expect SUCCESS)
 algparse -v2 -pfs 'esp=3des-sha1;ecp_521' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-DH21
 algparse -v2 -pfs 'esp=3des-sha1;dh23' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh23' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -v2 -pfs 'esp=3des-sha1;dh24' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh24' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh24' is not supported
 algparse -v2 -pfs 'esp=3des-sha1' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 -pfs 'esp=null-sha1' (expect SUCCESS)
@@ -1696,105 +1824,105 @@ algparse -v2 -pfs 'esp=camellia192' (expect SUCCESS)
 algparse -v2 -pfs 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v2 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v2 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v2 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v2 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v2 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v2 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v2 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v2 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v2 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v2 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aesctr' (expect SUCCESS)
@@ -1808,13 +1936,13 @@ algparse -v2 -pfs 'esp=aes_ctr256' (expect SUCCESS)
 algparse -v2 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v2 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
+	NULL_AUTH_AES_GMAC_256-MODP8192
 algparse -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -1823,7 +1951,7 @@ algparse -v2 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (e
 algparse -v2 -pfs 'esp=aes;none' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 algparse -v2 -pfs 'esp=aes;none,aes' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v2 -pfs 'esp=aes;none,aes;modp2048' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP2048
@@ -1848,35 +1976,35 @@ algparse -v2 -pfs 'esp=aes-0-sha1' (expect ERROR)
 algparse -v2 -pfs 'esp=aes512-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
 algparse -v2 -pfs 'esp=aes-sha1555' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha1555' is not recognized
 algparse -v2 -pfs 'esp=camellia666-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm CAMELLIA_CBC with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v2 -pfs 'esp=blowfish' (expect ERROR)
-	ERROR: ESP encryption algorithm 'blowfish' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'blowfish' is not supported
 algparse -v2 -pfs 'esp=des-sha1' (expect ERROR)
-	ERROR: ESP encryption algorithm 'des' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'des' is not supported
 algparse -v2 -pfs 'esp=aes_ctr666' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
 algparse -v2 -pfs 'esp=aes128-sha2_128' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
+	ERROR: ESP Integrity Algorithm 'sha2_128' is not recognized
 algparse -v2 -pfs 'esp=aes256-sha2_256-4096' (expect ERROR)
-	ERROR: ESP DH algorithm '4096' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '4096' is not recognized
 algparse -v2 -pfs 'esp=aes256-sha2_256-128' (expect ERROR)
-	ERROR: ESP DH algorithm '128' is not recognized
+	ERROR: ESP Key Exchange Method (DH) '128' is not recognized
 algparse -v2 -pfs 'esp=vanitycipher' (expect ERROR)
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'vanitycipher' is not recognized
 algparse -v2 -pfs 'esp=ase-sah' (expect ERROR)
-	ERROR: ESP encryption algorithm 'ase' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'ase' is not recognized
 algparse -v2 -pfs 'esp=aes-sah1' (expect ERROR)
-	ERROR: ESP integrity algorithm 'sah1' is not recognized
+	ERROR: ESP Integrity Algorithm 'sah1' is not recognized
 algparse -v2 -pfs 'esp=id3' (expect ERROR)
-	ERROR: ESP encryption algorithm 'id3' is not recognized
+	ERROR: ESP Encryption Algorithm (cipher) 'id3' is not recognized
 algparse -v2 -pfs 'esp=aes-id3' (expect ERROR)
-	ERROR: ESP integrity algorithm 'id3' is not recognized
+	ERROR: ESP Integrity Algorithm 'id3' is not recognized
 algparse -v2 -pfs 'esp=aes_gcm-md5' (expect ERROR)
 	ERROR: AEAD ESP encryption algorithm AES_GCM_16 must have 'NONE' as the integrity algorithm
 algparse -v2 -pfs 'esp=mars' (expect ERROR)
-	ERROR: ESP encryption algorithm 'mars' is not supported
+	ERROR: ESP Encryption Algorithm (cipher) 'mars' is not supported
 algparse -v2 -pfs 'esp=aes_gcm-16' (expect ERROR)
 	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
 algparse -v2 -pfs 'esp=aes_gcm-0' (expect ERROR)
@@ -1884,11 +2012,11 @@ algparse -v2 -pfs 'esp=aes_gcm-0' (expect ERROR)
 algparse -v2 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
 	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
 algparse -v2 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
-	ERROR: ESP DH algorithm 'dh22' is not supported
+	ERROR: ESP Key Exchange Method (DH) 'dh22' is not supported
 algparse -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -1902,7 +2030,18 @@ algparse -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv2 ESP DH algorithm (MODP8192, MODP2048) requires unimplemented CHILD_SA INVALID_KE
+	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
+algparse -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
+	ERROR: ESP proposal missing encrypt transform
+algparse -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -v2 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -v2 -pfs 'esp=aes;ECP_256,aes;none' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-DH19
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 algparse -v2 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -1939,23 +2078,29 @@ algparse -v2 -pfs 'ah=sha2;none' (expect SUCCESS)
 algparse -v2 -pfs 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
 	HMAC_SHA1_96-MODP8192
 algparse -v2 -pfs 'ah=aes-sha1' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes' is not recognized
+	ERROR: AH Integrity Algorithm 'aes' is not recognized
 algparse -v2 -pfs 'ah=vanityhash1' (expect ERROR)
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
+	ERROR: AH Integrity Algorithm 'vanityhash1' is not recognized
 algparse -v2 -pfs 'ah=aes_gcm_c-256' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm_c' is not recognized
 algparse -v2 -pfs 'ah=id3' (expect ERROR)
-	ERROR: AH integrity algorithm 'id3' is not recognized
+	ERROR: AH Integrity Algorithm 'id3' is not recognized
 algparse -v2 -pfs 'ah=3des' (expect ERROR)
-	ERROR: AH integrity algorithm '3des' is not recognized
+	ERROR: AH Integrity Algorithm '3des' is not recognized
 algparse -v2 -pfs 'ah=null' (expect ERROR)
 	ERROR: AH cannot have 'none' as the integrity algorithm
 algparse -v2 -pfs 'ah=aes_gcm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_gcm' is not recognized
 algparse -v2 -pfs 'ah=aes_ccm' (expect ERROR)
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
+	ERROR: AH Integrity Algorithm 'aes_ccm' is not recognized
 algparse -v2 -pfs 'ah=ripemd' (expect ERROR)
-	ERROR: AH integrity algorithm 'ripemd' is not recognized
+	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
+algparse -v2 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 -pfs 'ah=kem=modp8192' (expect SUCCESS)
+	HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP8192
+algparse -v2 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v2 -pfs 'ike' (expect SUCCESS)
 	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -1979,47 +2124,55 @@ algparse -v2 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 algparse -v2 -pfs 'ike=3des+aes' (expect SUCCESS)
 	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 -pfs 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -v2 -pfs 'ike=id2' (expect ERROR)
-	ERROR: IKE encryption algorithm 'id2' is not recognized
+	ERROR: IKE Encryption Algorithm (cipher) 'id2' is not recognized
 algparse -v2 -pfs 'ike=3des-id2' (expect ERROR)
-	ERROR: IKE PRF algorithm 'id2' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'id2' is not recognized
 algparse -v2 -pfs 'ike=aes_ccm' (expect ERROR)
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
 algparse -v2 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v2 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
-	ERROR: IKE DH algorithm 'sha2' is not recognized
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
 algparse -v2 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -v2 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	3DES_CBC+AES_CBC-HMAC_SHA2_256+HMAC_SHA1-MODP4096+MODP8192
 algparse -v2 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
 algparse -v2 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC
-ipsec algparse: discarding duplicate IKE PRF algorithm HMAC_SHA1
-ipsec algparse: discarding duplicate IKE DH algorithm MODP8192
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
 	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
 algparse -v2 -pfs 'ike=aes+aes128+aes256' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_128
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_128
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
 	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 -pfs 'ike=aes128+aes+aes256' (expect SUCCESS)
-ipsec algparse: discarding duplicate IKE encryption algorithm AES_CBC_256
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
 	AES_CBC_128+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 -pfs 'ike=aes128+aes256+aes' (expect SUCCESS)
 	AES_CBC_128+AES_CBC_256+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -2037,7 +2190,7 @@ algparse -v2 -pfs 'ike=aes_gcm-sha2-modp2048' (expect SUCCESS)
 algparse -v2 -pfs 'ike=aes_gcm-sha2;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_256-MODP2048
 algparse -v2 -pfs 'ike=aes_gcm-modp2048' (expect ERROR)
-	ERROR: IKE PRF algorithm 'modp2048' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
 algparse -v2 -pfs 'ike=aes_gcm;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 -pfs 'ike=aes_gcm-none' (expect SUCCESS)
@@ -2049,13 +2202,13 @@ algparse -v2 -pfs 'ike=aes_gcm-none-sha2-modp2048' (expect SUCCESS)
 algparse -v2 -pfs 'ike=aes_gcm-none-sha2;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_256-MODP2048
 algparse -v2 -pfs 'ike=aes_gcm-none-modp2048' (expect ERROR)
-	ERROR: IKE PRF algorithm 'modp2048' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
 algparse -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected 'modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected 'modp2048'
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 -pfs 'ike=,' (expect ERROR)
@@ -2073,11 +2226,11 @@ algparse -v2 -pfs 'ike=+' (expect ERROR)
 algparse -v2 -pfs 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes-' (expect ERROR)
-	ERROR: IKE PRF algorithm is empty
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -v2 -pfs 'ike=aes+' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes;' (expect ERROR)
-	ERROR: IKE DH algorithm is empty
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -v2 -pfs 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=+aes' (expect ERROR)
@@ -2090,10 +2243,542 @@ algparse -v2 -pfs 'ike=aes+;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
+algparse -v2 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
+algparse -v2 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
+algparse -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
+	ERROR: IKE proposal missing encrypt transform
+algparse -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+west #
+ ipsec algparse --tp --v2 --pfs --addke
+algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
+	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=' (expect ERROR)
+	ERROR: ESP proposal is empty
+algparse -addke -v2 -pfs 'esp=aes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes;modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP2048
+algparse -addke -v2 -pfs 'esp=aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-sha1-modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-MODP2048
+algparse -addke -v2 -pfs 'esp=aes-128-sha1' (expect SUCCESS)
+	AES_CBC_128-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-128-sha1' (expect SUCCESS)
+	AES_CBC_128-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
+	AES_CBC_128-HMAC_SHA1_96-MODP2048
+algparse -addke -v2 -pfs 'esp=aes-128' (expect SUCCESS)
+	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
+	AES_GCM_8_128
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP1536
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp2048' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP2048
+algparse -addke -v2 -pfs 'esp=3des-sha1;dh21' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
+algparse -addke -v2 -pfs 'esp=3des-sha1;ecp_521' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
+algparse -addke -v2 -pfs 'esp=3des-sha1;dh23' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
+algparse -addke -v2 -pfs 'esp=3des-sha1;dh24' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) 'dh24' is not supported
+algparse -addke -v2 -pfs 'esp=3des-sha1' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=null-sha1' (expect SUCCESS)
+	NULL-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes_cbc' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes-sha' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes128-sha1' (expect SUCCESS)
+	AES_CBC_128-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes-sha2' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes-sha256' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes-sha384' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_384_192
+algparse -addke -v2 -pfs 'esp=aes-sha512' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256
+algparse -addke -v2 -pfs 'esp=aes128-aes_xcbc' (expect SUCCESS)
+	AES_CBC_128-AES_XCBC_96
+algparse -addke -v2 -pfs 'esp=aes192-sha1' (expect SUCCESS)
+	AES_CBC_192-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes256-sha1' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes256-sha' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes256-sha2' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes256-sha2_256' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes256-sha2_384' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA2_384_192
+algparse -addke -v2 -pfs 'esp=aes256-sha2_512' (expect SUCCESS)
+	AES_CBC_256-HMAC_SHA2_512_256
+algparse -addke -v2 -pfs 'esp=camellia' (expect SUCCESS)
+	CAMELLIA_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=camellia128' (expect SUCCESS)
+	CAMELLIA_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=camellia192' (expect SUCCESS)
+	CAMELLIA_CBC_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=camellia256' (expect SUCCESS)
+	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes_ccm' (expect SUCCESS)
+	AES_CCM_16
+algparse -addke -v2 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
+	AES_CCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
+	AES_CCM_8_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
+	AES_CCM_8_256
+algparse -addke -v2 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
+	AES_CCM_12_128
+algparse -addke -v2 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
+	AES_CCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
+	AES_CCM_12_256
+algparse -addke -v2 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
+	AES_CCM_16_128
+algparse -addke -v2 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
+	AES_CCM_16_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
+	AES_CCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_gcm' (expect SUCCESS)
+	AES_GCM_16
+algparse -addke -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
+	AES_GCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
+	AES_GCM_8_192
+algparse -addke -v2 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
+	AES_GCM_8_256
+algparse -addke -v2 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
+	AES_GCM_12_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
+	AES_GCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
+	AES_GCM_12_256
+algparse -addke -v2 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
+	AES_GCM_16_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
+	AES_GCM_16_192
+algparse -addke -v2 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
+	AES_GCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
+	AES_CCM_8
+algparse -addke -v2 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
+	AES_CCM_12
+algparse -addke -v2 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
+	AES_CCM_16
+algparse -addke -v2 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
+	AES_GCM_8
+algparse -addke -v2 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
+	AES_GCM_12
+algparse -addke -v2 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
+	AES_GCM_16
+algparse -addke -v2 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
+	AES_CCM_16
+algparse -addke -v2 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
+	AES_GCM_16
+algparse -addke -v2 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
+	AES_CCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
+	AES_GCM_16_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
+	AES_CCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
+	AES_GCM_16_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
+	AES_CCM_8
+algparse -addke -v2 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
+	AES_CCM_12
+algparse -addke -v2 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
+	AES_CCM_16
+algparse -addke -v2 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
+	AES_GCM_8
+algparse -addke -v2 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
+	AES_GCM_12
+algparse -addke -v2 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
+	AES_GCM_16
+algparse -addke -v2 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
+	AES_CCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
+	AES_CCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
+	AES_CCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
+	AES_GCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
+	AES_GCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
+	AES_GCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
+	AES_CCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
+	AES_CCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
+	AES_CCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
+	AES_GCM_8_128
+algparse -addke -v2 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
+	AES_GCM_12_192
+algparse -addke -v2 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
+	AES_GCM_16_256
+algparse -addke -v2 -pfs 'esp=aes_ctr' (expect SUCCESS)
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aesctr' (expect SUCCESS)
+	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes_ctr128' (expect SUCCESS)
+	AES_CTR_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes_ctr192' (expect SUCCESS)
+	AES_CTR_192-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=aes_ctr256' (expect SUCCESS)
+	AES_CTR_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
+	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
+algparse -addke -v2 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
+	NULL_AUTH_AES_GMAC_256-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+algparse -addke -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
+	ERROR: either all or no ESP proposals should specify Key Exchange
+algparse -addke -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+algparse -addke -v2 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-MODP8192
+algparse -addke -v2 -pfs 'esp=aes;none' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
+algparse -addke -v2 -pfs 'esp=aes;none,aes' (expect ERROR)
+	ERROR: either all or no ESP proposals should specify Key Exchange
+algparse -addke -v2 -pfs 'esp=aes;none,aes;modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP2048
+algparse -addke -v2 -pfs 'esp=aes-sha1-none' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-NONE
+algparse -addke -v2 -pfs 'esp=aes-sha1;none' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-NONE
+algparse -addke -v2 -pfs 'esp=3des168-sha1' (expect ERROR)
+	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
+algparse -addke -v2 -pfs 'esp=3des-null' (expect ERROR)
+	ERROR: non-AEAD ESP encryption algorithm 3DES_CBC cannot have 'NONE' as the integrity algorithm
+algparse -addke -v2 -pfs 'esp=aes128-null' (expect ERROR)
+	ERROR: non-AEAD ESP encryption algorithm AES_CBC cannot have 'NONE' as the integrity algorithm
+algparse -addke -v2 -pfs 'esp=aes224-sha1' (expect ERROR)
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=aes-224-sha1' (expect ERROR)
+	ERROR: ESP encryption algorithm AES_CBC with key length 224 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=aes0-sha1' (expect ERROR)
+	ERROR: ESP encryption key length is zero
+algparse -addke -v2 -pfs 'esp=aes-0-sha1' (expect ERROR)
+	ERROR: ESP encryption key length is zero
+algparse -addke -v2 -pfs 'esp=aes512-sha1' (expect ERROR)
+	ERROR: ESP encryption algorithm AES_CBC with key length 512 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=aes-sha1555' (expect ERROR)
+	ERROR: ESP Integrity Algorithm 'sha1555' is not recognized
+algparse -addke -v2 -pfs 'esp=camellia666-sha1' (expect ERROR)
+	ERROR: ESP encryption algorithm CAMELLIA_CBC with key length 666 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=blowfish' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'blowfish' is not supported
+algparse -addke -v2 -pfs 'esp=des-sha1' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'des' is not supported
+algparse -addke -v2 -pfs 'esp=aes_ctr666' (expect ERROR)
+	ERROR: ESP encryption algorithm AES_CTR with key length 666 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=aes128-sha2_128' (expect ERROR)
+	ERROR: ESP Integrity Algorithm 'sha2_128' is not recognized
+algparse -addke -v2 -pfs 'esp=aes256-sha2_256-4096' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) '4096' is not recognized
+algparse -addke -v2 -pfs 'esp=aes256-sha2_256-128' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) '128' is not recognized
+algparse -addke -v2 -pfs 'esp=vanitycipher' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'vanitycipher' is not recognized
+algparse -addke -v2 -pfs 'esp=ase-sah' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'ase' is not recognized
+algparse -addke -v2 -pfs 'esp=aes-sah1' (expect ERROR)
+	ERROR: ESP Integrity Algorithm 'sah1' is not recognized
+algparse -addke -v2 -pfs 'esp=id3' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'id3' is not recognized
+algparse -addke -v2 -pfs 'esp=aes-id3' (expect ERROR)
+	ERROR: ESP Integrity Algorithm 'id3' is not recognized
+algparse -addke -v2 -pfs 'esp=aes_gcm-md5' (expect ERROR)
+	ERROR: AEAD ESP encryption algorithm AES_GCM_16 must have 'NONE' as the integrity algorithm
+algparse -addke -v2 -pfs 'esp=mars' (expect ERROR)
+	ERROR: ESP Encryption Algorithm (cipher) 'mars' is not supported
+algparse -addke -v2 -pfs 'esp=aes_gcm-16' (expect ERROR)
+	ERROR: ESP encryption algorithm AES_GCM_16 with key length 16 invalid; valid key lengths: 128, 192, 256
+algparse -addke -v2 -pfs 'esp=aes_gcm-0' (expect ERROR)
+	ERROR: ESP encryption key length is zero
+algparse -addke -v2 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
+	ERROR: ESP encryption algorithm 'aes_gcm-123456789012345' key length WAY too big
+algparse -addke -v2 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
+	ERROR: ESP Key Exchange Method (DH) 'dh22' is not supported
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
+	ERROR: either all or no ESP proposals should specify Key Exchange
+algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
+	ERROR: either all or no ESP proposals should specify Key Exchange
+algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2;modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
+	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
+algparse -addke -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect SUCCESS)
+	AES_GCM_16-MODP2048-MODP2048
+algparse -addke -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
+	ERROR: ESP proposal missing encrypt transform
+algparse -addke -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -addke -v2 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
+algparse -addke -v2 -pfs 'esp=aes;ECP_256,aes;none' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-DH19
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
+algparse -addke -v2 -pfs 'ah' (expect SUCCESS)
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'ah=' (expect ERROR)
+	ERROR: AH proposal is empty
+algparse -addke -v2 -pfs 'ah=md5' (expect SUCCESS)
+	HMAC_MD5_96
+algparse -addke -v2 -pfs 'ah=sha' (expect SUCCESS)
+	HMAC_SHA1_96
+algparse -addke -v2 -pfs 'ah=sha;modp2048' (expect SUCCESS)
+	HMAC_SHA1_96-MODP2048
+algparse -addke -v2 -pfs 'ah=sha1' (expect SUCCESS)
+	HMAC_SHA1_96
+algparse -addke -v2 -pfs 'ah=sha2' (expect SUCCESS)
+	HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'ah=sha256' (expect SUCCESS)
+	HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'ah=sha384' (expect SUCCESS)
+	HMAC_SHA2_384_192
+algparse -addke -v2 -pfs 'ah=sha512' (expect SUCCESS)
+	HMAC_SHA2_512_256
+algparse -addke -v2 -pfs 'ah=sha2_256' (expect SUCCESS)
+	HMAC_SHA2_256_128
+algparse -addke -v2 -pfs 'ah=sha2_384' (expect SUCCESS)
+	HMAC_SHA2_384_192
+algparse -addke -v2 -pfs 'ah=sha2_512' (expect SUCCESS)
+	HMAC_SHA2_512_256
+algparse -addke -v2 -pfs 'ah=aes_xcbc' (expect SUCCESS)
+	AES_XCBC_96
+algparse -addke -v2 -pfs 'ah=sha2-none' (expect SUCCESS)
+	HMAC_SHA2_256_128-NONE
+algparse -addke -v2 -pfs 'ah=sha2;none' (expect SUCCESS)
+	HMAC_SHA2_256_128-NONE
+algparse -addke -v2 -pfs 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
+	HMAC_SHA1_96-MODP8192
+algparse -addke -v2 -pfs 'ah=aes-sha1' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'aes' is not recognized
+algparse -addke -v2 -pfs 'ah=vanityhash1' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'vanityhash1' is not recognized
+algparse -addke -v2 -pfs 'ah=aes_gcm_c-256' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'aes_gcm_c' is not recognized
+algparse -addke -v2 -pfs 'ah=id3' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'id3' is not recognized
+algparse -addke -v2 -pfs 'ah=3des' (expect ERROR)
+	ERROR: AH Integrity Algorithm '3des' is not recognized
+algparse -addke -v2 -pfs 'ah=null' (expect ERROR)
+	ERROR: AH cannot have 'none' as the integrity algorithm
+algparse -addke -v2 -pfs 'ah=aes_gcm' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'aes_gcm' is not recognized
+algparse -addke -v2 -pfs 'ah=aes_ccm' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'aes_ccm' is not recognized
+algparse -addke -v2 -pfs 'ah=ripemd' (expect ERROR)
+	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
+algparse -addke -v2 -pfs 'ah=sha2;modp2048-modp2048' (expect SUCCESS)
+	HMAC_SHA2_256_128-MODP2048-MODP2048
+algparse -addke -v2 -pfs 'ah=kem=modp8192' (expect SUCCESS)
+	HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
+algparse -addke -v2 -pfs 'ike' (expect SUCCESS)
+	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	CHACHA20_POLY1305-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=' (expect ERROR)
+	ERROR: IKE proposal is empty
+algparse -addke -v2 -pfs 'ike=3des-sha1' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=3des-sha1' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=3des-sha1;modp1536' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1-MODP1536
+algparse -addke -v2 -pfs 'ike=3des;dh21' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH21
+algparse -addke -v2 -pfs 'ike=3des-sha1;dh21' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1-DH21
+algparse -addke -v2 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1-DH21
+algparse -addke -v2 -pfs 'ike=3des+aes' (expect SUCCESS)
+	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes;none' (expect ERROR)
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
+algparse -addke -v2 -pfs 'ike=id2' (expect ERROR)
+	ERROR: IKE Encryption Algorithm (cipher) 'id2' is not recognized
+algparse -addke -v2 -pfs 'ike=3des-id2' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'id2' is not recognized
+algparse -addke -v2 -pfs 'ike=aes_ccm' (expect ERROR)
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
+algparse -addke -v2 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -addke -v2 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+algparse -addke -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
+	AES_CBC-HMAC_SHA1-MODP8192
+algparse -addke -v2 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
+	3DES_CBC+AES_CBC-HMAC_SHA2_256+HMAC_SHA1-MODP4096+MODP8192
+algparse -addke -v2 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
+	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
+algparse -addke -v2 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
+ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
+ipsec algparse: discarding duplicate IKE Key Exchange Method (DH) MODP8192
+	AES_CBC+3DES_CBC-HMAC_SHA1+HMAC_SHA2_256-MODP8192+MODP4096
+algparse -addke -v2 -pfs 'ike=aes+aes128+aes256' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_128
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes128+aes+aes256' (expect SUCCESS)
+ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC_256
+	AES_CBC_128+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes128+aes256+aes' (expect SUCCESS)
+	AES_CBC_128+AES_CBC_256+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP8192
+algparse -addke -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP8192
+	AES_CBC-HMAC_SHA2_256-MODP8192
+algparse -addke -v2 -pfs 'ike=aes_gcm' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha2' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha2-modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha2;modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-modp2048' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
+algparse -addke -v2 -pfs 'ike=aes_gcm;modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-none' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes_gcm-none-sha2' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+algparse -addke -v2 -pfs 'ike=aes_gcm-none-sha2-modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-none-sha2;modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-none-modp2048' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'modp2048' is not recognized
+algparse -addke -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
+	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
+algparse -addke -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
+	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
+algparse -addke -v2 -pfs 'ike=,' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes,' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes,,aes' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=,aes' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=-' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=+' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=;' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes-' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) is empty
+algparse -addke -v2 -pfs 'ike=aes+' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes;' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) is empty
+algparse -addke -v2 -pfs 'ike=-aes' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=+aes' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=;aes' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes+-' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes+;' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes++' (expect ERROR)
+	ERROR: IKE encryption algorithm is empty
+algparse -addke -v2 -pfs 'ike=aes;modp2048-modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048-MODP2048
+algparse -addke -v2 -pfs 'ike=aes;addke1=modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192-MODP2048
+algparse -addke -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
+algparse -addke -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
+	ERROR: IKE proposal missing encrypt transform
+algparse -addke -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -addke -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
  # Run the algorithm tests; there should be no fails.
 west #
- ipsec algparse -ta > /dev/null
+ ipsec algparse --ta > /dev/null
 west #
  # Check pluto is starting in the correct mode.
 west #
@@ -2109,8 +2794,8 @@ FIPS HMAC integrity support [not required]
 west #
  # Check pluto algorithm list.
 west #
- sed -n -e '/^|/d' -e ':algs / algorithms:/ { :alg ; p ; n ; /^  / b alg ; b algs }' /tmp/pluto.log
-Encryption algorithms:
+ sed -n -e '/^|/d' -e '/Encryption Algorithm.*:/,/^testing/ p' /tmp/pluto.log
+Encryption Algorithm (cipher):
   AES_CCM_16         {256,192,*128} IKEv1:     ESP     IKEv2:     ESP     FIPS              aes_ccm, aes_ccm_c
   AES_CCM_12         {256,192,*128} IKEv1:     ESP     IKEv2:     ESP     FIPS              aes_ccm_b
   AES_CCM_8          {256,192,*128} IKEv1:     ESP     IKEv2:     ESP     FIPS              aes_ccm_a
@@ -2125,21 +2810,21 @@ Encryption algorithms:
   NULL_AUTH_AES_GMAC {256,192,*128} IKEv1:     ESP     IKEv2:     ESP     FIPS              aes_gmac
   NULL               []             IKEv1:     ESP     IKEv2:     ESP          NULL        
   CHACHA20_POLY1305  [*256]         IKEv1:             IKEv2: IKE ESP          NSS(AEAD)    chacha20poly1305
-Hash algorithms:
+Hashing Algorithm:
   MD5                               IKEv1: IKE         IKEv2:                  NSS         
   SHA1                              IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha
   SHA2_256                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha2, sha256
   SHA2_384                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha384
   SHA2_512                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512
   IDENTITY                          IKEv1:             IKEv2:             FIPS             
-PRF algorithms:
+Pseudorandom Function (KDF):
   HMAC_MD5                          IKEv1: IKE         IKEv2: IKE              NSS          md5
   HMAC_SHA1                         IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha, sha1
   HMAC_SHA2_256                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha2, sha256, sha2_256
   HMAC_SHA2_384                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha384, sha2_384
   HMAC_SHA2_512                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512, sha2_512
   AES_XCBC                          IKEv1:             IKEv2: IKE              native(XCBC) aes128_xcbc
-Integrity algorithms:
+Integrity Algorithm:
   HMAC_MD5_96                       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH       NSS          md5, hmac_md5
   HMAC_SHA1_96                      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS          sha, sha1, sha1_96, hmac_sha1
   HMAC_SHA2_512_256                 IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS          sha512, sha2_512, sha2_512_256, hmac_sha2_512
@@ -2149,7 +2834,7 @@ Integrity algorithms:
   AES_XCBC_96                       IKEv1:     ESP AH  IKEv2: IKE ESP AH       native(XCBC) aes_xcbc, aes128_xcbc, aes128_xcbc_96
   AES_CMAC_96                       IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS              aes_cmac
   NONE                              IKEv1:     ESP     IKEv2: IKE ESP     FIPS              null
-DH algorithms:
+Key Exchange Method (DH):
   NONE                              IKEv1:             IKEv2: IKE ESP AH  FIPS NSS(MODP)    null, dh0
   MODP1536                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH       NSS(MODP)    dh5
   MODP2048                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP)    dh14
@@ -2157,12 +2842,17 @@ DH algorithms:
   MODP4096                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP)    dh16
   MODP6144                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP)    dh17
   MODP8192                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP)    dh18
-  DH19                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_256, ecp256
-  DH20                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_384, ecp384
-  DH21                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_521, ecp521
-  DH31                              IKEv1: IKE         IKEv2: IKE ESP AH       NSS(ECP)     curve25519
-IPCOMP algorithms:
+  DH19                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_256, ecp256
+  DH20                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_384, ecp384
+  DH21                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_521, ecp521
+  DH31                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH       NSS(ECP)     curve25519
+  ML_KEM_768                        IKEv1:             IKEv2: IKE ESP AH       NSS(MLKEM)   mlkem768
+IP Compression:
   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS             
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             
   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS             
+Sequence Number:
+  32_BIT_SEQUENTIAL                 IKEv1:             IKEv2:     ESP AH  FIPS              no
+  PARTIAL_64_BIT_SEQUENTIAL         IKEv1:             IKEv2:     ESP AH  FIPS              yes
+testing CAMELLIA_CBC:
 west #

@@ -61,6 +61,7 @@
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
 #include "revival.h"
+#include "connection_event.h"
 
 static void terminate_v1_state(struct connection *c,
 			       struct ike_sa **ike,
@@ -77,7 +78,7 @@ static void terminate_v1_state(struct connection *c,
 		 * IKEv1 announces the death of the ISAKMP SA after
 		 * all the children have gone (reverse of IKEv2).
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
@@ -93,7 +94,7 @@ static void terminate_v1_state(struct connection *c,
 		 *
 		 * Hence just always re-compute it.
 		 */
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		struct ike_sa *isakmp = /* could be NULL */
 			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
 		/* IKEv1 has cuckoos */
@@ -103,11 +104,11 @@ static void terminate_v1_state(struct connection *c,
 	}
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_LURKING_IKE_SA:
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		delete_ike_sa(ike);
 		return;
 
@@ -151,7 +152,7 @@ static void terminate_v2_states(struct connection *c,
 		 *
 		 * IKEv2 announces the death first.
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		record_n_send_n_log_v2_delete(*ike, HERE);
 		return;
@@ -160,17 +161,17 @@ static void terminate_v2_states(struct connection *c,
 	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
 	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
 		PEXPECT(c->logger, ike != NULL);
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_CHILD_OF_NONE:
 		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		delete_child_sa(child);
 		return;
 	case VISIT_CONNECTION_LURKING_IKE_SA:
@@ -183,12 +184,12 @@ static void terminate_v2_states(struct connection *c,
 		 * the IKE SA has children then they too are deleted,
 		 * but when would this be the case?
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
@@ -227,7 +228,7 @@ static void terminate_v2_states(struct connection *c,
 	bad_case(visit_kind);
 }
 
-struct visit_connection_state_context {
+struct connection_state_visitor_context {
 	unsigned count;
 };
 
@@ -235,7 +236,7 @@ static void terminate_connection_states(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct visit_connection_state_context *context)
+					struct connection_state_visitor_context *context)
 {
 	if (context->count == 0) {
 		llog(RC_LOG, c->logger, "terminating SAs using this connection");
@@ -255,7 +256,7 @@ static void terminate_connection_states(struct connection *c,
 
 void terminate_all_connection_states(struct connection *c, where_t where)
 {
-	struct visit_connection_state_context context = {0};
+	struct connection_state_visitor_context context = {0};
 	visit_connection_states(c, terminate_connection_states, &context, where);
 	/* caller must hold a reference */
 	pmemory(c);
@@ -276,9 +277,9 @@ void terminate_connection(struct connection *c, where_t where)
 		 * is really needed.
 		 */
 		PEXPECT(c->logger, c->local->kind == CK_PERMANENT);
-		pdbg(c->logger, "terminating and downing never-negotiate connection");
+		ldbg(c->logger, "terminating and downing never-negotiate connection");
 	} else {
-		pdbg(c->logger, "terminating SAs using this connection");
+		ldbg(c->logger, "terminating SAs using this connection");
 	}
 
 	/* see callers */
@@ -294,8 +295,8 @@ void terminate_connection(struct connection *c, where_t where)
 	 *
 	 * Since the +UP and +KEEP bits have been stripped, deleting
 	 * states won't trigger a revival.  However, when there are no
-	 * states, the connection may be on the revival queue.  That
-	 * is handled below.
+	 * states, the connection may already be on the revival queue.
+	 * That is handled further down.
 	 */
 	terminate_all_connection_states(c, HERE);
 	pmemory(c); /* should not disappear; caller holds ref */
@@ -323,10 +324,11 @@ void terminate_connection(struct connection *c, where_t where)
 	 * the former's pending queue (i.e., no states).
 	 */
 	remove_connection_from_pending(c);
+
 	pmemory(c); /* should not disappear; caller holds ref */
 }
 
-static void terminate_and_unroute_connection(struct connection *c, where_t where)
+static void terminate_and_down_and_unroute_connection(struct connection *c, where_t where)
 {
 	/*
 	 * Strip the +UP bit so that the connection (when its state is
@@ -339,6 +341,20 @@ static void terminate_and_unroute_connection(struct connection *c, where_t where
 	del_policy(c, policy.up);
 	del_policy(c, policy.keep);
 	del_policy(c, policy.route);
+
+	/*
+	 * Remove pending DDNS.
+	 *
+	 * For instance, a disoriented connection trying to resolve or
+	 * orient being deleted.
+	 *
+	 * Running "down" on a dis-oriented connection will also loose
+	 * the CHECK_DDNS event.  But "up" should put it back.  Pluto
+	 * needs a way to indicate that a connection is "idle" -
+	 * igoring everything.
+	 */
+	flush_connection_event(c, CONNECTION_CHECK_DDNS);
+
 	terminate_connection(c, where);
 }
 
@@ -349,7 +365,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
 		/* caller holds ref; whack already attached */
-		terminate_and_unroute_connection(c, where);
+		terminate_and_down_and_unroute_connection(c, where);
 		pmemory(c); /* should not disappear; caller holds ref */
 		return;
 
@@ -391,14 +407,20 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			last = cq.c;
 			/* stop it disappearing */
 			connection_addref(cq.c, c->logger);
-			connection_attach(cq.c, c->logger);
-			terminate_and_unroute_connection(cq.c, where);
+			whack_attach(cq.c, c->logger);
+			terminate_and_down_and_unroute_connection(cq.c, where);
 			/* leave whack attached during death */
-			delete_connection(&cq.c);
+			connection_delref(&cq.c, c->logger);
 		}
 		pmemory(c); /* should not disappear */
 		/* to be sure */
 		connection_unroute(c, where);
+		/*
+		 * Remove pending DDNS.  For instance, a template
+		 * needing DNS resolution, and nence never made it to
+		 * orient.
+		 */
+		flush_connection_event(c, CONNECTION_CHECK_DDNS);
 		return;
 	}
 
@@ -418,12 +440,18 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 		if (next_connection(&cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
-				connection_attach(cq.c, c->logger); /* propagate whack */
+				whack_attach(cq.c, c->logger); /* propagate whack */
 				terminate_and_down_and_unroute_connections(cq.c, where);
 				pmemory(cq.c); /* should not disappear */
-				connection_detach(cq.c, c->logger); /* propagate whack */
+				whack_detach(cq.c, c->logger); /* propagate whack */
 			} while (next_connection(&cq));
 		}
+		/*
+		 * Remove pending DDNS.  For instance, a template
+		 * needing DNS resolution, and nence never made it to
+		 * orient.
+		 */
+		flush_connection_event(c, CONNECTION_CHECK_DDNS);
 		pmemory(c); /* should not disappear */
 		return;
 	}
@@ -435,10 +463,13 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
-void terminate_and_delete_connections(struct connection **cp,
-				      struct logger *logger, where_t where)
+void terminate_and_delete_connections(struct connection *c,
+				      struct logger *logger,
+				      where_t where)
 {
-	switch ((*cp)->local->kind) {
+	PEXPECT(logger, refcnt_peek(c, logger) > 1);
+
+	switch (c->local->kind) {
 	case CK_LABELED_PARENT:
 	case CK_PERMANENT:
 	case CK_TEMPLATE:
@@ -451,19 +482,19 @@ void terminate_and_delete_connections(struct connection **cp,
 		 * cause Child SA cuckoo connection to be deleted.
 		 * Hence, the keep getting first loop.
 		 */
-		connection_attach((*cp), logger);
-		terminate_and_down_and_unroute_connections((*cp), where);
+		whack_attach(c, logger);
+		terminate_and_down_and_unroute_connections(c, where);
 		/* leave whack attached during death */
-		delete_connection(cp);
+		connection_delref(&c, logger);
 		return;
 
 	case CK_GROUP:
 	{
 		/* should not disappear */
-		connection_attach((*cp), logger);
+		whack_attach(c, logger);
 		struct connection_filter cq = {
-			.clonedfrom = (*cp),
-			.ike_version = (*cp)->config->ike_version,
+			.clonedfrom = c,
+			.ike_version = c->config->ike_version,
 			.search = {
 				.order = OLD2NEW,
 				.verbose.logger = logger,
@@ -471,14 +502,16 @@ void terminate_and_delete_connections(struct connection **cp,
 			},
 		};
 		if (next_connection(&cq)) {
-			llog(RC_LOG, (*cp)->logger, "deleting group instances");
+			llog(RC_LOG, c->logger, "deleting group instances");
 			do {
-				terminate_and_delete_connections(&cq.c, logger, where);
+				connection_addref(cq.c, logger);
+				terminate_and_delete_connections(cq.c, logger, where);
+				connection_delref(&cq.c, logger);
 			} while (next_connection(&cq));
 		}
-		pmemory((*cp)); /* should not disappear */
+		pmemory(c); /* should not disappear */
 		/* leave whack attached during death */
-		delete_connection(cp);
+		connection_delref(&c, logger);
 		return;
 	}
 
@@ -487,7 +520,7 @@ void terminate_and_delete_connections(struct connection **cp,
 	case CK_INVALID:
 		break;
 	}
-	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
+	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
 static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
@@ -507,7 +540,7 @@ static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 		 */
 		ldbg_routing((*ike)->sa.logger, "    deleting larval IPsec SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
-		state_attach(&child->sa, (*ike)->sa.logger);
+		whack_attach(&child->sa, (*ike)->sa.logger);
 		delete_child_sa(&child);
 	}
 }
@@ -524,7 +557,7 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	 * If the child owns the connection's routing then it needs to
 	 * be dispatched; else it can simply be deleted.
 	 */
-	state_attach(&child->sa, (*ike)->sa.logger);
+	whack_attach(&child->sa, (*ike)->sa.logger);
 
 	/* redundant */
 	on_delete(&child->sa, skip_send_delete);
@@ -610,7 +643,7 @@ void terminate_ike_family(struct ike_sa **ike,
 	} else {
 		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
-		state_attach(&connection_child->sa, (*ike)->sa.logger);
+		whack_attach(&connection_child->sa, (*ike)->sa.logger);
 		/* will delete child and its logger */
 		connection_teardown_child(&connection_child, reason, where); /* always dispatches here*/
 		PEXPECT((*ike)->sa.logger, connection_child == NULL); /*gone!*/

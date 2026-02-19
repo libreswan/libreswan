@@ -99,8 +99,8 @@ struct child_policy capture_child_rekey_policy(struct state *st)
 	 * the connection as a Child SA (look for add_pending()).
 	 */
 	const struct connection *c = st->st_connection;
-	if (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ||
-	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+	if (c->config->child.encap_proto == ENCAP_PROTO_ESP ||
+	    c->config->child.encap_proto == ENCAP_PROTO_AH) {
 		return (struct child_policy) {
 			.is_set = true,
 			.transport = (st->st_kernel_mode == KERNEL_MODE_TRANSPORT),
@@ -124,15 +124,17 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		bool nat = nat_traversal_detected(st);
-		bool tfc = (c->config->child_sa.tfcpad != 0 &&
+		bool tfc = (c->config->child.tfcpad != 0 &&
 			    !st->st_seen_esp_tfc_padding_not_supported);
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool iptfs = st->st_seen_and_use_iptfs;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
 
-		if (nat)
-			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
+		if (nat) {
+			ldbg(st->logger,
+			     "NAT-T: NAT Traversal detected - their IKE port is '%d'",
 			     c->remote->host.port);
+		}
 
 		jam(buf, "ESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 		    tcp ? "inTCP" : nat ? "inUDP" : "",
@@ -141,18 +143,13 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		    iptfs ? "/IPTFS" : "",
 		    ntohl(st->st_esp.outbound.spi),
 		    ntohl(st->st_esp.inbound.spi));
-		jam(buf, " xfrm=%s", st->st_esp.trans_attrs.ta_encrypt->common.fqn);
-		/* log keylen when it is required and/or "interesting" */
-		if (!st->st_esp.trans_attrs.ta_encrypt->keylen_omitted ||
-		    (st->st_esp.trans_attrs.enckeylen != 0 &&
-		     st->st_esp.trans_attrs.enckeylen != st->st_esp.trans_attrs.ta_encrypt->keydeflen)) {
-			jam(buf, "_%u", st->st_esp.trans_attrs.enckeylen);
-		}
-		jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
 
-		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL) {
+		jam_string(buf, " xfrm=");
+		jam_ipsec_proto_info(buf, &st->st_esp);
+
+		if ((st->st_ike_version == IKEv2) && st->st_pfs_kem != NULL) {
 			jam_string(buf, "-");
-			jam_string(buf, st->st_pfs_group->common.fqn);
+			jam_string(buf, st->st_pfs_kem->common.fqn);
 		}
 
 		/*
@@ -169,11 +166,11 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 	if (st->st_ah.protocol == &ip_protocol_ah) {
 		jam_string(buf, ini);
 		ini = " ";
-		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
+		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=",
 		    st->st_ah.trans_attrs.esn_enabled ? "/ESN" : "",
 		    ntohl(st->st_ah.outbound.spi),
-		    ntohl(st->st_ah.inbound.spi),
-		    st->st_ah.trans_attrs.ta_integ->common.fqn);
+		    ntohl(st->st_ah.inbound.spi));
+		jam_ipsec_proto_info(buf, &st->st_ah);
 	}
 
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {

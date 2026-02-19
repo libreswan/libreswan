@@ -1,0 +1,205 @@
+<varlistentry id='conn.authby'>
+  <term>
+    <option>authby=</option>
+  </term>
+  <listitem>
+
+    <para>
+      How the two security gateways should authenticate each other.  A
+      comma separated list of one or more of the following:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+	<term>
+	  <option>ecdsa</option>
+	</term>
+	<term>
+	  <option>ecdsa-sha2</option>
+	</term>
+	<listitem>
+	  <para>
+	    ECDSA digital signature based authentication with any of
+	    the hash algorithms SHA2_256, SHA2_384, or SHA2_512.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>ecdsa-sha2_256</option>
+	</term>
+	<term>
+	  <option>ecdsa-sha2_384</option>
+	</term>
+	<term>
+	  <option>ecdsa-sha2_512</option>
+	</term>
+	<listitem>
+	  <para>
+	    ECDSA digital signature based authentication with the
+	    specified SHA2_256, SHA2_384, or SHA2_512 hash algorithm.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>eddsa</option>
+	</term>
+	<listitem>
+	  <para>
+	    EDDSA digital signature based authentication on curve on
+	    curve 25519.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>rsa</option>
+	</term>
+	<term>
+	  <option>rsasig</option>
+	</term>
+	<listitem>
+	  <para>
+	    RSA-PKCSv1.5 digital signature based authentication with
+	    SHA1; and, when IKEv2, RSASSA-PSS digital signature
+	    authentication with either SHA2_256, SHA2_384, or
+	    SHA2_512.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>rsa-sha1</option>
+	</term>
+	<listitem>
+	  <para>
+	    RSA-PKCSv1.5 digital signature based authentication with
+	    SHA1
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>rsa-sha2</option>
+	</term>
+	<listitem>
+	  <para>
+	    RSASSA-PSS digital signature based authentication with any
+	    of the hash algorithms SHA2_256, SHA2_384, or SHA2_512.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>rsa-sha2_256</option>
+	</term>
+	<term>
+	  <option>rsa-sha2_384</option>
+	</term>
+	<term>
+	  <option>rsa-sha2_512</option>
+	</term>
+	<listitem>
+	  <para>
+	      RSASSA-PSS digital signature based authentication with
+	      the specified SHA2_256, SHA2_384, or SHA2_512 hash
+	      algorithm.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>secret</option>
+	</term>
+	<listitem>
+	  <para>
+	    Shared secrets (PSK) authentication; cannot be combined
+	    with other authentication methods.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>never</option>
+	</term>
+	<listitem>
+	  <para>
+	    Negotiation is never to be attempted or accepted; cannot
+	    be combined with other authentication methods.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>null</option>
+	</term>
+	<listitem>
+	  <para>
+	    NULL-authentication; cannot be combined with other
+	    authentication methods.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      For IKEv1, SHA2 based signatures are not defined and ECDSA is
+      not implemented, so the default <option>authby</option> value is
+      <option>rsa-sha1</option>.  Using <option>authby=rsasig</option>
+      results in only <option>rsa-sha1</option> as well.
+    </para>
+
+    <para>
+      For IKEv2, <option>rsasig,ecdsa</option> which allows ECDSA with
+      SHA-2 and RSA with SHA2 or SHA1.  Using
+      <option>authby=rsasig</option> means using
+      <option>rsa-sha2_512</option>, <option>rsa-sha2_384</option>,
+      <option>rsa-sha2_256</option> and <option>rsa-sha1</option>,
+      where <option>rsa-sha1</option> will used only if RFC 7427 is
+      not supported by the peer.
+    </para>
+
+    <para>
+      Note that <option>authby</option> cannot be used for asymmetric
+      authentication.  Instead, IKEv2 must be enabled and the options
+      <option>leftauth</option> and <option>rightauth</option> used.
+    </para>
+
+    <para>
+      As per RFC 8221, <option>authby=rsa-sha1</option> is only
+      supported in the old style, meaning RSA-PKCSv1.5.  The SHA2
+      variants are only supported for the new style of RFC 7427, so
+      <option>authby=rsa-sha2</option> will use the new style. The
+      default <option>authby=</option> will remove
+      <option>rsa-sha1</option> in the near future.  It is strongly
+      recommended that when certificates are used, the certificates
+      and the <option>authby=</option> signature methods used are the
+      same, as it increases interoperability and keeps the
+      authentication of everything within one digital signature
+      system.
+    </para>
+
+    <para>
+      Digital signatures are superior in every way to shared secrets.
+      Especially IKEv1 in Aggressive Mode is vulnerable to offline
+      dictionary attacks and is performed routinely by at least the
+      NSA on monitored internet traffic globally.  The never option is
+      only used for connections that do not actually start an IKE
+      negotiation, such as type=passthrough connections. The auth
+      method null is used for "anonymous opportunistic IPsec" and
+      should not be used for regular pre-configured IPsec VPNs.
+    </para>
+
+  </listitem>
+</varlistentry>

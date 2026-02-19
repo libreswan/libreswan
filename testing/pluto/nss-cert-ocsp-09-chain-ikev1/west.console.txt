@@ -23,19 +23,19 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert-ocsp
-"nss-cert-ocsp": added IKEv1 connection
+"nss-cert-ocsp": added oriented IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert-ocsp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"nss-cert-ocsp":   mycert=west_chain_endcert; my_updown=ipsec _updown;
+"nss-cert-ocsp":   mycert=west_chain_endcert; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-ocsp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-ocsp":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-ocsp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-ocsp":   sec_label:unset;
 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_int_2.testing.libreswan.org, E=west_chain_int_2@testing.libreswan.org'...'%any'
-"nss-cert-ocsp":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"nss-cert-ocsp":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "nss-cert-ocsp":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-ocsp":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -63,7 +63,7 @@ west #
 "nss-cert-ocsp" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org'
 "nss-cert-ocsp" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
 "nss-cert-ocsp" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"nss-cert-ocsp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===192.0.2.254/32}
+"nss-cert-ocsp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===192.0.2.254/32}
 "nss-cert-ocsp" #2: sent Quick Mode request
 "nss-cert-ocsp" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

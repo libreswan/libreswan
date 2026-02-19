@@ -1,0 +1,589 @@
+/* ipsec.conf's config setup for Libreswan
+ *
+ * Copyright (C) 2025 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#include <stdbool.h>
+
+#include "ipsecconf/setup.h"
+#include "ipsecconf/keywords.h"
+#include "ipsecconf/confread.h"
+#include "ipsecconf/parser.h"
+#include "passert.h"
+#include "lswalloc.h"
+#include "lset.h"
+#include "lmod.h"
+#include "lswlog.h"
+#include "lswversion.h"
+#include "ocsp_method.h"
+#include "global_redirect.h"
+#include "seccomp_mode.h"
+#include "ddos_mode.h"
+#include "timescale.h"
+#include "sparse_names.h"
+
+/**
+ * Set up hardcoded defaults, from data in programs/pluto/constants.h
+ *
+ * @param cfg starter_config struct
+ * @return void
+ */
+
+static struct config_setup config_setup;
+
+void update_setup_string(enum config_setup_keyword kw, const char *string)
+{
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	pfreeany(kv->string);
+	kv->string = clone_str(string, "kv");
+	kv->set = k_set;
+}
+
+void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
+{
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->option = yn;
+	kv->set = k_set;
+}
+
+void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
+{
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->deltatime = deltatime;
+	kv->set = k_set;
+}
+
+void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
+{
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->option = option;
+	kv->set = k_set;
+}
+
+static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
+
+	[KBF_NHELPERS] = "-1",
+
+	[KBF_DDOS_MODE] = "auto",
+	[KBF_DDOS_IKE_THRESHOLD] = DEFAULT_IKE_SA_DDOS_THRESHOLD,
+	[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA,
+
+	[KBF_IKEv1_POLICY] = "drop",
+
+	[KSF_NSSDIR] = IPSEC_NSSDIR,
+	[KSF_SECRETSFILE] = IPSEC_SECRETS,
+	[KSF_DUMPDIR] = IPSEC_RUNDIR,
+	[KSF_IPSECDIR] = IPSEC_CONFDDIR,
+	[KSF_MYVENDORID] = libreswan_vendorid,
+#ifdef USE_LOGFILE
+	[KSF_LOGFILE] = LOGFILE,
+#endif
+	[KSF_RUNDIR] = IPSEC_RUNDIR,
+
+	[KSF_PROTOSTACK] =
+#ifdef KERNEL_XFRM
+	"xfrm"
+#endif
+#ifdef KERNEL_PFKEYV2
+	"pfkeyv2"
+#endif
+	,
+	[KSF_DNS_RESOLVER] = "file",
+
+	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
+
+#ifdef USE_SECCOMP
+	[KBF_SECCOMP] = "disabled",
+#endif
+
+	/* x509_ocsp */
+	[KBF_OCSP_TIMEOUT_SECONDS] = OCSP_DEFAULT_TIMEOUT,
+	[KBF_OCSP_CACHE_MIN_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MIN_AGE,
+	[KBF_OCSP_CACHE_MAX_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MAX_AGE,
+	[KBF_OCSP_CACHE_SIZE] = OCSP_DEFAULT_CACHE_SIZE,
+	[KBF_OCSP_METHOD] = "get",
+
+	[KBF_GLOBAL_REDIRECT] = "no",
+
+	[KSF_EXPIRE_SHUNT_INTERVAL] = DEFAULT_EXPIRE_SHUNT_INTERVAL,
+	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
+
+	[KYN_DNSSEC_ENABLE] = "yes",
+#ifdef DEFAULT_DNSSEC_ROOTKEY_FILE
+	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
+#endif
+
+	[KYN_LOGIP] = "yes",
+	[KYN_LOGTIME] = "yes",
+	[KYN_LOGAPPEND] = "yes",
+
+	[KYN_AUDIT_LOG] = "yes",
+	[KYN_UNIQUEIDS] = "yes",
+
+	[KYN_IKE_SOCKET_ERRQUEUE] = "yes",
+	[KYN_LISTEN_UDP] = "yes",
+	[KYN_LISTEN_TCP] = "no",
+
+};
+
+const struct config_setup *config_setup_updates(void)
+{
+	return &config_setup;
+}
+
+void free_config_setup(void)
+{
+	for (unsigned i = 0; i < elemsof(config_setup.values); i++) {
+		pfreeany(config_setup.values[i].string);
+	}
+}
+
+const char *config_setup_string(enum config_setup_keyword field)
+{
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		return kv->string; /* can be set to NULL? */
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		return value;
+	}
+
+	return NULL;
+}
+
+const char *config_setup_string_or_unset(enum config_setup_keyword field,
+					 const char *unset)
+{
+	const char *string = config_setup_string(field);
+	if (string == NULL) {
+		return unset;
+	}
+	return string;
+}
+
+bool config_setup_yn(enum config_setup_keyword field)
+{
+	enum yn_options yn = config_setup_option(field);
+
+	switch (yn) {
+	case 0: return false;
+	case YN_NO: return false;
+	case YN_YES: return true;
+	}
+	bad_case(yn);
+}
+
+deltatime_t config_setup_deltatime(enum config_setup_keyword field)
+{
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		deltatime_t deltatime = kv->deltatime;
+		pexpect(deltatime.is_set);
+		return deltatime;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		deltatime_t deltatime = unset_deltatime;
+		diag_t d = ttodeltatime(shunk1(value), &deltatime);
+		pexpect(d == NULL);
+		pexpect(deltatime.is_set);
+		pfree_diag(&d);
+		return deltatime;
+	}
+
+	return unset_deltatime;
+}
+
+uintmax_t config_setup_option(enum config_setup_keyword field)
+{
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		return kv->option;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		passert(field < config_setup_keywords.len);
+		const struct keyword_def *def = &config_setup_keywords.item[field];
+		switch (def->type) {
+		case kt_sparse_name:
+		{
+			const struct sparse_name *name = sparse_lookup_by_name(def->sparse_names,
+									       shunk1(value));
+			return (pexpect(name != NULL) ? name->value : 0);
+		}
+		case kt_unsigned:
+		{
+			uintmax_t option = 0;
+			err_t e = shunk_to_uintmax(shunk1(value), NULL, 0, &option);
+			pexpect(e == NULL);
+			return option;
+		}
+		case kt_string:
+		case kt_appendstrings:
+		case kt_seconds:
+		case kt_obsolete:
+		case kt_also:
+		{
+			name_buf ktn;
+			llog_pexpect(&global_logger, HERE,
+				     "\"config setup\" option %s has unexpected type %s",
+				     def->keyname,
+				     str_enum_short(&keyword_type_names, def->type, &ktn));
+			return 0;
+		}
+		}
+		bad_case(def->type);
+	}
+
+	return 0;
+}
+
+const char *config_setup_ipsecdir(void)
+{
+	return config_setup_string(KSF_IPSECDIR);
+}
+
+const char *config_setup_secretsfile(void)
+{
+	return config_setup_string(KSF_SECRETSFILE);
+}
+
+const char *config_setup_nssdir(void)
+{
+	return config_setup_string(KSF_NSSDIR);
+}
+
+const char *config_setup_dumpdir(void)
+{
+	return config_setup_string(KSF_DUMPDIR);
+}
+
+const char *config_setup_vendorid(void)
+{
+	return config_setup_string(KSF_MYVENDORID);
+}
+
+lset_t config_setup_debugging(struct logger *logger)
+{
+	/*
+	 * Use ttolmod() since it both knows how to parse a comma
+	 * separated list and can handle no-XXX (ex: all,no-xauth).
+	 * The final set of enabled bits is returned in .set.
+	 */
+	lmod_t result = {0};
+	const char *plutodebug = config_setup_string(KSF_PLUTODEBUG);
+	if (!ttolmod(shunk1(plutodebug), &result, &debug_lmod_info, true/*enable*/)) {
+		/*
+		 * If the lookup failed, complain.
+		 *
+		 * XXX: the error diagnostic is a little vague -
+		 * should lmod_arg() instead return the error?
+		 */
+		llog(RC_LOG, logger, "plutodebug='%s' invalid, keyword ignored",
+			plutodebug);
+		return LEMPTY;
+	}
+
+	return result.set;
+}
+
+/**
+ * Load a parsed config
+ *
+ * @param cfg starter_config structure
+ * @param cfgp config_parsed (ie: valid) struct
+ * @param perr pointer to store errors in
+ */
+
+static void llog_bad(struct logger *logger, const struct ipsec_conf_keyval *kv, diag_t d)
+{
+	llog(ERROR_STREAM, logger,
+	     PRI_KEYVAL_SAL": error: %s",
+	     pri_keyval_sal(kv), str_diag(d));
+}
+
+bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
+				   struct logger *logger)
+{
+	const struct keyval_entry *kw;
+
+	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {
+		/**
+		 * the parser already made sure that only config keywords were used,
+		 * but we double check!
+		 */
+		const struct ipsec_conf_keyval *kv = &kw->keyval;
+		enum config_setup_keyword f = kv->key->field;
+		shunk_t value = shunk1(kv->val);
+		diag_t d = NULL;
+
+		PASSERT(logger, f < elemsof(config_setup.values));
+		if (config_setup.values[f].set) {
+			llog(WARNING_STREAM, logger,
+			     PRI_KEYVAL_SAL": overriding earlier 'config setup' keyword with new value: %s=%s",
+			     pri_keyval_sal(kv),
+			     kv->key->keyname, kv->val);
+		}
+
+		switch (kv->key->type) {
+		case kt_string:
+		{
+			/* all treated as strings for now */
+			update_setup_string(f, kv->val);
+			continue;
+		}
+
+		case kt_sparse_name:
+		{
+			uintmax_t number;
+			d = parse_kt_sparse_name(kv, value, &number,
+						 ERROR_STREAM, logger);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
+			continue;
+		}
+
+		case kt_unsigned:
+		{
+			uintmax_t number;
+			d = parse_kt_unsigned(kv, value, &number);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
+			continue;
+		}
+
+		case kt_seconds:
+		{
+			deltatime_t deltatime;
+			d = parse_kt_deltatime(kv, value, &deltatime);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_deltatime(f, deltatime);
+			continue;
+		}
+
+		case kt_obsolete:
+		{
+			llog(WARNING_STREAM, logger,
+			     PRI_KEYVAL_SAL": obsolete keyword ignored: %s=%s",
+			     pri_keyval_sal(kv), kv->key->keyname, kv->val);
+			continue;
+		}
+
+		case kt_also:
+		case kt_appendstrings:
+			break;
+
+		}
+
+		bad_case(kv->key->type);
+	}
+
+	return true;
+}
+
+bool load_config_setup(const char *file,
+		       struct logger *logger,
+		       unsigned verbosity)
+{
+
+	/*
+	 * Load file
+	 */
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		return false;
+	}
+
+	/**
+	 * Load setup
+	 */
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return false;
+	}
+
+	pfree_ipsec_conf(&ipsec_conf);
+	return true;
+}
+
+static const struct keyword_def config_setup_keyword[] = {
+#define K(KEYNAME, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, ##__VA_ARGS__ }
+
+  K("ikev1-policy",  kt_sparse_name,  KBF_IKEv1_POLICY, .sparse_names = &global_ikev1_policy_names),
+  K("curl-iface",  kt_string,  KSF_CURLIFACE),
+
+  K("myvendorid",  kt_string,  KSF_MYVENDORID),
+
+  K("plutodebug", kt_string, KSF_PLUTODEBUG),
+
+  K("logfile",  kt_string,  KSF_LOGFILE),
+  K("logtime",  kt_sparse_name,  KYN_LOGTIME, .sparse_names = &yn_option_names),
+  K("logappend",  kt_sparse_name,  KYN_LOGAPPEND, .sparse_names = &yn_option_names),
+  K("logip",  kt_sparse_name,  KYN_LOGIP, .sparse_names = &yn_option_names),
+  K("audit-log",  kt_sparse_name,  KYN_AUDIT_LOG, .sparse_names = &yn_option_names),
+
+#ifdef USE_DNSSEC
+# define NOSUP LEMPTY
+#else
+# define NOSUP kv_nosup
+#endif
+  K("dnssec-enable", kt_sparse_name, KYN_DNSSEC_ENABLE, .sparse_names = &yn_option_names, .validity = NOSUP),
+  K("dnssec-rootkey-file", kt_string, KSF_DNSSEC_ROOTKEY_FILE, .validity = NOSUP),
+  K("dnssec-anchors", kt_string, KSF_DNSSEC_ANCHORS, .validity = NOSUP),
+#undef NOSUP
+
+  K("dumpdir",  kt_string,  KSF_DUMPDIR),
+  K("ipsecdir",  kt_string,  KSF_IPSECDIR),
+  K("nssdir", kt_string, KSF_NSSDIR),
+
+  /* these are only allowed on the command line */
+  K("rundir", kt_string, KSF_RUNDIR, .validity = kv_optarg_only),
+  K("logstderr", kt_string, KYN_LOGSTDERR, .validity = kv_optarg_only),
+
+  K("secretsfile",  kt_string,  KSF_SECRETSFILE),
+  K("statsbin",  kt_string,  KSF_STATSBIN),
+  K("uniqueids",  kt_sparse_name,  KYN_UNIQUEIDS, .sparse_names = &yn_option_names),
+  K("shuntlifetime",  kt_seconds,  KBF_SHUNTLIFETIME),
+
+  K("global-redirect", kt_sparse_name, KBF_GLOBAL_REDIRECT, .sparse_names = &global_redirect_names),
+  K("global-redirect-to", kt_string, KSF_GLOBAL_REDIRECT_TO),
+
+  K("crl-strict",  kt_sparse_name,  KYN_CRL_STRICT, .sparse_names = &yn_option_names),
+  K("crlcheckinterval",  kt_seconds,  KBF_CRL_CHECKINTERVAL),
+  K("crl-timeout",  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS),
+
+  K("ocsp-strict",  kt_sparse_name,  KYN_OCSP_STRICT, .sparse_names = &yn_option_names),
+  K("ocsp-enable",  kt_sparse_name,  KYN_OCSP_ENABLE, .sparse_names = &yn_option_names),
+  K("ocsp-uri",  kt_string,  KSF_OCSP_URI),
+  K("ocsp-timeout",  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS),
+  K("ocsp-trustname",  kt_string,  KSF_OCSP_TRUSTNAME),
+  K("ocsp-cache-size",  kt_unsigned,  KBF_OCSP_CACHE_SIZE),
+  K("ocsp-cache-min-age",  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS),
+  K("ocsp-cache-max-age",  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS),
+  K("ocsp-method",  kt_sparse_name,  KBF_OCSP_METHOD, .sparse_names = &ocsp_method_names),
+
+#ifdef USE_SECCOMP
+# define NOSUP LEMPTY
+#else
+# define NOSUP kv_nosup
+#endif
+  K("seccomp", kt_sparse_name,  KBF_SECCOMP, .sparse_names = &seccomp_mode_names, .validity = NOSUP),
+#undef NOSUP
+
+  K("ddos-mode",  kt_sparse_name,  KBF_DDOS_MODE, .sparse_names = &ddos_mode_names),
+  K("ddos-ike-threshold",  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD),
+  K("max-halfopen-ike",  kt_unsigned,  KBF_MAX_HALFOPEN_IKE),
+
+  K("ike-socket-bufsize",  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE),
+  K("ike-socket-errqueue",  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, .sparse_names = &yn_option_names),
+
+#ifdef XFRM_LIFETIME_DEFAULT
+# define NOSUP LEMPTY
+#else
+# define NOSUP kv_nosup
+#endif
+  K("expire-lifetime", kt_seconds,  KBF_EXPIRE_LIFETIME, .validity = NOSUP),
+#undef NOSUP
+
+  K("virtual-private",  kt_string,  KSF_VIRTUAL_PRIVATE),
+  K("seedbits",  kt_unsigned,  KBF_SEEDBITS),
+  K("keep-alive",  kt_seconds,  KBF_KEEP_ALIVE),
+
+  K("listen-tcp", kt_sparse_name, KYN_LISTEN_TCP, .sparse_names = &yn_option_names),
+  K("listen-udp", kt_sparse_name, KYN_LISTEN_UDP, .sparse_names = &yn_option_names),
+
+  K("listen",  kt_string,  KSF_LISTEN),
+  K("protostack",  kt_string,  KSF_PROTOSTACK),
+  K("nhelpers",  kt_unsigned,  KBF_NHELPERS),
+  K("drop-oppo-null",  kt_sparse_name,  KYN_DROP_OPPO_NULL, .sparse_names = &yn_option_names),
+  K("expire-shunt-interval", kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL),
+
+  K("dns-resolver", kt_string, KSF_DNS_RESOLVER),
+
+  K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
+
+#ifdef USE_NFLOG
+# define NOSUP LEMPTY
+#else
+# define NOSUP kv_nosup
+#endif
+  K("nflog-all", kt_unsigned,  KBF_NFLOG_ALL, .validity = NOSUP),
+#undef NOSUP
+
+  /*
+   * Force first alias/obsolete keyword into slot following all
+   * defined keywords.  Else compiler tries to store it into above
+   * keyword's slot + 1, which is likely occupied by another keyword.
+   * The result is a nonsensical error.
+   */
+  [CONFIG_SETUP_KEYWORD_ROOF] =
+
+  /* alias for compatibility - undocumented on purpose */
+
+#define A(KEYNAME, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+
+  A("curl-timeout", kt_seconds, KBF_CRL_TIMEOUT_SECONDS), /* legacy */
+#ifdef XFRM_LIFETIME_DEFAULT
+  A("xfrmlifetime", kt_seconds, KBF_EXPIRE_LIFETIME), /* legacy */
+#endif
+
+  /* obsolete config setup options */
+
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, }
+
+  O("syslog"), /* never went anywhere! */
+  O("plutostderrlog"), /* obsolete name, but very common :/ */
+  O("virtual_private"), /* obsolete variant, very common */
+  O("interfaces"), /* obsoleted but often present keyword */
+  O("ikev1-secctx-attr-type"),  /* obsolete: not a value, a type */
+  O("secctx-attr-type"),
+
+#undef U
+#undef O
+#undef A
+#undef K
+};
+
+const struct keywords_def config_setup_keywords = {
+	.len = elemsof(config_setup_keyword),
+	.item = config_setup_keyword,
+};

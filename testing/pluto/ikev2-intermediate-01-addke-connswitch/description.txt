@@ -1,0 +1,4 @@
+IKEv2 IKE_INTERMEDIATE exchange using PSK then RSA to authenticate
+
+For RSA, the responder gets to connswitch from PSK after the
+IKE_INTERMEDIATE exchanges.

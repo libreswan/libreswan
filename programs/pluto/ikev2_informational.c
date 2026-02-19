@@ -85,7 +85,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md)
 {
-	dbg("an informational request needing a response");
+	ldbg(ike->sa.logger, "an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(null_child == NULL);
 
@@ -235,24 +235,22 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 
 	{ .story      = "Informational Request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_responder_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.name = "INFORMATIONAL",
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
-	.subplot = "informational exchange",
 	.secured = true,
-	.responder = &v2_INFORMATIONAL_responder_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_responder_transition),
+	},
 };

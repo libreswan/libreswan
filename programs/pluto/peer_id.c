@@ -62,7 +62,7 @@ static bool idr_wildmatch(const struct host_end *this, const struct id *idr, str
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
 		diag_t d = cert_verify_subject_alt_name("our",
 							this->config->cert.nss_cert,
-							idr);
+							idr, logger);
 		if (d == NULL) {
 			return true;
 		}
@@ -393,8 +393,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		{
 			lset_buf eb;
 			vdbg("%s so no authby checks performed",
-			     str_lset_short(&keyword_auth_names, "+",
-					    proposed_authbys, &eb));
+			     str_lset_short(&auth_names, "+", proposed_authbys, &eb));
 			break;
 		}
 		}
@@ -971,7 +970,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		peer->name = name;
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "KEY ID:");
-			LDBG_hunk(logger, peer->name);
+			LDBG_hunk(logger, &peer->name);
 		}
 		break;
 
@@ -979,7 +978,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		peer->name = name;
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "DER ASN1 DN:");
-			LDBG_hunk(logger, peer->name);
+			LDBG_hunk(logger, &peer->name);
 		}
 		break;
 
@@ -987,7 +986,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		if (name.len != 0) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(logger, "unauthenticated NULL ID:");
-				LDBG_hunk(logger, name);
+				LDBG_hunk(logger, &name);
 			}
 		}
 		break;

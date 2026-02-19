@@ -8,13 +8,13 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --add percentage-good
-"percentage-good": added IKEv2 connection
+ ipsec add percentage-good
+"percentage-good": added oriented IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
 west #
  ipsec status | grep margin
-"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%; clones: no (unset);
 west #
  # output is unpredictable, include ephemeral values
 west #
@@ -25,7 +25,7 @@ loading conns matching percentage-wip:
 "percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
  ipsec status | grep margin
-"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%; clones: no (unset);
 west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
@@ -34,5 +34,5 @@ loading conns matching percentage-wip:
 "percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
  ipsec status | grep margin
-"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
+"percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%; clones: no (unset);
 west #

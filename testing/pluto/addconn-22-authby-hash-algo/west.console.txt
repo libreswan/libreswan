@@ -10,43 +10,49 @@ initdone
 west #
  # these should load properly
 west #
- ipsec auto --add default-implicit-authby
+ ipsec add default-implicit-authby
 "default-implicit-authby": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add default-specified-authby
+ ipsec add default-specified-authby
 "default-specified-authby": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-rsa
-"ecdsa-rsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
+ ipsec add eddsa
+"eddsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa
+ ipsec add eddsa,rsa
+"eddsa,rsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
+west #
+ ipsec add ecdsa
 "ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2
+ ipsec add ecdsa,rsa
+"ecdsa,rsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
+west #
+ ipsec add ecdsa-sha2
 "ecdsa-sha2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_256
+ ipsec add ecdsa-sha2_256
 "ecdsa-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_384
+ ipsec add ecdsa-sha2_384
 "ecdsa-sha2_384": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_512
+ ipsec add ecdsa-sha2_512
 "ecdsa-sha2_512": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha1
+ ipsec add rsa-sha1
 "rsa-sha1": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2
+ ipsec add rsa-sha2
 "rsa-sha2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_256
+ ipsec add rsa-sha2_256
 "rsa-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_384
+ ipsec add rsa-sha2_384
 "rsa-sha2_384": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_512
+ ipsec add rsa-sha2_512
 "rsa-sha2_512": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
  ipsec status |grep policy: | grep -v modecfg
@@ -56,8 +62,8 @@ west #
 "default-specified-authby":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"ecdsa-rsa":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa-rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"ecdsa,rsa":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ecdsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa-sha2":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa-sha2_256":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -66,6 +72,10 @@ west #
 "ecdsa-sha2_384":   v2-auth-hash-policy: SHA2_384;
 "ecdsa-sha2_512":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2_512":   v2-auth-hash-policy: SHA2_512;
+"eddsa":   policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"eddsa":   v2-auth-hash-policy: IDENTITY;
+"eddsa,rsa":   policy: IKEv2+RSASIG+EDDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"eddsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512+IDENTITY;
 "rsa-sha1":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha1":   v2-auth-hash-policy: none;
 "rsa-sha2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -83,13 +93,13 @@ west #
 west #
  echo "include /etc/ipsec.d/west-errors.conf" >> /etc/ipsec.conf
 west #
- ipsec auto --add ecdsa-sha1-should-fail
+ ipsec add ecdsa-sha1-should-fail
 "ecdsa-sha1-should-fail": failed to add connection: authby=ecdsa cannot use sha1, only sha2
 west #
- ipsec auto --add ikev1-rsa2-should-fail
+ ipsec add ikev1-rsa2-should-fail
 "ikev1-rsa2-should-fail": failed to add connection: authby=rsa-sha2 is not valid for IKEv1
 west #
- ipsec auto --add ikev1-ecdsa-should-fail
+ ipsec add ikev1-ecdsa-should-fail
 "ikev1-ecdsa-should-fail": failed to add connection: authby=ecdsa is not valid for IKEv1
 west #
  rm /etc/ipsec.d/west-errors.conf

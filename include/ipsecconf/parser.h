@@ -27,6 +27,7 @@ struct jambuf;
 struct logger;
 struct parser;
 enum end;
+struct ipsec_conf;
 
 /* Source-And-Line */
 struct ipsec_conf_sal {
@@ -49,8 +50,7 @@ struct ipsec_conf_keyval {
 diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key,
 			 shunk_t value, uintmax_t *number);
 diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key,
-			  shunk_t value, enum timescale default_timescale,
-			  deltatime_t *deltatime);
+			  shunk_t value, deltatime_t *deltatime);
 diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 			    shunk_t value, uintmax_t *number,
 			    enum stream stream, struct logger *logger);
@@ -107,7 +107,10 @@ struct parser {
 	 "???")
 	struct starter_comments_list *comments;
 	struct logger *logger;
-	enum stream error_stream;
+	struct {
+		enum stream warning;
+		enum stream error;
+	} stream;
 	unsigned verbosity;
 	bool setuponly;
 	struct input_source *input;
@@ -123,9 +126,16 @@ void parser_warning(struct parser *parser, int eerror/*can be 0*/,
 void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 		  const char *s, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
-struct ipsec_conf *load_ipsec_conf(const char *file, struct logger *logger,
-				   bool setuponly, unsigned verbosity);
-struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start, struct logger *logger);
+struct ipsec_conf *alloc_ipsec_conf(void);
+
+bool ipsec_conf_add_file(struct ipsec_conf *ipsec_conf,
+			 const char *file,
+			 struct logger *logger,
+			 unsigned verbosity);
+
+bool ipsec_conf_add_argv_conn(struct ipsec_conf *ipsec_conf,
+			      const char *name, char *argv[], int start,
+			      struct logger *logger);
 
 void pfree_ipsec_conf(struct ipsec_conf **cfg);
 

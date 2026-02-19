@@ -26,7 +26,7 @@
 
 #include "import_crl.h"
 
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 #include "lswnss.h"
 #include "lswtool.h"
 #include "lswalloc.h"

@@ -11,4 +11,4 @@ EOF
     exit 1
 fi
 
-../../guestbin/wait-for.sh --match 'IMPAIR: blocking outbound message '${1}'$'  -- cat /tmp/pluto.log
+../../guestbin/wait-for.sh --match 'IMPAIR: .*: blocking outbound message '${1}'$'  -- cat /tmp/pluto.log

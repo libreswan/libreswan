@@ -1,1 +1,0 @@
-../../guestbin/ocspd.sh --log

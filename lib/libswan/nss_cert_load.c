@@ -21,7 +21,7 @@
 #include "nss_cert_load.h"
 
 CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname,
-					       struct logger *logger)
+					       const struct logger *logger)
 {
 	return nickname == NULL ? NULL :
 		PK11_FindCertFromNickname(nickname,
@@ -31,7 +31,7 @@ CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname,
 struct ckaid_match_arg {
 	SECItem ckaid;
 	CERTCertificate *cert;
-	struct logger *logger;
+	const struct logger *logger;
 };
 
 static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, void *arg)
@@ -43,11 +43,11 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	SECItem *ckaid = PK11_GetLowLevelKeyIDForCert(NULL, cert,
 						      lsw_nss_get_password_context(ckaid_match_arg->logger));
 	if (ckaid == NULL) {
-		dbg("GetLowLevelID for cert %s failed", cert->nickname);
+		ldbg(ckaid_match_arg->logger, "GetLowLevelID() for cert %s failed", cert->nickname);
 		return SECSuccess;
 	}
 	if (SECITEM_ItemsAreEqual(ckaid, &ckaid_match_arg->ckaid)) {
-		dbg("CKAID matched cert %s", cert->nickname);
+		ldbg(ckaid_match_arg->logger, "CKAID matched cert %s", cert->nickname);
 		ckaid_match_arg->cert = CERT_DupCertificate(cert);
 		/* bail early, but how? */
 	}
@@ -55,7 +55,8 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	return SECSuccess;
 }
 
-CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid, struct logger *logger)
+CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid,
+					    const struct logger *logger)
 {
 	struct ckaid_match_arg ckaid_match_arg = {
 		.cert = NULL,

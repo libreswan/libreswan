@@ -1,0 +1,17 @@
+<varlistentry id='conn.reject-simultaneous-ike-auth'>
+  <term>
+    <option>reject-simultaneous-ike-auth=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      When libreswan receives IKE_AUTH request from the peer while
+      having an outstanding IKE_AUTH request for the same connection,
+      reject with AUTHENTICATION_FAILED to avoid potential SA mismatch
+      issues. This only applies to permanent IKEv2 connections so that
+      the revival mechanism ensures connection retry.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+  </listitem>
+</varlistentry>

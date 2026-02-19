@@ -1,0 +1,21 @@
+<varlistentry id='conn.ppk'>
+  <term>
+    <option>ppk=&ppk_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Post-quantum preshared keys (PPKs) to be used.  Currently the
+      accepted values are: &propose;, &permit;, or &yes;, signifying
+      we allow the of use PPK for this connection; &insist;,
+      signifying we allow communication only if PPK is used for key
+      derivation; &never; or &no;, signifying that PPK should not be
+      used for key derivation.  PPKs can be used in connections that
+      allow only IKEv2.  In &Libreswan; that would mean that ikev2
+      option must have value &insist;.  This feature is based on RFC
+      8784.
+    </para>
+    <para>
+      The default is &propose;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -22,6 +22,8 @@
 
 struct connection;
 
-void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote);
+void set_ike_mark_out(const struct connection *c,
+		      ip_endpoint *ike_remote,
+		      struct logger *logger);
 
 #endif

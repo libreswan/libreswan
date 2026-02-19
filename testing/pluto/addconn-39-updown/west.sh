@@ -1,4 +1,7 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+cp ../../guestbin/updown.sh /tmp
+chmod a+x /tmp/updown.sh
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
@@ -23,3 +26,14 @@ ipsec whack --name whack--pass               --pass                --host 1.2.3.
 ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
 
 ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
+
+ipsec stop
+
+PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
+../../guestbin/wait-until-pluto-started
+
+ipsec add --auto=route addconn--updown-config=exec
+grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
+ipsec delete addconn--updown-config=exec
+
+ipsec stop

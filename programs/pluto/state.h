@@ -85,7 +85,6 @@ typedef struct {
 size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy);
 const char *str_child_policy(const struct child_policy *policy, child_policy_buf *buf);
 
-
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -106,7 +105,19 @@ struct trans_attrs {
 	const struct ipcomp_desc *ta_ipcomp;	/* package of ipcomp routines */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
-	const struct dh_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	const struct kem_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	/*
+	 * For ADDKE, pack the valid KEMs into an array - negotiation
+	 * can leave holes but they are removed here.
+	 */
+	struct {
+		unsigned len;
+		struct {
+			enum ikev2_trans_type type; /*ADDKE1..ADDKE8*/
+			const struct kem_desc *kem;
+		} list[8/*magic*/];
+	} ta_addke;
+
 };
 
 /*
@@ -172,7 +183,6 @@ struct hidden_variables {
 						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
-	ip_address st_lease_ip;
 };
 
 /*
@@ -195,9 +205,17 @@ struct finite_state {
 			const struct state_v1_microcode *transitions;
 		} v1;
 		struct {
-			const struct v2_transition *child_transition;
-			const struct v2_exchanges *ike_exchanges;
-			bool secured; /* hence, exchanges must be integrity protected */
+			/*
+			 * The transition for the larval SAs being
+			 * created by CREATE_CHILD_SA.
+			 */
+			const struct v2_transition *larval_sa_transition;
+			const struct v2_exchanges {
+				const struct v2_exchange *const *list;
+				size_t len;
+			} ike_responder_exchanges;
+			bool secured; /* hence, exchanges must be
+				       * integrity protected */
 		} v2;
 	};
 };
@@ -250,15 +268,35 @@ struct state {
 
 	struct trans_attrs st_oakley;
 
-	/* Child SA / IPsec SA */
+	/*
+	 * Child SA / IPsec SA.
+	 *
+	 * XXX:
+	 *
+	 * There's space for separate ESP, AH, and IPcomp because,
+	 * long ago all possible combinations were allowed for IKEv1.
+	 * That code has long since gone, but the fields live on.
+	 *
+	 * Now-a-days only the conbination {ESP,AH}{,IPcomp} is
+	 * allowed.  An outgoing packet has the optional IPcomp
+	 * followed by ESP or AH.
+	 *
+	 * Notice how the struct has its protocol as a member.  This
+	 * is only set when the other fiels are populated (at least
+	 * for now).
+	 */
 	enum kernel_mode st_kernel_mode;	/* aka IPsec mode */
 	struct ipsec_proto_info st_ah;
 	struct ipsec_proto_info st_esp;
 	struct ipsec_proto_info st_ipcomp;
+#define outer_ipsec_proto_info(CHILD)					\
+	((CHILD)->sa.st_esp.protocol == &ip_protocol_esp ? &(CHILD)->sa.st_esp : \
+	 (CHILD)->sa.st_ah.protocol == &ip_protocol_ah ? &(CHILD)->sa.st_ah : \
+	 NULL)
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
-	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
+	const struct kem_desc *st_pfs_kem;   /*group for Phase 2 PFS */
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
@@ -362,8 +400,13 @@ struct state {
 
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
-	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
-	chunk_t st_firstpacket_peer;             /* copy of peers message 1 (for hashing) */
+	struct ro_hunk *st_firstpacket_me;	/* copy of my message
+						 * 1; for hashing and
+						 * dup detection */
+	struct ro_hunk *st_firstpacket_peer;	/* copy of peers
+						 * message 1; for
+						 * hashing and dup
+						 * detection */
 
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
@@ -379,6 +422,7 @@ struct state {
 		chunk_t responder;	/* calculated from peers last Intermediate Exchange packet */
 		bool enabled;		/* both ends agree/use Intermediate Exchange */
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
+		unsigned next_exchange;
 	} st_v2_ike_intermediate;
 
 	/** end of IKEv2-only things **/
@@ -468,6 +512,9 @@ struct state {
 	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
 	struct dh_local_secret *st_dh_local_secret;
+	struct {
+		struct kem_initiator *initiator;
+	} st_kem;
 
 	PK11SymKey *st_dh_shared_secret;	/* Derived shared secret
 						 * Note: during Quick Mode,
@@ -523,7 +570,7 @@ struct state {
 	 * the crypto calculation completes that MD will be fed into
 	 * the state machine.
 	 */
-	struct job *st_offloaded_task;
+	struct help_request *st_offloaded_task;
 	bool st_v1_offloaded_task_in_background;
 	struct msg_digest *st_v1_background_md;	/* arrived during background task */
 
@@ -547,12 +594,9 @@ struct state {
 	PK11SymKey *st_skey_pr_nss;	/* v2 PPK for responder */
 
 	struct eap_state  *st_eap;	/* v2 EAP */
-	struct msg_digest *st_eap_sa_md; /* v2 EAP initial message with SA request */
 
 	chunk_t st_skey_initiator_salt;	/* v2 */
 	chunk_t st_skey_responder_salt;	/* v2 */
-	chunk_t st_skey_chunk_SK_pi;	/* v2 */
-	chunk_t st_skey_chunk_SK_pr;	/* v2 */
 
 	/*
 	 * Post-quantum Preshared Key variables (v2)
@@ -704,7 +748,7 @@ struct state {
 #define on_delete_where(ST, S, WHERE)				\
 	{							\
 		struct state *s_ = (ST);			\
-		pdbg(s_->logger,				\
+		ldbg(s_->logger,				\
 		     ".st_on_delete."#S" %s->true "PRI_WHERE,	\
 		     bool_str(s_->st_on_delete.S),		\
 		     pri_where(WHERE));				\
@@ -714,9 +758,9 @@ struct state {
 	on_delete_where(ST, S, HERE)
 };
 
-void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
-void update_st_ike_spis(struct child_sa *child, const ike_spis_t *ike_spis);
-void update_st_ike_spis_responder(struct ike_sa *ike, const ike_spi_t *ike_responder_spi);
+void update_sa_clonedfrom(struct child_sa *sa, so_serial_t clonedfrom);
+void update_IKE_SPIs_of_sa(struct child_sa *child, const ike_spis_t *ike_spis);
+void update_IKE_responder_SPI_on_initiator(struct ike_sa *ike, const ike_spi_t *ike_responder_spi);
 
 /*
  * The IKE and CHILD SAs.
@@ -845,7 +889,6 @@ extern void change_v2_state(struct state *st);
 
 extern unsigned long total_halfopen_ike(void);
 extern void show_globalstate_status(struct show *s);
-extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 
 void append_st_cfg_domain(struct state *st, struct pbs_in *pbs,
 			  char *(*stringify)(shunk_t str, bool *ok));

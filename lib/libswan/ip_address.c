@@ -20,7 +20,7 @@
 
 #include "jambuf.h"
 #include "ip_address.h"
-#include "lswlog.h"		/* for dbg() */
+#include "lswlog.h"		/* for ldbg() */
 #include "ip_info.h"
 
 const ip_address unset_address; /* all zeros */
@@ -131,14 +131,11 @@ size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	size_t s = jam_sensitive_ip(buf, "address", address, &afi);
 	if (s > 0) {
 		return s;
 	}
 
-	if (!log_ip) {
-		return jam_string(buf, "<address>");
-	}
 	return jam_address(buf, address);
 }
 
@@ -222,7 +219,7 @@ bool address_is_specified(const ip_address address)
 	}
 
 	/* exclude any address */
-	if (address_eq_address(address, afi->address.unspec)) {
+	if (address_eq_address(address, afi->address.zero)) {
 		return false;
 	}
 

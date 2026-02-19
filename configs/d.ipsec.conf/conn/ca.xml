@@ -1,0 +1,25 @@
+<varlistentry id='conn.ca'>
+  <term>
+    <option>leftca=</option>
+  </term>
+  <term>
+    <option>rightca=</option>
+  </term>
+  <listitem>
+    <para>
+      Specifies the Distinguished Name of the authorized Certificate
+      Authority (CA) that signed the certificate of the peer.  When
+      unspecified, it defaults to the CA that signed the certificate
+      specified in <option>leftcert</option>.
+    </para>
+    <para>
+      The special
+      <option>rightca=%same</option> is implied when not specifying a
+      <option>rightca</option> and means that only peers with
+      certificates signed by the same CA as the leftca will be
+      allowed. This option is only useful in complex multi CA
+      certificate situations. When using a single CA, it can be safely
+      omitted for both left and right.
+    </para>
+  </listitem>
+</varlistentry>

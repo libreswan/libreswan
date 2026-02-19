@@ -21,7 +21,75 @@
 #include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
 
-char *raw_clone_as_string(const void *ptr, size_t maxlen, const char *name)
+struct rw_hunk *clone_bytes_as_rw_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where)
+{
+	struct rw_hunk *rw_hunk = refcnt_overalloc(struct rw_hunk, len, logger, where);
+	rw_hunk->len = len;
+	memcpy((void*)rw_hunk->ptr, ptr, len);
+	return rw_hunk;
+}
+
+struct rw_hunk *rw_hunk_addref_where(struct rw_hunk *rw_hunk,
+				     const struct logger *logger,
+				     where_t where)
+{
+	return refcnt_addref(rw_hunk, logger, where);
+}
+
+void rw_hunk_delref_where(struct rw_hunk **rw_hunkp,
+			  const struct logger *logger,
+			  where_t where)
+{
+	struct rw_hunk *rw_hunk = refcnt_delref(rw_hunkp, logger, where);
+	if (rw_hunk != NULL) {
+		pfreeany(rw_hunk);
+	}
+}
+
+void replace_rw_hunk(struct rw_hunk **hunk, struct rw_hunk *with,
+		     struct logger *logger, where_t where)
+{
+	rw_hunk_delref_where(hunk, logger, where);
+	*hunk = rw_hunk_addref_where(with, logger, where);
+}
+
+struct ro_hunk *clone_bytes_as_ro_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where)
+{
+	struct ro_hunk *ro_hunk = refcnt_overalloc(struct ro_hunk, len, logger, where);
+	ro_hunk->len = len;
+	memcpy((void*)ro_hunk->ptr, ptr, len);
+	return ro_hunk;
+}
+
+struct ro_hunk *ro_hunk_addref_where(struct ro_hunk *ro_hunk,
+				     const struct logger *logger,
+				     where_t where)
+{
+	return refcnt_addref(ro_hunk, logger, where);
+}
+
+void ro_hunk_delref_where(struct ro_hunk **ro_hunkp,
+			  const struct logger *logger,
+			  where_t where)
+{
+	struct ro_hunk *ro_hunk = refcnt_delref(ro_hunkp, logger, where);
+	if (ro_hunk != NULL) {
+		pfreeany(ro_hunk);
+	}
+}
+
+void replace_ro_hunk(struct ro_hunk **hunk, struct ro_hunk *with,
+		     struct logger *logger, where_t where)
+{
+	ro_hunk_delref_where(hunk, logger, where);
+	*hunk = ro_hunk_addref_where(with, logger, where);
+}
+
+char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
 {
 	if (ptr == NULL) {
 		return NULL;
@@ -140,17 +208,17 @@ uintmax_t raw_ntoh(const void *bytes, size_t size)
 	return h;
 }
 
-bool char_isupper(char c)
+bool char_isupper(intmax_t c)
 {
 	return (c >= 'A' && c <= 'Z');
 }
 
-bool char_islower(char c)
+bool char_islower(intmax_t c)
 {
 	return (c >= 'a' && c <= 'z');
 }
 
-bool char_isspace(char c)
+bool char_isspace(intmax_t c)
 {
 	return (c == ' ' ||
 		c == '\f' ||
@@ -160,45 +228,45 @@ bool char_isspace(char c)
 		c == '\v');
 }
 
-bool char_isblank(char c)
+bool char_isblank(intmax_t c)
 {
 	return (c == ' ' ||
 		c == '\t');
 }
 
-bool char_isdigit(char c)
+bool char_isdigit(intmax_t c)
 {
 	return (c >= '0' && c <= '9');
 }
 
-bool char_isbdigit(char c)
+bool char_isbdigit(intmax_t c)
 {
 	return (c >= '0' && c <= '1');
 }
 
-bool char_isodigit(char c)
+bool char_isodigit(intmax_t c)
 {
 	return (c >= '0' && c <= '7');
 }
 
-bool char_isxdigit(char c)
+bool char_isxdigit(intmax_t c)
 {
 	return ((c >= '0' && c <= '9') ||
 		(c >= 'a' && c <= 'f') ||
 		(c >= 'A' && c <= 'F'));
 }
 
-bool char_isprint(char c)
+bool char_isprint(intmax_t c)
 {
 	return (c >= 0x20 && c <= 0x7e);
 }
 
-char char_tolower(char c)
+char char_tolower(intmax_t c)
 {
 	return char_isupper(c) ? c - 'A' + 'a' : c;
 }
 
-char char_toupper(char c)
+char char_toupper(intmax_t c)
 {
 	return char_islower(c) ? c - 'a' + 'A' : c;
 }
@@ -229,4 +297,42 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat_ptr, size_t ea
 		return false;
 	}
 	return true;
+}
+
+char raw_char(const void *ptr, size_t len, long index)
+{
+	const char *p = ptr;
+
+	if (index < 0) {
+		index += len;
+	}
+
+	if (index >= (ssize_t)len) {
+		return '\0';
+	}
+
+	if (index >= 0) {
+		return p[index];
+	}
+
+	return '\0';
+}
+
+int raw_byte(const void *ptr, size_t len, long index)
+{
+	const uint8_t *p = ptr;
+
+	if (index < 0) {
+		index += len;
+	}
+
+	if (index >= (ssize_t)len) {
+		return -1;
+	}
+
+	if (index >= 0) {
+		return p[index];
+	}
+
+	return -1;
 }

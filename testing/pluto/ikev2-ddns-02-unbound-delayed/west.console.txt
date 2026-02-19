@@ -1,0 +1,68 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ cp resolv.conf /etc
+west #
+ # need to disable ipv6 and activate auto-interface
+west #
+ cp west-unbound.conf /etc/unbound/unbound.conf
+west #
+ # will throw an error about bad unresolvable name
+west #
+ echo "initdone"
+initdone
+west #
+ sleep 5
+west #
+ ipsec status |grep "===" # should show %dns for pending resolving
+"named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+west #
+ # use modified service file that skips ICANN root key checks
+west #
+ unbound-control-setup > /dev/null 2>&1
+west #
+ cat /lib/systemd/system/unbound.service | grep -v ExecStartPre > /etc/systemd/system/unbound.service
+west #
+ systemctl daemon-reload
+west #
+ systemctl start unbound.service
+west #
+ unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
+ok
+west #
+ dig +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ dig +dnssec +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ # trigger DDNS event (saves us from waiting)
+west #
+ ipsec whack --ddns --name named
+"named" #1: initiating IKEv2 connection to 192.1.2.23 (right.libreswan.org) using UDP
+west #
+ # give conn time to establish by itself
+west #
+ sleep 3
+west #
+ # tunnel should show up in final.sh
+west #
+ # seems to slow down/hang shutdown
+west #
+ rm /etc/resolv.conf
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+#2: "named", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ # clean up after ourselves
+west #
+ rm -f /etc/systemd/system/unbound.service
+west #

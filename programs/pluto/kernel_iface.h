@@ -18,8 +18,9 @@
 #define KERNEL_IFACE_H
 
 #include "ip_address.h"
+#include "verbose.h"
 
-struct logger;
+struct ip_info;
 
 struct kernel_iface {
 	ip_address addr;
@@ -27,8 +28,9 @@ struct kernel_iface {
 	char name[]; /* MUST BE LAST; overalloc hack */
 };
 
-extern struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger *logger);
-extern struct kernel_iface *find_kernel_ifaces4(struct logger *logger);
-extern struct kernel_iface *find_kernel_ifaces6(struct logger *logger);
+extern struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi,
+					       struct verbose verbose);
+extern struct kernel_iface *find_kernel_ifaces4(struct verbose verbose);
+extern struct kernel_iface *find_kernel_ifaces6(struct verbose verbose);
 
 #endif

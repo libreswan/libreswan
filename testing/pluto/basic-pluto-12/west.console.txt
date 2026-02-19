@@ -9,11 +9,11 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet-7
-"westnet-eastnet-7": warning: keyexchange=ikev1 ignored for never-negotiate (type=passthrough) connection
-"westnet-eastnet-7": added passthrough connection
+warning: "westnet-eastnet-7": keyexchange=ikev1 ignored for never-negotiate (type=passthrough) connection
+"westnet-eastnet-7": added oriented passthrough connection
 west #
  ipsec auto --route westnet-eastnet-7
 west #
@@ -28,7 +28,7 @@ west #
 "westnet-eastnet" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet" #2: sent Quick Mode request
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -65,6 +65,7 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -75,6 +76,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7

@@ -1,0 +1,30 @@
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+          inet addr:198.18.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:1::15/64 Scope:Global
+set #
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+          inet addr:192.0.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:0:1::15/64 Scope:Global
+set #
+ ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
+up
+set #
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # rise_sunnet
+up
+set #
+ ../../guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+set #
+ ipsec initnss
+Initializing NSS database
+set #
+ ipsec start
+Redirecting to: [initsystem]
+ * Starting ipsec ... [ ok ]
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec add rise-set
+"rise-set": added oriented IKEv2 connection
+set #

@@ -22,9 +22,9 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev1
-ipsec addconn: /etc/ipsec.conf:38: warning: obsolete keyword ignored: dpdaction=clear
-"westnet-eastnet-ikev1": added IKEv1 connection
+ ipsec add westnet-eastnet-ikev1
+ipsec add: warning: /etc/ipsec.conf:38: obsolete keyword ignored: dpdaction=clear
+"westnet-eastnet-ikev1": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -43,7 +43,7 @@ west #
 "westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
 "westnet-eastnet-ikev1" #1: received IPv4 lease 192.0.1.254, updating source IP address
 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===0.0.0.0/0}
+"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===0.0.0.0/0}
 "westnet-eastnet-ikev1" #2: sent Quick Mode request
 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 west #
@@ -56,7 +56,7 @@ west #
  # wait for a DPD; XXX: this is a debug line!
 west #
  ../../guestbin/wait-for.sh --match 'R_U_THERE_ACK, seqno received' -- cat /tmp/pluto.log | sed -e 's/received:.*/received:/'
-| DPD: R_U_THERE_ACK, seqno received:
+| "westnet-eastnet-ikev1" #1: DPD: R_U_THERE_ACK, seqno received:
 west #
  # confirm --down is processed properly too
 west #

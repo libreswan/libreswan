@@ -1,0 +1,89 @@
+<varlistentry id='conn.subnet'>
+  <term>
+    <option>leftsubnet=&ip_selector;,...</option>
+  </term>
+  <term>
+    <option>rightsubnet=&ip_selector;,...</option>
+  </term>
+  <listitem>
+    <para>
+      A comma separated list of traffic selectors behind the
+      <option>left</option> or <option>right</option> participant.
+    </para>
+    <para>
+      Each traffic selector expressed as: <systemitem
+      class="ipaddress"> <replaceable>network-prefix</replaceable> /
+      <replaceable>netmask</replaceable>/
+      <replaceable>protocol</replaceable>/
+      <replaceable>port</replaceable> </systemitem> where trailing
+      elements may be omitted.  For instance:
+      <code>leftsubnet=1.2.3.0/24,1:2::/64</code>,
+      <code>leftsubnet=1.2.3.4/32/tcp,1:2::/128/tcp</code>,
+      <code>leftsubnet=1.2.3.4/31/tcp/22,1:2::/128/tcp/22</code>.
+    </para>
+    <para>
+      If both <code>leftsubnet=</code> and <code>rightsubnet=</code>
+      are specified, all combinations will be established as a single
+      IPsec tunnel.
+    </para>
+    <para>
+      When omitted, essentially assumed to be <code>left</code>,
+      signifying that the left end of the connection goes to the left
+      participant only.
+    </para>
+
+    <note>
+      <para>
+	Support for specifying multiple selectors and the protocol and
+	port was added in &Libreswan; version 5.
+      </para>
+    </note>
+
+    <important>
+      <title>
+	IKEv1
+      </title>
+      <para>
+	In IKEv1 only a single selector is allowed and it is limited
+	to specifying a subnet as in: <code>
+	<replaceable>network</replaceable> /
+	<replaceable>netmask</replaceable> </code>
+      </para>
+    </important>
+
+    <important>
+      <title>
+	IKEv1
+      </title>
+      <para>
+	IKEv1 supports two magic shorthands <code>vhost:</code> and
+	<code>vnet:</code>, which can list subnets in the same syntax
+	as <replaceable>virtual-private</replaceable>.  The value
+	<code>%priv</code> expands to the networks specified in
+	<code>virtual-private</code>.  The value <code>%no</code>
+	means no subnet. A common use for allowing roadwarriors to
+	come in on public IPs or via accepted NATed networks from
+	RFC1918 is to use <code>leftsubnet=vhost:%no,%priv</code>. The
+	<code>vnet:</code> option can be used to allow RFC1918 subnets
+	without hardcoding them.  When using vnet the connection will
+	instantiate, allowing for multiple tunnels with different
+	subnets.
+      </para>
+    </important>
+
+    <important>
+      <title>
+	Use with <code>leftprotport</code> and
+	<code>leftsubnets</code>
+      </title>
+      <para>
+	Compatible with libreswan version 4, a simple
+	<code>leftsubnet</code> (specifying a single network prefix
+	and netmask) may be combined with <code>leftprotoport</code>
+	and <code>leftsubnets</code>.  Anything more complicated
+	should be converted to use the selector syntax.
+      </para>
+    </important>
+
+  </listitem>
+</varlistentry>

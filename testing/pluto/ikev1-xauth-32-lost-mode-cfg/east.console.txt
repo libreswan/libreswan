@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
-"east-any": added IKEv1 connection
+"east-any": added oriented IKEv1 connection
 east #
  ipsec whack --impair suppress_retransmits
 east #
@@ -27,6 +27,7 @@ src 192.1.2.23 dst 192.1.2.254
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -38,6 +39,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.2.101/32
@@ -68,6 +70,7 @@ src 192.1.2.23 dst 192.1.2.254
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -79,6 +82,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.2.101/32

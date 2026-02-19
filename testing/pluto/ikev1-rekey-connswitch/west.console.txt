@@ -25,19 +25,19 @@ west #
  ipsec whack --impair lifetime
 west #
  ipsec auto --add TUNNEL-C
-"TUNNEL-C": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-C": IMPAIR: skipping ipsec-lifetime=28800 checks
-"TUNNEL-C": added IKEv1 connection
+IMPAIR: "TUNNEL-C": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-C": skipping ipsec-lifetime=28800 checks
+"TUNNEL-C": added oriented IKEv1 connection
 west #
  ipsec auto --add TUNNEL-A
-"TUNNEL-A": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-A": IMPAIR: skipping ipsec-lifetime=28800 checks
-"TUNNEL-A": added IKEv1 connection
+IMPAIR: "TUNNEL-A": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-A": skipping ipsec-lifetime=28800 checks
+"TUNNEL-A": added oriented IKEv1 connection
 west #
  ipsec auto --add TUNNEL-B
-"TUNNEL-B": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-B": IMPAIR: skipping ipsec-lifetime=28800 checks
-"TUNNEL-B": added IKEv1 connection
+IMPAIR: "TUNNEL-B": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-B": skipping ipsec-lifetime=28800 checks
+"TUNNEL-B": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -127,14 +127,14 @@ west #
  ipsec auto --status | grep TUNNEL
 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; routed-tunnel; my_ip=unset; their_ip=unset;
 "TUNNEL-A":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
+"TUNNEL-A":   mycert=west; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-A":   sec_label:unset;
 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "TUNNEL-A":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "TUNNEL-A":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -150,14 +150,14 @@ west #
 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 "TUNNEL-B": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset;
-"TUNNEL-B":   mycert=west; my_updown=ipsec _updown;
+"TUNNEL-B":   mycert=west; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-B":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-B":   sec_label:unset;
 "TUNNEL-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "TUNNEL-B":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "TUNNEL-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "TUNNEL-B":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -172,14 +172,14 @@ west #
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
-"TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
+"TUNNEL-C":   mycert=west; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-C":   sec_label:unset;
 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "TUNNEL-C":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "TUNNEL-C":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -206,14 +206,14 @@ west #
  ipsec auto --status | grep TUNNEL
 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset;
-"TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
+"TUNNEL-A":   mycert=west; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-A":   sec_label:unset;
 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "TUNNEL-A":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "TUNNEL-A":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -229,14 +229,14 @@ west #
 "TUNNEL-A":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
-"TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
+"TUNNEL-C":   mycert=west; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-C":   sec_label:unset;
 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "TUNNEL-C":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "TUNNEL-C":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -273,6 +273,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -283,6 +284,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -293,6 +295,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -303,6 +306,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 XFRM policy:
 src 192.0.1.254/32 dst 192.0.2.234/32
 	dir out priority PRIORITY ptype main

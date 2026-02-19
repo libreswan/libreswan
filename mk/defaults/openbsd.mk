@@ -5,9 +5,6 @@ PKG_BASE ?= /usr/local
 # See: https://github.com/llvm/llvm-project/issues/55963
 # See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=264288
 # See: https://github.com/libreswan/libreswan/issues/735
-# OpenBSD seems to call GCC egcc
-#CC=egcc
-CC=clang-18
 
 WARNING_CFLAGS += -Wself-assign
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
@@ -31,7 +28,6 @@ USE_LIBCAP_NG = false
 USE_PTHREAD_SETSCHEDPRIO = false
 USE_AUTHPAM = false
 
-USE_DNSSEC = true
 DEFAULT_DNSSEC_ROOTKEY_FILE = /var/unbound/db/root.key
 
 INITSYSTEM=rc.d

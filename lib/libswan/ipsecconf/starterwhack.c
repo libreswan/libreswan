@@ -25,337 +25,68 @@
  * for more details.
  */
 
-#include <sys/types.h>
-#include <sys/un.h>
-#include <stddef.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-
-#include "lsw_socket.h"
-
-#include "ttodata.h"
 
 #include "ipsecconf/starterwhack.h"
+#include "whack.h"
 #include "ipsecconf/confread.h"
 
-#include "lswalloc.h"
-#include "lswlog.h"
-#include "whack.h"
-#include "id.h"
-#include "ip_address.h"
-#include "ip_info.h"
-#include "lswlog.h"
-
 static bool set_whack_end(struct whack_end *w,
-			  const struct starter_end *l,
-			  struct logger *logger)
+			  const struct starter_end *l)
 {
 	const char *lr = l->leftright;
 	w->leftright = lr;
 
-	/*
-	 * Deal with ADDCONN's legacy ID syntax where, instead of
-	 * "\,", ",," was used to escape commas!
-	 *
-	 * Don't move to pluto, so that when ADDCONN dies, this hack
-	 * goes with it.
-	 */
-
-	if (l->values[KWS_ID].string != NULL) {
-		char *value = l->values[KWS_ID].string;
-		/*
-		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
-		 * backslash comma.
-		 */
-		if (value[0] != '@' &&
-		    strstr(value, ",,") != NULL &&
-		    strstr(value, "=") != NULL) {
-			llog(RC_LOG, logger,
-			     "changing legacy ',,' to '\\,' in %sid=%s",
-			     lr, value);
-			char *cc;
-			while ((cc = strstr(value, ",,")) != NULL) {
-				cc[0] = '\\';
-			}
-		}
-		w->id = value;
+	for (enum config_conn_keyword kw = 1; kw < CONFIG_CONN_KEYWORD_ROOF; kw++) {
+		w->conn->value[kw] = l->values[kw].string;
 	}
 
-	w->host = l->values[KWS_HOST].string;
-	w->nexthop = l->values[KWS_NEXTHOP].string;
-	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
-	w->vti = l->values[KWS_VTI].string; /* could be NULL */
-	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
-
-	/*
-	 * Deal with legacy subnet=vhost:... and subnet=vnet:....
-	 * (although there's no alternative).
-	 *
-	 * Can't simply send {vhost,vnet}:... to pluto in .subnet
-	 * without a lot of work here and the extract code is the
-	 * subnets= expansion and that expects subnet= to be empty.
-	 */
-
-	const char *subnet = l->values[KWS_SUBNET].string;
-	if (subnet != NULL) {
-		if (startswith(subnet, "vhost:") ||
-		    startswith(subnet, "vnet:")) {
-			w->virt = subnet;
-		} else {
-			w->subnet = subnet;
-		}
-	}
-
-	w->subnets = l->values[KSCF_SUBNETS].string;
-	w->ikeport = l->values[KWS_IKEPORT].string;
-	w->protoport = l->values[KWS_PROTOPORT].string;
-	w->cert = l->values[KWS_CERT].string;
-	w->ckaid = l->values[KWS_CKAID].string;
-
-	/*
-	 * Map one of rsasigkey=, ecdsa=, or pubkey=, onto .pubkey +
-	 * .pubkey_alg.
-	 */
-
-	static const struct key {
-		enum ipseckey_algorithm_type alg;
-		enum config_conn_keyword kws;
-		const char *name;
-	} keys[] = {
-		{ IPSECKEY_ALGORITHM_RSA, KWS_RSASIGKEY, "rsasigkey", },
-		{ IPSECKEY_ALGORITHM_ECDSA, KWS_ECDSAKEY, "ecdsakey", },
-		{ IPSECKEY_ALGORITHM_X_PUBKEY, KWS_PUBKEY, "pubkey", },
-	};
-	const struct key *found_key = NULL;
-	FOR_EACH_ELEMENT(key, keys) {
-
-		/* find the first of above that is set */
-		const char *value = l->values[key->kws].string;
-		if (value == NULL) {
-			continue;
-		}
-
-		if (found_key != NULL) {
-			pexpect(w->pubkey != NULL);
-			llog(RC_LOG, logger,
-			     "duplicate key fields %s= and %s=", found_key->name, key->name);
-			return false;
-		}
-
-		found_key = key;
-		w->pubkey = value;
-		w->pubkey_alg = key->alg;
-		break;
-	}
-
-	w->ca = l->values[KWS_CA].string;
-	w->sendcert = l->values[KWS_SENDCERT].string;
-
-	w->auth = l->values[KWS_AUTH].string;
-	w->autheap = l->values[KWS_AUTHEAP].string;
-
-	w->updown = l->values[KWS_UPDOWN].string;
-
-	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
-	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
-	w->xauthusername = l->values[KWS_USERNAME].string;
-
-	w->groundhog = l->values[KWYN_GROUNDHOG].option;
-
-	w->modecfgserver = l->values[KWYN_MODECONFIGSERVER].option;
-	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
-	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
-
-	w->addresspool = l->values[KWS_ADDRESSPOOL].string;
 	return true;
-}
-
-static void conn_log_val(struct logger *logger,
-			 const struct starter_conn *conn,
-			 const char *name, const char *value)
-{
-	if (value != NULL) {
-		ldbg(logger, "conn: \"%s\" %s=%s", conn->name, name, value);
-	}
 }
 
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
-			   struct logger *logger)
+			   struct logger *logger,
+			   bool dry_run,
+			   enum yn_options async,
+			   enum whack_noise noise)
 {
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_ADD,
-		.name = conn->name,
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
 
-	msg.hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
-	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
-	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
-	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
-	msg.rekeymargin = conn->values[KNCF_REKEYMARGIN].deltatime;
-	msg.ipsec_max_bytes = conn->values[KWS_IPSEC_MAX_BYTES].string;
-	msg.ipsec_max_packets = conn->values[KWS_IPSEC_MAX_PACKETS].string;
-	msg.rekeyfuzz = conn->values[KWS_REKEYFUZZ].string;
-	msg.replay_window = conn->values[KWS_REPLAY_WINDOW].string;
-	msg.ipsec_interface = conn->values[KWS_IPSEC_INTERFACE].string;
+	msg.whack_command = WHACK_ADD;
+	msg.name = conn->name;
+	msg.whack_async = (async == YN_YES);
 
-	msg.retransmit_interval = conn->values[KWS_RETRANSMIT_INTERVAL].string;
-	msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
+	for (enum config_conn_keyword kw = 1; kw < CONFIG_CONN_KEYWORD_ROOF; kw++) {
+		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
+	}
 
-	msg.keyexchange = conn->values[KWS_KEYEXCHANGE].string;
-	msg.ikev2 = conn->values[KWS_IKEv2].string;
-	msg.pfs = conn->values[KWYN_PFS].option;
-	msg.compress = conn->values[KWYN_COMPRESS].option;
-	msg.type = conn->values[KNCF_TYPE].option;
-	msg.authby = conn->values[KWS_AUTHBY].string;
-
-	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
-	msg.negotiation_shunt = conn->negotiation_shunt;
-	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->values[KNCF_AUTO].option;
 
-	msg.connalias = conn->values[KSCF_CONNALIAS].string;
-
-	msg.metric = conn->values[KNCF_METRIC].option;
-
-	msg.narrowing = conn->values[KWYN_NARROWING].option;
-	msg.rekey = conn->values[KWYN_REKEY].option;
-	msg.reauth = conn->values[KWYN_REAUTH].option;
-
-	msg.mtu = conn->values[KWS_MTU].string;
-	msg.priority = conn->values[KWS_PRIORITY].string;
-	msg.tfc = conn->values[KWS_TFC].string;
-	msg.send_esp_tfc_padding_not_supported =
-		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
-	msg.nflog_group = conn->values[KWS_NFLOG_GROUP].string;
-	msg.reqid = conn->values[KWS_REQID].string;
-
-	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
-		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
+	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
+		return -1;
+	}
+	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END])) {
+		return -1;
 	}
 
-	if (conn->values[KNCF_ENABLE_TCP].set) {
-		msg.enable_tcp = conn->values[KNCF_ENABLE_TCP].option;
+	if (dry_run) {
+		enum autostart autostart = conn->values[KNCF_AUTO].option;
+		printf("ipsec add");
+		if (autostart != 0) {
+			name_buf asb;
+			printf(" --auto=%s",
+			       str_sparse_short(&autostart_names, autostart, &asb));
+		}
+		printf(" %s\n", conn->name);
+		return 0;
 	}
 
-	/* default to HOLD */
-	msg.dpddelay = conn->values[KWS_DPDDELAY].string;
-	msg.dpdtimeout = conn->values[KWS_DPDTIMEOUT].string;
-
-	msg.sendca = conn->values[KWS_SENDCA].string;
-
-	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
-
-	msg.nat_keepalive = conn->values[KWYN_NAT_KEEPALIVE].option;
-
-	/* can be 0 aka unset */
-	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
-
-	/* Activate sending out own vendorid */
-	msg.send_vendorid = conn->values[KWYN_SEND_VENDORID].option;
-
-	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	msg.initial_contact = conn->values[KWYN_INITIAL_CONTACT].option;
-
-	msg.fake_strongswan = conn->values[KWYN_FAKE_STRONGSWAN].option;
-
-	/*
-	 * Cisco (UNITY).
-	 */
-	msg.remote_peer_type = conn->values[KWS_REMOTE_PEER_TYPE].string;
-	msg.cisco_unity = conn->values[KWS_CISCO_UNITY].string;
-	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;
-	msg.cisco_split = conn->values[KWS_CISCO_SPLIT].string;
-
-	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
-	msg.debug = conn->values[KWS_DEBUG].string;
-
-	msg.modecfgdns = conn->values[KWS_MODECFGDNS].string;
-	msg.modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
-	msg.modecfgbanner = conn->values[KWS_MODECFGBANNER].string;
-
-	msg.mark = conn->values[KWS_MARK].string;
-	msg.mark_in = conn->values[KWS_MARK_IN].string;
-	msg.mark_out = conn->values[KWS_MARK_OUT].string;
-
-	msg.vti_interface = conn->values[KWS_VTI_INTERFACE].string;
-	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
-	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
-	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
-
-	msg.ppk_ids = conn->values[KWS_PPK_IDS].string;
-
-	msg.redirect_to = conn->values[KWS_REDIRECT_TO].string;
-	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);
-	msg.accept_redirect_to = conn->values[KWS_ACCEPT_REDIRECT_TO].string;
-	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
-	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
-
-	msg.session_resumption = conn->values[KWYN_SESSION_RESUMPTION].option;
-
-	msg.mobike = conn->values[KWYN_MOBIKE].option; /*yn_options*/
-	msg.intermediate = conn->values[KWYN_INTERMEDIATE].option; /*yn_options*/
-	msg.sha2_truncbug = conn->values[KWYN_SHA2_TRUNCBUG].option; /*yn_options*/
-	msg.share_lease = conn->values[KWYN_SHARE_LEASE].option; /*yn_options*/
-	msg.overlapip = conn->values[KWYN_OVERLAPIP].option; /*yn_options*/
-	msg.ms_dh_downgrade = conn->values[KWYN_MS_DH_DOWNGRADE].option; /*yn_options*/
-	msg.pfs_rekey_workaround = conn->values[KWYN_PFS_REKEY_WORKAROUND].option;
-	msg.dns_match_id = conn->values[KWYN_DNS_MATCH_ID].option; /* yn_options */
-	msg.pam_authorize = conn->values[KWYN_PAM_AUTHORIZE].option; /* yn_options */
-	msg.ignore_peer_dns = conn->values[KWYN_IGNORE_PEER_DNS].option; /* yn_options */
-	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yna_options */
-	msg.require_id_on_certificate = conn->values[KWYN_REQUIRE_ID_ON_CERTIFICATE].option; /* yn_options */
-	msg.modecfgpull = conn->values[KWYN_MODECFGPULL].option; /* yn_options */
-	msg.aggressive = conn->values[KWYN_AGGRESSIVE].option; /* yn_options */
-
-	msg.iptfs = conn->values[KWYN_IPTFS].option; /* yn_options */
-	msg.iptfs_fragmentation = conn->values[KWYN_IPTFS_FRAGMENTATION].option; /* yn_options */
-	msg.iptfs_packet_size = conn->values[KWS_IPTFS_PACKET_SIZE].string;
-	msg.iptfs_max_queue_size = conn->values[KWS_IPTFS_MAX_QUEUE_SIZE].string;
-	msg.iptfs_reorder_window = conn->values[KWS_IPTFS_REORDER_WINDOW].string;
-	msg.iptfs_init_delay = conn->values[KNCF_IPTFS_INIT_DELAY].deltatime;
-	msg.iptfs_drop_time = conn->values[KNCF_IPTFS_DROP_TIME].deltatime;
-
-	msg.decap_dscp = conn->values[KWYN_DECAP_DSCP].option; /* yn_options */
-	msg.encap_dscp = conn->values[KWYN_ENCAP_DSCP].option; /* yn_options */
-	msg.nopmtudisc = conn->values[KWYN_NOPMTUDISC].option; /* yn_options */
-	msg.accept_redirect = conn->values[KWYN_ACCEPT_REDIRECT].option; /* yn_options */
-	msg.fragmentation = conn->values[KNCF_FRAGMENTATION].option; /* yna_options */
-	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */
-	msg.ppk = conn->values[KNCF_PPK].option; /* nppi_options */
-
-	if (conn->values[KNCF_XAUTHBY].set)
-		msg.xauthby = conn->values[KNCF_XAUTHBY].option;
-	if (conn->values[KNCF_XAUTHFAIL].set)
-		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
-
-	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END], logger))
-		return -1;
-	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
-		return -1;
-
-	msg.ike = conn->values[KWS_IKE].string;
-
-	msg.esp = conn->values[KWS_ESP].string;
-	msg.ah = conn->values[KWS_AH].string;
-	msg.phase2 = conn->values[KNCF_PHASE2].option;
-	msg.phase2alg = conn->values[KWS_PHASE2ALG].string;
-
-	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
+	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);
 	if (r != 0)
 		return r;
 
 	return 0;
-}
-
-int starter_whack_listen(const char *ctlsocket, struct logger *logger)
-{
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_LISTEN,
-	};
-	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }

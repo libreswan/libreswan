@@ -1,0 +1,1 @@
+responder to omit the Child SA response in IKE_AUTH

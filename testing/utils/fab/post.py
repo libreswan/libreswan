@@ -19,6 +19,9 @@ import difflib
 import weakref
 import gzip
 import bz2
+from pathlib import Path
+
+from fab.datautil import *
 
 from fab import logutil
 from fab import jsonutil
@@ -71,6 +74,7 @@ class Issues:
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
     LEAK = "LEAK"
+    REFCNT = "REFCNT"
 
     TIMEOUT = "TIMEOUT"
     EOF = "EOF"
@@ -161,7 +165,7 @@ def _diff(logger, ln, l, rn, r):
         logger.debug("_diff '%s' and '%s' fast match", ln, rn)
         return []
     # compare
-    diff = list(difflib.diff_bytes(difflib.unified_diff,
+    diff = List(difflib.diff_bytes(difflib.unified_diff,
                                    l.splitlines(), r.splitlines(),
                                    fromfile=ln.encode(), tofile=rn.encode(),
                                    lineterm=rb""))
@@ -175,9 +179,9 @@ def _diff(logger, ln, l, rn, r):
 def _sanitize_output(logger, raw_path, test):
     # Run the sanitizer found next to the test_sanitize_directory.
     command = [
-        test.testing_directory("utils", "sanitizer.sh"),
+        test.testingdir.joinpath("utils", "sanitizer.sh"),
         raw_path,
-        test.testing_directory("pluto", test.name)
+        test.testingdir.joinpath("pluto", test.name)
     ]
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to have "sanitize.sh" read the file on disk
@@ -283,8 +287,7 @@ class TestResult:
         sanitize = []
         for guest in test.guests:
             sanitize.append(guest.host.name)
-        if os.path.exists(os.path.join(test.directory, "all.sh")) \
-        or os.path.exists(os.path.join(test.directory, "all.console.txt")):
+        if os.path.exists(os.path.join(test.directory, "all.console.txt")):
             sanitize.append("all")
 
         # Check the raw console output for problems and that it
@@ -333,6 +336,9 @@ class TestResult:
                 self.resolution.failed()
             if self._grub(raw_output_filename, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
+            if self._grub(raw_output_filename, r"FAIL: reference counts"):
+                self.issues.add(Issues.REFCNT, guest.host.name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.
@@ -417,8 +423,8 @@ class TestResult:
                 self.issues.add(Issues.KERNEL, host_name)
                 self.resolution.failed()
 
-            expected_output_path = test.testing_directory("pluto", test.name,
-                                                          host_name + ".console.txt")
+            expected_output_path = test.testingdir.joinpath("pluto", test.name,
+                                                            host_name + ".console.txt")
             self.logger.debug("comparing %s against known-good output '%s'",
                               sanitized_filename, expected_output_path)
 
@@ -516,7 +522,7 @@ class TestResult:
             self.logger.debug("loading contents of '%s'", path)
             self._file_contents_cache[path] = None
             for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
-                zippath = path + suffix
+                zippath = Path(path).joinpath(suffix)
                 if os.path.isfile(zippath):
                     self.logger.debug("loading '%s' into cache", zippath)
                     with open_op(path, "rb") as f:

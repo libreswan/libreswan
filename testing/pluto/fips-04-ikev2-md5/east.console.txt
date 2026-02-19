@@ -9,7 +9,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-md5
-"westnet-eastnet-md5": failed to add connection: IKE PRF algorithm 'md5' is not supported
+"westnet-eastnet-md5": failed to add connection: IKE Pseudorandom Function (KDF) 'md5' is not supported
 east #
  echo "initdone"
 initdone

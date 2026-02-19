@@ -24,7 +24,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-all
-"westnet-all": added IKEv1 connection
+"westnet-all": added oriented IKEv1 connection
 west #
  ../../guestbin/ip.sh route list
 default via 192.1.2.254 dev eth1 proto static
@@ -38,18 +38,18 @@ default via 192.1.2.254 dev eth1 proto static
 192.168.1.16/28 via 192.1.2.45 dev eth1
 west #
  for i in `seq 1 12`; do ipsec auto --add orient$i; done
-"orient1": added IKEv1 connection
-"orient2": added IKEv1 connection
-"orient3": added IKEv1 connection
-"orient4": added IKEv1 connection
-"orient5": added IKEv1 connection
-"orient6": added IKEv1 connection
-"orient7": added IKEv1 connection
-"orient8": added IKEv1 connection
-"orient9": added IKEv1 connection
-"orient10": added IKEv1 connection
-"orient11": added IKEv1 connection
-"orient12": added IKEv1 connection
+"orient1": added oriented IKEv1 connection
+"orient2": added oriented IKEv1 connection
+"orient3": added oriented IKEv1 connection
+"orient4": added oriented IKEv1 connection
+"orient5": added oriented IKEv1 connection
+"orient6": added oriented IKEv1 connection
+"orient7": added oriented IKEv1 connection
+"orient8": added oriented IKEv1 connection
+"orient9": added oriented IKEv1 connection
+"orient10": added oriented IKEv1 connection
+"orient11": added oriented IKEv1 connection
+"orient12": added oriented IKEv1 connection
 west #
  ipsec auto --status |grep "[.][.][.]"
 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; my_ip=unset; their_ip=unset;
@@ -79,7 +79,7 @@ west #
 "westnet-all" #1: Peer ID is FQDN: '@east'
 "westnet-all" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-all" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-all" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===0.0.0.0/0}
+"westnet-all" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===0.0.0.0/0}
 "westnet-all" #2: sent Quick Mode request
 "westnet-all" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -107,18 +107,18 @@ west #
 "westnet-all" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-all" #2: ESP traffic information: in=84B out=84B
 "westnet-all" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
-"westnet-all": added IKEv1 connection
+"westnet-all": added oriented IKEv1 connection
 west #
  ipsec auto --status |grep westnet
 "westnet-all": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===0.0.0.0/0; unrouted; my_ip=unset; their_ip=unset;
 "westnet-all":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-all":   my_updown=ipsec _updown;
+"westnet-all":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-all":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-all":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-all":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-all":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-all":   sec_label:unset;
-"westnet-all":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-all":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-all":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-all":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-all":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

@@ -112,7 +112,6 @@ bool send_v2CP_request(const struct connection *const cc,
 	return send;
 }
 
-/* Misleading name, also used for NULL sized type's */
 static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 					const char *story, struct pbs_out *outpbs)
 {
@@ -122,7 +121,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		.type = type,
 	};
 
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs, &a_pbs)) {
+	if (!pbs_out_struct(outpbs, attr, &ikev2_cp_attribute_desc, &a_pbs)) {
 		return false;
 	}
 
@@ -154,9 +153,51 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		}
 	}
 
-	close_output_pbs(&a_pbs);
+	close_pbs_out(&a_pbs);
 	return true;
 }
+
+/*
+ * For IKEv4, also emits the mask when needed.
+ *
+ * IP can be unset, yet still have info!
+ */
+
+static bool emit_v2CP_attribute_cidr(const ip_cidr cidr,
+				     const char *story,
+				     struct pbs_out *outpbs)
+{
+	const struct ip_info *afi = cidr_info(cidr);
+	struct pbs_out a_pbs;
+
+	struct ikev2_cp_attribute attr = {
+		.type = afi->ikev2_internal_address,
+	};
+
+	if (!pbs_out_struct(outpbs, attr, &ikev2_cp_attribute_desc, &a_pbs)) {
+		return false;
+	}
+
+	if (cidr.ip.is_set) {
+		if (!pbs_out_address(&a_pbs, cidr_address(cidr), story)) {
+			/* already logged */
+			return false;
+		}
+
+		if (afi == &ipv6_info) {
+			uint8_t ipv6_prefix_len = cidr_prefix_len(cidr);
+			if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
+				/* already logged */
+				return false;
+			}
+		}
+	}
+
+	close_pbs_out(&a_pbs);
+	return true;
+}
+
+/* Misleading name, also used for NULL sized type's */
 
 static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 				uint16_t type, shunk_t attrib,
@@ -180,7 +221,7 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 		}
 	}
 
-	close_output_pbs(&a_pbs);
+	close_pbs_out(&a_pbs);
 	return true;
 }
 
@@ -202,14 +243,12 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		"send %s Configuration Payload",
 		str_enum_long(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
-	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+	if (!pbs_out_struct(outpbs, cp, &ikev2_cp_desc, &cp_pbs))
 		return false;
 
 	FOR_EACH_ELEMENT(lease, c->remote->child.lease) {
 		if (lease->ip.is_set) {
-			const struct ip_info *lease_afi = address_type(lease);
-			if (!emit_v2CP_attribute_address(lease_afi->ikev2_internal_address,
-							 lease, "Internal IP Address", &cp_pbs)) {
+			if (!emit_v2CP_attribute_cidr(*lease, "Internal IP Address", &cp_pbs)) {
 				return false;
 			}
 		}
@@ -234,7 +273,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	close_output_pbs(&cp_pbs);
+	close_pbs_out(&cp_pbs);
 	return true;
 }
 
@@ -251,7 +290,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		"emit %s Configuration Payload",
 		str_enum_long(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
-	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+	if (!pbs_out_struct(outpbs, cp, &ikev2_cp_desc, &cp_pbs))
 		return false;
 
 	struct connection *cc = child->sa.st_connection;
@@ -285,7 +324,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 	}
 
-	close_output_pbs(&cp_pbs);
+	close_pbs_out(&cp_pbs);
 	return true;
 }
 
@@ -299,11 +338,8 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 		return true; /*non-fatal*/
 	}
 
-	ip_address assigned_address; /* ignore */
-	diag_t d = assign_remote_lease(cc, /*xauth-username*/NULL, afi,
-				       /*preferred-address*/unset_address,
-				       &assigned_address,
-				       child->sa.logger);
+	/* XXX: should provide provide prefered address */
+	diag_t d = assign_remote_ikev2_lease(cc, afi, child->sa.logger);
 	if (d != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
 			afi->ip_name, str_diag(d));
@@ -538,7 +574,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	}
 
 	set_child_has_client(cc, local, true);
-	local->lease[afi->ip.version] = ip;
+	local->lease[afi->ip.version] = cidr_from_address(ip);
 
 	if (local->config->has_client_address_translation) {
 		address_buf ipb;
@@ -553,7 +589,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			 * side should we also check the host_srcip.
 			 */
 			address_buf ipb;
-			pdbg(child->sa.logger,
+			ldbg(child->sa.logger,
 			     "CAT: received INTERNAL_IP%s_ADDRESS that is same as this->client.addr %s. Will not add CAT rules",
 			     afi->n_name, str_address(&ip, &ipb));
 		} else {
@@ -579,7 +615,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 	struct pbs_in *attrs = &cp_pd->pbs;
 
-	pdbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
+	ldbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
@@ -611,8 +647,8 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	 */
 	FOR_EACH_ELEMENT(lease, c->local->child.lease) {
 		if (lease->ip.is_set) {
-			address_buf ab;
-			ldbg(c->logger, "zapping lease %s", str_address(lease, &ab));
+			cidr_buf ab;
+			ldbg(c->logger, "zapping lease %s", str_cidr(lease, &ab));
 			zero(lease);
 		}
 	}

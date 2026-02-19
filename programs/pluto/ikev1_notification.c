@@ -91,7 +91,7 @@ static void send_v1_notification(struct logger *logger,
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		if (monotime_cmp(monotime_add(last_v1N_PAYLOAD_MALFORMED, deltatime(1)),
+		if (monotime_cmp(monotime_add(last_v1N_PAYLOAD_MALFORMED, deltatime_from_seconds(1)),
 				 <, now))
 			return;
 		last_v1N_PAYLOAD_MALFORMED = now;
@@ -286,7 +286,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		if (monotime_cmp(monotime_add(last_v1N_PAYLOAD_MALFORMED, deltatime(1)),
+		if (monotime_cmp(monotime_add(last_v1N_PAYLOAD_MALFORMED, deltatime_from_seconds(1)),
 				 <, now))
 			return;
 		last_v1N_PAYLOAD_MALFORMED = now;
@@ -335,7 +335,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 		return;
 	}
 
-	close_output_pbs(&hdr_pbs);
+	close_pbs_out(&hdr_pbs);
 	send_pbs_out_using_md(md, "notification packet", &packet.pbs);
 }
 

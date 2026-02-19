@@ -87,7 +87,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	}
 
 	if (impair.send_no_delete) {
-		llog(RC_LOG, st->logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		llog(IMPAIR_STREAM, st->logger, "send_no_delete set - not sending Delete/Notify");
 		return;
 	}
 
@@ -139,15 +139,15 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			break;
 		}
 		case IMPAIR_EMIT_OMIT:
-			llog(RC_LOG, st->logger, "IMPAIR: omitting ISKMP delete payload");
+			llog(IMPAIR_STREAM, st->logger, "omitting ISKMP delete payload");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) ISKMP delete payload");
+			llog(IMPAIR_STREAM, st->logger, "emitting empty (i.e., no SPI) ISKMP delete payload");
 			passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
 		{
-			llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate ISKMP delete payloads");
+			llog(IMPAIR_STREAM, st->logger, "emitting duplicate ISKMP delete payloads");
 			for (unsigned nr = 0; nr < 2; nr++) {
 				struct pbs_out del_pbs;
 				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
@@ -180,15 +180,15 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 				break;
 			}
 			case IMPAIR_EMIT_OMIT:
-				llog(RC_LOG, st->logger, "IMPAIR: omitting IPsec delete payload");
+				llog(IMPAIR_STREAM, st->logger, "omitting IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_EMPTY:
 				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
-				llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) IPsec delete payload");
+				llog(IMPAIR_STREAM, st->logger, "emitting empty (i.e., no SPI) IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_DUPLICATE:
 			{
-				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate IPsec delete payloads");
+				llog(IMPAIR_STREAM, st->logger, "emitting duplicate IPsec delete payloads");
 				for (unsigned nr = 0; nr < 2; nr++) {
 					struct pbs_out del_pbs;
 					passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
@@ -202,7 +202,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			if (impair.ikev1_del_with_notify) {
 				struct pbs_out cruft_pbs;
 
-				llog(RC_LOG, st->logger, "IMPAIR: adding bogus Notify payload after IKE Delete payload");
+				llog(IMPAIR_STREAM, st->logger, "adding bogus Notify payload after ISAKMP Delete payload");
 				struct isakmp_notification isan = {
 					.isan_doi = ISAKMP_DOI_IPSEC,
 					.isan_protoid = PROTO_ISAKMP,
@@ -224,8 +224,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	 * We use the Phase 1 State.  This is the one with right IV,
 	 * for one thing.
 	 */
-	struct crypt_mac iv = new_phase2_iv(ike, msgid,
-					    "IKE sending delete", HERE);
+	struct crypt_mac iv = new_phase2_iv(ike, msgid, "ISAKMP sending delete", HERE);
 	passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &iv));
 
 	send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
@@ -277,10 +276,11 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 						  child->sa.st_connection)) {
 			continue;
 		}
-		const struct ipsec_proto_info *pr =
-			(protoid == PROTO_IPSEC_AH ? &child->sa.st_ah :
-			 &child->sa.st_esp);
-		if (pr->protocol == NULL) {
+		const struct ipsec_proto_info *pr = outer_ipsec_proto_info(child);
+		if (pr == NULL) {
+			continue;
+		}
+		if (pr->protocol->ikev1_protocol_id != protoid) {
 			continue;
 		}
 		if (pr->outbound.spi == spi) {
@@ -410,8 +410,8 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			     (self_inflicted ? "self-" : ""),
 			     pri_so(dst->sa.st_serialno));
 			if (dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
-				nat_traversal_change_port_lookup(md, &dst->sa);
-				v1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
+				ikev1_nat_change_port_lookup(md, &dst->sa);
+				ikev1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
 			}
 			/*
 			 * IKEv1 semantics: when an ISAKMP is deleted
@@ -455,21 +455,21 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			passert(&(*ike)->sa != &p2d->sa);	/* st is an IKE SA */
 			if (bogus) {
 				name_buf b;
-				llog(RC_LOG, (*ike)->sa.logger,
-				     "warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
+				llog(WARNING_STREAM, (*ike)->sa.logger,
+				     "Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
 				     str_enum_long(&ikev1_protocol_names, d->isad_protoid, &b),
 				     pri_ipsec_spi(spi));
 			}
 
 			if (p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
-				nat_traversal_change_port_lookup(md, &p2d->sa);
-				v1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
+				ikev1_nat_change_port_lookup(md, &p2d->sa);
+				ikev1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
 			}
 
 			llog_sa(RC_LOG, p2d,
 				"received Delete SA payload via "PRI_SO,
 				pri_so((*ike)->sa.st_serialno));
-			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
+			p2d->sa.st_replace_margin = deltatime_from_seconds(0); /*NEEDED?*/
 			connection_teardown_child(&p2d, REASON_DELETED, HERE);
 
 		}

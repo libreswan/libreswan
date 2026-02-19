@@ -21,7 +21,6 @@ MANPROGPREFIX=
 PROGRAM_MANPAGE = # suppress default
 
 MANPAGES += ipsec.8
-MANPAGES += ipsec-add.8
 MANPAGES += ipsec-briefconnectionstatus.8
 MANPAGES += ipsec-briefstatus.8
 MANPAGES += ipsec-certutil.8
@@ -44,7 +43,6 @@ MANPAGES += ipsec-listcrls.8
 MANPAGES += ipsec-listen.8
 MANPAGES += ipsec-listpubkeys.8
 MANPAGES += ipsec-modutil.8
-MANPAGES += ipsec-ondemand.8
 MANPAGES += ipsec-pk12util.8
 MANPAGES += ipsec-purgeocsp.8
 MANPAGES += ipsec-redirect.8

@@ -20,6 +20,7 @@
 
 #include "whack.h"
 #include "lswlog.h"
+#include "ipsecconf/keywords.h"
 
 /*
  * Pack and unpack bytes
@@ -32,11 +33,29 @@ static bool pack_bytes(struct whackpacker *wp,
 {
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
-		llog(RC_LOG, logger, "buffer overflow for '%s', space for %zu bytes but need %zu",
-		     what, space, nr_bytes);
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s'in %s(), space for %zu bytes but need %zu",
+		     what, __func__, space, nr_bytes);
 		return false; /* would overflow buffer */
 	}
 	memcpy(wp->str_next, bytes, nr_bytes);
+	wp->str_next += nr_bytes;
+	return true;
+}
+
+static bool unpack_bytes(struct whackpacker *wp,
+			 void *bytes, size_t nr_bytes,
+			 const char *what,
+			 struct logger *logger)
+{
+	size_t space = wp->str_roof - wp->str_next;
+	if (space < nr_bytes) {
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s' in %s(), space for %zu bytes but need %zu",
+		     what, __func__, space, nr_bytes);
+		return false; /* would overflow buffer */
+	}
+	memcpy(bytes, wp->str_next, nr_bytes);
 	wp->str_next += nr_bytes;
 	return true;
 }
@@ -61,12 +80,42 @@ static bool unpack_raw(struct whackpacker *wp,
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
 		/* overflow */
-		llog(RC_LOG, logger, "buffer overflow for '%s'; have %zu bytes but expecting %zu",
-		     what, space, nr_bytes);
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s' in %s(), have %zu bytes but expecting %zu",
+		     what, __func__, space, nr_bytes);
 		return false;
 	}
 	(*bytes) = wp->str_next;
 	wp->str_next += nr_bytes;
+	return true;
+}
+
+static bool pack_str(struct whackpacker *wp,
+		     const char *string,
+		     const char *what,
+		     struct logger *logger)
+{
+	PASSERT(logger, string != NULL);
+	if (!pack_bytes(wp, string, strlen(string)+1, what, logger)) {
+		/* already logged */
+		return false;
+	}
+	return true;
+}
+
+static bool unpack_str(struct whackpacker *wp,
+		       const char **string,
+		       const char *what,
+		       struct logger *logger)
+{
+	void *value = wp->str_next;
+	void *nul = memchr(value, '\0', wp->str_roof - wp->str_next);
+	if (nul == NULL) {
+		llog(RC_LOG, logger, "%s is missing NUL", what);
+		return false;
+	}
+	*string = value;
+	wp->str_next = nul + 1;
 	return true;
 }
 
@@ -249,8 +298,90 @@ static bool unpack_constant_string(struct whackpacker *wp UNUSED,
 }
 
 /*
+ * Connections
+ */
+
+struct conn_pack {
+	enum end end:8;
+	enum config_conn_keyword key;
+};
+
+static bool pack_conn(struct whackpacker *wp,
+		      struct logger *logger)
+{
+	struct conn_pack conn = {0};
+	/* XXX: END_ROOF is used for non-end specific options */
+	for (conn.end = 0; conn.end <= END_ROOF; conn.end++) {
+		for (conn.key = 1; conn.key < CONFIG_CONN_KEYWORD_ROOF; conn.key++) {
+			const char *value = wp->msg->conn[conn.end].value[conn.key];
+			if (value == NULL) {
+				continue;
+			}
+			if (!pack_bytes(wp, &conn, sizeof(conn),
+					(conn.end == LEFT_END ? "left" :
+					 conn.end == RIGHT_END ? "right" :
+					 "conn"),
+					logger)) {
+				return false;
+			}
+			if (!pack_str(wp, value, "end.key.value", logger)) {
+				return false;
+			}
+		}
+		if (conn.end < elemsof(wp->msg->end)) {
+			wp->msg->end[conn.end].conn = NULL; /* don't send ptr over wire */
+		}
+	}
+	/* trailing 0.0 */
+	zero(&conn);
+	if (!pack_bytes(wp, &conn, sizeof(conn),
+			"sentinel", logger)) {
+		return false;
+	}
+	return true;
+}
+
+static bool unpack_conn(struct whackpacker *wp,
+			struct logger *logger)
+{
+	while (wp->str_next < wp->str_roof) {
+
+		struct conn_pack conn = {0};
+		if (!unpack_bytes(wp, &conn, sizeof(conn), "conn", logger)) {
+			return false;
+		}
+
+		if (conn.end == 0 && conn.key == 0) {
+			return true;
+		}
+
+		if (conn.end > END_ROOF) {
+			/* remember END_ROOF is used for
+			 * global options */
+			llog(ERROR_STREAM, logger, "end overflow");
+			return false;
+		}
+
+		if (conn.key >= CONFIG_CONN_KEYWORD_ROOF) {
+			llog(ERROR_STREAM, logger, "key overflow");
+			return false;
+		}
+
+		const char *value = NULL;
+		if (!unpack_str(wp, &value, "value", logger)) {
+			return false;
+		}
+
+		wp->msg->conn[conn.end].value[conn.key] = value;
+	}
+
+	return true;
+}
+
+/*
  * in and out/
  */
+
 struct pickler {
 	bool (*string)(struct whackpacker *wp, const char **p, const char *what, struct logger *logger);
 	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what, struct logger *logger);
@@ -258,6 +389,7 @@ struct pickler {
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what, struct logger *logger);
 	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what, struct logger *logger);
 	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what, struct logger *logger);
+	bool (*conn)(struct whackpacker *wp, struct logger *logger);
 };
 
 const struct pickler pickle_packer = {
@@ -267,6 +399,7 @@ const struct pickler pickle_packer = {
 	.raw = pack_raw,
 	.ip_protocol = pack_ip_protocol,
 	.constant_string = pack_constant_string,
+	.conn = pack_conn,
 };
 
 const struct pickler pickle_unpacker = {
@@ -276,6 +409,7 @@ const struct pickler pickle_unpacker = {
 	.raw = unpack_raw,
 	.ip_protocol = unpack_ip_protocol,
 	.constant_string = unpack_constant_string,
+	.conn = unpack_conn,
 };
 
 #define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD, logger)
@@ -291,30 +425,16 @@ static bool pickle_whack_end(struct whackpacker *wp,
 			     struct logger *logger)
 {
 	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
-		PICKLE_STRING(&end->id) &&
-		PICKLE_STRING(&end->cert) &&
-		PICKLE_STRING(&end->pubkey) &&
-		PICKLE_STRING(&end->ckaid) &&
-		PICKLE_STRING(&end->ca) &&
-		PICKLE_STRING(&end->groups) &&
-		PICKLE_STRING(&end->updown) &&
-		PICKLE_STRING(&end->virt) &&
-		PICKLE_STRING(&end->xauthusername) &&
-		PICKLE_STRING(&end->host) &&
-		PICKLE_STRING(&end->nexthop) &&
-		PICKLE_STRING(&end->interface_ip) &&
-		PICKLE_STRING(&end->vti) &&
-		PICKLE_STRING(&end->addresspool) &&
-		PICKLE_STRING(&end->ikeport) &&
-		PICKLE_STRING(&end->subnet) &&
-		PICKLE_STRING(&end->subnets) &&
-		PICKLE_STRING(&end->sourceip) &&
-		PICKLE_STRING(&end->sendcert) &&
-		PICKLE_STRING(&end->protoport) &&
-		PICKLE_STRING(&end->autheap) &&
-		PICKLE_STRING(&end->auth) &&
 		true);
 }
+
+#define PICKLE_COMMAND_THINGS(COMMAND, THINGS, NR)			\
+	(wm->whack_command == COMMAND ? PICKLE_THINGS(THINGS, NR) : true)
+#define PICKLE_COMMAND_STRING(COMMAND, FIELD)				\
+	(wm->whack_command == COMMAND ? PICKLE_STRING(FIELD) : true)
+#define PICKLE_COMMAND_PUBKEY(COMMAND, PUBKEY)			\
+	(PICKLE_COMMAND_STRING(COMMAND, &(PUBKEY)->id) &&	\
+	 PICKLE_COMMAND_STRING(COMMAND, &(PUBKEY)->key))
 
 static bool pickle_whack_message(struct whackpacker *wp,
 				 const struct pickler *pickle,
@@ -324,53 +444,14 @@ static bool pickle_whack_message(struct whackpacker *wp,
 	return (PICKLE_STRING(&wm->name) && /* first */
 		pickle_whack_end(wp, "left", &wm->end[LEFT_END], pickle, logger) &&
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wm->ike) &&
-		PICKLE_STRING(&wm->esp) &&
-		PICKLE_STRING(&wm->ah) &&
-		PICKLE_STRING(&wm->phase2alg) &&
-		PICKLE_STRING(&wm->connalias) &&
-		PICKLE_STRING(&wm->modecfgdns) &&
-		PICKLE_STRING(&wm->modecfgdomains) &&
-		PICKLE_STRING(&wm->modecfgbanner) &&
-		PICKLE_STRING(&wm->mark) &&
-		PICKLE_STRING(&wm->mark_in) &&
-		PICKLE_STRING(&wm->mark_out) &&
-		PICKLE_STRING(&wm->vti_interface) &&
-		PICKLE_STRING(&wm->ipsec_interface) &&
-		PICKLE_STRING(&wm->remote_host) &&
-		PICKLE_STRING(&wm->ppk_ids) &&
-		PICKLE_STRING(&wm->redirect_to) &&
-		PICKLE_STRING(&wm->accept_redirect_to) &&
-		PICKLE_STRING(&wm->keyid) &&
-		PICKLE_STRING(&wm->pubkey) &&
-		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
-		PICKLE_STRING(&wm->sec_label) &&
-		PICKLE_STRING(&wm->hostaddrfamily) &&
-		PICKLE_STRING(&wm->dpdtimeout) &&
-		PICKLE_STRING(&wm->dpddelay) &&
-		PICKLE_STRING(&wm->nflog_group) &&
-		PICKLE_STRING(&wm->reqid) &&
-		PICKLE_STRING(&wm->sendca) &&
-		PICKLE_STRING(&wm->remote_peer_type) &&
-		PICKLE_STRING(&wm->ipsec_max_bytes) &&
-		PICKLE_STRING(&wm->ipsec_max_packets) &&
-		PICKLE_STRING(&wm->rekeyfuzz) &&
-		PICKLE_STRING(&wm->replay_window) &&
-		PICKLE_STRING(&wm->keyexchange) &&
-		PICKLE_STRING(&wm->ikev2) &&
-		PICKLE_STRING(&wm->nm_configured) &&
-		PICKLE_STRING(&wm->cisco_unity) &&
-		PICKLE_STRING(&wm->cisco_split) &&
-		PICKLE_STRING(&wm->authby) &&
-		PICKLE_STRING(&wm->iptfs_reorder_window) &&
-		PICKLE_STRING(&wm->iptfs_packet_size) &&
-		PICKLE_STRING(&wm->iptfs_max_queue_size) &&
-		PICKLE_STRING(&wm->retransmit_interval) &&
-		PICKLE_STRING(&wm->debug) &&
-		PICKLE_STRING(&wm->mtu) &&
-		PICKLE_STRING(&wm->priority) &&
-		PICKLE_STRING(&wm->tfc) &&
-		PICKLE_STRING(&wm->whack.acquire.label) &&
+		PICKLE_COMMAND_THINGS(WHACK_IMPAIR, &wm->whack.impair.list, wm->whack.impair.len) &&
+		PICKLE_COMMAND_STRING(WHACK_INITIATE, &wm->whack.initiate.remote_host) &&
+		PICKLE_COMMAND_STRING(WHACK_ACQUIRE, &wm->whack.acquire.label) &&
+		PICKLE_COMMAND_PUBKEY(WHACK_ACQUIRE, &wm->whack.acquire.pubkey) &&
+		PICKLE_COMMAND_STRING(WHACK_GLOBAL_REDIRECT, &wm->whack.global_redirect.to) &&
+		PICKLE_COMMAND_STRING(WHACK_ACTIVE_REDIRECT, &wm->whack.active_redirect.to) &&
+		PICKLE_COMMAND_PUBKEY(WHACK_PUBKEY, &wm->whack.pubkey) &&
+		pickle->conn(wp, logger) &&
 		true);
 }
 
@@ -411,6 +492,11 @@ err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
  */
 diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
+	/* patch up conn tuple pointers before unpickling */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		wp->msg->end[end].conn = &wp->msg->conn[end];
+	}
+
 	/* sanity check message */
 	if (wp->msg->basic.magic == WHACK_BASIC_MAGIC) {
 		/* must at least contain .whack_shutdown */
@@ -452,8 +538,8 @@ diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	wp->str_next = wp->msg->string;
 	wp->str_roof = (unsigned char *)wp->msg + wp->n;
 	if (wp->str_next > wp->str_roof) {
-		return diag("ignoring truncated message from whack: got %zu bytes; expected %zu",
-			    wp->n, sizeof(wp->msg));
+		return diag("ignoring truncated message from whack: got %zu bytes; expected %tu",
+			    wp->n, wp->msg->string - (uint8_t*)wp->msg);
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {

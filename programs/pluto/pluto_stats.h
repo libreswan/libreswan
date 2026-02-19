@@ -35,6 +35,7 @@ struct pluto_stat {
 
 /* All statistics are totals since pluto daemon startup */
 
+#define OAKLEY_GROUP_PSTATS_ROOF PMAX(OAKLEY_GROUP_ROOF, IKEv2_KEM_ROOF)
 extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
@@ -94,7 +95,7 @@ extern void whack_clearstats(const struct whack_message *wm, struct show *s);
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
 		} else {						\
-			dbg("pstats %s %d", #TYPE, __pstat);		\
+			ldbg(&global_logger, "pstats %s %d", #TYPE, __pstat); \
 		}							\
 	}
 

@@ -1,0 +1,38 @@
+<varlistentry id='conn.replay-window'>
+  <term>
+    <option>replay-window=</option>
+  </term>
+  <listitem>
+    <para>
+      The size of the IPsec SA replay window protection in packets.
+      Kernels (Linux, and most BSDs) support a window size of at least
+      2040 packets.  The default replay window size is 128 packets.
+    </para>
+    <para>
+      A value of 0 disables replay protection.  Disabling of replay
+      protection is sometimes used on a pair of IPsec servers in a
+      High Availability setup, or on servers with very unpredictable
+      latency, such as mobile networks, which can cause an excessive
+      amount of out of order packets.
+    </para>
+    <para>
+      Disabling replay protection will also disable Extended Sequence
+      Numbers (esn=no), as advise from RFC 4303 caused some stacks to
+      not support ESN without a replay-window.
+    </para>
+    <para>
+      Note: on Linux, sequence errors can be seen in
+      /proc/net/xfrm_stat.
+    </para>
+    <para>
+      Note: the BSD <option>setkey</option> utility displays the
+      replay window size in bytes (8 packets per byte) and not
+      packets.
+    </para>
+    <para>
+      Technically, at least the Linux kernel can install IPsec SA's
+      with an IPsec SA Sequence Number, but this is currently not
+      supported by libreswan.
+    </para>
+  </listitem>
+</varlistentry>

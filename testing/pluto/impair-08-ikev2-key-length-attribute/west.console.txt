@@ -18,11 +18,12 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"aes128" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -40,12 +41,12 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
+IMPAIR: "aes128" #3: emitting fixed-length key-length attribute with 0 key
 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #3: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #3: retransmit so timing out SA (may retry)
 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
@@ -56,12 +57,13 @@ west #
  ipsec whack --impair child_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"aes128" #5: IMPAIR: emitting fixed-length key-length attribute with 0 key
+IMPAIR: "aes128" #5: emitting fixed-length key-length attribute with 0 key
 "aes128" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP}
+"aes128" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
 "aes128" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #6: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -75,12 +77,13 @@ west #
  ipsec whack --impair ike_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #8: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #8: IMPAIR: duplicating key-length attribute
+IMPAIR: "aes128" #8: duplicating key-length attribute
 "aes128" #8: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #8: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #8: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #9 {ESP <0xESPESP}
+"aes128" #8: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #8: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #9: initiator established Child SA using #8; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -96,12 +99,13 @@ west #
  ipsec whack --impair child_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"aes128" #10: IMPAIR: duplicating key-length attribute
+IMPAIR: "aes128" #10: duplicating key-length attribute
 "aes128" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #11 {ESP <0xESPESP}
+"aes128" #10: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #10: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
@@ -119,12 +123,12 @@ west #
  ipsec whack --impair ike_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #12: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #12: IMPAIR: omitting fixed-size key-length attribute
+IMPAIR: "aes128" #12: omitting fixed-size key-length attribute
 "aes128" #12: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #12: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #12: retransmit so timing out SA (may retry)
 "aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #12: deleting IKE SA (sent IKE_SA_INIT request)
 west #
@@ -135,12 +139,13 @@ west #
  ipsec whack --impair child_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #14: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #14: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"aes128" #14: IMPAIR: omitting fixed-size key-length attribute
+IMPAIR: "aes128" #14: omitting fixed-size key-length attribute
 "aes128" #14: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #15 {ESP <0xESPESP}
+"aes128" #14: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
 "aes128" #14: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #15: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "aes128" #15: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -156,13 +161,13 @@ west #
  ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
-"aes128" #17: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+IMPAIR: "aes128" #17: emitting variable-size key-length attribute with no key
+IMPAIR: "aes128" #17: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #17: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"aes128" #17: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #17: retransmit so timing out SA (may retry)
 "aes128" #17: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #17: deleting IKE SA (sent IKE_SA_INIT request)
 west #
@@ -175,13 +180,13 @@ west #
  ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #19: IMPAIR: emitting variable-size key-length attribute with no key
-"aes128" #19: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+IMPAIR: "aes128" #19: emitting variable-size key-length attribute with no key
+IMPAIR: "aes128" #19: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #19: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"aes128" #19: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #19: retransmit so timing out SA (may retry)
 "aes128" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #19: deleting IKE SA (sent IKE_SA_INIT request)
 west #
@@ -192,11 +197,12 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #21: initiating IKEv2 connection to 192.1.2.23 using UDP
 "3des" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "3des" #21: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #22 {ESP <0xESPESP}
+"3des" #21: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "3des" #21: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "3des" #22: initiator established Child SA using #21; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
@@ -214,12 +220,13 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #23: initiating IKEv2 connection to 192.1.2.23 using UDP
-"3des" #23: IMPAIR: emitting fixed-length key-length attribute with 0 key
+IMPAIR: "3des" #23: emitting fixed-length key-length attribute with 0 key
 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "3des" #23: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #24 {ESP <0xESPESP}
+"3des" #23: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "3des" #23: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "3des" #24: initiator established Child SA using #23; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
@@ -237,12 +244,12 @@ west #
  ipsec whack --impair ike_key_length_attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #25: initiating IKEv2 connection to 192.1.2.23 using UDP
-"3des" #25: IMPAIR: emitting fixed-length key-length attribute with 192 key
+IMPAIR: "3des" #25: emitting fixed-length key-length attribute with 192 key
 "3des" #25: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #25: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"3des" #25: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "3des" #25: retransmit so timing out SA (may retry)
 "3des" #25: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "3des" #25: deleting IKE SA (sent IKE_SA_INIT request)
 west #

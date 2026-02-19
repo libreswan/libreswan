@@ -25,7 +25,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet
-"road-eastnet": added IKEv2 connection
+"road-eastnet": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -35,6 +35,7 @@ road #
 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-eastnet"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and IPV4_ADDR '192.1.3.209'; Child SA #2 {ESP <0xESPESP}
+"road-eastnet"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(MOBIKE_SUPPORTED),IDr,AUTH,CP,SA,TSi,TSr}
 "road-eastnet"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and IPV4_ADDR '192.1.2.23'
 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 "road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.10/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -46,11 +47,13 @@ src 192.1.3.209 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.3.10/32
@@ -142,11 +145,13 @@ src 192.1.2.23 dst 192.1.33.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.33.209 dst 192.1.2.23
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 road #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.3.10/32
@@ -162,12 +167,16 @@ road #
  grep "MOBIKE " /tmp/pluto.log | sed -e '/Message ID:/ s/;.*//'
 | #1 MOBIKE new local 192.1.33.209:500 remote 192.1.2.23:500 and gateway 192.1.33.254
 | Message ID: record'n'send MOBIKE probe request
-| ft:   plausible; exchange type matches outstanding MOBIKE probe exchange
+| ft:   plausible; exchange type matches outstanding exchange INFORMATIONAL (MOBIKE probe)
+| #1.st_v2_transition ESTABLISHED_IKE_SA (IKE_AUTH MESSAGE_RESPONSE: Initiator: process IKE_AUTH response) -> ESTABLISHED_IKE_SA (INFORMATIONAL (MOBIKE probe) MESSAGE_RESPONSE: Informational Response) (v2_dispatch() +1377 programs/pluto/ikev2.c)
+| processing INFORMATIONAL (MOBIKE probe) response from 192.1.2.23:UDP/500 containing SK{N(NAT_DETECTION_SOURCE_IP),N(NAT_DETECTION_DESTINATION_IP)}
 | TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
 | TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 
+"road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
 | #2 pst=#1 MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
 "road-eastnet"[1] 192.1.2.23 #1:  success MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
-"road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
+| #1 complete_v2_state_transition() status STF_OK transitioning from state ESTABLISHED_IKE_SA to ESTABLISHED_IKE_SA (INFORMATIONAL (MOBIKE probe) MESSAGE_RESPONSE: Informational Response)
+| IKE SA in state ESTABLISHED_IKE_SA transitioning to ESTABLISHED_IKE_SA (INFORMATIONAL (MOBIKE probe) MESSAGE_RESPONSE: Informational Response)
 road #
  sleep 7
 road #

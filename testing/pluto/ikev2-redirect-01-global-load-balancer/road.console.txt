@@ -15,7 +15,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-"road-east": added IKEv2 connection
+"road-east": added oriented IKEv2 connection
 road #
  echo initdone
 initdone
@@ -31,21 +31,22 @@ road #
 "road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #1: IKE_SA_INIT response redirects to new gateway 192.1.2.45
 "road-east" #1: scheduling redirect 1 to 192.1.2.45
-"road-east" #1: IMPAIR: redirect: skip scheduling redirect event
+IMPAIR: "road-east" #1: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:1
-"road-east": IMPAIR: dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.45; delete IKE SA
+IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.45; delete IKE SA
 "road-east" #2: initiating IKEv2 connection to 192.1.2.45 using UDP
 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "road-east" #2: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-east" #2: sent IKE_AUTH request to 192.1.2.45:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #3 {ESP <0xESPESP}
+"road-east" #2: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,CERT,AUTH,CP,SA,TSi,TSr}
 "road-east" #2: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
 "road-east" #3: received INTERNAL_IP4_DNS server address 1.2.3.4
 "road-east" #3: received INTERNAL_IP4_DNS server address 5.6.7.8
-"road-east" #3: up-client output: updating resolvconf
-"road-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-east" #3: command "up" output: updating resolvconf
+"road-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -56,7 +57,7 @@ road #
  ipsec auto --delete road-east
 "road-east": terminating SAs using this connection
 "road-east" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"road-east" #3: down-client output: restoring resolvconf
+"road-east" #3: command "down" output: restoring resolvconf
 "road-east" #3: ESP traffic information: in=84B out=84B
 road #
  # road is redirected to 1 - 192.1.2.44 - which is down
@@ -66,23 +67,23 @@ road #
  ipsec whack --impair revival --impair timeout_on_retransmit
 road #
  ipsec auto --add road-east
-"road-east": added IKEv2 connection
+"road-east": added oriented IKEv2 connection
 road #
  ipsec auto --up road-east
 "road-east" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #4: IKE_SA_INIT response redirects to new gateway 192.1.2.44
 "road-east" #4: scheduling redirect 1 to 192.1.2.44
-"road-east" #4: IMPAIR: redirect: skip scheduling redirect event
+IMPAIR: "road-east" #4: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #4: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:2
-"road-east": IMPAIR: dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.44; delete IKE SA
+IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.44; delete IKE SA
 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
-"road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "road-east" #5: retransmit so timing out SA (may retry)
 "road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"road-east" #5: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "road-east" #5: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #5: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --trafficstatus

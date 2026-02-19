@@ -41,7 +41,7 @@
 #include "hunk.h"		/* for char_is_space() */
 #include "ip_cidr.h"
 #include "ttodata.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/confread.h"
@@ -166,17 +166,16 @@ static bool translate_field(struct starter_conn *conn,
 		values[field].set = assigned_value;
 		break;
 
-	case kt_appendstring:
-	case kt_appendlist:
+	case kt_appendstrings:
 		/* implicitly, this field can have multiple values */
 		if (values[field].string == NULL) {
 			values[field].string = clone_str(kw->keyval.val,
-							 "kt_appendlist kw->keyval.val");
+							 "kt_appendstrings kw->keyval.val");
 		} else {
 			char *s = values[field].string;
 			size_t old_len = strlen(s);	/* excludes '\0' */
 			size_t new_len = strlen(kw->keyval.val);
-			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
+			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendstrings");
 
 			memcpy(n, s, old_len);
 			n[old_len] = ' ';
@@ -323,35 +322,6 @@ static bool load_conn(struct starter_conn *conn,
 		return false;	/* error */
 	}
 
-	if (conn->values[KNCF_TYPE].set) {
-		switch ((enum type_options)conn->values[KNCF_TYPE].option) {
-		case KS_UNSET:
-			bad_case(KS_UNSET);
-
-		case KS_TUNNEL:
-			break;
-
-		case KS_TRANSPORT:
-			break;
-
-		case KS_PASSTHROUGH:
-			conn->never_negotiate_shunt = SHUNT_PASS;
-			break;
-
-		case KS_DROP:
-			conn->never_negotiate_shunt = SHUNT_DROP;
-			break;
-
-		case KS_REJECT:
-			llog(RC_LOG, logger, "warning: type=%%reject implemented as type=%%drop");
-			conn->never_negotiate_shunt = SHUNT_DROP;
-			break;
-		}
-	}
-
-	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
-	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
-
 	return true;
 }
 
@@ -404,122 +374,6 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-enum config_section { CONFIG_SETUP, CONFIG_CONN };
-
-static void check_config_keywords(struct logger *logger,
-				  const enum config_section section,
-				  const struct keywords_def *keywords)
-{
-	static bool checked;
-	if (checked) {
-		return;
-	}
-	checked = true;
-
-	if (LDBGP(DBG_TMI, logger)) {
-		ITEMS_FOR_EACH(k, keywords) {
-			if (k->keyname == NULL) {
-				continue;
-			}
-			unsigned i = (k - keywords->item);
-			LDBG_log(logger, "[%u] %s", i, k->keyname);
-		}
-	}
-
-	enum { NAME, ALIAS, OBSOLETE } group = NAME;
-
-	ITEMS_FOR_EACH(k, keywords) {
-
-		/*
-		 * Ignore gaps, happens when #ifdefs are at play.
-		 */
-
-		if (k->keyname == NULL) {
-			continue;
-		}
-
-		bool ok = true;
-		unsigned i = (k - keywords->item);
-
-		switch (group) {
-		case NAME:
-			if (k->validity & kv_alias) {
-				group = ALIAS;
-				break;
-			}
-			if (k->field == KNCF_OBSOLETE) {
-				group = OBSOLETE;
-				break;
-			}
-			break;
-		case ALIAS:
-			if (k->field == KNCF_OBSOLETE) {
-				group = OBSOLETE;
-				break;
-			}
-			break;
-		case OBSOLETE:
-			break;
-		}
-
-		ok &= pexpect(k->validity & kv_alias ? group == ALIAS :
-			      group == NAME || group == OBSOLETE);
-		ok &= pexpect(k->field == KNCF_OBSOLETE ? group == OBSOLETE :
-			      group == NAME || group == ALIAS);
-		ok &= pexpect(k->type == kt_obsolete ? group == OBSOLETE :
-			      group == NAME || group == ALIAS);
-
-		ok &= pexpect(group == NAME ? i == k->field : i > k->field);
-		ok &= pexpect(group == OBSOLETE ? k->sparse_names == NULL : true);
-
-		switch (section) {
-		case CONFIG_SETUP:
-			ok &= pexpect((k->field >= CONFIG_SETUP_KEYWORD_FLOOR &&
-				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
-				      k->field == KNCF_OBSOLETE);
-			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
-			break;
-		case CONFIG_CONN:
-			ok &= pexpect((k->field >= CONFIG_CONN_KEYWORD_FLOOR &&
-				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
-				      k->field == KNCF_OBSOLETE);
-			break;
-		}
-
-		/* above checked k->field in range; check things,
-		 * notably aliases, point back to a real NAME */
-		ok &= pexpect(k->field < keywords->len);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].keyname == NULL/*entry 0*/ :
-			      keywords->item[k->field].keyname != NULL);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].field == 0/*entry 0*/ :
-			      keywords->item[k->field].field == k->field);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].validity == 0/*entry 0*/ :
-			      keywords->item[k->field].validity == (k->validity & ~kv_alias));
-
-		if (!ok) {
-			llog_pexpect(logger, HERE, "[%u:%u] '%s' (follows '%s') expecting %s-%s",
-				     i, k->field,
-				     k->keyname,
-				     (i > 0 ? keywords->item[i-1].keyname : "???"),
-				     (section == CONFIG_SETUP ? "setup" :
-				      section == CONFIG_CONN ? "conn" :
-				      "???"),
-				     (group == NAME ? "name" :
-				      group == ALIAS ? "alias" :
-				      group == OBSOLETE ? "obsolete" :
-				      "???"));
-			break;
-		}
-	}
-}
-
-static void check_ipsec_conf_keywords(struct logger *logger)
-{
-	check_config_keywords(logger, CONFIG_SETUP, &config_setup_keywords);
-	check_config_keywords(logger, CONFIG_CONN, &config_conn_keywords);
-}
-
-
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger,
@@ -530,30 +384,32 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, setuponly, verbosity);
-	if (cfgp == NULL)
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
+	}
 
 	struct starter_config *cfg = alloc_starter_config();
 
 	/**
 	 * Load setup
 	 */
-	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		confread_free(cfg);
 		return NULL;
 	}
 
 	if (!setuponly) {
-		if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
-			pfree_ipsec_conf(&cfgp);
+		if (!parse_ipsec_conf_config_conn(cfg, ipsec_conf, logger)) {
+			pfree_ipsec_conf(&ipsec_conf);
 			confread_free(cfg);
 			return NULL;
 		}
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return cfg;
 }
 
@@ -611,22 +467,36 @@ bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
 	return true;
 }
 
-struct starter_config *confread_argv(const char *name,
-				     char *argv[], int start,
-				     struct logger *logger)
+struct starter_config *confread_load_argv(const char *file,
+					  const char *name,
+					  char *argv[], int start,
+					  struct logger *logger,
+					  unsigned verbosity)
 {
 	check_ipsec_conf_keywords(logger);
 
-	/**
-	 * Load file
-	 */
-	struct ipsec_conf *cfgp = argv_ipsec_conf(name, argv, start, logger);
-	if (cfgp == NULL)
+	/* Load file */
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
+	}
+
+	/* append the ARGV conn */
+	if (!ipsec_conf_add_argv_conn(ipsec_conf, name, argv, start, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
+
+	/* load setup */
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
 
 	struct starter_config *cfg = alloc_starter_config();
 	if (cfg == NULL) {
-		pfree_ipsec_conf(&cfgp);
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
 	}
 
@@ -634,12 +504,12 @@ struct starter_config *confread_argv(const char *name,
 	 * Load other conns
 	 */
 
-	if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_conn(cfg, ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		confread_free(cfg);
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return cfg;
 }
 

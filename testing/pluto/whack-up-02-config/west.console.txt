@@ -12,15 +12,16 @@ west #
  rm -f /etc/ipsec.conf
 west #
  ipsec --config $PWD/ipsec.conf add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec --config $PWD/ipsec.conf up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"west" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec --config $PWD/ipsec.conf down west
 "west": initiating delete of connection's IKE SA #1 (and Child SA #2)
@@ -31,15 +32,16 @@ west #
  ipsec --config $PWD/ipsec.conf delete west
 west #
  ipsec add --config $PWD/ipsec.conf west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec up --config $PWD/ipsec.conf west
 "west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
+"west" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec down --config $PWD/ipsec.conf west
 "west": initiating delete of connection's IKE SA #3 (and Child SA #4)

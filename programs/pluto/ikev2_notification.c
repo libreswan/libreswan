@@ -37,6 +37,9 @@
 #include "ikev2_send.h"		/* for send_v2_notification_from_md() et.al. */
 #include "log_limiter.h"
 
+static void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
+			       const struct payload_digest *notify);
+
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
 	switch (n) {
@@ -81,6 +84,8 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(TICKET_ACK);
 	C(TICKET_NACK);
 	C(TICKET_OPAQUE);
+	C(SA_RESOURCE_INFO);
+	C(TS_MAX_QUEUE);
 #undef C
 	default: return PD_v2_INVALID;
 	}
@@ -94,7 +99,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 	if (impair.ignore_v2_notification.enabled &&
 	    impair.ignore_v2_notification.value == n) {
 		name_buf eb;
-		llog(RC_LOG, logger, "IMPAIR: ignoring %s notification",
+		llog(IMPAIR_STREAM, logger, "ignoring %s notification",
 		     str_enum_short(&v2_notification_names, n, &eb));
 		return;
 	}
@@ -121,8 +126,8 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 			md->v2N_error = n;
 		} else {
 			/* XXX: is this allowed? */
-			dbg("message contains multiple error notifications: %d %d",
-			    md->v2N_error, n);
+			ldbg(logger, "message contains multiple error notifications: %d %d",
+			     md->v2N_error, n);
 		}
 	} else {
 		type = "status";
@@ -130,7 +135,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 
 	name_buf name;
 	if (!enum_long(&v2_notification_names, n, &name)) {
-		dbg("%s notification %d is unknown", type, n);
+		ldbg(logger, "%s notification %d is unknown", type, n);
 		return;
 	}
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
@@ -147,6 +152,14 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;
+}
+
+void decode_v2N_payloads(struct logger *logger, struct msg_digest *md)
+{
+	for (struct payload_digest *n = md->chain[ISAKMP_NEXT_v2N];
+	     n != NULL; n = n->next) {
+		decode_v2N_payload(logger, md, n);
+	}
 }
 
 /*
@@ -249,8 +262,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: omitting %s notification",
+		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
@@ -265,7 +277,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	close_output_pbs(&pl);
+	close_pbs_out(&pl);
 	return true;
 }
 
@@ -363,7 +375,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		}
 	}
 
-	close_output_pbs(&n_pbs);
+	close_pbs_out(&n_pbs);
 	return true;
 }
 
@@ -382,7 +394,7 @@ void record_v2N_spi_response(struct logger *logger,
 	/*
 	 * Never send a response to a response.
 	 */
-	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+	if (!PEXPECT(logger, v2_msg_role(md) == MESSAGE_REQUEST)) {
 		/* always responding */
 		return;
 	}
@@ -440,7 +452,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       const shunk_t *ndata,
 			       const char *details, ...)
 {
-	passert(md != NULL); /* always a response */
+	PASSERT(&global_logger, md != NULL); /* always a response */
 
 	name_buf notify_name;
 	PASSERT(md->logger, enum_short(&v2_notification_names, ntype, &notify_name));
@@ -450,8 +462,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	if (!enum_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
 		/* when responding to crud, name may not be known */
 		exchange_name.buf = "UNKNOWN";
-		dbg("message request contains unknown exchange type %d",
-		    exchange_type);
+		ldbg(md->logger, "message request contains unknown exchange type %d",
+		     exchange_type);
 	}
 
 	enum stream stream = log_limiter_stream(md->logger, UNSECURED_LOG_LIMITER);

@@ -1,0 +1,15 @@
+<varlistentry id='conn.cert'>
+  <term>
+    <option>leftcert=</option>
+  </term>
+  <term>
+    <option>rightcert=</option>
+  </term>
+  <listitem>
+    <para>
+      If you are using <option>leftrsasigkey=%cert</option>
+      this defines the certificate nickname of your certificate in the NSS
+      database. This can be on software or hardware security device.
+    </para>
+  </listitem>
+</varlistentry>

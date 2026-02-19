@@ -54,6 +54,8 @@
 #include "ikev2_auth.h"
 #include "ikev2_notification.h"
 
+static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_EAP_request;
+
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_start;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_final;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_continue;
@@ -62,6 +64,12 @@ static v2_auth_signature_cb process_v2_IKE_AUTH_request_EAP_start_signature_cont
 
 struct eap_state {
 	struct logger    *logger;
+	/*
+	 * Client's IKE_AUTH packet that triggered EAP.  It contains
+	 * IDi and TS[ir].
+	 */
+	struct msg_digest *first_v2_IKE_AUTH_request;
+
 	uint8_t          eap_id;
 	uint8_t          eap_established;
 
@@ -206,34 +214,39 @@ static void eaptls_handshake_cb(PRFileDesc *fd UNUSED, void *client_data)
 	eap->eap_established = 1;
 }
 
-static struct eap_state *alloc_eap_state(struct logger *logger)
+static struct eap_state *alloc_eap_state(struct logger *logger,
+					 struct msg_digest *first_v2_IKE_AUTH_request)
 {
 	struct eap_state *eap = alloc_thing(struct eap_state, "EAP state");
 	eap->logger = logger;
+	eap->first_v2_IKE_AUTH_request = md_addref(first_v2_IKE_AUTH_request);
 	return eap;
 }
 
 void free_eap_state(struct eap_state **_eap)
 {
 	struct eap_state *eap = *_eap;
-	if (eap == NULL)
+	if (eap == NULL) {
 		return;
+	}
 
 	if (eap->eaptls_desc) PR_Close(eap->eaptls_desc);
 	free_chunk_content(&eap->eaptls_chunk);
+
+	md_delref(&eap->first_v2_IKE_AUTH_request);
 
 	pfree(eap);
 	*_eap = NULL;
 }
 
-
-static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
+static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs,
+		      struct msg_digest *md)
 {
 	struct logger *logger = ike->sa.logger;
 	struct eap_state *eap;
 	struct pbs_out pb_eap;
 
-	eap = alloc_eap_state(logger);
+	eap = alloc_eap_state(logger, md);
 	ike->sa.st_eap = eap;
 
 	struct ikev2_generic ie = {
@@ -259,11 +272,11 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 	}
 
-	if (!out_struct(&ie, &ikev2_eap_desc, pbs, &pb_eap) ||
-	    !out_struct(&eap_payload, &eap_tls_desc, &pb_eap, 0))
+	if (!pbs_out_struct(pbs, ie, &ikev2_eap_desc, &pb_eap) ||
+	    !pbs_out_struct(&pb_eap, eap_payload, &eap_tls_desc, NULL))
 		return false;
 
-	close_output_pbs(&pb_eap);
+	close_pbs_out(&pb_eap);
 	llog_sa(RC_LOG, ike, "added EAP payload to packet");
 
 	PRFileDesc *pr = PR_CreateIOLayerStub(get_layer_name(), &eaptls_io);
@@ -316,18 +329,18 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 	};
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
+	if (!pbs_out_struct(response.pbs, ie, &ikev2_eap_desc, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!out_struct(&eap_msg, &eap_termination_desc, &eap_payload, 0)) {
+	if (!pbs_out_struct(&eap_payload, eap_msg, &eap_termination_desc, NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	dbg("closing EAP termination payload");
-	close_output_pbs(&eap_payload);
+	ldbg(ike->sa.logger, "closing EAP termination payload");
+	close_pbs_out(&eap_payload);
 
-	dbg("closing/recording EAP termination response");
+	ldbg(ike->sa.logger, "closing/recording EAP termination response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -371,12 +384,12 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 	}
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
+	if (!pbs_out_struct(response.pbs, ie, &ikev2_eap_desc, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	struct pbs_out eap_data;
-	if (!out_struct(&eaptls, &eap_tls_desc, &eap_payload, &eap_data)) {
+	if (!pbs_out_struct(&eap_payload, eaptls, &eap_tls_desc, &eap_data)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -405,11 +418,11 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 		}
 	}
 
-	dbg("closing EAP data / payload");
-	close_output_pbs(&eap_data);
- 	close_output_pbs(&eap_payload);
+	ldbg(ike->sa.logger, "closing EAP data / payload");
+	close_pbs_out(&eap_data);
+ 	close_pbs_out(&eap_payload);
 
-	dbg("closing/recording EAP response");
+	ldbg(ike->sa.logger, "closing/recording EAP response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -426,18 +439,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 {
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog(RC_LOG, ike->sa.logger,
-		     "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
-
-	/*
-	 * This log line establishes that the packet's been decrypted
-	 * and now it is being processed for real.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
 	/*
 	 * XXX: hack so that incoming certs are ignored; should update
@@ -452,6 +457,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
 	}
+
 	if (c->local->host.config->eap != IKE_EAP_TLS ||
 	    c->remote->host.config->eap != IKE_EAP_TLS) {
 		llog_sa(RC_LOG, ike,
@@ -459,9 +465,16 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		goto auth_fail;
 	}
 
+	/*
+	 * XXX: this can change the IKE SA's connection.
+	 */
+
 	stf_status status = process_v2_IKE_AUTH_request_standard_payloads(ike, md);
-	if (status != STF_OK)
+	if (status != STF_OK) {
 		return status;
+	}
+
+	c = ike->sa.st_connection; /* could have been changed */
 
 	/*
 	 * Construct the IDr payload and store it in state so that it
@@ -472,6 +485,11 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	 * laid out the same as the packet.
 	 */
 	v2_IKE_AUTH_responder_id_payload(ike);
+
+	if (c->local->host.config->auth == AUTH_EAPONLY) {
+		ldbg(ike->sa.logger, "EAPONLY: skipping v2AUTH calculation for start response, not needed");
+		return process_v2_IKE_AUTH_request_EAP_start_signature_continue(ike, md, NULL);
+	}
 
 	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_EAP_start_signature_continue);
 
@@ -488,6 +506,16 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 									   const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
+
+	/* when EAPONLY, AUTH_SIG==NULL */
+	if (auth_sig != NULL && auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	/* HDR out */
 
@@ -518,13 +546,12 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	/* send out the IDr payload */
 	{
 		struct pbs_out r_id_pbs;
-		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
-		    !out_hunk(ike->sa.st_v2_id_payload.data,
-				  &r_id_pbs, "my identity"))
+		if (!pbs_out_struct(response.pbs, ike->sa.st_v2_id_payload.header,
+				    &ikev2_id_r_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, ike->sa.st_v2_id_payload.data, "my identity"))
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&r_id_pbs);
-		dbg("added IDr payload to packet");
+		close_pbs_out(&r_id_pbs);
+		ldbg(ike->sa.logger, "added IDr payload to packet");
 	}
 
 	/*
@@ -552,6 +579,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	 * magic fed into it.
 	 */
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
+		pexpect(auth_sig == NULL);
 		ldbg_sa(ike, "EAP: skipping AUTH payload as our proof-of-identity is eap-only");
 	} else {
 		/*
@@ -570,16 +598,13 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 		}
 	}
 
-	if (!start_eap(ike, response.pbs)) {
+	if (!start_eap(ike, response.pbs, md)) {
 		goto auth_fail;
 	}
 
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	/* remember the original message with child sa etc. parameters */
-	ike->sa.st_eap_sa_md = md_addref(md);
 
 	return STF_OK;
 
@@ -651,7 +676,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 		}
 	}
 
-	close_output_pbs(&eap->eaptls_outbuf);
+	close_pbs_out(&eap->eaptls_outbuf);
 	replace_chunk(&eap->eaptls_chunk, pbs_out_all(&eap->eaptls_outbuf), "EAP response");
 	eap->eaptls_pos = 0;
 
@@ -674,16 +699,15 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 {
 	static const char key_pad_str[] = "client EAP encryption"; /* EAP-TLS RFC 5216 */
 	struct eap_state *eap = ike->sa.st_eap;
-	struct msg_digest *sa_md = ike->sa.st_eap_sa_md;
 	struct logger *logger = ike->sa.logger;
 
 	pexpect(eap != NULL);
-	pexpect(sa_md != NULL);
+	pexpect(eap->first_v2_IKE_AUTH_request != NULL);
 
 	if (!eap->eap_established)
 		return STF_FATAL;
 
-	dbg("responder verifying AUTH payload");
+	ldbg(ike->sa.logger, "responder verifying AUTH payload");
 
 	/*
 	 * IKEv2: 2.16.  Extensible Authentication Protocol Methods
@@ -701,27 +725,32 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 				     key_pad_str, sizeof(key_pad_str) - 1,
 				     PR_FALSE, NULL, 0,
 				     msk.ptr, msk.len) != SECSuccess) {
-		free_eap_state(&ike->sa.st_eap);
 		llog_nss_error(RC_LOG, logger, "Keying material export failed");
 		return STF_FATAL;
 	}
 
-	/* calculate hash of IDi for AUTH below */
-	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash", md);
+	/*
+	 * Calculate hash of IDi for AUTH below.
+	 *
+	 * The IDi was sent in the very first IKE_AUTH message from
+	 * the client.
+	 */
+	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash",
+						       eap->first_v2_IKE_AUTH_request);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "EAP: msk:", msk);
-		LDBG_log_hunk(logger, "EAP: idhash_in:", idhash_in);
+		LDBG_log_hunk(logger, "EAP: msk:", &msk);
+		LDBG_log_hunk(logger, "EAP: idhash_in:", &idhash_in);
 	}
 
 	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
 						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						   &msk);
-	free_eap_state(&ike->sa.st_eap);
+
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
-		dbg("EAP AUTH failed");
+		ldbg(ike->sa.logger, "EAP AUTH failed");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -768,10 +797,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	/*
-	 * EAP only does PSK!
+	 * EAP only does PSK?!?
 	 */
 
-	enum keyword_auth local_authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	enum auth local_authby = AUTH_PSK;
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, local_authby);
 	if (!PEXPECT(ike->sa.logger, (local_auth_method == IKEv2_AUTH_SHARED_KEY_MAC ||
 				      local_auth_method == IKEv2_AUTH_NULL))) {
@@ -795,7 +824,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+		LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 	}
 
 	struct hash_signature signed_signature = {
@@ -814,14 +843,16 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	/*
-	 * Try to build a child.
+	 * Try to build a child.  The Child SA payloads were sent in
+	 * the very first IKE_AUTH message from the client.
 	 *
 	 * The result can be fatal, or just doesn't create the child.
 	 */
 
 	if (send_redirect) {
-		dbg("skipping child; redirect response");
-	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
+		ldbg(ike->sa.logger, "skipping child; redirect response");
+	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, eap->first_v2_IKE_AUTH_request,
+								   response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
 	}
@@ -830,8 +861,19 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	md_delref(&ike->sa.st_eap_sa_md);
+	free_eap_state(&ike->sa.st_eap);
 	return STF_OK;
+}
+
+void llog_success_process_v2_IKE_AUTH_EAP_request(struct ike_sa *ike,
+						  const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
+ 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
+	}
 }
 
 /*
@@ -842,50 +884,48 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "process initial IKE_AUTH(EAP) request",
 	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange = &v2_IKE_AUTH_EAP_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(IDi),
 	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .llog_success = llog_v2_success_state_story,
+	  .log_transition_start = true,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process continuing IKE_AUTH(EAP) request",
 	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange = &v2_IKE_AUTH_EAP_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(EAP),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process final IKE_AUTH(EAP) request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange = &v2_IKE_AUTH_EAP_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(AUTH),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 };
 
-static const struct v2_transitions v2_IKE_AUTH_EAP_responder_transitions = {
-	ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
-};
-
-V2_STATE(IKE_AUTH_EAP_R,
-	 "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
+V2_STATE(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response",
 	 CAT_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_EAP_exchange);
 
 const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
-	.subplot = "EAP",
+	.name = "IKE_AUTH (EAP)",
 	.secured = true,
-	.responder = &v2_IKE_AUTH_EAP_responder_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
+	},
 };

@@ -1,0 +1,19 @@
+<varlistentry id='setup.ddos-mode'>
+  <term>
+    <option>ddos-mode=&ddos_mode_option;</option>
+  </term>
+  <listitem>
+    <para>
+      The startup mode of the DDoS defense mechanism.  This option can
+      also be given to the IKE daemon while running, for example by
+      issuing <command>ipsec whack --ddos--busy</command>.  When in
+      &busy; mode, pluto activates anti-DDoS counter measures.
+      Currently, counter measures consist of requiring IKEv2 anti-DDoS
+      cookies on new incoming IKE requests, and a more aggressive
+      cleanup of partially established or AUTH_NULL connections.
+    </para>
+    <para>
+      The default is &auto;.
+    </para>
+  </listitem>
+</varlistentry>

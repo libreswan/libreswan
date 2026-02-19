@@ -775,7 +775,7 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 
 	LLOG_JAMBUF(stream, logger, buf) {
 		/* truncate the VID */
-		shunk_t tvid = hunk_slice(vid, 0, PMIN(vid.len, MAX_LOG_VID_LEN));
+		shunk_t tvid = shunk_slice(vid, 0, PMIN(vid.len, MAX_LOG_VID_LEN));
 		const char *trunc = (vid.len > MAX_LOG_VID_LEN ? " ..." : "");
 		jam_string(buf, vid_useful ? "received" : "ignoring");
 		/* description */
@@ -913,7 +913,7 @@ void llog_vendorids(enum stream stream, struct logger *logger)
 		name_buf idb;
 		llog(stream, logger, "[%s]%s", str_vendorid(id, &idb),
 		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
-		llog_hunk(stream, logger, vid);
+		llog_hunk(stream, logger, &vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
 		if (r != id) {

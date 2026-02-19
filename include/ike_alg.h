@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2025 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
 #include <pk11pub.h>
 #include "shunk.h"
 #include "ietf_constants.h"
+#include "lswnss.h"	/* for ML_KEM hack */
 
 struct ike_alg;
 struct jambuf;
@@ -36,9 +37,9 @@ struct name_buf;
 
 #define PRI_IKE_ALG "IKE_ALG %s algorithm '%s'"
 #define pri_ike_alg(ALG)						\
-		ike_alg_type_name((ALG)->algo_type),			\
-			((ALG)->fqn != NULL ? (ALG)->fqn		\
-			 : "NULL")
+	(ALG)->type->name,						\
+		((ALG)->fqn != NULL ? (ALG)->fqn			\
+		 : "NULL")
 
 #define pexpect_ike_alg(LOGGER, ALG, ASSERTION)				\
 	{								\
@@ -85,38 +86,10 @@ struct name_buf;
 			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
-				     ike_alg_type_name((ALG)->algo_type), \
+				     (ALG)->type->story,		\
 				     (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
-
-/*
- * Different algorithm classes used by IKEv1/IKEv2 protocols.
- */
-
-struct ike_alg_type;
-
-extern const struct ike_alg_type ike_alg_encrypt;
-extern const struct ike_alg_type ike_alg_hash;
-extern const struct ike_alg_type ike_alg_prf;
-extern const struct ike_alg_type ike_alg_integ;
-extern const struct ike_alg_type ike_alg_dh;
-extern const struct ike_alg_type ike_alg_ipcomp;
-
-/* keep old code working */
-#define IKE_ALG_ENCRYPT &ike_alg_encrypt
-#define IKE_ALG_HASH &ike_alg_hash
-#define IKE_ALG_PRF &ike_alg_prf
-#define IKE_ALG_INTEG &ike_alg_integ
-#define IKE_ALG_DH &ike_alg_dh
-#define IKE_ALG_IPCOMP &ike_alg_ipcomp
-
-/*
- * User frendly string representing the algorithm type (family).
- * "...Name()" returns the capitalized name.
- */
-const char *ike_alg_type_name(const struct ike_alg_type *type);
-const char *ike_alg_type_Name(const struct ike_alg_type *type);
 
 /*
  * Different lookup KEYs used by IKEv1/IKEv2
@@ -129,6 +102,27 @@ enum ike_alg_key {
 };
 #define IKE_ALG_KEY_ROOF (SADB_ALG_ID+1)
 #define IKE_ALG_KEY_FLOOR IKEv1_OAKLEY_ID
+
+/*
+ * Different algorithm classes used by IKEv1/IKEv2 protocols.
+ */
+
+struct ike_alg_type {
+	const char *name;
+	const char *story;
+	struct algorithm_table *algorithms;
+	const struct enum_names *const enum_names[IKE_ALG_KEY_ROOF];
+	void (*desc_check)(const struct ike_alg*, struct logger *logger);
+	bool (*desc_is_ike)(const struct ike_alg*);
+};
+
+extern const struct ike_alg_type ike_alg_encrypt;
+extern const struct ike_alg_type ike_alg_hash;
+extern const struct ike_alg_type ike_alg_prf;
+extern const struct ike_alg_type ike_alg_integ;
+extern const struct ike_alg_type ike_alg_kem;
+extern const struct ike_alg_type ike_alg_ipcomp;
+extern const struct ike_alg_type ike_alg_sn;
 
 /*
  * User friendly string representing the key (protocol family).
@@ -169,6 +163,8 @@ bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name);
  * INTEG:    ikev2_trans_type_integ     ikev2_trans_type_integ_names  IKEv2_INTEG
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  * COMP:     ipsec_ipcomp_algo          ipsec_ipcomp_algo_names       ?
+ * SN:       ikev2_trans_type_sn        ikev2_trans_type_sn_names     ?
+ *
  *
  * id[IKEv1_OAKLEY_ID]:
  *
@@ -185,6 +181,8 @@ bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name);
  * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  * IPCOMP:   N/A
+ * SN:       N/A
+ *
  *
  * id[IKEv1_IPSEC_ID]:
  *
@@ -203,20 +201,7 @@ bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name);
  * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
  * INTEG:    ikev1_auth_attribute       auth_alg_names                AUTH_ALGORITHM
  * IPCOMP:   ipsec_ipcomp_algo          ipsec_ipcomp_algo_names       ?
- *
- *
- * (not yet if ever) ikev[12]_ipsec_id:
- *
- * While these values started out being consistent with IKEv1 and (I
- * suspect) SADB/KLIPS, the've gone off the rails.  Over time they've
- * picked up IKEv2 values making for general confusion.  Worse, as
- * noted above, CAMELLIA had the IKEv2 value 23 (IKEv1 is 22)
- * resulting in code never being sure of which it is dealing with.
- *
- * These values are not included in this table.
- *
- * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
- * INTEG:    ipsec_authentication_algo  ah_transformid_names          AH
+ * SN:       ?                          ?                             ?
  *
  *
  * id[IKE_ALG_SADB_ID] aka SADB/PFKEY (never?):
@@ -298,11 +283,11 @@ struct ike_alg {
 	 * -1 indicates not valid (annoyingly 0 is used by IKEv2 for
 	 * NULL integrity).
 	 */
-#define ikev1_oakley_id id[IKEv1_OAKLEY_ID]
-#define ikev1_ipsec_id id[IKEv1_IPSEC_ID]
-#define ikev2_alg_id id[IKEv2_ALG_ID]
+#define ikev1_oakley_id common.id[IKEv1_OAKLEY_ID]
+#define ikev1_ipsec_id  common.id[IKEv1_IPSEC_ID]
+#define ikev2_alg_id    common.id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
-	const struct ike_alg_type *algo_type;
+	const struct ike_alg_type *type;
 
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
@@ -695,36 +680,51 @@ struct integ_desc {
  * and "oakley_group" is too long.
  */
 
-struct dh_desc {
+struct kem_desc {
 	struct ike_alg common;		/* must be first */
-	uint16_t group;
+
 	size_t bytes;			/* raw bytes to be put on wire */
+	size_t initiator_bytes;		/* ML_KEM has different sizes */
+	size_t responder_bytes;		/* ML_KEM has different sizes */
 
-	/*
-	 * For MODP groups, the base and prime used when generating
-	 * the KE.
-	 */
-	const char *gen;
-	const char *modp;
+	struct {
+		struct {
+			/*
+			 * For MODP groups, the base and prime used
+			 * when generating the KE.
+			 */
+			const char *base;
+			const char *prime;
+		} modp;
+		struct {
+			/*
+			 * For ECP groups, the NSS ASN.1 OID that
+			 * identifies the ECP.
+			 */
+			SECOidTag oid;
+			/*
+			 * For most EC algorithms, NSS's public key
+			 * value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There's one exception (curve25519) which
+			 * contains no prefix and just a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+#ifdef USE_ML_KEM
+		struct {
+			LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter;
+			KyberParams encapsulate_parameter;
+		} ml_kem;
+#endif
+	} nss;
 
-	/*
-	 * For ECP groups, the NSS ASN.1 OID that identifies the ECP.
-	 */
-	SECOidTag nss_oid;
-	/*
-	 * For most EC algorithms, NSS's public key value consists of
-	 * the one byte EC_POINT_FORM_UNCOMPRESSED prefix followed by
-	 * two equal-sized points.
-	 *
-	 * There's one exception (curve25519) which contains no prefix
-	 * and just a single point.
-	 */
-	bool nss_adds_ec_point_form_uncompressed;
-
-	const struct dh_ops *dh_ops;
+	const struct kem_ops *kem_ops;
 };
 
-extern const struct dh_desc unset_group;      /* magic signifier */
+extern const struct kem_desc unset_group;      /* magic signifier */
 
 /*
  * IPCOMP, like encryption, re-aranges the bits.
@@ -754,6 +754,15 @@ struct ipcomp_desc {
 };
 
 /*
+ * SN, nee ESN or Extended Sequence Numbers, is just yes/no.
+ */
+
+struct sn_desc {
+	struct ike_alg common;		/* must be first */
+	const struct sn_ops *sn_ops;
+};
+
+/*
  * Is the encryption algorithm AEAD (Authenticated Encryption with
  * Associated Data)?
  *
@@ -776,15 +785,16 @@ void test_ike_alg(struct logger *logger);
 const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
 const struct prf_desc **next_prf_desc(const struct prf_desc **last);
 const struct integ_desc **next_integ_desc(const struct integ_desc **last);
-const struct dh_desc **next_dh_desc(const struct dh_desc **last);
+const struct kem_desc **next_kem_desc(const struct kem_desc **last);
 const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last);
+const struct sn_desc **next_sn_desc(const struct sn_desc **last);
 
 /*
  * Is the algorithm suitable for IKE (i.e., native)?
  *
  * Code should also filter on ikev1_oakley_id and/or ikev2_id.
  */
-bool ike_alg_is_ike(const struct ike_alg *alg);
+bool ike_alg_is_ike(const struct ike_alg *alg, 	const struct logger *logger);
 
 /*
  * Is the algorithm valid (or did FIPS, say, disable it)?
@@ -811,12 +821,14 @@ unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
  * Could be reduced to a macro, but only if passert() returned
  * something.
  */
+
 const struct hash_desc *hash_desc(const struct ike_alg *alg);
 const struct prf_desc *prf_desc(const struct ike_alg *alg);
 const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
-const struct dh_desc *dh_desc(const struct ike_alg *alg);
+const struct kem_desc *kem_desc(const struct ike_alg *alg);
 const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
+const struct sn_desc *sn_desc(const struct ike_alg *alg);
 
 /*
  * Find the ENCRYPT / HASH / PRF / INTEG / DH algorithm using the
@@ -836,10 +848,12 @@ const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf,
 				      struct name_buf *b);
 const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ,
 					  struct name_buf *b);
-const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh,
-				    struct name_buf *b);
+const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_kem,
+				      struct name_buf *b);
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo,
 					    struct name_buf *b);
+const struct sn_desc *ikev2_sn_desc(enum ikev2_trans_type_sn,
+				      struct name_buf *b);
 
 /*
  * Find the ENCRYPT / PRF / DH algorithm using IKEv1 IKE (aka OAKLEY)
@@ -857,10 +871,8 @@ const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute,
 						  struct name_buf *b);
 const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute,
 					  struct name_buf *b);
-const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh,
-					struct name_buf *b);
-const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo,
-						struct name_buf *b);
+const struct kem_desc *ikev1_ike_kem_desc(enum oakley_group,
+					  struct name_buf *b);
 
 /*
  * Find the IKEv1 ENCRYPT / INTEG algorithm that will be fed into the
@@ -890,5 +902,6 @@ const struct ike_alg *ike_alg_by_sadb_alg_id(const struct ike_alg_type *type,
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id);
+const struct sn_desc *sn_desc_by_sadb_calg_id(unsigned id);
 
 #endif /* _IKE_ALG_H */

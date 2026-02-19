@@ -1,0 +1,30 @@
+ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:1::15/64 flags 0
+	inet 198.18.1.15/24 broadcast 198.18.1.255 flags 0
+set #
+ ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:0:1::15/64 flags 0
+	inet 192.0.1.15/24 broadcast 192.0.1.255 flags 0
+set #
+ ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
+up
+set #
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # rise_sunnet
+up
+set #
+ ../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+set #
+ ipsec initnss
+Initializing NSS database
+set #
+ ipsec start
+Redirecting to: [initsystem]
+Starting pluto.
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec add rise-set
+"rise-set": added oriented IKEv2 connection
+set #

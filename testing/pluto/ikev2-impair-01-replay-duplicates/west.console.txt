@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added oriented IKEv2 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm
@@ -47,7 +47,7 @@ sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
-ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -98,16 +98,17 @@ algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-algorithm IKE DH Key Exchange: name=DH19, bits=512
-algorithm IKE DH Key Exchange: name=DH20, bits=768
-algorithm IKE DH Key Exchange: name=DH21, bits=1056
-algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=MODP1536, bits=1536
+algorithm IKE Key Exchange Method (DH): name=MODP2048, bits=2048
+algorithm IKE Key Exchange Method (DH): name=MODP3072, bits=3072
+algorithm IKE Key Exchange Method (DH): name=MODP4096, bits=4096
+algorithm IKE Key Exchange Method (DH): name=MODP6144, bits=6144
+algorithm IKE Key Exchange Method (DH): name=MODP8192, bits=8192
+algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
+algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
+algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
+algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -115,13 +116,13 @@ Connection list:
  
 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet":   my_updown=ipsec _updown;
+"westnet-eastnet":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet":   sec_label:unset;
-"westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -155,8 +156,9 @@ west #
 "westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -177,5 +179,5 @@ west #
 west #
  ipsec _kernel policy
 west #
- sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
+ sed -n -e '/IMPAIR: .*: start processing inbound duplicate/,/IMPAIR: .*: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
 west #

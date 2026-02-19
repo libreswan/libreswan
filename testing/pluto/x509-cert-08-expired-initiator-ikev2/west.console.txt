@@ -39,7 +39,7 @@ west #
  ipsec auto --add west
 "west": WARNING: left is a groundhog
 "west": WARNING: groundhog left certificate 'west-expired' has expired
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec checkpubkeys
 TIMESTAMP, 2048 RSA Key AwXXXXXXX (has private key), until TIMESTAMP fatal (expired)
@@ -63,7 +63,7 @@ west #
 "west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west" #1: encountered fatal error in state IKE_AUTH_I
 "west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done

@@ -1,0 +1,18 @@
+<varlistentry id='setup.listen-tcp'>
+  <term>
+    <option>listen-tcp=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether the pluto IKE daemon should listen on the standard TCP
+      port <option>4500</option>.  The TCP usage complies to RFC 9329
+      for IKE and ESP over TCP support. Connections can specify their
+      own non-standard TCP port using <option>leftikeport=</option>
+      and <option>tcp-remoteport=</option> for a non-standard peer TCP
+      port.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

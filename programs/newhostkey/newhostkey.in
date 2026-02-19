@@ -23,6 +23,7 @@ me="ipsec newhostkey"
 usage="Usage:
 	$me [--seeddev device] [--keytype rsa] [--bits n]
 	$me [--seeddev device] --keytype ecdsa [--curve curve]
+	$me [--seeddev device] --keytype eddsa [--curve curve]
 
 	other options: [--quiet] [--hostname host] [--nssdir @@IPSEC_NSSDIR@@] \\
 		[--password password]"
@@ -91,19 +92,21 @@ while [ $# != 0 ] ; do
 done
 
 if [ -n "$bits" ] && [ -n "$curve" ]; then
-    echo "${me}: --bits and --curve are mutually exclusive"
+    echo "${me}: --bits and --curve are mutually exclusive" >&2
     exit 2
 fi
 
 case "$keytype" in
     rsa)
 	if [ -n "$curve" ]; then
-	    echo "${me}: --curve and --keytype rsa are mutually exclusive"
+	    echo "${me}: --curve and --keytype rsa are mutually exclusive" >&2
+	    exit 2
 	fi
 	;;
-    ecdsa)
+    ecdsa|eddsa)
 	if [ -n "$bits" ]; then
-	    echo "${me}: --bits and --keytype ecdsa are mutually exclusive"
+	    echo "${me}: --bits and --keytype ${keytype} are mutually exclusive" >&2
+	    exit 2
 	fi
 	;;
     *)
@@ -120,8 +123,8 @@ fi
 certutil -L -d "sql:${nssdir}" >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
-    echo "NSS database in ${nssdir} not initialized."
-    echo "    Please run 'ipsec initnss --nssdir ${nssdir}'"
+    echo "NSS database in ${nssdir} not initialized." >&2
+    echo "    Please run 'ipsec initnss --nssdir ${nssdir}'" >&2
     exit 255
 fi
 
@@ -129,8 +132,8 @@ case "$keytype" in
     rsa)
 	key=$(ipsec rsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${bits})
 	;;
-    ecdsa)
-	key=$(ipsec ecdsasigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${curve})
+    ecdsa|eddsa)
+	key=$(ipsec ${keytype}sigkey ${verbose} ${seeddev} --nssdir ${nssdir} ${password} ${host} ${curve})
 	;;
 esac
 

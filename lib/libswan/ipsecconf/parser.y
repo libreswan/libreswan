@@ -197,10 +197,9 @@ statement_kw:
 
 void parser_warning(struct parser *parser, int error, const char *s, ...)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.warning != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam_scanner_file_line(buf, parser);
-			jam_string(buf, "warning: ");
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
@@ -247,10 +246,9 @@ void parser_key_value_warning(struct parser *parser,
 			      shunk_t value,
 			      const char *s, ...)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.warning != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam(buf, PRI_KEYVAL_SAL": ", pri_keyval_sal(key));
-			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
 			va_start(ap, s);
@@ -268,15 +266,15 @@ void parser_key_value_warning(struct parser *parser,
 
 void yyerror(struct parser *parser, const char *s)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.error != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.error, parser->logger, buf) {
 			jam_scanner_file_line(buf, parser);
 			jam_string(buf, s);
 		}
 	}
 }
 
-static struct ipsec_conf *alloc_ipsec_conf(void)
+struct ipsec_conf *alloc_ipsec_conf(void)
 {
 	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->config_setup);
@@ -285,31 +283,31 @@ static struct ipsec_conf *alloc_ipsec_conf(void)
 	return cfgp;
 }
 
-struct ipsec_conf *load_ipsec_conf(const char *file,
-				   struct logger *logger,
-				   bool setuponly,
-				   unsigned verbosity)
+bool ipsec_conf_add_file(struct ipsec_conf *ipsec_conf,
+			 const char *file,
+			 struct logger *logger,
+			 unsigned verbosity)
 {
 	struct parser parser = {
 		.logger = logger,
-		.error_stream = ERROR_STREAM,
+		.stream.warning = WARNING_STREAM,
+		.stream.error = ERROR_STREAM,
 		.verbosity = verbosity,
-		.setuponly = setuponly,
-		.cfg = alloc_ipsec_conf(),
+		.cfg = ipsec_conf,
 	};
 
 	if (!scanner_open(&parser, file)) {
-		pfree_ipsec_conf(&parser.cfg);
-		return NULL;
+		return false;
 	}
 
 	if (yyparse(&parser) != 0) {
-		/* suppress errors */
-		parser.error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
+		/* suppress errors and warnings */
+		enum stream stream =  (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
+		parser.stream.warning = stream;
+		parser.stream.error = stream;
 		do {} while (yyparse(&parser) != 0);
-		pfree_ipsec_conf(&parser.cfg);
 		scanner_close(&parser);
-		return NULL;
+		return false;
 	}
 
 	scanner_close(&parser);
@@ -317,14 +315,16 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	/**
 	 * Config valid
 	 */
-	return parser.cfg;
+	return true;
 }
 
-struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
-				   struct logger *logger)
+bool ipsec_conf_add_argv_conn(struct ipsec_conf *ipsec_conf,
+			      const char *name,
+			      char *argv[], int start,
+			      struct logger *logger)
 {
 	struct parser parser = {
-		.cfg = alloc_ipsec_conf(),
+		.cfg = ipsec_conf,
 		.logger = logger,
 		.setuponly = false,
 	};
@@ -402,8 +402,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
 				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
-				pfree_ipsec_conf(&parser.cfg);
-				return NULL;
+				return false;
 			}
 			/* skip/use next arg */
 			argp++;
@@ -436,8 +435,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 	}
 
 	scanner_close(&parser);
-
-	return parser.cfg;
+	return true;
 }
 
 static void pfree_keyval_list(struct keyval_list *list)
@@ -512,7 +510,7 @@ void add_parser_key_value(struct parser *parser,
 			parser_key_value_warning(parser, key, value,
 						 "overriding earlier '%s' keyword with new value", section);
 			pfreeany(kv->keyval.val);
-			kv->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
+			kv->keyval.val = clone_hunk_as_string(&value, "keyword.string"); /*handles NULL*/
 			kv->number = number;
 			kv->deltatime = deltatime;
 			return;
@@ -543,7 +541,7 @@ static void append_parser_key_value(struct parser *parser,
 	};
 
 	/* add the value */
-	new->keyval.val = clone_hunk_as_string(value, /*handles NULL*/
+	new->keyval.val = clone_hunk_as_string(&value/*handles NULL*/,
 					       "keyword.list");
 
 	if (LDBGP(DBG_TMI, parser->logger)) {
@@ -564,12 +562,6 @@ static void append_parser_key_value(struct parser *parser,
 diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
 			 shunk_t value, uintmax_t *number)
 {
-	/* treat -1 as special, turning it into max */
-	if (hunk_streq(value, "-1")) {
-		(*number) = UINTMAX_MAX;
-		return NULL;
-	}
-
 	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
 	if (err == NULL) {
 		return NULL;
@@ -579,10 +571,9 @@ diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
 }
 
 diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
-			  shunk_t value, enum timescale default_timescale,
-			  deltatime_t *deltatime)
+			  shunk_t value, deltatime_t *deltatime)
 {
-	diag_t diag = ttodeltatime(value, deltatime, default_timescale);
+	diag_t diag = ttodeltatime(value, deltatime);
 	if (diag != NULL) {
 		return diag;
 	}
@@ -592,7 +583,7 @@ diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
 
 diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 			    shunk_t value, uintmax_t *number,
-			    enum stream stream, struct logger *logger)
+			    enum stream warning_stream, struct logger *logger)
 {
 	const struct sparse_names *names = key->key->sparse_names;
 
@@ -608,19 +599,19 @@ diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 
 	(*number) = sn->value & ~NAME_FLAGS;
 
-	if (stream != NO_STREAM) {
+	if (warning_stream != NO_STREAM) {
 		enum name_flags flags = (sn->value & NAME_FLAGS);
 		name_buf new_name;
 
 		switch (flags) {
 		case NAME_IMPLEMENTED_AS:
-			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
 			return NULL;
 		case NAME_RENAMED_TO:
-			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
@@ -676,10 +667,6 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 	ITEMS_FOR_EACH(k, keywords) {
 
 		if (k->keyname == NULL) {
-			continue;
-		}
-
-		if (k->validity & kv_ignore) {
 			continue;
 		}
 
@@ -760,6 +747,19 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 		return false;
 	}
 
+	if (found->validity & kv_optarg_only) {
+		parser_fatal(parser, /*errno*/0, "'%s' keyword '"PRI_SHUNK"' invalid; use command line option",
+			     str_parser_section(parser), pri_shunk(skey));
+		/* never returns */
+		return false;
+	}
+
+	if (found->validity & kv_nosup) {
+		parser_warning(parser, /*errno*/0, "'%s' keyword '"PRI_SHUNK"' unsupported; ignored",
+			       str_parser_section(parser), pri_shunk(skey));
+		return false;
+	}
+
 	/* else, set up llval.k to point, and return KEYWORD */
 	key->key = found;
 	key->left = left;
@@ -791,7 +791,6 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		return;
 	}
 
-
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
 	diag_t d = NULL;
@@ -800,14 +799,13 @@ void parse_keyval(struct parser *parser, enum end default_end,
 
 	case kt_sparse_name:
 		d = parse_kt_sparse_name(&key, value, &number,
-					 parser->error_stream,
+					 parser->stream.warning,
 					 parser->logger);
 		break;
 
 	case kt_string:
 	case kt_also:
-	case kt_appendstring:
-	case kt_appendlist:
+	case kt_appendstrings:
 		break;
 
 	case kt_unsigned:
@@ -815,7 +813,7 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_seconds:
-		d = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS, &deltatime);
+		d = parse_kt_deltatime(&key, value, &deltatime);
 		break;
 
 	case kt_obsolete:
@@ -826,8 +824,8 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	}
 
 	if (d != NULL) {
-		llog(RC_LOG, parser->logger,
-		     PRI_KEYVAL_SAL": warning: %s, keyword ignored: %s%s="PRI_SHUNK,
+		llog(WARNING_STREAM, parser->logger,
+		     PRI_KEYVAL_SAL": %s, keyword ignored: %s%s="PRI_SHUNK,
 		     pri_keyval_sal(&key), str_diag(d),
 		     leftright(&key), key.key->keyname, pri_shunk(value));
 		pfree_diag(&d);

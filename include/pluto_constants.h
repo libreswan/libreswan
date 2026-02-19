@@ -40,10 +40,6 @@
 #define DEFAULT_UPDOWN "ipsec _updown"
 #define UPDOWN_DISABLED "%disabled"
 
-# ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
-#  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
-# endif
-
 enum ike_version {
 	/* 0 reserved */
 #define IKE_VERSION_FLOOR 1
@@ -60,13 +56,13 @@ extern const struct sparse_names ikev2_option_names;
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
  * We say maximum for either is 1d
  */
-#define IKE_SA_LIFETIME_DEFAULT deltatime(secs_per_hour * 8)
-#define IKE_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
-#define FIPS_IKE_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
+#define IKE_SA_LIFETIME_DEFAULT deltatime_from_seconds(secs_per_hour * 8)
+#define IKE_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_day)
+#define FIPS_IKE_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_day)
 
-#define IPSEC_SA_LIFETIME_DEFAULT deltatime(secs_per_hour * 8)
-#define IPSEC_SA_LIFETIME_MAXIMUM deltatime(secs_per_day)
-#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM deltatime(secs_per_hour * 8)
+#define IPSEC_SA_LIFETIME_DEFAULT deltatime_from_seconds(secs_per_hour * 8)
+#define IPSEC_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_day)
+#define FIPS_IPSEC_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_hour * 8)
 
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
@@ -91,7 +87,6 @@ enum autostart {
 	AUTOSTART_UNSET,
 	AUTOSTART_IGNORE,
 	AUTOSTART_ADD,
-	AUTOSTART_START,
 	AUTOSTART_ROUTE,
 	AUTOSTART_ONDEMAND,
 	AUTOSTART_UP,
@@ -122,23 +117,11 @@ enum keyword_pubkey {
 
 extern const struct sparse_names keyword_pubkey_names;
 
-enum keyword_auth {
-	AUTH_UNSET = 0,
-	AUTH_NEVER,
-	AUTH_PSK,
-	AUTH_RSASIG,
-	AUTH_ECDSA,
-	AUTH_NULL,
-	AUTH_EAPONLY,
-};
-
-extern const struct enum_names keyword_auth_names;
-
 /* OCSP related constants - defaults picked from NSS defaults */
-#define OCSP_DEFAULT_CACHE_SIZE 1000
-#define OCSP_DEFAULT_CACHE_MIN_AGE 3600
-#define OCSP_DEFAULT_CACHE_MAX_AGE 24 * 3600
-#define OCSP_DEFAULT_TIMEOUT 2
+#define OCSP_DEFAULT_CACHE_SIZE "1000"
+#define OCSP_DEFAULT_CACHE_MIN_AGE "1h"
+#define OCSP_DEFAULT_CACHE_MAX_AGE "1d"
+#define OCSP_DEFAULT_TIMEOUT "2s"
 
 enum global_ikev1_policy {
 	GLOBAL_IKEv1_ACCEPT = 0,
@@ -182,15 +165,14 @@ enum global_timer {
 #define GLOBAL_TIMER_FLOOR 0
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
-	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
 
 	EVENT_FREE_ROOT_CERTS,
-#define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
+#define FREE_ROOT_CERTS_TIMEOUT		deltatime_from_seconds(5 * secs_per_minute)
 
 	EVENT_RESET_LOG_LIMITER,	/* set rate limited log message count back to 0 */
-#define RESET_LOG_LIMITER_FREQUENCY	deltatime(secs_per_hour)
+#define RESET_LOG_LIMITER_FREQUENCY	deltatime_from_seconds(secs_per_hour)
 
 #define GLOBAL_TIMER_ROOF (EVENT_RESET_LOG_LIMITER+1)
 };
@@ -201,8 +183,9 @@ enum global_timer {
 
 enum connection_event_kind {
 	CONNECTION_REVIVAL = 1,
+	CONNECTION_CHECK_DDNS,
 };
-#define CONNECTION_EVENT_KIND_ROOF (CONNECTION_REVIVAL+1)
+#define CONNECTION_EVENT_ROOF (CONNECTION_CHECK_DDNS+1)
 
 extern const struct enum_names connection_event_kind_names;
 
@@ -258,11 +241,11 @@ enum event_type {
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
-#define RTM_NEWADDR_ROUTE_DELAY		deltatime(3) /* seconds */
+#define RTM_NEWADDR_ROUTE_DELAY		deltatime_from_seconds(3) /* seconds */
 
-#define PARENT_MIN_LIFE_DELAY		deltatime(1) /* second */
-#define EXPIRE_OLD_SA_DELAY		deltatime(1) /* second */
-#define REPLACE_ORPHAN_DELAY		deltatime(1) /* second */
+#define PARENT_MIN_LIFE_DELAY		deltatime_from_seconds(1) /* second */
+#define EXPIRE_OLD_SA_DELAY		deltatime_from_seconds(1) /* second */
+#define REPLACE_ORPHAN_DELAY		deltatime_from_seconds(1) /* second */
 
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
@@ -274,11 +257,11 @@ enum event_type {
 #ifndef RETRANSMIT_INTERVAL_DEFAULT_MS
 # define RETRANSMIT_INTERVAL_DEFAULT_MS	500 /* wait time doubled each retransmit - in milliseconds */
 #endif
-#define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
-#define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
+#define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
+#define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
 
-#define REVIVE_CONN_DELAY	deltatime(5) /* seconds */
-#define REVIVE_CONN_DELAY_MAX   deltatime(300) /* Do not delay more than 5 minutes per attempt */
+#define REVIVE_CONN_DELAY	deltatime_from_seconds(5) /* seconds */
+#define REVIVE_CONN_DELAY_MAX   deltatime_from_seconds(300) /* Do not delay more than 5 minutes per attempt */
 
 /*
  * status for state-transition-function
@@ -348,7 +331,7 @@ typedef enum {
  */
 #define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
 
-#define EXCHANGE_TIMEOUT_DELAY	   	deltatime(200) /* seconds before giving up on an exchange */
+#define EXCHANGE_TIMEOUT_DELAY	   	deltatime_from_seconds(200) /* seconds before giving up on an exchange */
 
 #define MAXIMUM_INVALID_KE_RETRANS 3
 
@@ -361,8 +344,8 @@ typedef enum {
 #define MAX_IKE_FRAGMENTS       32 /* Windows has been observed to send 29 fragments :/ */
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
-#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
-#define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
+#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA "50000" /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_THRESHOLD "25000" /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 128 /* for Linux, requires 2.6.39+ */
 
@@ -836,7 +819,6 @@ enum type_options {
 	KS_TRANSPORT,
 	KS_PASSTHROUGH,
 	KS_DROP,
-	KS_REJECT,
 };
 
 extern const struct sparse_names type_option_names;
@@ -959,10 +941,16 @@ extern void init_pluto_constants(void);
  */
 
 /* time between scans of eroutes */
-#define DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS (2*10)
+#define DEFAULT_EXPIRE_SHUNT_INTERVAL "20s"
 #define MAX_EXPIRE_SHUNT_INTERVAL_SECONDS 1000
 
-#define DEFAULT_SHUNT_LIFETIME_SECONDS (15 * secs_per_minute)
+#define DEFAULT_SHUNT_LIFETIME "15m"
+
+/* DDNS
+ *
+ * Time before retrying DDNS host lookup for phase 1.
+ */
+#define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
  * By default messages are broadcast (to both log files and whack),
@@ -977,32 +965,28 @@ extern void init_pluto_constants(void);
  * to get the definition of "enum stream".
  */
 
-#define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
-#define STREAM_MASK          0x0f00000
-
 enum stream {
-	/*                                 syslog()                      */
-	/*                                Severity  Whack  Tools  Prefix */
-	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <prefix> */
-	RC_LOG = 2,
-	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <prefix> */
-	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <prefix> */
-	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    "| " [ <prefix> ] */
-	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    "ERROR: " <prefix>   */
-	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    "EXPECTATION FAILED: " <prefix> */
-	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    "ABORT: ASSERTION_FAILED: " <prefix> */
-	FATAL_STREAM       = 0x0700000, /*   ERR     yes    err    "FATAL ERROR: " <prefix> */
-	PRINTF_STREAM      = 0x0800000, /*   N/A    stdout stdout  */
-	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
-	/*
-	 * <o>: add prefix when object is available
-	 *
-	 * | <o>: add both "| " and prefix when object is available and
-         * feature is enabled
-	 *
-	 * err?: write to stderr when enabled (tests log_to_stderr,
-	 * typically via -v).  Used by tools such as whack.
-	 */
+	/*                 syslog()   To                      */
+	/*                 Severity   Whack  Tools     Format */
+
+	NO_STREAM,	/*    -       -      -         */
+	DEBUG_STREAM,	/*  DEBUG     no     stderr    | [<prefix>] */
+
+	ALL_STREAMS,	/*  WARNING   yes    stderr?   <prefix> ... */
+#define RC_LOG ALL_STREAMS
+	LOG_STREAM,	/*  WARNING   no     stderr?   <prefix> ... */
+
+	IMPAIR_STREAM,	/*  WARNING   yes    stderr    IMPAIR: <prefix>   */
+	WARNING_STREAM,	/*  WARNING   yes    stderr    warning: <prefix>   */
+
+	ERROR_STREAM,	/*  ERR       yes    stderr    ERROR: <prefix>   */
+	PEXPECT_STREAM,	/*  ERR       yes    stderr    EXPECTATION FAILED: <prefix> ... */
+
+	FATAL_STREAM,	/*  ERR       yes    stderr    FATAL ERROR: <prefix> ... */
+	PASSERT_STREAM,	/*  ERR       yes    stderr    ABORT: ASSERTION_FAILED: <prefix> ... */
+
+	WHACK_STREAM,	/*  N/A       yes    stdout    <prefix> ...*/
+	PRINTF_STREAM,	/*  N/A       yes    stdout    */
 };
 
 #endif

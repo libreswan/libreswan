@@ -22,6 +22,9 @@ import subprocess
 import argparse
 from datetime import datetime
 from concurrent import futures
+from pathlib import Path
+
+from fab.datautil import *
 
 from fab import jsonutil
 from fab import timing
@@ -33,7 +36,7 @@ from fab import post
 from fab import skip
 from fab import ignore
 from fab import publish
-from fab.hosts import GUESTS
+from fab import hosts
 from fab import printer
 from fab import argutil
 
@@ -46,10 +49,8 @@ POST_MORTEM_TIMEOUT = 120
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
-    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
+    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append", type=Path,
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
-    group.add_argument("--parallel", action="store_true",
-                       help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--run-post-mortem", default=None, metavar="Y|N", type=argutil.boolean,
@@ -182,8 +183,8 @@ def executor_qsize_hack(executor):
 
 def _test_domains(logger, test, domains):
 
-    test_domains = dict()
-    unused_domains = set()
+    test_domains = Dict()
+    unused_domains = Set()
     for domain in domains:
         domain.nest(logger, test.name + " ")
         # new test domain
@@ -265,7 +266,7 @@ def _write_guest_prompt(domain, test):
     f.write(test.name)
     f.write("]# ")
 
-def _process_test(domain_prefix, domains, args, result_stats, task, logger):
+def _process_test(domains, args, result_stats, task, logger):
 
     test = task.test
     old_result = None
@@ -518,15 +519,19 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             result_stats.log_progress(logger.info)
 
 
-def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
+def _process_test_queue(domain_prefix, name_prefix,
+                        test_queue, nr_tests,
+                        args, done, result_stats):
     # New (per-thread/process) logger!
-    logger = logutil.getLogger(domain_prefix and domain_prefix or "kvmrunner")
-
+    logger_name = (name_prefix and name_prefix or "kvmrunner")
+    logger = logutil.getLogger(logger_name)
     logger.info("preparing test domains")
 
-    domains = list()
-    for guest in GUESTS:
-        domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
+    domains = List()
+    for guest in hosts.guests():
+        domain = virsh.Domain(logger=logger,
+                              prefix=name_prefix,
+                              guest=guest)
         domains.append(domain)
         domain.destroy()
 
@@ -534,25 +539,33 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     try:
         while True:
             task = test_queue.get(block=False)
-            task_logger = logger.nest(task.test.name + " " + domain_prefix)
-            _process_test(domain_prefix, domains, args,
-                          result_stats, task, task_logger)
+            task_logger_name = task.test.name + (name_prefix and " " + name_prefix or "")
+            task_logger = logger.nest(task_logger_name)
+            _process_test(domains, args, result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
+def _parallel_test_processor(test_queue, nr_tests, args, result_stats, logger):
 
     done = threading.Semaphore(value=0) # block
     threads = []
-    for domain_prefix in domain_prefixes:
-        threads.append(threading.Thread(name=domain_prefix,
+    for domain_prefix in args.prefix:
+        if domain_prefix.is_dir():
+            name_prefix = ""
+        elif domain_prefix.parent.is_dir():
+            name_prefix = domain_prefix.name
+        else:
+            raise Exception(f"invalid prefix {domain_prefix}")
+        thread_name = (name_prefix and name_prefix+"runner" or "runner")
+        threads.append(threading.Thread(name=thread_name,
                                         target=_process_test_queue,
                                         daemon=True,
-                                        args=(domain_prefix, test_queue,
-                                              nr_tests, args, done,
+                                        args=(domain_prefix, name_prefix,
+                                              test_queue, nr_tests,
+                                              args, done,
                                               result_stats)))
         # don't start more threads then needed
         if len(threads) >= nr_tests:
@@ -593,13 +606,5 @@ def run_tests(logger, args, tests, result_stats):
         test_nr += 1
         test_queue.put(Task(test, test_nr, len(tests)), block=False)
 
-    domain_prefixes = args.prefix or [""]
-    if args.parallel or (len(domain_prefixes) > 1 and len(tests) > 1):
-        logger.info("using the parallel test processor and domain prefixes %s to run %d tests", domain_prefixes, len(tests))
-        _parallel_test_processor(domain_prefixes, test_queue, len(tests), args, result_stats, logger)
-    else:
-        domain_prefix = domain_prefixes[0]
-        done = threading.Semaphore(value=0) # block
-        logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-        _process_test_queue(domain_prefix, test_queue, len(tests), args, done, result_stats)
+    _parallel_test_processor(test_queue, len(tests), args, result_stats, logger)
     publish.json_status(logger, args, "finished")

@@ -1,4 +1,13 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/comma,.p12
+ ipsec pk12util -w nss-pw -i real/mainca/comma,.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n comma,
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "comma," [E="user-comma,@testing.libreswan.org",CN="comma,.testing.libreswan.org",OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -42,7 +51,14 @@ west #
 "addconn-leftid=foo-at-bar": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn-leftid=foo
-"addconn-leftid=foo": failed to add connection: leftid=foo invalid, not a numeric IPv4 address and name lookup failed (no validation performed)
+"addconn-leftid=foo": failed to add connection: leftid=foo invalid, domain 'foo' has no data: Server Failure (rcode 2)
+west #
+ ipsec add addconn-rightid-x509
+"addconn-rightid-x509": added oriented IKEv2 connection
+west #
+ ipsec add addconn-rightid-x509-comma-comma
+warning: "addconn-rightid-x509-comma-comma": changing legacy ',,' to '\,' in rightid=E=user-comma,,@testing.libreswan.org,CN=comma,,.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+"addconn-rightid-x509-comma-comma": added oriented IKEv2 connection
 west #
  ipsec connectionstatus | grep ' id'
 "addconn":   our idtype: IPV4_ADDR; our id=1.2.3.4; their idtype: IPV4_ADDR; their id=5.6.7.8
@@ -57,4 +73,6 @@ west #
 "addconn-leftid=at-tilda-hex":   our idtype: DER_ASN1_DN; our id=0x1234ABCD; their idtype: IPV4_ADDR; their id=5.6.7.8
 "addconn-leftid=foo-at-bar":   our idtype: USER_FQDN; our id=foo@foo; their idtype: IPV4_ADDR; their id=5.6.7.8
 "addconn-leftid=ipv4":   our idtype: IPV4_ADDR; our id=1.2.3.4; their idtype: IPV4_ADDR; their id=5.6.7.8
+"addconn-rightid-x509":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=comma\,.testing.libreswan.org, E=user-comma\,@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=E=user-comma\,@testing.libreswan.org, CN=comma\,.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA
+"addconn-rightid-x509-comma-comma":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=comma\,.testing.libreswan.org, E=user-comma\,@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=E=user-comma\,@testing.libreswan.org, CN=comma\,.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA
 west #

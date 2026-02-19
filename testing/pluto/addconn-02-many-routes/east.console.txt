@@ -23,7 +23,7 @@ east #
 opening file: /etc/ipsec.conf
 loading conns matching test:
   sending to pluto
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

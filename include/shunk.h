@@ -55,10 +55,14 @@ extern const shunk_t empty_shunk;
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, size_t len);
 
-#define HUNK_AS_SHUNK(HUNK)			\
-	({					\
-		typeof(HUNK) *h_ = &(HUNK);	\
-		shunk2(h_->ptr, h_->len);	\
+#define HUNK_AS_SHUNK(HUNK)						\
+	({								\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evalutate once; no paren */ \
+		shunk_t s_ = {						\
+			.ptr = (h_ == NULL ? NULL : h_->ptr),		\
+			.len = (h_ == NULL ? 0 : h_->len),		\
+		};							\
+		s_;							\
 	})
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
@@ -136,6 +140,30 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delim, where_t here);
  * NULL_SHUNK so the next call returns the NULL_SHUNK.
  */
 shunk_t shunk_span(shunk_t *input, const char *accept);
+
+/*
+ * Return hunk[FLOOR..ROOF) as a read-only shunk_t.
+ *
+ * For instance:
+ *
+ *    hunk_slice(s, 1, s.len);
+ *
+ * drops the first character.
+ */
+
+#define shunk_slice(HUNK, FLOOR, ROOF)			\
+	({						\
+		size_t _floor = FLOOR;			\
+		size_t _roof = ROOF;			\
+		typeof(HUNK) *_hunk = &(HUNK); /* don't copy */	\
+		passert(_floor <= _roof);		\
+		passert(_roof <= _hunk->len);		\
+		shunk_t _slice = {			\
+			_hunk->ptr + _floor,		\
+			.len = _roof - _floor,		\
+		};					\
+		_slice;					\
+	})
 
 /*
  * Number conversion; loosely based on strtoul(START, END, BASE).

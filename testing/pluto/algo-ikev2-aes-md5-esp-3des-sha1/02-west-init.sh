@@ -1,1 +1,0 @@
-../../guestbin/algo.sh

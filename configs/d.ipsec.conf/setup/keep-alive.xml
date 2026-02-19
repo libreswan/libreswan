@@ -1,0 +1,13 @@
+<varlistentry id='setup.keep-alive'>
+  <term>
+    <option>keep-alive=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      The delay (in seconds) for NAT-T keep-alive packets, if these
+      are enabled using <option>nat-keepalive</option>
+      This parameter may eventually become per-connection.
+    </para>
+  </listitem>
+</varlistentry>
+

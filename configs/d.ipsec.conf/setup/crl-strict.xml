@@ -1,0 +1,23 @@
+<varlistentry id='setup.crl-strict'>
+  <term>
+    <option>crl-strict=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      if not set, &pluto; is tolerant about missing or expired &X.509;
+      Certificate Revocation Lists (CRL's), and will allow peer
+      certificates as long as they do not appear on an expired CRL.
+      When this option is enabled, all connections with an expired or
+      missing CRL will be denied.  Active connections will be
+      terminated at rekey time.  This setup is more secure, but
+      vulnerable to downtime if the CRL expires.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+    <para>
+      Prior to &Libreswan; version 3.16, this option was called
+      <option>strictcrlpolicy</option>.
+    </para>
+  </listitem>
+</varlistentry>

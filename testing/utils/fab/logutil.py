@@ -42,6 +42,8 @@ import threading
 import os
 from datetime import datetime
 
+from fab.datautil import *
+
 from fab import argutil
 from fab import timing
 
@@ -142,7 +144,7 @@ class DebugHandler(logging.Handler):
 
     def __init__(self):
         logging.Handler.__init__(self)
-        self.stream_handlers = list()
+        self.stream_handlers = List()
         self.setLevel(NONE)
         self.setFormatter(_DEBUG_FORMATTER)
 

@@ -17,7 +17,7 @@ east #
  # beware the groundhog!
 east #
  ipsec add east
-"east": added IKEv1 connection
+"east": added oriented IKEv1 connection
 east #
  ipsec checkpubkeys
 east #

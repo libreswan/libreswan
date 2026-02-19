@@ -87,13 +87,17 @@ static void check_ttodeltatime(void)
 		{ "0.1ms", (uintmax_t)      100,            TIMESCALE_SECONDS, true, },
 		{ "0.5m",  (uintmax_t)  30*1000*1000,       TIMESCALE_SECONDS, true, },
 
+		/* human */
+		{ "1seconds", (uintmax_t)1*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+		{ "2 second", (uintmax_t)2*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+		{ "1 ",       (uintmax_t)1*1000,            TIMESCALE_MILLISECONDS, true, },
+		{ "1 s",      (uintmax_t)1*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+
 		/* error */
 		{ "",    (uintmax_t)0,                      TIMESCALE_SECONDS, false, },
 		{ "1x",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "x1",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "1mm", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
-		{ "1seconds", (uintmax_t)0,                 TIMESCALE_MILLISECONDS, false, },
-		{ "1 s", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "0x10", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
 		{ "0.1",  (uintmax_t)0,                     TIMESCALE_MICROSECONDS, false, },
 		{ "0.1x", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
@@ -102,32 +106,48 @@ static void check_ttodeltatime(void)
 	};
 
 	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {
-		const struct test_ttodeltatime *t = &test_ttodeltatime[i];
-		fprintf(stdout, "ttodeltatime(%s, "PRI_SCALE") ok=%s\n",
-			t->str, pri_timescale(t->timescale), bool_str(t->ok));
-		deltatime_t d;
-		diag_t diag = ttodeltatime(shunk1(t->str), &d, t->timescale);
-		if (t->ok) {
-			if (diag != NULL) {
-				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly returned: %s\n",
-					t->str, pri_timescale(t->timescale), str_diag(diag));
+		for (unsigned pass = 1; pass <= 2; pass++) {
+			const struct test_ttodeltatime *t = &test_ttodeltatime[i];
+
+			if (pass == 2 && t->timescale != TIMESCALE_SECONDS) {
+				continue;
+			}
+
+			fprintf(stdout, "ttodeltatime%s(%s, "PRI_SCALE") = %juus ok=%s\n",
+				(pass == 1 ? "scale" : ""),
+				t->str,
+				pri_timescale(t->timescale),
+				t->us,
+				bool_str(t->ok));
+
+
+			deltatime_t d;
+			diag_t diag = (pass == 2 ? ttodeltatime(shunk1(t->str), &d) :
+				       ttodeltatimescale(shunk1(t->str), &d, t->timescale));
+
+			if (t->ok) {
+				if (diag != NULL) {
+					fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly returned: %s\n",
+						t->str, pri_timescale(t->timescale), str_diag(diag));
+					fails++;
+					return;
+				}
+			} else if (diag == NULL) {
+				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly succeeded\n",
+					t->str, pri_timescale(t->timescale));
+				fails++;
+				return;
+			} else {
+				pfree_diag(&diag);
+			}
+
+			intmax_t microseconds = microseconds_from_deltatime(d);
+			if (microseconds != t->us) {
+				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, expecting %jd\n",
+					t->str, pri_timescale(t->timescale), microseconds, t->us);
 				fails++;
 				return;
 			}
-		} else if (diag == NULL) {
-			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly succeeded\n",
-				t->str, pri_timescale(t->timescale));
-			fails++;
-			return;
-		} else {
-			pfree_diag(&diag);
-		}
-		intmax_t microseconds = microseconds_from_deltatime(d);
-		if (microseconds != t->us) {
-			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, expecting %jd\n",
-				t->str, pri_timescale(t->timescale), microseconds, t->us);
-			fails++;
-			return;
 		}
 	}
 

@@ -1,0 +1,20 @@
+<varlistentry id='conn.dpddelay'>
+  <term>
+    <option>dpddelay=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      Set the delay (in time units, defaults to seconds) between
+      IKEv1's Dead Peer Detection or IKEv2's Liveness keepalives that
+      are sent for this connection.  Set to enable checking.
+    </para>
+    <para>
+      The default is <option>0</option> meaning disabled.
+    </para>
+    <para>
+      If <option>dpddelay</option> is set, you might need to adjust
+      <option>retransmit-timeout</option> for IKEv2 and you must set
+      <option>dpdtimeout</option> for IKEv1.
+    </para>
+  </listitem>
+</varlistentry>

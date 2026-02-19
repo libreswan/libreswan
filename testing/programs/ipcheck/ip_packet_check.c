@@ -44,10 +44,10 @@ void ip_packet_check(void)
 		{ LN, &ipv6_info, &ip_protocol_tcp, "::1", 0, "::2", 65535, "[::1]-TCP->[::2]:65535", },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("[%s]:%d %s [%s]:%d => %s",
 		      t->sa, t->sp, t->protocol->name, t->da, t->dp, t->str);
 
@@ -57,17 +57,17 @@ void ip_packet_check(void)
 		ip_port dst_port = ip_hport(t->dp);
 
 		ip_address src_address;
-		oops = ttoaddress_num(shunk1(t->sa), afi, &src_address);
-		if (oops != NULL) {
+		d = ttoaddress_num(shunk1(t->sa), afi, &src_address);
+		if (d != NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttoaddress failed: %s", oops);
+			FAIL("ttoaddress failed: %s", str_diag(d));
 		}
 
 		ip_address dst_address;
-		oops = ttoaddress_num(shunk1(t->da), afi, &dst_address);
-		if (oops != NULL) {
+		d = ttoaddress_num(shunk1(t->da), afi, &dst_address);
+		if (d != NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttoendpoint failed: %s", oops);
+			FAIL("ttoendpoint failed: %s", str_diag(d));
 		}
 
 		ip_packet packet = packet_from_raw(HERE,

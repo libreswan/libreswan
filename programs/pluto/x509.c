@@ -184,16 +184,11 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
 
 bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 {
-	if (verbose.stream != NO_STREAM) {
-		dn_buf abuf;
-		llog(verbose.stream, verbose.logger,
-		     PRI_VERBOSE"trustee A = '%s'",
-		     pri_verbose, str_dn(a, &abuf));
-		dn_buf bbuf;
-		llog(verbose.stream, verbose.logger,
-		     PRI_VERBOSE"trustor B = '%s'",
-		     pri_verbose, str_dn(b, &bbuf));
-	}
+	dn_buf abuf;
+	verbose("trustee A = '%s'", str_dn(a, &abuf));
+	dn_buf bbuf;
+	verbose("trustor B = '%s'", str_dn(b, &bbuf));
+
 	verbose.level++;
 
 	/* no CA b specified => any CA a is accepted */
@@ -211,7 +206,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 	*pathlen = 0;
 
 	/* CA a equals CA b => we have a match */
-	if (same_dn(a, b)) {
+	if (same_dn(a, b, verbose)) {
 		return true;
 	}
 
@@ -222,7 +217,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	vassert(handle != NULL);
 
 	/* CA a might be a subordinate CA of b */
 
@@ -240,7 +235,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 
 		/* does the issuer of CA a match CA b? */
 		asn1_t i_dn = same_secitem_as_shunk(cacert->derIssuer);
-		match = same_dn(i_dn, b);
+		match = same_dn(i_dn, b, verbose);
 
 		if (match) {
 			/* we have a match: exit the loop */
@@ -254,8 +249,8 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 		cacert = NULL;
 	}
 
-	dbg("%s: returning %s at pathlen %d",
-	    __func__, match ? "trusted" : "untrusted", *pathlen);
+	vdbg("%s: returning %s at pathlen %d",
+	     __func__, match ? "trusted" : "untrusted", *pathlen);
 
 	if (cacert != NULL) {
 		CERT_DestroyCertificate(cacert);
@@ -266,6 +261,8 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 generalName_t *collect_rw_ca_candidates(ip_address local_address,
 					enum ike_version ike_version)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	generalName_t *top = NULL;
 	/* i.e., from anywhere to here - a host-pair search */
 	struct connection_filter hpf = {
@@ -286,8 +283,8 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 #if 0
 		/* REMOTE==%any so d can never be an instance */
 		if (instance(d) && d->remote->host.id.kind == ID_NULL) {
-			dbg("skipping unauthenticated %s with ID_NULL",
-			    d->name);
+			ldbg(logger, "skipping unauthenticated %s with ID_NULL",
+			     d->name);
 			continue;
 		}
 #endif
@@ -313,7 +310,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 				top = gn;
 				break;
 			}
-			if (same_dn(ASN1(gn->name), ASN1(d->remote->host.config->ca))) {
+			if (same_dn(ASN1(gn->name), ASN1(d->remote->host.config->ca), verbose)) {
 				/* D's CA already in list */
 				break;
 			}
@@ -325,7 +322,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 /*
  *  Converts a X.500 generalName into an ID
  */
-static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger)
+static void gntoid(struct id *id, const generalName_t *gn, const struct logger *logger)
 {
 	*id = empty_id; /* aka ID_NONE */
 
@@ -344,8 +341,8 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 			}
 		}
 		if (afi == NULL) {
-			llog(RC_LOG, logger,
-			     "warning: invalid IP_ADDRESS general name: %zu byte length is not valid",
+			llog(WARNING_STREAM, logger,
+			     "invalid IP_ADDRESS general name: %zu byte length is not valid",
 			     gn->name.len);
 			PEXPECT(logger, id->kind == ID_NONE);
 			return;
@@ -358,7 +355,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		ip_address addr;
 		diag_t diag = hunk_to_address(gn->name, afi, &addr);
 		if (diag != NULL) {
-			llog(RC_LOG, logger, "warning: invalid IP_ADDRESS general name: %s",
+			llog(WARNING_STREAM, logger, "invalid IP_ADDRESS general name: %s",
 			     str_diag(diag));
 			pfree_diag(&diag);
 			PEXPECT(logger, id->kind == ID_NONE);
@@ -385,10 +382,12 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 }
 
 /*
- * Convert all CERTCertificate general names to a list of pluto generalName_t
- * Results go in *gn_out.
+ * Convert all CERTCertificate general names to a list of pluto
+ * generalName_t
  */
-static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out, PRArenaPool *arena)
+static generalName_t *get_pluto_gn_from_nss_cert(CERTCertificate *cert,
+						 PRArenaPool *arena,
+						 const struct logger *logger)
 {
 	generalName_t *pgn_list = NULL;
 	CERTGeneralName *first_nss_gn = CERT_GetCertificateNames(cert, arena);
@@ -400,7 +399,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 			generalName_t *pluto_gn =
 				alloc_thing(generalName_t,
 					    "get_pluto_gn_from_nss_cert: converted gn");
-			dbg("%s: allocated pluto_gn %p", __func__, pluto_gn);
+			ldbg(logger, "%s: allocated pluto_gn %p", __func__, pluto_gn);
 			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
@@ -411,17 +410,16 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 		} while (cur_nss_gn != first_nss_gn);
 	}
 
-	*gn_out = pgn_list;
+	return pgn_list;
 }
 
 static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 				 CERTCertificate *cert,
-				 struct logger *logger)
+				 const struct logger *logger)
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 
-	generalName_t *gnt;
-	get_pluto_gn_from_nss_cert(cert, &gnt, arena);
+	generalName_t *gnt = get_pluto_gn_from_nss_cert(cert, arena, logger);
 
 	for (generalName_t *gn = gnt; gn != NULL; gn = gn->next) {
 		struct id id;
@@ -433,7 +431,7 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 			if (d != NULL) {
 				llog(RC_LOG, logger, "%s", str_diag(d));
 				pfree_diag(&d);
-				passert(pk == NULL);
+				PASSERT(logger, pk == NULL);
 				return;
 			}
 			replace_pubkey(pk, pubkey_db);
@@ -456,7 +454,7 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
  */
 bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			      const struct id *keyid, CERTCertificate *cert,
-			      struct logger *logger)
+			      const struct logger *logger)
 {
 	/*
 	 * Create a pubkey with ID set to the subject and add it.
@@ -531,7 +529,8 @@ void free_auth_chain(chunk_t *chain, int chain_len)
 
 int get_auth_chain(chunk_t *out_chain, int chain_max,
 		   const struct cert *cert,
-		   enum send_ca_policy send_policy)
+		   enum send_ca_policy send_policy,
+		   struct logger *logger)
 {
 	if (cert == NULL) {
 		return 0;
@@ -549,7 +548,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 
 	switch (send_policy) {
 
@@ -662,7 +661,8 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_verify_subject_alt_name("peer", end_cert, peer_id);
+		return cert_verify_subject_alt_name("peer", end_cert, peer_id,
+						    logger);
 	}
 
 	case ID_FROMCERT:
@@ -840,6 +840,7 @@ static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 
 static void show_cert_detail(struct show *s, CERTCertificate *cert)
 {
+	struct logger *logger = show_logger(s);
 	bool is_CA = CERT_IsCACert(cert, NULL);
 	bool is_root = cert->isRoot;
 	SECKEYPublicKey *pub_k = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
@@ -849,7 +850,7 @@ static void show_cert_detail(struct show *s, CERTCertificate *cert)
 
 	bool has_priv = cert_has_private_key(cert, show_logger(s));
 
-	if (!pexpect(pub_k != NULL))
+	if (PBAD(logger, pub_k == NULL))
 		return;
 
 	KeyType pub_k_t = SECKEY_GetPublicKeyType(pub_k);
@@ -940,6 +941,8 @@ static void crl_detail_to_whacklog(struct show *s, CERTCrl *crl)
 
 static void crl_detail_list(struct show *s)
 {
+	struct logger *logger = show_logger(s);
+
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -947,7 +950,7 @@ static void crl_detail_list(struct show *s)
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 
 	show_blank(s);
 	show(s, "List of CRLs:");
@@ -964,7 +967,7 @@ static void crl_detail_list(struct show *s)
 			crl_detail_to_whacklog(s, &crl_node->crl->crl);
 		}
 	}
-	dbg("releasing crl list in %s", __func__);
+	ldbg(logger, "releasing crl list in %s", __func__);
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 
@@ -1026,8 +1029,8 @@ const char *cert_nickname(const cert_t *cert)
 	return cert != NULL && cert->nss_cert != NULL ? cert->nss_cert->nickname : NULL;
 }
 
-void whack_purgeocsp(const struct whack_message *wm UNUSED, struct show *s UNUSED)
+void whack_purgeocsp(const struct whack_message *wm UNUSED, struct show *s)
 {
-	dbg("calling NSS to clear OCSP cache");
+	ldbg(show_logger(s), "calling NSS to clear OCSP cache");
 	(void)CERT_ClearOCSPCache();
 }

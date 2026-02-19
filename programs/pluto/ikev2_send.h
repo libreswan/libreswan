@@ -22,7 +22,7 @@
 #include "connections.h"
 
 struct msg_digest;
-struct dh_desc;
+struct kem_desc;
 struct ike_sa;
 struct child_sa;
 enum payload_security;
@@ -77,11 +77,10 @@ struct v2_incoming_fragments {
 	struct v2_incoming_fragment frags[MAX_IKE_FRAGMENTS + 1];
 };
 
-struct v2_outgoing_fragment {
-	struct v2_outgoing_fragment *next;
-	/* hunk like */
-	size_t len;
-	uint8_t ptr[]; /* can be bigger */
+struct v2_outgoing_fragments {
+	const char *story;
+	unsigned len;
+	chunk_t item[];
 };
 
 /*
@@ -89,8 +88,7 @@ struct v2_outgoing_fragment {
  * authenticated)?
  */
 
-bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
-			      struct v2_outgoing_fragment *frags);
+bool send_recorded_v2_message(struct ike_sa *ike, struct v2_outgoing_fragments *frags);
 
 struct emit_v2_response_context;
 typedef bool emit_v2_response_fn(struct pbs_out *pbs, struct emit_v2_response_context *context);
@@ -99,16 +97,19 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 			      emit_v2_response_fn *emit_v2_response,
 			      struct emit_v2_response_context *context);
 
-void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what,
-				 struct v2_outgoing_fragment **frags);
-void record_v2_message(struct pbs_out *msg,
-		       const char *what,
-		       struct v2_outgoing_fragment **outgoing_fragments);
+void record_v2_outgoing_message(shunk_t message,
+				struct v2_outgoing_fragments **fragments,
+				struct logger *logger,
+				const char *story);
 
 void free_v2_message_queues(struct state *st);
 void free_v2_incoming_fragments(struct v2_incoming_fragments **frags);
-void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
+
+void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **frags,
+				   struct logger *logger,
+				   unsigned nfrags,
+				   const char *story);
+void free_v2_outgoing_fragments(struct v2_outgoing_fragments **frags, struct logger *logger);
 
 /*
  * Emit an IKEv2 payload.

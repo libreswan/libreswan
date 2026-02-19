@@ -19,29 +19,31 @@
 #define ADDRESSPOOL_H
 
 #include "err.h"
-#include "ip_range.h"
+#include "ip_pool.h"
 #include "ip_address.h"
 
 struct addresspool;        /* abstract object */
 
-diag_t install_addresspool(const ip_range pool_range,
+diag_t install_addresspool(const ip_pool pool_range,
 			   struct addresspool *addresspool[],
 			   struct logger *logger) MUST_USE_RESULT;
 
 void addresspool_delref(struct addresspool **pool, struct logger *logger);
 struct addresspool *addresspool_addref(struct addresspool *pool);
 
-diag_t assign_remote_lease(struct connection *c,
-			   const char *xauth_username/*possibly-NULL|NUL*/,
-			   const struct ip_info *afi,
-			   const ip_address preferred_address,
-			   ip_address *assigned_address,
-			   struct logger *logger);
+diag_t assign_remote_ikev1_lease(struct connection *c,
+				 const char *xauth_username/*possibly-NULL|NUL*/,
+				 const struct ip_info *afi,
+				 const ip_address preferred_address,
+				 struct verbose verbose);
+diag_t assign_remote_ikev2_lease(struct connection *c,
+				 const struct ip_info *afi,
+				 struct logger *logger);
 
 extern void free_that_address_lease(struct connection *c, const struct ip_info *afi,
 				    struct logger *logger);
 
-ip_range addresspool_range(struct addresspool *pool);
+ip_pool addresspool_pool(struct addresspool *pool);
 
 void whack_addresspoolstatus(const struct whack_message *wm, struct show *s);
 

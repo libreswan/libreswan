@@ -86,7 +86,7 @@ void replace_connection_that_id(struct connection *c, const struct id *src)
 
 static hash_t hash_connection_clonedfrom(struct connection *const *cpp)
 {
-	so_serial_t serial = (*cpp == NULL ? 0 : (*cpp)->serialno);
+	co_serial_t serial = (*cpp == NULL ? COS_NOBODY : (*cpp)->serialno);
 	return hash_thing(serial, zero_hash);
 }
 
@@ -115,7 +115,7 @@ static hash_t hash_host_pair(const ip_address *local,
 static hash_t hash_connection_host_pair(const struct connection *c)
 {
 	address_buf lb, rb;
-	pdbg(c->logger, "%s->%s oriented=%s",
+	ldbg(c->logger, "hashing %s->%s oriented=%s",
 	     str_address(&c->local->host.addr, &lb),
 	     str_address(&c->remote->host.addr, &rb),
 	     bool_str(oriented(c)));
@@ -368,9 +368,9 @@ bool all_connections(struct connection_filter *filter)
 			struct connection_filter iterator = *filter;
 			unsigned i = 0;
 			while (next_connection(&iterator)) {
-				vassert(refcnt_peek(iterator.c) >= 1);
+				vassert(refcnt_peek(iterator.c, verbose.logger) >= 1);
 				connections[i++] = connection_addref(iterator.c, verbose.logger);
-				vassert(refcnt_peek(iterator.c) > 1);
+				vassert(refcnt_peek(iterator.c, verbose.logger) > 1);
 			}
 			vassert(i == count);
 			vassert(connections[i] == NULL);
@@ -385,7 +385,7 @@ bool all_connections(struct connection_filter *filter)
 	 * XXX: refcnt_peek() returns 0 for NULL.
 	 */
 
-	while (refcnt_peek(filter->connections[filter->count]) == 1) {
+	while (refcnt_peek(filter->connections[filter->count], verbose.logger) == 1) {
 		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 	}
@@ -395,7 +395,7 @@ bool all_connections(struct connection_filter *filter)
 	 */
 	filter->c = filter->connections[filter->count];
 	if (filter->c != NULL) {
-		vassert(refcnt_peek(filter->c) > 1);
+		vassert(refcnt_peek(filter->c, verbose.logger) > 1);
 		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 		return true;

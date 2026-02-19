@@ -52,7 +52,6 @@ extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
 extern enum_names oakley_auth_names;
-extern enum_names oakley_group_names;
 extern enum_names v1_notification_names;
 
 /* IKEv2 */
@@ -61,11 +60,9 @@ extern enum_names ikev2_hash_algorithm_names;
 extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_notify_protocol_id_names;	/* NONE=0, 1=IKE, 2=AH, 3=ESP */
-extern enum_names ikev2_trans_type_names;
 extern enum_names ikev2_trans_type_encr_names;
 extern enum_names ikev2_trans_type_prf_names;
 extern enum_names ikev2_trans_type_integ_names;
-extern enum_names ikev2_trans_type_esn_names;
 extern enum_names ikev2_trans_attr_descs;
 extern enum_enum_names v2_transform_ID_enums;
 extern enum_names ikev2_cert_type_names;

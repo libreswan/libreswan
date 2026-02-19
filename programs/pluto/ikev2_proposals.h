@@ -37,12 +37,12 @@ void llog_v2_proposals(enum stream stream, const struct logger *logger,
  * and returning the "first" local proposal to match.
  *
  * The need to load all the remote proposals into buffers is avoided
- * by processing them in a single pass.  This is a tradeoff.  Since each
- * remote proposal in turn is compared against all local proposals
- * (and not each local proposal in turn compared against all remote
- * proposals) a local proposal matching only the last remote proposal
- * takes more comparisons.  On the other hand, mallocing and pointer
- * juggling is avoided.
+ * by processing them in a single pass.  This is a tradeoff.  Since
+ * each remote proposal in turn is compared against all local
+ * proposals (and not each local proposal in turn compared against all
+ * remote proposals) a local proposal matching only the last remote
+ * proposal takes more comparisons.  On the other hand, mallocing and
+ * pointer juggling is avoided.
  */
 
 v2_notification_t process_v2SA_payload(const char *what,
@@ -106,18 +106,18 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
  * Return the first valid DH proposal that is supported.
  */
 
-const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
-					      struct verbose verbose);
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct verbose verbose);
+const struct kem_desc *ikev2_proposal_first_kem(const struct ikev2_proposal *proposal,
+						struct verbose verbose);
+const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *proposals,
+						 struct verbose verbose);
 
 /*
- * Is the modp group in the proposal set?
+ * Is the Key Exchange Method in the proposal set?
  *
  * It's the caller's problem to check that it is actually supported.
  */
-bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
-				  oakley_group_t modp);
+bool ikev2_proposals_include_kem(const struct ikev2_proposals *proposals,
+				 enum ikev2_trans_type_kem kem);
 
 void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ike_proposal,
 					ike_spi_t *cookie);
@@ -126,7 +126,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 				 enum ikev2_trans_type_encr sr_encr,
 				 enum ikev2_trans_type_prf sr_prf,
 				 enum ikev2_trans_type_integ sr_integ,
-				 enum ike_trans_type_dh sr_dh,
+				 enum ikev2_trans_type_kem sr_kem,
 				 unsigned sr_enc_keylen);
 
 #endif

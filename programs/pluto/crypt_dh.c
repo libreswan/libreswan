@@ -46,6 +46,7 @@
 #include "defs.h"
 #include "demux.h"
 #include "crypto.h"
+#include "crypt_kem.h"
 #include "rnd.h"
 #include "state.h"
 #include "connections.h"
@@ -56,35 +57,78 @@
 #include "id.h"
 #include "keys.h"
 #include "crypt_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 #include <pk11pub.h>
 #include <keyhi.h>
 #include "lswnss.h"
+#include "sa_role.h"
 
 struct dh_local_secret {
-	refcnt_t refcnt;
-	const struct dh_desc *group;
-	SECKEYPrivateKey *privk;
-	SECKEYPublicKey *pubk;
+	refcnt_t refcnt;	/* must be first */
+	const struct kem_desc *kem;
+	SECKEYPrivateKey *private_key;
+	SECKEYPublicKey *public_key;
+	PK11SymKey *shared_key;
+	shunk_t ke;
+	chunk_t responder_ke;
+	enum sa_role role;
 };
 
 static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secret)
 {
-	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
+	jam(buf, "DH secret %s@%p: ", secret->kem->common.fqn, secret);
 }
 
-struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger)
+struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *kem,
+					     enum sa_role role,
+					     shunk_t initiator_ke,
+					     struct logger *logger)
 {
-	SECKEYPrivateKey *privk;
-	SECKEYPublicKey *pubk;
-	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
-	passert(privk != NULL);
-	passert(pubk != NULL);
+	SECKEYPrivateKey *private_key;
+	SECKEYPublicKey *public_key;
+        PK11SymKey *shared_key;
+	shunk_t ke;
+	chunk_t responder_ke;
+	if (role == SA_RESPONDER &&
+	    kem->kem_ops->kem_encapsulate != NULL) {
+		ldbgf(DBG_CRYPT, logger, "responder kem_encapsulate(initator_ke.len=%zu)",
+		      initiator_ke.len);
+		if (PBAD(logger, initiator_ke.len == 0)) {
+			return NULL;
+		}
+		diag_t d = kem->kem_ops->kem_encapsulate(kem,
+							 initiator_ke,
+							 &shared_key,
+							 &responder_ke,
+							 logger);
+		if (d != NULL) {
+			llog(RC_LOG, logger, "computing responder KE: %s",
+			     str_diag(d));
+			pfree_diag(&d);
+			return NULL;
+		}
+		ke = HUNK_AS_SHUNK(&responder_ke);
+		private_key = NULL;
+		public_key = NULL;
+	} else {
+		if (!kem->kem_ops->calc_local_secret(kem, &private_key, &public_key, logger)) {
+			return NULL;
+		}
+		shared_key = NULL;
+		zero(&responder_ke);
+		passert(private_key != NULL);
+		passert(public_key != NULL);
+		ke = kem->kem_ops->local_secret_ke(kem, public_key);
+	}
 	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, logger, HERE);
-	secret->group = group;
-	secret->privk = privk;
-	secret->pubk = pubk;
+	secret->kem = kem;
+	secret->private_key = private_key;
+	secret->public_key = public_key;
+	secret->shared_key = shared_key;
+	secret->ke = ke;
+	secret->responder_ke = responder_ke;
+	secret->role = role;
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam_dh_local_secret(buf, secret);
 		jam_string(buf, "created");
@@ -94,30 +138,32 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 
 shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 {
-	return local_secret->group->dh_ops->local_secret_ke(local_secret->group,
-							    local_secret->pubk);
+	return local_secret->ke;
 }
 
-const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
+const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 {
-	return local_secret->group;
+	return local_secret->kem;
 }
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(secret, logger, where);
+	return refcnt_addref(secret, logger, where);
 }
 
 void dh_local_secret_delref(struct dh_local_secret **secretp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct dh_local_secret *secret = delref_where(secretp, logger, where);
-	if (secret != NULL) {
-		SECKEY_DestroyPublicKey(secret->pubk);
-		SECKEY_DestroyPrivateKey(secret->privk);
-		pfree(secret);
+	struct dh_local_secret *secret = refcnt_delref(secretp, logger, where);
+	if (secret == NULL) {
+		return;
 	}
+	SECKEY_DestroyPublicKey(secret->public_key);
+	SECKEY_DestroyPrivateKey(secret->private_key);
+	symkey_delref(logger, "shared-key", &secret->shared_key);
+	free_chunk_content(&secret->responder_ke);
+	pfreeany(secret);
 }
 
 struct task {
@@ -142,15 +188,41 @@ static void compute_dh_shared_secret(struct logger *logger,
 {
 
 	struct dh_local_secret *secret = task->local_secret;
-	diag_t diag = secret->group->dh_ops->calc_shared_secret(secret->group,
-								secret->privk,
-								secret->pubk,
-								task->remote_ke,
-								&task->shared_secret,
-								logger);
-	if (diag != NULL) {
-		llog(RC_LOG, logger, "%s", str_diag(diag));
-		pfree_diag(&diag);
+	const struct kem_desc *kem = secret->kem;
+	diag_t d = NULL;
+	if (kem->kem_ops->calc_shared_secret != NULL) {
+		d = kem->kem_ops->calc_shared_secret(kem,
+						     secret->private_key,
+						     secret->public_key,
+						     HUNK_AS_SHUNK(&task->remote_ke),
+						     &task->shared_secret,
+						     logger);
+	} else {
+		switch (secret->role) {
+		case SA_RESPONDER:
+		{
+			PASSERT(logger, secret->shared_key != NULL);
+			task->shared_secret = symkey_addref(logger, "shared_secret",
+							    secret->shared_key);
+			break;
+		}
+		case SA_INITIATOR:
+		{
+			PASSERT(logger, secret->private_key != NULL);
+			d = kem->kem_ops->kem_decapsulate(kem,
+							  secret->private_key,
+							  HUNK_AS_SHUNK(&task->remote_ke),
+							  &task->shared_secret,
+							  logger);
+			break;
+		}
+		default:
+			bad_case(secret->role);
+		}
+	}
+	if (d != NULL) {
+		llog(RC_LOG, logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return;
 	}
 	/*
@@ -166,11 +238,11 @@ static void compute_dh_shared_secret(struct logger *logger,
 	}
 }
 
-static void cleanup_dh_shared_secret(struct task **task)
+static void cleanup_dh_shared_secret(struct task **task, struct logger *logger)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
-	symkey_delref(&global_logger, "DH secret", &(*task)->shared_secret);
+	symkey_delref(logger, "DH secret", &(*task)->shared_secret);
 	pfreeany(*task);
 }
 
@@ -179,8 +251,9 @@ static stf_status complete_dh_shared_secret(struct state *task_st,
 					    struct task *task)
 {
 	struct state *dh_st = state_by_serialno(task->dh_serialno);
-	dbg("completing DH shared secret for "PRI_SO"/"PRI_SO,
-	    task_st->st_serialno, dh_st->st_serialno);
+	ldbg(dh_st->logger, "completing DH shared secret for "PRI_SO"/"PRI_SO,
+	     pri_so(task_st->st_serialno),
+	     pri_so(dh_st->st_serialno));
 	pexpect(dh_st->st_dh_shared_secret == NULL);
 	symkey_delref(dh_st->logger, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
 	/* transfer */
@@ -203,15 +276,17 @@ void submit_dh_shared_secret(struct state *callback_sa,
 			     chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
-	dbg("submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
-	    callback_sa->st_serialno, dh_st->st_serialno, pri_where(where));
+	ldbg(dh_st->logger, "submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
+	     pri_so(callback_sa->st_serialno),
+	     pri_so(dh_st->st_serialno),
+	     pri_where(where));
 	if (dh_st->st_dh_shared_secret != NULL) {
 		llog_pexpect(dh_st->logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",
 			     __func__);
 	}
 	struct task *task = alloc_thing(struct task, "dh");
-	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
+	task->remote_ke = clone_hunk_as_chunk(&remote_ke, "DH crypto");
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;

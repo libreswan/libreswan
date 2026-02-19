@@ -1,0 +1,38 @@
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 198.18.1.12  netmask 255.255.255.0  broadcast 198.18.1.255
+        inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
+rise #
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.0.2.12  netmask 255.255.255.0  broadcast 192.0.2.255
+        inet6 2001:db8:0:2::12  prefixlen 64  scopeid 0x0<global>
+rise #
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
+up
+rise #
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_sunnet
+up
+rise #
+ ../../guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+rise #
+ ipsec initnss
+Initializing NSS database
+rise #
+ ipsec start
+Redirecting to: [initsystem]
+rise #
+ ../../guestbin/wait-until-pluto-started
+rise #
+ ipsec add rise-set
+"rise-set": added oriented IKEv2 connection
+rise #
+ ipsec up rise-set
+"rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
+"rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
+"rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@rise'; Child SA #2 {ESP <0xESPESP}
+"rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@set'
+"rise-set" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+rise #

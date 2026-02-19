@@ -34,7 +34,7 @@
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "kernel.h"             /* needs connections.h */
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
@@ -108,13 +108,13 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	}
 
 	/* and group instance */
-	connection_attach(template, logger);
+	whack_attach(template, logger);
 	ldbg(template->logger, "removing group template");
 
 	PEXPECT(template->logger, !is_group(template));
 	PEXPECT(template->logger, is_template(template));
 
-	terminate_and_delete_connections(&template, logger, HERE);
+	terminate_and_delete_connections(template, logger, HERE);
 }
 
 /* subnetcmp compares the two ip_subnet values a and b.
@@ -178,7 +178,8 @@ static void read_foodgroup(struct file_lex_position *oflp,
 	struct file_lex_position *flp;
 	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
-		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
+		ldbg(g->logger, "no group file \"%s\" (pwd:%s)",
+		     fg_path, getcwd(cwd, sizeof(cwd)));
 		pfreeany(fg_path);
 		return;
 	}
@@ -200,12 +201,13 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		 */
 		ip_subnet sn;
 		ip_address nonzero_host;
-		err_t err = ttosubnet_num(shunk1(flp->tok), NULL, &sn, &nonzero_host);
+		diag_t d = ttosubnet_num(shunk1(flp->tok), NULL, &sn, &nonzero_host);
 
-		if (err != NULL) {
+		if (d != NULL) {
 			llog(RC_LOG, flp->logger,
 			     "ignored, '%s' is not a subnet: %s",
-			     flp->tok, err);
+			     flp->tok, str_diag(d));
+			pfree_diag(&d);
 			flushline(flp, NULL/*shh*/);
 			continue;
 		}
@@ -344,9 +346,24 @@ void load_groups(struct logger *logger)
 {
 	struct fg_targets *new_targets = NULL;
 
+	ldbg(logger, "old food groups:");
+	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
+		if (!oriented(t->group)) {
+			llog_pexpect(logger, HERE, "group %s is not oriented", t->group->name);
+			return;
+		}
+		selector_buf asource;
+		subnet_buf atarget;
+		LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
+			 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
+			 str_subnet(&t->subnet, &atarget),
+			 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
+			 t->group->name);
+	}
+
 	/*
-	 * Find all the connection groups and, for each, add config
-	 * file targets into new_targets.
+	 * Find all the ORIENTED connection groups and, for each, add
+	 * config file targets into new_targets.
 	 */
 	struct connection_filter cf = {
 		.kind = CK_GROUP,
@@ -367,17 +384,6 @@ void load_groups(struct logger *logger)
 	}
 
 	if (LDBGP(DBG_BASE, logger)) {
-		/* dump old food groups */
-		LDBG_log(logger, "old food groups:");
-		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
-			selector_buf asource;
-			subnet_buf atarget;
-			LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
-				 str_subnet(&t->subnet, &atarget),
-				 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				 t->group->name);
-		}
 		/* dump new food groups */
 		LDBG_log(logger, "new food groups:");
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
@@ -454,7 +460,7 @@ void load_groups(struct logger *logger)
 				}
 				if (r >= 0) {
 					struct connection *g = np->group;
-					connection_attach(g, logger);
+					whack_attach(g, logger);
 					/* group instance (which is a template) */
 					struct connection *t = group_instantiate(g,
 										 np->subnet,
@@ -477,7 +483,7 @@ void load_groups(struct logger *logger)
 						np->serialno = t->serialno;
 						/* advance new */
 						npp = &np->next;
-						connection_detach(t, logger);
+						whack_detach(t, logger);
 					} else {
 						/*
 						 * XXX: is this really
@@ -488,12 +494,12 @@ void load_groups(struct logger *logger)
 						 * name may already
 						 * exist.
 						 */
-						dbg("add group instance failed");
+						ldbg(g->logger, "add group instance failed");
 						/* free new; advance new */
 						*npp = np->next;
 						pfree_target(&np);
 					}
-					connection_detach(g, logger);
+					whack_detach(g, logger);
 				}
 			}
 		}

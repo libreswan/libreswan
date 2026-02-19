@@ -17,6 +17,7 @@
 #define SERVER_FORK_H
 
 #include "chunk.h"
+#include "verbose.h"
 
 struct logger;
 struct msg_digest;
@@ -74,9 +75,12 @@ pid_t server_fork_exec(const char *path,
 		       void *callback_context,
 		       struct logger *logger);
 
-void server_fork_sigchld_handler(struct logger *logger);
+void server_fork_sigchld_handler(struct verbose verbose);
+
 void init_server_fork(struct logger *logger);
-void check_server_fork(struct logger *logger);
+void check_server_fork(struct logger *logger, where_t where);
+void free_server_fork(struct logger *logger); /*just deletes memory*/
+
 void whack_processstatus(const struct whack_message *wm, struct show *s);
 
 #endif

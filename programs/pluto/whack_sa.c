@@ -32,17 +32,18 @@
 
 static unsigned whack_connection_sa(const struct whack_message *m,
 				    struct show *s,
-				    struct connection *c)
+				    struct connection *c,
+				    struct connection_visitor_context *context UNUSED)
 {
 	enum sa_kind sa_kind = whack_sa_kind(m->whack_command);
 	struct logger *logger = show_logger(s);
 
 	if (!can_have_sa(c, sa_kind)) {
 		/* silently skip */
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		ldbg(logger, "skipping non-%s connection",
 		     connection_sa_name(c, sa_kind));
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0;
 	}
 
@@ -53,24 +54,24 @@ static unsigned whack_connection_sa(const struct whack_message *m,
 	}
 
 	if (so == SOS_NOBODY) {
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		llog(RC_LOG, c->logger, "connection does not have an established %s",
 		     connection_sa_name(c, sa_kind));
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	}
 
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		llog(RC_LOG, c->logger, "connection established %s "PRI_SO" missing",
 		     connection_sa_name(c, sa_kind), pri_so(so));
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	}
 
 	if (!m->whack_async) {
-		state_attach(st, logger);
+		whack_attach(st, logger);
 	}
 
 	/* find and attach to the IKE SA */
@@ -85,7 +86,7 @@ static unsigned whack_connection_sa(const struct whack_message *m,
 			return 0; /* the connection doesn't count */
 		}
 		if (!m->whack_async) {
-			state_attach(&parent->sa, logger);
+			whack_attach(&parent->sa, logger);
 		}
 	}
 
@@ -132,8 +133,9 @@ void whack_sa(const struct whack_message *m, struct show *s)
 	 * Order doesn't matter as actual operation put on the event
 	 * queue.
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_connection_sa,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_connection_sa, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

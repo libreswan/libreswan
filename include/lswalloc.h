@@ -90,29 +90,6 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define alloc_things(THING, COUNT, NAME)			\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-#define alloc_items(ITEMS, COUNT)					\
-	({								\
-		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
-		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
-		_items->len = (COUNT);					\
-		_items;							\
-	})
-
-#define realloc_items(ITEMS, COUNT)					\
-	({								\
-		void *_items = (ITEMS);					\
-		size_t _old = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (ITEMS)->len); \
-		size_t _new = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (COUNT)); \
-		realloc_bytes(&_items, _old, _new, "realloc-"#ITEMS"-items"); \
-		(ITEMS) = _items;					\
-		(ITEMS)->len = (COUNT);					\
-	})
-
-#define ITEMS_FOR_EACH(ITEM, ITEMS)					\
-	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
-	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
-	     ITEM++)
-
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\
 	{								\
 		void *things_ = THINGS;					\
@@ -160,5 +137,107 @@ void *uninitialized_realloc(void *ptr, size_t size, const char *name);
 /* can't use vaprintf() as it calls malloc() directly */
 char *alloc_printf(const char *fmt, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
 char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESULT;
+
+/*
+ * Items:
+ *
+ * Use C's feature of open ended array:
+ *
+ *   struct whatever {
+ *     unsigned len;
+ *     <TYPE> items[];
+ *   }
+ *
+ * XXX: should this be made HUNK like, as in call the items[] ptr[]?
+ */
+
+#define alloc_items(ITEMS, COUNT)					\
+	({								\
+		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
+		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
+		_items->len = (COUNT);					\
+		_items;							\
+	})
+
+#define grow_items(ITEMS)						\
+	({								\
+		unsigned _old_nr = ((ITEMS) == NULL ? 0 : (ITEMS)->len); \
+		unsigned _new_nr = _old_nr + 1;				\
+		size_t _old_size = ((ITEMS) == NULL ? 0 :		\
+				    sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _old_nr); \
+		size_t _new_size = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _new_nr); \
+		void *_items = (ITEMS);					\
+		realloc_bytes(&_items, _old_size, _new_size, "grow-"#ITEMS"-items"); \
+		(ITEMS) = _items;					\
+		(ITEMS)->len = _new_nr;					\
+		/* return pointer to new element */			\
+		&(ITEMS)->item[_new_nr-1];				\
+	})
+
+#define ITEMS_FOR_EACH(ITEM, ITEMS)					\
+	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
+	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
+	     ITEM++)
+
+/*
+ * Data is for when the array header is embedded in another structure,
+ * and only the data table needs allocating.
+ *
+ *   struct whatever {
+ *      unsigned len;
+ *      <TYPE> *data;
+ *   }
+ *
+ * Since .len always exits it simplifies code needing to check if the
+ * array is empty.
+ */
+
+#define alloc_data(DATA, COUNT)					\
+	({							\
+		(DATA)->data = alloc_things((DATA)->data[0],	\
+					    COUNT, #DATA);	\
+		(DATA)->len = (COUNT);				\
+	})
+
+#define pfree_data(DATA)			\
+	{					\
+		pfreeany((DATA)->data);		\
+		(DATA)->len = 0;		\
+	}
+
+#define grow_data(DATA)						\
+	({							\
+		size_t size_ = sizeof((DATA)->data[0]);		\
+		void *data_ = (DATA)->data;			\
+		realloc_bytes(&data_,				\
+			      /*old*/size_ * (DATA)->len,	\
+			      /*old*/size_ * ((DATA)->len + 1),	\
+			      #DATA);				\
+		(DATA)->data = data_;				\
+		(DATA)->len += 1;				\
+		&(DATA)->data[(DATA)->len-1];			\
+	})
+
+#define realloc_data(DATA, COUNT)					\
+	{								\
+		if ((COUNT) == 0) {					\
+			/* realloc doesn't like size==0*/		\
+			pfree_data(DATA);				\
+		} else if ((COUNT) != (DATA)->len) {			\
+			size_t size_ = sizeof((DATA)->data[0]);		\
+			void *data_ = (DATA)->data;			\
+			realloc_bytes(&data_,				\
+				      /*old*/size_ * (DATA)->len,	\
+				      /*old*/size_ * (COUNT),		\
+				      #DATA);				\
+			(DATA)->data = data_;				\
+			(DATA)->len = (COUNT);				\
+		}							\
+	}
+
+#define DATA_FOR_EACH(DATUM, DATA)					\
+	for (typeof((DATA)->data[0]) *DATUM = (DATA)->data;		\
+	     (DATUM) != NULL && (DATUM) < ((DATA)->data + (DATA)->len);	\
+	     (DATUM)++)
 
 #endif /* _LSW_ALLOC_H_ */

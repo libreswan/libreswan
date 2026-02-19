@@ -26,6 +26,7 @@
 #include "chunk.h"
 #include "hunk.h"
 #include "ike_alg_integ.h"	/* for ike_alg_integ_none; */
+#include "ike_alg_encrypt.h"	/* for aes_gcm, an OpenBSD hack */
 
 #include "kernel.h"
 #include "kernel_alg.h"
@@ -43,7 +44,7 @@ static pid_t pfkeyv2_pid;
 static uint32_t pfkeyv2_seq;
 static int pfkeyv2_fd;
 
-static void pfkeyv2_process_msg(int fd, void *arg, struct logger *logger);
+static void pfkeyv2_process_msg(struct verbose verbose, int fd, void *arg);
 
 #define SIZEOF_SADB_ADDRESS (sizeof(struct sadb_address) + sizeof(ip_sockaddr))
 #define SIZEOF_SADB_BASE sizeof(struct sadb_msg)
@@ -65,7 +66,7 @@ struct outbuf {
 	const char *what;
 	chunk_t buf;
 	unsigned seq;
-	const struct logger *logger;
+	struct logger *logger;
 	struct sadb_msg *base;
 	/* cursor */
 	void *ptr;
@@ -173,7 +174,7 @@ static void queue_msg(const struct inbuf *msg)
 {
 	struct pending *pending = alloc_thing(struct pending, __func__);
 	/* assume MSG still points at the entire buffer */
-	pending->msg = clone_hunk(msg->buf, __func__);
+	pending->msg = clone_hunk_as_chunk(&msg->buf, __func__);
 	init_list_entry(&pending_info, pending, &pending->entry);
 	insert_list_entry(&pending_queue, &pending->entry);
 }
@@ -271,7 +272,7 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	llog_sadb(verbose, HUNK_AS_SHUNK(req->buf));
+	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
 
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
@@ -341,7 +342,7 @@ static struct sockaddr *put_address_sockaddr(struct outbuf *msg,
 					     const ip_address addr)
 {
 	ip_sockaddr sa = sockaddr_from_address(addr);
-	return hunk_put(msg, &sa.sa.sa, sa.len);
+	return hunk_put_bytes(msg, &sa.sa.sa, sa.len);
 }
 
 /*
@@ -450,7 +451,7 @@ static struct sadb_key *put_sadb_key(struct outbuf *msg,
 	struct sadb_key *key =
 		put_sadb_ext(msg, sadb_key, key_alg,
 			     .sadb_key_bits = keyval.len * BITS_IN_BYTE);
-	if (hunk_put_hunk(msg, keyval) == NULL) {
+	if (hunk_put_hunk(msg, &keyval) == NULL) {
 		llog_passert(verbose.logger, HERE, "bad key(E)");
 	}
 	padup_sadb(msg, key);
@@ -561,10 +562,10 @@ static bool register_alg(const struct sadb_msg *b,
 
 		const struct ike_alg *ike_alg = ike_alg_by_sadb_alg_id(type, alg->sadb_alg_id);
 		if (ike_alg != NULL) {
-			kernel_alg_add(ike_alg);
+			kernel_alg_add(ike_alg, verbose.logger);
 		} else {
-			vdbg("%s algorithm %d not recognized",
-			     ike_alg_type_name(type),
+			vdbg("%s %d not recognized",
+			     type->story,
 			     alg->sadb_alg_id);
 		}
 	}
@@ -662,6 +663,19 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 	register_satype(&ip_protocol_ah, verbose);
 	register_satype(&ip_protocol_esp, verbose);
 	register_satype(&ip_protocol_ipcomp, verbose);
+
+#ifdef __OpenBSD__
+	/*
+	 * OpenBSD probably supports these algorithms, but forgets to
+	 * mention them.
+	 *
+	 * See https://marc.info/?l=openbsd-bugs&m=177017688300753
+	 * See https://github.com/libreswan/libreswan/issues/2607
+	 */
+	kernel_alg_add(&ike_alg_encrypt_aes_gcm_16.common, verbose.logger);
+	kernel_alg_add(&ike_alg_encrypt_chacha20_poly1305.common, verbose.logger);
+	kernel_alg_add(&ike_alg_integ_none.common, verbose.logger);
+#endif
 }
 
 static void kernel_pfkeyv2_flush(struct logger *logger)
@@ -1697,7 +1711,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 #endif
 
 		case SADB_EXT_PROPOSAL:
-			if (VDBGP()) {
+			if (verbose.debug) {
 				verbose("ignore: ");
 				verbose.level++;
 				llog_sadb_ext(verbose, msg, ext, ext_cursor);
@@ -1706,7 +1720,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			break;
 
 		default:
-			if (VDBGP()) {
+			if (verbose.debug) {
 				verbose.level++;
 				llog_sadb_ext(verbose, msg, ext, ext_cursor);
 				verbose.level--;
@@ -1764,15 +1778,14 @@ static void process_pending_queue(struct verbose verbose)
 	struct pending *pending;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(pending, &pending_queue) {
 		remove_list_entry(&pending->entry);
-		process_pending(HUNK_AS_SHUNK(pending->msg), verbose);
+		process_pending(HUNK_AS_SHUNK(&pending->msg), verbose);
 		free_chunk_content(&pending->msg);
 		pfree(pending);
 	}
 }
 
-static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *logger)
+static void pfkeyv2_process_msg(struct verbose verbose, int fd UNUSED, void *arg UNUSED)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("processing message");
 	verbose.level++;
 

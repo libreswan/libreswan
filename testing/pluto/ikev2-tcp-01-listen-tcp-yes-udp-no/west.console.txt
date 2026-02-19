@@ -22,10 +22,10 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add tcp
-"tcp": added IKEv2 connection
+"tcp": added oriented IKEv2 connection
 west #
  ipsec add udp
-"udp": added IKEv2 connection
+"udp": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -35,8 +35,9 @@ west #
 "tcp" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "tcp" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "tcp" #1: sent IKE_AUTH request to 192.1.2.23:TCP/4500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESPinTCP <0xESPESP}
+"tcp" #1: processing IKE_AUTH response from 192.1.2.23:TCP/4500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "tcp" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"tcp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"tcp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "tcp": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "tcp" #1: sent INFORMATIONAL request to delete IKE SA
@@ -48,6 +49,6 @@ west #
 "udp" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "udp" #3: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "udp" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"udp" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "udp" #3: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "udp" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #

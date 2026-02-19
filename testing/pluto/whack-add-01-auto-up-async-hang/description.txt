@@ -1,0 +1,7 @@
+<<ipsec add --auto=up>> when peer is down
+
+Both with and without --async; whack (add) should detach.
+
+see #2615 ipsec start ... hangs when peer is down
+
+bug was that ipsec.in was eating --async option

@@ -1,0 +1,21 @@
+<varlistentry id='conn.encap-dscp'>
+  <term>
+    <option>encap-dscp=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Enable encapsulating the Differentiated Services Code Point
+      (DSCP, formerly known as Terms Of Service (TOS)) bits. The extra
+      xfrm flag "dont-encap-dscp" prevents these bits from being
+      copied from the unencrypted IP packets to the encrypted IP
+      packets.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+    <para>
+      Currently this feature is only implemented for the Linux XFRM
+      stack.
+    </para>
+  </listitem>
+</varlistentry>

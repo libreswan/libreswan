@@ -42,5 +42,5 @@ east #
  # a tunnel should have established
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"private#192.1.3.209/32"[1] ...192.1.3.209 #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.23/32===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"private#192.1.3.209/32"[1] ...192.1.3.209 #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.23/32===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #

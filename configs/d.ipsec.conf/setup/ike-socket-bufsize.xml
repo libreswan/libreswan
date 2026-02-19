@@ -1,0 +1,21 @@
+<varlistentry id='setup.ike-socket-bufsize'>
+  <term>
+    <option>ike-socket-bufsize=&count;</option>
+  </term>
+  <listitem>
+    <para>
+      Set the IKE socket buffer size. On Linux, this option uses
+      SO_RCVBUFFORCE and SO_SNDBUFFORCE so that it can override
+      rmem_max/wmem_max values of the OS. This requires CAP_NET_ADMIN
+      (which is also required for other tasks). This option can also
+      be toggled on a running system using <option>ipsec
+      whack --ike-socket-bufsize bufsize</option>.
+    </para>
+    <para>
+      The default is determined by the OS (as of writing, this
+      seems to be <literal>212992</literal>).  On Linux this is
+      visible via <filename>/proc/sys/net/core/rmem_default</filename>
+      and <filename>/proc/sys/net/core/wmem_default</filename>.
+    </para>
+  </listitem>
+</varlistentry>

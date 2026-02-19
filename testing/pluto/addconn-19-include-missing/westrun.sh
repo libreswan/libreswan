@@ -5,4 +5,4 @@ ipsec start
 grep include /etc/ipsec.conf
 
 # expect include file not found
-ipsec auto --add west
+ipsec add west

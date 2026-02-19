@@ -82,7 +82,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	threadtime_t inception = threadtime_start();
 
 	if (impair.cannot_ondemand) {
-		llog(RC_LOG, b->logger, "IMPAIR: cannot ondemand forced");
+		llog(IMPAIR_STREAM, b->logger, "cannot ondemand forced");
 		return;
 	}
 
@@ -138,16 +138,16 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 NULL);
 
 	if (cp == NULL) {
-		connection_attach(c, b->logger);
+		whack_attach(c, b->logger);
 		LLOG_PEXPECT_JAMBUF(c->logger, HERE, buf) {
 			jam_string(buf, "can't acquire (on-demand): ");
 			jam_kernel_acquire(buf, b);
 		}
-		connection_detach(c, b->logger);
+		whack_detach(c, b->logger);
 		return;
 	}
 
-	connection_attach(cp, b->logger);
+	whack_attach(cp, b->logger);
 	LLOG_JAMBUF(RC_LOG, cp->logger, buf) {
 		jam_kernel_acquire(buf, b);
 	}
@@ -159,7 +159,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 INITIATED_BY_ACQUIRE,
 		 HERE);
 
-	connection_detach(cp, b->logger);
+	whack_detach(cp, b->logger);
 	connection_delref(&cp, b->logger);
 
 }

@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
 	ip_address_check();
 	ip_endpoint_check();
 	ip_range_check(logger);
+	ip_pool_check(logger);
 	ip_subnet_check(logger);
 	ip_said_check();
 	ip_info_check();

@@ -65,7 +65,8 @@
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
+#include "ikev2_ke.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -74,8 +75,8 @@ static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
-static void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike);
-static void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike);
+static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_request;
+static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_response;
 
 static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 {
@@ -111,30 +112,35 @@ static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 	jam_string(buf, "}");
 }
 
-void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike)
+void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
+						 const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent IKE_SA_INIT response to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_string(buf, " ");
 		jam_secured(buf, ike);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 	}
-
 }
 
-void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike)
+void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
+						  const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 
 		jam_string(buf, "processed IKE_SA_INIT response from ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
 		jam_string(buf, " ");
 
 		jam_secured(buf, ike);
 
 		jam_string(buf, ", initiating ");
 		enum ikev2_exchange ix =
-			(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
+			(next_is_ikev2_ike_intermediate_exchange(ike) ? ISAKMP_v2_IKE_INTERMEDIATE :
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
@@ -152,8 +158,8 @@ bool calc_v2_new_ike_keymat(struct ike_sa *ike,
 	     __func__, prf->common.fqn);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
-						     shared, logger);
+	PK11SymKey *skeyseed = ikev2_IKE_SA_INIT_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
+							  shared, logger);
 	if (skeyseed == NULL) {
 		llog_pexpect(logger, where, "rekey SKEYSEED failed");
 		return false;
@@ -203,8 +209,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	if (is_labeled(c) && sec_label.len == 0) {
 		/*
 		 * Establishing a sec_label connection yet there's no
-		 * sec-label for the child.  Assume this is a forced
-		 * up aka childless IKE SA.
+		 * sec-label for the child.
+		 *
+		 * Assume this is a forced UP aka childless IKE SA.
 		 */
 		PEXPECT(ike->sa.logger, is_labeled_parent(c));
 		ldbg(ike->sa.logger,
@@ -220,20 +227,26 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ldbg(ike->sa.logger,
 		     "omitting CHILD SA payloads from the IKE_AUTH request as no child policy");
 	} else if (impair.omit_v2_ike_auth_child) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
-	} else {
-		struct connection *cc;
-		if (is_labeled(c)) {
-			PEXPECT(ike->sa.logger, is_labeled_parent(c));
-			PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
-			cc = labeled_parent_instantiate(ike, sec_label, HERE);
-		} else {
-			cc = connection_addref(c, ike->sa.logger);
-		}
+		llog(IMPAIR_STREAM, ike->sa.logger, "omitting CHILD SA payloads from the IKE_AUTH request");
+	} else if (is_labeled(c)) {
+		/*
+		 * Need to release the reference returned by
+		 * instantiate() (append_pending() will take its own
+		 * reference).
+		 */
+		PEXPECT(ike->sa.logger, sec_label.len > 0);
+		PEXPECT(ike->sa.logger, is_labeled_parent(c));
+		PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
+		struct connection *cc = labeled_parent_instantiate(ike, sec_label, HERE);
 		append_pending(ike, cc, policy,
 			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			       sec_label, true/*part of initiate*/, detach_whack);
 		connection_delref(&cc, ike->sa.logger);
+	} else {
+		PEXPECT(ike->sa.logger, sec_label.len == 0);
+		append_pending(ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			       sec_label, true/*part of initiate*/, detach_whack);
 	}
 
 	/*
@@ -280,7 +293,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 #endif
 		if (c->remote->config->host.host.type == KH_IPHOSTNAME) {
 			jam_string(buf, " (");
-			jam_string(buf, c->remote->config->host.host.name);
+			jam_string(buf, c->remote->config->host.host.value);
 			jam_string(buf, ")");
 		}
 #if 0
@@ -306,7 +319,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		release_whack(ike->sa.logger, HERE);
 	}
 
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
 		/*
 		 * This submits a background task?  How is it ever
 		 * synced?
@@ -327,7 +340,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, verbose);
+	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_kem(ike_proposals, verbose);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		llog_sa(RC_LOG, ike, "proposals do not contain a valid DH");
 		delete_ike_sa(&ike);
@@ -346,18 +359,22 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 }
 
 stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
-						    struct msg_digest *unused_md,
+						    struct msg_digest *null_md,
 						    struct dh_local_secret *local_secret,
 						    chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-	pexpect(unused_md == NULL);
+	pexpect(null_md == NULL);
 	/* I1 is from INVALID KE */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_I0 ||
 		ike->sa.st_state == &state_v2_IKE_SA_INIT_I);
-	dbg("%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
+
+	if (local_secret == NULL) {
+		return STF_FATAL;
+	}
 
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gi);
 	unpack_nonce(&ike->sa.st_ni, nonce);
@@ -372,7 +389,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting %s notification",
+		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
@@ -397,9 +414,10 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
 	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
 	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
+	H(POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY);
 #undef H
 
-	close_output_pbs(&n_pbs);
+	close_pbs_out(&n_pbs);
 	return true;
 }
 
@@ -419,7 +437,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	switch (impair.ddos_cookie) {
 	case IMPAIR_DDOS_COOKIE_ADD:
 		if (ike->sa.st_dcookie.ptr == NULL) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: adding unsolicited and mangled DDOS cookie");
+			llog(IMPAIR_STREAM, ike->sa.logger, "adding unsolicited and mangled DDOS cookie");
 			uint8_t byte = 0;
 			messupn(&byte, sizeof(byte));
 			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
@@ -428,7 +446,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	case IMPAIR_DDOS_COOKIE_MANGLE:
 		/* add or mangle a dcookie so what we will send is bogus */
 		if (ike->sa.st_dcookie.ptr != NULL) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: mangling DDOS cookie sent by peer");
+			llog(IMPAIR_STREAM, ike->sa.logger, "mangling DDOS cookie sent by peer");
 			uint8_t byte = 0;
 			messupn(&byte, sizeof(byte));
 			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
@@ -461,7 +479,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 */
 
 	/* send KE */
-	if (!emit_v2KE(ike->sa.st_gi, ike->sa.st_oakley.ta_dh, request.pbs))
+	if (!emit_v2KE(HUNK_AS_SHUNK(&ike->sa.st_gi), ike->sa.st_oakley.ta_dh, request.pbs))
 		return false;
 
 	/* send NONCE */
@@ -471,11 +489,11 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(request.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_ni, "IKEv2 nonce"))
 			return false;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* Send fragmentation support notification */
@@ -525,7 +543,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * Since the initiator can't switch connections the decision is
 	 * final.
 	 */
-	if (authby_has_digsig(c->remote->host.config->authby) &&
+	if (digital_signature_in_authby(c->remote->host.config->authby) &&
 	    (c->config->sighash_policy != LEMPTY)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
 			return false;
@@ -568,9 +586,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&request.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SA_INIT request",
+					 ike, &request);
 
 	return true;
 }
@@ -596,7 +613,6 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 {
 	v2_notification_t n;
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
 
 	vassert(ike->sa.st_ike_version == IKEv2);
 	vassert(ike->sa.st_state == &state_v2_UNSECURED_R);
@@ -610,7 +626,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 */
 
 	struct connection *c = ike->sa.st_connection;
-	update_ike_endpoints(ike, md);
+	natify_ikev2_ike_responder_endpoints(ike, md);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
@@ -727,8 +743,11 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * It is the initiator that will switch to port 4500 (float
 	 * away) when necessary.
 	 */
-	if (v2_nat_detected(ike, md)) {
-		dbg("NAT: responder so initiator gets to switch ports");
+
+	detect_ikev2_nat(ike, md);
+
+	if (nat_traversal_detected(&ike->sa)) {
+		ldbg(ike->sa.logger, "NAT: responder so initiator gets to switch ports");
 		/* should this check that a port is available? */
 	}
 
@@ -766,15 +785,16 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_UNSECURED_R);
-	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculated ke+nonce, sending R1",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct connection *c = ike->sa.st_connection;
 
 	/* note that we don't update the state here yet */
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SA_INIT request",
+					ike, md);
 
 	/* make sure HDR is at start of a clean buffer */
 
@@ -797,7 +817,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		passert(ike->sa.st_v2_accepted_proposal != NULL);
 		if (!emit_v2SA_proposal(response.pbs, ike->sa.st_v2_accepted_proposal,
 					null_shunk/*IKE has no SPI*/)) {
-			dbg("problem emitting accepted proposal");
+			ldbg(ike->sa.logger, "problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -830,7 +850,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	pexpect(ike->sa.st_oakley.ta_dh == dh_local_secret_desc(local_secret));
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
-	if (!emit_v2KE(ike->sa.st_gr, dh_local_secret_desc(local_secret), response.pbs)) {
+	if (!emit_v2KE(HUNK_AS_SHUNK(&ike->sa.st_gr), dh_local_secret_desc(local_secret), response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -842,11 +862,11 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(response.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* Send fragmentation support notification response? */
@@ -894,7 +914,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	if (impair.childless_ikev2_supported) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
+		llog(IMPAIR_STREAM, ike->sa.logger, "omitting CHILDESS_IKEV2_SUPPORTED notify");
 	} else {
 		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -907,7 +927,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* send CERTREQ */
 
 	if (need_v2CERTREQ_in_IKE_SA_INIT_response(ike)) {
-		dbg("going to send a certreq");
+		ldbg(ike->sa.logger, "going to send a certreq");
 		emit_v2CERTREQ(ike, response.pbs);
 	}
 
@@ -942,9 +962,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&response.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SA_INIT response",
+					 ike, &response);
 
 	return STF_OK;
 }
@@ -973,12 +992,12 @@ static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 }
 
 stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
-								  struct child_sa *child,
+								  struct child_sa *null_child,
 								  struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	pexpect(child == NULL);
+	pexpect(null_child == NULL);
 	if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -987,7 +1006,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	/* careful of DDOS, only log with debugging on? */
 	/* we treat this as a "retransmit" event to rate limit these */
 	if (!count_duplicate(&ike->sa, MAXIMUM_INVALID_KE_RETRANS)) {
-		dbg("ignoring received INVALID_KE packets - received too many (DoS?)");
+		ldbg(ike->sa.logger, "ignoring received INVALID_KE packets - received too many (DoS?)");
 		return STF_IGNORE;
 	}
 
@@ -996,46 +1015,47 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * one?
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N]->next != NULL) {
-		dbg("ignoring other notify payloads");
+		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 
-	struct suggested_group sg;
-	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
-				 &sg, sizeof(sg), NULL);
+	struct ikev2_suggested_kem sk;
+	diag_t d = pbs_in_struct(&invalid_ke_pbs,
+				 &ikev2_suggested_kem_desc,
+				 &sk, sizeof(sk), NULL);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		return STF_IGNORE;
 	}
 
-	pstats(invalidke_recv_s, sg.sg_group);
-	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
+	pstats(invalidke_recv_s, sk.sk_kem);
+	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
+	if (!ikev2_proposals_include_kem(ike_proposals, sk.sk_kem)) {
 		name_buf esb;
 		llog_sa(RC_LOG, ike,
-			"discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
+			"discarding unauthenticated INVALID_KE_PAYLOAD response to KEM %s; suggested KEM %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
-			str_enum_short(&oakley_group_names,
-				       sg.sg_group, &esb));
+			str_enum_short(&ikev2_trans_type_kem_names, sk.sk_kem, &esb));
 		return STF_IGNORE;
 	}
 
-	dbg("Suggested modp group is acceptable");
+	ldbg(ike->sa.logger, "Suggested modp group is acceptable");
 	/*
 	 * Since there must be a group object for every local
 	 * proposal, and sg.sg_group matches one of the local proposal
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
 	name_buf ignore;
-	const struct dh_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
-	passert(new_group != NULL);
+	const struct kem_desc *new_kem = ikev2_kem_desc(sk.sk_kem, &ignore);
+	passert(new_kem != NULL);
 	llog_sa(RC_LOG, ike,
-		  "received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
-		  ike->sa.st_oakley.ta_dh->common.fqn,
-		  new_group->common.fqn);
-	ike->sa.st_oakley.ta_dh = new_group;
+		"received unauthenticated INVALID_KE_PAYLOAD response to %s %s; resending with suggested %s",
+		ike_alg_kem.story,
+		ike->sa.st_oakley.ta_dh->common.fqn,
+		new_kem->common.fqn);
+	ike->sa.st_oakley.ta_dh = new_kem;
 	/* wipe our mismatched KE */
 	dh_local_secret_delref(&ike->sa.st_dh_local_secret, HERE);
 	/*
@@ -1067,7 +1087,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 
@@ -1088,8 +1108,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 */
 	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu, drop this negotiation",
-			  c->established_child_sa);
+			"state superseded by "PRI_SO", drop this negotiation",
+			pri_so(c->established_child_sa));
 		return STF_FATAL;
 	}
 
@@ -1104,7 +1124,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			llog(RC_LOG, ike->sa.logger, "IKE_SA_INIT response has zero IKE SA Responder SPI; dropping packet");
 			return STF_FATAL;
 		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway");
+		llog(IMPAIR_STREAM, ike->sa.logger, "IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway");
 	}
 
 	/*
@@ -1169,11 +1189,10 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * the shared key values.
 	 */
 
-	dbg("ikev2 parent inR1: calculating g^{xy} in order to send I2");
+	ldbg(ike->sa.logger, "ikev2 parent inR1: calculating g^{xy} in order to send I2");
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		/*
 		 * XXX: Initiator - so this code will not trigger a
 		 * notify.  Since packet isn't trusted, should it be
@@ -1214,7 +1233,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					 &ike->sa.st_v2_accepted_proposal,
 					 ike_proposals, verbose);
 		if (n != v2N_NOTHING_WRONG) {
-			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
+			ldbg(ike->sa.logger, "ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			/*
 			 * STF_FATAL will send the code down the retry path.
 			 */
@@ -1238,7 +1257,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	}
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SA_INIT response",
+					ike, md);
 
 	/*
 	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and
@@ -1257,15 +1277,16 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * can't support NAT, give up.
 	 */
 
-	if (v2_nat_detected(ike, md)) {
-		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
-		if (!v2_natify_initiator_endpoints(ike, HERE)) {
+	detect_ikev2_nat(ike, md);
+
+	if (nat_traversal_detected(&ike->sa)) {
+		if (!ikev2_natify_initiator_endpoints(ike, HERE)) {
 			/* already logged */
 			return STF_FATAL;
 		}
 		if (ike->sa.st_connection->config->nic_offload == NIC_OFFLOAD_PACKET) {
 			llog_sa(RC_LOG, ike,
-			"connection is NATed but nic-offload=packet does not support NAT");
+				"connection is NATed but nic-offload=packet does not support NAT");
 			return STF_FATAL;
 		}
 	}
@@ -1330,7 +1351,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * Since systems are go, start updating the state, starting
 	 * with SPIr.
 	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	/*
 	 * Parse any CERTREQ in the IKE_SA_INIT response so that it is
@@ -1344,13 +1365,9 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * and dispatch the next request.
 	 */
 
-	const struct v2_exchange *next_exchange;
-	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		next_exchange = &v2_IKE_INTERMEDIATE_exchange;
-	} else {
-		next_exchange = &v2_IKE_AUTH_exchange;
-	}
-
+	const struct v2_exchange *next_exchange =
+		(next_is_ikev2_ike_intermediate_exchange(ike) ? &v2_IKE_INTERMEDIATE_exchange
+		 : &v2_IKE_AUTH_exchange);
 	return next_v2_exchange(ike, md, next_exchange, HERE);
 }
 
@@ -1360,9 +1377,9 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	 */
 	.story      = "initiating IKE_SA_INIT",
 	.to = &state_v2_IKE_SA_INIT_I,
-	.exchange   = ISAKMP_v2_IKE_SA_INIT,
+	.exchange = &v2_IKE_SA_INIT_exchange,
 	.processor  = NULL, /* XXX: should be set */
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -1373,11 +1390,12 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .to = &state_v2_IKE_SA_INIT_R,
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
-	  .llog_success = llog_process_v2_IKE_SA_INIT_request_success,
+	  .log_transition_start = true,
+	  .llog_success = llog_success_process_v2_IKE_SA_INIT_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
@@ -1390,32 +1408,32 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
 	  .to = &state_v2_IKE_SA_INIT_I0,
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
 	  .to = &state_v2_IKE_SA_INIT_I0,
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
@@ -1427,25 +1445,28 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
 	  .to = &state_v2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
 	  .message_payloads.optional = v2P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_process_v2_IKE_SA_INIT_response_success,
+	  .llog_success = llog_success_process_v2_IKE_SA_INIT_response,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
 	},
 
 };
 
-V2_STATE(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE, /*secured*/false);
+V2_STATE(IKE_SA_INIT_I0, "waiting for KE to finish",
+	 CAT_IGNORE, /*secured*/false);
 
-V2_STATE(IKE_SA_INIT_R,
-	 "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+V2_STATE(IKE_SA_INIT_R, "sent IKE_SA_INIT response",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
-	 &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
+	 &v2_IKE_AUTH_exchange,
+	 &v2_IKE_INTERMEDIATE_exchange,
+	 &v2_IKE_AUTH_EAP_exchange);
 
-V2_EXCHANGE(IKE_SA_INIT, "initiate IKE SA",
-	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false,
+V2_EXCHANGE(IKE_SA_INIT, "",
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/false,
+	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_I0);

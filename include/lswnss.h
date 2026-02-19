@@ -17,6 +17,48 @@
 #ifndef LSWNSS_H
 #define LSWNSS_H
 
+/*
+ * XXX: old comment:
+ *
+ *   The official ML-KEM constants from PKCS#11 3.2 are only supported
+ *   in NSS 3.116 or later.  Use the vendor-specific constants
+ *   otherwise.
+ *
+ * XXX:
+ *
+ * This code was added BEFORE NSS 4.116 was released; and when it did
+ * drop it didn't work with Libreswan!  Hence (5.4) the new values are
+ * now disabled.
+ *
+ * There's no hurry here.  Since dropping support for the old values
+ * breaks runtime compatibility it, likely, will never happen.  Once
+ * there's confirmation that Libreswan works using the new values with
+ * a RELEASED version of NSS the switch can be made (results from the
+ * intermediate tests should be posted as evidence).
+ *
+ * Note: CONSTANTS not MACROs.  NSS has had the macro CKM_ML_KEM
+ * et.al.  defined for sometime, it's that the internal code didn't
+ * know what to do with the value.  Hence the need for LSW_ prefix.
+ *
+ * Note: It's assumed that <nss.h> contains the version constants; it
+ * has since 3.2.
+ */
+
+#include <nss.h>
+
+#if 0 && (( NSS_VMAJOR > 3 ) ||				\
+	  ( NSS_VMAJOR == 3 &&	NSS_VMINOR >= 116 ))
+#define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_ML_KEM_KEY_PAIR_GEN
+#define LSW_CKM_ML_KEM CKM_ML_KEM
+#define LSW_CKP_ML_KEM_768 CKP_ML_KEM_768
+#define LSW_CK_ML_KEM_PARAMETER_SET_TYPE CK_ML_KEM_PARAMETER_SET_TYPE
+#else
+#define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_NSS_ML_KEM_KEY_PAIR_GEN
+#define LSW_CKM_ML_KEM CKM_NSS_ML_KEM
+#define LSW_CKP_ML_KEM_768 CKP_NSS_ML_KEM_768
+#define LSW_CK_ML_KEM_PARAMETER_SET_TYPE CK_NSS_KEM_PARAMETER_SET_TYPE
+#endif
+
 #include <prerror.h>		/* for PRErrorCode, for PR_GetError() */
 #include <pk11pub.h>
 
@@ -50,9 +92,13 @@ void shutdown_nss(void);
  * pass in a context parameter - the logger is it.  Otherwise the
  * password code can't log!
  *
- * Just a wrapper but type checked.
+ * Just a wrapper but type checked.  However, does strip const!
  */
-#define lsw_nss_get_password_context(LOGGER) ({ struct logger *l_ = LOGGER; l_; })
+#define lsw_nss_get_password_context(LOGGER)		\
+	({						\
+		const struct logger *l_ = LOGGER;	\
+		(void*)l_;				\
+	})
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
@@ -104,7 +150,12 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, name_buf *buf);
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);
 shunk_t same_secitem_as_shunk(SECItem si);
-SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
+#define same_hunk_as_secitem(HUNK, TYPE)				\
+	({								\
+		typeof(*(HUNK)) *hunk_ = HUNK;				\
+		same_bytes_as_secitem(hunk_->ptr, hunk_->len, TYPE);	\
+	})
+SECItem same_bytes_as_secitem(void *bytes, size_t len, SECItemType type);
 SECItem same_shunk_as_secitem(shunk_t chunk, SECItemType type); /* NSS doesn't do const */
 
 /* this clones */

@@ -21,12 +21,12 @@
 
 #include "kernel_iface.h"
 
-struct kernel_iface *find_kernel_ifaces4(struct logger *logger)
+struct kernel_iface *find_kernel_ifaces4(struct verbose verbose)
 {
-	return find_kernel_ifaces(&ipv4_info, logger);
+	return find_kernel_ifaces(&ipv4_info, verbose);
 }
 
-struct kernel_iface *find_kernel_ifaces6(struct logger *logger UNUSED)
+struct kernel_iface *find_kernel_ifaces6(struct verbose verbose)
 {
-	return find_kernel_ifaces(&ipv6_info, logger);
+	return find_kernel_ifaces(&ipv6_info, verbose);
 }

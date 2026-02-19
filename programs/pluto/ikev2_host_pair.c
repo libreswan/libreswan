@@ -86,7 +86,7 @@ static bool match_v2_connection(const struct connection *c,
 		 * have GROUPINSTANCE!  Hence the some what convoluted
 		 * logic to detect these cases and clear.
 		 */
-		if (is_group_instance(c)) {
+		if (is_from_group(c)) {
 			PEXPECT(verbose.logger, remote_authby.never);
 			(*send_reject_response) = false;
 		}
@@ -386,6 +386,7 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 */
 	static const struct authby remote_authbys[] = {
 		{ .ecdsa = true, },
+		{ .eddsa = true, },
 		{ .rsasig = true, },
 		{ .rsasig_v1_5 = true, },
 		{ .psk = true, },

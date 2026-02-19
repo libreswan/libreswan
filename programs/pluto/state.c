@@ -48,6 +48,7 @@
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "crypt_symkey.h"
+#include "crypt_kem.h"		/* for free_kem_initiator(), free_kem_responder() */
 #include "ikev2.h"
 #include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
@@ -75,7 +76,7 @@
 #include "ikev2_states.h"
 #include "crypt_cipher.h"		/* for cipher_context_destroy() */
 #include "ddos.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 static void delete_state(struct state *st);
 
@@ -293,7 +294,7 @@ static void change_state(struct state *st, enum state_kind new_state_kind)
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
 		binlog_state(st, new_state_kind /* XXX */);
-		pdbg(st->logger, "transition %s->%s", old_state->short_name, new_state->short_name);
+		ldbg(st->logger, "transition %s->%s", old_state->short_name, new_state->short_name);
 		st->st_state = new_state;
 	}
 }
@@ -403,8 +404,8 @@ struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		llog_pexpect(st->logger, where,
-			     "state #%lu is not an IKE SA", st->st_serialno);
+		llog_pexpect(st->logger, where, "state "PRI_SO" is not an IKE SA",
+			     pri_so(st->st_serialno));
 		return NULL; /* kaboom */
 	}
 	return (struct ike_sa*) st;
@@ -417,8 +418,8 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		llog_pexpect(st->logger, where,
-			     "state #%lu is not a CHILD", st->st_serialno);
+		llog_pexpect(st->logger, where, "state "PRI_SO" is not a CHILD",
+			     pri_so(st->st_serialno));
 		return NULL; /* kaboom */
 	}
 	return (struct child_sa*) st;
@@ -459,7 +460,7 @@ static struct state *new_state(struct connection *c,
 	 * and .st_connection.
 	 *
 	 * See github#2338 (.st_state was being dereferenced by the
-	 * logger) causing state_attach(), which debug-logs, to core
+	 * logger) causing whack_attach(), which debug-logs, to core
 	 * dump.
 	 *
 	 * Note:
@@ -488,7 +489,7 @@ static struct state *new_state(struct connection *c,
 	/* the logger is minimally viable */
 
 	/* causes first (debug-log) gasp */
-	state_attach(st, c->logger);
+	whack_attach(st, c->logger);
 
 	/* fix HACK: above with real reference */
 	st->st_connection = connection_addref(c, st->logger);
@@ -504,20 +505,20 @@ static struct state *new_state(struct connection *c,
 	if (sa_kind == IKE_SA && sa_role == SA_INITIATOR &&
 	    impair.ike_initiator_spi.enabled) {
 		uintmax_t v = impair.ike_initiator_spi.value;
-		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE initiator SPI to 0x%jx", v);
-		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.initiator));
+		llog(IMPAIR_STREAM, st->logger, "forcing IKE initiator SPI to 0x%jx", v);
+		hton_thing(v, st->st_ike_spis.initiator);
 	}
 
 	st->st_ike_spis.responder = ike_responder_spi;
 	if (sa_kind == IKE_SA && sa_role == SA_RESPONDER &&
 	    impair.ike_responder_spi.enabled) {
 		uintmax_t v = impair.ike_responder_spi.value;
-		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE responder SPI to 0x%jx", v);
-		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.responder));
+		llog(IMPAIR_STREAM, st->logger, "forcing IKE responder SPI to 0x%jx", v);
+		hton_thing(v, st->st_ike_spis.responder);
 	}
 
-	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
-	st->hidden_variables.st_natd = ipv4_info.address.unspec;
+	st->hidden_variables.st_nat_oa = ipv4_info.address.zero;
+	st->hidden_variables.st_natd = ipv4_info.address.zero;
 	st->st_remote_endpoint = remote_endpoint;
 	st->st_iface_endpoint = local_iface_endpoint;
 
@@ -749,12 +750,12 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-				state_attach(&child->sa, ike->sa.logger);
+				whack_attach(&child->sa, ike->sa.logger);
 				connection_teardown_child(&child, REASON_DELETED, HERE);
 			}
 			continue;
 		case IKEv2:
-			state_attach(&child->sa, ike->sa.logger);
+			whack_attach(&child->sa, ike->sa.logger);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			continue;
 		}
@@ -864,7 +865,7 @@ void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	pdbg(st->logger, "%s() skipping log_message:%s",
+	ldbg(st->logger, "%s() skipping log_message:%s",
 	     __func__,
 	     bool_str(st->st_on_delete.skip_log_message));
 
@@ -912,11 +913,16 @@ void delete_state(struct state *st)
 	 * it when debugging - values range from very approximate to
 	 * (in the case of IKEv1) simply wrong.
 	 */
-	if (LDBGP(DBG_CPU_USAGE, st->logger) || LDBGP(DBG_BASE, st->logger)) {
-		LDBG_log(st->logger, PRI_SO" main thread "PRI_CPU_USAGE" helper thread "PRI_CPU_USAGE" in total",
-			 pri_so(st->st_serialno),
-			 pri_cpu_usage(st->st_timing.main_usage),
-			 pri_cpu_usage(st->st_timing.helper_usage));
+	if (LDBGP(DBG_CPU_USAGE, st->logger) ||
+	    LDBGP(DBG_BASE, st->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, st->logger, buf) {
+			jam_so(buf, st->st_serialno);
+			jam_string(buf, " main thread ");
+			jam_cpu_usage(buf, st->st_timing.main_usage);
+			jam_string(buf, " helper thread ");
+			jam_cpu_usage(buf, st->st_timing.helper_usage);
+			jam_string(buf, " in total");
+		}
 	}
 
 	/*
@@ -1115,7 +1121,6 @@ void delete_state(struct state *st)
 	ikev1_clear_msgid_list(st);
 #endif
 	pubkey_delref(&st->st_peer_pubkey);
-	md_delref(&st->st_eap_sa_md);
 	free_eap_state(&st->st_eap);
 
 	free_ikev2_proposals(&st->st_v2_create_child_sa_proposals);
@@ -1132,8 +1137,9 @@ void delete_state(struct state *st)
 
 	free_generalNames(st->st_v1_requested_ca, true);
 
-	free_chunk_content(&st->st_firstpacket_me);
-	free_chunk_content(&st->st_firstpacket_peer);
+	ro_hunk_delref(&st->st_firstpacket_me, st->logger);
+	ro_hunk_delref(&st->st_firstpacket_peer, st->logger);
+
 #ifdef USE_IKEv1
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
@@ -1170,8 +1176,8 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_skey_initiator_salt);
 	free_chunk_content(&st->st_skey_responder_salt);
-	free_chunk_content(&st->st_skey_chunk_SK_pi);
-	free_chunk_content(&st->st_skey_chunk_SK_pr);
+
+	pfree_kem_initiator(&st->st_kem.initiator, st->logger);
 
 #define wipe_any_chunk(C)				\
 	{						\
@@ -1240,10 +1246,11 @@ static struct child_sa *duplicate_state(struct connection *c,
 					   ike->sa.st_ike_spis.responder,
 					   sa_kind, sa_role, HERE));
 
-	ldbg(ike->sa.logger, "duplicating state object %s #%lu as #%lu for %s",
+	ldbg(ike->sa.logger, "duplicating state object %s "PRI_SO" as "PRI_SO" for %s",
 	     ike->sa.st_connection->name,
-	     ike->sa.st_serialno,
-	     child->sa.st_serialno, sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA");
+	     pri_so(ike->sa.st_serialno),
+	     pri_so(child->sa.st_serialno),
+	     (sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA"));
 
 	/*
 	 * Some sloppy value inheritance.
@@ -1265,7 +1272,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	 */
 	if (sa_kind == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
-#   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
+#   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk_as_chunk(&ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
 #   undef state_clone_chunk
@@ -1327,7 +1334,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
-	const struct v2_transition *transition = fs->v2.child_transition;
+	const struct v2_transition *transition = fs->v2.larval_sa_transition;
 	PASSERT(c->logger, transition != NULL);
 
 	/*
@@ -1428,8 +1435,8 @@ static bool v2_spi_predicate(struct state *st, void *context)
 
 	if (pr->protocol != NULL) {
 		if (pr->outbound.spi == filter->outbound_spi) {
-			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-			    st->st_serialno, st->st_state->name);
+			ldbg(st->logger, "v2 CHILD SA "PRI_SO" found using their inbound (our outbound) SPI, in %s",
+			     pri_so(st->st_serialno), st->st_state->name);
 			ret = true;
 			if (filter->dst != NULL) {
 				ret = false;
@@ -1439,8 +1446,8 @@ static bool v2_spi_predicate(struct state *st, void *context)
 			}
 		} else if (filter->inbound_spi > 0 &&
 			   filter->inbound_spi == pr->inbound.spi) {
-			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
-			    st->st_serialno, st->st_state->name);
+			ldbg(st->logger, "v2 CHILD SA "PRI_SO" found using their our SPI, in %s",
+			     pri_so(st->st_serialno), st->st_state->name);
 			ret = true;
 			if (filter->dst != NULL) {
 				ret = false;
@@ -1452,9 +1459,10 @@ static bool v2_spi_predicate(struct state *st, void *context)
 #if 0
 		/* see function description above */
 		if (pr->inbound.spi == filter->outbound_spi) {
-			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
-			    st->st_serialno,
-			    st->st_state->name);
+			ldbg(st->logger,
+			     "v2 CHILD SA "PRI_SO" found using our inbound (their outbound) !?! SPI, in %s",
+			     st->st_serialno,
+			     st->st_state->name);
 			return true;
 		}
 #endif
@@ -1639,9 +1647,18 @@ void jam_humber_uintmax(struct jambuf *buf,
 void whack_briefstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
-	show(s, "State Information: DDoS cookies %s, %s new IKE connections",
-	     require_ddos_cookies() ? "REQUIRED" : "not required",
-	     (drop_new_exchanges(show_logger(s)) == NULL ? "Accepting" : "NOT ACCEPTING"));
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "State Information: ");
+		/*DDoS*/
+		jam_string(buf, "DDoS cookies ");
+		jam_string(buf, (require_ddos_cookies() ? "REQUIRED" : "not required"));
+		/* IKE */
+		jam_string(buf, ", ");
+		jam_string(buf, (drop_new_exchanges(show_logger(s)) != NULL ? "NOT ACCEPTING" :
+				 listening ? "Accepting" :
+				 "IGNORING"));
+		jam_string(buf, " new IKE connections");
+	}
 
 	show(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
@@ -1699,34 +1716,6 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 }
 
 /*
- * see https://tools.ietf.org/html/rfc7296#section-2.23
- *
- * [...] SHOULD store this as the new address and port combination
- * for the SA (that is, they SHOULD dynamically update the address).
- * A host behind a NAT SHOULD NOT do this type of dynamic address
- * update if a validated packet has different port and/or address
- * values because it opens a possible DoS attack (such as allowing
- * an attacker to break the connection with a single packet).
- *
- * The probe bool is used to signify we are answering a MOBIKE
- * probe request (basically a informational without UPDATE_ADDRESS
- */
-void update_ike_endpoints(struct ike_sa *ike,
-			  const struct msg_digest *md)
-{
-	/* caller must ensure we are not behind NAT */
-	ike->sa.st_remote_endpoint = md->sender;
-	endpoint_buf eb1, eb2;
-	dbg("#%lu updating local interface from %s to %s using md->iface "PRI_WHERE,
-	    ike->sa.st_serialno,
-	    ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>",
-	    str_endpoint(&md->iface->local_endpoint, &eb2),
-	    pri_where(HERE));
-	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
-	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
-}
-
-/*
  * This is for panic situations where the entire IKE family needs to
  * be blown away.
  */
@@ -1735,7 +1724,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 				      struct logger *logger,
 				      where_t where)
 {
-	state_attach(&(*ike)->sa, logger); /* no detach, going down */
+	whack_attach(&(*ike)->sa, logger); /* no detach, going down */
 
 	ldbg_sa((*ike), "parent is no longer vivable (but can send delete)");
 	(*ike)->sa.st_viable_parent = false;
@@ -1782,7 +1771,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 	};
 	while(next_state(&cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
-		state_attach(&child->sa, logger); /* no detach, going down */
+		whack_attach(&child->sa, logger); /* no detach, going down */
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			llog_sa_delete_n_send(established_isakmp, &child->sa);
@@ -1808,11 +1797,10 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 void show_globalstate_status(struct show *s)
 {
-	const struct config_setup *oco = config_setup_singleton();
 	unsigned shunts = shunt_count();
 
-	show(s, "config.setup.ike.ddos_threshold=%ju", config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD));
-	show(s, "config.setup.ike.max_halfopen=%ju", config_setup_option(oco, KBF_MAX_HALFOPEN_IKE));
+	show(s, "config.setup.ike.ddos_threshold=%ju", config_setup_option(KBF_DDOS_IKE_THRESHOLD));
+	show(s, "config.setup.ike.max_halfopen=%ju", config_setup_option(KBF_MAX_HALFOPEN_IKE));
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
 	show(s, "current.states.all="PRI_CAT, shunts + total_sa());
@@ -1955,7 +1943,8 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 		       where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
-		jam(buf, "#%lu.st_v1_transition ", st->st_serialno);
+		jam_so(buf, st->st_serialno);
+		jam_string(buf, ".st_v1_transition ");
 		jam_v1_transition(buf, st->st_v1_transition);
 		jam(buf, " to ");
 		jam_v1_transition(buf, transition);
@@ -1970,7 +1959,8 @@ void set_v2_transition(struct state *st, const struct v2_transition *transition,
 		       where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
-		jam(buf, "#%lu.st_v2_transition ", st->st_serialno);
+		jam_so(buf, st->st_serialno);
+		jam_string(buf, ".st_v2_transition ");
 		jam_v2_transition(buf, st->st_v2_transition);
 		jam(buf, " -> ");
 		jam_v2_transition(buf, transition);
@@ -1985,9 +1975,15 @@ static void jam_st(struct jambuf *buf, struct state *st)
 	if (st == NULL) {
 		jam(buf, "NULL");
 	} else {
-		jam(buf, "%s #%lu %s",
+		jam(buf, "%s "PRI_SO" %s",
 		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-		    st->st_serialno, st->st_state->short_name);
+		    pri_so(st->st_serialno), st->st_state->short_name);
+		jam(buf, "%s "PRI_SO" %s",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    pri_so(st->st_serialno), st->st_state->short_name);
+		jam(buf, "%s "PRI_SO" %s",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    pri_so(st->st_serialno), st->st_state->short_name);
 	}
 }
 
@@ -2306,4 +2302,9 @@ const char *str_child_policy(const struct child_policy *policy, child_policy_buf
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_child_policy(&buf, policy);
 	return dst->buf;
+}
+
+size_t jam_so(struct jambuf *buf, so_serial_t so)
+{
+	return jam(buf, PRI_SO, so);
 }

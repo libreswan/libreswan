@@ -53,7 +53,7 @@
 #include "lsw_socket.h"
 
 #include "constants.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 #include "defs.h"
 #include "state.h"
 #include "id.h"
@@ -76,6 +76,7 @@
 #include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 #include "show.h"
 #include "nat_traversal.h"
+#include "whack_listen.h"
 
 #include "fips_mode.h"
 
@@ -139,10 +140,9 @@ void check_open_fds(struct logger *logger)
  * it.
  */
 
-void init_ctl_socket(const struct config_setup *oco,
-		       struct logger *logger)
+void init_ctl_socket(struct logger *logger)
 {
-	const char *rundir = config_setup_string(oco, KSF_RUNDIR);
+	const char *rundir = config_setup_string(KSF_RUNDIR);
 	int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
 			 "%s/pluto.ctl", rundir);
 	if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
@@ -151,17 +151,13 @@ void init_ctl_socket(const struct config_setup *oco,
 	}
 
 	delete_ctl_socket();    /* preventative medicine */
-	ctl_fd = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
+	ctl_fd = cloexec_socket(PLUTO_CTL_DOMAIN, PLUTO_CTL_TYPE, 0);
 	if (ctl_fd == -1) {
 		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not create control socket");
 	}
 
 	/* to keep control socket secure, use umask */
-#ifdef PLUTO_GROUP_CTL
-	mode_t ou = umask(~(S_IRWXU | S_IRWXG));
-#else
 	mode_t ou = umask(~S_IRWXU);
-#endif
 
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
@@ -169,20 +165,6 @@ void init_ctl_socket(const struct config_setup *oco,
 		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not bind control socket");
 	}
 	umask(ou);
-
-#ifdef PLUTO_GROUP_CTL
-	{
-		struct group *g = getgrnam("pluto");
-
-		if (g != NULL) {
-			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				llog(RC_LOG, logger,
-					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
-					    ctl_fd, g->gr_gid, strerror(errno));
-			}
-		}
-	}
-#endif
 
 	/*
 	 * 5 (five) is a haphazardly chosen limit for the backlog.
@@ -216,6 +198,8 @@ bool listening = false;  /* should we pay attention to IKE messages? */
  * For instance, a timer with delay 0 will likely start running in the
  * main thread before this macro has finished.
  *
+ * DANGER: on a helper thread, LOGGER MUST BE GLOBAL!
+ *
  * Deleting:
  *
  * "If the event has already executed or has never been added the
@@ -225,24 +209,46 @@ bool listening = false;  /* should we pay attention to IKE messages? */
  * Libevent that an event should no longer be considered as assigned."
  */
 
-#define EVENT_ADD(EVP, EVENTS, FD, TIME, CB)				\
+#define EVENT_ADD(EVP, PRIORITY, EVENTS, FD, TIME, CB, LOGGER)		\
 	{								\
 		struct event *ev = &(EVP)->ev;				\
 		short events = EVENTS;					\
-		passert(!event_initialized(ev));			\
+		PASSERT(LOGGER, !event_initialized(ev));		\
 		event_assign(ev, pluto_eb, FD, events, CB, EVP);	\
-		passert(event_get_events(ev) == events);		\
-		passert(event_add(ev, TIME) >= 0);			\
+		event_priority_set(ev, PRIORITY);			\
+		PASSERT(LOGGER, event_get_events(ev) == events);	\
+		int r = event_add(ev, TIME);				\
+		PASSERT(LOGGER, r >= 0);				\
 	}
 
-#define EVENT_DEL(EVP)							\
-	{								\
-		struct event *ev = &(EVP)->ev;				\
-		passert(event_initialized(ev));				\
-		passert(event_del(ev) >= 0);				\
-		event_debug_unassign(ev);				\
-		zero(ev);						\
+#define EVENT_DEL(EVP, LOGGER)				\
+	{						\
+		PASSERT(LOGGER, in_main_thread());	\
+		struct event *ev = &(EVP)->ev;		\
+		PASSERT(LOGGER, event_initialized(ev));	\
+		PASSERT(LOGGER, event_del(ev) >= 0);	\
+		event_debug_unassign(ev);		\
+		zero(ev);				\
 	}
+
+/*
+ * Event priority.
+ *
+ * libevent defines 0 as most important and highest priority through
+ * to EVENT_PRIORITY_ROOF-1 as least important and lowest priority.
+ */
+enum event_priority {
+	EVENT_PRIORITY_GLOBAL,
+	EVENT_PRIORITY_OTHER,
+	/*
+	 * To quote libevent:
+	 *
+	 * "By default, all new events associated with this base will
+	 * be initialized with priority equal to n_priorities / 2."
+	 */
+#define EVENT_PRIORITY_DEFAULT (EVENT_PRIORITY_ROOF / 2)
+#define EVENT_PRIORITY_ROOF (EVENT_PRIORITY_OTHER+1)
+};
 
 /*
  * Global timer events.
@@ -258,7 +264,6 @@ static struct global_timer_desc global_timers[] = {
 #define E(T) [T] = { .name = #T, }
 	E(EVENT_REINIT_SECRET),
 	E(EVENT_SHUNT_SCAN),
-	E(EVENT_PENDING_DDNS),
 	E(EVENT_SD_WATCHDOG),
 	E(EVENT_CHECK_CRLS),
 	E(EVENT_FREE_ROOT_CERTS),
@@ -269,104 +274,117 @@ static struct global_timer_desc global_timers[] = {
 static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 				  const short event, void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	passert(in_main_thread());
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_TIMEOUT);
 	struct global_timer_desc *gt = arg;
-	passert(event & EV_TIMEOUT);
-	passert(gt >= global_timers);
-	passert(gt < global_timers + elemsof(global_timers));
-	dbg("processing global timer %s", gt->name);
-	threadtime_t start = threadtime_start();
-	gt->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
+	vassert(gt >= global_timers);
+	vassert(gt < global_timers + elemsof(global_timers));
+	const char *name = gt->name; /*save*/
+	vtime_t start = vdbg_start("processing global timer %s", name);
+	gt->cb(verbose);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void whack_impair_call_global_event_handler(enum global_timer timer,
 					    struct logger *logger)
 {
-	passert(in_main_thread());
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL); /* event-handler */
+
+	vassert(in_main_thread());
 	/* timer is hardwired so shouldn't happen */
-	passert(timer < elemsof(global_timers));
+	vassert(timer < elemsof(global_timers));
 
 	struct global_timer_desc *gt = &global_timers[timer];
-	passert(gt->name != NULL);
+	vassert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
-		llog(RC_LOG, logger,
-			    "IMPAIR: timer %s is not initialized",
-			    gt->name);
+		llog(IMPAIR_STREAM, logger, "timer %s is not initialized",
+		     gt->name);
 		return;
 	}
 
-	llog(RC_LOG, logger, "IMPAIR: injecting timer event %s", gt->name);
-	threadtime_t start = threadtime_start();
-	gt->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
+	const char *name = gt->name; /*save*/
+	llog(IMPAIR_STREAM, verbose.logger, "injecting timer event %s", name);
+	vtime_t start = vdbg_start("processing global timer %s", name);
+	gt->cb(verbose);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
-			   deltatime_t period)
+			   deltatime_t period, const struct logger *logger)
 {
-	passert(in_main_thread());
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, in_main_thread());
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	passert(gt->name != NULL);
+	PASSERT(logger, gt->name != NULL);
 	gt->cb = cb;
 	struct timeval t = timeval_from_deltatime(period);
-	EVENT_ADD(gt, EV_TIMEOUT|EV_PERSIST,
+	EVENT_ADD(gt, EVENT_PRIORITY_GLOBAL,
+		  EV_TIMEOUT|EV_PERSIST,
 		  (evutil_socket_t)-1, &t,
-		  global_timer_event_cb);
+		  global_timer_event_cb,
+		  logger);
 	/* log */
 	deltatime_buf buf;
-	dbg("global periodic timer %s enabled with interval of %s seconds",
-	    gt->name, str_deltatime(period, &buf));
+	ldbg(logger, "global periodic timer %s enabled with interval of %s seconds",
+	     gt->name, str_deltatime(period, &buf));
 }
 
-void init_oneshot_timer(enum global_timer type, global_timer_cb *cb)
+void init_oneshot_timer(enum global_timer type, global_timer_cb *cb,
+			const struct logger *logger)
 {
-	passert(in_main_thread());
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, in_main_thread());
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	/* initialize */
-	passert(gt->name != NULL);
-	passert(!event_initialized(&gt->ev));
+	/*
+	 * Initialize
+	 *
+	 * Unlike this code path, EVENT_ADD() also calls
+	 * event_add(TIME) scheduling an event.
+	 */
+	PASSERT(logger, gt->name != NULL);
+	PASSERT(logger, !event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
 		     EV_TIMEOUT,
 		     global_timer_event_cb, gt/*arg*/);
+	event_priority_set(&gt->ev, EVENT_PRIORITY_GLOBAL);
 	gt->cb = cb;
-	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
-	dbg("global one-shot timer %s initialized", gt->name);
+	PASSERT(logger, event_get_events(&gt->ev) == (EV_TIMEOUT));
+	ldbg(logger, "global one-shot timer %s initialized", gt->name);
 }
 
-void schedule_oneshot_timer(enum global_timer type, deltatime_t delay)
+void schedule_oneshot_timer(enum global_timer type, deltatime_t delay,
+			    const struct logger *logger)
 {
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
 	deltatime_buf buf;
-	dbg("global one-shot timer %s scheduled in %s seconds",
-	    gt->name, str_deltatime(delay, &buf));
-	passert(event_initialized(&gt->ev));
-	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
+	ldbg(logger, "global one-shot timer %s scheduled in %s seconds",
+	     gt->name, str_deltatime(delay, &buf));
+	PASSERT(logger, event_initialized(&gt->ev));
+	PASSERT(logger, event_get_events(&gt->ev) == (EV_TIMEOUT));
 	struct timeval t = timeval_from_deltatime(delay);
-	passert(event_add(&gt->ev, &t) >= 0);
+	PASSERT(logger, event_add(&gt->ev, &t) >= 0);
 }
 
 /* urban dictionary says deschedule is a word */
-void deschedule_oneshot_timer(enum global_timer type)
+void deschedule_oneshot_timer(enum global_timer type,
+			      const struct logger *logger)
 {
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	dbg("global one-shot timer %s disabled", gt->name);
-	passert(event_initialized(&gt->ev));
-	passert(event_del(&gt->ev) >= 0);
+	ldbg(logger, "global one-shot timer %s disabled", gt->name);
+	PASSERT(logger, event_initialized(&gt->ev));
+	PASSERT(logger, event_del(&gt->ev) >= 0);
 }
 
-static void free_global_timers(void)
+static void free_global_timers(const struct logger *logger)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
-			EVENT_DEL(gt);
-			dbg("global timer %s uninitialized", gt->name);
+			EVENT_DEL(gt, logger);
+			ldbg(logger, "global timer %s uninitialized", gt->name);
 		}
 	}
 }
@@ -398,7 +416,7 @@ static void list_global_timers(struct show *s, const monotime_t now)
  * Global signal events.
  */
 
-typedef void (signal_handler_cb)(struct logger *logger);
+typedef void (signal_handler_cb)(struct verbose verbose);
 
 struct signal_handler {
 	struct event ev;
@@ -423,34 +441,36 @@ static struct signal_handler signal_handlers[] = {
 static void signal_handler_handler(evutil_socket_t fd UNUSED,
 				   const short event, void *arg)
 {
-	passert(in_main_thread());
-	passert(event & EV_SIGNAL);
-	struct logger logger[1] = { global_logger, }; /* event-handler */
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_SIGNAL);
 	struct signal_handler *se = arg;
-	dbg("processing signal %s", se->name);
-	threadtime_t start = threadtime_start();
-	se->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "signal handler %s", se->name);
+	const char *name = se->name; /*save*/
+	vtime_t start = vdbg_start("processing signal %s", name);
+	se->cb(verbose);
+	vdbg_stop(&start, "signal handler %s", name);
 }
 
-static void install_signal_handlers(void)
+static void install_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		EVENT_ADD(se, EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
+		EVENT_ADD(se, EVENT_PRIORITY_DEFAULT,
+			  EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
 			  (evutil_socket_t)se->signal,
 			  (struct timeval*)NULL,
-			  signal_handler_handler);
-		dbg("signal event handler %s installed", se->name);
+			  signal_handler_handler,
+			  logger);
+		ldbg(logger, "signal event handler %s installed", se->name);
 	}
 }
 
-static void free_signal_handlers(void)
+static void free_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		EVENT_DEL(se);
-		dbg("signal event handler %s uninstalled", se->name);
+		EVENT_DEL(se, logger);
+		ldbg(logger, "signal event handler %s uninstalled", se->name);
 	}
 }
 
@@ -477,7 +497,7 @@ struct fd_read_listener {
 	struct fd_read_listener *next;
 };
 
-void free_server(void)
+void free_server(struct logger *logger)
 {
 	if (pluto_eb == NULL) {
 		/*
@@ -485,7 +505,7 @@ void free_server(void)
 		 * init_server(); mumble something about using
 		 * atexit().
 		 */
-		dbg("server event base not initialized");
+		ldbg(logger, "server event base not initialized");
 		return;
 	}
 
@@ -495,10 +515,10 @@ void free_server(void)
 		tbd->next = NULL;
 		detach_fd_read_listener(&tbd);
 	}
-	free_global_timers();
-	free_signal_handlers();
+	free_global_timers(logger);
+	free_signal_handlers(logger);
 
-	dbg("releasing event base");
+	ldbg(logger, "releasing event base");
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
 #if LIBEVENT_VERSION_NUMBER >= 0x02010100
@@ -515,10 +535,10 @@ void free_server(void)
 	 * function: RHEL 7.6 / CentOS 7.x (2.0.21-stable); Ubuntu
 	 * 16.04.6 LTS (Xenial Xerus) (2.0.21-stable).
 	 */
-	dbg("releasing global libevent data");
+	ldbg(logger, "releasing global libevent data");
 	libevent_global_shutdown();
 #else
-	dbg("leaking global libevent data (libevent is old)");
+	ldbg(logger, "leaking global libevent data (libevent is old)");
 #endif
 }
 
@@ -536,7 +556,7 @@ static void link_pluto_event_list(struct fd_read_listener *e) {
 
 struct timeout {
 	const char *name;
-	void (*cb)(void *arg, const struct timer_event *event);
+	timeout_event_cb *cb;
 	void *arg;
 	struct event ev;
 };
@@ -544,39 +564,48 @@ struct timeout {
 static void timeout(evutil_socket_t fd UNUSED,
 		    const short ev_event UNUSED, void *arg)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	struct timeout *tt = arg;
-	struct timer_event event = {
-		.inception = threadtime_start(),
-		.logger = &global_logger,
-	};
-	tt->cb(tt->arg, &event);
+	const char *name = tt->name; /*save*/
+
+	vtime_t start = vdbg_start("processing timer %s", name);
+	tt->cb(verbose, start, tt->arg);
+	vdbg_stop(&start, "timer %s", name);
 }
 
 void schedule_timeout(const char *name,
 		      struct timeout **tt, const deltatime_t delay,
-		      void (*cb)(void *arg, const struct timer_event *event),
+		      timeout_event_cb *cb,
 		      void *arg)
 {
 	*tt = alloc_thing(struct timeout, name);
-	ldbg_alloc(&global_logger, "tt", *tt, HERE);
+	ldbg_newref(&global_logger, *tt);
 	(*tt)->name = name;
 	(*tt)->cb = cb;
 	(*tt)->arg = arg;
 	/*
+	 * This code is executed on a helper thread.
+	 *
 	 * When DELAY is zero, the photon torpedo may have hit its
 	 * target before this function even returns.  Hence TT is a
 	 * parameter and is stored before the timer.
+	 *
+	 * DANGER: do not pass in a local logger, target may delete it
+	 * before it is used.
 	 */
 	struct timeval t = timeval_from_deltatime(delay);
-	EVENT_ADD(*tt, EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout);
+	EVENT_ADD(*tt, EVENT_PRIORITY_DEFAULT,
+		  EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout,
+		  &global_logger);
 }
 
 void destroy_timeout(struct timeout **tt)
 {
 	passert(in_main_thread());
 	if (*tt != NULL) {
-		EVENT_DEL(*tt);
-		ldbg_free(&global_logger, "tt", *tt, HERE);
+		EVENT_DEL(*tt, &global_logger);
+		ldbg_delref(&global_logger, *tt);
 		pfree(*tt);
 		*tt = NULL;
 	}
@@ -618,9 +647,12 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 	}
 }
 
-static void resume_handler(void *arg, const struct timer_event *event)
+static void resume_handler(struct verbose verbose,
+			   vtime_t inception UNUSED,
+			   void *arg)
 {
 	struct resume_event *e = (struct resume_event *)arg;
+	const char *name = e->name;
 	/*
 	 * At one point, .ne_event was was being set after the event
 	 * was enabled.  With multiple threads this resulted in a race
@@ -628,18 +660,21 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	 * pexpect() followed by the passert() demonstrated this - the
 	 * pexpect() failed yet the passert() passed.
 	 */
-	pexpect(e->timer != NULL);
-	ldbg(event->logger, "processing resume %s for #%lu", e->name, e->serialno);
+	vexpect(e->timer != NULL);
+	vdbg("processing resume %s for "PRI_SO"",
+	     name, pri_so(e->serialno));
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
+	 *
 	 * This unsuspends MD, "callback" does not.
 	 */
 	struct state *st = state_by_serialno(e->serialno);
 	if (st == NULL) {
-		threadtime_t start = threadtime_start();
+		vtime_t start = vdbg_start("processing ("PRI_SO") resume %s",
+					   pri_so(e->serialno), name);
 		stf_status status = e->callback(NULL, NULL, e->context);
-		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
-		threadtime_stop(&start, e->serialno, "resume %s", e->name);
+		vexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
+		vdbg_stop(&start, "("PRI_SO") resume %s", pri_so(e->serialno), name);
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
@@ -659,9 +694,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
-			ldbg(event->logger,
-			     "resume %s for #%lu suppressed complete_v%d_state_transition()%s",
-			     e->name, e->serialno, ike_version,
+			vdbg("resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
+			     name, pri_so(e->serialno), ike_version,
 			     (old_md_st != SOS_NOBODY && e->md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && e->md->v1_st != st ? "; MD.ST was switched" :
 			      ""));
@@ -690,7 +724,7 @@ static void resume_handler(void *arg, const struct timer_event *event)
 			}
 			complete_state_transition(st, e->md, status);
 		}
-		statetime_stop(&start, "resume %s", e->name);
+		statetime_stop(&start, "resume %s", name);
 	}
 	passert(e->timer != NULL);
 	destroy_timeout(&e->timer);
@@ -725,15 +759,15 @@ void schedule_resume(const char *name, so_serial_t serialno,
 		.md = md,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
-	dbg("scheduling resume %s for #%lu",
-	    e->name, e->serialno);
+	ldbg(&global_logger, "scheduling resume %s for "PRI_SO"",
+	     name, pri_so(e->serialno));
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	schedule_timeout(name, &e->timer, deltatime(0), resume_handler, e);
+	schedule_timeout(name, &e->timer, deltatime_from_seconds(0), resume_handler, e);
 }
 
 /*
@@ -748,7 +782,9 @@ struct callback_event {
 	struct timeout *timer;
 };
 
-static void callback_handler(void *arg, const struct timer_event *event)
+static void callback_handler(struct verbose verbose,
+			     vtime_t inception UNUSED,
+			     void *arg)
 {
 	/*
 	 * Save all fields so that all event-loop memory can be freed
@@ -763,31 +799,34 @@ static void callback_handler(void *arg, const struct timer_event *event)
 	 * ran and was deleted .event was valid.  Oops!
 	 */
 	struct callback_event e = *(struct callback_event *)arg;
-	passert(e.timer != NULL);
+	vassert(e.timer != NULL);
 	destroy_timeout(&e.timer);
 	pfree(arg);
 
 	struct state *st;
 	if (e.serialno == SOS_NOBODY) {
-		ldbg(event->logger, "processing callback %s", e.story);
+		vdbg("processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		ldbg(event->logger, "processing callback %s for #%lu", e.story, e.serialno);
+		vdbg("processing callback %s for "PRI_SO"",
+		     e.story, pri_so(e.serialno));
 		st = state_by_serialno(e.serialno);
 	}
 
-	threadtime_t start = threadtime_start();
+	vtime_t start = vdbg_start("callback %s", e.story);
 	e.callback(e.story, st, e.context);
-	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
+	vdbg_stop(&start, "callback %s", e.story);
 }
 
-void schedule_callback(const char *story, deltatime_t delay,
+void schedule_callback(const char *story,
+		       deltatime_t delay,
 		       so_serial_t serialno,
-		       callback_cb *callback, void *context)
+		       callback_cb *callback, void *context,
+		       struct logger *logger)
 {
 	struct callback_event tmp = {
 		.serialno = serialno,
@@ -796,7 +835,8 @@ void schedule_callback(const char *story, deltatime_t delay,
 		.story = story,
 	};
 	struct callback_event *e = clone_thing(tmp, story);
-	dbg("scheduling callback %s (#%lu)", e->story, e->serialno);
+	ldbg(logger, "scheduling callback %s ("PRI_SO")",
+	     e->story, pri_so(e->serialno));
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below
@@ -806,12 +846,17 @@ void schedule_callback(const char *story, deltatime_t delay,
 }
 
 static void fd_read_listener_event_handler(evutil_socket_t fd,
-					   short events UNUSED,
+					   const short event,
 					   void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_READ);
 	struct fd_read_listener *fdl = arg;
-	fdl->cb(fd, fdl->arg, logger);
+	const char *name = fdl->name;
+	vtime_t start = vdbg_start("processing read %d listener %s", fd, name);
+	fdl->cb(verbose, fd, fdl->arg);
+	vdbg_stop(&start, "read %d listener %s", fd, name);
 }
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
@@ -822,21 +867,23 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 	passert(fd >= 0);
 	/* create the listener */
 	*fdl = alloc_thing(struct fd_read_listener, name);
-	ldbg_alloc(&global_logger, "fdl", *fdl, HERE);
+	ldbg_newref(&global_logger, *fdl);
 	(*fdl)->name = name;
 	(*fdl)->arg = arg;
 	(*fdl)->cb = cb;
-	EVENT_ADD(*fdl, EV_READ|EV_PERSIST,
+	EVENT_ADD(*fdl, EVENT_PRIORITY_DEFAULT,
+		  EV_READ|EV_PERSIST,
 		  (evutil_socket_t)fd,
 		  (struct timeval*)NULL,
-		  fd_read_listener_event_handler);
+		  fd_read_listener_event_handler,
+		  &global_logger);
 }
 
 void detach_fd_read_listener(struct fd_read_listener **fdl)
 {
 	if (*fdl != NULL) {
-		EVENT_DEL(*fdl);
-		ldbg_free(&global_logger, "fdl", *fdl, HERE);
+		EVENT_DEL(*fdl, &global_logger);
+		ldbg_delref(&global_logger, *fdl);
 		pfree(*fdl);
 		*fdl = NULL;
 	}
@@ -863,14 +910,20 @@ static void fd_accept_listener(struct evconnlistener *efc UNUSED,
 			       struct sockaddr *sockaddr, int sockaddr_len,
 			       void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	struct fd_accept_listener *fdl = arg;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
 	};
-	passert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
+	vassert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
 	memcpy(&sa.sa, sockaddr, sockaddr_len);
-	fdl->cb(fd, &sa, fdl->arg, logger);
+
+	struct fd_accept_listener *fdl = arg;
+	const char *name = fdl->name; /*save*/
+	vtime_t start = vdbg_start("processing accept %d listener %s", fd, name);
+	fdl->cb(verbose, fd, &sa, fdl->arg);
+	vdbg_stop(&start, "accept %d listener %s", fd, name);
 }
 
 void attach_fd_accept_listener(const char *name,
@@ -880,7 +933,7 @@ void attach_fd_accept_listener(const char *name,
 	passert(*fdl == NULL);
 	passert(fd >= 0);
 	*fdl = alloc_thing(struct fd_accept_listener, name);
-	ldbg_alloc(&global_logger, "fdl", *fdl, HERE);
+	ldbg_newref(&global_logger, *fdl);
 	(*fdl)->cb = cb;
 	(*fdl)->arg = arg;
 	(*fdl)->name = name;
@@ -894,7 +947,7 @@ void detach_fd_accept_listener(struct fd_accept_listener **fdl)
 	if (*fdl != NULL) {
 		evconnlistener_free((*fdl)->ev);
 		(*fdl)->ev = NULL;
-		ldbg_free(&global_logger, "fdl", *fdl, HERE);
+		ldbg_delref(&global_logger, *fdl);
 		pfree(*fdl);
 		*fdl = NULL;
 	}
@@ -934,14 +987,14 @@ void show_debug_status(struct show *s)
 	}
 }
 
-static void huphandler_cb(struct logger *logger)
+static void huphandler_cb(struct verbose verbose)
 {
-	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	vlog("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(struct logger *logger)
+static void termhandler_cb(struct verbose verbose)
 {
-	whack_shutdown(logger, PLUTO_EXIT_OK);
+	whack_shutdown(verbose.logger, PLUTO_EXIT_OK);
 }
 
 static server_fork_cb addconn_exited; /* type assertion */
@@ -950,9 +1003,13 @@ static stf_status addconn_exited(struct state *null_st UNUSED,
 				 struct msg_digest *null_mdp UNUSED,
 				 int status, shunk_t output UNUSED,
 				 void *context UNUSED,
-				 struct logger *logger UNUSED)
+				 struct logger *logger)
 {
-	dbg("reaped addconn helper child (status %d)", status);
+	ldbg(logger, "reaped addconn helper child (status %d)", status);
+	struct whack_listen wl = {0};
+	whack_listen_1(&wl, logger);
+	/* XXX: test startup scripts look for this message */
+	llog(RC_LOG, logger, "Pluto is up");
 	return STF_OK;
 }
 
@@ -960,23 +1017,23 @@ static stf_status addconn_exited(struct state *null_st UNUSED,
 static void *libevent_malloc(size_t size)
 {
 	void *ptr = uninitialized_malloc(size, __func__);
-	ldbg_alloc(&global_logger, "libevent", ptr, HERE);
+	ldbg_newref(&global_logger, ptr);
 	return ptr;
 }
 static void *libevent_realloc(void *old, size_t size)
 {
 	if (old != NULL) {
-		ldbg_free(&global_logger, "libevent", old, HERE);
+		ldbg_delref(&global_logger, old);
 	}
 	void *new = uninitialized_realloc(old, size, __func__);
 	if (new != NULL) {
-		ldbg_alloc(&global_logger, "libevent", new, HERE);
+		ldbg_newref(&global_logger, new);
 	}
 	return new;
 }
 static void libevent_free(void *ptr)
 {
-	ldbg_free(&global_logger, "libevent", ptr, HERE);
+	ldbg_delref(&global_logger, ptr);
 	pfree(ptr);
 }
 #endif
@@ -991,27 +1048,62 @@ void init_server(struct logger *logger)
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
 	event_set_mem_functions(libevent_malloc, libevent_realloc,
 				libevent_free);
-	dbg("libevent is using pluto's memory allocator");
+	ldbg(logger, "libevent is using pluto's memory allocator");
 #else
-	dbg("libevent is using its own memory allocator");
+	ldbg(logger, "libevent is using its own memory allocator");
 #endif
 	llog(RC_LOG, logger,
-		    "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
-		    LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
-		    event_get_version(), event_get_version_number());
+	     "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
+	     LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
+	     event_get_version(), event_get_version_number());
+
 	/*
 	 * According to section 'setup Library setup', libevent needs
 	 * to be set up in pthreads mode before doing anything else.
 	 */
 	int r = evthread_use_pthreads();
-	passert(r >= 0);
+	PASSERT(logger, r >= 0);
+
+	/*
+	 * Force the event queue to run global events at least once a
+	 * second.  This should prevent a priority inversion locking
+	 * out the SYSTEMD watchdog timer.
+	 *
+	 * Note: If more priorities are added, then this will need to
+	 * be tweaked.  While 1s is fine for global timers it is too
+	 * course grained for other events.
+	 *
+	 * Note: this is unfortunately global.  It isn't possible to
+	 * put limits on specific priority queues.
+	 *
+	 * Note: libevent's documentation is a little confusing here.
+	 * It talks about how the limit applies to `min_priority` or
+	 * HIGHER, but the code has it applying to `min_priority` or
+	 * LOWER - which makes far more sense.
+	 *
+	 * https://github.com/libevent/libevent/issues/1831
+	 */
+	struct event_config *cfg = event_config_new();
+	struct timeval one_second = from_seconds(1);
+	event_config_set_max_dispatch_interval(cfg, &one_second,
+					       /*no-nr-events-limit*/-1,
+					       EVENT_PRIORITY_GLOBAL-1);
+
 	/* now do anything */
-	dbg("creating event base");
-	pluto_eb = event_base_new();
+	ldbg(logger, "creating event base");
+	pluto_eb = event_base_new_with_config(cfg);
 	passert(pluto_eb != NULL);
+	event_config_free(cfg);
+	cfg = NULL;
+
+	/*
+	 * Allow priorities.
+	 */
+	event_base_priority_init(pluto_eb, EVENT_PRIORITY_ROOF);
+
 	int s = evthread_make_base_notifiable(pluto_eb);
 	passert(s >= 0);
-	dbg("libevent initialized");
+	ldbg(logger, "libevent initialized");
 }
 
 /*
@@ -1022,21 +1114,19 @@ void init_server(struct logger *logger)
  * shutdown code).
  */
 
-static server_stopped_cb server_stopped;
+static server_stopped_cb *server_stopped NEVER_RETURNS;
 
 void run_server(const char *conffile, struct logger *logger)
 {
-	UNUSED const struct config_setup *oco = config_setup_singleton(); /*param?*/
-
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
 
-	dbg("Setting up events, loop start");
+	ldbg(logger, "Setting up events, loop start");
 
 	add_fd_read_listener(ctl_fd, "PLUTO_CTL_FD", whack_handle_cb, NULL);
 
-	install_signal_handlers();
+	install_signal_handlers(logger);
 
 	/* do_whacklisten() is now done by the addconn fork */
 
@@ -1056,6 +1146,7 @@ void run_server(const char *conffile, struct logger *logger)
 		DISCARD_CONST(char *, "--config"),
 		DISCARD_CONST(char *, conffile),
 		DISCARD_CONST(char *, "--autoall"),
+		DISCARD_CONST(char *, "--quiet"),
 		NULL,
 	};
 	char *newenv[] = { NULL };
@@ -1066,21 +1157,21 @@ void run_server(const char *conffile, struct logger *logger)
 	/* parent continues */
 
 #ifdef USE_SECCOMP
-	init_seccomp_main(oco, logger);
+	init_seccomp_main(logger);
 #else
 	llog(RC_LOG, logger, "seccomp security not supported");
 #endif
 
 	int r = event_base_loop(pluto_eb, 0);
 	pexpect(r >= 0);
-	server_stopped(r);
+	server_stopped(r, logger);
 }
 
 /*
  * Indicate to libevent that the event-loop should be shutdown.  Once
  * shutdown has completed CB is called.
  */
-void stop_server(server_stopped_cb cb)
+void stop_server(server_stopped_cb *cb NEVER_RETURNS)
 {
 	server_stopped = cb;
 	event_base_loopbreak(pluto_eb);
@@ -1089,4 +1180,9 @@ void stop_server(server_stopped_cb cb)
 struct event_base *get_pluto_event_base(void)
 {
 	return pluto_eb;
+}
+
+unsigned nr_processors_online(void)
+{
+	return sysconf(_SC_NPROCESSORS_ONLN);
 }

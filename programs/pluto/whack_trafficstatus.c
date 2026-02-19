@@ -78,11 +78,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 
 	jam(buf, ", add_time=%"PRIu64, child->sa.st_esp.add_time);
 
-	struct ipsec_proto_info *first_ipsec_proto =
-		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
-		 child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		 NULL);
+	struct ipsec_proto_info *first_ipsec_proto = outer_ipsec_proto_info(child);
 	passert(first_ipsec_proto != NULL);
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
@@ -119,9 +115,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
 				if (lease->ip.is_set) {
 					jam_string(buf, sep); sep = ",";
-					/* XXX: lease should be CIDR */
-					ip_subnet s = subnet_from_address(*lease);
-					jam_subnet(buf, &s);
+					jam_cidr(buf, lease);
 				}
 			}
 		}
@@ -130,7 +124,8 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 
 static unsigned whack_trafficstatus_connection(const struct whack_message *m UNUSED,
 					       struct show *s,
-					       struct connection *c)
+					       struct connection *c,
+					       struct connection_visitor_context *context UNUSED)
 {
 	if (!can_have_sa(c, CHILD_SA)) {
 		return 0; /* the connection doesn't count */
@@ -183,14 +178,15 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 	if (m->name == NULL) {
 		struct connections *connections = sort_connections();
 		ITEMS_FOR_EACH(cp, connections) {
-			whack_trafficstatus_connection(m, s, (*cp));
+			whack_trafficstatus_connection(m, s, (*cp), NULL);
 		}
 		pfree(connections);
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_trafficstatus_connection,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_trafficstatus_connection, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

@@ -1,0 +1,25 @@
+<varlistentry id='conn.esn'>
+  <term>
+    <option>esn=&esn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether or not to enable Extended Sequence Number (ESN) for the
+      IPsec SA. This option is only implemented for IKEv2. ESN is
+      typically used for very high-speed links (10Gbps or faster)
+      where the standard 32 bit sequence number is exhausted too
+      quickly, causing IPsec SA's rekeys to happen too often.  If
+      &either; is specified as an initiator, the responder will make
+      the choice.  As a responder, if &either; is received, &yes; is
+      picked.
+    </para>
+    <para>
+      The default is &either;.
+    </para>
+    <para>
+      If replay-window is set to 0, ESN is disabled as some (most?)
+      IPsec stacks won't support ESN in such a configuration.
+    </para>
+  </listitem>
+</varlistentry>
+

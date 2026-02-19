@@ -47,7 +47,8 @@ bool lexopen(struct file_lex_position **flp, const char *name,
 	FILE *f = fopen(name, "r");
 	if (f == NULL) {
 		if (!optional || errno != ENOENT) {
-			llog_error(logger, errno, "could not open \"%s\"", name);
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "could not open \"%s\": ", name);
 		} else if (LDBGP(DBG_TMI, logger)) {
 			LDBG_errno(logger, errno, "lex open: %s: ", name);
 		}

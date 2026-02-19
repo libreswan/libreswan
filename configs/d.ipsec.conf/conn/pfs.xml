@@ -1,0 +1,14 @@
+<varlistentry id='conn.pfs'>
+  <term>
+    <option>pfs=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      whether Perfect Forward Secrecy of keys is desired on the
+      connection's keying channel (with PFS, penetration of the
+      key-exchange protocol does not compromise keys negotiated
+      earlier); Acceptable values are &yes; (the
+      default) and &no;.
+    </para>
+  </listitem>
+</varlistentry>

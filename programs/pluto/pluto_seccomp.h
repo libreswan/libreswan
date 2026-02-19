@@ -17,6 +17,8 @@
 #ifndef PLUTO_SECCOMP_H
 #define PLUTO_SECCOMP_H
 
+#include "verbose.h"
+
 #include "seccomp_mode.h"
 
 struct config_setup;
@@ -24,11 +26,11 @@ struct logger;
 struct show;
 struct whack_message;
 
-void init_seccomp_main(const struct config_setup *oco, struct logger *logger);
-void init_seccomp_cryptohelper(int helpernum, struct logger *logger);
+void init_seccomp_main(struct logger *logger);
+void init_seccomp_helper(struct logger *logger);
 
 void whack_seccomp_crashtest(const struct whack_message *wm, struct show *s);
-void show_seccomp(const struct config_setup *oco, struct show *s);
-void seccomp_sigsys_handler(struct logger *logger);
+void show_seccomp(struct show *s);
+void seccomp_sigsys_handler(struct verbose verbose);
 
 #endif

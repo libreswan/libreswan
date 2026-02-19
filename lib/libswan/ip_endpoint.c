@@ -73,7 +73,7 @@ int endpoint_hport(const ip_endpoint endpoint)
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("%s has unspecified type", __func__);
+		ldbg(&global_logger, "%s has unspecified type", __func__);
 		return -1;
 	}
 
@@ -86,7 +86,7 @@ ip_port endpoint_port(const ip_endpoint endpoint)
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("%s has unspecified type", __func__);
+		ldbg(&global_logger, "%s has unspecified type", __func__);
 		return unset_port;
 	}
 
@@ -99,13 +99,13 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 	if (afi == NULL) {
 		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("endpoint has unspecified type");
+		ldbg(&global_logger, "endpoint has unspecified type");
 		return unset_endpoint;
 	}
 
 	ip_endpoint dst = endpoint;
 	dst.hport = hport(port);
-	pendpoint(&dst);
+	pexpect_endpoint(&dst, HERE);
 	return dst;
 }
 
@@ -185,13 +185,9 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	size_t s = jam_sensitive_ip(buf, "endpoint", endpoint, &afi);
 	if (s > 0) {
 		return s;
-	}
-
-	if (!log_ip) {
-		return jam_string(buf, "<endpoint>");
 	}
 
 	return jam_endpoint(buf, endpoint);
@@ -241,13 +237,9 @@ const char *str_endpoint_address_protocol_port(const ip_endpoint *endpoint, endp
 size_t jam_endpoint_address_protocol_port_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	size_t s = jam_sensitive_ip(buf, "endpoint", endpoint, &afi);
 	if (s > 0) {
 		return s;
-	}
-
-	if (!log_ip) {
-		return jam_string(buf, "<endpoint>");
 	}
 
 	return jam_endpoint_address_protocol_port(buf, endpoint);
@@ -338,6 +330,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	    e->ipproto == 0 ||
 	    protocol == NULL /* ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
-		llog_pexpect(&global_logger, where, "invalid endpoint: "PRI_ENDPOINT, pri_endpoint(e));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_ENDPOINT, pri_ip_endpoint(e));
 	}
 }

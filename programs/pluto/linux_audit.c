@@ -90,7 +90,7 @@ bool linux_audit_init(bool do_audit, struct logger *logger)
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			llog(RC_LOG, logger, "warning: kernel has no audit support");
+			llog(WARNING_STREAM, logger, "kernel has no audit support");
 			log_to_audit = false;
 			return false;
 		}
@@ -99,7 +99,7 @@ bool linux_audit_init(bool do_audit, struct logger *logger)
 		 */
 #if 0
 		if (!do_audit) {
-			llog_errno(RC_LOG, logger, errno, "warning: audit_open() failed");
+			llog_errno(WARNING_STREAM, logger, errno, "audit_open() failed");
 			log_to_audit = false;
 			return false;
 		}
@@ -165,13 +165,13 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	{
 		/* head */
 		jam(&buf, "op=%s direction=%s %s connstate=%lu ike-version=%s",
-		    op == LAK_PARENT_DESTROY ? "destroy" : "start", /* fail to start logged under op=start */
+		    (op == LAK_PARENT_DESTROY ? "destroy" : "start"), /* fail to start logged under op=start */
 		    (st->st_sa_role == SA_INITIATOR ? "initiator" :
 		     st->st_sa_role == SA_RESPONDER ? "responder" :
 		     "????"),
 		    conn_encode,
-		    st->st_serialno,
-		    (st->st_ike_version == IKEv2) ? "2.0" : "1");
+		    (unsigned long) st->st_serialno,
+		    (st->st_ike_version == IKEv2 ? "2.0" : "1"));
 
 		jam(&buf, " auth=");
 		if (st->st_ike_version == IKEv2 ||
@@ -243,12 +243,14 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	{
 		/* head */
 		jam(&buf, "op=%s %s connstate=%lu, satype=%s",
-		    op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
+		    (op == LAK_CHILD_DESTROY ? "destroy" : "start"), /* fail uses op=start */
 		    conn_encode,
-		    st->st_serialno,
-		    st->st_esp.protocol == &ip_protocol_esp ? "ipsec-esp" : st->st_ah.protocol == &ip_protocol_ah ? "ipsec-ah" : "ipsec-policy");
+		    (unsigned long) st->st_serialno,
+		    (st->st_esp.protocol == &ip_protocol_esp ? "ipsec-esp" :
+		     st->st_ah.protocol == &ip_protocol_ah ? "ipsec-ah" :
+		     "ipsec-policy"));
 		jam_string(&buf, " samode=");
-		jam_enum_short(&buf, &encap_mode_story, c->config->child_sa.encap_mode);
+		jam_enum_short(&buf, &encap_mode_story, c->config->child.encap_mode);
 
 		/*
 		 * XXX: Instead of IKEv1_ESP_ID, this should use

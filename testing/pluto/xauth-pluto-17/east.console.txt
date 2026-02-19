@@ -6,9 +6,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add xauth-road-eastnet-psk
-ipsec addconn: /etc/ipsec.conf:22: warning: obsolete keyword ignored: dpdaction=restart
-"xauth-road-eastnet-psk": added IKEv1 connection
+ ipsec add xauth-road-eastnet-psk
+ipsec add: warning: /etc/ipsec.conf:22: obsolete keyword ignored: dpdaction=restart
+"xauth-road-eastnet-psk": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -19,6 +19,7 @@ src 192.1.2.23 dst 192.1.3.209
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	dir out
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -28,11 +29,13 @@ src 192.1.3.209 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	dir out
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -42,6 +45,7 @@ src 192.1.3.209 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.1.3.209/32

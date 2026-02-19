@@ -9,7 +9,7 @@ east #
  ipsec add east
 "east": adding interface eth1 192.1.2.23:UDP/443 (NAT fixed)
 "east": adding interface eth1 192.1.2.23:TCP/443 (NAT fixed)
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  # block all TCP and UDP port 500 and 4500
 east #

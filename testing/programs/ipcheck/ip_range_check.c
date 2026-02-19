@@ -58,27 +58,30 @@ static void check_iprange_bits(void)
 		{ LN, &ipv6_info, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 1, 127},
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
-		oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+		d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->lo, str_diag(d));
 		}
 
 		ip_address hi;
-		oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+		d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->hi, str_diag(d));
 		}
 
-		ip_range range = range_from_raw(HERE, afi, lo.bytes, hi.bytes);
+		ip_range range = range_from_raw(HERE, afi,
+						lo.bytes, hi.bytes);
 		int host_len = range_host_len(range);
 		if (host_len != t->host_len) {
 			FAIL("range_host_len(range) returned '%d', expected '%d'",
@@ -109,9 +112,11 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::1-::1", "::1/128", 1, },
 		{ LN, &ipv4_info, "4.3.2.1/32", "4.3.2.1/32", 1, },
 		{ LN, &ipv6_info, "::2/128", "::2/128", 1, },
+
 		/* normal range */
 		{ LN, &ipv6_info, "::1-::2", "::1-::2", 2, },
 		{ LN, &ipv4_info, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, },
+
 		/* largest */
 		{ LN, &ipv4_info, "0.0.0.1-255.255.255.255", "0.0.0.1-255.255.255.255", UINT32_MAX, },
 
@@ -145,7 +150,7 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::/0", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
 
-		/* allow mask */
+		/* allow CIDR prefix */
 		{ LN, &ipv4_info, "1.2.3.0/32", "1.2.3.0/32", 1, },
 		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, },
 		{ LN, &ipv6_info, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, },
@@ -162,9 +167,11 @@ static void check_ttorange__to__str_range(void)
 		/* reject port */
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:0", NULL, -1, },
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:30", NULL, -1, },
+
 		/* wrong order */
 		{ LN, &ipv4_info, "1.2.3.4-1.2.3.3", NULL, -1, },
 		{ LN, &ipv6_info, "::2-::1", NULL, -1, },
+
 		/* can contain %any */
 		{ LN, &ipv4_info, "0.0.0.0-0.0.0.0", "0.0.0.0/32", 1, },
 		{ LN, &ipv4_info, "0.0.0.0-0.0.0.1", "0.0.0.0/31", 2, },
@@ -174,6 +181,7 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::0/64", "::/64", UINT64_MAX, },
 		{ LN, &ipv6_info, "::0/127", "::/127", 2, },
 		{ LN, &ipv6_info, "::/0", "::/0", UINTMAX_MAX, },
+
 		/* nonsense */
 		{ LN, &ipv4_info, "1.2.3.0-nonenone", NULL, -1, },
 		{ LN, &ipv4_info, "", NULL, -1, },
@@ -193,9 +201,10 @@ static void check_ttorange__to__str_range(void)
 		const char *oops = NULL;
 
 		ip_range tmp, *range = &tmp;
-		oops = ttorange_num(shunk1(t->in), t->afi, range);
-		if (oops != NULL && t->str == NULL) {
+		diag_t d = ttorange_num(shunk1(t->in), t->afi, range);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
@@ -245,18 +254,17 @@ static void check_range_from_subnet(void)
 		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'..'%s'", pri_afi(t->afi), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		oops = ttosubnet_num(shunk1(t->in), t->afi,
-				     subnet, &nonzero_host);
-		if (oops != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		d = ttosubnet_num(shunk1(t->in), t->afi,
+				  subnet, &nonzero_host);
+		if (d != NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
@@ -309,19 +317,20 @@ static void check_range_is(void)
 		{ LN, &ipv6_info, "::1", "::2",          "::1-::2",         .size = 2, },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+			d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->lo, str_diag(d));
 			}
 		} else {
 			lo = unset_address;
@@ -329,16 +338,18 @@ static void check_range_is(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+			d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->hi, str_diag(d));
 			}
 		} else {
 			hi = unset_address;
 		}
 
 		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
-				range_from_raw(HERE, afi, lo.bytes, hi.bytes));
+				range_from_raw(HERE, afi,
+					       lo.bytes, hi.bytes));
 		ip_range *range = &tmp;
 		CHECK_INFO(range);
 		CHECK_STR2(range);
@@ -389,8 +400,6 @@ static void check_range_op_range(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s vs %s", t->l, t->r);
@@ -398,9 +407,10 @@ static void check_range_op_range(void)
 #define TT(R)								\
 		ip_range R;						\
 		if (t->R != NULL) {					\
-			oops = ttorange_num(shunk1(t->R), 0, &R);	\
-			if (oops != NULL) {				\
-				FAIL("ttorange(%s) failed: %s", t->R, oops); \
+			diag_t d = ttorange_num(shunk1(t->R), 0, &R);	\
+			if (d != NULL) {				\
+				FAIL("ttorange(%s) failed: %s", t->R,	\
+				     str_diag(d));			\
 			}						\
 		} else {						\
 			R = unset_range;				\
@@ -427,125 +437,6 @@ static void check_range_op_range(void)
 	}
 }
 
-static void check_range_to_address(void)
-{
-	static const struct test {
-		int line;
-		const char *range;
-		uintmax_t offset;
-		const char *address;
-	} tests[] = {
-		{ LN, "1.0.0.0/32",	         0, "1.0.0.0", },
-		{ LN, "1.0.0.0/31",	         1, "1.0.0.1", },
-		{ LN, "1.0.0.0/24",	       255, "1.0.0.255", },
-		{ LN, "1.0.0.0/24",            256, NULL, },
-		{ LN, "1.0.0.0/23",            256, "1.0.1.0", },
-		/* bits */
-		{ LN, "::1-::2",                 0, "::1", },
-		{ LN, "::1-::2",                 1, "::2", },
-		/* carry/overflow */
-		{ LN, "::ffff-::1:0000",         1, "::1:0", },
-		{ LN, "::ffff-::1:ffff",   0x10001, NULL, },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX-1ULL, "255.255.255.255", },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX,      NULL, },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX+1ULL, NULL, },
-	};
-
-	err_t err;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT("%s + %jx -> %s", t->range, t->offset,
-		      t->address == NULL ? "<unset>" : t->address);
-
-		/* convert it *to* internal format */
-		ip_range range;
-		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
-		if (err != NULL) {
-			FAIL("ttorange(%s) failed: %s", t->range, err);
-		}
-
-		ip_address address;
-		err = range_offset_to_address(range, t->offset, &address);
-		address_buf out;
-		str_address(&address, &out);
-
-		if (t->address == NULL) {
-			if (address.ip.is_set) {
-				FAIL("range_to_address(%s + %jx -> %s) should have returned <unset>",
-				     t->range, t->offset, out.buf);
-			}
-		} else if (!streq(out.buf, t->address)) {
-			FAIL("range_to_address(%s + %jx -> %s) should have returned %s",
-			     t->range, t->offset, out.buf, t->address);
-		}
-
-		PRINT("range_to_address(%s + %jx -> %s): %s",
-		      t->range, t->offset, out.buf, err == NULL ? "<ok>" : err);
-
-	}
-}
-
-static void check_range_to_offset(void)
-{
-	static const struct test {
-		int line;
-		const char *range;
-		const char *address;
-		uintmax_t offset;
-		bool ok;
-	} tests[] = {
-		{ LN, "1.0.0.0/32", "1.0.0.0", 0, true, },
-		{ LN, "0.0.0.1-255.255.255.255", "255.255.255.255", UINT32_MAX-1ULL, true, },
-		/* out of range */
-		{ LN, "1.0.0.0/32", "0.255.255.255", UINTMAX_MAX, false, },
-		{ LN, "1.0.0.0/32", "1.0.0.1", UINTMAX_MAX, false, },
-	};
-
-	err_t err;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT("%s - %s -> %jx ok: %s",
-		      t->range, t->address,
-		      t->offset, bool_str(t->ok));
-
-		ip_range range;
-		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
-		if (err != NULL) {
-			FAIL("ttorange(%s) failed: %s", t->range, err);
-		}
-
-		ip_address address;
-		err = ttoaddress_num(shunk1(t->address), NULL/*auto-detect*/, &address);
-		if (err != NULL) {
-			FAIL("ttoaddress_num(%s) failed: %s", t->address, err);
-		}
-
-		uintmax_t offset;
-		err = address_to_range_offset(range, address, &offset);
-
-		if (t->ok) {
-			if (err != NULL) {
-				FAIL("range_to_offset(%s - %s -> %jx) unexpectedly failed: %s",
-				     t->range, t->address, offset, err);
-			}
-		} else if (err == NULL) {
-			FAIL("range_to_offset(%s - %s -> %jx) unexpectedly succeeded",
-			     t->range, t->address, offset);
-		}
-
-		if (offset != t->offset) {
-			FAIL("range_to_offset(%s - %s -> %jx) should have returned %jx",
-			     t->range, t->address, offset, t->offset);
-		}
-
-		PRINT("range_to_offset(%s - %s -> %jx): %s",
-		      t->range, t->address, offset, err == NULL ? "<ok>" : err);
-
-	}
-}
-
 void ip_range_check(struct logger *logger UNUSED)
 {
 	check_iprange_bits();
@@ -553,6 +444,4 @@ void ip_range_check(struct logger *logger UNUSED)
 	check_range_from_subnet();
 	check_range_is();
 	check_range_op_range();
-	check_range_to_address();
-	check_range_to_offset();
 }

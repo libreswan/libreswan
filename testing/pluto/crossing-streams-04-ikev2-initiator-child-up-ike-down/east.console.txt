@@ -13,8 +13,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-"east/0x1": added IKEv2 connection
-"east/0x2": added IKEv2 connection
+"east/0x1": added oriented IKEv2 connection
+"east/0x2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -22,5 +22,5 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-#4: "east/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#5: "east/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 east #

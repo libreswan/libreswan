@@ -2,10 +2,11 @@
   Description=determine hostname from MAC
   #not-file-not-empty == file empty
   # ConditionFileNotEmpty=|!/etc/hostname
-  # need interfaces configured
+  # Between interfaces comming online ...
   After=systemd-networkd-wait-online.service
   Wants=systemd-networkd-wait-online.service
-  Before=network-online.target
+  # ... and user logins
+  Before=multi-user.target
 [Service]
   Type=oneshot
   ExecStart=/usr/local/sbin/hostnamer.sh

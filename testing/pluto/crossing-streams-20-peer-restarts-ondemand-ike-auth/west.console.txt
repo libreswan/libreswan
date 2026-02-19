@@ -21,7 +21,7 @@ IMPAIR: recording all inbound messages
 IMPAIR: block all inbound messages: no -> yes
 west #
  ipsec add east-west
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 west #
  ipsec route east-west
 west #
@@ -45,7 +45,7 @@ west #
 "east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
  ../../guestbin/drip-inbound.sh 1 '#1: processed IKE_SA_INIT response'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 "east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -54,7 +54,7 @@ west #
 "east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 west #
  ../../guestbin/wait-for-inbound.sh 2
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 west #
  # should be the block
 west #
@@ -67,16 +67,16 @@ west #
  # west receives IKE_SA_INIT request
 west #
  ../../guestbin/drip-inbound.sh 3 '#3: sent IKE_SA_INIT response'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
-"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
  ../../guestbin/drip-inbound.sh 4 '#4: responder established Child SA'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
 IMPAIR: start processing inbound drip packet 4
 IMPAIR: stop processing inbound drip packet 4
-"east-west" #4: responder established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #4: responder established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
@@ -86,6 +86,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -94,13 +95,16 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
+	dir in
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 src 192.0.1.254 dst 192.0.2.254
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
+	dir out
 	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
  ipsec _kernel policy

@@ -1,0 +1,14 @@
+<varlistentry id='conn.modecfgpull'>
+  <term>
+    <option>modecfgpull=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Pull the Mode Config network information from the server.
+      Both server and client must use same setting.
+    </para>
+    <para>
+      The default is &no;,
+    </para>
+  </listitem>
+</varlistentry>

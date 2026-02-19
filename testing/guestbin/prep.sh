@@ -75,3 +75,21 @@ log_if racoon /etc/racoon/racoon.conf
 case $(uname) in
     *BSD ) stty -oxtabs ;;
 esac
+
+#
+# extra stuff
+#
+
+while test $# -gt 0 ; do
+    case $1 in
+	--hostkeys )
+	    nssdir=$(ipsec addconn --configsetup=nssdir --config /dev/null)
+	    cp -v /testing/baseconfigs/$(hostname)/etc/ipsec.d/*.db "${nssdir}"
+	    shift
+	    ;;
+	* )
+	    echo "option $1 ignored" 1>&2
+	    shift
+	    ;;
+    esac
+done

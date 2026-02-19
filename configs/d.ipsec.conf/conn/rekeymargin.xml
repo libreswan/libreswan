@@ -1,0 +1,16 @@
+<varlistentry id='conn.rekeymargin'>
+  <term>
+    <option>rekeymargin=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      how long before connection expiry or keying-channel expiry
+      should attempts to negotiate a replacement begin; acceptable
+      values as for <option>salifetime</option>.  Relevant only
+      locally, other end need not agree on it.
+    </para>
+    <para>
+      The default is 9 minutes (<literal>9m</literal>).
+    </para>
+  </listitem>
+</varlistentry>

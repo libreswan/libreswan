@@ -1,0 +1,12 @@
+<varlistentry id='setup.crl-timeout'>
+  <term><option>crl-timeout=&seconds;</option></term>
+  <listitem>
+    <para>
+      The timeout for used when fetching CRLs.
+    </para>
+    <para>
+      The default is 5 seconds (<literal>5s</literal>).
+    </para>
+  </listitem>
+</varlistentry>
+

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
+<refentry>
+  <refmeta>
+    <refentrytitle>IPSEC-ADD</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
+    <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id='name'>
+    <refname>ipsec-add</refname>
+    <refname>ipsec-ondemand</refname>
+    <refpurpose>
+      Add a connection specification to pluto internal database from
+      <filename>@@IPSEC_CONF@@</filename>
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+
+    <cmdsynopsis>
+      <command>ipsec add <replaceable>connection</replaceable>...</command>
+      <group choice='opt'>
+	<arg choice='plain'>--auto
+	<group choice="plain">
+	  <arg choice="plain">route</arg>
+	  <arg choice="plain">up</arg>
+	  <arg choice="plain">keep</arg>
+	</group>
+	</arg>
+      </group>
+      &opt_async;
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec add --autoall</command>
+      &opt_async;
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec add --checkconfig</command>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec add ...</command>
+      <arg choice='opt'>--dry-run</arg>
+      <arg choice='opt'>-n</arg>
+      <arg choice='opt'>--verbose</arg>
+      <arg choice='opt'>--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec ondemand <replaceable>connection</replaceable>...</command>
+      &opt_async;
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+
+    <para>
+      The command <command>ipsec add</command> reads connection
+      specifications from the configuration file
+      <filename>@@IPSEC_CONF@@</filename> and then loads them into
+      &pluto;:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+	<term>
+	  <command>
+	    ipsec add <replaceable>connection</replaceable>...
+	  </command>
+	</term>
+	<listitem>
+	  <para>
+	    The <replaceable>connection's</replaceable> specification
+	    is loaded into into &pluto;'s internal connection
+	    database, and configured to accept connections from remote
+	    peers (see also <option>--auto</option> and
+	    <option>--autoall</option>).  If a connection with same
+	    name already exists in &pluto;'s connection database then
+	    the old connection's tunnels are torn down and the new
+	    connection specification replaces old one.
+	  </para>
+	  <para>
+	    The option <option>--auto</option> specifies additional
+	    action to take once the connection is loaded:
+	    <option>--auto=up</option> also initiates the connection
+	    (see &ipsec-up.8;); <option>--auto=route</option> routes
+	    the connection (make it on-demand) (see &ipsec-route.8;).
+	  </para>
+	  <para>
+	    This is equivalent to a connection with
+	    <option>auto=add</option> being loaded during startup.
+	  </para>
+	  <para>
+	    By default, once all connections are loaded,
+	    <command>ipsec add
+	    <replaceable>connection</replaceable>...</command> will
+	    continue to monitor &pluto;'s logs until additional
+	    actions, such as <option>--auto=up</option>, have
+	    completed (<option>--asynchronous=no</option>).
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <command>
+	    ipsec add --autoall
+	  </command>
+	</term>
+	<listitem>
+	  <para>
+	    Load all connection specifications with
+	    <option>auto=add</option>, <option>auto=route</option>,
+	    <option>auto=up</option>, or <option>auto=keep</option>.
+	    In addition, <option>auto=route</option> connections will
+	    be routed (made on-demand) and <option>auto=up</option>
+	    will be initiated.
+	  </para>
+	  <para>
+	    By default, once all connections are loaded,
+	    <command>ipsec add --autoall</command> will disconnect
+	    from &pluto;.  Additional actions, such as
+	    <option>auto=up</option>, will be performed in the
+	    background (<option>--asynchronous=yes</option>).
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <command>
+	    ipsec add --checkconfig
+	  </command>
+	</term>
+	<listitem>
+	  <para>
+	    Parse the configuration file, performing minimal
+	    validation.  This will return 0 if config was valid.
+	    Optionally you can add <option>--verbose</option> for more
+	    detailed analysis.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <command>
+	    ipsec ondemand <replaceable>connection</replaceable>...
+	  </command>
+	</term>
+	<listitem>
+	  <para>
+	    Load and then route (make on-demand) the
+	    <replaceable>connection</replaceable>.
+	  </para>
+	  <para>
+	    This is equivalent to a connection with
+	    <option>auto=route</option> being loaded during startup.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      Note: if the new connection uses pre-shared key (PSK)
+      authentication the command <command>ipsec
+      rereadsecrets</command> may also be needed as secrets keys are
+      only only read at startup.
+    </para>
+
+    <para>
+      To inspect a loaded connection run <command> ipsec
+      connectionstatus <replaceable>connection</replaceable>
+      </command> (see &ipsec-connectionstatus.8;) and to remove it run
+      <command> ipsec delete <replaceable>connection</replaceable>
+      </command> (see &ipsec-delete.8;);.
+    </para>
+
+    <para>
+      The following additional options are supported by all variants
+      of <command>ipsec add</command>:
+
+      <variablelist>
+
+	<varlistentry>
+	  <term>
+	    <option>--dry-run</option>
+	  </term>
+	  <term>
+	    <option>-n</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Do not pass the connections to &pluto;.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>--verbose</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Increase verbosity.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>--config <replaceable>config-file</replaceable></option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Specify an alternative configuration file to load.
+	    </para>
+	    <para>
+	      The default is <filename>@@IPSEC_CONF@@</filename>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>--ctlsocket <replaceable>socket-file</replaceable></option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Specify an alternative control socket to use.
+	    </para>
+	    <para>
+	      The default is <filename>@@RUNDIR@@/pluto.ctl</filename>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>--asynchronous[={yes,no}</option>
+	  </term>
+	  <term>
+	    <option>--bg[={yes,no}</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Should <command>ipsec add</command> detach, allowing
+	      <option>auto=</option> to be performed in the
+	      background?
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+      </variablelist>
+
+    </para>
+
+  </refsect1>
+
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      &ipsec.8;,
+      &ipsec.conf.5;,
+      &ipsec-delete.8;
+      &ipsec-route.8;,
+      &ipsec-up.8;,
+    </para>
+  </refsect1>
+
+  <refsect1 id='bugs'>
+    <title>BUGS</title>
+    <para>none</para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Tuomo</firstname><surname>Soini</surname></personname></author>
+      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>

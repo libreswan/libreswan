@@ -9,7 +9,7 @@ east #
  ipsec whack --impair add_unknown_v2_payload_to:IKE_SA_INIT
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

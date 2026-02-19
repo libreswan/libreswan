@@ -51,9 +51,6 @@
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
 #include "revival.h"		/* for free_revivals() */
-#ifdef USE_DNSSEC
-#include "dnssec.h"		/* for unbound_ctx_free() */
-#endif
 #include "demux.h"		/* for free_demux() */
 #include "impair_message.h"	/* for free_impair_message() */
 #include "state_db.h"		/* for check_state_db() */
@@ -61,9 +58,16 @@
 #include "ikev2_ike_session_resume.h"	/* for shutdown_ike_session_resume() */
 #include "spd_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
+#include "ikev2_redirect.h"	/* for free_global_redirect_dests() */
+#include "ipsecconf/setup.h"	/* for free_config_setup() */
+#include "ikev2_ipseckey.h"	/* for shutdown_ikev2_ipseckey() */
 #include "pending.h"
 #include "connection_event.h"
 #include "terminate.h"
+#include "helper.h"
+#include "resolve_helper.h"	/* for shutdown_resolve_helper() */
+
+server_stopped_cb server_stopped_callback NEVER_RETURNS;
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
@@ -79,17 +83,18 @@ static bool pluto_leave_state;
  * 10 lock file exists
  */
 
-static void exit_prologue(enum pluto_exit_code code);
-static void exit_epilogue(void) NEVER_RETURNS;
-static void server_helpers_stopped_callback(void);
+static void exit_prologue(enum pluto_exit_code code, struct logger *logger);
+static void exit_epilogue(struct logger *logger) NEVER_RETURNS;
+static void helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
-	exit_prologue(exit_code);
-	exit_epilogue();
+	struct logger *logger = &global_logger;
+	exit_prologue(exit_code, logger);
+	exit_epilogue(logger);
 }
 
-static void exit_prologue(enum pluto_exit_code exit_code)
+static void exit_prologue(enum pluto_exit_code exit_code, struct logger *logger UNUSED/*sometimes*/)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -102,7 +107,7 @@ static void exit_prologue(enum pluto_exit_code exit_code)
 
 	/* needed because we may be called in odd state */
  #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_STOPPING, exit_code);
+	pluto_sd(PLUTO_SD_STOPPING, exit_code, logger);
  #endif
 }
 
@@ -128,9 +133,15 @@ static void delete_every_connection(struct logger *logger)
 		}
 
 		/*
+		 * Check that the last connection deleted hasn't come
+		 * back to haunt us.  If it has then most likely
+		 * there's a stray reference lurking somewhere.
+		 *
 		 * Always going forward, never in reverse.
 		 */
-		PASSERT(logger, last != cq.c);
+		if (last == cq.c) {
+			llog_passert(cq.c->logger, HERE, "failed to delete connection; stray reference?");
+		}
 		last = cq.c;
 
 		/*
@@ -138,26 +149,26 @@ static void delete_every_connection(struct logger *logger)
 		 * wipes out anything else.
 		 */
 
-		connection_attach(cq.c, logger);
+		whack_attach(cq.c, logger);
 		PEXPECT(cq.c->logger, (cq.c->local->kind == CK_GROUP ||
 				       cq.c->local->kind == CK_PERMANENT ||
 				       cq.c->local->kind == CK_TEMPLATE ||
 				       cq.c->local->kind == CK_LABELED_TEMPLATE));
-		terminate_and_delete_connections(&cq.c, logger, HERE);
+		connection_addref(cq.c, logger);
+		terminate_and_delete_connections(cq.c, logger, HERE);
+		connection_delref(&cq.c, logger);
 	}
 }
 
-void exit_epilogue(void)
+void exit_epilogue(struct logger *logger)
 {
-	struct logger logger[1] = { global_logger, };
-
 	if (pluto_leave_state) {
 		shutdown_nss();
 		free_preshared_secrets(logger);
 		delete_lock_file();	/* delete any lock files */
 		close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
+		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code, logger);
 #endif
 		exit(pluto_exit_code);
 	}
@@ -165,10 +176,10 @@ void exit_epilogue(void)
 	/*
 	 * Before ripping everything down; check internal state.
 	 */
-	state_db_check(logger);
-	connection_db_check(logger);
-	spd_db_check(logger);
-	check_server_fork(logger); /*pid_entry_db_check()*/
+	state_db_check(logger, HERE);
+	connection_db_check(logger, HERE);
+	spd_db_check(logger, HERE);
+	check_server_fork(logger, HERE); /*pid_entry_db_check()*/
 
 	/*
 	 * This wipes out pretty much everything: connections, states,
@@ -176,9 +187,9 @@ void exit_epilogue(void)
 	 */
 	delete_every_connection(logger);
 
-	free_server_helper_jobs(logger);
+	free_help_requests(logger);
 
-	free_root_certs(logger);
+	free_root_certs(VERBOSE(DEBUG_STREAM, logger, NULL));
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	/*
@@ -205,17 +216,21 @@ void exit_epilogue(void)
 	shutdown_kernel(logger);
 	shutdown_ike_session_resume(logger); /* before NSS! */
 	shutdown_nss();
+
 	delete_lock_file();	/* delete any lock files */
-#ifdef USE_DNSSEC
-	unbound_ctx_free();	/* needs event-loop aka server */
-#endif
 
 	/*
-	 * No libevent events beyond this point.
+	 * NO LIBEVENT EVENTS BEYOND THIS POINT.
+	 *
+	 * THESE FUNCTIONS JUST DELETE MEMORY (hence free*())
 	 */
-	free_server();
+
+	free_server_fork(logger);
+	free_server(logger);
 
 	free_virtual_ip();	/* virtual_private= */
+	free_global_redirect_dests();
+	free_config_setup();
 	free_pluto_main();	/* our static chars */
 
 	/* report memory leaks now, after all free_* calls */
@@ -224,7 +239,7 @@ void exit_epilogue(void)
 	}
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
+	pluto_sd(PLUTO_SD_EXIT, pluto_exit_code, logger);
 #endif
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
@@ -248,7 +263,7 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * See also whack_handle_cb() sets whackfd[0] to the current
 	 * whack's FD before, indirectly, calling this function.
 	 */
-	fd_leak(logger->whackfd[0], HERE);
+	fd_leak(logger->whackfd[0], logger, HERE);
 
 	/*
 	 * Start the shutdown process.
@@ -256,13 +271,18 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * Flag that things are going down and delete anything that
 	 * isn't asynchronous (or depends on something asynchronous).
 	 */
-	exit_prologue(PLUTO_EXIT_OK);
+	exit_prologue(PLUTO_EXIT_OK, logger);
 
 	/*
-	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
-	 * and exit (if necessary, wake any sleeping helpers from
-	 * their slumber).  Without this any helper using NSS after
-	 * the code below has shutdown the NSS DB will crash.
+	 * Wait for the helper threads to notice EXITING_PLUTO and
+	 * exit (if necessary, wake any sleeping helpers from their
+	 * slumber).  Without this any helper using NSS after the code
+	 * below has shutdown the NSS DB will crash.
+	 *
+	 * Since there's two pools of helpers, both need to be nudged.
+	 *
+	 * Since the helpers interact with the eventloop, this code
+	 * needs be in the event.
 	 *
 	 * This does not try to delete any tasks left waiting on the
 	 * helper queue.  Instead, code further down deleting
@@ -274,38 +294,20 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_server_helpers(server_helpers_stopped_callback);
-	/*
-	 * helper_threads_stopped_callback() is called once both all
-	 * helper-threads have exited, and all helper-thread events
-	 * lurking in the event-queue have been processed).
-	 */
+	stop_helpers(helpers_stopped_callback, &global_logger);
 }
 
-static void server_stopped_callback(int r) NEVER_RETURNS;
-
-void server_helpers_stopped_callback(void)
+void helpers_stopped_callback(void)
 {
-	/*
-	 * As libevent to shutdown the event-loop, once completed
-	 * SERVER_STOPPED_CALLBACK is called.
-	 *
-	 * XXX: don't hardwire the callback - passing it in as an
-	 * explicit parameter hopefully makes following the code flow
-	 * a little easier(?).
-	 */
 	stop_server(server_stopped_callback);
-	/*
-	 * server_stopped() is called once the event-loop exits.
-	 */
 }
 
-void server_stopped_callback(int r)
+void server_stopped_callback(int r, struct logger *logger)
 {
-	dbg("event loop exited: %s",
-	    r < 0 ? "an error occurred" :
-	    r > 0 ? "no pending or active events" :
-	    "success");
+	ldbg(logger, "event loop exited: %s",
+	     r < 0 ? "an error occurred" :
+	     r > 0 ? "no pending or active events" :
+	     "success");
 
-	exit_epilogue();
+	exit_epilogue(logger);
 }

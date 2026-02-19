@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add san
-"san": added IKEv2 connection
+"san": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -28,7 +28,7 @@ west #
 "san" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "san" #1: encountered fatal error in state IKE_AUTH_I
 "san" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"san" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "san" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "san" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo "done"

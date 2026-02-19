@@ -54,7 +54,6 @@ class Domain:
         self.debug_handler = None
         self.logger.debug("domain created")
         self._mounts = None
-        self._xml = None
         # ._console is three state: None when state unknown; False
         # when shutdown (by us); else the console.
         self._console = None
@@ -188,13 +187,6 @@ class Domain:
 
         command = _VIRSH + ["start", self.name, "--console"]
         return self.__console(command, START_TIMEOUT)
-
-    def dumpxml(self):
-        if self._xml == None:
-            status, self._xml = self._run_status_output(_VIRSH + ["dumpxml", self.name])
-            if status:
-                raise AssertionError("dumpxml failed: %s" % (output))
-        return self._xml
 
     def console(self):
         # self._console is None

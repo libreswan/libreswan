@@ -32,6 +32,7 @@
 #include "refcnt.h"
 #include "where.h"
 #include "crypt_mac.h"
+#include "verbose.h"
 
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
@@ -41,7 +42,7 @@ struct logger;
  * Used by UDP and TCP to inject packets.
  */
 
-void process_iface_packet(int fd, void *ifp_arg, struct logger *logger);
+void process_iface_packet(struct verbose verbose, int fd, void *ifp_arg);
 
 /* State transition function infrastructure
  *
@@ -134,6 +135,9 @@ enum v2_pd {
 	PD_v2N_TICKET_NACK,
 	PD_v2N_TICKET_OPAQUE,
 
+	PD_v2N_SA_RESOURCE_INFO,
+	PD_v2N_TS_MAX_QUEUE,
+
 	PD_v2_ROOF,
 };
 
@@ -145,12 +149,17 @@ enum v1_pb {
 #endif
 
 /* message digest
+ *
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
  */
 
 struct msg_digest {
-	refcnt_t refcnt;
-	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
+	refcnt_t refcnt;	/* must be first */
+	chunk_t v1_raw_packet;			/* (v1) if encrypted,
+						 * received packet
+						 * before
+						 * decryption */
+
 	struct iface_endpoint *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
@@ -201,7 +210,7 @@ struct msg_digest {
 	 * at each other, their lifetime is the same as the
 	 * msg_digest.
 	 */
-	struct pbs_in packet_pbs;			/* whole packet */
+	chunk_t packet;
 	struct pbs_in message_pbs;			/* message to be processed */
 
 #   define PAYLIMIT 30
@@ -241,9 +250,9 @@ enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
 extern struct msg_digest *alloc_md(struct iface_endpoint *ifp,
-				   const ip_endpoint *sender,
+				   const ip_endpoint sender,
 				   const uint8_t *packet, size_t packet_len,
-				   where_t where);
+				   struct logger *logger, where_t where);
 struct msg_digest *md_addref_where(struct msg_digest *md, where_t where);
 #define md_addref(MD) md_addref_where(MD, HERE)
 void md_delref_where(struct msg_digest **mdp, where_t where);
@@ -252,16 +261,16 @@ void md_delref_where(struct msg_digest **mdp, where_t where);
 /* only the buffer */
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
+void jam_msg_digest_payloads(struct jambuf *buf,
+			     const struct msg_digest *md);
+
 void schedule_md_event(const char *story, struct msg_digest *md);
 
-void llog_msg_digest(enum stream stream, struct logger *logger,
-		     const char *prefix, const struct msg_digest *md);
-
 /* rate limited logging */
-void llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(2);
+void limited_llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(2);
 
 void process_md(struct msg_digest *md);
 
-void init_demux(const struct config_setup *oco, struct logger *logger);
+void init_demux(struct logger *logger);
 
 #endif /* _DEMUX_H */

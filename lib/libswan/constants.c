@@ -44,6 +44,14 @@
 #include "connection_owner.h"
 #include "sparse_names.h"
 
+bool strheq(const char *a, const char *b)
+{
+	/* these handle NULL pointers */
+	shunk_t sa = shunk1(a);
+	shunk_t sb = shunk1(b);
+	return hunk_heq(sa, sb);
+}
+
 const char *bool_str(bool b)
 {
 	return b ? "yes" : "no";
@@ -165,11 +173,12 @@ enum_names dns_auth_level_names = {
 static const char *connection_event_kind_name[] = {
 #define S(E) [E - 1] = #E
 	S(CONNECTION_REVIVAL),
+	S(CONNECTION_CHECK_DDNS),
 #undef S
 };
 
 const struct enum_names connection_event_kind_names = {
-	1, CONNECTION_REVIVAL,
+	1, CONNECTION_EVENT_ROOF-1,
 	ARRAY_REF(connection_event_kind_name),
 	"CONNECTION_", NULL,
 };
@@ -188,25 +197,6 @@ static const char *const sd_action_name[] = {
 enum_names sd_action_names = {
 	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
 	ARRAY_REF(sd_action_name),
-	NULL, /* prefix */
-	NULL
-};
-
-static const char *const keyword_auth_name[] = {
-#define R(E,S) [E - AUTH_UNSET] = S
-	R(AUTH_UNSET, "unset"),
-	R(AUTH_NEVER, "never"),
-	R(AUTH_PSK, "secret"),
-	R(AUTH_RSASIG, "rsasig"),
-	R(AUTH_ECDSA, "ecdsa"),
-	R(AUTH_NULL, "null"),
-	R(AUTH_EAPONLY, "eaponly"),
-#undef R
-};
-
-enum_names keyword_auth_names = {
-	AUTH_UNSET, AUTH_EAPONLY,
-	ARRAY_REF(keyword_auth_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -1604,15 +1594,12 @@ enum_names ikev2_auth_method_names = {
 };
 
 /*
- * Oakley Group Description attribute
- * XXX: Shared for IKEv1 and IKEv2 (although technically there could
- * be differences we need to care about)
+ * IKEv1 Oakley Group Description attribute
  */
 
 /* these string names map via a lookup function to configuration strings */
-static const char *const oakley_group_name[] = {
-#define S(E) [E - OAKLEY_GROUP_NONE] = #E
-	S(OAKLEY_GROUP_NONE), /* 0! RFC 7296 */
+static const char *const oakley_group_name[OAKLEY_GROUP_ROOF-OAKLEY_GROUP_FLOOR] = {
+#define S(E) [E - OAKLEY_GROUP_FLOOR] = #E
 	S(OAKLEY_GROUP_MODP768),
 	S(OAKLEY_GROUP_MODP1024),
 	S(OAKLEY_GROUP_GP155),
@@ -1645,14 +1632,12 @@ static const char *const oakley_group_name[] = {
 	S(OAKLEY_GROUP_BRAINPOOL_P512R1), /* RFC 6932 */
 	S(OAKLEY_GROUP_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
 	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
-	/* 33 - 32767 Unassigned */
-	/* 32768 - 65535 Reserved for private use */
 #undef S
 };
 
 enum_names oakley_group_names = {
-	OAKLEY_GROUP_NONE,
-	OAKLEY_GROUP_CURVE448,
+	OAKLEY_GROUP_FLOOR,
+	OAKLEY_GROUP_ROOF - 1,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */
 	NULL
@@ -1827,7 +1812,7 @@ enum_names v1_notification_names = {
 };
 
 static const char *const v2_notification_error_name[] = {
-#define S(E) [E - v2N_NOTHING_WRONG] = #E
+#define S(E) [E - v2N_ERROR_FLOOR] = #E
 	S(v2N_UNSUPPORTED_CRITICAL_PAYLOAD),
 	S(v2N_INVALID_IKE_SPI),
 	S(v2N_INVALID_MAJOR_VERSION),
@@ -1851,6 +1836,8 @@ static const char *const v2_notification_error_name[] = {
 	S(v2N_INVALID_GROUP_ID),
 	S(v2N_AUTHORIZATION_FAILED),
 	S(v2N_STATE_NOT_FOUND),
+	S(v2N_TS_MAX_QUEUE),
+	S(v2N_REGISTRATION_FAILED),
 #undef S
 };
 
@@ -1902,7 +1889,7 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_PSK_CONFIRM),
 	S(v2N_ERX_SUPPORTED),
 	S(v2N_IFOM_CAPABILITY),
-	S(v2N_SENDER_REQUEST_ID),
+	S(v2N_GROUP_SENDER),
 	S(v2N_IKEV2_FRAGMENTATION_SUPPORTED),
 	S(v2N_SIGNATURE_HASH_ALGORITHMS),
 	S(v2N_CLONE_IKE_SA_SUPPORTED),
@@ -1916,49 +1903,38 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_IP6_ALLOWED),
 	S(v2N_ADDITIONAL_KEY_EXCHANGE),
 	S(v2N_USE_AGGFRAG),
+	S(v2N_SUPPORTED_AUTH_METHODS),
+	S(v2N_SA_RESOURCE_INFO),
+	S(v2N_USE_PPK_INT),
+	S(v2N_PPK_IDENTITY_KEY),
 #undef S
 };
 
-static const char *const v2_notification_private_first_range_name[] = {
+static const char *const v2_notification_private_range_40960_40960_name[] = {
 #define S(E) [E - v2N_NULL_AUTH] = #E
 	S(v2N_NULL_AUTH),		/* 40960, used for mixed OE */
 #undef S
 };
 
-static const char *const v2_notification_private_second_range_name[] = {
-#define S(E) [E - v2N_PPK_IDENTITY_KEY] = #E
-	S(v2N_PPK_IDENTITY_KEY),	/* 50208, draft-ietf-ipsecme-ikev2-qr-alt-04 */
-	S(v2N_USE_PPK_INT),		/* 50209, draft-ietf-ipsecme-ikev2-qr-alt-04 */
-#undef S
-};
-
-static const struct enum_names v2_notification_private_second_range_names = {
-	v2N_PPK_IDENTITY_KEY,
-	v2N_USE_PPK_INT,
-	ARRAY_REF(v2_notification_private_second_range_name),
-	"v2N_", /* prefix */
-	NULL
-};
-
-static const struct enum_names v2_notification_private_first_range_names = {
+static const struct enum_names v2_notification_private_40960_40960_names = {
 	v2N_NULL_AUTH,
 	v2N_NULL_AUTH,
-	ARRAY_REF(v2_notification_private_first_range_name),
+	ARRAY_REF(v2_notification_private_range_40960_40960_name),
 	"v2N_", /* prefix */
-	&v2_notification_private_second_range_names
+	NULL,
 };
 
 static const struct enum_names v2_notification_status_names = {
-	v2N_INITIAL_CONTACT,
-	v2N_USE_AGGFRAG,
+	v2N_STATUS_FLOOR,
+	v2N_STATUS_PSTATS_ROOF-1,
 	ARRAY_REF(v2_notification_status_name),
 	"v2N_", /* prefix */
-	&v2_notification_private_first_range_names,
+	&v2_notification_private_40960_40960_names,
 };
 
 const struct enum_names v2_notification_names = {
-	v2N_NOTHING_WRONG,
-	v2N_STATE_NOT_FOUND,
+	v2N_ERROR_FLOOR,
+	v2N_ERROR_PSTATS_ROOF-1,
 	ARRAY_REF(v2_notification_error_name),
 	"v2N_", /* prefix */
 	&v2_notification_status_names
@@ -2220,7 +2196,61 @@ enum_names ikev2_trans_type_integ_names = {
 	NULL
 };
 
-/* Transform-type Integrity */
+/* Key Exchange Method names */
+
+static const char *const ikev2_trans_type_kem_name[IKEv2_KEM_ROOF-IKEv2_KEM_FLOOR] = {
+#define S(E) [E - IKEv2_KEM_FLOOR] = #E
+	S(IKEv2_KEM_NONE), /* 0! RFC 7296 */
+	S(IKEv2_KEM_MODP768),
+	S(IKEv2_KEM_MODP1024),
+	S(IKEv2_KEM_GP155),
+	S(IKEv2_KEM_GP185),
+	S(IKEv2_KEM_MODP1536), /* RFC 3526 */
+	S(IKEv2_KEM_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_MODP2048), /* RFC 3526 */
+	S(IKEv2_KEM_MODP3072), /* RFC 3526 */
+	S(IKEv2_KEM_MODP4096), /* RFC 3526 */
+	S(IKEv2_KEM_MODP6144), /* RFC 3526 */
+	S(IKEv2_KEM_MODP8192), /* RFC 3526 */
+	S(IKEv2_KEM_ECP_256), /* RFC 5903 */
+	S(IKEv2_KEM_ECP_384), /* RFC 5903 */
+	S(IKEv2_KEM_ECP_521), /* RFC 5903 */
+	S(IKEv2_KEM_DH22), /* RFC 5114 */
+	S(IKEv2_KEM_DH23), /* RFC 5114 */
+	S(IKEv2_KEM_DH24), /* RFC 5114 */
+	S(IKEv2_KEM_ECP_192), /* RFC 5114 */
+	S(IKEv2_KEM_ECP_224), /* RFC 5114 */
+	S(IKEv2_KEM_BRAINPOOL_P224R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P256R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P384R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P512R1), /* RFC 6932 */
+	S(IKEv2_KEM_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KEM_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KEM_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KEM_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KEM_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KEM_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KEM_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+#undef S
+};
+
+enum_names ikev2_trans_type_kem_names = {
+	IKEv2_KEM_FLOOR,
+	IKEv2_KEM_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_kem_name),
+	"IKEv2_KEM_", /* prefix */
+	NULL
+};
+
 static const char *const ikev2_trans_type_esn_name[] = {
 #define S(E) [E - IKEv2_ESN_FLOOR] = #E
 	S(IKEv2_ESN_YES),
@@ -2233,17 +2263,78 @@ enum_names ikev2_trans_type_esn_names = {
 	IKEv2_ESN_ROOF-1,
 	ARRAY_REF(ikev2_trans_type_esn_name),
 	"IKEv2_ESN_", /* prefix */
+ 	NULL
+ };
+
+static const char *const ikev2_trans_type_sn_name[IKEv2_SN_ROOF-IKEv2_SN_FLOOR] = {
+#define S(E) [E - IKEv2_SN_FLOOR] = #E
+	S(IKEv2_SN_32_BIT_SEQUENTIAL),
+	S(IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL),
+	S(IKEv2_SN_32_BIT_UNSPECIFIED),
+#undef S
+};
+
+enum_names ikev2_trans_type_sn_names = {
+	IKEv2_SN_FLOOR,
+	IKEv2_SN_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_sn_name),
+	"IKEv2_SN_", /* prefix */
+	NULL
+};
+
+static const char *const ikev2_trans_type_kwa_name[IKEv2_KWA_ROOF-IKEv2_KWA_FLOOR] = {
+#define S(E) [E - IKEv2_KWA_FLOOR] = #E
+	S(IKEv2_KWA_KW_5649_128),
+	S(IKEv2_KWA_KW_5649_192),
+	S(IKEv2_KWA_KW_5649_256),
+	S(IKEv2_KWA_KW_ARX),
+#undef S
+};
+
+enum_names ikev2_trans_type_kwa_names = {
+	IKEv2_KWA_FLOOR,
+	IKEv2_KWA_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_kwa_name),
+	"IKEv2_KWA_", /* prefix */
+	NULL
+};
+
+static const char *const ikev2_trans_type_gcauth_name[IKEv2_GCAUTH_ROOF-IKEv2_GCAUTH_FLOOR] = {
+#define S(E) [E - IKEv2_GCAUTH_FLOOR] = #E
+	S(IKEv2_GCAUTH_IMPLICIT),
+	S(IKEv2_GCAUTH_DIGITAL_SIGNATURE),
+#undef S
+};
+
+enum_names ikev2_trans_type_gcauth_names = {
+	IKEv2_GCAUTH_FLOOR,
+	IKEv2_GCAUTH_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_gcauth_name),
+	"IKEv2_GCAUTH_", /* prefix */
 	NULL
 };
 
 /* Transform Type */
-static const char *const ikev2_trans_type_name[] = {
+static const char *const ikev2_trans_type_name[IKEv2_TRANS_TYPE_ROOF - IKEv2_TRANS_TYPE_FLOOR] = {
 #define S(E) [E - IKEv2_TRANS_TYPE_FLOOR] = #E
 	S(IKEv2_TRANS_TYPE_ENCR),
 	S(IKEv2_TRANS_TYPE_PRF),
 	S(IKEv2_TRANS_TYPE_INTEG),
-	S(IKEv2_TRANS_TYPE_DH),
+	S(IKEv2_TRANS_TYPE_KEM),
+#if 1
 	S(IKEv2_TRANS_TYPE_ESN),
+#else
+	S(IKEv2_TRANS_TYPE_SN),
+#endif
+	S(IKEv2_TRANS_TYPE_ADDKE1),
+	S(IKEv2_TRANS_TYPE_ADDKE2),
+	S(IKEv2_TRANS_TYPE_ADDKE3),
+	S(IKEv2_TRANS_TYPE_ADDKE4),
+	S(IKEv2_TRANS_TYPE_ADDKE5),
+	S(IKEv2_TRANS_TYPE_ADDKE6),
+	S(IKEv2_TRANS_TYPE_ADDKE7),
+	S(IKEv2_TRANS_TYPE_KWA),
+	S(IKEv2_TRANS_TYPE_GCAUTH),
 #undef S
 };
 
@@ -2256,13 +2347,26 @@ enum_names ikev2_trans_type_names = {
 };
 
 /* for each IKEv2 transform attribute, which enum_names describes its values? */
-static enum_names *const ikev2_transid_val_descs[] = {
+static enum_names *const ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ROOF-IKEv2_TRANS_TYPE_FLOOR] = {
 #define S(E,V) [E - IKEv2_TRANS_TYPE_FLOOR] = &V
 	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
 	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_DH, oakley_group_names),                   /* 4 */
+	S(IKEv2_TRANS_TYPE_KEM, ikev2_trans_type_kem_names),          /* 4 */
+#if 1
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
+#else
+	S(IKEv2_TRANS_TYPE_SN, ikev2_trans_type_sn_names),            /* 5 */
+#endif
+	S(IKEv2_TRANS_TYPE_ADDKE1, ikev2_trans_type_kem_names),       /* 6 */
+	S(IKEv2_TRANS_TYPE_ADDKE2, ikev2_trans_type_kem_names),       /* 7 */
+	S(IKEv2_TRANS_TYPE_ADDKE3, ikev2_trans_type_kem_names),       /* 8 */
+	S(IKEv2_TRANS_TYPE_ADDKE4, ikev2_trans_type_kem_names),       /* 9 */
+	S(IKEv2_TRANS_TYPE_ADDKE5, ikev2_trans_type_kem_names),       /* 10 */
+	S(IKEv2_TRANS_TYPE_ADDKE6, ikev2_trans_type_kem_names),       /* 11 */
+	S(IKEv2_TRANS_TYPE_ADDKE7, ikev2_trans_type_kem_names),       /* 12 */
+	S(IKEv2_TRANS_TYPE_KWA, ikev2_trans_type_kwa_names),          /* 13 */
+	S(IKEv2_TRANS_TYPE_GCAUTH, ikev2_trans_type_gcauth_names),    /* 14 */
 #undef S
 };
 
@@ -2291,9 +2395,10 @@ static const char *const secret_kind_name[] = {
 #define S(E) [E - SECRET_PSK] = #E
 	S(SECRET_PSK),
 	S(SECRET_RSA),
+	S(SECRET_ECDSA),
+	S(SECRET_EDDSA),
 	S(SECRET_XAUTH),
 	S(SECRET_PPK),
-	S(SECRET_ECDSA),
 	S(SECRET_NULL),
 	S(SECRET_INVALID),
 #undef S
@@ -2409,7 +2514,6 @@ static const char *global_timer_name[] = {
 #define S(E) [E - EVENT_REINIT_SECRET] = #E
 	S(EVENT_REINIT_SECRET),
 	S(EVENT_SHUNT_SCAN),
-	S(EVENT_PENDING_DDNS),
 	S(EVENT_SD_WATCHDOG),
 	S(EVENT_CHECK_CRLS),
 	S(EVENT_FREE_ROOT_CERTS),

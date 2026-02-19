@@ -12,10 +12,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add one
-"one": added IKEv2 connection
+"one": added oriented IKEv2 connection
 west #
  ipsec auto --add two
-"two": added IKEv2 connection
+"two": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -25,13 +25,14 @@ west #
 "one" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "one" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "one" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"one" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "one" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"one" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32/UDP/6081===192.1.2.23/32/UDP] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"one" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32/UDP/6081===192.1.2.23/32/UDP] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec auto --up two
 "two" #3: initiating Child SA using IKE SA #1
 "two" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"two" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32/UDP===192.1.2.23/32/UDP/6081] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"two" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32/UDP===192.1.2.23/32/UDP/6081] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ipsec whack --trafficstatus
 #2: "one", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
@@ -48,6 +49,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -56,6 +58,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -63,6 +66,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -71,6 +75,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto udp dport 6081

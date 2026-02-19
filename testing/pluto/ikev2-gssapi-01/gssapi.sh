@@ -72,7 +72,7 @@ make kvm-install-test-domains
 
 for host in nic east west ; do
     make kvmsh-${host} \
-	 KVMSH_FLAGS="--chdir . --shutdown" \
+	 KVMSH_FLAGS="--chdir /source --shutdown" \
 	 KVMSH_COMMAND="./testing/guestbin/swan-transmogrify.sh \
 	 ${host}.testing.libreswan.org"
 done

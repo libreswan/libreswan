@@ -33,6 +33,7 @@
 
 struct ip_info;
 struct logger;
+struct pbs_out;
 
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
@@ -88,9 +89,14 @@ typedef const struct {
  */
 struct fixup {
 	uint8_t *loc;
+	const char *name;
 	struct_desc *sd;
 	field_desc *fp; /* name .fp from packet.c */
 };
+
+void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value);
+uintmax_t fixup_value(struct logger *logger, const struct fixup *fixup);
+struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs);
 
 /*
  * The formatting of input and output of packets is done through
@@ -98,12 +104,12 @@ struct fixup {
  * memory.  Several routines are provided to manipulate these objects.
  * Actual packet transfer is done elsewhere.
  *
- * Note: it is safe to copy a PBS with no children because a PBS
- * is only pointed to by its children.  This is done in out_struct().
+ * Note: it is safe to copy a PBS with no children because a PBS is
+ * only pointed to by its children.  This is done in pbs_out_struct().
  */
 
 struct pbs_in {
-	struct pbs_in *container;		/* PBS of which we are part */
+	unsigned level;				/* PBS of which we are part */
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
 	uint8_t *start;				/* public: where this stream starts */
@@ -124,11 +130,10 @@ struct pbs_out {
 	/*
 	 * For patching Length field in header.
 	 *
-	 * Filled in by close_output_pbs().
+	 * Filled in by close_pbs_out() calling apply_fixup().
 	 * Note: it may not be aligned.
 	 */
-	uint8_t *lenfld;	/* start of variable length field */
-	field_desc *lenfld_desc;	/* includes length */
+	struct fixup header_length_field;
 
 	/*
 	 * For patching IKEv2's Next Payload field chain.
@@ -146,6 +151,10 @@ struct pbs_out {
 
 	/*
 	 * For patching IKEv2's Last Substructure field.
+	 *
+	 * XXX: acutually, it's used to verify the last substructure
+	 * bit, not set it.  Caller should know when it has reached
+	 * the end.
 	 *
 	 * IKEv2 has nested substructures.  An SA Payload contains
 	 * Proposal Substructures, and a Proposal Substructure
@@ -256,7 +265,6 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
 
 bool close_pbs_out(struct pbs_out *pbs);
-#define close_output_pbs close_pbs_out
 
 /*
  * For sending packets (such as notifications) that won't fragment.
@@ -295,9 +303,6 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 #define pbs_out_struct(PBS, STRUCT, STRUCT_DESC, STRUCT_PBS)		\
 	pbs_out_struct_desc(PBS, &(STRUCT), sizeof(STRUCT), STRUCT_DESC, STRUCT_PBS)
 
-#define out_struct(STRUCT_PTR, STRUCT_DESC, PBS, STRUCT_PBS)		\
-	pbs_out_struct_desc(PBS, STRUCT_PTR, sizeof *(STRUCT_PTR), STRUCT_DESC, STRUCT_PBS)
-
 extern bool ikev1_out_generic(struct_desc *sd,
 			      struct pbs_out *outs,
 			      struct pbs_out *obj_pbs) MUST_USE_RESULT;
@@ -316,8 +321,6 @@ bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		 const char *name) MUST_USE_RESULT;
-
-#define out_hunk(HUNK, OUTS, NAME) pbs_out_hunk(OUTS, HUNK, NAME)
 
 #define pbs_out_hunk(OUTS, HUNK, NAME)					\
 	({								\
@@ -1014,9 +1017,10 @@ struct ikev2_ke {
 	uint8_t isak_np;		/* Next payload */
 	uint8_t isak_critical;
 	uint16_t isak_length;		/* Payload length */
-	uint16_t isak_group;		/* transform type */
+	uint16_t isak_kem;		/* transform type */
 	uint16_t isak_res2;
 };
+
 extern struct_desc ikev2_ke_desc;
 
 /* rfc4306, section 3.5 */
@@ -1271,11 +1275,11 @@ union payload {
 	struct ikev2_skf v2skf;
 };
 
-struct suggested_group {
-	uint16_t /*oakley_group_t*/ sg_group;
+struct ikev2_suggested_kem {
+	uint16_t /*oakley_group_t*/ sk_kem;
 };
 
-extern struct_desc suggested_group_desc;
+extern struct_desc ikev2_suggested_kem_desc;
 
 struct ikev2_redirect_part {
 	u_int8_t gw_identity_type;

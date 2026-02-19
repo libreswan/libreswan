@@ -1,6 +1,6 @@
 #!/bin/sh
 ../../guestbin/ping-once.sh --up 192.1.2.23
-ipsec auto --up road-east-x509-ipv4
+ipsec up road-east-x509-ipv4 # sanitize-retransmits
 ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 ipsec status
 ../../guestbin/wait-for.sh --timeout 120 --match '^".*#3: initiator rekeyed IKE SA #1' -- cat /tmp/pluto.log

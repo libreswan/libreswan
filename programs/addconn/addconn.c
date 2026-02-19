@@ -28,13 +28,12 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
+#include "ipsecconf/conn.h"
+#include "ipsecconf/keywords.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#ifdef USE_DNSSEC
-# include "dnssec.h"
-#endif
 
 #ifdef USE_SECCOMP
 #include "seccomp_mode.h"
@@ -157,7 +156,8 @@ static void fprint_conn(FILE *file,
 
 static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL*/,
 		     const char *ctlsocket, int *exit_status,
-		     struct logger *logger)
+		     struct logger *logger,
+		     enum whack_noise noise)
 {
 	/* found name or alias */
 	if (conn->state == STATE_ADDED) {
@@ -181,7 +181,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_KEEP:
 		break;
-	case AUTOSTART_START:
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
 	case AUTOSTART_UP:
@@ -199,7 +198,10 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn, logger);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger,
+					    /*dry_run*/false,
+					    /*async*/YN_YES,
+					    noise);
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -211,13 +213,14 @@ static bool find_and_add_conn_by_name(const char *connname,
 				      struct starter_config *cfg,
 				      const char *ctlsocket,
 				      int *exit_status,
-				      struct logger *logger)
+				      struct logger *logger,
+				      enum whack_noise noise)
 {
 	/* find first name match, if any */
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link)  {
 		if (streq(conn->name, connname)) {
-			add_conn(conn, NULL, ctlsocket, exit_status, logger);
+			add_conn(conn, NULL, ctlsocket, exit_status, logger, noise);
 			return true;
 		}
 	}
@@ -229,15 +232,16 @@ static bool find_and_add_conn_by_alias(const char *connname,
 				       struct starter_config *cfg,
 				       const char *ctlsocket,
 				       int *exit_status,
-				       struct logger *logger)
+				       struct logger *logger,
+				       enum whack_noise noise)
 {
 	bool found = false;
 
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
-				  conn->values[KSCF_CONNALIAS].string)) {
-			add_conn(conn, connname, ctlsocket, exit_status, logger);
+				  conn->values[KWS_CONNALIAS].string)) {
+			add_conn(conn, connname, ctlsocket, exit_status, logger, noise);
 			found = true;
 		}
 	}
@@ -279,10 +283,11 @@ static void print_option(const struct configsetup_options po,
 }
 
 enum opt {
-	OPT_HELP = 'h',
-	OPT_CONFIG = 256,
+	OPT_DEBUG = 256,
+	OPT_HELP,
+	OPT_CONFIG,
 	OPT_VERBOSE,
-	OPT_DEBUG,
+	OPT_QUIET,
 	OPT_AUTOALL,
 	OPT_LISTALL,
 	OPT_LISTADD,
@@ -311,6 +316,7 @@ const struct option optarg_options[] =
 	HEADING_OPT("  Display more details:"),
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
+	{ OPT("quiet"), no_argument, NULL, OPT_QUIET, },
 
 	HEADING_OPT("  Display content of 'ipsec.conf' 'conn' sections:"),
 	{ OPT("listall"), no_argument, NULL, OPT_LISTALL, },
@@ -364,6 +370,7 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 	const char *name = NULL;
+	enum whack_noise noise = NOISY_WHACK;
 
 #if 0
 	/* efence settings */
@@ -380,7 +387,7 @@ int main(int argc, char *argv[])
 
 	while (name == NULL) {
 
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -400,6 +407,10 @@ int main(int argc, char *argv[])
 
 		case OPT_DEBUG:
 			optarg_debug(OPTARG_DEBUG_YES);
+			continue;
+
+		case OPT_QUIET:
+			noise = QUIET_WHACK;
 			continue;
 
 		case OPT_CONFIGSETUP:
@@ -467,6 +478,7 @@ int main(int argc, char *argv[])
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist &&
 	    configsetup.name == NULL &&
+	    name == NULL &&
 	    !checkconfig) {
 		llog(RC_LOG, logger, "nothing to do, see --help");
 		exit(1);
@@ -490,7 +502,7 @@ int main(int argc, char *argv[])
 			llog(ERROR_STREAM, logger, "--conn %s conflicts with --autoall", name);
 			exit(1);
 		}
-		cfg = confread_argv(name, argv, optind, logger);
+		cfg = confread_load_argv(configfile, name, argv, optind, logger, verbose);
 		if (cfg == NULL) {
 			llog(RC_LOG, logger, "parsing config arguments failed");
 			exit(3);
@@ -512,10 +524,8 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	const struct config_setup *oco = config_setup_singleton();
-
 #ifdef USE_SECCOMP
-	enum seccomp_mode seccomp = config_setup_option(oco, KBF_SECCOMP);
+	enum seccomp_mode seccomp = config_setup_option(KBF_SECCOMP);
 	switch (seccomp) {
 	case SECCOMP_ENABLED:
 		init_seccomp_addconn(SCMP_ACT_KILL, logger);
@@ -561,7 +571,6 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
-			case AUTOSTART_START:
 				break;
 			}
 
@@ -569,34 +578,27 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn, logger);
+			starter_whack_add_conn(ctlsocket, conn, logger,
+					       /*dry_run*/false,
+					       /*async*/YN_YES,
+					       noise);
 		}
-
-		/*
-		 * We loaded all connections. Now tell pluto to
-		 * listen, then route the conns and resolve default
-		 * route.
-		 *
-		 * Any connections that orient and have +ROUTE will be
-		 * routed.
-		 */
-		if (verbose > 0)
-			printf("  Step #2: Listening which will then orient, route, up connections\n");
-
-		starter_whack_listen(ctlsocket, logger);
 
 		if (verbose > 0)
 			printf("\n");
 
 	} else if (name != NULL) {
 
-		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+		struct starter_conn *conn = TAILQ_LAST(&cfg->conns, conns_head);
 		if (conn == NULL) {
 			llog(ERROR_STREAM, logger, "no conn %s to load", name);
 			exit(1);
 		}
 
-		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
+		exit_status = starter_whack_add_conn(ctlsocket, conn, logger,
+						     /*dry_run*/false,
+						     /*async*/YN_YES,
+						     noise);
 
 	} else {
 
@@ -611,13 +613,13 @@ int main(int argc, char *argv[])
 			}
 
 			if (find_and_add_conn_by_name(connname, cfg, ctlsocket,
-						      &exit_status, logger)) {
+						      &exit_status, logger, noise)) {
 				continue;
 			}
 
 			/* We didn't find name; look for first alias */
 			if (find_and_add_conn_by_alias(connname, cfg, ctlsocket,
-						       &exit_status, logger)) {
+						       &exit_status, logger, noise)) {
 				continue;
 			}
 
@@ -666,7 +668,6 @@ int main(int argc, char *argv[])
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
 				    autostart == AUTOSTART_ONDEMAND) {
 					printf("%s ", conn->name);
@@ -682,8 +683,7 @@ int main(int argc, char *argv[])
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START) {
+				if (autostart == AUTOSTART_UP) {
 					printf("%s ", conn->name);
 				}
 			}
@@ -707,7 +707,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (opt_liststack) {
-		const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+		const char *protostack = config_setup_string(KSF_PROTOSTACK);
 		if (pexpect(protostack != NULL)) {
 			printf("%s\n", protostack);
 		}
@@ -724,11 +724,7 @@ int main(int argc, char *argv[])
 			print_option(configsetup, "ctlsocket", "%s", ctlsocket);
 		}
 
-		for (enum config_setup_keyword kw = CONFIG_SETUP_KEYWORD_FLOOR;
-		     kw < CONFIG_SETUP_KEYWORD_ROOF; kw++) {
-
-			PASSERT(logger, kw < config_setup_keywords.len);
-			const struct keyword_def *kd = &config_setup_keywords.item[kw];
+		ITEMS_FOR_EACH(kd, &config_setup_keywords) {
 
 			if (kd->keyname == NULL) {
 				continue;
@@ -748,7 +744,7 @@ int main(int argc, char *argv[])
 			switch (kd->type) {
 			case kt_string:
 			{
-				const char *string = config_setup_string(oco, kd->field);
+				const char *string = config_setup_string(kd->field);
 				if (string != NULL) {
 					print_option(configsetup, kd->keyname, "%s", string);
 				}
@@ -757,7 +753,7 @@ int main(int argc, char *argv[])
 
 			case kt_sparse_name:
 			{
-				uintmax_t option = config_setup_option(oco, kd->field);
+				uintmax_t option = config_setup_option(kd->field);
 				if (option != 0) {
 					name_buf nb;
 					print_option(configsetup, kd->keyname, "%s",
@@ -768,7 +764,7 @@ int main(int argc, char *argv[])
 
 			case kt_seconds:
 			{
-				deltatime_t deltatime = config_setup_deltatime(oco, kd->field);
+				deltatime_t deltatime = config_setup_deltatime(kd->field);
 				if (deltatime.is_set) {
 					print_option(configsetup, kd->keyname, "%jd", deltasecs(deltatime));
 				}
@@ -780,10 +776,10 @@ int main(int argc, char *argv[])
 
 			default:
 			{
-				uintmax_t option = config_setup_option(oco, kd->field);
-				if (option != 0 ||
-				    oco->values[kd->field].set) {
-					print_option(configsetup, kd->keyname, "%jd", option);
+				const struct config_setup *updates = config_setup_updates();
+				if (updates->values[kd->field].set) {
+					print_option(configsetup, kd->keyname, "%jd",
+						     updates->values[kd->field].option);
 				}
 				break;
 			}

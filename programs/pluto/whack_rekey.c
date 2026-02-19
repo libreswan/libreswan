@@ -36,15 +36,15 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		llog(RC_LOG, c->logger, "connection does not have %s",
 		     connection_sa_name(c, sa_kind));
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	}
 
 	if (!m->whack_async) {
-		state_attach(st, logger);
+		whack_attach(st, logger);
 	}
 
 	if (IS_CHILD_SA(st)) {
@@ -58,7 +58,7 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 			return 0; /* the connection doesn't count */
 		}
 		if (!m->whack_async) {
-			state_attach(&parent->sa, logger);
+			whack_attach(&parent->sa, logger);
 		}
 	}
 

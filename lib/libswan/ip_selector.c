@@ -192,8 +192,17 @@ size_t jam_selector_pair_sensitive(struct jambuf *buf,
 				   const ip_selector *src,
 				   const ip_selector *dst)
 {
-	if(!log_ip) {
-		return jam_string(buf, "<selectors>");
+	const struct ip_info *afi;
+	size_t s;
+
+	s = jam_sensitive_ip(buf, "selectors", src, &afi);
+	if (s > 0) {
+		return s;
+	}
+
+	s = jam_sensitive_ip(buf, "selectors", dst, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return jam_selector_pair(buf, src, dst);
@@ -361,6 +370,19 @@ ip_selector selector_from_range(const ip_range range)
 	return selector_from_range_protocol_port(range, &ip_protocol_all, unset_port);
 }
 
+ip_selector selector_from_pool(const ip_pool pool)
+{
+	const struct ip_info *afi = pool_info(pool);
+	if (afi == NULL) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, afi,
+				 pool.lo, pool.hi,
+				 &ip_protocol_all,
+				 unset_port);
+}
+
 ip_selector selector_from_range_protocol_port(const ip_range range,
 					      const struct ip_protocol *protocol,
 					      const ip_port port)
@@ -432,7 +454,8 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	return range_from_raw(HERE, afi, selector.lo, selector.hi);
+	return range_from_raw(HERE, afi,
+			      selector.lo, selector.hi);
 }
 
 ip_address selector_prefix(const ip_selector selector)
@@ -632,7 +655,8 @@ void pexpect_selector(const ip_selector *s, where_t where)
 
 	if (s->ip.is_set == false ||
 	    s->ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_SELECTOR, pri_ip_selector(s));
 	}
 }
 

@@ -17,13 +17,14 @@ import re
 import collections
 
 from fab import logutil
-from fab import utilsdir
+from fab import testingdir
 from fab import scripts
 from fab import hosts
+from pathlib import Path
 
 class Test:
 
-    def __init__(self, test_directory, testing_directory,
+    def __init__(self, test_directory,
                  saved_test_output_directory=None,
                  kind="kvmplutotest", status="good"):
         # basics
@@ -38,6 +39,10 @@ class Test:
         # The test's name is the same as the directory's basename.
         self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
+
+        # always us the test's TESTINGDIR, that is given
+        # testing/pluto/test/, use testing/
+        self.testingdir = Path(test_directory).resolve().parent.parent
 
         self.logger = logutil.getLogger(self.name)
 
@@ -69,22 +74,10 @@ class Test:
         else:
             self.saved_output_directory = None
 
-        # The testing_directory to use when performing post.mortem
-        # tasks such as running the sanitizer.
-        #
-        # Since test.directory may be incomplete (sanitizers directory
-        # may be missing), use the testing directory belonging to this
-        # script.
-        if testing_directory:
-            # trust it
-            self._testing_directory = os.path.relpath(testing_directory)
-        else:
-            self._testing_directory = utilsdir.relpath("..")
-
         # Get an ordered list of {guest_name:,command:} to run.
         self.commands = scripts.commands(self.directory, self.logger)
 
-        # Just assume any non-empty hosts mentioned in scripts needs
+        # Just assume any non-empty guests mentioned in scripts needs
         # to run.
         guests = hosts.Set()
         for command in self.commands:
@@ -99,96 +92,8 @@ class Test:
                 platforms.add(guest.platform)
         self.platforms = sorted(platforms)
 
-    def testing_directory(self, *path):
-        return os.path.relpath(os.path.join(self._testing_directory, *path))
-
     def __str__(self):
         return self.full_name
-
-
-# Load the tetsuite defined by TESTLIST
-
-class Testsuite:
-
-    def __init__(self, logger, testlist,
-                 testing_directory):
-        self.directory = os.path.dirname(testlist)
-        self.testlist = collections.OrderedDict()
-        line_nr = 0
-        ok = True
-        with open(testlist, 'r') as testlist_file:
-            for line in testlist_file:
-                line_nr += 1
-                # clean up the line, but save the original for logging
-                orig = line.strip("\r\n")
-                if "#" in line:
-                    line = line[:line.find("#")]
-                line = line.strip()
-                # the two log messages should align
-                if not line:
-                    logger.debug("empty: %s", orig)
-                    continue
-                else:
-                    logger.debug("input: %s", orig)
-                # Extract the fields
-                fields = line.split()
-                if len(fields) < 3:
-                    # This is serious
-                    logger.error("****** %s:%d: line has too few fields: %s",
-                                 testlist, line_nr, orig)
-                    ok = False
-                    continue
-                if len(fields) > 4:
-                    # This is serious
-                    logger.error("****** %s:%d: line has too many fields: %s",
-                                 testlist, line_nr, orig)
-                    ok = False
-                    continue
-                kind = fields[0]
-                name = fields[1]
-                status = fields[2]
-                # pr = fields[3]?
-                test = Test(kind=kind, status=status,
-                            test_directory=os.path.join(self.directory, name),
-                            testing_directory=testing_directory)
-                logger.debug("test directory: %s", test.directory)
-                if not os.path.exists(test.directory):
-                    # This is serious.  However, stumble on.
-                    logger.error("****** %s:%d: invalid test %s: test directory not found: %s",
-                                 testlist, line_nr,
-                                 test.name, test.directory)
-                    ok = False
-                    continue
-                if test.name in self.testlist:
-                    # This is serious.
-                    #
-                    # However, after reporting continue and select the
-                    # second entry.  Preserves historic behaviour, as
-                    # selecting the first entry would invalidate
-                    # earlier test results.
-                    first = self.testlist[test.name]
-                    logger.error("****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
-                                 testlist, line_nr,
-                                 test.kind, test.name, test.status,
-                                 first.kind, first.name, first.status)
-                    ok = False
-                # an OrderedDict which saves insertion order
-                self.testlist[test.name] = test
-
-        if not ok:
-            raise Exception("TESTLIST file %s invalid" % (testlist))
-
-    def __iter__(self):
-        return self.testlist.values().__iter__()
-
-    def __contains__(self, index):
-        return index in self.testlist
-
-    def __getitem__(self, index):
-        return self.testlist[index]
-
-    def __len__(self):
-        return self.testlist.__len__()
 
 
 def add_arguments(parser):
@@ -196,9 +101,13 @@ def add_arguments(parser):
     group = parser.add_argument_group("testsuite arguments",
                                       "options for configuring the testsuite or test directories")
 
-    group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       default=utilsdir.relpath(".."),
-                       help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
+    group.add_argument("--testingdir", metavar="DIRECTORY", type=Path,
+                       default=testingdir.joinpath(),
+                       help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto/' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
+    # Required argument, so that no arguments triggers usage.
+    # Everyone uses ./kvm anyway?
+    group.add_argument("directories", metavar="DIRECTORY", nargs="+",
+                       help="a testsuite directory, a TESTLIST file, or a list of test directories")
 
 
 def is_test_directory(directory):
@@ -216,38 +125,100 @@ def is_test_output_directory(directory):
     return False
 
 
-def load(logger, log_level, args,
-         testsuite_directory=None):
-    """Load the single testsuite (TESTLIST) found in DIRECTORY
+def _load_testlist(logger, log_level, args, directory):
 
-    A testsutite is defined by the presence of TESTLIST in DIRECTORY,
-    it returns what looks like a dictionary indexable by test name.
+    """Expands TESTLIST in DIRECTORY into a list of tests
+
+    So that . (run here), and testing/ (value of KVM_TESTINGDIR) work,
+    apply some fuzz when looking for TESTLIST.
 
     """
 
-    # Is DIRECTORY a testsuite or a testlist file?  For instance:
-    # testing/pluto or testing/pluto/TESTLIST.
+    # search directory, directory/TESTLIST, directory/pluto/TESTLIST,
+    # ...
+    head = "testing/pluto/TESTLIST"
+    suffix = ""
+    testlist = directory
+    while True:
+        if os.path.isfile(testlist):
+            logger.log(log_level, "adding TESTLIST: %s", testlist)
+            break
+        if not head:
+            logger.debug("directory does not contain TESTLIST: %s", directory)
+            return None
+        head, tail = os.path.split(head)
+        suffix = suffix and os.path.join(tail, suffix) or tail
+        testlist = os.path.join(directory, suffix)
 
-    if os.path.isfile(testsuite_directory):
-        testlist = testsuite_directory
-        testsuite_directory = os.path.dirname(testsuite_directory)
-        logger.log(log_level, "'%s' is a TESTLIST file", testlist)
-    else:
-        head = "testing/pluto"
-        path = "TESTLIST"
-        while True:
-            testlist = os.path.join(testsuite_directory, path)
-            if os.path.isfile(testlist):
-                logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
-                break
-            if not head:
-                logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
-                return None
-            head, tail = os.path.split(head)
-            path = os.path.join(tail, path)
+    # DICT so duplicate checking is quick; preserve order of TESTLIST
+    tests = collections.OrderedDict()
+    line_nr = 0
+    ok = True
 
-    return Testsuite(logger, testlist,
-                     testing_directory=args.testing_directory)
+    with open(testlist, 'r') as testlist_file:
+        for line in testlist_file:
+            line_nr += 1
+
+            # clean up the line, but save the original for logging
+            orig = line.strip("\r\n")
+            if "#" in line:
+                line = line[:line.find("#")]
+            line = line.strip()
+            # the two log messages should align
+            if not line:
+                logger.debug("empty: %s", orig)
+                continue
+            else:
+                logger.debug("input: %s", orig)
+
+            # Extract the fields
+            fields = line.split()
+            if len(fields) < 3:
+                # This is serious
+                logger.error("****** %s:%d: line has too few fields: %s",
+                             testlist, line_nr, orig)
+                ok = False
+                continue
+            if len(fields) > 4:
+                # This is serious
+                logger.error("****** %s:%d: line has too many fields: %s",
+                             testlist, line_nr, orig)
+                ok = False
+                continue
+
+            test_kind = fields[0]
+            test_name = fields[1]
+            test_status = fields[2]
+            # pr = fields[3]?
+
+            test_directory = os.path.join(os.path.dirname(testlist), test_name)
+            if not os.path.exists(test_directory):
+                logger.error("****** %s:%d: invalid test %s: test directory not found: %s",
+                             testlist, line_nr,
+                             test_name, test_directory)
+                ok = False
+                continue
+
+            if test_name in tests:
+                # This is serious.
+                first = tests[test_name]
+                logger.error("****** %s:%d: test %s %s %s is a duplicate of %s %s %s",
+                             testlist, line_nr,
+                             test_kind, test_name, test_status,
+                             first.kind, first.name, first.status)
+                ok = False
+                continue
+
+            test = Test(kind=test_kind, status=test_status,
+                        test_directory=test_directory)
+            logger.debug("test directory: %s", test.directory)
+            # an OrderedDict which saves insertion order
+            tests[test_name] = test
+
+    if not ok:
+        os.exit(1)
+
+    return tests.values()
 
 
 def append_test(logger, log_level, tests, args, directory,
@@ -266,7 +237,7 @@ def append_test(logger, log_level, tests, args, directory,
 
     if test:
         assert not test_directory
-        test_directory = os.path.join(args.testing_directory, "pluto", test)
+        test_directory = args.testingdir.joinpath("pluto", test)
 
     if not test_directory:
         return False
@@ -275,8 +246,7 @@ def append_test(logger, log_level, tests, args, directory,
         return False
 
     test = Test(test_directory=test_directory,
-                saved_test_output_directory=saved_test_output_directory,
-                testing_directory=args.testing_directory)
+                saved_test_output_directory=saved_test_output_directory)
     logger.log(log_level, "directory '%s' contains %s '%s'", directory, message, test.name)
     tests.append(test)
 
@@ -300,12 +270,11 @@ def load_testsuite_or_tests(logger, directories, args,
             logger.debug("chopping / off '%s'", directory)
             directory = os.path.dirname(directory)
 
-        # perhaps directory/file is a testsuite?
-        testsuite = load(logger, log_level, args, testsuite_directory=directory)
+        # perhaps directory contains TESTLIST?
+        testsuite = _load_testlist(logger, log_level, args, directory)
         if testsuite:
             # more efficient?
-            for test in testsuite:
-                tests.append(test)
+            tests.extend(testsuite)
             continue
 
         # kvmrunner.py testing/pluto/<test>
@@ -383,5 +352,9 @@ def load_testsuite_or_tests(logger, directories, args,
 
         logger.error("directory '%s' is invalid", directory)
         continue
+
+    if not tests:
+        logger.error("test or testsuite directory invalid: %s", args.directories)
+        os.exit(1)
 
     return tests

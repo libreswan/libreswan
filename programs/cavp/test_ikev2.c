@@ -36,7 +36,7 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 			    struct logger *logger)
 {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ni, nr, g_ir, logger);
+	PK11SymKey *skeyseed = ikev2_IKE_SA_INIT_skeyseed(prf, ni, nr, g_ir, logger);
 	print_symkey("SKEYSEED", "sKeySeed", skeyseed, 0, logger);
 	if (skeyseed == NULL) {
 		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
@@ -69,9 +69,9 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 		     child_sa_dkm_dh, nr_child_sa_dkm_bytes, logger);
 
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
-	PK11SymKey *skeyseed_rekey = ikev2_ike_sa_rekey_skeyseed(prf, SK_d, g_ir_new,
-								 ni, nr,
-								 logger);
+	PK11SymKey *skeyseed_rekey = ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(prf, SK_d, g_ir_new,
+									      ni, nr,
+									      logger);
 	print_symkey("SKEYSEED(Rekey)", "sKeySeedReKey",
 		     skeyseed_rekey, 0, logger);
 	if (skeyseed_rekey == NULL) {

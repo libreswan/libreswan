@@ -9,20 +9,17 @@ set -xe ; exec < /dev/null
 systemctl enable systemd-networkd.service
 systemctl enable systemd-networkd-wait-online.service
 
-cp -v /bench/testing/kvm/systemd/network/* /etc/systemd/network/
-test -x /usr/sbin/restorecon && restorecon -R /etc/systemd/network
+# Drop hostname, instead rely either on the kernel cmdline and
+# systemd.hostname=... or zzz.eth0.network which defaults to the local
+# platform.
 
-# Provide a default network configuration for build domain
+rm -f /etc/hostname
+rm -f /etc/systemd/network/*
+cp -v /bench/testing/kvm/systemd/network/*.network /etc/systemd/network/
+sed -i -e "s/@@PLATFORM@@/${PLATFORM}/" /etc/systemd/network/*.network
 
-# Since systemd-networkd matches .network files in lexographical
-# order, this zzz.*.network file is only matched when all else fails.
+# test specific configs; bound using ethernet addresses
 
-cat > /etc/systemd/network/zzz.eth0.network << EOF
-[Match]
-Name=eth0
-Host=${PLATFORM}
-[Network]
-Description=fallback for when no other interface matches
-DHCP=ipv4
-KeepConfiguration=no
-EOF
+if test -x /usr/sbin/restorecon ; then
+    restorecon -R /etc/systemd/network
+fi

@@ -25,18 +25,18 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ipcomp
-"westnet-eastnet-ipcomp": added IKEv2 connection
+"westnet-eastnet-ipcomp": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipcomp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ipcomp":   my_updown=ipsec _updown;
+"westnet-eastnet-ipcomp":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ipcomp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipcomp":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-ipcomp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipcomp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipcomp":   sec_label:unset;
-"westnet-eastnet-ipcomp":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipcomp":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ipcomp":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipcomp":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipcomp":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -59,8 +59,9 @@ west #
 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipcomp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipcomp" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP IPCOMP <0xCPI}
+"westnet-eastnet-ipcomp" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(IPCOMP_SUPPORTED)}
 "westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xCPI <0xCPI DPD=passive}
+"westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
  # First ping hit regular ESP since pings too small to compress.  This
 west #
@@ -98,12 +99,14 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
@@ -116,12 +119,14 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
@@ -148,4 +153,8 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+west #
+ ipsec connectionstatus | grep 'algorithm newest'
+"westnet-eastnet-ipcomp":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"westnet-eastnet-ipcomp":   ESP algorithm newest: AES_GCM_16_256; IPCOMP; pfsgroup=<Phase1>
 west #

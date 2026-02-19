@@ -32,23 +32,26 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	if (!proposal_transform_ok(parser, proposal, transform_type_encrypt, false)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, transform_type_prf, false)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, transform_type_integ, true)) {
+		return false;
+	}
 
 	/* ah=null is invalid */
 	if (!impair.allow_null_none) {
-		FOR_EACH_ALGORITHM(proposal, integ, alg) {
+		TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 			/* passerts */
 			const struct integ_desc *integ = integ_desc(alg->desc);
 			if (integ == &ike_alg_integ_none) {
 				proposal_error(parser, "AH cannot have 'none' as the integrity algorithm");
-				if (!impair_proposal_errors(parser)) {
-					return false;
-				}
+				return false;
 			}
 		}
 	}
@@ -94,7 +97,7 @@ static const struct ike_alg *default_ikev2_ah_integ[] = {
 const struct proposal_defaults ikev2_ah_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev2_ah_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev2_ah_proposals,
-	.integ = default_ikev2_ah_integ,
+	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev2_ah_integ,
 };
 
 /*
@@ -107,7 +110,7 @@ static const struct proposal_protocol ikev1_ah_proposal_protocol = {
 	.defaults = &ikev1_ah_defaults,
 	.proposal_ok = ah_proposal_ok,
 	.integ = true,
-	.dh = true,
+	.kem = true,
 };
 
 static const struct proposal_protocol ikev2_ah_proposal_protocol = {
@@ -116,7 +119,7 @@ static const struct proposal_protocol ikev2_ah_proposal_protocol = {
 	.defaults = &ikev2_ah_defaults,
 	.proposal_ok = ah_proposal_ok,
 	.integ = true,
-	.dh = true,
+	.kem = true,
 };
 
 static const struct proposal_protocol *ah_proposal_protocol[] = {

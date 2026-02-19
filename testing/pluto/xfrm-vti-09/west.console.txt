@@ -25,10 +25,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti-01
-"westnet-eastnet-vti-01": added IKEv2 connection
+"westnet-eastnet-vti-01": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-vti-02
-"westnet-eastnet-vti-02": added IKEv2 connection
+"westnet-eastnet-vti-02": added oriented IKEv2 connection
 west #
  # remove the regular route for 192.0.2.0/24
 west #
@@ -42,30 +42,31 @@ west #
 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-vti-01" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-vti-01" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-vti-01" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-vti-01" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
-"westnet-eastnet-vti-01" #2: route-client output: done ip route
-"westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-01" #2: up-client output: done ip route
-"westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.disable_policy = 1
+"westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.rp_filter = 0
+"westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.forwarding = 1
+"westnet-eastnet-vti-01" #2: command "route" output: done ip route
+"westnet-eastnet-vti-01" #2: command "up" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-01" #2: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-01" #2: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-01" #2: command "up" output: done ip route
+"westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-02" #3: route-client output: done ip route
-"westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
-"westnet-eastnet-vti-02" #3: up-client output: done ip route
-"westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"westnet-eastnet-vti-02" #3: command "prepare" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: command "prepare" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "route" output: done ip route
+"westnet-eastnet-vti-02" #3: command "up" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "up" output: RTNETLINK answers: File exists
+"westnet-eastnet-vti-02" #3: command "up" output: done ip route
+"westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -89,12 +90,14 @@ west #
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
-    altname enp0s6
-    altname ens6
+    altname enp0s5
+    altname ens5
+    altname enx120000abcdff
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
-    altname enp0s8
-    altname ens8
+    altname enp0s6
+    altname ens6
+    altname enx120000646445
     inet 192.1.2.45/24 scope global eth1
        valid_lft forever preferred_lft forever
 5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default qlen 1000
@@ -109,12 +112,14 @@ west #
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
-    altname enp0s6
-    altname ens6
+    altname enp0s5
+    altname ens5
+    altname enx120000abcdff
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
-    altname enp0s8
-    altname ens8
+    altname enp0s6
+    altname ens6
+    altname enx120000646445
 5: ip_vti0@NONE: <NOARP> mtu XXXX qdisc state DOWN qlen 1000
     link/ipip 0.0.0.0 brd 0.0.0.0
 X: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
@@ -136,6 +141,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -144,6 +150,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -152,6 +159,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -161,6 +169,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 10.0.1.0/24 dst 10.0.2.0/24

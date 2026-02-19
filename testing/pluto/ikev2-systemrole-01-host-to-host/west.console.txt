@@ -69,7 +69,7 @@ sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
-ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -120,16 +120,17 @@ algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-algorithm IKE DH Key Exchange: name=DH19, bits=512
-algorithm IKE DH Key Exchange: name=DH20, bits=768
-algorithm IKE DH Key Exchange: name=DH21, bits=1056
-algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=MODP1536, bits=1536
+algorithm IKE Key Exchange Method (DH): name=MODP2048, bits=2048
+algorithm IKE Key Exchange Method (DH): name=MODP3072, bits=3072
+algorithm IKE Key Exchange Method (DH): name=MODP4096, bits=4096
+algorithm IKE Key Exchange Method (DH): name=MODP6144, bits=6144
+algorithm IKE Key Exchange Method (DH): name=MODP8192, bits=8192
+algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
+algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
+algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
+algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -137,13 +138,13 @@ Connection list:
  
 "192.1.2.45-to-192.1.2.23": 192.1.2.45...192.1.2.23; routed-ondemand; my_ip=unset; their_ip=unset;
 "192.1.2.45-to-192.1.2.23":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"192.1.2.45-to-192.1.2.23":   my_updown=ipsec _updown;
+"192.1.2.45-to-192.1.2.23":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "192.1.2.45-to-192.1.2.23":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
-"192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "192.1.2.45-to-192.1.2.23":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "192.1.2.45-to-192.1.2.23":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "192.1.2.45-to-192.1.2.23":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

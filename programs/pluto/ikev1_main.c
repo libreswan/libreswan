@@ -302,9 +302,9 @@ static void main_mode_hash_body(struct ike_sa *ike,
 	 * we use the bytes as they appear on the wire to avoid
 	 * "spelling problems".
 	 */
-	shunk_t id_body = hunk_slice(id_payload,
-				     sizeof(struct isakmp_generic),
-				     id_payload.len);
+	shunk_t id_body = shunk_slice(id_payload,
+				      sizeof(struct isakmp_generic),
+				      id_payload.len);
 	crypt_prf_update_hunk(ctx, "idpl", id_body);
 }
 
@@ -340,8 +340,10 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
-	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
-								    &ike_alg_hash_sha1, logger);
+	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks,
+								    HUNK_AS_SHUNK(hash),
+								    &ike_alg_hash_sha1,
+								    logger);
 	return sig;
 }
 
@@ -512,7 +514,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	     __func__, pri_so(ike->sa.st_serialno));
 
 	if (impair.drop_i2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: dropping Main Mode I2 packet as per impair");
+		llog(IMPAIR_STREAM, ike->sa.logger, "dropping Main Mode I2 packet as per impair");
 		return STF_IGNORE;
 	}
 
@@ -589,7 +591,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mi2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: busting MI2 with pointlessly large VID payload");
+		llog(IMPAIR_STREAM, ike->sa.logger, "busting MI2 with pointlessly large VID payload");
 		/*
 		 * generate a pointless large VID payload to push message
 		 * over MTU
@@ -626,7 +628,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	/* outI2 is not encrypted */
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outI2*/
@@ -656,8 +658,7 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 	     __func__, pri_so(ike->sa.st_serialno));
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
@@ -719,7 +720,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mr2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: busting MR2 with pointlessly large VID payload");
+		llog(IMPAIR_STREAM, ike->sa.logger, "busting MR2 with pointlessly large VID payload");
 		/*
 		 * generate a pointless large VID payload to push
 		 * message over MTU
@@ -791,8 +792,8 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	ldbg(ike->sa.logger, "%s() starting async DH calculation (group=%d)",
-	     __func__, ike->sa.st_oakley.ta_dh->group);
+	ldbg(ike->sa.logger, "%s() starting async DH calculation (group=%s)",
+	     __func__, ike->sa.st_oakley.ta_dh->common.fqn);
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
 				/*no-md:in-background*/NULL,
 				ike->sa.st_gi/*responder needs initiator's KE*/,
@@ -900,8 +901,7 @@ stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 	symkey_delref(ike->sa.logger, "enc_key", &ike->sa.st_enc_key_nss);
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
@@ -958,7 +958,9 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
+				       c->config->send_ca,
+				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested, send_cert, chain_len);
@@ -1008,8 +1010,9 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* CERT out */
 	if (send_cert && impair.send_pkcs7_thingie) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
+		llog(IMPAIR_STREAM, ike->sa.logger, "sending cert as pkcs7 blob");
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
+						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -1185,7 +1188,9 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* Must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
+				       c->config->send_ca,
+				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested, send_cert, chain_len);
@@ -1235,8 +1240,9 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* CERT out, if we have one */
 	if (send_cert && impair.send_pkcs7_thingie) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
+		llog(IMPAIR_STREAM, ike->sa.logger, "sending cert as pkcs7 blob");
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
+						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;

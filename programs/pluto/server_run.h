@@ -27,19 +27,33 @@
 struct verbose;
 struct logger;
 
-bool server_run(const char *verb, const char *verb_suffix,
-		const char *cmd,
-		struct verbose verbose);
+bool server_runve(const char *story,
+		  const char *argv[],
+		  const char *envp[],
+		  struct verbose verbose);
 
-bool server_runv(const char *argv[], struct verbose verbose);
+bool server_runv(const char *story, const char *argv[],
+		 struct verbose verbose);
 
-/* sends INPUT, returns OUTPUT */
+/*
+ * When INPUT is non-empty it is written to the child.
+ *
+ * When SAVE_OUTPUT is non-NULL, output from the child is captured;
+ * else output is logged.
+ *
+ * When envp is non-NULL, use execve(argv,envp).
+ *
+ * Write command being executed to COMMAND_STREAM (when non-zero).
+ *
+ * Returns -1, 0, exit code.
+ */
 
-struct server_run {
-	chunk_t output;
-	int status;
-};
-
-struct server_run server_runv_chunk(const char *argv[], shunk_t input, struct verbose verbose);
+int server_runve_io(const char *story,
+		    const char *argv[],
+		    const char *envp[],
+		    shunk_t input,
+		    chunk_t *save_output,
+		    struct verbose verbose,
+		    enum stream command_stream);
 
 #endif

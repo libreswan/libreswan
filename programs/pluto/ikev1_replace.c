@@ -101,8 +101,8 @@ void event_v1_replace(struct state *st, monotime_t now)
 	if (newer_sa != SOS_NOBODY) {
 		/* not very interesting: no need to replace */
 		ldbg(st->logger,
-		     "not replacing stale %s SA %lu; #%lu will do",
-		     satype, st->st_serialno, newer_sa);
+		     "not replacing stale %s SA "PRI_SO"; "PRI_SO" will do",
+		     satype, pri_so(st->st_serialno), pri_so(newer_sa));
 	} else if (!c->config->rekey &&
 		   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
 						      c->config->sa_rekey_margin))) {

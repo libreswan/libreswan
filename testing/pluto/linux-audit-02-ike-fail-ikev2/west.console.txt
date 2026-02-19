@@ -13,7 +13,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-failtest
-"ikev2-failtest": added IKEv2 connection
+"ikev2-failtest": added oriented IKEv2 connection
 west #
  #ipsec whack --impair timeout_on_retransmit
 west #
@@ -34,7 +34,7 @@ west #
 "ikev2-failtest" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "ikev2-failtest" #1: encountered fatal error in state IKE_AUTH_I
 "ikev2-failtest" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"ikev2-failtest" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "ikev2-failtest" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "ikev2-failtest" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  ipsec auto --delete ikev2-failtest

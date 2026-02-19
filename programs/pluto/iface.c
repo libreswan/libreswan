@@ -37,7 +37,7 @@
 #endif
 
 #include "lsw_socket.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "defs.h"
 
@@ -124,22 +124,22 @@ LIST_INFO(iface_device, entry, iface_info, jam_iface);
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
 						       &iface_info);
 
-static void add_iface(const struct kernel_iface *ifp, struct logger *logger)
+static void add_iface(const struct kernel_iface *ifp, struct verbose verbose)
 {
-	struct iface_device *ifd = refcnt_alloc(struct iface_device, logger, HERE);
+	struct iface_device *ifd = refcnt_alloc(struct iface_device, verbose.logger, HERE);
 	ifd->real_device_name = clone_str(ifp->name, "real device name");
 	ifd->local_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
-	ifd->nic_offload = kernel_ops_detect_nic_offload(ifp->name, logger);
+	ifd->nic_offload = kernel_ops_detect_nic_offload(ifp->name, verbose.logger);
 	init_list_entry(&iface_info, ifd, &ifd->entry);
 	insert_list_entry(&interface_dev, &ifd->entry);
-	dbg("iface: marking %s add", ifd->real_device_name);
+	vdbg("marking %s add", ifd->real_device_name);
 }
 
 struct iface_device *iface_device_addref_where(struct iface_device *iface, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(iface, logger, where);
+	return refcnt_addref(iface, logger, where);
 }
 
 struct iface_device *next_iface_device(struct iface_device *iface)
@@ -158,34 +158,37 @@ struct iface_device *find_iface_device_by_address(const ip_address *address)
 	return NULL;
 }
 
-static void mark_ifaces_dead(void)
+static void mark_ifaces_dead(struct verbose verbose)
 {
+	vdbg("marking ifaces dead");
 	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
-		dbg("iface: marking %s dead", ifd->real_device_name);
+		vdbg("marking %s dead", ifd->real_device_name);
 		ifd->ifd_change = IFD_DELETE;
 	}
 }
 
-static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct logger *logger)
+static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct verbose verbose)
 {
+	vdbg("adding or keeping ifaces");
+	verbose.level++;
 	/* find the iface */
 	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (streq(ifd->real_device_name, ifp->name) &&
-		    sameaddr(&ifd->local_address, &ifp->addr)) {
-			dbg("iface: marking %s keep", ifd->real_device_name);
+		    address_eq_address(ifd->local_address, ifp->addr)) {
+			vdbg("marking %s keep", ifd->real_device_name);
 			ifd->ifd_change = IFD_KEEP;
 			return;
 		}
 	}
-	add_iface(ifp, logger);
+	add_iface(ifp, verbose);
 }
 
 void iface_device_delref_where(struct iface_device **ifdp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct iface_device *ifd = delref_where(ifdp, logger, where);
+	struct iface_device *ifd = refcnt_delref(ifdp, logger, where);
 	if (ifd != NULL) {
 		/* i.e., last reference */
 		remove_list_entry(&ifd->entry);
@@ -194,7 +197,7 @@ void iface_device_delref_where(struct iface_device **ifdp, where_t where)
 	}
 }
 
-static void release_dead_interfaces(struct logger *logger)
+static void release_dead_interfaces(struct verbose verbose)
 {
 	/*
 	 * Release (and for instances, delete) any connections with a
@@ -206,7 +209,7 @@ static void release_dead_interfaces(struct logger *logger)
 	struct connection_filter cf = {
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = logger,
+			.verbose = verbose,
 			.where = HERE,
 		},
 	};
@@ -215,21 +218,21 @@ static void release_dead_interfaces(struct logger *logger)
 
 		if (!oriented(c)) {
 			/* aka c->iface == NULL */
-			pdbg(c->logger, "connection interface un-oriented");
+			vdbg("connection %s interface un-oriented", c->name);
 			continue;
 		}
 
-		passert(c->iface != NULL); /* aka oriented() */
+		vassert(c->iface != NULL); /* aka oriented() */
 		if (c->iface->ifd_change != IFD_DELETE) {
 			address_buf eb;
-			pdbg(c->logger, "connection interface %s safe",
-			     str_address(&c->iface->local_address, &eb));
+			vdbg("connection %s interface %s safe",
+			     c->name, str_address(&c->iface->local_address, &eb));
 			continue;
 		}
 
 		address_buf eb;
-		pdbg(c->logger, "connection interface %s being deleted",
-		     str_address(&c->iface->local_address, &eb));
+		vdbg("connection %s interface %s being deleted",
+		     c->name, str_address(&c->iface->local_address, &eb));
 
 		/*
 		 * This connection interface is going away.
@@ -240,30 +243,62 @@ static void release_dead_interfaces(struct logger *logger)
 		 * have been deleted.
 		 *
 		 * Since a reference is taken, deleting all states of
-		 * an instance can't delete the connection.
+		 * an instance can't delete the connection; instead it
+		 * happens here.
 		 *
 		 * What's needed is a variant that doesn't try to send
 		 * (it's pointless as the interface has gone).
+		 *
+		 * Don't alter +UP and +ROUTE, when the interface
+		 * comes back things should react accordingly.
 		 */
-		c = connection_addref(c, logger);
-		connection_attach(c, logger);
+
+		connection_addref(c, verbose.logger);
+		whack_attach(c, verbose.logger);
+
+		/*
+		 * Instantiated groups are never in a disoriented
+		 * state; hence instead of disorienting the
+		 * connection, delete it.
+		 *
+		 * The double delref, is first to get rid of the
+		 * addref above; and second to do the deed, dirt
+		 * cheap.
+		 *
+		 * XXX: the first delref should be part of
+		 * disorient()?
+		 */
+		if (is_from_group(c) &&
+		    is_group(c->clonedfrom) &&
+		    vexpect(refcnt_peek(c, verbose.logger) > 1)) {
+			struct connection *cp = c;
+			terminate_and_down_and_unroute_connections(cp, HERE);
+			vdbg("%s has a count of %d (%p %p)", c->name,
+			     refcnt_peek(c, verbose.logger), c->logger, verbose.logger);
+			connection_delref(&cp, verbose.logger);
+			connection_delref(&c, verbose.logger);
+			continue;
+		}
+
+		vexpect(refcnt_peek(c, verbose.logger) > 1);
 		terminate_all_connection_states(c, HERE);
+		vexpect(refcnt_peek(c, verbose.logger) >= 1);
 
 		/*
 		 * ... and then disorient it, moving it to the
 		 * unoriented list.  Always do this - the delete code
-		 * pexpect()s to find the connection on one of those
+		 * PEXPECT()s to find the connection on one of those
 		 * lists.
 		 */
 		PEXPECT(c->logger, oriented(c)); /* per above */
 		disorient(c);
 
-		connection_detach(c, logger);
-		connection_delref(&c, logger);
+		whack_detach(c, verbose.logger);
+		connection_delref(&c, verbose.logger);
 	}
 }
 
-static void free_dead_ifaces(struct logger *logger)
+static void free_dead_ifaces(struct verbose verbose)
 {
 	struct iface_endpoint *p;
 	bool some_dead = false;
@@ -274,12 +309,11 @@ static void free_dead_ifaces(struct logger *logger)
 	 * interface_devs, so that it can list all IFACE_PORTs being
 	 * shutdown before shutting them down.  Is this useful?
 	 */
-	dbg("updating interfaces - listing interfaces that are going down");
+	vdbg("updating interfaces - listing interfaces that are going down");
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
-			llog(RC_LOG, logger,
-			     "shutting down interface %s %s",
+			vlog("shutting down interface %s %s",
 			     p->ip_dev->real_device_name,
 			     str_endpoint(&p->local_endpoint, &b));
 			some_dead = true;
@@ -295,12 +329,12 @@ static void free_dead_ifaces(struct logger *logger)
 	 */
 
 	if (some_dead) {
-		dbg("updating interfaces - deleting the dead");
+		vdbg("updating interfaces - deleting the dead");
 		/*
 		 * Delete any iface_port's pointing at the dead
 		 * iface_dev.
 		 */
-		release_dead_interfaces(logger);
+		release_dead_interfaces(verbose);
 		for (struct iface_endpoint **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp (skip p) */
@@ -331,8 +365,8 @@ static void free_dead_ifaces(struct logger *logger)
 	 * be able to orient to an existing or new interface.
 	 */
 	if (some_dead || some_new) {
-		dbg("updating interfaces - checking orientation");
-		check_orientations(logger);
+		vdbg("updating interfaces - checking orientation");
+		check_orientations(verbose.logger);
 	}
 }
 
@@ -348,7 +382,7 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 
 	struct iface_endpoint *ifp = refcnt_alloc(struct iface_endpoint, logger, where);
 	ifp->fd = fd;
-	ifp->ip_dev = addref_where(ifd, logger, where);
+	ifp->ip_dev = refcnt_addref(ifd, logger, where);
 	ifp->io = io;
 	ifp->esp_encapsulation_enabled = (esp_encapsulation == ESP_ENCAPSULATION_ENABLED);
 	ifp->float_nat_initiator = (initiator_port == INITIATOR_PORT_FLOATS);
@@ -360,13 +394,15 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 
 void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 {
-	struct iface_endpoint *ifp = delref_where(ifpp, &global_logger, where);
+	struct logger *logger = &global_logger;
+
+	struct iface_endpoint *ifp = refcnt_delref(ifpp, logger, where);
 	if (ifp != NULL) {
 		/* drop any lists */
-		pexpect(ifp->next == NULL);
+		PEXPECT(logger, ifp->next == NULL);
 		remove_list_entry(&ifp->entry);
 		/* generic stuff */
-		ifp->io->cleanup(ifp);
+		ifp->io->cleanup(ifp, logger);
 		iface_device_delref(&ifp->ip_dev);
 		/* XXX: after cleanup so code can log FD */
 		close(ifp->fd);
@@ -378,7 +414,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(ifp, logger, where);
+	return refcnt_addref(ifp, logger, where);
 }
 
 struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
@@ -392,9 +428,9 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	{								\
 		int e = ERROR;						\
 		endpoint_buf eb;					\
-		llog_error(logger, e,					\
-			   "bind %s %s endpoint %s failed, "MSG,	\
-			   ifd->real_device_name, io->protocol->name,		\
+		llog_errno(ERROR_STREAM, logger, e,			\
+			   "bind %s %s endpoint %s failed, "MSG": ",	\
+			   ifd->real_device_name, io->protocol->name,	\
  			   str_endpoint(&local_endpoint, &eb),		\
 			   ##__VA_ARGS__);				\
 	}
@@ -628,29 +664,30 @@ static void add_new_ifaces(struct logger *logger)
 	}
 }
 
-void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
+void listen_on_iface_endpoint(struct iface_endpoint *ifp, const struct logger *logger)
 {
 	ifp->io->listen(ifp, logger);
 	endpoint_buf b;
-	dbg("setup callback for interface %s %s fd %d on %s",
-	    ifp->ip_dev->real_device_name,
-	    str_endpoint(&ifp->local_endpoint, &b),
-	    ifp->fd, ifp->io->protocol->name);
+	ldbg(logger, "setup callback for interface %s %s fd %d on %s",
+	     ifp->ip_dev->real_device_name,
+	     str_endpoint(&ifp->local_endpoint, &b),
+	     ifp->fd, ifp->io->protocol->name);
 }
 
-static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *logger)
+static void process_kernel_ifaces(struct kernel_iface *rifaces, struct verbose verbose)
 {
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen != NULL) {
-		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
+		diag_t d = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
 
-		if (e != NULL) {
-			llog(RC_LOG, logger, "invalid listen= option ignored: %s", e);
+		if (d != NULL) {
+			vlog("invalid listen= option ignored: %s", str_diag(d));
+			pfree_diag(&d);
 			pluto_listen = NULL;
 		}
 		address_buf b;
-		dbg("Only looking to listen on %s", str_address(&lip, &b));
+		vdbg("Only looking to listen on %s", str_address(&lip, &b));
 	}
 
 	struct kernel_iface *ifp;
@@ -663,14 +700,13 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
 				after = true;
-			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
+			} else if (address_eq_address(ifp->addr, vfp->addr)) {
 				if (after) {
 					address_buf b;
 
-					llog(RC_LOG, logger,
-					            "IP interfaces %s and %s share address %s!",
-					       ifp->name, vfp->name,
-					       str_address(&ifp->addr, &b));
+					vlog("IP interfaces %s and %s share address %s!",
+					     ifp->name, vfp->name,
+					     str_address(&ifp->addr, &b));
 				}
 				bad = true;
 				/* continue just to find other duplicates */
@@ -685,12 +721,11 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 		 *
 		 * ignore if --listen is specified and we do not match
 		 */
-		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+		if (pluto_listen != NULL && !address_eq_address(lip, ifp->addr)) {
 			address_buf b;
 
-			llog(RC_LOG, logger,
-				    "skipping interface %s with %s",
-				    ifp->name, str_address(&ifp->addr, &b));
+			vlog("skipping interface %s with %s",
+			     ifp->name, str_address(&ifp->addr, &b));
 			continue;
 		}
 
@@ -698,7 +733,7 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 		 * We've got all we need; see if this is a new thing:
 		 * search old interfaces list.
 		 */
-		add_or_keep_iface_dev(ifp, logger);
+		add_or_keep_iface_dev(ifp, verbose);
 	}
 
 	/* delete the raw interfaces list */
@@ -712,24 +747,25 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 
 void find_ifaces(bool rm_dead, struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "iface");
 	/*
 	 * Sweep the interfaces, after this each is either KEEP, DEAD,
 	 * or ADD.
 	 */
-	mark_ifaces_dead();
-	process_kernel_ifaces(find_kernel_ifaces4(logger), logger);
-	process_kernel_ifaces(find_kernel_ifaces6(logger), logger);
+	mark_ifaces_dead(verbose);
+	process_kernel_ifaces(find_kernel_ifaces4(verbose), verbose);
+	process_kernel_ifaces(find_kernel_ifaces6(verbose), verbose);
 	add_new_ifaces(logger);
 
 	if (rm_dead)
-		free_dead_ifaces(logger); /* ditch remaining old entries */
+		free_dead_ifaces(verbose); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
-		llog(RC_LOG, logger, "no public interfaces found");
+		vlog("no public interfaces found");
 
 	if (listening) {
 		for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			listen_on_iface_endpoint(ifp, logger);
+			listen_on_iface_endpoint(ifp, verbose.logger);
 		}
 	}
 }
@@ -754,18 +790,19 @@ void show_ifaces_status(struct show *s)
 	}
 }
 
-void init_ifaces(const struct config_setup *oco, struct logger *logger UNUSED)
+void init_ifaces(struct logger *logger UNUSED)
 {
-	pluto_listen = config_setup_string(oco, KSF_LISTEN);
-	pluto_listen_tcp = config_setup_yn(oco, KYN_LISTEN_TCP);
-	pluto_listen_udp = config_setup_yn(oco, KYN_LISTEN_UDP);
+	pluto_listen = config_setup_string(KSF_LISTEN);
+	pluto_listen_tcp = config_setup_yn(KYN_LISTEN_TCP);
+	pluto_listen_udp = config_setup_yn(KYN_LISTEN_UDP);
 }
 
 void shutdown_ifaces(struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "iface");
 	/* clean up public interfaces */
-	mark_ifaces_dead();
-	free_dead_ifaces(logger);
+	mark_ifaces_dead(verbose);
+	free_dead_ifaces(verbose);
 	/* clean up remaining hidden interface endpoints */
 	struct iface_endpoint *ifp;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(ifp, &iface_endpoints) {

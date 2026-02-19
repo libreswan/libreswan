@@ -54,7 +54,7 @@
 #include "ikev1_message.h"
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
-#include "refcnt.h"		/* for ldbg_alloc(&global_logger, )+ldbg_free(&global_logger, ) */
+#include "refcnt.h"		/* for ldbg_newref()+ldbg_delref() */
 #include "secrets.h"
 
 /** output an attribute (within an SA) */
@@ -84,7 +84,7 @@ static bool out_attr(int type,
 		struct pbs_out val_pbs;
 		uint32_t nval = htonl(val);
 
-		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
+		PASSERT(pbs->logger, (type & ISAKMP_ATTR_AF_MASK) == 0);
 		struct isakmp_attribute attr = {
 			.isaat_af_type = type | ISAKMP_ATTR_AF_TLV,
 			.isaat_lv = sizeof(nval),
@@ -97,7 +97,7 @@ static bool out_attr(int type,
 	}
 	if (LDBGP(DBG_BASE, pbs->logger)) {
 		name_buf b;
-		if (enum_enum_name(attr_value_names, type, val, &b)) {
+		if (enum_enum_long(attr_value_names, type, val, &b)) {
 			LDBG_log(pbs->logger, "    [%lu is %s]", val, b.buf);
 		}
 	}
@@ -115,12 +115,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta,
 			     struct logger *logger)
 {
-	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
+	if (PBAD(logger, c->config->child.proposals.p == NULL)) {
 		return false;
 	}
 
-	if (c->config->child_sa.encap_proto != ENCAP_PROTO_ESP) {
-		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
+	if (c->config->child.encap_proto != ENCAP_PROTO_ESP) {
+		ldbg(logger, "ignoring ESP proposal as POLICY_ENCRYPT unset");
 		return false;       /* try another */
 	}
 
@@ -137,18 +137,17 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * because it was NULLed to force the proposal's
 		 * rejection.
 		 */
-		dbg(
-		     "ignoring ESP proposal with NULLed or unknown encryption");
+		ldbg(logger, "ignoring ESP proposal with NULLed or unknown encryption");
 		return false;       /* try another */
 	}
-	if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
+	if (!kernel_alg_encrypt_ok(ta->ta_encrypt, logger)) {
 		/*
 		 * No kernel support.  Needed because ALG_INFO==NULL
 		 * will act as a wild card.  XXX: but is ALG_INFO ever
 		 * NULL?
 		 */
-		dbg("ignoring ESP proposal with alg %s not present in kernel",
-		    ta->ta_encrypt->common.fqn);
+		ldbg(logger, "ignoring ESP proposal with alg %s not present in kernel",
+		     ta->ta_encrypt->common.fqn);
 		return false;
 	}
 	if (!encrypt_has_key_bit_length(ta->ta_encrypt, ta->enckeylen)) {
@@ -173,11 +172,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * NULL), a NULL here must indicate that integrity was
 		 * present but the lookup failed.
 		 */
-		dbg("ignoring ESP proposal with unknown integrity");
+		ldbg(logger, "ignoring ESP proposal with unknown integrity");
 		return false;       /* try another */
 	}
 
-	if (ta->ta_integ != &ike_alg_integ_none && !kernel_alg_integ_ok(ta->ta_integ)) {
+	if (ta->ta_integ != &ike_alg_integ_none &&
+	    !kernel_alg_integ_ok(ta->ta_integ, logger)) {
 		/*
 		 * No kernel support.  Needed because ALG_INFO==NULL
 		 * will act as a wild card.
@@ -187,8 +187,8 @@ static bool ikev1_verify_esp(const struct connection *c,
 		 * XXX: check for NONE comes from old code just
 		 * assumed NONE was supported.
 		 */
-		dbg("ignoring ESP proposal with alg %s not present in kernel",
-		    ta->ta_integ->common.fqn);
+		ldbg(logger, "ignoring ESP proposal with alg %s not present in kernel",
+		     ta->ta_integ->common.fqn);
 		return false;
 	}
 
@@ -213,14 +213,14 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
+	FOR_EACH_PROPOSAL(c->config->child.proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.encrypt == ta->ta_encrypt &&
 		    (algs.enckeylen == 0 ||
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.integ == ta->ta_integ) {
-			dbg("ESP IPsec Transform verified; matches alg_info entry");
+			ldbg(logger, "ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -231,12 +231,12 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta,
 			    struct logger *logger)
 {
-	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
+	if (PBAD(logger, c->config->child.proposals.p == NULL)) {
 		return false;
 	}
 
-	if (c->config->child_sa.encap_proto != ENCAP_PROTO_AH) {
-		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
+	if (c->config->child.encap_proto != ENCAP_PROTO_AH) {
+		ldbg(logger, "ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
 	}
 	if (ta->ta_encrypt != NULL) {
@@ -260,10 +260,10 @@ static bool ikev1_verify_ah(const struct connection *c,
 		return false;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {	/* really AH */
+	FOR_EACH_PROPOSAL(c->config->child.proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
-			dbg("ESP IPsec Transform verified; matches alg_info entry");
+			ldbg(logger, "ESP IPsec Transform verified; matches alg_info entry");
 			return true;
 		}
 	}
@@ -286,9 +286,9 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 	struct v1_proposal algs = v1_proposal(proposal);
 	if (encap_proto == ENCAP_PROTO_ESP) {
-		ealg_i = algs.encrypt->common.id[IKEv1_IPSEC_ID];
+		ealg_i = algs.encrypt->ikev1_ipsec_id;
 		/* already checked by the parser? */
-		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
+		if (!kernel_alg_encrypt_ok(algs.encrypt, logger)) {
 			llog(RC_LOG, logger,
 			     "requested kernel enc ealg_id=%d not present",
 			     ealg_i);
@@ -299,8 +299,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int aalg_i = algs.integ->integ_ikev1_ah_transform;
 
 	/* already checked by the parser? */
-	if (!kernel_alg_integ_ok(algs.integ)) {
-		dbg("kernel_alg_db_add() kernel auth aalg_id=%d not present", aalg_i);
+	if (!kernel_alg_integ_ok(algs.integ, logger)) {
+		ldbg(logger, "kernel_alg_db_add() kernel auth aalg_id=%d not present", aalg_i);
 		return false;
 	}
 
@@ -312,7 +312,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		if (algs.integ != &ike_alg_integ_none) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   algs.integ->common.id[IKEv1_IPSEC_ID]);
+					   algs.integ->ikev1_ipsec_id);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -334,7 +334,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 					if (algs.integ != &ike_alg_integ_none) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							algs.integ->common.id[IKEv1_IPSEC_ID]);
+							algs.integ->ikev1_ipsec_id);
 					}
 					db_attr_add_values(db_ctx,
 							   KEY_LENGTH,
@@ -348,7 +348,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx, AUTH_ALGORITHM,
-				   algs.integ->common.id[IKEv1_IPSEC_ID]);
+				   algs.integ->ikev1_ipsec_id);
 	}
 
 	return true;
@@ -472,7 +472,7 @@ static struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 			alloc_bytes(sizeof(struct db_prop) * 2,
 				    "ipcomp_prop");
 
-		passert(n->prop_conjs->prop_cnt == 1);
+		PASSERT(logger, n->prop_conjs->prop_cnt == 1);
 
 		/* construct the IPcomp proposal */
 		ipcomp_trans->transid = IPCOMP_DEFLATE;
@@ -552,12 +552,12 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					enum ikev1_auth_method auth_method,
 					bool single_dh, struct logger *logger)
 {
-	passert(ike_proposals.p != NULL);
+	PASSERT(logger, ike_proposals.p != NULL);
 
 	struct db_sa *gsp = NULL;
 
 	/* Next two are for multiple proposals in aggressive mode... */
-	unsigned last_modp = 0;
+	enum oakley_group last_modp = 0;
 	bool warned_dropped_dhgr = false;
 
 	int transcnt = 0;
@@ -572,20 +572,20 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	FOR_EACH_PROPOSAL(ike_proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 
-		passert(algs.encrypt != NULL);
-		passert(algs.prf != NULL);
-		passert(algs.dh != NULL);
+		PASSERT(logger, algs.encrypt != NULL);
+		PASSERT(logger, algs.prf != NULL);
+		PASSERT(logger, algs.kem != NULL);
 
-		unsigned ealg = algs.encrypt->common.ikev1_oakley_id;
-		unsigned halg = algs.prf->common.ikev1_oakley_id;
-		unsigned modp = algs.dh->group;
+		unsigned ealg = algs.encrypt->ikev1_oakley_id;
+		unsigned halg = algs.prf->ikev1_oakley_id;
+		unsigned modp = algs.kem->ikev1_oakley_id;
 		unsigned eklen = algs.enckeylen;
 
 		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
 		     __func__,
 		     algs.encrypt->common.fqn, ealg,
 		     algs.prf->common.fqn, halg,
-		     algs.dh->common.fqn, modp,
+		     algs.kem->common.fqn, modp,
 		     eklen);
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
@@ -601,12 +601,12 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * copy the template
 		 */
 		struct db_sa *emp_sp = sa_copy_sa(&oakley_empty, HERE);
-		passert(emp_sp->dynamic);
-		passert(emp_sp->prop_conj_cnt == 1);
-		passert(emp_sp->prop_conjs[0].prop_cnt == 1);
-		passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
+		PASSERT(logger, emp_sp->dynamic);
+		PASSERT(logger, emp_sp->prop_conj_cnt == 1);
+		PASSERT(logger, emp_sp->prop_conjs[0].prop_cnt == 1);
+		PASSERT(logger, emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 		struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
-		passert(trans->attr_cnt == 5);
+		PASSERT(logger, trans->attr_cnt == 5);
 
 		/*
 		 * See "struct db_attr otempty" above, and spdb.c, for
@@ -620,21 +620,21 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		/*
 		 * auth type for IKE must be set.
 		 */
-		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+		PASSERT(logger, auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 		auth->val = auth_method;
 
 		if (eklen > 0) {
 			struct db_attr *enc_keylen = &trans->attrs[4];
 
-			passert(trans->attr_cnt == 5);
-			passert(enc_keylen->type.oakley == OAKLEY_KEY_LENGTH);
+			PASSERT(logger, trans->attr_cnt == 5);
+			PASSERT(logger, enc_keylen->type.oakley == OAKLEY_KEY_LENGTH);
 			enc_keylen->val = eklen;
 		} else {
 			/* truncate */
 			trans->attr_cnt = 4;
 		}
 
-		passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
+		PASSERT(logger, enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 		if (ealg > 0)
 			enc->val = ealg;
 
@@ -650,7 +650,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * initialized using "struct db_attr otempty")
 		 * it doesn't hurt to be safe.
 		 */
-		passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM ||
+		PASSERT(logger, hash->type.oakley == OAKLEY_HASH_ALGORITHM ||
 			hash->type.oakley == OAKLEY_PRF);
 		if (halg > 0) {
 			hash->val = halg;
@@ -661,7 +661,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 			}
 		}
 
-		passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
+		PASSERT(logger, grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
 		if (modp > 0)
 			grp->val = modp;
 
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.dh->group != last_modp) {
+		    algs.kem->ikev1_oakley_id != (int)last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
@@ -692,10 +692,10 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				llog(RC_LOG, logger,
 				     "transform (%s,%s,%s keylen %d) ignored.",
 				     str_enum_long(&oakley_enc_names,
-					      algs.encrypt->common.ikev1_oakley_id, &eb),
+					      algs.encrypt->ikev1_oakley_id, &eb),
 				     str_enum_long(&oakley_hash_names,
-					      algs.prf->common.ikev1_oakley_id, &hb),
-				     algs.dh->common.fqn,
+					      algs.prf->ikev1_oakley_id, &hb),
+				     algs.kem->common.fqn,
 				     algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
@@ -728,14 +728,14 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 			    !algs.encrypt->keylen_omitted) {
 				const struct encrypt_desc *enc_desc = algs.encrypt;
 				int def_ks = enc_desc->keydeflen;
-				passert(def_ks); /* ike=null not supported */
+				PASSERT(logger, def_ks); /* ike=null not supported */
 				int max_ks = encrypt_max_key_bit_length(enc_desc);
 				int ks;
 
-				passert(emp_sp->dynamic);
-				passert(emp_sp->prop_conj_cnt == 1);
-				passert(emp_sp->prop_conjs[0].prop_cnt == 1);
-				passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
+				PASSERT(logger, emp_sp->dynamic);
+				PASSERT(logger, emp_sp->prop_conj_cnt == 1);
+				PASSERT(logger, emp_sp->prop_conjs[0].prop_cnt == 1);
+				PASSERT(logger, emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 
 				if (emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 4) {
 					/* add a key length attribute of 0 */
@@ -746,8 +746,8 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 						(n + 1) * sizeof(old_attrs[0]),
 						"extended trans");
 
-					passert(emp_sp->dynamic);
-					passert(old_attrs[0].type.oakley != OAKLEY_KEY_LENGTH &&
+					PASSERT(logger, emp_sp->dynamic);
+					PASSERT(logger, old_attrs[0].type.oakley != OAKLEY_KEY_LENGTH &&
 						old_attrs[1].type.oakley != OAKLEY_KEY_LENGTH &&
 						old_attrs[2].type.oakley != OAKLEY_KEY_LENGTH &&
 						old_attrs[3].type.oakley != OAKLEY_KEY_LENGTH);
@@ -759,8 +759,8 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					tr->attrs = new_attrs;
 					tr->attr_cnt++;
 				}
-				passert(emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
-				passert(emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
+				PASSERT(logger, emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
+				PASSERT(logger, emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
 
 				/*
 				 * This odd FOR loop executes its body for
@@ -796,10 +796,10 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = algs.dh->group;
+			last_modp = algs.kem->ikev1_oakley_id;
 		}
 
-		pexpect(emp_sp == NULL);
+		PEXPECT(logger, emp_sp == NULL);
 		transcnt++;
 	}
 
@@ -816,6 +816,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 			 bool oakley_mode)
 {
 	struct connection *c = st->st_connection;
+	struct logger *logger = outs->logger;
 
 	/* SA header out */
 	struct pbs_out sa_pbs;
@@ -852,7 +853,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 		const struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
 		int valid_prop_cnt = pc->prop_cnt;
 
-		ldbg(outs->logger, "%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
+		ldbg(logger, "%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
 
 		for (unsigned pn = 0; pn < pc->prop_cnt; pn++) {
 			const struct db_prop *const p = &pc->props[pn];
@@ -862,7 +863,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 			 * pick the part of the proposal we are trying to work on
 			 */
 
-			ldbg(outs->logger, "%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			ldbg(logger, "%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
 			     __func__, pcn, pn, pc->prop_cnt, valid_prop_cnt,
 			     p->trans_cnt);
 
@@ -913,7 +914,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 
 				switch (p->protoid) {
 				case PROTO_ISAKMP:
-					passert(oakley_mode);
+					PASSERT(logger, oakley_mode);
 					trans_desc =
 						&isakmp_isakmp_transform_desc;
 					attr_desc =
@@ -923,7 +924,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					break;
 
 				case PROTO_IPSEC_AH:
-					passert(!oakley_mode);
+					PASSERT(logger, !oakley_mode);
 					trans_desc = &isakmp_ah_transform_desc;
 					attr_desc =
 						&isakmp_ipsec_attribute_desc;
@@ -934,7 +935,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					break;
 
 				case PROTO_IPSEC_ESP:
-					passert(!oakley_mode);
+					PASSERT(logger, !oakley_mode);
 					trans_desc =
 						&isakmp_esp_transform_desc;
 					attr_desc =
@@ -946,7 +947,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					break;
 
 				case PROTO_IPCOMP:
-					passert(!oakley_mode);
+					PASSERT(logger, !oakley_mode);
 					trans_desc = &isakmp_ipcomp_transform_desc;
 					attr_desc = &isakmp_ipsec_attribute_desc;
 					attr_value_names = &ikev1_ipsec_attr_value_names;
@@ -1020,11 +1021,18 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 				 * in every transform.  Except IPCOMP.
 				 */
 				if (p->protoid != PROTO_IPCOMP &&
-				    st->st_pfs_group != NULL) {
-					passert(!oakley_mode);
-					passert(st->st_pfs_group != &unset_group);
+				    st->st_pfs_kem != NULL) {
+					PASSERT(logger, !oakley_mode);
+					PASSERT(logger, st->st_pfs_kem != &unset_group);
+					/*
+					 * XXX: Use .ikev1_oakley_id
+					 * and not .ikev1_ipsec_id.
+					 * Key Exchange something
+					 * between IKEs and not
+					 * something between kernel.
+					 */
 					if (!out_attr(GROUP_DESCRIPTION,
-						      st->st_pfs_group->group,
+						      st->st_pfs_kem->ikev1_oakley_id, /*NOT .ikev1_ipsec_id*/
 						      attr_desc,
 						      attr_value_names,
 						      &trans_pbs))
@@ -1125,8 +1133,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					    (oakley_mode ? a->type.oakley == OAKLEY_KEY_LENGTH
 					     :  a->type.ipsec == KEY_LENGTH)) {
 						key_length_to_impair = a->val;
-						llog(RC_LOG, st->logger,
-						     "IMPAIR: stripping key-length");
+						llog(IMPAIR_STREAM, st->logger, "stripping key-length");
 						continue;
 					}
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
@@ -1148,17 +1155,14 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 * long form packet of no
 					 * length.
 					 */
-					llog(RC_LOG, st->logger,
-					     "IMPAIR: key-length-attribute:empty not implemented");
+					llog(IMPAIR_STREAM, st->logger, "key-length-attribute:empty not implemented");
 					break;
 				case IMPAIR_EMIT_OMIT:
-					llog(RC_LOG, st->logger,
-					     "IMPAIR: not sending key-length attribute");
+					llog(IMPAIR_STREAM, st->logger, "not sending key-length attribute");
 					break;
 				case IMPAIR_EMIT_DUPLICATE:
 					if (key_length_to_impair >= 0) {
-						llog(RC_LOG, st->logger,
-						     "IMPAIR: duplicating key-length");
+						llog(IMPAIR_STREAM, st->logger, "duplicating key-length");
 						for (unsigned dup = 0; dup < 2; dup++) {
 							if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 								      key_length_to_impair,
@@ -1168,15 +1172,13 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 								goto fail;
 						}
 					} else {
-						llog(RC_LOG, st->logger,
-						     "IMPAIR: no key-length to duplicate");
+						llog(IMPAIR_STREAM, st->logger, "no key-length to duplicate");
 					}
 					break;
 				default:
 				{
 					unsigned keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF;
-					llog(RC_LOG, st->logger,
-					     "IMPAIR: sending key-length attribute value %u",
+					llog(IMPAIR_STREAM, st->logger, "sending key-length attribute value %u",
 					     keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 						      keylen, attr_desc, attr_value_names,
@@ -1202,8 +1204,8 @@ bool ikev1_out_quick_sa(struct pbs_out *outs,
 			struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
-						  c->config->child_sa.proposals,
+	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child.encap_proto,
+						  c->config->child.proposals,
 						  child->sa.st_policy.compress,
 						  child->sa.logger);
 
@@ -1246,7 +1248,8 @@ static bool ikev1_out_oakley_sa(struct pbs_out *outs,
 	return ok;
 }
 
-static enum ikev1_auth_method sa_auth_method(const struct connection *c)
+static enum ikev1_auth_method sa_auth_method(const struct connection *c,
+					     struct logger *logger)
 {
 	/*
 	 * IKEv1 auth is symmetric
@@ -1254,8 +1257,8 @@ static enum ikev1_auth_method sa_auth_method(const struct connection *c)
 	 * Notice how MAIN and AGGR modes use slightly different code
 	 * to compute the index.
 	 */
-	enum keyword_auth auth = c->local->host.config->auth;
-	pexpect(auth == c->remote->host.config->auth);
+	enum auth auth = c->local->host.config->auth;
+	PEXPECT(logger, auth == c->remote->host.config->auth);
 	unsigned index = ((auth == AUTH_PSK ? 1 :
 			   auth == AUTH_RSASIG ? 2 : 0) |
 			  (c->local->host.config->xauth.server ? 4 : 0) |
@@ -1282,14 +1285,15 @@ static enum ikev1_auth_method sa_auth_method(const struct connection *c)
 		0,			/* XAUTHCLIENT+XAUTHSERVER + RSA */
 		0,			/* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 	};
-	passert(index < elemsof(auth_method));
+	PASSERT(logger, index < elemsof(auth_method));
 	return auth_method[index];
 }
 
 bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum ikev1_auth_method auth_method = sa_auth_method(c);
+	struct logger *logger = ike->sa.logger;
+	enum ikev1_auth_method auth_method = sa_auth_method(c, logger);
 
 	return ikev1_out_oakley_sa(outs, auth_method, ike, false);
 }
@@ -1297,7 +1301,8 @@ bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
 bool ikev1_out_aggr_sa(struct pbs_out *outs, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum ikev1_auth_method auth_method = sa_auth_method(c);
+	struct logger *logger = ike->sa.logger;
+	enum ikev1_auth_method auth_method = sa_auth_method(c, logger);
 
 	return ikev1_out_oakley_sa(outs, auth_method, ike, true);
 }
@@ -1481,7 +1486,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.prf == ta->ta_prf &&
-		    algs.dh == ta->ta_dh) {
+		    algs.kem == ta->ta_dh) {
 			if (ealg_insecure) {
 				llog(RC_LOG, logger,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",
@@ -1536,7 +1541,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	const char *const role = selection ? "initiator" : "responder";
 	const struct secret_preshared_stuff *pss = NULL;
 
-	passert(c != NULL);
+	PASSERT(logger, c != NULL);
 
 	/* calculate the per-end policy that might apply */
 
@@ -1782,7 +1787,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			if (LDBGP(DBG_BASE, ike->sa.logger)) {
 				name_buf b;
-				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
+				if (enum_enum_long(&ikev1_oakley_attr_value_names, type, value, &b)) {
 					LDBG_log(ike->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 				} else if (tlv) {
 					LDBG_log(ike->sa.logger, "   [%s is %jd]", af, value);
@@ -1865,7 +1870,7 @@ psk_common:
 							    str_id(&c->remote->host.id, &hid));
 						} else if (LDBGP(DBG_PRIVATE, logger) ||
 							   LDBGP(DBG_CRYPT, logger)) {
-							LDBG_log_hunk(logger, "user PSK:", *pss);
+							LDBG_log_hunk(logger, "user PSK:", pss);
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
@@ -1940,7 +1945,7 @@ rsasig_common:
 			case OAKLEY_GROUP_DESCRIPTION:
 			{
 				name_buf b;
-				ta.ta_dh = ikev1_ike_dh_desc(value, &b);
+				ta.ta_dh = ikev1_ike_kem_desc(value, &b);
 				if (ta.ta_dh == NULL) {
 					UGH("OAKLEY_GROUP %s not supported", b.buf);
 					break;
@@ -1983,10 +1988,10 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					ta.life_seconds = deltatime(value);
+					ta.life_seconds = deltatime_from_seconds(value);
 					if (deltatime_cmp(ta.life_seconds, >, IKE_SA_LIFETIME_MAXIMUM)) {
-						llog(RC_LOG, ike->sa.logger,
-						     "warning: peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
+						llog(WARNING_STREAM, ike->sa.logger,
+						     "peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
 						     value, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
 						ta.life_seconds = IKE_SA_LIFETIME_MAXIMUM;
 					}
@@ -2103,26 +2108,26 @@ rsasig_common:
 			if (r_sa_pbs != NULL) {
 
 				/* Situation */
-				passert(pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
+				PASSERT(logger, pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
 
 				/* Proposal */
 				struct isakmp_proposal r_proposal = proposal;
 				r_proposal.isap_spisize = 0;
 				r_proposal.isap_notrans = 1;
 				struct pbs_out r_proposal_pbs;
-				passert(pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc,
+				PASSERT(logger, pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc,
 						       &r_proposal_pbs));
 
 				/* Transform */
 				struct isakmp_transform r_trans = trans;
 				r_trans.isat_tnp = ISAKMP_NEXT_NONE;
 				struct pbs_out r_trans_pbs;
-				passert(pbs_out_struct(&r_proposal_pbs,
+				PASSERT(logger, pbs_out_struct(&r_proposal_pbs,
 						       r_trans,
 						       &isakmp_isakmp_transform_desc,
 						       &r_trans_pbs));
 
-				passert(pbs_out_raw(&r_trans_pbs, attr_start, attr_len, "attributes"));
+				PASSERT(logger, pbs_out_raw(&r_trans_pbs, attr_start, attr_len, "attributes"));
 				close_pbs_out(&r_trans_pbs);
 				close_pbs_out(&r_proposal_pbs);
 				close_pbs_out(r_sa_pbs);
@@ -2170,7 +2175,9 @@ rsasig_common:
 bool init_aggr_st_oakley(struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
-	if (PBAD(ike->sa.logger, c->config->ike_proposals.p == NULL)) {
+	struct logger *logger = ike->sa.logger;
+
+	if (PBAD(logger, c->config->ike_proposals.p == NULL)) {
 		return false;
 	}
 
@@ -2178,33 +2185,33 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	 * Max transforms == 2 - Multiple transforms, 1 DH
 	 * group
 	 */
-	enum ikev1_auth_method sadb_auth_method = sa_auth_method(c);
+	enum ikev1_auth_method sadb_auth_method = sa_auth_method(c, logger);
 	struct db_sa *revised_sadb = oakley_alg_mergedb(c->config->ike_proposals,
 							sadb_auth_method, true,
-							ike->sa.logger);
+							logger);
 	if (revised_sadb == NULL) {
 		return false;
 	}
 
-	passert(revised_sadb->prop_conj_cnt == 1);
+	PASSERT(logger, revised_sadb->prop_conj_cnt == 1);
 	const struct db_prop_conj *cprop = &revised_sadb->prop_conjs[0];
 
-	passert(cprop->prop_cnt == 1);
+	PASSERT(logger, cprop->prop_cnt == 1);
 	const struct db_prop *prop = &cprop->props[0];
 
 	const struct db_trans *trans = &prop->trans[0];
 
-	passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
+	PASSERT(logger, trans->attr_cnt == 4 || trans->attr_cnt == 5);
 
 	const struct db_attr *enc  = &trans->attrs[0];
 	const struct db_attr *hash = &trans->attrs[1];
 	const struct db_attr *auth = &trans->attrs[2];
 	const struct db_attr *grp  = &trans->attrs[3];
 
-	ldbg(ike->sa.logger, "initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
+	ldbg(logger, "initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
 	     enc->val, hash->val, grp->val);
 
-	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
+	PASSERT(logger, enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
 	name_buf ignore;
 	struct trans_attrs ta = {
@@ -2213,7 +2220,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 		.ta_encrypt = ikev1_ike_encrypt_desc(enc->val, &ignore)
 	};
 
-	passert(ta.ta_encrypt != NULL);
+	PASSERT(logger, ta.ta_encrypt != NULL);
 
 	if (trans->attr_cnt == 5) {
 		struct db_attr *enc_keylen;
@@ -2223,16 +2230,16 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 		ta.enckeylen = ta.ta_encrypt->keydeflen;
 	}
 
-	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
+	PASSERT(logger, hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 	ta.ta_prf = ikev1_ike_prf_desc(hash->val, &ignore);
-	passert(ta.ta_prf != NULL);
+	PASSERT(logger, ta.ta_prf != NULL);
 
-	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+	PASSERT(logger, auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
-	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.ta_dh = ikev1_ike_dh_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
-	passert(ta.ta_dh != NULL);
+	PASSERT(logger, grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
+	ta.ta_dh = ikev1_ike_kem_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
+	PASSERT(logger, ta.ta_dh != NULL);
 
 	ike->sa.st_oakley = ta;
 
@@ -2259,7 +2266,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
  * Only IPsec DOI is accepted (what is the ISAKMP DOI?).
  * Error response is rudimentary.
  *
- * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_group
+ * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_kem
  * holds this across multiple payloads.
  * &unset_group signifies not yet "set"; NULL signifies NONE.
  *
@@ -2335,7 +2342,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		attrs->transattrs.ta_ipcomp = ikev1_kernel_ipcomp_desc(trans->isat_transid, &b);
 		if (attrs->transattrs.ta_ipcomp == NULL) {
 			llog(RC_LOG, child->sa.logger, "unsupported IPsec IPcomp algorithm %s", b.buf);
-			pexpect(attrs->transattrs.ta_integ == NULL); /* implies skip */
+			PEXPECT(child->sa.logger, attrs->transattrs.ta_integ == NULL); /* implies skip */
 			return true;
 		}
 		break;
@@ -2347,7 +2354,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		attrs->transattrs.ta_encrypt = ikev1_kernel_encrypt_desc(trans->isat_transid, &b);
 		if (attrs->transattrs.ta_encrypt == NULL) {
 			llog(RC_LOG, child->sa.logger, "unsupported IPsec encryption algorithm %s", b.buf);
-			pexpect(attrs->transattrs.ta_integ == NULL); /* implies skip */
+			PEXPECT(child->sa.logger, attrs->transattrs.ta_integ == NULL); /* implies skip */
 			return true;
 		}
 		break;
@@ -2361,7 +2368,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	lset_t seen_attrs = LEMPTY;
 	lset_t seen_durations = LEMPTY;
 	enum ikev1_sa_life_type life_type = 0;		/* 0 invalid */
-	const struct dh_desc *pfs_group = NULL;
+	const struct kem_desc *pfs_group = NULL;
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
@@ -2424,7 +2431,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (LDBGP(DBG_BASE, child->sa.logger)) {
 			/* i.e., VALUE is real value */
 			name_buf b;
-			if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
+			if (enum_enum_long(&ikev1_ipsec_attr_value_names, type, value, &b)) {
 				LDBG_log(child->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 			} else if (tlv) {
 				LDBG_log(child->sa.logger, "   [%s is %jd]", af, value);
@@ -2497,7 +2504,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				if (deltatime_cmp(lifemax, >, child->sa.st_connection->config->sa_ipsec_max_lifetime)) {
 					lifemax = child->sa.st_connection->config->sa_ipsec_max_lifetime;
 				}
-				deltatime_t lifetime = deltatime(value);
+				deltatime_t lifetime = deltatime_from_seconds(value);
 				attrs->lifetime = (deltatime_cmp(lifetime, >, lifemax) ? lifemax : lifetime);
 				break;
 			}
@@ -2536,12 +2543,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			name_buf b;
-			pfs_group = ikev1_ike_dh_desc(value, &b);
+			pfs_group = ikev1_ike_kem_desc(value, &b);
 			if (pfs_group == NULL) {
 				llog(RC_LOG, child->sa.logger,
 				     "OAKLEY_GROUP %s not supported for PFS", b.buf);
 				return false;
 			}
+			ldbg(child->sa.logger, "accepting OAKLEY_GROUP %s", pfs_group->common.fqn);
 			break;
 		}
 
@@ -2636,10 +2644,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 	 */
 	if (proto != PROTO_IPCOMP || pfs_group != NULL) {
-		if (child->sa.st_pfs_group == &unset_group)
-			child->sa.st_pfs_group = pfs_group;
+		if (child->sa.st_pfs_kem == &unset_group)
+			child->sa.st_pfs_kem = pfs_group;
 
-		if (child->sa.st_pfs_group != pfs_group) {
+		if (child->sa.st_pfs_kem != pfs_group) {
 			llog(RC_LOG, child->sa.logger,
 				  "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
 				  selection ? "the Proposal" : "a previous Transform");
@@ -2742,7 +2750,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	/* Proposal */
 	r_proposal.isap_pnp = pnp;
 	r_proposal.isap_notrans = 1;
-	passert(pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc, &r_proposal_pbs));
+	PASSERT(logger, pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc, &r_proposal_pbs));
 
 	/* allocate and emit our CPI/SPI */
 	if (r_proposal.isap_protoid == PROTO_IPCOMP) {
@@ -2752,7 +2760,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * but we'll ignore that.
 		 */
 		pi->inbound.spi = get_ipsec_cpi(sr->connection, logger);
-		passert(pbs_out_raw(&r_proposal_pbs,
+		PASSERT(logger, pbs_out_raw(&r_proposal_pbs,
 				    ((uint8_t *) &pi->inbound.spi + IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE),
 				    IPCOMP_CPI_SIZE,
 				    "CPI"));
@@ -2763,16 +2771,16 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 						pi->outbound.spi,
 						logger);
 		/* XXX should check for errors */
-		passert(pbs_out_raw(&r_proposal_pbs, (uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE, "SPI"));
+		PASSERT(logger, pbs_out_raw(&r_proposal_pbs, (uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE, "SPI"));
 	}
 
 	/* Transform */
 	r_trans.isat_tnp = ISAKMP_NEXT_NONE;
-	passert(pbs_out_struct(&r_proposal_pbs, r_trans, trans_desc, &r_trans_pbs));
+	PASSERT(logger, pbs_out_struct(&r_proposal_pbs, r_trans, trans_desc, &r_trans_pbs));
 
 	/* Transform Attributes: pure echo */
 	trans_pbs->cur = trans_pbs->start + sizeof(struct isakmp_transform);
-	passert(pbs_out_raw(&r_trans_pbs, trans_pbs->cur, pbs_left(trans_pbs), "attributes"));
+	PASSERT(logger, pbs_out_raw(&r_trans_pbs, trans_pbs->cur, pbs_left(trans_pbs), "attributes"));
 
 	close_pbs_out(&r_trans_pbs);
 	close_pbs_out(&r_proposal_pbs);
@@ -3142,7 +3150,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			}
 			kernel_mode = ah_attrs.kernel_mode;
 			ah_attrs.spi = ah_spi;
-		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+		} else if (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_AH) {
 			address_buf b;
 			ldbg(child->sa.logger, "policy requires authentication but none in proposal from %s",
 			    str_address(&c->remote->host.addr, &b));
@@ -3185,7 +3193,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none &&
 				    !encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 				    !ah_seen) {
-					LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+					LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 						jam_string(buf, "ESP from ");
 						jam_address(buf, &c->remote->host.addr);
 						jam_string(buf, " must either have AUTH or be combined with AH");
@@ -3206,7 +3214,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 			kernel_mode = esp_attrs.kernel_mode;
 			esp_attrs.spi = esp_spi;
-		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP) {
+		} else if (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_ESP) {
 			address_buf b;
 			ldbg(child->sa.logger, "policy requires encryption but ESP not in Proposal from %s",
 			     str_address(&c->remote->host.addr, &b));
@@ -3299,7 +3307,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			/* emit what we've accepted */
 
 			/* Situation */
-			passert(pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
+			PASSERT(child->sa.logger, pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
 
 			/* AH proposal */
 			if (ah_seen) {

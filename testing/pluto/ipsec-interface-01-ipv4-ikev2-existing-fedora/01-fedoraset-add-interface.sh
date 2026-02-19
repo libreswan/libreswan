@@ -1,6 +1,6 @@
 ../../guestbin/prep.sh
 
-../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth2 if_id 0x1
+../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth0 if_id 0x1
 ../../guestbin/ip.sh addr add 198.18.15.15/24 dev ipsec1
 ../../guestbin/ip.sh link set ipsec1 up
 

@@ -70,11 +70,11 @@ void append_pending(struct ike_sa *ike,
 	if (c->pending != NULL) {
 		address_buf b;
 		bool duplicate = (c->pending->ike == ike);
-		ldbg_sa(ike, "connection %s is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+		ldbg_sa(ike, "connection %s is already pending: waiting on IKE SA "PRI_SO" connecting to %s; %s",
 			c->name,
-			c->pending->ike->sa.st_serialno,
+			pri_so(c->pending->ike->sa.st_serialno),
 			str_address(&c->remote->host.addr, &b),
-			duplicate ? "ignoring duplicate" : "this IKE SA is different");
+			(duplicate ? "ignoring duplicate" : "this IKE SA is different"));
 		if (duplicate) {
 			return;
 		}
@@ -149,7 +149,7 @@ void append_pending(struct ike_sa *ike,
 void release_pending_whacks(struct state *st, err_t story)
 {
 	if (!whack_attached(st->logger)) {
-		pdbg(st->logger, "%s: state has no whack fd", __func__);
+		ldbg(st->logger, "%s: state has no whack fd", __func__);
 		return;
 	}
 
@@ -198,7 +198,7 @@ void release_pending_whacks(struct state *st, err_t story)
 
 		bool has_whack = whack_attached(p->logger);
 
-		pdbg(p->logger,
+		ldbg(p->logger,
 		     "pending: %s: %s SA "PRI_SO" "PRI_LOGGER" has %s SA with whack "PRI_LOGGER,
 		     __func__,
 		     p->ike->sa.st_connection->config->ike_info->parent_name,
@@ -276,11 +276,11 @@ static void delete_pending(struct pending **pp, const char *what)
 void unpend(struct ike_sa *ike, struct connection *cc)
 {
 	if (cc == NULL) {
-		ldbg_sa(ike, "pending: unpending state %p #%lu pending %p",
-			ike, ike->sa.st_serialno, ike->sa.st_pending);
+		ldbg_sa(ike, "pending: unpending state %p "PRI_SO" pending %p",
+			ike, pri_so(ike->sa.st_serialno), ike->sa.st_pending);
 	} else {
-		ldbg_sa(ike, "pending: unpending state #%lu connection %s",
-			ike->sa.st_serialno, cc->name);
+		ldbg_sa(ike, "pending: unpending state "PRI_SO" connection %s",
+			pri_so(ike->sa.st_serialno), cc->name);
 	}
 
 	struct pending **pp = &ike->sa.st_pending;
@@ -304,7 +304,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				 */
 				what = "delete from";
 			} else if (!already_has_larval_v2_child(ike, p->connection)) {
-				connection_attach(p->connection, p->logger);
+				whack_attach(p->connection, p->logger);
 				struct child_sa *child =
 					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
 									    &p->policy,
@@ -312,13 +312,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				connection_initiated_child(ike, child,
 							   INITIATED_BY_PENDING,
 							   HERE);
-				connection_detach(p->connection, p->logger);
+				whack_detach(p->connection, p->logger);
 			}
 			break;
 		case IKEv1:
 #ifdef USE_IKEv1
 		{
-			connection_attach(p->connection, p->logger);
+			whack_attach(p->connection, p->logger);
 			struct child_sa *child =
 				quick_outI1(ike, p->connection,
 					    &p->policy,
@@ -326,7 +326,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			connection_initiated_child(ike, child,
 						   INITIATED_BY_PENDING,
 						   HERE);
-			connection_detach(p->connection, p->logger);
+			whack_detach(p->connection, p->logger);
 			break;
 		}
 #endif
@@ -342,7 +342,7 @@ struct connection *first_pending(const struct ike_sa *ike)
 {
 	struct pending *p = ike->sa.st_pending;
 	if (p != NULL) {
-		connection_attach(p->connection, p->logger);
+		whack_attach(p->connection, p->logger);
 		ldbg_sa(ike, "pending: %s() ike %p pending %p connection %p ike %p",
 			__func__, ike, p, p->connection, p->ike);
 		return p->connection;

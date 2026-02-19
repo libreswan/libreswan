@@ -19,6 +19,7 @@
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "shunk.h"
 #include "crypt_mac.h"
 
 struct hash_desc;
@@ -53,7 +54,6 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 
 #define crypt_hash_digest_thing(HASH, NAME, THING) crypt_hash_digest_bytes(HASH, NAME, &THING, sizeof(THING))
 
-
 /*
  * Finally ...
  *
@@ -64,14 +64,24 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 
 struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
 
-
-
 /*
- * Short cut for symkeys.
+ * Convenience.
  */
-PK11SymKey *crypt_hash_symkey(const char *hash_name,
-			      const struct hash_desc *hash_desc,
-			      const char *symkey_name, PK11SymKey *symkey,
-			      struct logger *logger);
+
+struct hash_hunk {
+	const char *name;
+	size_t len;
+	const void *ptr;
+};
+
+struct hash_hunks {
+	const struct hash_hunk *hunk;
+	unsigned len;
+};
+
+struct crypt_mac crypt_hash_hunks(const char *what,
+				  const struct hash_desc *hasher,
+				  const struct hash_hunks *hunks,
+				  struct logger *logger);
 
 #endif

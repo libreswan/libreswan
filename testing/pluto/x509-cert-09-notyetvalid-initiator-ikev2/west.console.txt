@@ -41,7 +41,7 @@ west #
  ipsec add nss-cert
 "nss-cert": WARNING: left is a groundhog
 "nss-cert": WARNING: groundhog left certificate 'west-notyetvalid' is not yet valid
-"nss-cert": added IKEv2 connection
+"nss-cert": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -58,7 +58,7 @@ west #
 "nss-cert" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "nss-cert" #1: encountered fatal error in state IKE_AUTH_I
 "nss-cert" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "nss-cert" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "nss-cert" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done

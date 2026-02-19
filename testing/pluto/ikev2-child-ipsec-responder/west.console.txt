@@ -21,10 +21,10 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2a
-"westnet-eastnet-ikev2a": added IKEv2 connection
+"westnet-eastnet-ikev2a": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2b
-"westnet-eastnet-ikev2b": added IKEv2 connection
+"westnet-eastnet-ikev2b": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -43,7 +43,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2b
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up

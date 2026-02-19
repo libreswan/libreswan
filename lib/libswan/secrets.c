@@ -61,11 +61,14 @@
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 #include "certs.h"
+#include "crypt_hash.h"
 
 struct fld {
 	const char *name;
 	ssize_t offset;
 };
+
+static lswglob_match_cb process_secret_files;
 
 static void process_secrets_file(struct file_lex_position *flp,
 				 struct secret **psecrets, const char *file_pat);
@@ -94,6 +97,10 @@ struct secret {
 
 const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_PSK:
 	case SECRET_XAUTH:
@@ -106,9 +113,14 @@ const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret 
 
 struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_RSA:
 	case SECRET_ECDSA:
+	case SECRET_EDDSA:
 		/* some sort of PKI */
 		return secret->u.pubkey;
 	default:
@@ -118,6 +130,10 @@ struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 
 const struct secret_ppk_stuff *secret_ppk_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_PPK:
 		return secret->u.ppk;
@@ -164,23 +180,10 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 
 	/* form the Libreswan keyid */
 	err_t err = splitkey_to_keyid(e.ptr, e.len, n.ptr, n.len, keyid);
-	passert(err == NULL);
+	PASSERT(logger, err == NULL);
 
 	/* return the RSA modulus size in octets */
 	*keysize = n.len;
-}
-
-const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg)
-{
-	static const struct pubkey_type *pubkey_types[] = {
-		[IPSECKEY_ALGORITHM_RSA] = &pubkey_type_rsa,
-		[IPSECKEY_ALGORITHM_ECDSA] = &pubkey_type_ecdsa,
-		[IPSECKEY_ALGORITHM_X_PUBKEY] = NULL,
-	};
-	if (alg < elemsof(pubkey_types)) {
-		return pubkey_types[alg];
-	}
-	return NULL;
 }
 
 const keyid_t *pubkey_keyid(const struct pubkey *pk)
@@ -234,32 +237,38 @@ struct secret *foreach_secret(struct secret *secrets,
 }
 
 static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
-						    const struct pubkey_type *type_or_null,
-						    const SECItem *pubkey_ckaid)
+						    const ckaid_t *ckaid,/*truncated?*/
+						    struct logger *logger)
 {
-	for (struct secret *s = secrets; s != NULL; s = s->next) {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
+	ckaid_buf cb;
+	vdbg("looking for pubkey secret with ckaid %s", str_ckaid(ckaid, &cb));
+	unsigned base_level = verbose.level;
+
+	for (struct secret *secret = secrets; secret != NULL; secret = secret->next) {
 		id_buf idb;
 		name_buf kb;
-		dbg("trying secret %s:%s",
-		    str_enum_long(&secret_kind_names, s->kind, &kb),
-		    (pexpect(s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
-		const struct secret_pubkey_stuff *pki = secret_pubkey_stuff(s);
+		verbose.level = base_level + 1;
+		vdbg("trying secret %s:%s",
+		     str_enum_long(&secret_kind_names, secret->kind, &kb),
+		     (vbad(secret->ids == NULL) ? "<NULL-ID-LIST>" : str_id(&secret->ids->id, &idb)));
+		verbose.level++;
+
+		const struct secret_pubkey_stuff *pki = secret_pubkey_stuff(secret);
 		if (pki == NULL) {
 			/* not a pubkey */
-			dbg("  not PKI");
+			vdbg("secret has no pubkey stuff");
 			continue;
 		}
-		if (type_or_null != NULL && pki->content.type != type_or_null) {
-			/* need exact or wildcard */
-			dbg("  not %s", type_or_null->name);
+
+		if (!hunk_eq(pki->content.ckaid, *ckaid)) {
+			vdbg("secret has wrong ckaid");
 			continue;
 		}
-		if (!ckaid_eq_nss(&pki->content.ckaid, pubkey_ckaid)) {
-			dbg("  wrong ckaid");
-			continue;
-		}
-		dbg("  matched");
-		return s;
+
+		vdbg("secret matched");
+		return secret;
 	}
 	return NULL;
 }
@@ -315,7 +324,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		     str_enum_long(&secret_kind_names, s->kind, &skb));
 
 		if (s->kind != kind) {
-			dbg("  wrong kind");
+			ldbg(logger, "  wrong kind");
 			continue;
 		}
 
@@ -382,11 +391,11 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		}
 
 		if (match == match_none) {
-			dbg("  id didn't match");
+			ldbg(logger, "  id didn't match");
 			continue;
 		}
 
-		dbg("  match="PRI_LSET, match);
+		ldbg(logger, "  match="PRI_LSET, match);
 		if (match == best_match) {
 			/*
 			 * Two good matches are equally good: do they
@@ -404,6 +413,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
+			case SECRET_EDDSA:
 				same = secret_pubkey_same(s, best, logger);
 				break;
 			case SECRET_XAUTH:
@@ -420,7 +430,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				bad_case(kind);
 			}
 			if (!same) {
-				dbg("  multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
+				ldbg(logger, "  multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
 				/*
 				 * list is backwards: take latest in
 				 * list
@@ -437,7 +447,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			 * count, even when there are other ids in the
 			 * list.
 			 */
-			dbg("  local match not asymmetric");
+			ldbg(logger, "  local match not asymmetric");
 			continue;
 		}
 
@@ -453,19 +463,19 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			 * XXX: what combinations are missing?
 			 */
 			if (match > best_match) {
-				dbg("  match "PRI_LSET" beats previous best_match "PRI_LSET" match=%p (line=%d)",
+				ldbg(logger, "  match "PRI_LSET" beats previous best_match "PRI_LSET" match=%p (line=%d)",
 				    match, best_match, s, s->line);
 				/* this is the best match so far */
 				best_match = match;
 				best = s;
 			} else {
-				dbg("  match "PRI_LSET" loses to best_match "PRI_LSET,
+				ldbg(logger, "  match "PRI_LSET" loses to best_match "PRI_LSET,
 				    match, best_match);
 			}
 		}
 	}
 
-	dbg("concluding with best_match="PRI_LSET" best=%p (lineno=%d)",
+	ldbg(logger, "concluding with best_match="PRI_LSET" best=%p (lineno=%d)",
 	    best_match, best,
 	    best == NULL ? -1 : best->line);
 
@@ -605,13 +615,14 @@ const struct secret_ppk_stuff *secret_ppk_stuff_by_id(const struct secret *s, sh
 	return NULL;
 }
 
-static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
+static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key,
+					  const struct logger *logger)
 {
 	SECKEYPrivateKey *unpacked_key = NULL;
 	if (private_key->pkcs11Slot != NULL) {
 		PK11SlotInfo *slot = PK11_ReferenceSlot(private_key->pkcs11Slot);
 		if (slot != NULL) {
-			dbg("copying key using reference slot");
+			ldbg(logger, "copying key using reference slot");
 			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
 			PK11_FreeSlot(slot);
 		}
@@ -620,13 +631,13 @@ static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
 		CK_MECHANISM_TYPE mech = PK11_MapSignKeyType(private_key->keyType);
 		PK11SlotInfo *slot = PK11_GetBestSlot(mech, NULL);
 		if (slot != NULL) {
-			dbg("copying key using mech/slot");
+			ldbg(logger, "copying key using mech/slot");
 			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
 			PK11_FreeSlot(slot);
 		}
 	}
 	if (unpacked_key == NULL) {
-		dbg("copying key using SECKEY_CopyPrivateKey()");
+		ldbg(logger, "copying key using SECKEY_CopyPrivateKey()");
 		unpacked_key = SECKEY_CopyPrivateKey(private_key);
 	}
 	return unpacked_key;
@@ -637,24 +648,25 @@ static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * lock access to my certs and keys
  */
-static void lock_certs_and_keys(const char *who)
+static void lock_certs_and_keys(const char *who, const struct logger *logger)
 {
 	pthread_mutex_lock(&certs_and_keys_mutex);
-	dbg("certs and keys locked by '%s'", who);
+	ldbg(logger, "certs and keys locked by '%s'", who);
 }
 
 /*
  * unlock access to my certs and keys
  */
-static void unlock_certs_and_keys(const char *who)
+static void unlock_certs_and_keys(const char *who, const struct logger *logger)
 {
-	dbg("certs and keys unlocked by '%s'", who);
+	ldbg(logger, "certs and keys unlocked by '%s'", who);
 	pthread_mutex_unlock(&certs_and_keys_mutex);
 }
 
 static void add_secret(struct secret **slist,
 		       struct secret *s,
-		       const char *story)
+		       const char *story,
+		       const struct logger *logger)
 {
 	/*
 	 * If the ID list is empty, add two empty IDs.
@@ -681,10 +693,10 @@ static void add_secret(struct secret **slist,
 		s->ids = idl2;
 	}
 
-	lock_certs_and_keys(story);
+	lock_certs_and_keys(story, logger);
 	s->next = *slist;
 	*slist = s;
-	unlock_certs_and_keys(story);
+	unlock_certs_and_keys(story, logger);
 }
 
 static void process_secret(struct file_lex_position *flp,
@@ -741,7 +753,7 @@ static void process_secret(struct file_lex_position *flp,
 
 	if (flushline(flp, "expected record boundary in key")) {
 		/* gauntlet has been run: install new secret */
-		add_secret(psecrets, s, "process_secret");
+		add_secret(psecrets, s, "process_secret", flp->logger);
 	}
 }
 
@@ -821,7 +833,6 @@ static void process_secret_records(struct file_lex_position *flp,
 
 			for (;;) {
 				struct id id;
-				err_t ugh;
 
 				if (tokeq(flp, ":")) {
 					/* found key part */
@@ -835,26 +846,28 @@ static void process_secret_records(struct file_lex_position *flp,
 				 * See RFC2407 IPsec Domain of
 				 * Interpretation 4.6.2
 				 */
+				diag_t d;
 				if (tokeq(flp, "%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
-					id.ip_addr = ipv4_info.address.unspec;
-					ugh = NULL;
+					id.ip_addr = ipv4_info.address.zero;
+					d = NULL;
 				} else if (tokeq(flp, "%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
-					id.ip_addr = ipv6_info.address.unspec;
-					ugh = NULL;
+					id.ip_addr = ipv6_info.address.zero;
+					d = NULL;
 				} else {
-					ugh = atoid(flp->tok, &id);
+					d = ttoid(flp->tok, &id);
 				}
 
-				if (ugh != NULL) {
+				if (d != NULL) {
 					llog(RC_LOG, flp->logger,
-						    "ERROR \"%s\" line %d: index \"%s\" %s",
-						    flp->filename,
-						    flp->lino, flp->tok,
-						    ugh);
+					     "ERROR \"%s\" line %d: index \"%s\" %s",
+					     flp->filename,
+					     flp->lino, flp->tok,
+					     str_diag(d));
+					pfree_diag(&d);
 				} else {
 					struct id_list *i = alloc_thing(
 						struct id_list,
@@ -865,15 +878,15 @@ static void process_secret_records(struct file_lex_position *flp,
 					s->ids = i;
 					id_buf b;
 					name_buf skb;
-					dbg("id type added to secret(%p) %s: %s",
-					    s, str_enum_long(&secret_kind_names, s->kind, &skb),
-					    str_id(&id, &b));
+					ldbg(flp->logger, "id type added to secret(%p) %s: %s",
+					     s, str_enum_long(&secret_kind_names, s->kind, &skb),
+					     str_id(&id, &b));
 				}
 				if (!shift(flp)) {
 					/* unexpected Record Boundary or EOF */
 					llog(RC_LOG, flp->logger,
-						    "\"%s\" line %d: unexpected end of id list",
-						    flp->filename, flp->lino);
+					     "\"%s\" line %d: unexpected end of id list",
+					     flp->filename, flp->lino);
 					pfree(s);
 					break;
 				}
@@ -889,7 +902,7 @@ struct lswglob_context {
 
 static void process_secret_files(unsigned count, char **files,
 				 struct lswglob_context *context,
-				 struct logger *logger UNUSED)
+				 const struct logger *logger UNUSED)
 {
 	for (unsigned i = 0; i < count; i++) {
 		const char *file = files[i];
@@ -926,7 +939,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 
 void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 {
-	lock_certs_and_keys("free_preshared_secrets");
+	lock_certs_and_keys("free_preshared_secrets", logger);
 
 	if (*psecrets != NULL) {
 		struct secret *s, *ns;
@@ -954,6 +967,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
+			case SECRET_EDDSA:
 				secret_pubkey_stuff_delref(&s->u.pubkey, HERE);
 				break;
 			default:
@@ -964,7 +978,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 		*psecrets = NULL;
 	}
 
-	unlock_certs_and_keys("free_preshared_secrets");
+	unlock_certs_and_keys("free_preshared_secrets", logger);
 }
 
 void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
@@ -981,7 +995,7 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(pk, logger, where);
+	return refcnt_addref(pk, logger, where);
 }
 
 /*
@@ -991,7 +1005,7 @@ struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 void pubkey_delref_where(struct pubkey **pkp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct pubkey *pk = delref_where(pkp, logger, where);
+	struct pubkey *pk = refcnt_delref(pkp, logger, where);
 	if (pk != NULL) {
 		free_id_content(&pk->id);
 		/* algorithm-specific freeing */
@@ -1064,12 +1078,10 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   uint32_t ttl,
 				   const struct pubkey_content *pkc,
 				   shunk_t issuer,
-				   where_t where)
+				   const struct logger *logger, where_t where)
 {
-	struct logger *logger = &global_logger;
-
-	pexpect(pkc->keyid.keyid[0] != '\0');
-	pexpect(pkc->ckaid.len > 0);
+	PEXPECT(logger, pkc->keyid.keyid[0] != '\0');
+	PEXPECT(logger, pkc->ckaid.len > 0);
 
 	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len, logger, where);
 	pk->content = *pkc;
@@ -1093,33 +1105,31 @@ diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
 				 struct pubkey_content *pubkey_content,
 				 const struct logger *logger)
 {
-
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, pubkey_content);
 		if (d != NULL) {
 			return d;
 		}
-	} else {
-		const struct pubkey_type *pubkey_type = NULL; /* TBD */
-		switch (algorithm_type) {
-		case IPSECKEY_ALGORITHM_RSA:
-			pubkey_type = &pubkey_type_rsa;
-			break;
-		case IPSECKEY_ALGORITHM_ECDSA:
-			pubkey_type = &pubkey_type_ecdsa;
-			break;
-		default:
-			return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
-		}
-
-		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 pubkey_content,
-									 logger);
-		if (d != NULL) {
-			return d;
-		}
+		PASSERT(logger, pubkey_content->type != NULL);
+		return NULL;
 	}
-	passert(pubkey_content->type != NULL);
+
+	const struct pubkey_type *pubkey_type = pubkey_type_from_ipseckey_algorithm(algorithm_type);
+	if (pubkey_type == NULL) {
+		return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
+	}
+
+	*pubkey_content = (struct pubkey_content) {
+		.type = pubkey_type,
+	};
+	diag_t d = pubkey_type->extract_pubkey_content_from_ipseckey(dnssec_pubkey,
+								     pubkey_content,
+								     logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	PASSERT(logger, pubkey_content->type != NULL);
 	return NULL;
 }
 
@@ -1130,7 +1140,7 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 			 uint32_t ttl,
 			 const shunk_t dnssec_pubkey,
 			 struct pubkey **pubkey,
-			 struct logger *logger)
+			 const struct logger *logger)
 {
 
 	/*
@@ -1152,31 +1162,22 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 				 install_time, until_time, ttl,
 				 &scratch_pkc,
 				 null_shunk,	/* raw keys have no issuer */
-				 HERE);
+				 logger, HERE);
 	return NULL;
 }
 
-static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
+const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *pubk)
 {
 	KeyType key_type = SECKEY_GetPublicKeyType(pubk);
 	switch (key_type) {
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
-		return &pubkey_type_ecdsa;
-	default:
-		return NULL;
-	}
-}
-
-static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_key)
-{
-	KeyType key_type = SECKEY_GetPrivateKeyType(private_key);
-	switch (key_type) {
-	case rsaKey:
-		return &pubkey_type_rsa;
-	case ecKey:
-		return &pubkey_type_ecdsa;
+	        return &pubkey_type_ecdsa;
+#ifdef USE_EDDSA
+	case edKey:
+	        return &pubkey_type_eddsa;
+#endif
 	default:
 		return NULL;
 	}
@@ -1186,13 +1187,13 @@ struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuf
 						       where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(pks, logger, where);
+	return refcnt_addref(pks, logger, where);
 }
 
 void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct secret_pubkey_stuff *last = delref_where(pks, logger, where);
+	struct secret_pubkey_stuff *last = refcnt_delref(pks, logger, where);
 	if (last != NULL) {
 		SECKEY_DestroyPrivateKey(last->private_key);
 		free_pubkey_content(&last->content, logger);
@@ -1202,46 +1203,55 @@ void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 
 static err_t add_private_key(struct secret **secrets,
 			     struct secret_pubkey_stuff **pks,
+			     const struct logger *logger,
 			     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 			     const struct pubkey_type *type,
 			     SECKEYPrivateKey *private_key)
 {
-	const struct logger *logger = &global_logger;
+	struct pubkey_content content = {
+		.type = type,
+	};
 
-	struct pubkey_content content;
-	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss, logger);
+	err_t err = type->extract_pubkey_content_from_SECKEYPublicKey(&content, pubk, ckaid_nss, logger);
 	if (err != NULL) {
 		return err;
 	}
 
-	passert(content.type == type);
-	pexpect(content.ckaid.len > 0);
-	pexpect(content.keyid.keyid[0] != '\0');
+	PASSERT(logger, content.type == type); /* don't change */
+	PEXPECT(logger, content.ckaid.len > 0);
+	PEXPECT(logger, content.keyid.keyid[0] != '\0');
 
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
 	s->kind = type->private_key_kind;
 	s->line = 0;
 	/* make an unpacked copy of the private key */
 	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, logger, HERE);
-	s->u.pubkey->private_key = copy_private_key(private_key);
+	s->u.pubkey->private_key = copy_private_key(private_key, logger);
 	s->u.pubkey->content = content;
 
-	add_secret(secrets, s, "lsw_add_rsa_secret");
+	add_secret(secrets, s, "lsw_add_rsa_secret", logger);
 	*pks = s->u.pubkey;
 	return NULL;
 }
 
 static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCertificate *cert,
-						struct secret_pubkey_stuff **pks, struct logger *logger,
+						struct secret_pubkey_stuff **pks,
+						const struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 						const struct pubkey_type *type)
 {
 
 	SECKEYPrivateKey *private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
-	if (private_key == NULL)
+#ifdef USE_EDDSA
+	ldbg(logger, "found private key %p with type %d vs edKey=%d ecKey=%d",
+	     private_key,
+	     (private_key != NULL ? private_key->keyType : 0),
+	     edKey, ecKey);
+#endif
+	if (private_key == NULL) {
 		return "NSS: cert private key not found";
-	err_t err = add_private_key(secrets, pks,
-				    /* extracted fields */
+	}
+	err_t err = add_private_key(secrets, pks, logger,
 				    pubk, ckaid_nss, type, private_key);
 	SECKEY_DestroyPrivateKey(private_key);
 	return err;
@@ -1252,22 +1262,26 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 						struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
-
 	/* XXX: see also nss_cert_key_kind(cert) */
-	const struct pubkey_type *type = pubkey_type_nss(pubk);
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubk);
 	if (type == NULL) {
 		return "NSS cert not supported";
 	}
 
-	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, type, ckaid_nss);
+	ckaid_t ckaid = ckaid_from_secitem(ckaid_nss);
+	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, &ckaid, logger);
 	if (s != NULL) {
-		dbg("secrets entry for certificate already exists: %s", cert->nickname);
+		if (s->u.pubkey->content.type != type) {
+			return "NSS private key as wrong type";
+		}
+
+		ldbg(logger, "secrets entry for certificate already exists: %s", cert->nickname);
 		*pks = s->u.pubkey;
 		*load_needed = false;
 		return NULL;
 	}
 
-	dbg("adding %s secret for certificate: %s", type->name, cert->nickname);
+	ldbg(logger, "loading %s secret for certificate: %s", type->name, cert->nickname);
 	*load_needed = true;
 	err_t err = find_or_load_private_key_by_cert_3(secrets, cert, pks, logger,
 						       /* extracted fields */
@@ -1312,7 +1326,6 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 
 	SECKEYPublicKey *pubk = SECKEY_ExtractPublicKey(&cert->nss_cert->subjectPublicKeyInfo);
 	if (pubk == NULL) {
-		/* dbg(... nss error) */
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
@@ -1326,34 +1339,47 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 
 static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 						 struct secret_pubkey_stuff **pks,
-						 SECItem *ckaid_nss, SECKEYPrivateKey *private_key)
+						 const struct logger *logger,
+						 SECItem *ckaid_nss,
+						 SECKEYPrivateKey *private_key)
 {
-	const struct pubkey_type *type = private_key_type_nss(private_key);
-	if (type == NULL) {
-		return "NSS private key not supported (unknown type)";
-	}
-
-	SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key); /* must free */
-	if (pubk == NULL) {
+	SECKEYPublicKey *public_key = SECKEY_ConvertToPublicKey(private_key); /* must free */
+	if (public_key == NULL) {
 		return "NSS private key has no public key";
 	}
 
-	err_t err = add_private_key(secrets, pks, pubk, ckaid_nss, type, private_key);
-	SECKEY_DestroyPublicKey(pubk);
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(public_key);
+	if (type == NULL) {
+		SECKEY_DestroyPublicKey(public_key);
+		return "NSS private key not supported (unknown type)";
+	}
+
+	err_t err = add_private_key(secrets, pks, logger,
+				    public_key, ckaid_nss,
+				    type, private_key);
+	SECKEY_DestroyPublicKey(public_key);
 	return err;
 }
 
-err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					struct secret_pubkey_stuff **pks, bool *load_needed,
+/*
+ * CKAIDs are unique; there should be only one match.
+ *
+ * XXX: caller is responsible for checking that the returned key is
+ * useful.  For instance, given auth=ecdsa ckaid=<eddsa>, this will
+ * return the <eddsa> key, which isn't useful.
+ */
+err_t find_or_load_private_key_by_ckaid(struct secret **secrets,
+					const ckaid_t *ckaid,
+					struct secret_pubkey_stuff **pks,
+					bool *load_needed,
 					struct logger *logger)
 {
 	*load_needed = false;
-	passert(ckaid != NULL);
+	PASSERT(logger, ckaid != NULL);
 
-	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
-	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, NULL, &ckaid_nss);
+	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, ckaid, logger);
 	if (s != NULL) {
-		dbg("secrets entry for ckaid already exists");
+		ldbg(logger, "secrets entry for ckaid already exists");
 		*pks = s->u.pubkey;
 		*load_needed = false;
 		return NULL;
@@ -1361,10 +1387,11 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 
 	*load_needed = true;
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-	if (!pexpect(slot != NULL)) {
+	if (PBAD(logger, slot == NULL)) {
 		return "NSS: has no internal slot ....";
 	}
 
+	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
 	/* must free */
 	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &ckaid_nss,
 							    lsw_nss_get_password_context(logger));
@@ -1378,8 +1405,9 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 	}
 
 	ckaid_buf ckb;
-	dbg("loaded private key matching CKAID %s", str_ckaid(ckaid, &ckb));
-	err_t err = find_or_load_private_key_by_ckaid_1(secrets, pks, &ckaid_nss, private_key);
+	ldbg(logger, "loaded private key matching CKAID %s", str_ckaid(ckaid, &ckb));
+	err_t err = find_or_load_private_key_by_ckaid_1(secrets, pks, logger,
+							&ckaid_nss, private_key);
 	SECKEY_DestroyPrivateKey(private_key);
 	return err;
 }
@@ -1388,9 +1416,9 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 					CERTCertificate *cert,
 					SECKEYPublicKey *pubkey_nss,
 					struct pubkey **pk,
-					struct logger *logger)
+					const struct logger *logger)
 {
-	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubkey_nss);
 	if (type == NULL) {
 		id_buf idb;
 		return diag("NSS: could not create public key with ID '%s': certificate '%s' has an unknown key kind",
@@ -1408,8 +1436,11 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			    cert->nickname);
 	}
 
-	struct pubkey_content pkc = {0};
-	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss, logger);
+	struct pubkey_content pkc = {
+		.type = type,
+	};
+
+	err_t err = type->extract_pubkey_content_from_SECKEYPublicKey(&pkc, pubkey_nss, ckaid_nss, logger);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		id_buf idb;
@@ -1417,30 +1448,30 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			    str_id(id, &idb),
 			    err);
 	}
-	passert(pkc.type != NULL);
+	PASSERT(logger, pkc.type != NULL);
 
 	realtime_t install_time = realnow();
 	realtime_t until_time;
 	PRTime not_before, not_after;
 	if (CERT_GetCertTimes(cert, &not_before, &not_after) != SECSuccess) {
-		until_time = realtime(-1);
+		until_time = realtime_from_seconds(-1);
 	} else {
-		until_time = realtime(not_after / PR_USEC_PER_SEC);
+		until_time = realtime_from_seconds(not_after / PR_USEC_PER_SEC);
 	}
 	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
 			   install_time, until_time,
 			   /*ttl*/0, &pkc,
 			   same_secitem_as_shunk(cert->derIssuer),
-			   HERE);
+			   logger, HERE);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return NULL;
 }
 
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,
-			       struct logger *logger)
+			       const struct logger *logger)
 {
-	if (!pexpect(cert != NULL)) {
+	if (PBAD(logger, cert == NULL)) {
 		return NULL;
 	}
 

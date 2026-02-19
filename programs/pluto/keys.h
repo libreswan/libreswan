@@ -41,6 +41,7 @@ struct hash_desc;
 struct show;
 struct ike_sa;
 struct pubkey_signer;
+struct hash_hunks;
 
 struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 						  const struct pubkey_type *type,
@@ -53,25 +54,26 @@ enum keys_to_show { SHOW_ALL_KEYS = 1, SHOW_EXPIRED_KEYS, };
 extern void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show);
 
 const struct secret_preshared_stuff *get_connection_psk(const struct connection *c);
-const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connection *c);
-const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
-						  shunk_t ppk_id, unsigned int index);
+const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection *c);
+const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger *logger);
 
 extern void load_preshared_secrets(struct logger *logger);
 extern void free_preshared_secrets(struct logger *logger);
 extern void free_remembered_public_keys(void);
-err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger);
-err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger);
+err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
+				  struct logger *logger);
+err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
+				   struct logger *logger);
 
-extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname);
+extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname,
+								       struct logger *logger);
 
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
 
-const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
-
 extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 					   const struct crypt_mac *hash,
+					   const struct hash_hunks *hunks,
 					   shunk_t signature,
 					   const struct hash_desc *hash_algo,
 					   const struct pubkey_signer *signer,

@@ -57,7 +57,9 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
  * fetches a binary blob from a url with libcurl
  */
 
-err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
+err_t fetch_curl(const char *url,
+		 long timeout,
+		 chunk_t *blob,
 		 struct verbose verbose)
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "?";
@@ -75,18 +77,17 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	if (curl == NULL)
 		return "cannot initialize curl";
 
-	vdbg("Trying cURL '%s' with connect timeout of %ld",
-	     url, (long)timeout);
+	vdbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
 
 	CURLcode res = CURLE_OK;
 
-#	define CESO(optype, optarg) { \
-		if (res == CURLE_OK) { \
-			res = curl_easy_setopt(curl, optype, optarg); \
-			if (res != CURLE_OK) { \
+#	define CESO(optype, optarg) {					\
+		if (res == CURLE_OK) {					\
+			res = curl_easy_setopt(curl, optype, optarg);	\
+			if (res != CURLE_OK) {				\
 				vdbg("curl_easy_setopt " #optype " failed %d", res); \
-			} \
-		} \
+			}						\
+		}							\
 	}
 
 	CESO(CURLOPT_URL, url);
@@ -98,6 +99,7 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	 */
 	CESO(CURLOPT_WRITEDATA, (void *)&response);
 	CESO(CURLOPT_ERRORBUFFER, errorbuffer);
+	/* Note: TIMEOUT is a LONG */
 	CESO(CURLOPT_CONNECTTIMEOUT, timeout);
 	CESO(CURLOPT_TIMEOUT, 2 * timeout);
 	CESO(CURLOPT_NOSIGNAL, 1L);	/* work around for libcurl signal bug */
@@ -113,7 +115,7 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	if (res == CURLE_OK) {
 		/* clone from realloc(3)ed memory to pluto-allocated memory */
 		errorbuffer[0] = '\0';
-		*blob = clone_hunk(response, "curl blob");
+		*blob = clone_hunk_as_chunk(&response, "curl blob");
 	} else {
 		llog(RC_LOG, verbose.logger,
 		     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);

@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
 east #
  ipsec whack --impair send_pkcs7_thingie
 east #
@@ -31,6 +31,7 @@ src 192.1.2.23 dst 192.1.2.45
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -40,6 +41,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24

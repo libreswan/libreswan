@@ -242,28 +242,15 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
  * ??? the table contains unsigned long values BUT the function returns an
  * int so there is some potential for overflow.
  */
-int enum_search(enum_names *ed, const char *str)
-{
-	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
-		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
-			const char *ptr = p->en_names[en - p->en_first];
 
-			if (ptr != NULL && strcaseeq(ptr, str)) {
-				passert(en <= INT_MAX);
-				return en;
-			}
-		}
-	}
-	return -1;
-}
-
-int enum_match(enum_names *ed, shunk_t string)
+int enum_byname(enum_names *ed, shunk_t string)
 {
 	const char *prefix = NULL;
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
 		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
+		size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
+
 		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
@@ -274,18 +261,9 @@ int enum_match(enum_names *ed, shunk_t string)
 			passert(en <= INT_MAX);
 
 			/*
-			 * try matching all four variants of name:
-			 * with and without prefix en->en_prefix and
-			 * with and without suffix '(...)'
+			 * Try matching with and without prefix.
 			 */
 			size_t name_len = strlen(name);
-			size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
-
-			/* suffix must not and will not overlap prefix */
-			const char *suffix = strchr(name + prefix_len, '(');
-
-			size_t suffix_len = (suffix != NULL && name[name_len - 1] == ')' ?
-					     &name[name_len] - suffix : 0);
 
 #			define try(guard, f, b) ( \
 				(guard) && \
@@ -293,12 +271,10 @@ int enum_match(enum_names *ed, shunk_t string)
 				strncaseeq(name + (f), string.ptr, string.len))
 
 			if (try(true, 0, 0) ||
-			    try(suffix_len > 0, 0, suffix_len) ||
-			    try(prefix_len > 0, prefix_len, 0) ||
-			    try(prefix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
-			{
+			    try(prefix_len > 0, prefix_len, 0)) {
 				return en;
 			}
+
 #			undef try
 		}
 	}
@@ -323,7 +299,7 @@ static const struct enum_names *enum_enum_table(enum_enum_names *een,
 	return NULL;
 }
 
-bool enum_enum_name(enum_enum_names *een, unsigned long table,
+bool enum_enum_long(enum_enum_names *een, unsigned long table,
 		    unsigned long val, name_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
@@ -336,10 +312,25 @@ bool enum_enum_name(enum_enum_names *een, unsigned long table,
 	return enum_long(en, val, b);
 }
 
-const char *str_enum_enum(enum_enum_names *een, unsigned long table,
-			  unsigned long val, name_buf *b)
+bool enum_enum_short(enum_enum_names *een,
+		     unsigned long table,
+		     unsigned long val,
+		     name_buf *b)
 {
-	enum_enum_name(een, table, val, b);
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		snprintf(b->tmp, sizeof(b->tmp), "%lu.%lu", table, val);
+		b->buf = b->tmp;
+		return false;
+	}
+
+	return enum_short(en, val, b);
+}
+
+const char *str_enum_enum_long(enum_enum_names *een, unsigned long table,
+			       unsigned long val, name_buf *b)
+{
+	enum_enum_long(een, table, val, b);
 	return b->buf;
 }
 
@@ -357,8 +348,8 @@ const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,
 	return str_enum_short(en, val, b);
 }
 
-size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
-		     unsigned long table, unsigned long val)
+size_t jam_enum_enum_long(struct jambuf *buf, enum_enum_names *een,
+			  unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {

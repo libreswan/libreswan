@@ -10,7 +10,7 @@
  * Copyright (C) 2010, 2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2016, 2022 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, 2022, 2025 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,7 +57,7 @@
 #include "optarg.h"
 
 #include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include <keyhi.h>
 #include <prerror.h>
@@ -99,46 +99,44 @@ const char usage[] =
  */
 enum opt {
 	OPT_HELP = '?',
-	OPT_IPSECKEY = 'K',
 	OPT_GATEWAY = 'g',
 	OPT_LEFT = 'l',
 	OPT_RIGHT = 'r',
-	OPT_LIST = 'L',
 	OPT_NSSDIR = 'd', /* nss-tools use -d */
 	OPT_VERBOSE = 'v',
-	OPT_VERSION = 'V',
-	OPT_RSAID = 'I',
-	OPT_PRECIDENCE = 'p',
 	OPT_CONFIGDIR = 256,
+	OPT_IPSECKEY,
+	OPT_LIST,
+	OPT_PRECIDENCE,
+	OPT_RSAID,
 	OPT_DUMP,
 	OPT_PASSWORD,
 	OPT_CKAID,
 	OPT_DEBUG,
 	OPT_PEM,
 	OPT_PUBKEY,
+	OPT_VERSION,
 };
 
-const char short_opts[] = "v?d:lrg";
-
 const struct option optarg_options[] = {
-	{ "help",       no_argument,            NULL,   OPT_HELP, },
-	{ "left",       no_argument,            NULL,   OPT_LEFT, },
-	{ "right",      no_argument,            NULL,   OPT_RIGHT, },
-	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
+	{ "help\0",       no_argument,            NULL,   OPT_HELP, },
+	{ "left\0",       no_argument,            NULL,   OPT_LEFT, },
+	{ "right\0",      no_argument,            NULL,   OPT_RIGHT, },
+	{ "dump\0",       no_argument,            NULL,   OPT_DUMP, },
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
-	{ "list",       no_argument,            NULL,   OPT_LIST, },
-	{ "ipseckey",   no_argument,            NULL,   OPT_IPSECKEY, },
-	{ "gateway",    required_argument,      NULL,   OPT_GATEWAY, },
-	{ "precedence", required_argument,      NULL,   OPT_PRECIDENCE, },
-	{ "ckaid",      required_argument,      NULL,   OPT_CKAID, },
-	{ "rsaid",      required_argument,      NULL,   OPT_RSAID, },
-	{ "version",    no_argument,            NULL,   OPT_VERSION, },
-	{ "verbose",    no_argument,            NULL,   OPT_VERBOSE, },
-	{ "configdir",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
-	{ "nssdir",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
-	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
-	{ "pem",        no_argument,            NULL,   OPT_PEM, },
-	{ "pubkey",     no_argument,            NULL,   OPT_PUBKEY, },
+	{ "list\0",       no_argument,            NULL,   OPT_LIST, },
+	{ "ipseckey\0",   no_argument,            NULL,   OPT_IPSECKEY, },
+	{ "gateway\0",    required_argument,      NULL,   OPT_GATEWAY, },
+	{ "precedence\0", required_argument,      NULL,   OPT_PRECIDENCE, },
+	{ "ckaid\0",      required_argument,      NULL,   OPT_CKAID, },
+	{ "rsaid\0",      required_argument,      NULL,   OPT_RSAID, },
+	{ "version\0",    no_argument,            NULL,   OPT_VERSION, },
+	{ "verbose\0",    no_argument,            NULL,   OPT_VERBOSE, },
+	{ "configdir\0",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
+	{ "nssdir\0",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
+	{ "password\0",   required_argument,      NULL,   OPT_PASSWORD, },
+	{ "pem\0",        no_argument,            NULL,   OPT_PEM, },
+	{ "pubkey\0",     no_argument,            NULL,   OPT_PUBKEY, },
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -196,9 +194,9 @@ static char *base64_ipseckey_rdata_from_pubkey_secret(struct secret_pubkey_stuff
 						      enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
-	err_t e = pks->content.type->pubkey_content_to_ipseckey_rdata(&pks->content,
-									       &ipseckey_pubkey,
-									       ipseckey_algorithm);
+	err_t e = pks->content.type->pubkey_content_to_ipseckey(&pks->content,
+								&ipseckey_pubkey,
+								ipseckey_algorithm);
 	if (e != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, e);
 		return NULL;
@@ -281,7 +279,7 @@ static int show_pem(struct secret_pubkey_stuff *pks, struct logger *logger)
 	 *
 	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
 	 */
-	llog_pem_hunk(PRINTF_STREAM, logger, "PUBLIC KEY", der);
+	llog_pem_hunk(PRINTF_STREAM, logger, "PUBLIC KEY", &der);
 
 	free_chunk_content(&der);
 
@@ -304,18 +302,19 @@ static int show_leftright(struct secret_pubkey_stuff *pks,
 		return 5;
 	}
 
-	if (pubkey_flg) {
-		printf("\t%spubkey=", side);
-	} else if (pks->content.type == &pubkey_type_rsa) {
-		printf("\t# rsakey %s\n", pks->content.keyid.keyid);
-		printf("\t%srsasigkey=0s", side);
-	} else if (pks->content.type == &pubkey_type_ecdsa) {
-		printf("\t# ecdsakey %s\n", pks->content.keyid.keyid);
-		printf("\t%secdsakey=0s", side);
-	} else {
+	printf("\t# %s keyid: %s\n", side, pks->content.keyid.keyid);
+
+	name_buf config_name = {0};
+	if (!enum_short(&ipseckey_algorithm_config_names, pks->content.type->ipseckey_algorithm, &config_name)) {
 		fprintf(stderr, "%s: wrong kind of key %s in show_confkey, expected RSA or ECDSA.\n",
 			progname, pks->content.type->name);
 		return 5;
+	}
+
+	if (pubkey_flg) {
+		printf("\t%spubkey=", side);
+	} else {
+		printf("\t%s%s=0s", side, config_name.buf);
 	}
 
 	printf("%s\n", base64);
@@ -357,34 +356,27 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 		 * which also creates private-key-stuff.
 		 */
 
-		/* XXX: see also private_key_type_nss(pubk); */
-		const struct pubkey_type *type;
-		switch (SECKEY_GetPrivateKeyType(private_key)) {
-		case rsaKey:
-			type = &pubkey_type_rsa;
-			break;
-		case ecKey:
-			type = &pubkey_type_ecdsa;
-			break;
-		default:
-			continue;
-		}
-
-		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(node->key); /* must free */
+		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(private_key); /* must free */
 		if (ckaid_nss == NULL) {
 			continue;
 		}
 
-		SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(node->key);
-		if (pubk == NULL) {
+		SECKEYPublicKey *public_key = SECKEY_ConvertToPublicKey(private_key); /* must free? */
+		if (public_key == NULL) {
+			continue;
+		}
+
+		const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(public_key);
+		if (type == NULL) {
 			continue;
 		}
 
 		struct secret_pubkey_stuff pks = {
+			.content.type = type,
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.content, pubk, ckaid_nss, logger);
+		type->extract_pubkey_content_from_SECKEYPublicKey(&pks.content, public_key, ckaid_nss, logger);
 
 		/*
 		 * Only count private keys that get processed.
@@ -457,7 +449,7 @@ int main(int argc, char *argv[])
 
 	while (true) {
 
-		int c = optarg_getopt(logger, argc, argv, short_opts);
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -545,8 +537,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VERSION:
-			fprintf(stdout, "%s\n", ipsec_version_string());
-			exit(0);
+			optarg_version("");
 
 		}
 

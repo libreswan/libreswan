@@ -191,11 +191,30 @@ const char *str_cidr(const ip_cidr *cidr, cidr_buf *out)
 	return out->buf;
 }
 
+size_t jam_cidr_sensitive(struct jambuf *buf, const ip_cidr *cidr)
+{
+	const struct ip_info *afi;
+	size_t s = jam_sensitive_ip(buf, "cidr", cidr, &afi);
+	if (s > 0) {
+		return s;
+	}
+
+	return jam_cidr(buf, cidr);
+}
+
+const char *str_cidr_sensitive(const ip_cidr *cidr, cidr_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_cidr_sensitive(&buf, cidr);
+	return dst->buf;
+}
+
 void pexpect_cidr(const ip_cidr cidr, where_t where)
 {
 	if (cidr.ip.is_set == false ||
 	    cidr.ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_CIDR, pri_ip_cidr(cidr));
 	}
 }
 

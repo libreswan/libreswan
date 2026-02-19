@@ -656,7 +656,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 void init_ikev1_states(struct logger *logger)
 {
-	dbg("checking IKEv1 state table");
+	ldbg(logger, "checking IKEv1 state table");
 
 	/*
 	 * Fill in FINITE_STATES[].

@@ -29,4 +29,10 @@ enum ip_version {
 #define IP_VERSION_ROOF (IPv6+1)
 };
 
+#define PRI_IP_VERSION "%s"
+#define pri_ip_version(VERSION) ((VERSION) == 0 ? "IP?0" :	\
+				 (VERSION) == IPv4 ? "IPv4" :	\
+				 (VERSION) == IPv6 ? "IPv6" :	\
+				 "IP??")
+
 #endif

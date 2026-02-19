@@ -76,6 +76,10 @@
 #include "ikev2_notification.h"
 #include "peer_id.h"
 #include "ddos.h"
+#include "ikev2_nat.h"
+
+static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
+static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
@@ -99,6 +103,9 @@ static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct
 static stf_status process_v2_IKE_AUTH_request_skip_cert_decode(struct ike_sa *ike,
 							       struct msg_digest *md);
 
+static stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike,
+							       struct msg_digest *md);
+
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
 static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
@@ -108,8 +115,8 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	PEXPECT(ike->sa.logger, null_child_sa == NULL);
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending IKE_AUTH",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
@@ -124,10 +131,10 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		const struct secret_ppk_stuff *ppk =
-			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
+			get_connection_ppk_stuff(ike->sa.st_connection);
 
 		if (ppk != NULL) {
-			dbg("found PPK and PPK_ID for our connection");
+			ldbg(ike->sa.logger, "found PPK and PPK_ID for our connection");
 
 			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
 			ike->sa.st_sk_d_no_ppk = symkey_addref(ike->sa.logger, "sk_d_no_ppk",
@@ -181,10 +188,16 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
-							   struct msg_digest *null_md UNUSED,
+							   struct msg_digest *null_md,
 							   const struct hash_signature *auth_sig)
 {
+	PEXPECT(ike->sa.logger, null_md == NULL);
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
+
+	if (auth_sig == NULL || auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		return STF_FATAL;
+	}
 
 	/* beginning of data going out */
 
@@ -286,7 +299,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
-		dbg("not sending INITIAL_CONTACT");
+		ldbg(ike->sa.logger, "not sending INITIAL_CONTACT");
 	}
 
 	/* send out the AUTH payload */
@@ -363,7 +376,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 * not propose DH - the IKE SA's SKEYSEED is always
 		 * used.
 		 */
-		const struct ikev2_proposals *child_proposals = cc->config->child_sa.v2_ike_auth_proposals;
+		const struct ikev2_proposals *child_proposals = cc->config->child.v2_ike_auth_proposals;
 		if (!emit_v2_child_request_payloads(ike, child, child_proposals,
 						    /*ike_auth_exchange*/true, request.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -378,9 +391,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		const struct secret_ppk_stuff *ppk =
-			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
+			get_connection_ppk_stuff(ike->sa.st_connection);
 		const struct ppk_id_payload ppk_id_p =
-			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id),
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(&ppk->id),
 				       ike->sa.logger);
 
 		struct pbs_out ppks;
@@ -390,12 +403,12 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
-		close_output_pbs(&ppks);
+		close_pbs_out(&ppks);
 
 		if (!cc->config->ppk.insist) {
 			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 						    &ike->sa.st_no_ppk_auth)) {
-				dbg("ikev2_calc_no_ppk_auth() failed dying");
+				ldbg(ike->sa.logger, "ikev2_calc_no_ppk_auth() failed dying");
 				return STF_FATAL;
 			}
 
@@ -414,7 +427,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * NULL_AUTH in separate chunk. This is only done on the
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if (authby_has_digsig(pc->local->host.config->authby) &&
+	if (digital_signature_in_authby(pc->local->host.config->authby) &&
 	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
@@ -465,8 +478,8 @@ static stf_status ikev2_pam_continue(struct ike_sa *ike,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-	dbg("%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	if (!success) {
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -488,17 +501,9 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
-
-	/*
-	 * This log line establishes that the packet's been decrypted
-	 * and now it is being processed for real.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
 	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, skipping cert decode");
@@ -528,10 +533,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 {
 	/* going to switch to child st. before that update parent */
 	if (!ike->sa.hidden_variables.st_nated_host) {
-		update_ike_endpoints(ike, md);
+		natify_ikev2_ike_responder_endpoints(ike, md);
 	}
 
-	nat_traversal_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
+	ikev2_nat_change_port_lookup(md, ike); /* why? */
 
 	/*
 	 * Decode any certificate requests sent by the initiator.
@@ -562,24 +567,26 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * that can be matched?
 	 */
 
-	if (PBAD(ike->sa.logger, md->chain[ISAKMP_NEXT_v2AUTH] == NULL)) {
-		return STF_FATAL;
-	}
-
-	lset_t proposed_authbys;
-	if (ike->sa.st_v2_resume_session) {
-		enum keyword_auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
+	lset_t proposed_initiator_auths;
+	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
+		/*
+		 * Can only be EAP.  Is EAPONLY right? EAP can be
+		 * combined with some other method?
+		 */
+		proposed_initiator_auths = LELEM(AUTH_EAPONLY);
+	} else if (ike->sa.st_v2_resume_session) {
+		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
 		name_buf rn, an;
 		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
-		     str_enum_short(&keyword_auth_names, auth, &rn));
-		proposed_authbys = LELEM(auth);
+		     str_enum_short(&auth_names, auth, &rn));
+		proposed_initiator_auths = LELEM(auth);
 	} else {
-		proposed_authbys = proposed_v2AUTH(ike, md);
+		proposed_initiator_auths = proposed_v2AUTH(ike, md);
 	}
 
-	if (proposed_authbys == LEMPTY) {
+	if (proposed_initiator_auths == LEMPTY) {
 		/* already logged */
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -654,8 +661,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * We might be surprised!  Which is why C is only captured
 	 * _after_ this operation.
 	 */
-       if (!LHAS(proposed_authbys, AUTH_NULL)) {
-	       refine_host_connection_of_state_on_responder(ike, proposed_authbys,
+       if (!LHAS(proposed_initiator_auths, AUTH_NULL)) {
+	       refine_host_connection_of_state_on_responder(ike, proposed_initiator_auths,
 							    &initiator_id,
 							    &responder_id);
        }
@@ -690,17 +697,16 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	/* Only RFC 8784 PPK mechanism here: */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
-			dbg("received PPK_IDENTITY");
+			ldbg(ike->sa.logger, "received PPK_IDENTITY");
 			struct ppk_id_payload payl;
 			if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
-				dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+				ldbg(ike->sa.logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 				return STF_FATAL;
 			}
 
 			const struct secret_ppk_stuff *ppk =
-				get_connection_ppk(ike->sa.st_connection,
-						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
-						   /*index*/0);
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(&payl.ppk_id),
+						    ike->sa.logger);
 			if (ppk != NULL) {
 				found_ppk = true;
 			}
@@ -720,9 +726,9 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			}
 		}
 		if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
-			dbg("received NO_PPK_AUTH");
+			ldbg(ike->sa.logger, "received NO_PPK_AUTH");
 			if (c->config->ppk.insist) {
-				dbg("Ignored NO_PPK_AUTH data - connection insists on PPK");
+				ldbg(ike->sa.logger, "Ignored NO_PPK_AUTH data - connection insists on PPK");
 			} else {
 				struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
 				/* zero length doesn't matter? */
@@ -783,7 +789,7 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 		return s;
 
 	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, atype)) {
 		dns_status ret = responder_fetch_idi_ipseckey(ike, md, process_v2_IKE_AUTH_request_ipseckey_continue);
 		switch (ret) {
 		case DNS_SUSPEND:
@@ -821,19 +827,19 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
+	enum auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 	struct authby initiator_authby = c->remote->host.config->authby;
 	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
 	bool remote_can_authby_null = initiator_authby.null;
-	bool remote_can_authby_digsig = authby_has_digsig(initiator_authby);
+	bool remote_can_authby_digsig = digital_signature_in_authby(initiator_authby);
 
 	if (!ike->sa.st_ppk_ike_auth_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
 		 * we didn't recalculate keys with PPK, but we found NO_PPK_AUTH
 		 * (meaning that initiator did use PPK) so we try to verify NO_PPK_AUTH.
 		 */
-		dbg("going to try to verify NO_PPK_AUTH.");
+		ldbg(ike->sa.logger, "going to try to verify NO_PPK_AUTH.");
 		/*
 		 * Making a dummy struct pbs_in so we could pass it to
 		 * v2_check_auth.
@@ -842,7 +848,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		size_t len = pbs_left(&pbs);
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		struct pbs_in pbs_no_ppk_auth =
-			pbs_in_from_shunk(HUNK_AS_SHUNK(ike->sa.st_no_ppk_auth),
+			pbs_in_from_shunk(HUNK_AS_SHUNK(&ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth,
@@ -850,14 +856,14 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("no PPK auth failed");
+			ldbg(ike->sa.logger, "no PPK auth failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
-		dbg("NO_PPK_AUTH verified");
+		ldbg(ike->sa.logger, "NO_PPK_AUTH verified");
 	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
 		   remote_can_authby_null && !remote_can_authby_digsig) {
 		/*
@@ -876,16 +882,16 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("NULL_auth from Notify Payload failed");
+			ldbg(ike->sa.logger, "NULL_auth from Notify Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
-		dbg("NULL_AUTH verified");
+		ldbg(ike->sa.logger, "NULL_AUTH verified");
 	} else {
-		dbg("responder verifying AUTH payload");
+		ldbg(ike->sa.logger, "responder verifying AUTH payload");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in,
 						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
@@ -893,7 +899,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("I2 Auth Payload failed");
+			ldbg(ike->sa.logger, "I2 Auth Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -994,16 +1000,17 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 			 * Note that "xauth_server" also refers to
 			 * IKEv2 CP
 			 */
-			dbg("ignoring initial contact: we are a server using PSK and clients are using a group ID");
+			ldbg(ike->sa.logger, "ignoring initial contact: we are a server using PSK and clients are using a group ID");
 		} else if (!pluto_uniqueIDs) {
-			dbg("ignoring initial contact: uniqueIDs disabled");
+			ldbg(ike->sa.logger, "ignoring initial contact: uniqueIDs disabled");
 		} else {
 			struct state *old_p2 = state_by_serialno(c->established_child_sa);
 			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 			if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
-				dbg("Initial Contact received, deleting old state #%lu from connection %s due to new IKE SA #%lu",
-				    c->established_child_sa, c->name, ike->sa.st_serialno);
+				ldbg(ike->sa.logger, "initial Contact received, deleting old state "PRI_SO" from connection %s due to new IKE SA "PRI_SO,
+				     pri_so(c->established_child_sa),
+				     c->name, pri_so(ike->sa.st_serialno));
 				on_delete(old_p2, skip_send_delete);
 				event_force(EVENT_v2_DISCARD, old_p2);
 			}
@@ -1032,6 +1039,15 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 								      struct msg_digest *md,
 								      const struct hash_signature *auth_sig)
 {
+	if (auth_sig == NULL || auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
 	struct connection *c = ike->sa.st_connection;
 	bool send_redirect = false;
 	if (!v2_ike_sa_auth_responder_establish(ike, &send_redirect)) {
@@ -1100,13 +1116,12 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	/* send out the IDr payload */
 	{
 		struct pbs_out r_id_pbs;
-		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
-		    !out_hunk(ike->sa.st_v2_id_payload.data,
-				  &r_id_pbs, "my identity"))
+		if (!pbs_out_struct(response.pbs, ike->sa.st_v2_id_payload.header,
+				    &ikev2_id_r_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, ike->sa.st_v2_id_payload.data, "my identity"))
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&r_id_pbs);
-		dbg("added IDr payload to packet");
+		close_pbs_out(&r_id_pbs);
+		ldbg(ike->sa.logger, "added IDr payload to packet");
 	}
 
 	/*
@@ -1140,7 +1155,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 */
 
 	if (send_redirect) {
-		dbg("skipping child; redirect response");
+		ldbg(ike->sa.logger, "skipping child; redirect response");
 	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
@@ -1171,8 +1186,6 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 	/*
 	 * If the initiator rejects the responders authentication it
 	 * should immediately send a delete notification and wipe the SA.
-	 *
-	 * This doesn't happen.  Instead the SA is deleted.
 	 */
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
@@ -1180,7 +1193,7 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 				      process_v2_IKE_AUTH_response_post_cert_decode, HERE);
 		return STF_SUSPEND;
 	} else {
-		dbg("no certs to decode");
+		ldbg(ike->sa.logger, "no certs to decode");
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
 		return process_v2_IKE_AUTH_response_post_cert_decode(&ike->sa, md);
@@ -1207,7 +1220,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
+	enum auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 
 	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
@@ -1222,7 +1235,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 			if (c->config->ppk.insist) {
 				llog_sa(RC_LOG, ike,
 					"failed to receive PPK confirmation and connection has ppk=insist");
-				dbg("should be initiating a notify that kills the state");
+				ldbg(ike->sa.logger, "should be initiating a notify that kills the state");
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
@@ -1255,7 +1268,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	/* process AUTH payload */
 
-	dbg("initiator verifying AUTH payload");
+	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in,
 				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
@@ -1310,63 +1323,134 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	ike->sa.st_v2_mobike.enabled =
 		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
 
+	return process_v2_IKE_AUTH_response_post_cert_child(ike, md);
+}
+
+stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike, struct msg_digest *md)
+{
 	/*
-	 * Figure out of the child is both expected and viable.
+	 * Figure out if the child is both expected and viable.
+	 *
+	 * If the Child SA is still standing (because this end
+	 * rejected response) then this end needs to initiate a delete
+	 * so that the peer is cleaned up.
 	 *
 	 * See 2.21.2.  Error Handling in IKE_AUTH
 	 */
 
 	v2_notification_t n = process_v2_IKE_AUTH_response_child_payloads(ike, md);
+	if (n == v2N_NOTHING_WRONG) {
+		return STF_OK;
+	}
 
 	if (v2_notification_fatal(n)) {
-		/* already logged */
+		/* reason already logged */
 		/*
-		 * XXX: there was something "really bad" about the
-		 * child.  Should be sending the fatal notification in
-		 * a new exchange (see RFC); returning STF_FATAL just
-		 * causes the IKE SA to silently self-destruct.
+		 * There was something "really bad" about the child.
+		 *
+		 * Should be sending the fatal notification in a new
+		 * exchange (see RFC); returning STF_FATAL just causes
+		 * the IKE SA to silently self-destruct leaving the
+		 * other end hanging.
+		 *
+		 * XXX: This will clean out any lingering child.
+		 *
+		 * XXX: Can't use STF_OK_INITIATOR_SEND_DELETE_IKE as
+		 * that sends a clean delete and not a dirty notify.
 		 */
 		return STF_FATAL;
 	}
 
-	if(n != v2N_NOTHING_WRONG) {
+	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa; /* could be NULL */
+
+	if (!ike->sa.st_connection->policy.up) {
 		/* already logged */
 		/*
-		 * This end (the initiator) did not like something
-		 * about the Child SA.
+		 * Since the IKE SA has no-reason to be up, delete it.
+		 * This will implicitly delete the Child SA (not
+		 * exactly what the RFC says, but closer to how UP is
+		 * intended to work).  For instance, when the IKE SA +
+		 * Child SA are initiated on-demand, this won't leave
+		 * a lingering IKE SA.
 		 *
-		 * (If the responder sent back an error notification
-		 * to reject the Child SA, then the above call would
-		 * have cleaned up the mess and return
-		 * v2N_NOTHING_WRONG.  After all, problem solved.
+		 * Any connections waiting for this IKE SA to
+		 * establish (they made a really poor choice) will be
+		 * given the boot forcing them to either initiate, or
+		 * find another parent.
 		 */
-		llog_sa(RC_LOG, ike, "IKE SA established but initiator rejected Child SA response");
-		struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
-		passert(larval_child != NULL);
+
+		LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+			if (larval_child == NULL) {
+				jam_string(buf, "peer rejected Child SA ");
+			} else {
+				jam_string(buf, "response for Child SA ");
+				jam_so(buf, larval_child->sa.st_serialno);
+				jam_string(buf, " was rejected");
+			}
+
+			jam_string(buf, " (");
+			jam_enum_short(buf, &v2_notification_names, n);
+			jam_string(buf, ") and IKE SA does not have policy UP");
+		}
+
 		/*
-		 * Needed to un-plug the pending queue.  Without this
-		 * the next pending exchange is never started.
-		 *
-		 * While not obvious from the name - unpend() - the
-		 * code is doing two things: removing LARVAL_CHILD's
-		 * pending connection; and submitting a request to
-		 * initiate the next pending connection, if any.
-		 *
-		 * The key thing here is that unpend() delays creating
-		 * the next child until after the previous child is
-		 * done.  Avoiding a race for which child goes next.
-		 *
-		 * For IKEv2, should merge the pending queue into the
-		 * Message ID queue.  Have a queue of exchanges, and a
-		 * queue of things to do when there are no exchanges.
+		 * This will log that the IKE SA is deleted.
 		 */
-		unpend(ike, larval_child->sa.st_connection);
-		/*
-		 * Quickly delete this larval SA.
-		 */
-		submit_v2_delete_exchange(ike, larval_child);
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
 	}
+
+	if (larval_child == NULL) {
+		/* already logged */
+		name_buf nb;
+		ldbg(ike->sa.logger, "leaving IKE SA UP; peer rejected Child SA with %s",
+		     str_enum_short(&v2_notification_names, n, &nb));
+		return STF_OK;
+	}
+
+	/* already logged against child */
+
+	/*
+	 * This end (the initiator) did not like something about the
+	 * Child SA so need to delete it.
+	 *
+	 * (If the responder sent back an error notification to reject
+	 * the Child SA, then the above call would have cleaned up the
+	 * mess and returned v2N_NOTHING_WRONG).
+	 */
+
+	PASSERT(ike->sa.logger, larval_child != NULL);
+	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+
+	name_buf nb;
+	llog(RC_LOG, ike->sa.logger,
+	     "response for Child SA "PRI_SO" was rejected with %s; initiating delete of Child SA (IKE SA will remain UP)",
+	     pri_so(larval_child->sa.st_serialno),
+	     str_enum_short(&v2_notification_names, n, &nb));
+
+	/*
+	 * Needed to un-plug the pending queue.  Without this the next
+	 * pending exchange is never started.
+	 *
+	 * While not obvious from the name - unpend() - the code is
+	 * doing two things: removing LARVAL_CHILD's pending
+	 * connection; and submitting a request to initiate the next
+	 * pending connection, if any.
+	 *
+	 * The key thing here is that unpend() delays creating the
+	 * next child until after the previous child is done.
+	 * Avoiding a race for which child goes next.
+	 *
+	 * For IKEv2, should merge the pending queue into the Message
+	 * ID queue.  Have a queue of exchanges, and a queue of things
+	 * to do when there are no exchanges.
+	 */
+	unpend(ike, larval_child->sa.st_connection);
+
+	/*
+	 * Quickly delete this larval SA.  This will, in turn, clean
+	 * up larval child.
+	 */
+	submit_v2_delete_exchange(ike, larval_child);
 
 	return STF_OK;
 }
@@ -1496,16 +1580,17 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 #define STATE_V2_IKE_AUTH_IR STATE_V2_ESTABLISHED_IKE_SA
 
-/* sent EXCHANGE {request,response} to <address> */
-static void llog_v2_success_sent_IKE_AUTH_request(struct ike_sa *ike)
+void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
+					       const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	const struct connection *c = ike->sa.st_connection;
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent IKE_AUTH request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		/* AUTH payload (proof-of-identity) */
 		jam_string(buf, " with ");
-		enum keyword_auth authby = local_v2_auth(ike);
+		enum auth authby = local_v2_auth(ike);
 		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
 		/* ID payload */
@@ -1532,9 +1617,9 @@ static void llog_v2_success_sent_IKE_AUTH_request(struct ike_sa *ike)
 static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.story      = "initiating IKE_AUTH",
 	.to = &state_v2_IKE_AUTH_I,
-	.exchange   = ISAKMP_v2_IKE_AUTH,
+	.exchange = &v2_IKE_AUTH_exchange,
 	.processor  = initiate_v2_IKE_AUTH_request,
-	.llog_success = llog_v2_success_sent_IKE_AUTH_request,
+	.llog_success = llog_success_initiate_v2_IKE_AUTH_request,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -1543,16 +1628,26 @@ static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange = &v2_IKE_AUTH_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
-	  .llog_success = ldbg_v2_success,
+	  .log_transition_start = true,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 };
+
+void llog_success_process_v2_IKE_AUTH_response(struct ike_sa *ike,
+					       const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
+ 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
+	}
+}
 
 static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
@@ -1568,31 +1663,34 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .flags.release_whack = true,
+	  .exchange = &v2_IKE_AUTH_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
-	  .llog_success = ldbg_v2_success,/* logged mid transition */
+	  .log_transition_start = true,
+	  .llog_success = ldbg_success_ikev2,/* logged mid transition */
 	  .timeout_event = EVENT_v2_REPLACE,
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
 	  .to = &state_v2_IKE_AUTH_I,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange = &v2_IKE_AUTH_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(SK), },
 	  /* .encrypted_payloads = { .required = v2P(N), }, */
 	  .processor  = process_v2_IKE_AUTH_failure_response,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_response,
 	},
 
 };
 
-V2_EXCHANGE(IKE_AUTH, "authenticate IKE SA", "",
-	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA, /*secured*/true,
+V2_EXCHANGE(IKE_AUTH, "",
+	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA,
+	    /*secured*/true,
+	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_IR,
 	    &state_v2_IKE_INTERMEDIATE_IR,
 	    &state_v2_IKE_SESSION_RESUME_IR);

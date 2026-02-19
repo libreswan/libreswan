@@ -31,7 +31,7 @@
 PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   const chunk_t Ni,
 				   const chunk_t Nr,
-				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
+				   /*const*/ PK11SymKey *ke_secret /* NSS doesn't do const */,
 				   struct logger *logger)
 {
 	if (LDBGP(DBG_CRYPT, logger)) {
@@ -39,7 +39,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr,
-								       dh_secret, logger);
+								       ke_secret, logger);
 	return result;
 }
 
@@ -65,7 +65,7 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
-			   PK11SymKey *dh_secret,
+			   PK11SymKey *ke_secret,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
@@ -73,7 +73,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
-	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret,
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, ke_secret,
 							       cky_i, cky_r, logger);
 	return result;
 }
@@ -83,7 +83,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
-			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
+			   PK11SymKey *skeyid_d, PK11SymKey *ke_secret,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
@@ -91,7 +91,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
-	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret,
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, ke_secret,
 							       cky_i, cky_r, logger);
 	return result;
 }
@@ -101,7 +101,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   PK11SymKey *skeyid,
-			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
+			   PK11SymKey *skeyid_a, PK11SymKey *ke_secret,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
@@ -109,7 +109,7 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
-	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret,
+	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, ke_secret,
 							       cky_i, cky_r, logger);
 	return result;
 }
@@ -145,11 +145,11 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 		LDBG_symkey(logger, __func__, "g_xy:", g_xy);
 		LDBG_log(logger, "protocol: 0x%02"PRIx8, protocol);
 		LDBG_log(logger, "SPI");
-		LDBG_hunk(logger, SPI);
+		LDBG_hunk(logger, &SPI);
 		LDBG_log(logger, "Ni_b");
-		LDBG_hunk(logger, Ni_b);
+		LDBG_hunk(logger, &Ni_b);
 		LDBG_log(logger, "Ni_b");
-		LDBG_hunk(logger, Nr_b);
+		LDBG_hunk(logger, &Nr_b);
 		LDBG_log(logger, "required keymat: %u", required_keymat);
 	}
 	chunk_t result = prf_desc->prf_ikev1_ops->section_5_keymat(prf_desc, SKEYID_d,
@@ -158,7 +158,7 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 								   logger);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s.%s() returns:", prf_desc->prf_ikev1_ops->backend, __func__);
-		LDBG_hunk(logger, result);
+		LDBG_hunk(logger, &result);
 	}
 	return result;
 }

@@ -1,0 +1,19 @@
+<varlistentry id='conn.initial-contact'>
+  <term>
+    <option>initial-contact=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      whether to send an INITIAL_CONTACT payload to the peer we are
+      initiating to, if we currently have no IPsec SAs up with that
+      peer.  It is recommended to leave this option set, unless
+      multiple clients with the same identity are expected to connect
+      using the same subnets and should operate at the same time. Or
+      if a reconnecting client should not delete its old instance (eg
+      perhaps it is still running). This is unlikely to be true.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -9,7 +9,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add roadnet-eastnet-ipv4-psk-ikev1
-"roadnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"roadnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -17,14 +17,14 @@ east #
  ipsec status | grep eastnet
 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...%any[%fromcert]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
-"roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
+"roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; xauthfail:hard; my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "roadnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"roadnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"roadnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "roadnet-eastnet-ipv4-psk-ikev1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "roadnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "roadnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -39,14 +39,14 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]==={192.0.2.1/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
-"roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; xauthfail:hard; my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   sec_label:unset;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"roadnet-eastnet-ipv4-psk-ikev1"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

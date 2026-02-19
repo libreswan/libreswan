@@ -1,0 +1,21 @@
+<varlistentry id='conn.vti-routing'>
+  <term>
+    <option>vti-routing=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether or not to add network rules or routes for IPsec SA's to
+      the respective VTI devices.  When using "routing based VPNs"
+      with a subnets policy of <literal>0.0.0.0/0</literal>, this
+      setting needs to set to &no; to prevent imploding the tunnel,
+      and the administrator is expected to manually add ip rules and
+      ip routes to configure what traffic must be encrypted.  When set
+      to &yes;, the _updown script will automatically route the
+      leftsubnet/rightsubnet traffic into the VTI device specified
+      with <option>vti-interface</option>
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -34,42 +34,26 @@
 #include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #include "ikev1_delete.h"	/* for record_n_send_n_log_v2_delete() */
 
-static struct logger *merge_loggers(struct logger *o_logger,
-				   bool background,
-				   struct logger *g_logger)
+void whack_deletestate(const struct whack_message *wm, struct show *s)
 {
-	/*
-	 * Create a logger that looks like the object; but also has
-	 * whack attached.
-	 */
-	struct logger *logger = clone_logger(o_logger, HERE);
-	whack_attach(logger, g_logger);
-	if (!background) {
-		whack_attach(o_logger, g_logger);
-	}
-	return logger;
-}
+	const struct whack_deletestate *deletestate = &wm->whack.deletestate;
 
-void whack_deletestate(const struct whack_message *m, struct show *s)
-{
-#if 0
-	/* this command uses .deletestateno instead */
-	if (m->name == NULL) {
-		whack_log(RC_FATAL, s,
-			  "received whack command to delete a state by serial number, but did not receive the serial number - ignored");
+	if (deletestate->state_nr > SOS_MAX) {
+		show_rc(RC_FATAL, s, "received whack command to delete state #%lu but value is out-of-range",
+			deletestate->state_nr);
 		return;
 	}
-#endif
 
-	struct state *st = state_by_serialno(m->whack_deletestateno);
+	so_serial_t so = deletestate->state_nr;
+	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		llog_rc(RC_UNKNOWN_NAME, show_logger(s), "no state "PRI_SO" to delete",
-			pri_so(m->whack_deletestateno));
+			pri_so(so));
 		return;
 	}
 
 	struct logger *logger = merge_loggers(st->logger,
-					      m->whack_async/*background*/,
+					      wm->whack_async/*background*/,
 					      show_logger(s));
 	llog(LOG_STREAM/*not-whack*/, logger,
 	     "received whack to delete %s state "PRI_SO" %s",

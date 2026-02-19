@@ -50,16 +50,19 @@
 #include "iface.h"			/* for find_ifaces() */
 #include "foodgroups.h"			/* for load_groups() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
-#include "ikev2_redirect.h"		/* for find_and_active_redirect_states() */
 #include "addresspool.h"		/* for show_addresspool_status() */
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
-#include "ddns.h"			/* for connection_check_ddns() */
+#include "ipsecconf/setup.h"
+#include "ddos.h"
+
 #include "visit_connection.h"
+
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
 #include "whack_connectionstatus.h"
 #include "whack_crash.h"
+#include "whack_ddns.h"
 #include "whack_debug.h"
 #include "whack_delete.h"
 #include "whack_deleteid.h"
@@ -68,7 +71,9 @@
 #include "whack_down.h"
 #include "whack_impair.h"
 #include "whack_initiate.h"
+#include "whack_listen.h"
 #include "whack_pubkey.h"
+#include "whack_redirect.h"
 #include "whack_route.h"
 #include "whack_sa.h"
 #include "whack_showstates.h"
@@ -77,8 +82,16 @@
 #include "whack_suspend.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
-#include "config_setup.h"
-#include "ddos.h"
+
+static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
+
+static void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
+			   struct whack_message_refcnt *rwm);
+
+static void rcv_whack_pubkey(const struct whack_message *wm, struct show *s)
+{
+	whack_pubkey(&wm->whack.pubkey, s);
+}
 
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
@@ -95,7 +108,7 @@ static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct sh
 static void whack_rereadcerts(const struct whack_message *wm UNUSED, struct show *s)
 {
 	reread_cert_connections(show_logger(s));
-	free_root_certs(show_logger(s));
+	free_root_certs(VERBOSE(DEBUG_STREAM, show_logger(s), NULL));
 }
 
 static void whack_fetchcrls(const struct whack_message *wm UNUSED, struct show *s)
@@ -142,19 +155,23 @@ static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
 
 static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam_so(buf, wm->whack_deletestateno);
+	if (wm->whack.deletestate.state_nr > SOS_MAX) {
+		jam_string(buf, "<so-overflow>");
+	}
+	so_serial_t so = wm->whack.deletestate.state_nr;
+	jam_so(buf, so);
 }
 
 static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam_address(buf, &wm->whack_crash_peer);
+	jam_address(buf, &wm->whack.crash.peer);
 }
 
 static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam(buf, "initiate: start: name='%s' remote='%s' async=%s",
+	jam(buf, "name='%s' remote='%s' async=%s",
 	    (wm->name == NULL ? "<null>" : wm->name),
-	    (wm->remote_host != NULL ? wm->remote_host : "<null>"),
+	    (wm->whack.initiate.remote_host != NULL ? wm->whack.initiate.remote_host : "<null>"),
 	    bool_str(wm->whack_async));
 }
 
@@ -174,94 +191,6 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static void whack_listen(const struct whack_message *wm, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	const struct whack_listen *wl = &wm->whack.listen;
-
-	/* first extract current values from config */
-
-	const struct config_setup *oco = config_setup_singleton();
-	pluto_ike_socket_errqueue = config_setup_yn(oco, KYN_IKE_SOCKET_ERRQUEUE);
-	pluto_ike_socket_bufsize = config_setup_option(oco, KBF_IKE_SOCKET_BUFSIZE);
-
-	/* Update MSG_ERRQUEUE settings before listen. */
-
-	bool errqueue_set = false;
-	if (wl->ike_socket_errqueue_toggle) {
-		errqueue_set = true;
-		pluto_ike_socket_errqueue = !pluto_ike_socket_errqueue;
-	}
-
-	switch (wl->ike_socket_errqueue) {
-	case YN_YES:
-		errqueue_set = true;
-		pluto_ike_socket_errqueue = true;
-		break;
-	case YN_NO:
-		errqueue_set = true;
-		pluto_ike_socket_errqueue = false;
-		break;
-	case YN_UNSET:
-		break;
-	}
-
-	if (errqueue_set) {
-		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
-		     (pluto_ike_socket_errqueue ? "enabling" : "disabling"));
-	}
-
-	/* Update MSG buffer size before listen */
-
-	if (wl->ike_socket_bufsize != 0) {
-		pluto_ike_socket_bufsize = wl->ike_socket_bufsize;
-		llog(RC_LOG, logger, "set IKE socket buffer to %u", pluto_ike_socket_bufsize);
-	}
-
-	/* now put values back into config_setup */
-	update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, (pluto_ike_socket_errqueue ? YN_YES : YN_NO));
-	update_setup_option(KBF_IKE_SOCKET_BUFSIZE, pluto_ike_socket_bufsize);
-
-	/* do the deed */
-
-#ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
-#endif
-	llog(RC_LOG, logger, "listening for IKE messages");
-	listening = true;
-	find_ifaces(true /* remove dead interfaces */, logger);
-
-	load_preshared_secrets(logger);
-	load_groups(logger);
-#ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
-#endif
-}
-
-static void jam_redirect(struct jambuf *buf, const struct whack_message *wm)
-{
-	if (wm->redirect_to != NULL) {
-		jam_string(buf, " redirect-to=");
-		jam_string(buf, wm->redirect_to);
-	}
-	if (wm->global_redirect != 0) {
-		jam_string(buf, " redirect_to=");
-		jam_sparse_long(buf, &yna_option_names, wm->global_redirect);
-	}
-}
-
-static void whack_active_redirect(const struct whack_message *wm, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	/*
-	 * We are redirecting all peers of one or all connections.
-	 *
-	 * Whack's --redirect-to is ambitious - is it part of an ADD
-	 * or a global op?  Checking .whack_add.
-	 */
-	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
-}
-
 static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
 {
 	show_pubkeys(s, wm->whack_utc, SHOW_EXPIRED_KEYS);
@@ -276,53 +205,64 @@ static void whack_list(const struct whack_message *wm, struct show *s)
 {
 	monotime_t now = mononow();
 
-	if (wm->whack_list & LELEM(LIST_PUBKEYS)) {
-		dbg_whack(s, "listpubkeys: start:");
-		show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
-		dbg_whack(s, "listpubkeys: stop:");
-	}
+	for (enum whack_lists list = WHACK_LIST_FLOOR; list < WHACK_LIST_ROOF; list++) {
+		if (!wm->whack.list.list[list]) {
+			continue;
+		}
+		switch (list) {
 
-	if (wm->whack_list & LELEM(LIST_PSKS)) {
-		dbg_whack(s, "list & LIST_PSKS: start:");
-		list_psks(s);
-		dbg_whack(s, "list & LIST_PSKS: stop:");
-	}
+		case WHACK_LIST_PUBKEYS:
+			dbg_whack(s, "listpubkeys: start:");
+			show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
+			dbg_whack(s, "listpubkeys: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CERTS)) {
-		dbg_whack(s, "listcerts: start:");
-		list_certs(s);
-		dbg_whack(s, "listcerts: stop:");
-	}
+		case WHACK_LIST_PSKS:
+			dbg_whack(s, "list & LIST_PSKS: start:");
+			list_psks(s);
+			dbg_whack(s, "list & LIST_PSKS: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CACERTS)) {
-		dbg_whack(s, "listcacerts: start");
-		whack_listcacerts(s);
-		dbg_whack(s, "listcacerts: stop:");
-	}
+		case WHACK_LIST_CERTS:
+			dbg_whack(s, "listcerts: start:");
+			list_certs(s);
+			dbg_whack(s, "listcerts: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CRLS)) {
-		dbg_whack(s, "listcrls: start:");
-		list_crls(s);
+		case WHACK_LIST_CACERTS:
+			dbg_whack(s, "listcacerts: start");
+			whack_listcacerts(s);
+			dbg_whack(s, "listcacerts: stop:");
+			break;
+
+		case WHACK_LIST_CRLS:
+			dbg_whack(s, "listcrls: start:");
+			list_crls(s);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-		list_crl_fetch_requests(s, wm->whack_utc);
+			list_crl_fetch_requests(s, wm->whack_utc);
 #endif
-		dbg_whack(s, "listcrls: stop:");
-	}
+			dbg_whack(s, "listcrls: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_EVENTS)) {
-		dbg_whack(s, "listevents: start:");
-		list_timers(s, now);
-		list_state_events(s, now);
-		dbg_whack(s, "listevents: stop:");
+		case WHACK_LIST_EVENTS:
+			dbg_whack(s, "listevents: start:");
+			list_timers(s, now);
+			list_state_events(s, now);
+			dbg_whack(s, "listevents: stop:");
+			break;
+		}
 	}
 }
 
-static void dispatch_command(const struct whack_message *const wm, struct show *s)
+static void dispatch_command(struct whack_message_refcnt *const wmr, struct show *s)
 {
+	const struct whack_message *wm = &wmr->wm;
+
 	static const struct command {
 		const char *name;
 		void (*jam)(struct jambuf *buf, const struct whack_message *wm);
 		void (*op)(const struct whack_message *wm, struct show *s);
+		void (*wop)(struct whack_message_refcnt *wmr, struct show *s);
 	} commands[] = {
 		[WHACK_FETCHCRLS] = {
 			.name = "fetchcrls",
@@ -384,7 +324,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		},
 		[WHACK_ADD] = {
 			.name = "add",
-			.op = whack_add,
+			.wop = whack_add,
 			.jam = jam_whack_name,
 		},
 		[WHACK_ROUTE] = {
@@ -508,12 +448,12 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_shutdown_leave_state,
 		},
 		[WHACK_GLOBAL_REDIRECT] = {
-			.jam = jam_redirect,
+			.jam = jam_whack_redirect,
 			.name = "global-redirect",
 			.op = whack_global_redirect,
 		},
 		[WHACK_ACTIVE_REDIRECT] = {
-			.jam = jam_redirect,
+			.jam = jam_whack_redirect,
 			.name = "active-redirect",
 			.op = whack_active_redirect,
 		},
@@ -526,14 +466,27 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "unlisten",
 			.op = whack_unlisten,
 		},
+		/**/
+		[WHACK_IMPAIR] = {
+			.name = "impair",
+			.op = whack_impair,
+		},
+		[WHACK_DEBUG] = {
+			.name = "debug",
+			.op = whack_debug,
+		},
+		/**/
+		[WHACK_PUBKEY] = {
+			.name = "pubkey",
+			.op = rcv_whack_pubkey,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
 	PASSERT(logger, wm->whack_command < elemsof(commands));
 	const struct command *command = &commands[wm->whack_command];
 
-	if (PBAD(logger, command->name == NULL) ||
-	    PBAD(logger, command->op == NULL)) {
+	if (PBAD(logger, command->name == NULL)) {
 		return;
 	}
 
@@ -550,7 +503,17 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		}
 	}
 
-	command->op(wm, s);
+	if (PBAD(logger, (command->op == NULL &&
+			  command->wop == NULL))) {
+		return;
+	}
+
+	if (command->op != NULL) {
+		command->op(wm, s);
+	}
+	if (command->wop != NULL) {
+		command->wop(wmr, s);
+	}
 
 	if (LDBGP(DBG_BASE, logger)) {
 		struct logger *logger = show_logger(s);
@@ -571,8 +534,10 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
  * handle a whack message.
  */
 
-static void whack_process(const struct whack_message *const m, struct show *s)
+static void whack_process(struct whack_message_refcnt *const wmr, struct show *s)
 {
+	const struct whack_message *const m = &wmr->wm;
+
 	/*
 	 * XXX: keep code below compiling.
 	 *
@@ -596,66 +561,41 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * XXX: why?
 	 */
 
-	if (!lmod_empty(m->whack_debugging)) {
-		lmod_buf lb;
-		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
-		whack_debug(m, s);
-		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
-	}
-
-	if (m->impairments.len > 0) {
-		dbg_whack(s, "impair: start: %d impairments", m->impairments.len);
-		whack_impair(m, s);
-		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
-	}
-
 	/*
 	 * Most commands go here.
 	 */
 
 	if (m->whack_command != 0) {
-		dispatch_command(m, s);
-	}
-
-	if (m->whack_key) {
-		dbg_whack(s, "key: start:");
-		/* add a public key */
-		key_add_request(m, show_logger(s));
-		dbg_whack(s, "key: stop:");
+		dispatch_command(wmr, s);
 	}
 
 	return;
 }
 
-static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
-
-void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
+void whack_handle_cb(struct verbose verbose, int fd, void *arg UNUSED)
 {
-	threadtime_t start = threadtime_start();
-	{
-		struct fd *whackfd = fd_accept(fd, HERE, global_logger);
-		if (whackfd == NULL) {
-			/* already logged */
-			return;
-		}
-
-		/*
-		 * Hack to get the whack fd attached to the initial
-		 * event handler logger.  With this done, everything
-		 * from here on can use attach_whack() et.al.
-		 *
-		 * See also whack_shutdown() which deliberately leaks
-		 * this fd.
-		 */
-		struct logger whack_logger = *global_logger;
-		whack_logger.whackfd[0] = whackfd;
-		whack_logger.where = HERE;
-
-		whack_handle(whackfd, &whack_logger);
-
-		fd_delref(&whackfd);
+	struct fd *whackfd = fd_accept(fd, verbose.logger, HERE);
+	if (whackfd == NULL) {
+		/* already logged */
+		return;
 	}
-	threadtime_stop(&start, SOS_NOBODY, "whack");
+
+	/*
+	 * Hack to get the whack fd attached to the initial
+	 * event handler logger.  With this done, everything
+	 * from here on can use attach_whack() et.al.
+	 *
+	 * See also whack_shutdown() which deliberately leaks
+	 * this fd.
+	 */
+	struct logger *global_logger = verbose.logger;
+	struct logger whack_logger = *global_logger;
+	whack_logger.whackfd[0] = whackfd;
+	whack_logger.where = HERE;
+
+	whack_handle(whackfd, &whack_logger);
+
+	fd_delref(&whackfd, &whack_logger);
 }
 
 /*
@@ -668,12 +608,18 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * properly initialize msg - needed because short reads are
 	 * sometimes OK
 	 */
-	struct whack_message msg = {0};
+	struct whack_message_refcnt *rwm = alloc_whack_message(whack_logger, HERE);
+	whack_handle_1(whackfd, whack_logger, rwm);
+	refcnt_delref(&rwm, whack_logger, HERE);
+}
 
-	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
+void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
+		    struct whack_message_refcnt *wmr)
+{
+	ssize_t n = fd_read(whackfd, &wmr->wm, sizeof(wmr->wm));
 	if (n <= 0) {
-		llog_error(whack_logger, -(int)n,
-			   "read() failed in whack_handle()");
+		llog_errno(ERROR_STREAM, whack_logger, -(int)n,
+			   "read() failed in whack_handle(): ");
 		return;
 	}
 
@@ -686,7 +632,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 */
 
 	struct whackpacker wp = {
-		.msg = &msg,
+		.msg = &wmr->wm,
 		.n = n,
 	};
 
@@ -704,12 +650,12 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * Handle basic commands here.
 	 */
 
-	if (msg.basic.whack_shutdown) {
+	if (wmr->wm.basic.whack_shutdown) {
 		whack_shutdown(whack_logger, false);
 		return; /* force shutting down */
 	}
 
-	if (msg.basic.whack_status) {
+	if (wmr->wm.basic.whack_status) {
 		struct show *s = alloc_show(whack_logger);
 		whack_status(s, mononow());
 		free_show(&s);
@@ -718,6 +664,6 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	}
 
 	struct show *s = alloc_show(whack_logger);
-	whack_process(&msg, s);
+	whack_process(wmr, s);
 	free_show(&s);
 }

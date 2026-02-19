@@ -1,0 +1,25 @@
+<varlistentry id='conn.ms-dh-downgrade'>
+  <term>
+    <option>ms-dh-downgrade=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to allow a downgrade of Diffie-Hellman group during
+      rekey (using CREATE_CHILD_SA).
+    </para>
+    <para>
+      Microsoft Windows (at the time of writing, Feb 2018) defaults to
+      using the very weak modp1024 (DH2).  This can be changed using a
+      Windows registry setting to use modp2048 (DH14).  However, at
+      rekey times, it will shamelessly use modp1024 again and the
+      connection might fail.  Setting <option>ms-dh-downgrade=&yes;</option>
+      (and adding modp1024 proposals to the ike line) will allow this
+      downgrade attack to happen. This should only be used to support
+      Windows that feature this bug.
+    </para>
+    <para>
+      The accepted values are &no;, (the
+      default) or &yes;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -10,7 +10,8 @@ iptables -A INPUT -i eth1 -s 192.0.201.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --debug-all --impair suppress_retransmits
+ipsec whack --debug-all
+ipsec whack --impair suppress_retransmits
 ipsec auto --add westnet-eastnet-a
 ipsec auto --add westnet-eastnet-b
 ipsec auto --add westnet-eastnet-c

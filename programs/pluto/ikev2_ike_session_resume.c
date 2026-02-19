@@ -64,13 +64,7 @@ static bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike);
 static bool emit_v2N_TICKET_OPAQUE(chunk_t ticket, struct pbs_out *pbs);
 static bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike);
 
-static stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
-								 struct msg_digest *md,
-								 struct dh_local_secret *local_secret,
-								 chunk_t *nonce);
-stf_status process_v2_IKE_SESSION_RESUME_response_continue(struct state *ike_sa,
-							   struct msg_digest *md);
-
+static ke_and_nonce_cb process_v2_IKE_SESSION_RESUME_request_continue; /* type assertion */
 static ke_and_nonce_cb initiate_v2_IKE_SESSION_RESUME_request_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK;
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT;
@@ -160,10 +154,10 @@ void refresh_v2_ike_session_resume(struct logger *logger)
 struct resume_session {
 	char initiator_id[256];
 	char responder_id[256];
-	enum keyword_auth auth_method;
+	enum auth auth_method;
 };
 
-enum keyword_auth resume_session_auth(const struct resume_session *session)
+enum auth resume_session_auth(const struct resume_session *session)
 {
 	return session->auth_method;
 }
@@ -238,7 +232,7 @@ struct ticket {
 			enum ikev2_trans_type_encr sr_encr;
 			enum ikev2_trans_type_prf sr_prf;
 			enum ikev2_trans_type_integ sr_integ;
-			enum ike_trans_type_dh sr_dh;
+			enum ikev2_trans_type_kem sr_kem;
 			unsigned sr_enc_keylen;
 		} state;
 		uint8_t tag[16];
@@ -257,7 +251,7 @@ struct session {
 	enum ikev2_trans_type_encr sr_encr;
 	enum ikev2_trans_type_prf sr_prf;
 	enum ikev2_trans_type_integ sr_integ;
-	enum ike_trans_type_dh sr_dh;
+	enum ikev2_trans_type_kem sr_kem;
 	unsigned sr_enc_keylen;
 
 	/*
@@ -275,11 +269,13 @@ struct session {
 
 void pfree_session(struct session **session)
 {
+	struct logger *logger = &global_logger;
+
 	if (*session == NULL) {
 		return;
 	}
 	free_chunk_content(&(*session)->ticket);
-	symkey_delref(&global_logger, "session.sk_d_old", &(*session)->sk_d_old);
+	symkey_delref(logger, "session.sk_d_old", &(*session)->sk_d_old);
 	pfree((*session));
 	(*session) = NULL;
 }
@@ -339,11 +335,11 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 	free_chunk_content(&sk);
 
 	/*Algorithm description*/
-#define ID(ALG) ((ALG) != NULL ? (ALG)->common.ikev2_alg_id : 0);
+#define ID(ALG) ((ALG) != NULL ? (ALG)->ikev2_alg_id : 0);
 	ticket->secured.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
 	ticket->secured.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
 	ticket->secured.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
-	ticket->secured.state.sr_dh = ID(ike->sa.st_oakley.ta_dh);
+	ticket->secured.state.sr_kem = ID(ike->sa.st_oakley.ta_dh);
 #undef ID
 
 	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
@@ -401,7 +397,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 
 	/* XXX: missing replace time */
 	deltatime_t lifetime = deltatime_min(realtime_diff(ike_expires, now),
-					     deltatime(EVENT_REINIT_SECRET_DELAY));
+					     deltatime_from_seconds(EVENT_REINIT_SECRET_DELAY));
 	realtime_t expiration = realtime_add(now, lifetime);
 
 	struct ikev2_ticket_lifetime tl = {
@@ -419,7 +415,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 	}
 
-	if (!out_struct(&tl, &ikev2_ticket_lifetime_desc, &resume_pbs, NULL))
+	if (!pbs_out_struct(&resume_pbs, tl, &ikev2_ticket_lifetime_desc, NULL))
 		return false;
 
 	if (!pbs_out_thing(&resume_pbs, ticket, "resume (encrypted) ticket data")) {
@@ -526,7 +522,7 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 				    ticket.secured.state.sr_encr,
 				    ticket.secured.state.sr_prf,
 				    ticket.secured.state.sr_integ,
-				    ticket.secured.state.sr_dh,
+				    ticket.secured.state.sr_kem,
 				    ticket.secured.state.sr_enc_keylen);
 
 	/* save what is needed */
@@ -564,11 +560,11 @@ bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike)
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(request.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_ni, "IKEv2 nonce"))
 			return false;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* send TICKET_OPAQUE */
@@ -582,9 +578,8 @@ bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike)
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&request.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SESSION_RESUME request",
+					 ike, &request);
 
 	return true;
 }
@@ -601,20 +596,21 @@ bool skeyseed_v2_sr(struct ike_sa *ike,
 	const size_t key_size = ike->sa.st_oakley.enckeylen / BITS_PER_BYTE;
 
 	passert(ike->sa.st_oakley.ta_prf != NULL);
-	dbg("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-	    ike->sa.st_oakley.ta_prf->common.fqn,
-	    (ike->sa.st_oakley.ta_integ ? ike->sa.st_oakley.ta_integ->common.fqn : "n/a"),
-	    key_size, salt_size);
+	ldbg(ike->sa.logger,
+	     "calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+	     ike->sa.st_oakley.ta_prf->common.fqn,
+	     (ike->sa.st_oakley.ta_integ ? ike->sa.st_oakley.ta_integ->common.fqn : "n/a"),
+	     key_size, salt_size);
 
 	/* old key unpacked by resume */
 	pexpect(ike->sa.st_skey_d_nss != NULL);
 
 	PK11SymKey *skeyseed_k =
-		ikev2_ike_sa_resume_skeyseed(ike->sa.st_oakley.ta_prf,
-					     ike->sa.st_skey_d_nss,
-					     ike->sa.st_ni,
-					     ike->sa.st_nr,
-					     logger);
+		ikev2_IKE_SESSION_RESUME_skeyseed(ike->sa.st_oakley.ta_prf,
+						  ike->sa.st_skey_d_nss,
+						  ike->sa.st_ni,
+						  ike->sa.st_nr,
+						  logger);
 	if (skeyseed_k == NULL) {
 		llog_pexpect(ike->sa.logger, where, "KEYSEED failed");
 		return false;
@@ -704,8 +700,8 @@ stf_status initiate_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_sa,
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	PASSERT(ike->sa.logger, md == NULL); /* initiator */
-	ldbg(ike->sa.logger, "%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	PASSERT(ike->sa.logger, local_secret == NULL);
 	unpack_nonce(&ike->sa.st_ni, nonce);
@@ -721,19 +717,10 @@ static void record_v2N_TICKET_NACK(struct ike_sa *ike, struct msg_digest *md)
 }
 
 stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
-						 struct child_sa *child,
+						 struct child_sa *null_child,
 						 struct msg_digest *md)
 {
-	/*
-	 * This log line establishes that resources (such as the state
-	 * structure) have been allocated and the packet is being
-	 * processed for real.
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
-
-	pexpect(child == NULL);
-	/* set up new state */
-	update_ike_endpoints(ike, md);
+	pexpect(null_child == NULL);
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state == &state_v2_UNSECURED_R);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
@@ -799,8 +786,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_UNSECURED_R);
-	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculated ke+nonce, sending R1",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	/* Nr generated */
 
@@ -824,7 +811,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SESSION_RESUME request",
+					ike, md);
 
 	/*
 	 * The response needs to be sent in the clear so that the
@@ -851,11 +839,11 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(response.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	if (!close_and_record_v2_message(&response)) {
@@ -863,9 +851,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&response.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SESSION_RESUME response",
+					 ike, &response);
 
 	return STF_OK;
 }
@@ -892,7 +879,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK(struct ike_sa 
 	 * This should trigger revival and, with no ticket, use
 	 * IKE_SA_INIT.
 	 */
-	connection_attach(ike->sa.st_connection, ike->sa.logger);
+	whack_attach(ike->sa.st_connection, ike->sa.logger);
 	return STF_OK_INITIATOR_DELETE_IKE;
 }
 
@@ -904,7 +891,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 
@@ -925,8 +912,8 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 	 */
 	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu, drop this negotiation",
-			  c->established_child_sa);
+			"state superseded by "PRI_SO", drop this negotiation",
+			pri_so(c->established_child_sa));
 		return STF_FATAL;
 	}
 
@@ -949,7 +936,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 				    c->session->sr_encr,
 				    c->session->sr_prf,
 				    c->session->sr_integ,
-				    c->session->sr_dh,
+				    c->session->sr_kem,
 				    c->session->sr_enc_keylen);
 
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
@@ -1013,13 +1000,14 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 	 */
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SESSION_RESUME response",
+					ike, md);
 
 	/*
 	 * Since systems are go, start updating the state, starting
 	 * with SPIr.
 	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	return next_v2_exchange(ike, md, &v2_IKE_AUTH_exchange, HERE);
 }
@@ -1048,8 +1036,8 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 
 	c->session = alloc_thing(struct session, __func__);
 	c->session->sr_expires = monotime_add(mononow(),
-					      deltatime(tl.sr_lifetime));
-	c->session->ticket = clone_hunk(ticket, __func__);
+					      deltatime_from_seconds(tl.sr_lifetime));
+	c->session->ticket = clone_hunk_as_chunk(&ticket, __func__);
 
 	set_resume_session(&c->session->resume,
 			   /*initiator*/c->local,
@@ -1060,10 +1048,10 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 					     ike->sa.st_skey_d_nss);
 
 #define ID(ALG) (ike->sa.st_oakley.ALG == NULL ? 0 :		\
-		 ike->sa.st_oakley.ALG->common.ikev2_alg_id)
+		 ike->sa.st_oakley.ALG->ikev2_alg_id)
 	c->session->sr_encr = ID(ta_encrypt);
 	c->session->sr_prf = ID(ta_prf);
-	c->session->sr_dh = ID(ta_dh);
+	c->session->sr_kem = ID(ta_dh);
 	c->session->sr_integ = ID(ta_integ);
 #undef ID
 	c->session->sr_enc_keylen = ike->sa.st_oakley.enckeylen;
@@ -1074,21 +1062,22 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 static const struct v2_transition v2_IKE_SESSION_RESUME_initiate_transition = {
 	.story      = "initiating IKE_SESSION_RESUME",
 	.to = &state_v2_IKE_SESSION_RESUME_I,
-	.exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	.exchange = &v2_IKE_SESSION_RESUME_exchange,
 	.processor  = NULL, /* XXX: should be set */
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
 static const struct v2_transition v2_IKE_SESSION_RESUME_responder_transition[] = {
 	{ .story      = "Respond to IKE_SESSION_RESUME",
 	  .to = &state_v2_IKE_SESSION_RESUME_R,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(Ni) | v2P(N),
 	  .message_payloads.notification = v2N_TICKET_OPAQUE,
 	  .processor  = process_v2_IKE_SESSION_RESUME_request,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .log_transition_start = true,
+	  .llog_success = llog_success_ikev2_exchange_responder,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
@@ -1096,59 +1085,60 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 	{ .story      = "received anti-DDOS COOKIE notify response; resending IKE_SESSION_RESUME request with cookie payload added",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_COOKIE, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_COOKIE,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT notify response; aborting resumption and start IKE_SA_INIT request to new destination",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_REDIRECT, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
 	{ .story      = "received TICKET_NACK notification response; aborting resumption and initiating IKE_SA_INIT exchange",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_TICKET_NACK, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
 	{ .story      = "Initiator: process incoming Session Resume Packet from Responder, initiate IKE_AUTH",
 	  .to = &state_v2_IKE_SESSION_RESUME_IR,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(Nr),
 	  .processor  = process_v2_IKE_SESSION_RESUME_response,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
 	},
 
 };
 
-V2_STATE(IKE_SESSION_RESUME_I0, "waiting for KE to finish", CAT_IGNORE, /*secured*/false);
+V2_STATE(IKE_SESSION_RESUME_I0, "waiting for KE to finish",
+	 CAT_IGNORE, /*secured*/false);
 
 V2_STATE(IKE_SESSION_RESUME_R0, "processing IKE_SESSION_RESUME request",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
 	 &v2_IKE_SESSION_RESUME_exchange);
 
-V2_STATE(IKE_SESSION_RESUME_R,
-	 "sent IKE_SESSION_RESUME response, waiting for IKE_AUTH request",
+V2_STATE(IKE_SESSION_RESUME_R, "sent IKE_SESSION_RESUME response",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_exchange);
 
-V2_EXCHANGE(IKE_SESSION_RESUME, "initiate IKE SESSION RESUME",
-	    ", preparing IKE_AUTH request",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+V2_EXCHANGE(IKE_SESSION_RESUME, "",
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/false,
+	    /*llog-processing*/false);
 
 #if 0
 void init_ike_session_resume(struct logger *logger)

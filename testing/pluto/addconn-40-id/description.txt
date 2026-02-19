@@ -1,1 +1,7 @@
 test weird {left,right}id= syntaxes
+
+From merged test ikev2-x509-39-OU-comma:
+
+  X.509 test where peers have an embedded comma in their OU, and their
+  ID specified in leftid/rightid.  This tests rhbz#1743649
+

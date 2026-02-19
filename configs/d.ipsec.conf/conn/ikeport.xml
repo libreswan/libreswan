@@ -1,0 +1,14 @@
+<varlistentry id='conn.ikeport'>
+  <term>
+    <option>leftikeport=&ip_port;</option>
+  </term>
+  <term>
+    <option>rightikeport=&ip_port;</option>
+  </term>
+  <listitem>
+    <para>
+      The UDP IKE port to listen on or send data to. This port cannot
+      be 0 or 500. For TCP, see <option>tcp-remoteport=</option>
+    </para>
+  </listitem>
+</varlistentry>

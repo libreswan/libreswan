@@ -1,131 +1,65 @@
 /testing/guestbin/swan-prep
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-west #
  ipsec whack --impair suppress_retransmits
 west #
- echo "initdone"
-initdone
-west #
  ipsec whack --impair block_inbound:yes
-IMPAIR: block all inbound messages: yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
 west #
- ipsec whack --impair block_outbound:yes
-IMPAIR: block all outbound messages: yes
-west #
- ipsec auto --asynchronous --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 1
-west #
- ipsec whack --impair drip_outbound:1
-IMPAIR: start processing outbound drip packet 1
-IMPAIR: stop processing outbound drip packet 1
+ ipsec auto --add east-west
+"east-west": added oriented IKEv2 connection
 west #
  ../../guestbin/wait-for-inbound.sh 1
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
+west #
+ ipsec up --asynchronous east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+west #
+ ../../guestbin/wait-for-inbound.sh 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 west #
  ipsec whack --impair drip_inbound:1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 2'
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: blocking outbound message 2
+ ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT'
+"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
- ipsec whack --impair drip_outbound:2
-IMPAIR: start processing outbound drip packet 2
-IMPAIR: stop processing outbound drip packet 2
-west #
- ../../guestbin/wait-for-inbound.sh 2
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+ ../../guestbin/wait-for-inbound.sh 3
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 west #
  ipsec whack --impair drip_inbound:2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
+ ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_AUTH request'  -- cat /tmp/pluto.log
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESP <0xESPESP}
 west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+ ../../guestbin/wait-for-inbound.sh 4
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
 west #
- echo done
-done
+ ipsec whack --impair drip_inbound:4
+IMPAIR: start processing inbound drip packet 4
+IMPAIR: stop processing inbound drip packet 4
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
-DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ../../guestbin/wait-for-pluto.sh 'established Child SA using #1'
+"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec whack --impair drip_inbound:3
+IMPAIR: start processing inbound drip packet 3
+IMPAIR: stop processing inbound drip packet 3
+west #
+ ../../guestbin/wait-for.sh --match 'established Child SA using #2'  -- cat /tmp/pluto.log
+"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec whack --impair block_inbound:no
+IMPAIR: block all inbound messages: yes -> no
 west #

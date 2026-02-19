@@ -9,7 +9,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add rw
-"rw": added IKEv2 connection
+"rw": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -19,12 +19,13 @@ road #
 "rw"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "rw"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "rw"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"rw"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "rw"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate '@east.testing.libreswan.org' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 "rw"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
-"rw"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-"rw"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"rw"[1] 192.1.2.23 #2: command "up" output: updating resolvconf
+"rw"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  echo done
 done

@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add road
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #
@@ -19,14 +19,15 @@ road #
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "road" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road" #1: sent IKE_AUTH request to 192.1.2.23:TCP/4500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESPinTCP <0xESPESP}
+"road" #1: processing IKE_AUTH response from 192.1.2.23:TCP/4500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --impair send_keepalive:1
-"road" #1: IMPAIR: sending keepalive
+IMPAIR: "road" #1: sending keepalive
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -41,6 +42,7 @@ src 192.1.3.209 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -51,6 +53,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.1.3.209/32
@@ -79,6 +82,7 @@ src 192.1.3.209 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -89,6 +93,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.1.3.209/32

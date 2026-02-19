@@ -25,22 +25,25 @@ rise #
  ../../guestbin/wait-until-pluto-started
 rise #
  ipsec add rise-set
-"rise-set": command: 'ifconfig' 'sec1'
-"rise-set": output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\tindex 7 priority 0 llprio 3\n\tgroups: se
-"rise-set": output: c\n\tinet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"rise-set": added IKEv2 connection
+"rise-set": command "ifconfig": 'ifconfig' 'sec1'
+"rise-set": command "ifconfig" output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+"rise-set": command "ifconfig" output: \tindex 7 priority 0 llprio 3
+"rise-set": command "ifconfig" output: \tgroups: sec
+"rise-set": command "ifconfig" output: \tinet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00
+"rise-set": command "ifconfig": exited normally
+"rise-set": added oriented IKEv2 connection
 rise #
  ipsec up rise-set
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
 "rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio2)
-"rise-set" #2: command: 'ifconfig' 'sec1' 'up'
-"rise-set" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio2)
+"rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio0)
+"rise-set" #2: command "ifconfig up": 'ifconfig' 'sec1' 'up'
+"rise-set" #2: command "ifconfig up": exited normally
+"rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio0)
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
  ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15

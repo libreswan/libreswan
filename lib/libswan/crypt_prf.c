@@ -65,65 +65,88 @@ size_t crypt_prf_fips_key_size_floor(void)
 
 struct crypt_prf {
 	struct prf_context *context;
-	const char *name;
+	const char *prf_name;
+	const char *key_name;
 	const struct prf_desc *desc;
 	struct logger *logger;
 };
 
-static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
-			      const char *name,
+PRINTF_LIKE(2)
+static bool ldbg_prf(const struct crypt_prf *prf, const char *msg, ...)
+{
+	if (!LDBGP(DBG_CRYPT, prf->logger)) {
+		return false;
+	}
+	LLOG_JAMBUF(DEBUG_STREAM, prf->logger, buf) {
+		jam_string(buf, prf->prf_name);
+		jam_string(buf, " ");
+		jam_string(buf, prf->desc->common.fqn);
+		jam_string(buf, " PRF(");
+		jam_string(buf, prf->key_name);
+		jam_string(buf, ")");
+		if (prf->context != NULL) {
+			jam(buf, " at %p", prf->context);
+		}
+		jam_string(buf, ": ");
+		va_list ap;
+		va_start(ap, msg);
+		jam_va_list(buf, msg, ap);
+		va_end(ap);
+	}
+	return true;
+}
+
+static struct crypt_prf *wrap(const char *prf_name,
+			      const struct prf_desc *prf_desc,
+			      const char *key_name,
 			      struct logger *logger,
 			      struct prf_context *context)
 {
-	struct crypt_prf *prf = NULL;
-	if (context != NULL) {
-		prf = alloc_thing(struct crypt_prf, name);
-		*prf = (struct crypt_prf) {
-			.context = context,
-			.name = name,
-			.desc = prf_desc,
-			.logger = logger,
-		};
+	if (context == NULL) {
+		return NULL;
 	}
-	/* not @POINTER, confuses refcnt.awk */
-	ldbgf(DBG_CRYPT, logger, "%s PRF %s %p",
-	      name, prf_desc->common.fqn, prf);
+
+	struct crypt_prf *prf = alloc_thing(struct crypt_prf, prf_name);
+	prf->context = context;
+	prf->prf_name = prf_name;
+	prf->key_name = key_name;
+	prf->desc = prf_desc;
+	prf->logger = logger;
 	return prf;
 }
 
-struct crypt_prf *crypt_prf_init_bytes(const char *name,
+struct crypt_prf *crypt_prf_init_bytes(const char *prf_name,
 				       const struct prf_desc *prf_desc,
 				       const char *key_name,
 				       const void *key, size_t key_size,
 				       struct logger *logger)
 {
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "%s PRF %s init %s hunk %p (length %zd)",
-			 name, prf_desc->common.fqn,
-			 key_name, key, key_size);
+	struct crypt_prf *prf = wrap(prf_name, prf_desc, key_name, logger,
+				     prf_desc->prf_mac_ops->init_bytes(prf_desc, prf_name,
+								       key_name, key, key_size,
+								       logger));
+	if (prf == NULL) {
+		return NULL;
+	}
+	if (ldbg_prf(prf, "init hunk %p (length %zd)", key, key_size)) {
 		LDBG_dump(logger, key, key_size);
 	}
-	return wrap(prf_desc, name, logger,
-		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
-						      key_name, key, key_size,
-						      logger));
+	return prf;
 }
 
-struct crypt_prf *crypt_prf_init_symkey(const char *name,
+struct crypt_prf *crypt_prf_init_symkey(const char *prf_name,
 					const struct prf_desc *prf_desc,
 					const char *key_name, PK11SymKey *key,
 					struct logger *logger)
 {
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "%s PRF %s init %s-key@%p (size %zd)",
-			name, prf_desc->common.fqn,
-			key_name, key, sizeof_symkey(key));
-		LDBG_symkey(logger, name, key_name, key);
+	struct crypt_prf *prf = wrap(prf_name, prf_desc, key_name, logger,
+				     prf_desc->prf_mac_ops->init_symkey(prf_desc, prf_name,
+									key_name, key,
+									logger));
+	if (ldbg_prf(prf, "init symkey %p (length %zd)", key, sizeof_symkey(key))) {
+		LDBG_symkey(logger, prf_name, key_name, key);
 	}
-	return wrap(prf_desc, name, logger,
-		    prf_desc->prf_mac_ops->init_symkey(prf_desc, name,
-						       key_name, key,
-						       logger));
+	return prf;
 }
 
 /*
@@ -131,43 +154,37 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
  */
 
 void crypt_prf_update_symkey(struct crypt_prf *prf,
-			     const char *name, PK11SymKey *update)
+			     const char *update_name, PK11SymKey *update)
 {
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
-		LDBG_log(prf->logger, "%s PRF %s update %s-key@%p (size %zd)",
-			prf->name, prf->desc->common.fqn,
-			name, update, sizeof_symkey(update));
-		LDBG_symkey(prf->logger, prf->name, name, update);
+	if (ldbg_prf(prf, "update symkey %s@%p (size %zd)",
+		     update_name, update, sizeof_symkey(update))) {
+		LDBG_symkey(prf->logger, prf->prf_name, update_name, update);
 	}
-	prf->desc->prf_mac_ops->digest_symkey(prf->context, name, update);
+	prf->desc->prf_mac_ops->digest_symkey(prf->context, update_name, update);
 }
 
 void crypt_prf_update_byte(struct crypt_prf *prf,
-			   const char *name, uint8_t update)
+			   const char *update_name, uint8_t update)
 {
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
-		LDBG_log(prf->logger, "%s PRF %s update %s 0x%"PRIx8" (%"PRIu8")",
-			 prf->name, prf->desc->common.fqn,
-			 name, update, update);
+	if (ldbg_prf(prf, "update byte %s 0x%"PRIx8" (%"PRIu8")",
+		     update_name, update, update)) {
 		LDBG_thing(prf->logger, update);
 	}
-	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, &update, 1);
+	prf->desc->prf_mac_ops->digest_bytes(prf->context, update_name, &update, 1);
 }
 
 void crypt_prf_update_bytes(struct crypt_prf *prf,
-			    const char *name, const void *update, size_t sizeof_update)
+			    const char *update_name, const void *update, size_t sizeof_update)
 {
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
 		/*
 		 * XXX: don't log UPDATE using @POINTER syntax as it
 		 * might be bogus - confusing refcnt.awk.
 		 */
-		LDBG_log(prf->logger, "%s PRF %s update %s (%p length %zu)",
-			 prf->name, prf->desc->common.fqn,
-			 name, update, sizeof_update);
+	if (ldbg_prf(prf, "update hunk %s at %p (size %zu)",
+		     update_name, update, sizeof_update)) {
 		LDBG_dump(prf->logger, update, sizeof_update);
 	}
-	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, update, sizeof_update);
+	prf->desc->prf_mac_ops->digest_bytes(prf->context, update_name, update, sizeof_update);
 }
 
 PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
@@ -175,11 +192,9 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 	struct crypt_prf *prf = *prfp;
 	struct logger *logger = (*prfp)->logger;
 	PK11SymKey *tmp = prf->desc->prf_mac_ops->final_symkey(&prf->context);
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
-		LDBG_log(logger, "%s PRF %s final-key@%p (size %zu)",
-			 (*prfp)->name, (*prfp)->desc->common.fqn,
-			 tmp, sizeof_symkey(tmp));
-		LDBG_symkey(logger, (*prfp)->name, "key", tmp);
+	if (ldbg_prf(prf, "final key@%p (size %zu)",
+		     tmp, sizeof_symkey(tmp))) {
+		LDBG_symkey(logger, prf->prf_name, "key", tmp);
 	}
 	pfree(*prfp);
 	*prfp = prf = NULL;
@@ -191,10 +206,8 @@ void crypt_prf_final_bytes(struct crypt_prf **prfp,
 {
 	struct crypt_prf *prf = *prfp;
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, bytes, sizeof_bytes);
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
-		LDBG_log(prf->logger, "%s PRF %s final-bytes@%p (length %zu)",
-			 (*prfp)->name, (*prfp)->desc->common.fqn,
-			 bytes, sizeof_bytes);
+	if (ldbg_prf(prf, "final bytes@%p (length %zu)",
+		     bytes, sizeof_bytes)) {
 		LDBG_dump(prf->logger, bytes, sizeof_bytes);
 	}
 	pfree(*prfp);
@@ -219,14 +232,48 @@ struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ
 	passert(prf->desc->prf_output_size <= sizeof(output.ptr/*array*/));
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, output.ptr,
 					    prf->desc->prf_output_size);
-	if (LDBGP(DBG_CRYPT, prf->logger)) {
-		LDBG_log(prf->logger, "%s PRF %s final length %zu",
-			 (*prfp)->name, (*prfp)->desc->common.fqn,
-			 output.len);
-		LDBG_hunk(prf->logger, output);
+	if (ldbg_prf(prf, "final mac length %zu", output.len)) {
+		LDBG_hunk(prf->logger, &output);
 	}
 	/* clean up */
 	pfree(*prfp);
 	*prfp = prf = NULL;
 	return output;
+}
+
+/*
+ * Extract SIZEOF_SYMKEY bytes of keying material as a PRF key.
+ *
+ * Offset into the SYMKEY is in BYTES.
+ */
+
+PK11SymKey *prf_key_from_symkey_bytes(const char *name,
+				      const struct prf_desc *prf,
+				      size_t symkey_start_byte, size_t sizeof_symkey,
+				      PK11SymKey *source_key,
+				      where_t where, struct logger *logger)
+{
+	/*
+	 * NSS expects a key's mechanism to match the NSS algorithm
+	 * the key is intended for.  If this is wrong then the
+	 * operation fails.
+	 *
+	 * Unfortunately, some algorithms are not implemented by NSS,
+	 * so the correct key type can't always be specified.  For
+	 * those specify CKM_VENDOR_DEFINED.
+	 *
+	 * XXX: this function should be part of prf_ops.
+	 */
+	CK_FLAGS flags;
+	CK_MECHANISM_TYPE mechanism;
+	if (prf->prf_mac_ops->bespoke) {
+		flags = 0;
+		mechanism = CKM_VENDOR_DEFINED;
+	} else {
+		flags = CKF_SIGN;
+		mechanism = prf->nss.mechanism;
+	}
+	return symkey_from_symkey(name, source_key, mechanism, flags,
+				  symkey_start_byte, sizeof_symkey,
+				  where, logger);
 }

@@ -5,8 +5,8 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
-"west-east": added IKEv1 connection
+ ipsec add west-east
+"west-east": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -86,6 +86,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -96,6 +97,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main

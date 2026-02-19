@@ -229,6 +229,11 @@ size_t jam(struct jambuf *buf, const char *format, ...)
 	return n;
 }
 
+size_t jam_bool(struct jambuf *buf, bool b)
+{
+	return jam(buf, "%s", bool_str(b));
+}
+
 size_t jam_char(struct jambuf *buf, char c)
 {
 	return jam_raw_bytes(buf, &c, 1);

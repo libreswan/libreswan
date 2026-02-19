@@ -49,7 +49,7 @@ chunk_t decode_to_chunk(const char *prefix, const char *original,
 	}
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s() output:", __func__);
-		LDBG_hunk(logger, chunk);
+		LDBG_hunk(logger, &chunk);
 	}
 	return chunk;
 }
@@ -84,7 +84,7 @@ struct crypt_mac decode_to_mac(const char *prefix, const char *original,
 	}
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s() output:", __func__);
-		LDBG_hunk(logger, mac);
+		LDBG_hunk(logger, &mac);
 	}
 	return mac;
 }

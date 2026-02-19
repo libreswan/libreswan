@@ -1,0 +1,67 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ../../guestbin/callgrind.sh PATH/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork > /tmp/$(hostname).pluto.calllog 2>&1 & sleep 1
+[x] PID
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ echo done
+done
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # callgrind only dumps results after pluto is shutdown
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ cp -v /tmp/$(hostname).*.call* OUTPUT/
+'/tmp/west.callgrind.sh.callgrind' -> 'OUTPUT/west.callgrind.sh.callgrind'
+'/tmp/west.callgrind.sh.callgrind-01' -> 'OUTPUT/west.callgrind.sh.callgrind-01'
+'/tmp/west.pluto.calllog' -> 'OUTPUT/west.pluto.calllog'
+[1]+  Done                       ../../guestbin/callgrind.sh PATH/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork > /tmp/$(hostname).pluto.calllog 2>&1
+west #

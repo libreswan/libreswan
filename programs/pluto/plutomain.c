@@ -54,7 +54,7 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "hourly.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"
@@ -80,23 +80,24 @@
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
+#include "updown.h"		/* for pluto_dns_resolver; */
+#include "ikev2_ipseckey.h"	/* for init_ikev2_ipseckey() */
 #include "ddos.h"
+#include "helper.h"
+#include "resolve_helper.h"	/* for init_resolve_helper() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
 
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 # include <cap-ng.h>	/* rpm:libcap-ng-devel deb:libcap-ng-dev */
 #endif
 
 #include "labeled_ipsec.h"		/* for init_labeled_ipsec() */
 
 # include "pluto_sd.h"		/* for pluto_sd_init() */
-
-#ifdef USE_DNSSEC
-#include "dnssec.h"
-#endif
+#include "dnssec.h"		/* for struct dnssec_config; */
 
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
@@ -111,19 +112,11 @@ bool in_main_thread(void)
 
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
-static const char *conffile = IPSEC_CONF;
-
-static struct {
-	bool enable;
-	const char *rootkey_file;
-	const char *anchors;
-} pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
+static char *conffile = NULL;
 
 void free_pluto_main(void)
 {
-	/* Some values can be NULL if not specified as pluto argument */
-	free_global_redirect_dests();
-	free_config_setup();
+	pfreeany(conffile);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -157,9 +150,6 @@ static const char compile_time_interop_options[] = ""
 #if defined __GNUC__ && defined __EXCEPTIONS
 	" GCC_EXCEPTIONS"
 #endif
-#ifdef HAVE_BROKEN_POPEN
-	" BROKEN_POPEN"
-#endif
 	" NSS"
 	" (IPsec profile)"
 #ifdef USE_NSS_KDF
@@ -167,20 +157,29 @@ static const char compile_time_interop_options[] = ""
 #else
 	" (native-KDF)"
 #endif
+#ifdef USE_UNBOUND
+	" UNBOUND"
+#endif
+#ifdef USE_LDNS
+	" LDNS"
+#endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
+#endif
+#if ENABLE_IPSECKEY
+	" IPSECKEY"
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
 	" SYSTEMD_WATCHDOG"
 #endif
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 	" LABELED_IPSEC"
 	" (SELINUX)"
 #endif
 #ifdef USE_SECCOMP
 	" SECCOMP"
 #endif
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 	" LIBCAP_NG"
 #endif
 #ifdef USE_LINUX_AUDIT
@@ -232,8 +231,8 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 	}
 
 	ndone = 0;
-	dbg("need %d bits random for extra seeding of the NSS PRNG",
-	    (int) nbytes * BITS_IN_BYTE);
+	ldbg(logger, "need %d bits random for extra seeding of the NSS PRNG",
+	     (int) nbytes * BITS_IN_BYTE);
 
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
@@ -246,7 +245,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 		ndone += got;
 	}
 	close(dev);
-	dbg("read %zu bytes from /dev/random for NSS PRNG", nbytes);
+	ldbg(logger, "read %zu bytes from /dev/random for NSS PRNG", nbytes);
 }
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)
@@ -260,9 +259,9 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
  * on other users
  */
 
-static void init_seedbits(const struct config_setup *oco, struct logger *logger)
+static void init_seedbits(struct logger *logger)
 {
-	uintmax_t seedbits = config_setup_option(oco, KBF_SEEDBITS);
+	uintmax_t seedbits = config_setup_option(KBF_SEEDBITS);
 	if (seedbits != 0) {
 		int seedbytes = BYTES_FOR_BITS(seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
@@ -305,6 +304,7 @@ enum opt {
 	OPT_DEBUG_NONE,
 	OPT_DEBUG_ALL,
 	OPT_IMPAIR,
+	OPT_DNSSEC_ENABLE,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_ANCHORS,
 	OPT_HELP,
@@ -408,11 +408,10 @@ const struct option optarg_options[] = {
 	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
 	{ OPT("efence-protect"), no_argument, NULL, OPT_EFENCE_PROTECT, },
 
-#ifdef USE_DNSSEC
+	{ OPT("dnssec-enable", "<bool>"), required_argument, NULL, OPT_DNSSEC_ENABLE },
 	{ OPT("dnssec-rootkey-file", "<filename>"), required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
 	{ OPT("dnssec-anchors", "<filename>"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 	{ REPLACE_OPT("dnssec-trusted", "dnssec-anchors", "5.3"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
-#endif
 
 	{ OPT("ddos-mode", "{auto,busy,unlimited}"), required_argument, NULL, OPT_DDOS_MODE },
 	{ OPT("ddos-ike-threshold", "<count>"), required_argument, NULL, OPT_DDOS_IKE_THRESHOLD },
@@ -546,29 +545,29 @@ static void check_conf(diag_t d, const char *conf, struct logger *logger)
 
 static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 {
-	if (lower >= 0 && deltatime_cmp(timeout, <, deltatime(lower))) {
+	if (lower >= 0 && deltatime_cmp(timeout, <, deltatime_from_seconds(lower))) {
 		return diag("too small, less than %us", lower);
 	}
-	if (upper >= 0 && deltatime_cmp(timeout, >, deltatime(upper))) {
+	if (upper >= 0 && deltatime_cmp(timeout, >, deltatime_from_seconds(upper))) {
 		return diag("too big, more than %us", upper);
 	}
 	return NULL;
 }
 
-static void update_optarg_deltatime(enum config_setup_keyword kw, struct logger *logger,
-				   enum timescale timescale, int lower, int upper)
+static void update_optarg_deltatime(enum config_setup_keyword kw,
+				    struct logger *logger,
+				    int lower, int upper)
 {
-	deltatime_t time = optarg_deltatime(logger, timescale);
+	deltatime_t time = optarg_deltatime(logger);
 	check_diag(logger, deltatime_ok(time, lower, upper));
 	update_setup_deltatime(kw, time);
 }
 
-static deltatime_t check_config_deltatime(const struct config_setup *oco,
-					  enum config_setup_keyword kw,
+static deltatime_t check_config_deltatime(enum config_setup_keyword kw,
 					  struct logger *logger,
 					  int lower, int upper, const char *name)
 {
-	deltatime_t time = config_setup_deltatime(oco, kw);
+	deltatime_t time = config_setup_deltatime(kw);
 	if (time.is_set) {
 		check_conf(deltatime_ok(time, lower, upper), name, logger);
 	}
@@ -634,6 +633,7 @@ int main(int argc, char **argv)
 	 * determine if it is running on an aux thread.
 	 */
 	main_thread = pthread_self();
+	conffile = clone_str(IPSEC_CONF, "conffile");
 
 	/* handle arguments */
 	for (;; ) {
@@ -644,7 +644,7 @@ int main(int argc, char **argv)
 		 * string as the list.  It could be "hvdenp:l:s:"
 		 * "NARXPECK".
 		 */
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
@@ -679,10 +679,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VERSION:	/* --version */
-			printf("%s%s\n", ipsec_version_string(), /* ok */
-			       compile_time_interop_options);
-			/* not exit_pluto because we are not initialized yet */
-			exit(PLUTO_EXIT_OK);
+			/* move these to optarg_version()? */
+			optarg_version(compile_time_interop_options);
 
 		case OPT_NHELPERS:	/* --nhelpers */
 			update_setup_option(KBF_NHELPERS, optarg_uintmax(logger));
@@ -723,12 +721,14 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_LOGFILE, optarg_nonempty(logger));
 			continue;
 
+		case OPT_DNSSEC_ENABLE:	/* --dnssec-enable yes|no */
+			update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
+			continue;
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			/* reject '' */
 			update_setup_string(KSF_DNSSEC_ROOTKEY_FILE,
 					    optarg_nonempty(logger));
 			continue;
-
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
 			/* allow '', become NULL */
 			update_setup_string(KSF_DNSSEC_ANCHORS,
@@ -763,7 +763,7 @@ int main(int argc, char **argv)
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
 		{
-			deltatime_t interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			deltatime_t interval = optarg_deltatime(logger);
 			check_diag(logger, deltatime_ok(interval, 1, MAX_EXPIRE_SHUNT_INTERVAL_SECONDS));
 			update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, interval);
 			continue;
@@ -839,14 +839,14 @@ int main(int argc, char **argv)
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
 #define CRL_TIMEOUT_RANGE 1, 1000
 			update_optarg_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
-						TIMESCALE_SECONDS, CRL_TIMEOUT_RANGE);
+						CRL_TIMEOUT_RANGE);
 			continue;
 		case OPT_CRL_STRICT:	/* --crl-strict */
 			update_setup_yn(KYN_CRL_STRICT, YN_YES);
 			continue;
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
 			update_setup_deltatime(KBF_CRL_CHECKINTERVAL,
-					       optarg_deltatime(logger, TIMESCALE_SECONDS));
+					       optarg_deltatime(logger));
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -864,7 +864,7 @@ int main(int argc, char **argv)
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
 #define OCSP_TIMEOUT_RANGE 1, 1000
 			update_optarg_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_TIMEOUT_RANGE);
+						OCSP_TIMEOUT_RANGE);
 			continue;
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
@@ -881,7 +881,7 @@ int main(int argc, char **argv)
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
 #define OCSP_CACHE_MIN_AGE_RANGE 1, -1
 			update_optarg_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_CACHE_MIN_AGE_RANGE);
+						OCSP_CACHE_MIN_AGE_RANGE);
 			continue;
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
 			/*
@@ -891,7 +891,7 @@ int main(int argc, char **argv)
 			 */
 #define OCSP_CACHE_MAX_AGE_RANGE 0, -1
 			update_optarg_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_CACHE_MAX_AGE_RANGE);
+						OCSP_CACHE_MAX_AGE_RANGE);
 			continue;
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
 			update_setup_option(KBF_OCSP_METHOD, optarg_sparse(logger, 0, &ocsp_method_names));
@@ -952,7 +952,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
-			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger, TIMESCALE_SECONDS));
+			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger));
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */
@@ -971,7 +971,8 @@ int main(int argc, char **argv)
 			 * Config struct to variables mapper.  This
 			 * will update previously set options.
 			 */
-			conffile = optarg_nonempty(logger);
+			pfreeany(conffile);
+			conffile = optarg_realpath(logger);
 			if (!load_config_setup(optarg, logger, 0/*no-verbosity*/)) {
 				/* details already logged */
 				optarg_fatal(logger, "cannot load config file '%s'", optarg);
@@ -1005,7 +1006,7 @@ int main(int argc, char **argv)
 
 		case OPT_IMPAIR:
 		{
-			struct whack_impair impairment;
+			struct whack_impairment impairment;
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 				if (!process_impair(&impairment, NULL, true, logger)) {
@@ -1038,9 +1039,7 @@ int main(int argc, char **argv)
 	}
 
 	/* options processed save to obtain the setup */
-	const struct config_setup *oco = config_setup_singleton();
-
-	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+	const char *protostack = config_setup_string(KSF_PROTOSTACK);
 	if (protostack != NULL) {
 		for (const struct kernel_ops *const *stack = kernel_stacks;
 		     *stack != NULL; stack++) {
@@ -1065,56 +1064,56 @@ int main(int argc, char **argv)
 		     kernel_ops->protostack_names[0]);
 	}
 
-	enum yn_options managed = config_setup_option(oco, KYN_IPSEC_INTERFACE_MANAGED);
+	enum yn_options managed = config_setup_option(KYN_IPSEC_INTERFACE_MANAGED);
 	config_ipsec_interface(managed, logger);
 
 	/* trash default; which is true */
-	log_ip = config_setup_yn(oco, KYN_LOGIP);
+	log_ip = config_setup_yn(KYN_LOGIP);
 
 	/* there's a rumor this is going away */
-	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
+	pluto_uniqueIDs = config_setup_yn(KYN_UNIQUEIDS);
 
 	/* IKEv2 ignoring OPPO? */
-	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
+	pluto_drop_oppo_null = config_setup_yn(KYN_DROP_OPPO_NULL);
 
 	/* redirect|to */
 
-	init_global_redirect(config_setup_option(oco, KBF_GLOBAL_REDIRECT),
-			     config_setup_string(oco, KSF_GLOBAL_REDIRECT_TO),
+	init_global_redirect(config_setup_option(KBF_GLOBAL_REDIRECT),
+			     config_setup_string(KSF_GLOBAL_REDIRECT_TO),
 			     logger);
 
 	/* ddos */
-	init_ddos(oco, logger);
+	init_ddos(logger);
 
 	/* listening et.al.? */
-	init_ifaces(oco, logger);
+	init_ifaces(logger);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
 	 */
 
-	x509_crl.curl_iface = config_setup_string(oco, KSF_CURLIFACE);
-	x509_crl.strict = config_setup_yn(oco, KYN_CRL_STRICT);
-	x509_crl.check_interval = config_setup_deltatime(oco, KBF_CRL_CHECKINTERVAL);
-	x509_crl.timeout = check_config_deltatime(oco, KBF_CRL_TIMEOUT_SECONDS, logger,
+	x509_crl.curl_iface = config_setup_string(KSF_CURLIFACE);
+	x509_crl.strict = config_setup_yn(KYN_CRL_STRICT);
+	x509_crl.check_interval = config_setup_deltatime(KBF_CRL_CHECKINTERVAL);
+	x509_crl.timeout = check_config_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
 						  CRL_TIMEOUT_RANGE, "crl-timeout");
 
 	/*
 	 * Extract/check X509 OCSP.
 	 */
 
-	x509_ocsp.enable = config_setup_yn(oco, KYN_OCSP_ENABLE);
-	x509_ocsp.strict = config_setup_yn(oco, KYN_OCSP_STRICT);
-	x509_ocsp.uri = config_setup_string(oco, KSF_OCSP_URI);
-	x509_ocsp.trust_name = config_setup_string(oco, KSF_OCSP_TRUSTNAME);
-	x509_ocsp.timeout = check_config_deltatime(oco, KBF_OCSP_TIMEOUT_SECONDS, logger,
+	x509_ocsp.enable = config_setup_yn(KYN_OCSP_ENABLE);
+	x509_ocsp.strict = config_setup_yn(KYN_OCSP_STRICT);
+	x509_ocsp.uri = config_setup_string(KSF_OCSP_URI);
+	x509_ocsp.trust_name = config_setup_string(KSF_OCSP_TRUSTNAME);
+	x509_ocsp.timeout = check_config_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
 						   OCSP_TIMEOUT_RANGE, "ocsp-timeout");
-	x509_ocsp.cache_min_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+	x509_ocsp.cache_min_age = check_config_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
 							 OCSP_CACHE_MIN_AGE_RANGE, "ocsp-cache-min-age");
-	x509_ocsp.cache_max_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+	x509_ocsp.cache_max_age = check_config_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
 							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
-	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
-	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
+	x509_ocsp.method = config_setup_option(KBF_OCSP_METHOD);
+	x509_ocsp.cache_size = config_setup_option(KBF_OCSP_CACHE_SIZE);
 
 	/*
 	 * Create the lock file before things fork.
@@ -1128,7 +1127,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "selftest: skipping lock");
 		lockfd = -1;
 	} else {
-		lockfd = create_lock_file(oco, fork_desired, logger);
+		lockfd = create_lock_file(fork_desired, logger);
 	}
 
 	/*
@@ -1145,7 +1144,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "selftest: skipping control socket");
 	} else {
 		/* may never return */
-		init_ctl_socket(oco, logger);
+		init_ctl_socket(logger);
 	}
 
 	/*
@@ -1204,7 +1203,7 @@ int main(int argc, char **argv)
 		/* no daemon fork: we have to fill in lock file */
 		fill_and_close_lock_file(&lockfd, getpid());
 
-		if (isatty(fileno(stdout)) && !config_setup_yn(oco, KYN_LOGSTDERR)) {
+		if (isatty(fileno(stdout)) && !config_setup_yn(KYN_LOGSTDERR)) {
 			/*
 			 * Last gasp; from now on everything goes to
 			 * the file/syslog.
@@ -1241,7 +1240,7 @@ int main(int argc, char **argv)
 	 * switch debugging flags when specified).
 	 */
 
-	switch_log(oco, &logger);
+	switch_log(&logger);
 
 	/*
 	 * Forking done; logging enabled.  Time to announce things to
@@ -1249,7 +1248,7 @@ int main(int argc, char **argv)
 	 */
 
 	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
-	     ipsec_version_code(), compile_time_interop_options, getpid());
+	     libreswan_version, compile_time_interop_options, getpid());
 
 	/*
 	 * Enable debugging from the config file and announce it.
@@ -1269,13 +1268,26 @@ int main(int argc, char **argv)
 	}
 
 	init_kernel_info(logger);
-	init_binlog(oco, logger);
+	init_binlog(logger);
+
+	/*
+	 * DNS.
+	 */
+	pluto_dns_resolver = config_setup_string(KSF_DNS_RESOLVER);
+	if (streq(pluto_dns_resolver, "file") ||
+	    streq(pluto_dns_resolver, "systemd")) {
+		llog(RC_LOG, logger, "using dns-resolver=%s",
+		     pluto_dns_resolver);
+	} else {
+		llog(RC_LOG, logger, "using dns-resolver=%s (but it is not recognized)",
+		     pluto_dns_resolver);
+	}
 
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
 		int e = errno;
-		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		llog(WARNING_STREAM, logger, "chdir(\"%s\") to dumpdir failed (%d: %s)",
 		     coredir, e, strerror(e));
 	}
 
@@ -1297,8 +1309,8 @@ int main(int argc, char **argv)
 	spd_db_init(logger);
 
 	pluto_init_nss(config_setup_nssdir(), logger);
-	init_seedbits(oco, logger);
-	init_demux(oco, logger);
+	init_seedbits(logger);
+	init_demux(logger);
 
 	if (is_fips_mode()) {
 		/*
@@ -1332,7 +1344,7 @@ int main(int argc, char **argv)
 	 */
 
 	if (impair.force_fips) {
-		llog(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
+		llog(IMPAIR_STREAM, logger, "forcing FIPS checks to true to emulate FIPS mode");
 		set_fips_mode(FIPS_MODE_ON);
 	}
 
@@ -1370,7 +1382,7 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [DISABLED]");
 #endif
 
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 	/*
 	 * If we don't have the capability to drop capailities, do nothing.
 	 *
@@ -1428,7 +1440,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	bool audit_ok = linux_audit_init(config_setup_yn(oco, KYN_AUDIT_LOG), logger);
+	bool audit_ok = linux_audit_init(config_setup_yn(KYN_AUDIT_LOG), logger);
 	llog(RC_LOG, logger, "Linux audit support [%s]",
 	     (audit_ok ? "enabled" : "disabled"));
 #else
@@ -1463,11 +1475,10 @@ int main(int argc, char **argv)
 
 	/* server initialized; timers can follow */
 	init_log_limiter(logger);
-	deltatime_t keep_alive = config_setup_deltatime(oco, KBF_KEEP_ALIVE);
+	deltatime_t keep_alive = config_setup_deltatime(KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
-	init_ddns();
 
-	const char *virtual_private = config_setup_string(oco, KSF_VIRTUAL_PRIVATE);
+	const char *virtual_private = config_setup_string(KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
 
 	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
@@ -1478,7 +1489,7 @@ int main(int argc, char **argv)
 	      "!?!"));
 
 	/* require NSS */
-	init_root_certs();
+	init_root_certs(logger);
 	init_secret_timer(logger);
 	init_ike_alg(logger);
 	test_ike_alg(logger);
@@ -1496,9 +1507,10 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_server_helpers(config_setup_option(oco, KBF_NHELPERS), logger);
+	uintmax_t nhelpers = config_setup_option(KBF_NHELPERS);
+	start_helpers(nhelpers, logger);
 
-	init_kernel(oco, logger);
+	init_kernel(logger);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
@@ -1510,22 +1522,15 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-#ifdef USE_DNSSEC
-	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
-	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
-	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
-	d = unbound_event_init(get_pluto_event_base(),
-			       pluto_dnssec.enable,
-			       pluto_dnssec.rootkey_file,
-			       pluto_dnssec.anchors,
-			       logger/*for-warnings*/);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0, "%s", str_diag(d));
-	}
+	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
 	llog(RC_LOG, logger, "DNSSEC support [%s]",
-	     (pluto_dnssec.enable ? "enabled" : "disabled"));
+	     (dnssec->disabled != NULL ? dnssec->disabled : "enabled"));
+
+#if ENABLE_IPSECKEY
+	init_ikev2_ipseckey(get_pluto_event_base(), logger);
+	llog(RC_LOG, logger, "IPSECKEY support [enabled]");
 #else
-	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
+	llog(RC_LOG, logger, "IPSECKEY support [not compiled in]");
 #endif
 
 	/*
@@ -1556,8 +1561,6 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
-	const struct config_setup *oco = config_setup_singleton();
-
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
@@ -1570,16 +1573,17 @@ void show_setup_plutomain(struct show *s)
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
 	     config_setup_dumpdir(),
-	     config_setup_string_or_unset(oco, KSF_STATSBIN, "unset"));
+	     config_setup_string_or_unset(KSF_STATSBIN, "unset"));
 
 	SHOW_JAMBUF(s, buf) {
-		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
+		const struct dnssec_config *dnssec = dnssec_config_singleton(show_logger(s));
+		jam(buf, "dnssec-enable=%s", bool_str(dnssec->disabled == NULL));
 		jam_string(buf, ", ");
 		jam(buf, "dnssec-rootkey-file=%s",
-		    (pluto_dnssec.rootkey_file == NULL ? "<unset>" : pluto_dnssec.rootkey_file));
+		    (dnssec->rootkey_file == NULL ? "<unset>" : dnssec->rootkey_file));
 		jam_string(buf, ", ");
 		jam(buf, "dnssec-anchors=%s",
-		    (pluto_dnssec.anchors == NULL ? "<unset>" : pluto_dnssec.anchors));
+		    (dnssec->anchors == NULL ? "<unset>" : dnssec->anchors));
 	}
 
 	show(s, "sbindir=%s, libexecdir=%s",
@@ -1587,12 +1591,12 @@ void show_setup_plutomain(struct show *s)
 		IPSEC_EXECDIR);
 
 	show(s, "pluto_version=%s, pluto_vendorid=%s",
-	     ipsec_version_code(),
+	     libreswan_version,
 	     config_setup_vendorid());
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "nhelpers=");
-		uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
+		uintmax_t nhelpers = config_setup_option(KBF_NHELPERS);
 		if (nhelpers == UINTMAX_MAX) {
 			jam_string(buf, "-1");
 		} else {
@@ -1600,23 +1604,23 @@ void show_setup_plutomain(struct show *s)
 		}
 		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds",
-		    deltasecs(config_setup_deltatime(oco, KBF_SHUNTLIFETIME)));
+		    deltasecs(config_setup_deltatime(KBF_SHUNTLIFETIME)));
 		jam(buf, ", expire-lifetime=%jds",
-		    deltasecs(config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME)));
+		    deltasecs(config_setup_deltatime(KBF_EXPIRE_LIFETIME)));
 	}
 
 	show_log(s);
 
-	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	enum global_ikev1_policy ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 
 	name_buf pb;
 	name_buf mb;
 
 	show(s,
 	     "ddos-cookies-threshold=%ju, ddos-max-halfopen=%ju, ddos-mode=%s, ikev1-policy=%s",
-	     config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD),
-	     config_setup_option(oco, KBF_MAX_HALFOPEN_IKE),
-	     str_sparse_long(&ddos_mode_names, config_setup_option(oco, KBF_DDOS_MODE), &mb),
+	     config_setup_option(KBF_DDOS_IKE_THRESHOLD),
+	     config_setup_option(KBF_MAX_HALFOPEN_IKE),
+	     str_sparse_long(&ddos_mode_names, config_setup_option(KBF_DDOS_MODE), &mb),
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	/*
@@ -1629,16 +1633,17 @@ void show_setup_plutomain(struct show *s)
 	 *
 	 * NFLOG group - 0 means no logging.
 	 */
-	uintmax_t nflog_all = config_setup_option(oco, KBF_NFLOG_ALL);
+	uintmax_t nflog_all = config_setup_option(KBF_NFLOG_ALL);
 
 	show(s,
-		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju",
-		pluto_ike_socket_bufsize,
-		bool_str(pluto_ike_socket_errqueue),
-		bool_str(x509_crl.strict),
-		deltasecs(x509_crl.check_interval),
-		pluto_listen != NULL ? pluto_listen : "<any>",
-		nflog_all
+	     "ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju, dns-resolver=%s,",
+	     pluto_ike_socket_bufsize,
+	     bool_str(pluto_ike_socket_errqueue),
+	     bool_str(x509_crl.strict),
+	     deltasecs(x509_crl.check_interval),
+	     pluto_listen != NULL ? pluto_listen : "<any>",
+	     nflog_all,
+	     pluto_dns_resolver
 		);
 
 	show_x509_ocsp(s);

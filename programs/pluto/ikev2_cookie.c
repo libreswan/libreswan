@@ -119,7 +119,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		pexpect(cookie_digest == md->pd[PD_v2N_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
-		dbg("DDOS disabled and no cookie sent, continuing");
+		ldbg(logger, "DDOS disabled and no cookie sent, continuing");
 		return false; /* all ok!?! */
 	}
 	pexpect(me_want_cookie || cookie_digest != NULL);
@@ -139,12 +139,12 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	 * function (PRF) (We can check for minimum 128bit length).
 	 */
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
-		llog_md(md, "DDOS cookie requires Ni paylod - dropping message");
+		limited_llog_md(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
 	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
-		llog_md(md, "DOS cookie failed as Ni payload invalid - dropping message");
+		limited_llog_md(md, "DOS cookie failed as Ni payload invalid - dropping message");
 		return true; /* reject cookie */
 	}
 
@@ -177,21 +177,21 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	if (cookie_header->isan_protoid != 0 ||
 	    cookie_header->isan_spisize != 0 ||
 	    cookie_header->isan_length != sizeof(v2_cookie_t) + sizeof(struct ikev2_notify)) {
-		llog_md(md, "DOS cookie notification corrupt, or invalid - dropping message");
+		limited_llog_md(md, "DOS cookie notification corrupt, or invalid - dropping message");
 		return true; /* reject cookie */
 	}
 	shunk_t remote_cookie = pbs_in_left(&cookie_digest->pbs);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "received cookie:", remote_cookie);
-		LDBG_log_hunk(logger, "computed cookie:", local_cookie);
+		LDBG_log_hunk(logger, "received cookie:", &remote_cookie);
+		LDBG_log_hunk(logger, "computed cookie:", &local_cookie);
 	}
 
 	if (!hunk_eq(local_cookie, remote_cookie)) {
-		llog_md(md, "DOS cookies do not match - dropping message");
+		limited_llog_md(md, "DOS cookies do not match - dropping message");
 		return true; /* reject cookie */
 	}
-	dbg("cookies match");
+	ldbg(logger, "cookies match");
 
 	return false; /* love the cookie */
 }
@@ -260,7 +260,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	replace_chunk(&ike->sa.st_dcookie, cookie, "DDOS cookie");
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "IKEv2 cookie received");
-		LDBG_hunk(ike->sa.logger, ike->sa.st_dcookie);
+		LDBG_hunk(ike->sa.logger, &ike->sa.st_dcookie);
 	}
 
 	if (stream != NO_STREAM) {

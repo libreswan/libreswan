@@ -77,11 +77,11 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				   const chunk_t Ni, const chunk_t Nr,
-				   PK11SymKey *dh_secret,
+				   PK11SymKey *ke_secret,
 				   struct logger *logger)
 {
 	int is_aes_prf = 0;
-	switch (prf_desc->common.id[IKEv2_ALG_ID]) {
+	switch (prf_desc->ikev2_alg_id) {
 	case IKEv2_PRF_AES128_CMAC:
 	case IKEv2_PRF_AES128_XCBC:
 		is_aes_prf = 1;
@@ -101,7 +101,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
+	return crypt_derive(ke_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE, CKA_DERIVE,
 			    /*keysize*/0, /*flags*/0,
 			    HERE, logger);
@@ -112,7 +112,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					 PK11SymKey *SK_d_old,
-					 PK11SymKey *new_dh_secret,
+					 PK11SymKey *new_ke_secret,
 					 const chunk_t Ni, const chunk_t Nr,
 					 struct logger *logger)
 {
@@ -120,7 +120,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_FALSE,
 		.bRekey = CK_TRUE,
-		.hNewKey = PK11_GetSymKeyHandle(new_dh_secret),
+		.hNewKey = PK11_GetSymKeyHandle(new_ke_secret),
 		.pNi = Ni.ptr,
 		.ulNiLen = Ni.len,
 		.pNr = Nr.ptr,
@@ -164,7 +164,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *prf_plus;
 
-	chunk_t seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
+	chunk_t seed_data = clone_hunk_hunk_as_chunk(&Ni, &Nr, "seed_data = Ni || Nr");
 	append_chunk_hunk("seed_data = Nir || SPIi", &seed_data, SPIi);
 	append_chunk_hunk("seed_data = Nir || SPIir", &seed_data, SPIr);
 	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data,
@@ -178,7 +178,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   PK11SymKey *SK_d,
-				   PK11SymKey *new_dh_secret,
+				   PK11SymKey *new_ke_secret,
 				   const chunk_t Ni, const chunk_t Nr,
 				   size_t required_bytes,
 				   struct logger *logger)
@@ -195,16 +195,17 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	chunk_t seed_data;
 	PK11SymKey *prf_plus;
 
-	seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
-	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_dh_secret, seed_data,
+	seed_data = clone_hunk_hunk_as_chunk(&Ni, &Nr, "seed_data = Ni || Nr");
+	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_ke_secret, seed_data,
 				    required_bytes, logger);
 	free_chunk_content(&seed_data);
 	return prf_plus;
 }
 
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
-				 shunk_t pss,
-				 chunk_t first_packet, chunk_t nonce,
+				 PK11SymKey *psk,
+				 shunk_t first_packet,
+				 chunk_t nonce,
 				 const struct crypt_mac *id_hash,
 				 chunk_t intermediate_packet,
 				 struct logger *logger)
@@ -214,17 +215,6 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 	{
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
 		CK_MECHANISM_TYPE prf_mech = prf_desc->nss.mechanism;
-		PK11SymKey *pss_key = prf_key_from_hunk("pss", prf_desc, pss, logger);
-		if (pss_key == NULL) {
-			if (is_fips_mode()) {
-				llog_passert(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
-					     prf_desc->common.fqn);
-			}
-			llog_pexpect(logger, HERE, "failure creating %s PRF context for digesting PSK",
-				     prf_desc->common.fqn);
-			return empty_mac;
-		}
-
 		CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 			.prfMechanism = prf_mech,
 			.bDataAsKey = CK_FALSE,
@@ -238,18 +228,16 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 			.data = (unsigned char *)&ike_prf_params,
 			.len = sizeof(ike_prf_params),
 		};
-		prf_psk = crypt_derive(pss_key, CKM_NSS_IKE_PRF_DERIVE, &params,
+		prf_psk = crypt_derive(psk, CKM_NSS_IKE_PRF_DERIVE, &params,
 				       "prf(Shared Secret, \"Key Pad for IKEv2\")", prf_mech,
 				       CKA_SIGN, 0/*key-size*/, 0/*flags*/,
 				       HERE, logger);
-		symkey_delref(logger, "psk pss_key", &pss_key);
 	}
 
 	/* calculate outer prf */
 	struct crypt_mac signed_octets;
 	{
-		struct crypt_prf *prf = crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-							      prf_desc,
+		struct crypt_prf *prf = crypt_prf_init_symkey("PSK signed-octets", prf_desc,
 							      "<prf-psk>", prf_psk,
 							      logger);
 		/*
@@ -268,7 +256,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", *id_hash);
-		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
+		crypt_prf_update_hunk(prf, "intauth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	symkey_delref(logger, "prf-psk", &prf_psk);
@@ -278,7 +266,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 
 static struct crypt_mac psk_resume(const struct prf_desc *prf,
 				   PK11SymKey *SK_px,
-				   chunk_t first_packet,
+				   shunk_t first_packet,
 				   struct logger *logger)
 {
 	return ike_alg_prf_ikev2_mac_ops.psk_resume(prf, SK_px,

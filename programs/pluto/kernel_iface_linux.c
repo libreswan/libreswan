@@ -27,14 +27,6 @@
 #include "log.h"
 #include "kernel_iface.h"
 
-#ifdef HAVE_BROKEN_POPEN
-/*
- * including this may be acceptable on a system without a working popen
- * but a normal system should not need this, <errno.h> should cover it ;-)
- */
-#include <asm-generic/errno.h>
-#endif
-
 /* invoke the updown script to do the routing and firewall commands required
  *
  * The user-specified updown script is run.  Parameters are fed to it in
@@ -107,11 +99,11 @@ static int cmp_iface(const void *lv, const void *rv)
 	}
 	/* Interface addresses don't have ports. */
 	/* what else */
-	dbg("interface sort not stable or duplicate");
+	ldbg(&global_logger, "interface sort not stable or duplicate");
 	return 0;
 }
 
-static void sort_ifaces(struct kernel_iface **rifaces)
+static void sort_ifaces(struct kernel_iface **rifaces, struct verbose verbose)
 {
 	/* how many? */
 	unsigned nr_ifaces = 0;
@@ -119,18 +111,18 @@ static void sort_ifaces(struct kernel_iface **rifaces)
 		nr_ifaces++;
 	}
 	if (nr_ifaces == 0) {
-		dbg("no interfaces to sort");
+		vdbg("no interfaces to sort");
 		return;
 	}
 	/* turn the list into an array */
 	struct kernel_iface **ifaces = alloc_things(struct kernel_iface *, nr_ifaces,
-						 "ifaces for sorting");
+						    "ifaces for sorting");
 	ifaces[0] = *rifaces;
 	for (unsigned i = 1; i < nr_ifaces; i++) {
 		ifaces[i] = ifaces[i-1]->next;
 	}
 	/* sort */
-	dbg("sorting %u interfaces", nr_ifaces);
+	vdbg("sorting %u interfaces", nr_ifaces);
 	qsort(ifaces, nr_ifaces, sizeof(ifaces[0]), cmp_iface);
 	/* turn the array back into a list */
 	for (unsigned i = 0; i < nr_ifaces - 1; i++) {
@@ -148,7 +140,7 @@ static void sort_ifaces(struct kernel_iface **rifaces)
  * rtnetlink(7) should be used for IPv6.
  */
 
-struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
+struct kernel_iface *find_kernel_ifaces6(struct verbose verbose)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *
@@ -169,7 +161,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 	FILE *proc_sock = fopen(proc_name, "r");
 
 	if (proc_sock == NULL) {
-		dbg("could not open %s", proc_name);
+		vdbg("could not open %s", proc_name);
 	} else {
 		for (;; ) {
 			unsigned short xb[8];           /* IPv6 address as 8 16-bit chunks */
@@ -212,7 +204,10 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 				 xb[6], xb[7]);
 
 			ip_address ifaddr;
-			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr));
+			diag_t d = ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr);
+			if (d != NULL) {
+				llog_passert(verbose.logger, HERE, "%s", str_diag(d));
+			}
 
 			if (address_is_specified(ifaddr)) {
 				struct kernel_iface *ri =
@@ -222,7 +217,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 				ri->next = rifaces;
 				rifaces = ri;
 				address_buf ab;
-				dbg("found %s with address %s", ri->name, str_address(&ri->addr, &ab));
+				vdbg("found %s with address %s", ri->name, str_address(&ri->addr, &ab));
 			}
 		}
 		fclose(proc_sock);
@@ -235,13 +230,13 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 		 * (scattered between kernel_*.c files) instead
 		 * maintain the "interfaces" structure?
 		 */
-		sort_ifaces(&rifaces);
+		sort_ifaces(&rifaces, verbose);
 	}
 
 	return rifaces;
 }
 
-struct kernel_iface *find_kernel_ifaces4(struct logger *logger)
+struct kernel_iface *find_kernel_ifaces4(struct verbose verbose)
 {
-	return find_kernel_ifaces(&ipv4_info, logger);
+	return find_kernel_ifaces(&ipv4_info, verbose);
 }

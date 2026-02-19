@@ -1,0 +1,13 @@
+IKEv2 X.509 exchange, but with pluto under gdb
+
+This specific test sets up two breakpoints on PR_Lock()
+
+  #1 just continue (so the call is traced)
+
+  #2 backtrace and then continue (so each call gets a stack backtrace)
+
+Initially, the first breakpoint is enabled.  But when IKE_AUTH starts,
+things switch to the second breakpoint.
+
+The result is all PR_Lock() calls being traced with IKE_AUTH traced in
+great detail.

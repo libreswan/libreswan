@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
-[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % entities SYSTEM "entities.xml">%entities;
+]>
+
 <refentry id="whack8">
   <refmeta>
     <refentrytitle>IPSEC-WHACK</refentrytitle>
@@ -328,14 +331,14 @@
       <arg choice="opt">--remote-host <replaceable>ip-address</replaceable></arg>
       <arg choice="opt">--xauthuser <replaceable>user</replaceable></arg>
       <arg choice="opt">--xauthpass <replaceable>pass</replaceable></arg>
-      <arg choice="opt">--asynchronous</arg>
+      &opt_async;
     </cmdsynopsis>
 
     <cmdsynopsis>
       <command>ipsec whack</command>
       <arg choice="plain">--down</arg>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
-      <arg choice="opt">--asynchronous</arg>
+      &opt_async;
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -349,7 +352,7 @@
         <arg choice="plain">--down-child</arg>
       </group>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
-      <arg choice="opt">--asynchronous</arg>
+      &opt_async;
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -2602,15 +2605,8 @@
       </para>
     </refsect2>
 
-    <refsect2 id="debugging">
-      <title>Debugging</title>
-
-      <para>
-	<command>pluto</command> accepts several optional
-	arguments, useful mostly for debugging. Except for
-	<option>--interface</option>, each should appear at most
-	once.
-      </para>
+    <refsect2 id="misc">
+      <title>Miscellaneous Options</title>
 
       <variablelist>
 
@@ -2718,19 +2714,16 @@
 	</varlistentry>
       </variablelist>
 
-      <para>
-	<command>pluto</command> is willing to produce a
-	prodigious amount of debugging information. There are several
-	classes of debugging output, and <command>pluto</command>
-	may be directed to produce a selection of them. All lines of
-	debugging output are prefixed with "|" to distinguish them
-	from normal diagnostic messages.
-      </para>
+    </refsect2>
+
+    <refsect2 id="debugging">
+
+      <title>Debugging</title>
 
       <para>
-	When <command>pluto</command> is invoked, it may
-	be given arguments to specify which debug classes to output.
-	The current options are:
+	<command>whack</command> accepts the <option>--debug</option>
+	to control the level of debugging enabled within
+	<command>pluto</command>:
       </para>
 
       <variablelist>
@@ -2748,39 +2741,6 @@
 
 	<varlistentry>
 	  <term>
-	    <option>--debug none</option>
-	  </term>
-	  <listitem>
-	    <para>
-	      Disable logging for all debugging classes.
-	    </para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>
-	    <option>--debug base</option>
-	  </term>
-	  <listitem>
-	    <para>
-	      Enable debug-logging.
-	    </para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>
-	    <option>--debug cpu-usage</option>
-	  </term>
-	  <listitem>
-	    <para>
-	      Enable cpu-usage logging.
-	    </para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>
 	    <option>--debug <replaceable>class</replaceable></option>
 	  </term>
 	  <term>
@@ -2792,9 +2752,8 @@
 	  <listitem>
 	    <para>
 	      Enable (disable) logging of the specified debugging
-	      <replaceable>class</replaceable> (<option>--debug
-	      help</option> lists debugging classes supported by this
-	      version of <command>pluto</command>).
+	      <replaceable>class</replaceable> within
+	      <command>pluto</command>.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -2802,44 +2761,14 @@
       </variablelist>
 
       <para>
-	The debug form of the <command>whack</command>
-	command will change the selection in a running
-	<command>pluto</command>. If a connection name is specified,
-	the flags are added whenever <command>pluto</command> has
-	identified that it is dealing with that connection. Unfortunately,
-	this is often part way into the operation being observed.
+	For more details, see <option>plutodebug=</option> in
+	&ipsec.conf.5;.
       </para>
-
-      <para>
-	For example, to start <command>pluto</command>
-	with both <emphasis>base</emphasis> and
-	<emphasis>cpu-usage</emphasis> debug-logging enabled:
-      </para>
-
-      <para><simplelist columns='1'>
-	<member><computeroutput>ipsec pluto --debug base --debug cpu-usage</computeroutput></member>
-      </simplelist></para>
-
-      <para>
-	To later change this <command>pluto</command> to
-	disable <emphasis>base</emphasis> debug-logging use either:
-      </para>
-
-      <para><simplelist columns='1'>
-	<member><computeroutput>ipsec whack --no-debug base</computeroutput></member>
-      </simplelist></para>
-
-      <para>
-	or:
-      </para>
-
-      <para><simplelist columns='1'>
-	<member><computeroutput>ipsec whack --debug none --debug cpu-usage</computeroutput></member>
-      </simplelist></para>
 
     </refsect2>
 
     <refsect2 id="impairing">
+
       <title>Impairing</title>
 
       <para>

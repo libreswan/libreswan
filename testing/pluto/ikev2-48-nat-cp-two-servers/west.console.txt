@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add rw-westnet-pool-x509-ipv4
-"rw-westnet-pool-x509-ipv4": added IKEv2 connection
+"rw-westnet-pool-x509-ipv4": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

@@ -8,7 +8,7 @@ east #
  ipsec whack --impair tcp_use_blocking_write
 east #
  ipsec add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

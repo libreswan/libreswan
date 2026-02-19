@@ -173,7 +173,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 		PEXPECT(md->logger, msgid == 0); /* per above */
 		/* XXX: keep test results happy */
 		if (md->fake_clone) {
-			llog(RC_LOG, old->sa.logger, "IMPAIR: processing a fake (cloned) message");
+			llog(IMPAIR_STREAM, old->sa.logger, "processing a fake (cloned) message");
 		}
 
 		if (old->sa.st_state != &state_v2_IKE_SA_INIT_R) {
@@ -209,7 +209,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 				     "received IKE_SA_INIT request from previous exchange; packet dropped");
 		}
 
-		if (hunk_eq(old->sa.st_firstpacket_peer, pbs_in_all(&md->message_pbs))) {
+		if (old->sa.st_firstpacket_peer != NULL &&
+		    hunk_eq(*old->sa.st_firstpacket_peer, md->packet)) {
 			/*
 			 * Clearly a duplicate.
 			 *
@@ -219,8 +220,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 */
 			limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
 				     "received duplicate IKE_SA_INIT request; retransmitting response");
-			send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
-						 old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+			send_recorded_v2_message(old, old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			return;
 		}
 
@@ -258,7 +258,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 */
 	pexpect(!md->message_payloads.parsed);
 	md->message_payloads = ikev2_decode_payloads(md->logger, md,
-						     &md->message_pbs,
+						     md->message_pbs,
 						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		if (require_ddos_cookies()) {
@@ -272,6 +272,18 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 					  &data, "contains invalid paylod");
 		return;
 	}
+
+	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(md->logger, md);
 
 	/*
 	 * Do I want a cookie?
@@ -296,15 +308,15 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	/*
 	 * Check if we would drop the packet based on VID before we
 	 * create a state.
+	 *
+	 * XXX: this is forcing us to double parse the VIDs!
 	 */
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
-		if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
-			if (pluto_drop_oppo_null) {
-				dbg("Dropped IKE request for Opportunistic IPsec by global policy");
+	if (pluto_drop_oppo_null) {
+		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
+			if (vid_is_oppo(pbs_in_left(&p->pbs))) {
+				limited_llog_md(md, "dropped IKE request for Opportunistic IPsec by global policy");
 				return;
 			}
-			ldbg(md->logger, "Processing IKE request for Opportunistic IPsec");
-			break;
 		}
 	}
 
@@ -364,7 +376,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 	/* XXX: keep test results happy */
 	if (md->fake_clone) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: processing a fake (cloned) message");
+		llog(IMPAIR_STREAM, ike->sa.logger, "processing a fake (cloned) message");
 	}
 	v2_dispatch(ike, md, transition);
 	statetime_stop(&start, "%s()", __func__);
@@ -387,7 +399,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	 * i.e., in the response I must be clear
 	 */
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
-		llog_md(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
+		limited_llog_md(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
 		return;
 	}
 
@@ -480,7 +492,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 			     "dropping unexpected %s response with Message ID %jd, IKE SA in state %s is waiting for %s response",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
 			     ike->sa.st_state->short_name,
-			     str_enum_short(&ikev2_exchange_names, outstanding_exchange->type, &xb));
+			     outstanding_exchange->name);
 		return;
 	}
 
@@ -535,12 +547,24 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 
 	ldbg(ike->sa.logger, "unpacking clear payloads");
 	md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
-						     &md->message_pbs,
+						     md->message_pbs,
 						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		/* already logged */
 		return;
 	}
+
+	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(ike->sa.logger, md);
 
 	/* transition? */
 	const struct v2_transition *transition = NULL;
@@ -567,7 +591,7 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 	 * zero.
 	 */
 	if (md->hdr.isa_msgid != 0) {
-		llog_md(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
+		limited_llog_md(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
 		return;
 	}
 	/*
@@ -589,7 +613,7 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 
 }
 
-V2_STATE(UNSECURED_R,
-	 "larval unsecured IKE SA responder",
+V2_STATE(UNSECURED_R, "larval unsecured IKE SA responder",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
-	 &v2_IKE_SA_INIT_exchange, &v2_IKE_SESSION_RESUME_exchange);
+	 &v2_IKE_SA_INIT_exchange,
+	 &v2_IKE_SESSION_RESUME_exchange);

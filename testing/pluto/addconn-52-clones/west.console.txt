@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn
+"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-clones=no
+"addconn-clones=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-clones=yes
+"addconn-clones=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-clones=0
+"addconn-clones=0": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-clones=1
+"addconn-clones=1": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(clones: [^;]*;\).*/\1 \2/p'
+"addconn": clones: no (unset);
+"addconn-clones=0": clones: no;
+"addconn-clones=1": clones: 1;
+"addconn-clones=no": clones: no;
+"addconn-clones=yes": clones: yes (1);
+west #

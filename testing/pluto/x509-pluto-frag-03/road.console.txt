@@ -19,7 +19,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add x509
-"x509": added IKEv1 connection
+"x509": added oriented IKEv1 connection
 road #
  echo done
 done
@@ -33,9 +33,9 @@ road #
 "x509" #1: I am sending my cert
 "x509" #1: I am sending a certificate request
 "x509" #1: sent Main Mode I3
-"x509" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "x509" #1: retransmit so timing out SA (may retry)
 "x509" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"x509" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "x509" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "x509" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 road #
  echo done

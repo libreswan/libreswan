@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-"ipv4-psk-ikev2-transport": added IKEv2 connection
+"ipv4-psk-ikev2-transport": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -19,8 +19,9 @@ west #
 "ipv4-psk-ikev2-transport" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ipv4-psk-ikev2-transport" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ipv4-psk-ikev2-transport" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"ipv4-psk-ikev2-transport" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_TRANSPORT_MODE)}
 "ipv4-psk-ikev2-transport" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ipv4-psk-ikev2-transport" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32/UDP/1701===192.1.2.23/32/UDP/1702] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ipv4-psk-ikev2-transport" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32/UDP/1701===192.1.2.23/32/UDP/1702] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  echo done
 done
@@ -35,6 +36,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1702 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -44,6 +46,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto udp sport 1702 dport 1701 
 west #
  ipsec _kernel policy

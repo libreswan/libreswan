@@ -35,33 +35,34 @@
 #include "initiate.h"
 #include "orient.h"
 #include "show.h"
+#include "defaultroute.h"	/* for struct route_addrs */
+#include "extract.h"
+#include "connection_event.h"
+#include "resolve_helper.h"
 
-/* time before retrying DDNS host lookup for phase 1 */
-#define PENDING_DDNS_INTERVAL secs_per_minute
+static resolve_helper_cb connection_check_ddns1_continue;
 
 /*
- * Call me periodically to check to see if any DDNS tunnel can come up.
+ * Call me periodically to check to see if any DDNS tunnel can come
+ * up.
+ *
  * The order matters, we try to do the cheapest checks first.
+ *
+ * Return true when connection needs further processing.
  */
 
-static void connection_check_ddns1(struct connection *c, struct logger *logger)
+static bool connection_check_ddns1(struct connection *c,
+				   struct verbose verbose)
 {
-	const char *e;
-
 	/* This is the cheapest check, so do it first */
 	if (never_negotiate(c)) {
-		pdbg(c->logger, "pending ddns: skipping connection, is never_negotiate");
-		return;
+		vdbg("skipping connection %s, is never_negotiate", c->name);
+		return false;
 	}
 
-	/* find the end needing DNS */
-	if (c->remote->config->host.host.type != KH_IPHOSTNAME) {
-		pdbg(c->logger, "pending ddns: skipping connection, has no KP_IPHOSTNAME");
-		return;
-	}
-
-	if (PBAD(c->logger, c->remote->config->host.host.name == NULL)) {
-		return;
+	if (!is_permanent(c)) {
+		vdbg("skipping connection %s, is not permanent", c->name);
+		return false;
 	}
 
 	/*
@@ -70,20 +71,16 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(c->remote->host.addr)) {
-		pdbg(c->logger, "pending ddns: skipping connection, already has address");
-		return;
+	if (address_is_specified(c->local->host.addr) &&
+	    address_is_specified(c->remote->host.addr)) {
+		vdbg("skipping connection %s, already has addresses", c->name);
+		return false;
 	}
 
-	if (!is_permanent(c)) {
-		pdbg(c->logger, "pending ddns: skipping connection, is not permanent");
-		return;
-	}
-
-	/* should have been handled by above */
+	/* should have been handled by above is_permanent() */
 	if (pbad(id_has_wildcards(&c->remote->host.id))) {
-		pdbg(c->logger, "pending ddns: skipping connection, remote has wildcard ID");
-		return;
+		vdbg("skipping connection %s, remote has wildcard ID", c->name);
+		return false;
 	}
 
 	/*
@@ -98,149 +95,86 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		/* also require viable? */
 		PEXPECT(established_ike->sa.logger, (IS_IKE_SA_ESTABLISHED(&established_ike->sa) ||
 						     IS_V1_ISAKMP_SA_ESTABLISHED(&established_ike->sa)));
-		pdbg(c->logger, "pending ddns: skipping connection, is established as "PRI_SO,
+		vdbg("skipping connection %s, is established as "PRI_SO, c->name,
 		     pri_so(established_ike->sa.st_serialno));
-		return;
+		return false;
 	}
 
-	/* XXX: blocking call */
-
-	ip_address new_remote_addr;
-	e = ttoaddress_dns(shunk1(c->remote->config->host.host.name),
-			   NULL/*UNSPEC*/, &new_remote_addr);
-	if (e != NULL) {
-		pdbg(c->logger, "pending ddns: skipping connection, lookup of \"%s\" failed: %s",
-		     c->remote->config->host.host.name, e);
-		return;
-	}
-
-	if (!address_is_specified(new_remote_addr)) {
-		pdbg(c->logger, "pending ddns: skipping connection, still no address for \"%s\"",
-		     c->remote->config->host.host.name);
-		return;
-	}
+	vdbg("updating connection IP addresses");
+	verbose.level++;
 
 	/*
-	 * Since above rejected a specified .remote .host .addr, this
-	 * check currently cannot succeed.  If in the future we do,
-	 * don't do weird things.
-	 */
-	if (sameaddr(&new_remote_addr, &c->remote->host.addr)) {
-		llog_pexpect(c->logger, HERE, "pending ddns: skipping connection, unset address unchanged");
-		return;
-	}
+	 * Pull any existing kernel policy and routing based on
+	 * current SPDs, and then delete the SPDs.
+	 *
+	 * Remember, per above, the connection isn't established.
 
-	/* I think this is OK now we check everything above. */
-
-	address_buf old, new;
-	pdbg(c->logger,
-	     "pending ddns: updating connection IP address by '%s' from %s to %s",
-	     c->remote->config->host.host.name,
-	     str_address_sensitive(&c->remote->host.addr, &old),
-	     str_address_sensitive(&new_remote_addr, &new));
-
-	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
-
-	/*
-	 * Pull any existing routing based on current SPDs.  Remember,
-	 * per above, the connection isn't established.
+	 * XXX: since the connection has at least one unknown
+	 * addresses is it even oriented or routed?  Lets find out.
 	 *
 	 * Note: disorient() also deletes any SPDs, orient() will put
 	 * them back.
 	 */
-	pdbg(c->logger, "  unrouting");
+
+	vdbg("unrouting (oriented %s, routing %s, kernel route installed %s, kernel policy installed %s)",
+	     bool_str(oriented(c)),
+	     bool_str(c->policy.route),
+	     bool_str(kernel_route_installed(c)),
+	     bool_str(kernel_policy_installed(c)));
 	connection_unroute(c, HERE);
 
 	if (oriented(c)) {
-		pdbg(c->logger, "  disorienting");
+		vdbg("disorienting");
 		disorient(c);
 	} else {
-		pdbg(c->logger, "  already disoriented");
-	}
-
-	/* propagate remote address */
-	pdbg(c->logger, "  updating hosts");
-	update_hosts_from_end_host_addr(c, c->remote->config->index,
-					new_remote_addr, c->local->host.nexthop,
-					HERE); /* from DNS */
-
-	if (c->remote->child.config->selectors.len > 0) {
-		pdbg(c->logger, "  %s.child already has hard-wired selectors; skipping",
-		     c->remote->config->leftright);
-	} else if (c->remote->child.has_client) {
-		pexpect(is_opportunistic(c));
-		pdbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
-		     c->remote->config->leftright);
-	} else {
-		/*
-		 * Default the end's child selector (client)
-		 * to a subnet containing only the end's host
-		 * address.
-		 */
-		struct child_end *child = &c->remote->child;
-		ip_selector remote =
-			selector_from_address_protoport(new_remote_addr, child->config->protoport);
-		selector_buf new;
-		pdbg(logger, "  updated %s.selector to %s",
-		    c->remote->config->leftright,
-		    str_selector(&remote, &new));
-		append_end_selector(c->remote, remote, c->logger, HERE);
+		vdbg("already disoriented");
 	}
 
 	/*
-	 * Caller holds reference.
+	 * Now that everything is torn down, start the rebuild.  Even
+	 * when resolve failed, build new proposals - gives ipsec
+	 * connsectionstatus something to display.
 	 */
-	pdbg(c->logger, "  orienting?");
-	PASSERT(logger, !oriented(c));	/* see above */
-	if (!orient(c, logger)) {
-		pdbg(c->logger, "pending ddns: connection was updated, but did not orient");
+
+	delete_connection_proposals(c);
+
+	request_resolve_help(c, connection_check_ddns1_continue,
+			     /*background*/false, c->logger);
+	return true;
+}
+
+void connection_check_ddns1_continue(struct connection *c,
+				     const struct host_addrs *resolved_host_addrs,
+				     bool background UNUSED,
+				     struct verbose verbose)
+{
+	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
+		vlog("not resolved");
+		whack_detach(c, verbose.logger);
 		return;
 	}
 
-	if (c->policy.route) {
-		ldbg(c->logger, "pending ddns: connection was updated, restoring route");
-		connection_route(c, HERE);
+	if (orient(c, verbose)) {
+		/* new orientation */
+		connection_oriented(c, /*background*/true, HERE);
 	}
 
-	if (c->policy.up) {
-		ldbg(c->logger,
-		     "pending ddns: connection was updated, (re-)initiating");
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    logger);
+	whack_detach(c, verbose.logger);
+}
+
+void connection_check_ddns(struct connection *c, struct verbose verbose)
+{
+	/* addref, delref is probably over kill */
+	connection_addref(c, verbose.logger);
+	{
+		vtime_t start = vdbg_start("check_dns");
+		whack_attach(c, verbose.logger);
+		struct verbose v = verbose;
+		v.logger = c->logger;
+		if (!connection_check_ddns1(c, v)) {
+			whack_detach(c, verbose.logger);
+		}
+		vdbg_stop(&start, "check_dns");
 	}
-}
-
-static void connection_check_ddns(struct logger *logger)
-{
-	threadtime_t start = threadtime_start();
-
-	struct connection_filter cf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose.logger = logger,
-			.where = HERE,
-		},
-	};
-	while (next_connection(&cf)) {
-		/* addref, delref is probably over kill */
-		struct connection *c = connection_addref(cf.c, logger);
-		connection_check_ddns1(c, logger);
-		connection_delref(&c, logger);
-	}
-
-	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
-}
-
-void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	llog(RC_LOG, logger, "updating pending dns lookups");
-	connection_check_ddns(logger);
-}
-
-void init_ddns(void)
-{
-	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
-			      deltatime(PENDING_DDNS_INTERVAL));
+	connection_delref(&c, verbose.logger);
 }

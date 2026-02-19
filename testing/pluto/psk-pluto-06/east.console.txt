@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-psk
-"road-east-psk": added IKEv1 connection
+"road-east-psk": added oriented IKEv1 connection
 east #
  # confirm loaded exclude entry
 east #

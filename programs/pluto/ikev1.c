@@ -429,7 +429,7 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
-	if (hunk_eq(st->st_v1_rpacket, pbs_in_all(&md->packet_pbs))) {
+	if (hunk_eq(st->st_v1_rpacket, md->packet)) {
 		/*
 		 * Exact Duplicate.  Drop or retransmit?
 		 *
@@ -1256,8 +1256,9 @@ void process_v1_packet(struct msg_digest *md)
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
 					struct msg_digest *whole_md = alloc_md(frag->md->iface,
-									       &frag->md->sender,
+									       frag->md->sender,
 									       NULL/*packet*/, size,
+									       frag->md->logger,
 									       HERE);
 
 					/*
@@ -1271,7 +1272,7 @@ void process_v1_packet(struct msg_digest *md)
 					 * reusing FRAG.
 					 */
 					frag = st->st_v1_rfrags;
-					uint8_t *buffer = whole_md->packet_pbs.start;
+					uint8_t *buffer = whole_md->packet.ptr;
 					size_t offset = 0;
 					while (frag != NULL && frag->index <= last_frag_index) {
 						passert(offset + frag->data.len <= size);
@@ -1393,7 +1394,7 @@ void process_v1_packet(struct msg_digest *md)
 		}
 		if (st->st_v1_background_md != NULL) {
 			ldbg(logger, "suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
-			     st->st_serialno, st->st_v1_background_md,
+			     pri_so(st->st_serialno), st->st_v1_background_md,
 			     pri_where(HERE));
 			md_delref(&st->st_v1_background_md);
 		}
@@ -1516,7 +1517,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * Grab a copy of raw packet (for duplicate packet
 		 * detection).
 		 */
-		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
+		md->v1_raw_packet = clone_hunk_as_chunk(&md->packet, "raw packet");
 		PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == cipher->enc_blocksize);
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
@@ -1525,7 +1526,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				 (unsigned) pbs_left(&md->message_pbs),
 				 cipher->common.fqn);
 			LDBG_log(ike->sa.logger, "IV before:");
-			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
+			LDBG_hunk(ike->sa.logger, &md->v1_decrypt_iv);
 		}
 
 		/* Decrypt everything after header */
@@ -1540,7 +1541,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			     ike->sa.logger);
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "IV after:");
-			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
+			LDBG_hunk(ike->sa.logger, &md->v1_decrypt_iv);
 			LDBG_log(ike->sa.logger,
 				 "decrypted payload (starts at offset %td):",
 				 md->message_pbs.cur - md->message_pbs.roof);
@@ -1940,7 +1941,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * see ikev1-aggr-08-copy-r1-spis-to-i1
 		 */
 		if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+			llog(IMPAIR_STREAM, ike->sa.logger, "copying notify response SPIs to recorded message and then resending it");
 			/* skip non-ESP marker if needed */
 			size_t skip = (ike->sa.st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 			size_t spis = sizeof(md->hdr.isa_ike_spis);
@@ -1976,7 +1977,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (LDBGP(DBG_BASE, LOGGER)) {
 				shunk_t header = pbs_in_to_cursor(&p->pbs);
 				LDBG_log(LOGGER, "%s", p->pbs.name);
-				LDBG_hunk(LOGGER, header);
+				LDBG_hunk(LOGGER, &header);
 			}
 		}
 	}
@@ -2033,15 +2034,15 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 {
 	if (md->encrypted) {
 		/* if encrypted, duplication already done */
-		if (md->raw_packet.ptr != NULL) {
+		if (md->v1_raw_packet.ptr != NULL) {
 			pfreeany(st->st_v1_rpacket.ptr);
-			st->st_v1_rpacket = md->raw_packet;
-			md->raw_packet = EMPTY_CHUNK;
+			st->st_v1_rpacket = md->v1_raw_packet;
+			md->v1_raw_packet = EMPTY_CHUNK;
 		}
 	} else {
 		/* this may be a repeat, but it will work */
 		replace_chunk(&st->st_v1_rpacket,
-			      pbs_in_all(&md->packet_pbs),
+			      HUNK_AS_SHUNK(&md->packet),
 			      "raw packet");
 	}
 }
@@ -2049,7 +2050,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	jam_enum_long(buf, &encap_mode_story, c->config->child_sa.encap_mode);
+	jam_enum_long(buf, &encap_mode_story, c->config->child.encap_mode);
 	jam_string(buf, " mode ");
 	jam_child_sa_details(buf, st);
 }
@@ -2262,8 +2263,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		if (st->st_connection->config->ikev1_natt != NATT_NONE) {
 			/* adjust our destination port if necessary */
-			nat_traversal_change_port_lookup(md, st);
-			v1_maybe_natify_initiator_endpoints(st, HERE);
+			ikev1_nat_change_port_lookup(md, st);
+			ikev1_maybe_natify_initiator_endpoints(st, HERE);
 		}
 
 		/*
@@ -2289,8 +2290,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			    impair.send_no_main_r2) {
 				/* record-only so we properly emulate packet drop */
 				record_outbound_v1_ike_msg(st, &reply_stream, smc->message);
-				llog(RC_LOG, st->logger,
-				     "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
+				llog(IMPAIR_STREAM, st->logger, "skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream, smc->message);
 			}
@@ -2395,7 +2395,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				if (deltatime_cmp(event_delay, >, marg)) {
 					st->st_replace_margin = marg;
 				} else {
-					marg = deltatime(0);
+					marg = deltatime_from_seconds(0);
 				}
 				event_delay = deltatime_sub(event_delay, marg);
 			}
@@ -2579,16 +2579,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		remember_received_packet(st, md);
 		llog_rc(RC_FATAL, st->logger,
 			"encountered fatal error in state %s", st->st_state->name);
-		if (st->st_connection->config->host.cisco.peer &&
-		    st->st_connection->config->host.cisco.nm) {
-			if (!do_updown(UPDOWN_DISCONNECT_NM,
-				       st->st_connection,
-				       st->st_connection->child.spds.list,
-				       pexpect_child_sa(st),
-				       st->logger))
-				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
-		}
-
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
@@ -2635,16 +2625,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		ldbg(st->logger, "state transition function for %s failed: %s",
 		     st->st_state->name, notify_name.buf);
-
-		if (st->st_connection->config->host.cisco.peer &&
-		    st->st_connection->config->host.cisco.nm) {
-			if (!do_updown(UPDOWN_DISCONNECT_NM,
-				       st->st_connection,
-				       st->st_connection->child.spds.list,
-				       pexpect_child_sa(st),
-				       st->logger))
-				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
-		}
 
 		if (IS_V1_QUICK(st->st_state->kind)) {
 			ldbg(st->logger, "quick delete");

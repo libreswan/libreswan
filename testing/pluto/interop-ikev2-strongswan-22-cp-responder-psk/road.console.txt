@@ -11,7 +11,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 road #
  ipsec auto --status
 using kernel interface: xfrm
@@ -33,7 +33,7 @@ sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
-ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -84,16 +84,17 @@ algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-algorithm IKE DH Key Exchange: name=DH19, bits=512
-algorithm IKE DH Key Exchange: name=DH20, bits=768
-algorithm IKE DH Key Exchange: name=DH21, bits=1056
-algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=MODP1536, bits=1536
+algorithm IKE Key Exchange Method (DH): name=MODP2048, bits=2048
+algorithm IKE Key Exchange Method (DH): name=MODP3072, bits=3072
+algorithm IKE Key Exchange Method (DH): name=MODP4096, bits=4096
+algorithm IKE Key Exchange Method (DH): name=MODP6144, bits=6144
+algorithm IKE Key Exchange Method (DH): name=MODP8192, bits=8192
+algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
+algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
+algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
+algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -101,13 +102,13 @@ Connection list:
  
 "westnet-eastnet-ipv4-psk-ikev2": 0.0.0.0/0===192.1.3.209[@road]---192.1.3.254...192.1.2.23[@east]===0.0.0.0/0; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: 192.1.2.23;
-"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
+"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
-"westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ipv4-psk-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -139,11 +140,12 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr,N(AUTH_LIFETIME)}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 192.168.0.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 192.168.0.2
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1/32===0.0.0.0/0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 road #
  route -n

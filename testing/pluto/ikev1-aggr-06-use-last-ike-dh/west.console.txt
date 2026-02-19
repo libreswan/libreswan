@@ -23,18 +23,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aggr
-"westnet-eastnet-aggr": added IKEv1 connection
+"westnet-eastnet-aggr": added oriented IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-aggr
 "westnet-eastnet-aggr": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-aggr":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-aggr":   my_updown=ipsec _updown;
+"westnet-eastnet-aggr":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-aggr":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-aggr":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-aggr":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-aggr":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-aggr":   sec_label:unset;
-"westnet-eastnet-aggr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-aggr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-aggr":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-aggr":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-aggr":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -66,7 +66,7 @@ west #
 "westnet-eastnet-aggr" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-aggr" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-aggr" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
-"westnet-eastnet-aggr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP1536 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet-aggr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP1536 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-aggr" #2: sent Quick Mode request
 "westnet-eastnet-aggr" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -86,6 +86,7 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -96,6 +97,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24

@@ -9,10 +9,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-01
-"westnet-eastnet-01": added IKEv1 connection
+"westnet-eastnet-01": added oriented IKEv1 connection
 east #
  ipsec auto --add westnet-eastnet-02
-"westnet-eastnet-02": added IKEv1 connection
+"westnet-eastnet-02": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -26,6 +26,7 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -36,12 +37,14 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -52,6 +55,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 10.0.1.0/24 dst 10.0.2.0/24

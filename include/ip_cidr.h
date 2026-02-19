@@ -37,15 +37,14 @@ typedef struct {
 	unsigned prefix_len;
 } ip_cidr;
 
-#define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
-#define pri_cidr(A)							\
-	((A).ip.is_set ? "set" : "unset"),				\
-			(A).ip.version,					\
-			pri_ip_bytes((A).bytes),			\
-			(A).prefix_len
+#define PRI_IP_CIDR "<cidr-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]/%u>"
+#define pri_ip_cidr(A)				\
+	((A).ip.is_set ? "set" : "unset"),	\
+		pri_ip_version((A).ip.version),	\
+		pri_ip_bytes((A).bytes),	\
+		(A).prefix_len
 
 void pexpect_cidr(const ip_cidr a, where_t where);
-#define pcidr(A) pexpect_cidr(A, HERE)
 
 extern const ip_cidr unset_cidr;
 
@@ -89,7 +88,7 @@ bool cidr_eq_cidr(const ip_cidr address, const ip_cidr another);
 shunk_t cidr_as_shunk(const ip_cidr *cidr);
 chunk_t cidr_as_chunk(ip_cidr *cidr);
 
-err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
+diag_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
 
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*/128*/];
@@ -97,5 +96,8 @@ typedef struct {
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr);
 const char *str_cidr(const ip_cidr *cidr, cidr_buf*buf);
+
+size_t jam_cidr_sensitive(struct jambuf *buf, const ip_cidr *cidr);
+const char *str_cidr_sensitive(const ip_cidr *cidr, cidr_buf*buf);
 
 #endif

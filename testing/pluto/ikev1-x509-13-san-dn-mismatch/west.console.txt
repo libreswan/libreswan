@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add san
-"san": added IKEv1 connection
+"san": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -28,7 +28,7 @@ west #
 "san" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "san" #1: X509: authentication failed; peer ID DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-NOTeast@testing.libreswan.org'
 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
-"san" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "san" #1: retransmit so timing out SA (may retry)
 "san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "san" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #

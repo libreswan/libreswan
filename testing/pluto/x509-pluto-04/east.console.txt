@@ -25,19 +25,19 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-x509-cr
-"westnet-eastnet-x509-cr": added IKEv1 connection
+"westnet-eastnet-x509-cr": added oriented IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet-x509-cr
 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-x509-cr":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
-"westnet-eastnet-x509-cr":   mycert=east; my_updown=ipsec _updown;
+"westnet-eastnet-x509-cr":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-x509-cr":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-x509-cr":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-x509-cr":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-x509-cr":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-x509-cr":   sec_label:unset;
 "westnet-eastnet-x509-cr":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"westnet-eastnet-x509-cr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-x509-cr":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-x509-cr":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-x509-cr":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-x509-cr":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

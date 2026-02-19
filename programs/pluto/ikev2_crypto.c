@@ -54,11 +54,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
-	struct ipsec_proto_info *ipi =
-		child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-		child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		NULL;
-
+	struct ipsec_proto_info *ipi = outer_ipsec_proto_info(child);
 	passert(ipi != NULL);	/* ESP or AH must be present */
 
 	/*
@@ -81,7 +77,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 
 	size_t keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
 
-	dbg("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%zu",
+	ldbg(logger, "integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%zu",
 	    integ != NULL ? integ->common.fqn : "N/A",
 	    integ_key_size,
 	    encrypt != NULL ? encrypt->common.fqn : "N/A",
@@ -108,10 +104,11 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
 	PK11SymKey *shared = NULL;
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		ldbgf(DBG_CRYPT, child->sa.logger,
-		      "#%lu %s add g^ir to child key %p",
-		      child->sa.st_serialno, child->sa.st_state->name, child->sa.st_dh_shared_secret);
+		      PRI_SO" %s add g^ir to child key %p",
+		      pri_so(child->sa.st_serialno),
+		      child->sa.st_state->name, child->sa.st_dh_shared_secret);
 		shared = child->sa.st_dh_shared_secret;
 	}
 
@@ -146,16 +143,16 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	switch (child->sa.st_sa_role) {
 	case SA_RESPONDER:
 		if (LDBGP(DBG_CRYPT, logger)) {
-			    LDBG_log_hunk(logger, "inbound  keymat:", ikeymat);
-			    LDBG_log_hunk(logger, "outbound keymat:", rkeymat);
+			    LDBG_log_hunk(logger, "inbound  keymat:", &ikeymat);
+			    LDBG_log_hunk(logger, "outbound keymat:", &rkeymat);
 		}
 		ipi->inbound.keymat = ikeymat;
 		ipi->outbound.keymat = rkeymat;
 		break;
 	case SA_INITIATOR:
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "inbound  keymat:", rkeymat);
-			LDBG_log_hunk(logger, "outbound keymat:", ikeymat);
+			LDBG_log_hunk(logger, "inbound  keymat:", &rkeymat);
+			LDBG_log_hunk(logger, "outbound keymat:", &ikeymat);
 		}
 		ipi->outbound.keymat = ikeymat;
 		ipi->inbound.keymat = rkeymat;

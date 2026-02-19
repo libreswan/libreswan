@@ -27,19 +27,19 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
-"road-chain-B": added IKEv2 connection
+"road-chain-B": added oriented IKEv2 connection
 west #
  ipsec auto --status |grep road-chain-B
 "road-chain-B": 192.0.1.254/32===192.1.2.45[@west_chain_endcert.testing.libreswan.org]...192.1.2.23[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=unset;
 "road-chain-B":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"road-chain-B":   mycert=west_chain_endcert; my_updown=ipsec _updown;
+"road-chain-B":   mycert=west_chain_endcert; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-chain-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-chain-B":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-chain-B":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-chain-B":   sec_label:unset;
 "road-chain-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_int_2.testing.libreswan.org, E=west_chain_int_2@testing.libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"road-chain-B":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"road-chain-B":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "road-chain-B":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-chain-B":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -72,8 +72,9 @@ west #
 "road-chain-B" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-chain-B" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-chain-B" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west_chain_endcert.testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"road-chain-B" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "road-chain-B" #1: initiator established IKE SA; authenticated peer certificate '@east.testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"road-chain-B" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-chain-B" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  echo done
 done

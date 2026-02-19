@@ -28,22 +28,20 @@
 #include "lswlog.h"
 
 static pthread_mutex_t lswglob_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct logger *lswglob_logger;
+static const struct logger *lswglob_logger;
 static const char *lswglob_what;
 
 static int lswglob_errfunc(const char *epath, int eerrno)
 {
-	llog_error(lswglob_logger, eerrno,
-		   "problem with %s file \"%s\"", lswglob_what, epath);
+	llog_errno(ERROR_STREAM, lswglob_logger, eerrno,
+		   "problem with %s file \"%s\": ", lswglob_what, epath);
 	return 1;	/* stop glob */
 }
 
 bool lswglob(const char *pattern, const char *what,
-	     void (*matches)(unsigned count, char **files,
-			     struct lswglob_context *context,
-			     struct logger *logger),
+	     lswglob_match_cb *matches,
 	     struct lswglob_context *context,
-	     struct logger *logger)
+	     const struct logger *logger)
 {
 	int r;
 	glob_t globbuf;

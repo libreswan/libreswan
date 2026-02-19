@@ -113,7 +113,7 @@ struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike)
 
 	ldbg(ike->sa.logger,
 	     "NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
-	     ike->sa.st_serialno,
+	     pri_so(ike->sa.st_serialno),
 	     ike->sa.st_v1_isakmp_skeyid_d,
 	     ike->sa.st_skeyid_a_nss,
 	     ike->sa.st_skeyid_e_nss,
@@ -123,9 +123,9 @@ struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike)
 
 	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "DH_i");
-		LDBG_hunk(ike->sa.logger, gi);
+		LDBG_hunk(ike->sa.logger, &gi);
 		LDBG_log(ike->sa.logger, "DH_r");
-		LDBG_hunk(ike->sa.logger, gr);
+		LDBG_hunk(ike->sa.logger, &gr);
 	}
 
 	struct crypt_hash *ctx = crypt_hash_init("new IV", prf->hasher, ike->sa.logger);

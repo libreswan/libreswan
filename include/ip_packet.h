@@ -48,18 +48,17 @@ typedef struct {
 	/*XXX sec_label?*/
 } ip_packet;
 
-#define PRI_PACKET "<packet-%s:IPv%d["PRI_IP_BYTES"]:%u-%u->["PRI_IP_BYTES"]:%u>"
-#define pri_packet(S)							\
-	((S)->ip.is_set ? "set" : "unset"),				\
-		(S)->ip.version,					\
-		pri_ip_bytes((S)->src.bytes),				\
-		(S)->src.hport,						\
-		(S)->ipproto,						\
-		pri_ip_bytes((S)->dst.bytes),				\
+#define PRI_PACKET "<packet-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]//"PRI_IP_PROTOCOL"/%u->["PRI_IP_BYTES"]:%u>"
+#define pri_packet(S)					\
+	((S)->ip.is_set ? "set" : "unset"),		\
+		pri_ip_version((S)->ip.version),	\
+		pri_ip_bytes((S)->src.bytes),		\
+		pri_ip_protocol((S)->ipproto),		\
+		(S)->src.hport,				\
+		pri_ip_bytes((S)->dst.bytes),		\
 		(S)->dst.hport
 
 void pexpect_packet(const ip_packet *s, where_t where);
-#define ppacket(S) pexpect_packet(S, HERE)
 
 ip_packet packet_from_raw(where_t where,
 			  /* AFI determines meaning of ... */

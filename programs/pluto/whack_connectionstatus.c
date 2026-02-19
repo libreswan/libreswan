@@ -37,6 +37,7 @@
 #include "visit_connection.h"
 
 #include "ike_alg.h"
+#include "flags.h"
 
 #include "defs.h"
 #include "connections.h"
@@ -53,6 +54,7 @@
 #include "monotime.h"
 #include "ikev2_ike_session_resume.h"	/* for show_session_resume() */
 #include "kernel_info.h"
+#include "timescale.h"
 
 /* Passed in to jam_end_client() */
 static const char END_SEPARATOR[] = "===";
@@ -84,7 +86,7 @@ void jam_end_host(struct jambuf *buf,
 	if (!address_is_specified(end->addr)) {
 		if (end->config->host.type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", end->config->host.name);
+			jam(buf, "<%s>", end->config->host.value);
 		} else {
 			if (is_group(c)) {
 				if (is_opportunistic(c)) {
@@ -136,9 +138,9 @@ void jam_end_host(struct jambuf *buf,
 		address_buf ab;
 		if (end->config->host.type == KH_IPHOSTNAME ||
 		    (end->config->host.type == KH_IPADDR &&
-		     end->config->host.name[0] != '%' &&
-		     !streq(str_address(&end->addr, &ab), end->config->host.name))) {
-			jam(buf, "<%s>", end->config->host.name);
+		     end->config->host.value[0] != '%' &&
+		     !streq(str_address(&end->addr, &ab), end->config->host.value))) {
+			jam(buf, "<%s>", end->config->host.value);
 		}
 	}
 }
@@ -508,26 +510,13 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam(buf, " peercert=%s;", remote_cert);
 		}
 
-#define JAM_UPDOWN(BUF, E)						\
-		{							\
-			if ((E)->config->child.updown == NULL) {	\
-				jam_string(BUF, "<disabled>");		\
-			} else {					\
-				jam_string(BUF, (E)->config->child.updown); \
-			}						\
-			jam_string(BUF, ";");				\
-		}
 		if (oriented(c)) {
-			/* left? */
-			jam_string(buf, " my_updown=");
-			JAM_UPDOWN(buf, c->local);
+			/* my_updown=... */
+			jam_updown_status(buf, "my_", c->local);
 		} else {
-			jam_string(buf, " leftupdown=");
-			JAM_UPDOWN(buf, &c->end[LEFT_END]);
-			jam_string(buf, " rightupdown=");
-			JAM_UPDOWN(buf, &c->end[RIGHT_END]);
+			jam_updown_status(buf, "left", &c->end[LEFT_END]);
+			jam_updown_status(buf, "right", &c->end[LEFT_END]);
 		}
-#undef JAM_UPDOWN
 	}
 
 	/*
@@ -594,7 +583,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		 */
 		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
-			jam(buf, "%s auth:", who);
+			jam_string(buf, who);
+			jam_string(buf, " auth:");
 			/*
 			 * EXPECT everything except rsasig_v1_5.
 			 */
@@ -603,11 +593,11 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			expect.rsasig_v1_5 = false;
 			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
-				jam_enum_short(buf, &keyword_auth_names, end->auth);
+				jam_enum_human(buf, &auth_names, end->auth);
 			} else if (oriented(c) && end == c->remote->host.config) {
 				jam_authby(buf, end->authby);
 			} else {
-				jam_enum_short(buf, &keyword_auth_names, end->auth);
+				jam_enum_human(buf, &auth_names, end->auth);
 				jam_string(buf, "(");
 				jam_authby(buf, authby);
 				jam_string(buf, ")");
@@ -735,35 +725,48 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->config->sa_ipsec_max_lifetime));
 		jam_humber_uintmax(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
 		jam_humber_uintmax(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
-		jam(buf, " replay_window: %ju;", c->config->child_sa.replay_window);
+		jam(buf, " replay_window: %ju;", c->config->child.replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
+		/* clones */
+		jam_string(buf, " clones: ");
+		switch (c->config->child.clones.yna) {
+		case YNA_NO: jam_string(buf, "no"); break;
+		case YNA_YES: jam(buf, "%u", c->config->child.clones.nr); break;
+		case YNA_AUTO: jam(buf, "yes (%u)", c->config->child.clones.nr); break;
+		case YNA_UNSET: jam_string(buf, "no (unset)"); break;
+		}
+		jam_string(buf, ";");
 	}
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " iptfs: %s;", bool_str(c->config->child_sa.iptfs.enabled));
-		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs.fragmentation));
-		jam(buf, " packet-size: %ju;", c->config->child_sa.iptfs.packet_size);
-		jam(buf, " max-queue-size: %ju;", c->config->child_sa.iptfs.max_queue_size);
+		jam(buf, " iptfs: %s;", bool_str(c->config->child.iptfs.enabled));
+		jam(buf, " fragmentation: %s;", bool_str(c->config->child.iptfs.fragmentation));
+		jam(buf, " packet-size: %ju;", c->config->child.iptfs.packet_size);
+		jam(buf, " max-queue-size: %ju;", c->config->child.iptfs.max_queue_size);
 		/* */
 		jam(buf, " drop-time: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs.drop_time);
+		jam_deltatime(buf, c->config->child.iptfs.drop_time);
 		jam_string(buf, ";");
 		/* */
 		jam_string(buf, " init-delay: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs.init_delay);
+		jam_deltatime(buf, c->config->child.iptfs.init_delay);
 		jam_string(buf, ";");
 		/* */
-		jam(buf, " reorder-window: %ju;", c->config->child_sa.iptfs.reorder_window);
+		jam(buf, " reorder-window: %ju;", c->config->child.iptfs.reorder_window);
 	}
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " retransmit-interval: %jdms;",
-		    milliseconds_from_deltatime(c->config->retransmit_interval));
+		/* retransmit-interval */
+		jam_string(buf, " retransmit-interval: ");
+		jam_deltatime_scaled(buf, c->config->retransmit_interval,
+				     TIMESCALE_MILLISECONDS);
+		jam_string(buf, "ms;");
+		/* retransmit-timeout */
 		jam(buf, " retransmit-timeout: %jds;",
 		    deltasecs(c->config->retransmit_timeout));
 		/* tcp? */
@@ -839,29 +842,29 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 		jam_string(buf, ";");
 		/* .metric */
-		jam(buf, " metric: %u;", c->config->child_sa.metric);
+		jam(buf, " metric: %u;", c->config->child.metric);
 		/* .connmtu */
 		jam_string(buf, " mtu: ");
-		if (c->config->child_sa.mtu == 0) {
+		if (c->config->child.mtu == 0) {
 			jam_string(buf, "unset");
 		} else {
-			jam(buf, "%d", c->config->child_sa.mtu);
+			jam(buf, "%d", c->config->child.mtu);
 		}
 		jam_string(buf, ";");
 		/* .sa_priority */
 		jam_string(buf, " sa_prio:");
-		if (c->config->child_sa.priority == 0) {
+		if (c->config->child.priority == 0) {
 			jam_string(buf, "auto");
 		} else {
-			jam(buf, "%ju", c->config->child_sa.priority);
+			jam(buf, "%ju", c->config->child.priority);
 		}
 		jam_string(buf, ";");
 		/* .sa_tfcpad */
 		jam_string(buf, " sa_tfc:");
-		if (c->config->child_sa.tfcpad == 0) {
+		if (c->config->child.tfcpad == 0) {
 			jam_string(buf, "none");
 		} else {
-			jam(buf, "%ju", c->config->child_sa.tfcpad);
+			jam(buf, "%ju", c->config->child.tfcpad);
 		}
 		jam_string(buf, ";");
 	}
@@ -1094,7 +1097,8 @@ void show_connection_statuses(struct show *s)
 
 static unsigned whack_connection_status(const struct whack_message *m UNUSED,
 					struct show *s,
-					struct connection *c)
+					struct connection *c,
+					struct connection_visitor_context *context UNUSED)
 {
 	show_connection_status(s, c);
 	return 1; /* the connection counts */
@@ -1107,8 +1111,9 @@ void whack_connectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_connection_status,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_connection_status, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

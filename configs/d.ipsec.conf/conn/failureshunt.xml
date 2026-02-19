@@ -1,0 +1,15 @@
+<varlistentry id='conn.failureshunt'>
+  <term>
+    <option>failureshunt=&failureshunt_option;</option>
+  </term>
+  <listitem>
+    <para>
+      What to do with packets when negotiation fails.  &none; means
+      install no shunt; &pass;, &drop;, and &reject; have the obvious
+      meanings.
+    </para>
+    <para>
+      The default is &none;.
+    </para>
+  </listitem>
+</varlistentry>

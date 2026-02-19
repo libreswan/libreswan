@@ -49,6 +49,6 @@ extern const struct enum_enum_names_check enum_enum_names_checklist[]; /* NULL t
 extern void check_enum_names(const struct enum_names_check *checklist);
 extern void check_enum_enum_names(const struct enum_enum_names_check *checklist);
 
-extern void init_enum_names();
+extern void init_enum_names(void);
 
 #endif

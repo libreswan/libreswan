@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 			name_buf tidb;
 			LDBG_log(logger, "looking up %d [%s]",
 				 t->id, str_vendorid(t->id, &tidb));
-			LDBG_hunk(logger, vid);
+			LDBG_hunk(logger, &vid);
 		}
 
 		enum known_vendorid id = vendorid_by_shunk(vid);

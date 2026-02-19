@@ -1,0 +1,5 @@
+iked_flags=NO
+sshd_flags=NO
+cron_flags=NO
+smtpd_flags=NO
+sndiod_flags=NO

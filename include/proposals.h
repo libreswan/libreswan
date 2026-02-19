@@ -42,15 +42,42 @@ struct proposal_parser;
 enum stream;
 
 /*
- * XXX: needs to be merged with IKE_ALG_TYPE.
+ * Can this be merged with IKEv2's transform type?
  */
-enum proposal_algorithm {
-	PROPOSAL_encrypt,
-	PROPOSAL_prf,
-	PROPOSAL_integ,
-	PROPOSAL_dh,
-	PROPOSAL_ALGORITHM_ROOF,
+enum proposal_transform {
+#define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_TRANSFORM_encrypt)
+	PROPOSAL_TRANSFORM_encrypt = 1,
+	PROPOSAL_TRANSFORM_prf,
+	PROPOSAL_TRANSFORM_integ,
+	PROPOSAL_TRANSFORM_kem,
+	PROPOSAL_TRANSFORM_sn,
+	PROPOSAL_TRANSFORM_addke1,
+	PROPOSAL_TRANSFORM_addke2,
+	PROPOSAL_TRANSFORM_addke3,
+	PROPOSAL_TRANSFORM_addke4,
+	PROPOSAL_TRANSFORM_addke5,
+	PROPOSAL_TRANSFORM_addke6,
+	PROPOSAL_TRANSFORM_addke7,
+#define PROPOSAL_TRANSFORM_ROOF (PROPOSAL_TRANSFORM_addke7+1)
 };
+
+extern const struct enum_names proposal_transform_names;
+
+/* map transform onto its type */
+struct transform_type {
+	enum proposal_transform index;
+	const char *name;
+	const struct ike_alg_type *alg;
+};
+
+extern const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1];
+#define transform_type_floor (&transform_types[PROPOSAL_TRANSFORM_FLOOR])
+#define transform_type_encrypt (&transform_types[PROPOSAL_TRANSFORM_encrypt])
+#define transform_type_prf (&transform_types[PROPOSAL_TRANSFORM_prf])
+#define transform_type_integ (&transform_types[PROPOSAL_TRANSFORM_integ])
+#define transform_type_kem (&transform_types[PROPOSAL_TRANSFORM_kem])
+#define transform_type_addke1 (&transform_types[PROPOSAL_TRANSFORM_addke1])
+#define transform_type_roof (&transform_types[PROPOSAL_TRANSFORM_ROOF])
 
 /*
  * Everything combined.
@@ -69,8 +96,17 @@ struct proposal_parser {
 struct proposal_policy {
 	enum ike_version version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
-	bool check_pfs_vs_dh;
-	bool ignore_parser_errors;
+	bool addke;	/* allow ADDKE* algorithms */
+	bool check_pfs_vs_ke;
+
+	/*
+	 * Ignore (but log) when an algorithm lookup fails.
+	 *
+	 * For instance, an algorithm may be compiled out, or FIPS may
+	 * have stripped an algorithm.
+	 */
+	bool ignore_transform_lookup_error;
+
 	/*
 	 * According to current policy, is the algorithm ok
 	 * (supported)?  If it isn't return FALSE.
@@ -78,7 +114,7 @@ struct proposal_policy {
 	 * For instance, an IKE algorithm requires in-process support;
 	 * while an ESP/AH algorithm requires kernel support.
 	 */
-	bool (*alg_is_ok)(const struct ike_alg *alg);
+	bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
 	/*
 	 * logging context
 	 */
@@ -102,10 +138,7 @@ struct proposal_defaults {
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
 	 */
-	const struct ike_alg **dh;
-	const struct ike_alg **prf;
-	const struct ike_alg **integ;
-	const struct ike_alg **encrypt;
+	const struct ike_alg **transform[PROPOSAL_TRANSFORM_ROOF];
 };
 
 /*
@@ -136,27 +169,35 @@ struct proposal_protocol {
 	bool encrypt;
 	bool prf;
 	bool integ;
-	bool dh;
+	bool kem;
 };
 
 /*
- * A proposal as decoded by the parser.
+ * A proposal's transforms as decoded by the parser.
  */
 
-struct algorithm {
+struct transform {
+	const struct transform_type *type;
 	const struct ike_alg *desc;
 	/*
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
-	struct algorithm *next;
+	/* something to keep sorts stable */
+	int order;
+};
+
+struct transforms {
+	unsigned len;
+	struct transform *data;
 };
 
 /* return counts of encrypt=aead and integ=none */
 bool proposal_encrypt_aead(const struct proposal *proposal);
 bool proposal_encrypt_norm(const struct proposal *proposal);
 bool proposal_integ_none(const struct proposal *proposal);
+bool proposal_impaired(const struct proposal *proposal);
 
 unsigned nr_proposals(const struct proposals *proposals);
 bool default_proposals(const struct proposals *proposals);
@@ -166,13 +207,16 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorithm);
-void append_proposal(struct proposals *proposals, struct proposal **proposal);
-void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
-		      const struct ike_alg *alg, int enckeylen);
-void remove_duplicate_algorithms(struct proposal_parser *parser,
-				 struct proposal *proposal,
-				 enum proposal_algorithm algorithm);
+void append_proposal(struct proposal_parser *parser,
+		     struct proposals *proposals,
+		     struct proposal **proposal,
+		     struct verbose verbose);
+void append_proposal_transform(struct proposal_parser *parser,
+			       struct proposal *proposal,
+			       const struct transform_type *transform_type,
+			       const struct ike_alg *transform,
+			       int enckeylen,
+			       struct verbose verbose);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -192,9 +236,9 @@ struct child_proposals {
 	struct proposals *p;
 };
 
-void jam_proposal(struct jambuf *log,
-		  const struct proposal *proposal);
-void jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposal(struct jambuf *log, const struct proposal *proposal);
+size_t jam_transform(struct jambuf *buf, const struct transform *transform);
 
 /*
  * Iterate through all the proposals and the proposal's algorithms.
@@ -211,13 +255,20 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL != NULL;						\
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
-struct algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_algorithm algorithm,
-				 struct algorithm *last);
+/* the first algorithm, or NULL */
+const struct transform *first_proposal_transform(const struct proposal *proposal,
+						 const struct transform_type *transform_type);
 
-#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, NULL); \
-	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, ALGORITHM))
+const struct transform *next_proposal_transform(const struct proposal *proposal,
+						const struct transform *prev);
+
+#define TRANSFORMS_FOR_EACH(TRANSFORM, PROPOSAL, TYPE)			\
+	for (const struct transform *TRANSFORM =			\
+		     first_proposal_transform(proposal, TYPE);		\
+	     TRANSFORM != NULL;						\
+	     TRANSFORM = next_proposal_transform(proposal, TRANSFORM))
+
+const struct transforms *proposal_transforms(const struct proposal *proposal);
 
 /*
  * Error indicated by err_buf[0] != '\0'.
@@ -240,21 +291,36 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 
 /*
- * Check that encrypt==AEAD and/or integ==none don't contradict.
+ * Post parsing checks that the proposal is ok (yea *_ok() is a pretty
+ * lame naming schema).
  */
+
+/* encrypt==AEAD and/or integ==none are consistent */
 bool proposal_aead_none_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal);
 
+/* proposal has at least one expected transform */
+bool proposal_transform_ok(struct proposal_parser *parser,
+			   const struct proposal *proposal,
+			   const struct transform_type *transform_type,
+			   bool expected);
+
+/*
+ * Record a proposal error.
+ *
+ * XXX: now that there's diag_t, perhaps this can be replaced?
+ */
+
 void proposal_error(struct proposal_parser *parser,
 		    const char *message, ...) PRINTF_LIKE(2);
-
-bool impair_proposal_errors(struct proposal_parser *parser);
 
 /*
  * Convert a generic proposal back into something the IKEv1 code can
@@ -265,32 +331,14 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct dh_desc *dh;
+	const struct kem_desc *kem;
 	const struct proposal_protocol *protocol;
 };
 
 struct v1_proposal v1_proposal(const struct proposal *proposal);
 
-/*
- * INTERNAL: tokenize <input> into <delim_before><current><delim_after><input>
- */
-
-struct proposal_tokenizer {
-	char prev_term;
-	shunk_t this;
-	char this_term;
-	shunk_t next;
-	char next_term;
-	shunk_t input;
-	const char *delims;
-};
-
-struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
-void proposal_next_token(struct proposal_tokenizer *token);
-
-bool proposal_parse_encrypt(struct proposal_parser *parser,
-			    struct proposal_tokenizer *tokens,
-			    const struct ike_alg **encrypt,
-			    int *enckeylen);
+bool parse_proposal(struct proposal_parser *parser,
+		    struct proposal *proposal, shunk_t input,
+		    struct verbose verbose);
 
 #endif /* PROPOSALS_H */

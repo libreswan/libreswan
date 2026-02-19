@@ -1,0 +1,18 @@
+<varlistentry id='setup.dns-resolver'>
+  <term>
+    <option>dns-resolver={<literal>file</literal>,<literal>systemd</literal>}</option>
+  </term>
+  <listitem>
+    <para>
+      The DNS resolver to be configured by &ipsec-updown.8;.  Both
+      <literal>file</literal> (<filename>/etc/resolve.conf</filename>)
+      and <literal>systemd</literal>
+      (<command>systemd-resolved</command> are recognized.  The
+      configured value is passed to &ipsec-updown.8; in the
+      environment variable <envar>PLUTO_DNS_RESOLVER</envar>.
+    </para>
+    <para>
+      The default is <literal>file</literal>.
+    </para>
+  </listitem>
+</varlistentry>

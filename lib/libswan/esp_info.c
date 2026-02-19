@@ -37,17 +37,21 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 			    const struct proposal *proposal)
 {
 	if (!proposal_aead_none_ok(parser, proposal)) {
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	if (!proposal_transform_ok(parser, proposal, transform_type_encrypt, true)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, transform_type_prf, false)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, transform_type_integ, true)) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -82,7 +86,7 @@ static const struct ike_alg *default_ikev1_esp_integ[] = {
 static const struct proposal_defaults ikev1_esp_defaults = {
 	.proposals[FIPS_MODE_OFF] = default_ikev1_esp_proposals,
 	.proposals[FIPS_MODE_ON] = default_ikev1_esp_proposals,
-	.integ = default_ikev1_esp_integ,
+	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev1_esp_integ,
 };
 
 /*
@@ -124,7 +128,7 @@ static const struct ike_alg *default_ikev2_esp_integ[] = {
 static const struct proposal_defaults ikev2_esp_defaults = {
 	.proposals[FIPS_MODE_ON] = default_fips_on_ikev2_esp_proposals,
 	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_esp_proposals,
-	.integ = default_ikev2_esp_integ,
+	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev2_esp_integ,
 };
 
 /*
@@ -138,7 +142,7 @@ static const struct proposal_protocol ikev1_esp_proposal_protocol = {
 	.proposal_ok = esp_proposal_ok,
 	.encrypt = true,
 	.integ = true,
-	.dh = true,
+	.kem = true,
 };
 
 static const struct proposal_protocol ikev2_esp_proposal_protocol = {
@@ -148,7 +152,7 @@ static const struct proposal_protocol ikev2_esp_proposal_protocol = {
 	.proposal_ok = esp_proposal_ok,
 	.encrypt = true,
 	.integ = true,
-	.dh = true,
+	.kem = true,
 };
 
 static const struct proposal_protocol *esp_proposal_protocol[] = {

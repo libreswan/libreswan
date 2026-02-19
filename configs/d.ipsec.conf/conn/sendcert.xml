@@ -1,0 +1,53 @@
+<varlistentry id='conn.sendcert'>
+  <term>
+    <option>leftsendcert=</option>
+  </term>
+  <term>
+    <option>rightsendcert=</option>
+  </term>
+  <listitem>
+    <para>
+      This option configures when &Libreswan; will send &X.509;
+      certificates to the remote host.  Acceptable values are:
+
+      <variablelist spacing="compact">
+
+	<varlistentry>
+	  <term>&yes;</term>
+	  <term><option>always</option></term>
+	  <listitem><para>always send a certificate</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>sendifasked</option></term>
+	  <listitem><para>send a certificate when the peer asks for it
+	  (for instance by sending a CERTREQ
+	  payload)</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>&no;</term>
+	  <term><option>never</option></term>
+	  <listitem><para>never send a certificate</para></listitem>
+	</varlistentry>
+
+      </variablelist>
+
+      The default for this option is <option>always</option>.  Note
+      that while <option>always</option> is suboptimal, setting this
+      to <option>sendifasked</option> may break compatibility with
+      other vendor's IPsec implementations, such as &Cisco;.  If you
+      find that you are getting errors about no ID/Key found, you
+      likely need to revert this option to <option>always</option>.
+    </para>
+
+    <para>
+      This option was added in &Libreswan; 2.5.14; in &Libreswan;
+      2.28, the default was changed from <option>sendifasked</option>
+      to <option>always</option>; and in &Libreswan; 3.0, the related
+      and obsolete global option <option>nocrsend=</option> was
+      removed.
+    </para>
+
+  </listitem>
+</varlistentry>

@@ -129,8 +129,11 @@ void show_ike_alg_connection(struct show *s,
 /*
  * Show registered IKE algorithms
  */
+
 void show_ike_alg_status(struct show *s)
 {
+	struct logger *logger = show_logger(s);
+
 	show_separator(s);
 	show(s, "IKE algorithms supported:");
 	show_separator(s);
@@ -138,21 +141,21 @@ void show_ike_alg_status(struct show *s)
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
-		if (ike_alg_is_ike(&(alg)->common)) {
-			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
+		if (ike_alg_is_ike(&(alg)->common, logger)) {
+			passert(alg->ikev1_oakley_id >= 0 || alg->ikev2_alg_id >= 0);
 			SHOW_JAMBUF(s, buf) {
 				jam_string(buf, "algorithm IKE encrypt:");
-				jam(buf, " v1id=%d, v1name=", alg->common.ikev1_oakley_id);
-				if (alg->common.id[IKEv1_OAKLEY_ID] >= 0) {
-					jam_enum_long(buf, &oakley_enc_names, alg->common.ikev1_oakley_id);
+				jam(buf, " v1id=%d, v1name=", alg->ikev1_oakley_id);
+				if (alg->ikev1_oakley_id >= 0) {
+					jam_enum_long(buf, &oakley_enc_names, alg->ikev1_oakley_id);
 				} else {
 					jam_string(buf, "n/a");
 				}
 				jam_string(buf, ",");
-				jam(buf, " v2id=%d, v2name=", alg->common.id[IKEv2_ALG_ID]);
-				if (alg->common.id[IKEv2_ALG_ID] >= 0) {
+				jam(buf, " v2id=%d, v2name=", alg->ikev2_alg_id);
+				if (alg->ikev2_alg_id >= 0) {
 					jam_enum_short(buf, &ikev2_trans_type_encr_names,
-						       alg->common.id[IKEv2_ALG_ID]);
+						       alg->ikev2_alg_id);
 				} else {
 					jam_string(buf, "n/a");
 				}
@@ -166,22 +169,36 @@ void show_ike_alg_status(struct show *s)
 	for (const struct prf_desc **algp = next_prf_desc(NULL);
 	     algp != NULL; algp = next_prf_desc(algp)) {
 		const struct prf_desc *alg = (*algp);
-		if (ike_alg_is_ike(&(alg)->common)) {
+		if (ike_alg_is_ike(&(alg)->common, logger)) {
 			show(s,
 			     "algorithm IKE PRF: name=%s, hashlen=%zu",
 			     alg->common.fqn, alg->prf_output_size);
 		}
 	}
 
-	for (const struct dh_desc **gdescp = next_dh_desc(NULL);
-	     gdescp != NULL; gdescp = next_dh_desc(gdescp)) {
-		const struct dh_desc *gdesc = *gdescp;
-		if (gdesc->bytes > 0) {
-			/* nothing crazy like 'none' */
-			show(s,
-			     "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-			     gdesc->common.fqn,
-			     (int)gdesc->bytes * BITS_IN_BYTE);
+	for (const struct kem_desc **kemp = next_kem_desc(NULL);
+	     kemp != NULL; kemp = next_kem_desc(kemp)) {
+		const struct kem_desc *kem = *kemp;
+		/* nothing crazy like 'none' */
+		if (kem->bytes == 0 &&
+		    kem->initiator_bytes == 0 &&
+		    kem->responder_bytes == 0) {
+			continue;
+		}
+		SHOW_JAMBUF(s, buf) {
+			jam(buf, "algorithm IKE %s:", kem->common.type->story);
+			jam(buf, " name=%s", kem->common.fqn);
+			if (kem->bytes > 0) {
+				jam(buf, ", bits=%zu", kem->bytes * BITS_IN_BYTE);
+			}
+			if (kem->initiator_bytes > 0 &&
+			    kem->initiator_bytes != kem->bytes) {
+				jam(buf, ", initiator-bytes=%zu", kem->initiator_bytes);
+			}
+			if (kem->responder_bytes > 0 &&
+			    kem->responder_bytes != kem->bytes) {
+				jam(buf, ", responder-bytes=%zu", kem->responder_bytes);
+			}
 		}
 	}
 }

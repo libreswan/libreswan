@@ -93,7 +93,7 @@ size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsig
 /* drop prefix + transform [_A-Z]->[-a-z] */
 size_t jam_enum_human(struct jambuf *, const struct enum_names *en, unsigned long val);
 
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
+size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *names);
 
 /*
  * Recommended for determining an enum's validity:
@@ -124,18 +124,11 @@ bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b)
  */
 extern long next_enum(const struct enum_names *en, long last);
 
-extern int enum_search(const struct enum_names *ed, const char *string);
-
 /*
  * Search ED for an enum matching STRING.  Return -1 if no match is
  * found.
- *
- * Unlike enum_search() this compares strings both with and without
- * any prefix or suffix.  For instance, given the enum_name entry
- * "ESP_BLOWFISH(OBSOLETE)" with prefix "ESP_", any of
- * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
-extern int enum_match(const struct enum_names *ed, shunk_t string);
+extern int enum_byname(const struct enum_names *ed, shunk_t string);
 
 /*
  * primitives:
@@ -166,16 +159,18 @@ const char *enum_range_name(const struct enum_names *range, unsigned long val, c
 
 typedef const struct enum_enum_names enum_enum_names;
 
-bool enum_enum_name(enum_enum_names *e, unsigned long table,
+bool enum_enum_long(enum_enum_names *e, unsigned long table,
 		    unsigned long val, name_buf *buf);
+bool enum_enum_short(enum_enum_names *e, unsigned long table,
+		     unsigned long val, name_buf *buf);
 
-const char *str_enum_enum(enum_enum_names *e, unsigned long table,
-			  unsigned long val, name_buf *buf);
+const char *str_enum_enum_long(enum_enum_names *e, unsigned long table,
+			       unsigned long val, name_buf *buf);
 const char *str_enum_enum_short(enum_enum_names *e, unsigned long table,
 				unsigned long val, name_buf *buf);
 
-size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
-		     unsigned long table, unsigned long val);
+size_t jam_enum_enum_long(struct jambuf *log, enum_enum_names *een,
+			  unsigned long table, unsigned long val);
 size_t jam_enum_enum_short(struct jambuf *log, enum_enum_names *een,
 			   unsigned long table, unsigned long val);
 

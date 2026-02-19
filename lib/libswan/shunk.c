@@ -65,7 +65,7 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 				*delim = *pos;
 			}
 			/* skip over TOKEN+DELIM */
-			*input = hunk_slice(*input, pos-start+1, input->len);
+			*input = shunk_slice(*input, pos-start+1, input->len);
 			return token;
 		}
 		pos++;
@@ -96,7 +96,7 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 			/* save the token and stop character */
 			shunk_t token = shunk2(start, pos - start);
 			/* skip over TOKEN+DELIM */
-			*input = hunk_slice(*input, pos - start, input->len);
+			*input = shunk_slice(*input, pos - start, input->len);
 			return token;
 		}
 		pos++;
@@ -127,6 +127,19 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 
 	if (input.len == 0) {
 		return "empty string";
+	}
+
+	if (hunk_streat(&input, "-1")) {
+		if (output != NULL) {
+			*output = input;
+			*dest = UINTMAX_MAX;
+			return NULL;
+		}
+		if (input.len == 0) {
+			*dest = UINTMAX_MAX;
+			return NULL;
+		}
+		return "trailing junk";
 	}
 
 	/*
@@ -205,7 +218,7 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 			return "uintmax_t overflow";
 		}
 		u = u + d;
-		cursor = hunk_slice(cursor, 1, cursor.len);
+		cursor = shunk_slice(cursor, 1, cursor.len);
 	}
 
 	if (cursor.len == input.len) {
@@ -311,10 +324,9 @@ struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 		ldbgf(DBG_TMI, &global_logger,
 		      "%s() [%u] \""PRI_SHUNK"\"",
 		      __func__, tokens->len, pri_shunk(token));
-		/* grow by one shunk_t */
-		realloc_items(tokens, tokens->len + 1);
-		/* save */
-		tokens->item[tokens->len - 1] = token;
+		/* grow by one shunk_t; and save the token */
+		shunk_t *end = grow_items(tokens);
+		(*end) = token;
 	}
 
 	return tokens;

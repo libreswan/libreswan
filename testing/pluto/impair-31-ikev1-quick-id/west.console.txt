@@ -8,7 +8,7 @@ west #
 west #
  ipsec auto --add west
 "west": ikev2=no has been replaced by keyexchange=ikev1
-"west": added IKEv1 connection
+"west": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -26,35 +26,35 @@ west #
 "west" #1: sent Main Mode I3
 "west" #1: Peer ID is IPV4_ADDR: '192.1.2.23'
 "west" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
-"west" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
-"west" #2: IMPAIR: skipping Quick Mode client initiator ID (IDci)
-"west" #2: IMPAIR: skipping Quick Mode client responder ID (IDcr)
+"west" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
+IMPAIR: "west" #2: skipping Quick Mode client initiator ID (IDci)
+IMPAIR: "west" #2: skipping Quick Mode client responder ID (IDcr)
 "west" #2: sent Quick Mode request
-"west" #2: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "west" #2: retransmit so timing out SA (may retry)
 "west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair v1_emit_quick_id:1
 west #
  ipsec up west
-"west" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
-"west" #3: IMPAIR: skipping Quick Mode client responder ID (IDcr)
+"west" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
+IMPAIR: "west" #3: skipping Quick Mode client responder ID (IDcr)
 "west" #3: sent Quick Mode request
-"west" #3: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "west" #3: retransmit so timing out SA (may retry)
 "west" #3: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"west" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #3: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 "west" #3: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair v1_emit_quick_id:3
 west #
  ipsec up west
-"west" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
-"west" #4: IMPAIR: adding bonus Quick Mode client ID
+"west" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
+IMPAIR: "west" #4: adding bonus Quick Mode client ID
 "west" #4: sent Quick Mode request
-"west" #4: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "west" #4: retransmit so timing out SA (may retry)
 "west" #4: connection is supposed to remain up; revival attempt 3 scheduled in 10 seconds
-"west" #4: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #4: revival: skip scheduling CONNECTION_REVIVAL event in 10 seconds
 "west" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

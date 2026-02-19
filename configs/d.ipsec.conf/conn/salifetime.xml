@@ -1,0 +1,25 @@
+<varlistentry id='conn.salifetime'>
+  <term>
+    <option>salifetime=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      How long a particular instance of a connection (a set of
+      encryption/authentication keys for user packets) should last up
+      to a maximum of 24 hours (<option>1d</option> or
+      <option>24h</option>); from successful negotiation to expiry.
+    </para>
+    <para>
+      Normally, the connection is renegotiated (via the keying
+      channel) before it expires.  The two ends need not exactly agree
+      on <option>salifetime</option>.
+    </para>
+    <para>
+      The default is 8 hours (<literal>8h</literal>)).
+    </para>
+    <para>
+      The keywords "keylife" and "lifetime" are obsoleted aliases for
+      "salifetime."  Change your configs to use "salifetime" instead.
+    </para>
+  </listitem>
+</varlistentry>

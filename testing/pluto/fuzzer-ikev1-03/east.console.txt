@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ # Start only one, so it is easier to spot a crash
+east #
+ ipsec pluto --config /etc/ipsec.conf
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add test
+"test": added oriented IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # if east was already down, we crashed it
+east #
+ ipsec whack --shutdown
+Pluto is shutting down
+east #
+ sed -n -e 's/^.*: packet from /packet from /p' /tmp/pluto.log
+packet from 192.1.2.45:EPHEM: message ignored because it contains a payload type (ISAKMP_NEXT_SA) unexpected by state STATE_INFO
+packet from 192.1.2.45:EPHEM: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:EPHEM
+packet from 192.1.2.45:EPHEM: message ignored because it contains a payload type (ISAKMP_NEXT_SIG) unexpected by state STATE_MAIN_R0
+packet from 192.1.2.45:EPHEM: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:EPHEM
+east #

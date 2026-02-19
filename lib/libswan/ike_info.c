@@ -27,58 +27,63 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_prf.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "proposals.h"
 
 static bool ike_proposal_ok(struct proposal_parser *parser,
 			    const struct proposal *proposal)
 {
+	const struct logger *logger = parser->policy->logger;
+
 	if (!proposal_aead_none_ok(parser, proposal)) {
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
 	/*
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_encrypt, true)) {
+		return false;
+	}
+
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		passert(ike_alg_is_ike(&encrypt->common));
-		passert(impair.proposal_parser ||
-			alg->enckeylen == 0 ||
-			encrypt_has_key_bit_length(encrypt,
-						   alg->enckeylen));
+		PASSERT(logger, ike_alg_is_ike(&encrypt->common, logger));
+		PASSERT(logger, (alg->enckeylen == 0 ||
+				 encrypt_has_key_bit_length(encrypt,
+							    alg->enckeylen)));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL);
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_prf, true)) {
+		return false;
+	}
+
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_prf) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
-		passert(ike_alg_is_ike(&prf->common));
+		PASSERT(logger, ike_alg_is_ike(&prf->common, logger));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
-	FOR_EACH_ALGORITHM(proposal, integ, alg) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_integ, true)) {
+		return false;
+	}
+
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
-		passert(integ == &ike_alg_integ_none ||
-			ike_alg_is_ike(&integ->common));
+		PASSERT(logger, (integ == &ike_alg_integ_none ||
+				 ike_alg_is_ike(&integ->common, logger)));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL);
-	FOR_EACH_ALGORITHM(proposal, dh, alg) {
-		const struct dh_desc *dh = dh_desc(alg->desc);
-		passert(ike_alg_is_ike(&dh->common));
-		if (dh == &ike_alg_dh_none) {
-			proposal_error(parser, "IKE DH algorithm 'none' not permitted");
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+	if (!proposal_transform_ok(parser, proposal, transform_type_kem, true)) {
+		return false;
+	}
+
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_kem) {
+		const struct kem_desc *kem = kem_desc(alg->desc);
+		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
+		if (kem == &ike_alg_kem_none) {
+			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
+			return false;
 		}
 	}
 
@@ -116,18 +121,18 @@ static const struct ike_alg *default_ikev1_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev1_groups[] = {
-	&ike_alg_dh_modp2048.common,
-	&ike_alg_dh_modp1536.common,
-	&ike_alg_dh_secp256r1.common,
-	&ike_alg_dh_curve25519.common,
+	&ike_alg_kem_modp2048.common,
+	&ike_alg_kem_modp1536.common,
+	&ike_alg_kem_secp256r1.common,
+	&ike_alg_kem_curve25519.common,
 	NULL,
 };
 
 const struct proposal_defaults ikev1_ike_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_ike_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev1_ike_proposals,
-	.dh = default_ikev1_groups,
-	.prf = default_ikev1_ike_prfs,
+	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev1_groups,
+	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev1_ike_prfs,
 };
 
 /*
@@ -182,25 +187,25 @@ static const struct ike_alg *default_ikev2_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev2_groups[] = {
-	&ike_alg_dh_secp256r1.common,
-	&ike_alg_dh_secp384r1.common,
-	&ike_alg_dh_secp521r1.common,
+	&ike_alg_kem_secp256r1.common,
+	&ike_alg_kem_secp384r1.common,
+	&ike_alg_kem_secp521r1.common,
 #ifdef USE_DH31
-	&ike_alg_dh_curve25519.common,
+	&ike_alg_kem_curve25519.common,
 #endif
-	&ike_alg_dh_modp4096.common,
-	&ike_alg_dh_modp3072.common,
-	&ike_alg_dh_modp2048.common,
-	&ike_alg_dh_modp8192.common,
+	&ike_alg_kem_modp4096.common,
+	&ike_alg_kem_modp3072.common,
+	&ike_alg_kem_modp2048.common,
+	&ike_alg_kem_modp8192.common,
 	NULL,
 };
 
 const struct proposal_defaults ikev2_ike_defaults = {
 	.proposals[FIPS_MODE_ON] = default_fips_on_ikev2_ike_proposals,
 	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_ike_proposals,
-	.prf = default_ikev2_ike_prfs,
+	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
-	.dh = default_ikev2_groups,
+	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev2_groups,
 };
 
 /*
@@ -213,9 +218,13 @@ static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.defaults = &ikev1_ike_defaults,
 	.proposal_ok = ike_proposal_ok,
 	.encrypt = true,
+	/*
+	 * IKEv1 IKE proposals only have the PRF, i.e., 
+	 * <encr>-<prf>-<integ> isn't acceptable.
+	 */
 	.prf = true,
-	.integ = true,
-	.dh = true,
+	.integ = false,
+	.kem = true,
 };
 
 static const struct proposal_protocol ikev2_ike_proposal_protocol = {
@@ -226,7 +235,7 @@ static const struct proposal_protocol ikev2_ike_proposal_protocol = {
 	.encrypt = true,
 	.prf = true,
 	.integ = true,
-	.dh = true,
+	.kem = true,
 };
 
 static const struct proposal_protocol *ike_proposal_protocol[] = {

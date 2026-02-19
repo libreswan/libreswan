@@ -75,7 +75,7 @@
 #include "log_limiter.h"
 #include "ikev1_notification.h"
 #include "ikev2_notification.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
 static callback_cb handle_md_event;		/* type assertion */
@@ -93,8 +93,10 @@ static callback_cb handle_md_event;		/* type assertion */
 
 void process_md(struct msg_digest *md)
 {
-	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
-				 &md->hdr, sizeof(md->hdr), &md->message_pbs);
+	struct pbs_in packet_pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->packet), "packet");
+	diag_t d = pbs_in_struct(&packet_pbs, &isakmp_hdr_desc,
+				 &md->hdr, sizeof(md->hdr),
+				 &md->message_pbs);
 	if (d != NULL) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
@@ -115,25 +117,31 @@ void process_md(struct msg_digest *md)
 	 * They map onto the same bytes.
 	 */
 	shunk_t message = pbs_in_all(&md->message_pbs);
-	shunk_t packet = pbs_in_all(&md->packet_pbs);
-	PEXPECT(md->logger, message.ptr == packet.ptr);
+	PEXPECT(md->logger, message.ptr == md->packet.ptr);
 
-	if (packet.len > message.len) {
+	if (md->packet.len > message.len) {
 		/*
 		 * The extracted message, with its .len set from the
-		 * header, is shorter than the raw packet.
+		 * header is shorter than the raw packet.
 		 *
 		 * Some (old?) versions of the Cisco VPN client send
-		 * an additional 16 bytes of zero bytes - Complain but
-		 * accept it
+		 * an additional 16 zero-bytes - complain but accept
+		 * it
 		 */
 		if (LDBGP(DBG_BASE, md->logger)) {
 			LDBG_log(md->logger, "size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-				 packet.len, md->hdr.isa_length);
-			shunk_t tail = hunk_slice(packet, message.len, packet.len);
-			LDBG_log(md->logger, "extraneous bytes:");
-			LDBG_hunk(md->logger, tail);
+				 md->packet.len, md->hdr.isa_length);
+			shunk_t tail = shunk_slice(md->packet, message.len, md->packet.len);
+			if (tail.len > 16) {
+				LDBG_log(md->logger, "extraneous bytes (truncated from %zu):", tail.len);
+				tail.len = 16;
+			} else {
+				LDBG_log(md->logger, "extraneous bytes:");
+			}
+			LDBG_hunk(md->logger, &tail);
 		}
+		/* truncate */
+		md->packet.len = message.len;
 	}
 
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
@@ -145,20 +153,18 @@ void process_md(struct msg_digest *md)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
+		limited_llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 	{
 		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
-			llog_md(md,
-			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
+			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
-			llog_md(md,
-			     "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
+			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
 			return;
 		}
@@ -178,8 +184,7 @@ void process_md(struct msg_digest *md)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			llog_md(md,
-			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			limited_llog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
 		}
@@ -203,11 +208,10 @@ void process_md(struct msg_digest *md)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			llog_md(md,
-			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
+			limited_llog_md(md, "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
 		name_buf xb;
-		pdbg(md->logger,
+		ldbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -272,8 +276,10 @@ void process_md(struct msg_digest *md)
  * input packet buffer, an auto.
  */
 
-void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
+void process_iface_packet(struct verbose verbose, int fd, void *ifp_arg)
 {
+	struct logger *logger = verbose.logger;
+
 	struct iface_endpoint *ifp = ifp_arg;
 	ifp_arg = NULL; /* can no longer be trusted */
 
@@ -300,16 +306,16 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 			endpoint_buf sb;
 			endpoint_buf lb;
 			LDBG_log(logger, "*received %zu bytes from %s on %s %s using %s",
-				 pbs_in_all(&md->packet_pbs).len,
+				 md->packet.len,
 				 str_endpoint(&md->sender, &sb),
 				 md->iface->ip_dev->real_device_name,
 				 str_endpoint(&md->iface->local_endpoint, &lb),
 				 md->iface->io->protocol->name);
-			shunk_t packet = pbs_in_all(&md->packet_pbs);
-			LDBG_hunk(logger, packet);
+			shunk_t packet = HUNK_AS_SHUNK(&md->packet);
+			LDBG_hunk(logger, &packet);
 		}
 
-		pstats_ike_bytes.in += pbs_in_all(&md->packet_pbs).len;
+		pstats_ike_bytes.in += md->packet.len;
 
 		md->md_inception = md_start;
 		if (!impair_inbound(md)) {
@@ -324,8 +330,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 		pexpect(md == NULL);
 	}
 
-	threadtime_stop(&md_start, SOS_NOBODY,
-			"%s() reading and processing packet", __func__);
+	threadtime_stop(&md_start, "%s() reading and processing packet", __func__);
 }
 
 static void handle_md_event(const char *story UNUSED, struct state *st, void *context)
@@ -339,8 +344,8 @@ static void handle_md_event(const char *story UNUSED, struct state *st, void *co
 
 void schedule_md_event(const char *story, struct msg_digest *md)
 {
-	schedule_callback(story, deltatime(0), SOS_NOBODY,
-			  handle_md_event, md);
+	schedule_callback(story, deltatime_from_seconds(0), SOS_NOBODY,
+			  handle_md_event, md, md->logger);
 }
 
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr)
@@ -396,27 +401,11 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * list all the payload types
  */
 
-static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct msg_digest *md)
+void jam_msg_digest_payloads(struct jambuf *buf,
+			     const struct msg_digest *md)
 {
-	jam_string(buf, prefix);
-
-	jam_string(buf, " ");
 	const enum ike_version ike_version = hdr_ike_version(&md->hdr);
-	jam_enum_enum_short(buf, &exchange_type_names, ike_version,
-			    md->hdr.isa_xchg);
-
-	if (ike_version == IKEv2) {
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST: jam_string(buf, " request"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, " response"); break;
-		case NO_MESSAGE: break;
-		}
-	}
-
-	jam_string(buf, " from ");
-	jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
-
-	const char *sep = " containing ";
+	const char *sep = "";
 	const char *term = "";
 	for (unsigned d = 0; d < md->digest_roof; d++) {
 		const struct payload_digest *pd = &md->digest[d];
@@ -433,9 +422,13 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 		} else {
 			sep = ",";
 		}
-		jam_enum_enum_short(buf, &payload_type_names,
-				    ike_version,
-				    pd->payload_type);
+		name_buf ptb;
+		if (enum_enum_short(&payload_type_names, ike_version,
+				    pd->payload_type, &ptb)) {
+			jam_string(buf, ptb.buf);
+		} else {
+			jam(buf, "%u?", pd->payload_type);
+		}
 		/* go deeper? */
 		switch (pd->payload_type) {
 		case ISAKMP_NEXT_v2N:
@@ -453,15 +446,8 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 	jam_string(buf, term);
 }
 
-void llog_msg_digest(enum stream stream, struct logger *logger, const char *prefix, const struct msg_digest *md)
-{
-	LLOG_JAMBUF(stream, logger, buf) {
-		jam_msg_digest(buf, prefix, md);
-	}
-}
-
-void llog_md(const struct msg_digest *md,
-	     const char *message, ...)
+void limited_llog_md(const struct msg_digest *md,
+		     const char *message, ...)
 {
 	enum stream stream = log_limiter_stream(md->logger, MD_LOG_LIMITER);
 	if (stream != NO_STREAM) {
@@ -472,9 +458,9 @@ void llog_md(const struct msg_digest *md,
 	}
 }
 
-void init_demux(const struct config_setup *oco, struct logger *logger UNUSED)
+void init_demux(struct logger *logger UNUSED)
 {
-	global_ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	global_ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 #ifndef USE_IKEv1
 	if (global_ikev1_policy != GLOBAL_IKEv1_DROP) {
 		name_buf pb;

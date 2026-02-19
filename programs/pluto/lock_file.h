@@ -22,7 +22,7 @@
 struct config_setup;
 struct logger;
 
-int create_lock_file(const struct config_setup *oco, bool fork_desired, struct logger *logger);
+int create_lock_file(bool fork_desired, struct logger *logger);
 bool fill_and_close_lock_file(int *lockfd, pid_t pid);
 void delete_lock_file(void);
 

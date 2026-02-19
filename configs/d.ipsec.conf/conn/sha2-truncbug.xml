@@ -1,0 +1,23 @@
+<varlistentry id='conn.sha2-truncbug'>
+  <term>
+    <option>sha2-truncbug=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Enable the use of the draft 96-bit trunacted hash (instead of
+      the 128-bit truncated has specified in the final RFC) when
+      negotiating &ESP; with <option>esp=sha2_256</option>.
+    </para>
+    <para>
+      This option is required when interoperating with &Linux;, before
+      2.6.33, and some &Cisco; routers (2811?).
+    </para>
+    <para>
+      Another workaround is to switch from <option>sha2_256</option>
+      to <option>sha2_512</option>.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

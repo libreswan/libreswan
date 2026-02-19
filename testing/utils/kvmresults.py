@@ -68,9 +68,6 @@ def main():
     parser.add_argument("--json", action="store_true",
                         help="output each result as an individual json object (pipe the output through 'jq -s .' to convert it to a well formed json list")
 
-    parser.add_argument("directories", metavar="DIRECTORY-OR-FILE", nargs="+",
-                        help="a directory containing: a test, testsuite, test output, or testsuite output; or a file containing a 'TESTLIST'")
-
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
     skip.add_arguments(parser)
@@ -89,11 +86,6 @@ def main():
     publish.process_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args)
-    # And check
-    if not tests:
-        logger.error("Invalid testsuite or test directories")
-        return 1
-
     result_stats = stats.Results()
     exit_code = 125 # assume a 'git bisect' barf
     try:

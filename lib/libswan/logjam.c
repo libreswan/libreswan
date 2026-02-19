@@ -47,7 +47,7 @@ void logjam_to_logger(struct logjam *logjam)
 		jam_where(&logjam->barf.jambuf, logjam->barf.where);
 	}
 	jambuf_to_logger(&logjam->barf.jambuf, logjam->barf.logger, logjam->barf.stream);
-	if ((logjam->barf.stream & STREAM_MASK) == PASSERT_STREAM) {
+	if (logjam->barf.stream == PASSERT_STREAM) {
 		abort();
 	}
 }

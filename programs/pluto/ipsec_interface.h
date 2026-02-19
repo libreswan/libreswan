@@ -44,7 +44,7 @@ typedef enum { IPSEC_INTERFACE_ID_1 = 1, } ipsec_interface_id_t;
  */
 
 struct ipsec_interface_address {
-	refcnt_t refcnt;
+	refcnt_t refcnt;	/* must be first */
 	ip_cidr if_ip;
 	bool pluto_added;	/* vs an address on a pre-existing
 				 * interface */

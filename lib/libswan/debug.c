@@ -44,8 +44,8 @@ static struct double_double debug = {
 	.name[N##_IX] = A "\0", \
 	.help[N##_IX] = H
 
-	D(DBG_BASE, "debug-base", "enable detailed debug logging"),
 	D(DBG_ROUTING, "debug-routing", "enable routing debug logging"),
+	D(DBG_BASE, "debug-base", "enable detailed debug logging"),
 
 	/* end of debug=base */
 

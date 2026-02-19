@@ -21,7 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add east-any
-"east-any": added IKEv2 connection
+"east-any": added oriented IKEv2 connection
 west #
  echo initdone
 initdone
@@ -35,14 +35,14 @@ Connection list:
  
 "east-any": 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...%any[%fromcert]==={192.0.2.101-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "east-any":   host: oriented; local: 192.1.2.45; remote: %any;
-"east-any":   mycert=east; my_updown=ipsec _updown;
+"east-any":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east-any":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east-any":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "east-any":   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
 "east-any":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east-any":   sec_label:unset;
 "east-any":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"east-any":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "east-any":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -58,14 +58,14 @@ Connection list:
 "east-any":   conn serial: $1;
 "east-any"[1]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]==={192.0.2.101/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.101;
 "east-any"[1]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.209; established IKE SA: #1;
-"east-any"[1]:   mycert=east; my_updown=ipsec _updown;
+"east-any"[1]:   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east-any"[1]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east-any"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "east-any"[1]:   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
 "east-any"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east-any"[1]:   sec_label:unset;
 "east-any"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"east-any"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "east-any"[1]:   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "east-any"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any"[1]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -80,17 +80,17 @@ Connection list:
 "east-any"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
 "east-any"[1]:   conn serial: $2, instantiated from: $1;
 "east-any"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
-"east-any"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"east-any"[1]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
 "east-any"[2]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]==={192.0.2.102/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.102;
 "east-any"[2]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.33; established IKE SA: #3;
-"east-any"[2]:   mycert=east; my_updown=ipsec _updown;
+"east-any"[2]:   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east-any"[2]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east-any"[2]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "east-any"[2]:   modecfg info: us:server, them:client, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
 "east-any"[2]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east-any"[2]:   sec_label:unset;
 "east-any"[2]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"east-any"[2]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east-any"[2]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "east-any"[2]:   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "east-any"[2]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any"[2]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -105,7 +105,7 @@ Connection list:
 "east-any"[2]:   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #3; established Child SA: #4;
 "east-any"[2]:   conn serial: $3, instantiated from: $1;
 "east-any"[2]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
-"east-any"[2]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"east-any"[2]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
  
 Total IPsec connections: loaded 3, routed 2, active 2
 west #
@@ -118,6 +118,7 @@ src 192.1.2.45 dst 192.1.3.33
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.3.33 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -127,6 +128,7 @@ src 192.1.3.33 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.45 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -135,6 +137,7 @@ src 192.1.2.45 dst 192.1.3.209
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.3.209 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -144,6 +147,7 @@ src 192.1.3.209 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.2.101/32

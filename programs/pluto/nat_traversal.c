@@ -78,14 +78,14 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 {
 	/* only responder's IKE SPI can be zero */
 	if (ike_spi_is_zero(&spis->initiator)) {
-		dbg("nat: IKE.SPIi is unexpectedly zero");
+		ldbg(logger, "nat: IKE.SPIi is unexpectedly zero");
 		/* presumably because it was impaired?!? */
-		pexpect(impair.ike_initiator_spi.enabled &&
-			impair.ike_initiator_spi.value == 0);
+		PEXPECT(logger, (impair.ike_initiator_spi.enabled &&
+				 impair.ike_initiator_spi.value == 0));
 	}
 	if (ike_spi_is_zero(&spis->responder)) {
 		/* IKE_SA_INIT exchange */
-		dbg("nat: IKE.SPIr is zero");
+		ldbg(logger, "nat: IKE.SPIr is zero");
 	}
 
 	/*
@@ -120,53 +120,61 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	return hash;
 }
 
-void natd_lookup_common(struct state *st,
-			const ip_endpoint sender,
-			bool found_me, bool found_peer)
+/*
+ * XXX: FOUND_ME and FOUND_PEER are true when the hash in the NAT
+ * detection payload that the peer computed for that end matches what
+ * was computed locally (i.e., the end isn't behind a NAT).
+ */
+
+void detect_nat_common(struct ike_sa *ike,
+		       const ip_endpoint sender,
+		       bool found_me, bool found_peer)
 {
-	st->hidden_variables.st_natd = ipv4_info.address.unspec;
+	struct logger *logger = ike->sa.logger;
+	ike->sa.hidden_variables.st_natd = ipv4_info.address.zero;
 
 	/* update NAT-T settings for local policy */
-	switch (st->st_connection->config->encapsulation) {
+	switch (ike->sa.st_connection->config->encapsulation) {
 	case YNA_UNSET:
 	case YNA_AUTO:
-		dbg("NAT_TRAVERSAL encaps using auto-detect");
+		ldbg(logger, "NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
-			dbg("NAT_TRAVERSAL this end is behind NAT");
-			st->hidden_variables.st_nated_host = true;
-			st->hidden_variables.st_natd = endpoint_address(sender);
+			ldbg(logger, "NAT_TRAVERSAL this end is behind NAT");
+			ike->sa.hidden_variables.st_nated_host = true;
+			ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		} else {
-			dbg("NAT_TRAVERSAL this end is NOT behind NAT");
+			ldbg(logger, "NAT_TRAVERSAL this end is NOT behind NAT");
 		}
 
 		if (!found_peer) {
 			endpoint_buf b;
-			dbg("NAT_TRAVERSAL that end is behind NAT %s",
-			    str_endpoint(&sender, &b));
-			st->hidden_variables.st_nated_peer = true;
-			st->hidden_variables.st_natd = endpoint_address(sender);
+			ldbg(logger, "NAT_TRAVERSAL that end is behind NAT %s",
+			     str_endpoint(&sender, &b));
+			ike->sa.hidden_variables.st_nated_peer = true;
+			ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		} else {
-			dbg("NAT_TRAVERSAL that end is NOT behind NAT");
+			ldbg(logger, "NAT_TRAVERSAL that end is NOT behind NAT");
 		}
 		break;
 
 	case YNA_NO:
-		st->hidden_variables.st_nat_traversal |= LEMPTY;
-		dbg("NAT_TRAVERSAL local policy prohibits encapsulation");
+		ike->sa.hidden_variables.st_nat_traversal |= LEMPTY;
+		ldbg(logger, "NAT_TRAVERSAL local policy prohibits encapsulation");
 		break;
 
 	case YNA_YES:
-		ldbg(st->logger, "NAT_TRAVERSAL local policy enforces encapsulation");
-		st->hidden_variables.st_nated_peer = true;
-		st->hidden_variables.st_nated_host = true;
-		st->hidden_variables.st_natd = endpoint_address(sender);
+		ldbg(ike->sa.logger, "NAT_TRAVERSAL local policy enforces encapsulation");
+		ike->sa.hidden_variables.st_nated_peer = true;
+		ike->sa.hidden_variables.st_nated_host = true;
+		ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		break;
 	}
 
-	if (st->st_connection->config->nat_keepalive) {
+	if (ike->sa.st_connection->config->nat_keepalive) {
 		endpoint_buf b;
-		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
+		ldbg(logger, "NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
 	}
+
 }
 
 bool nat_traversal_detected(struct state *st)
@@ -178,12 +186,12 @@ bool nat_traversal_detected(struct state *st)
 static void nat_traversal_send_ka(struct state *st)
 {
 	endpoint_buf b;
-	dbg("ka_event: send NAT-KA to %s (state=#%lu)",
-	    str_endpoint(&st->st_remote_endpoint, &b),
-	    st->st_serialno);
+	ldbg(st->logger, "ka_event: send NAT-KA to %s (state="PRI_SO")",
+	     str_endpoint(&st->st_remote_endpoint, &b),
+	     pri_so(st->st_serialno));
 
 	/* send keep alive */
-	dbg("sending NAT-T Keep Alive");
+	ldbg(st->logger, "sending NAT-T Keep Alive");
 	send_keepalive_using_state(st, "NAT-T Keep Alive");
 }
 
@@ -196,18 +204,18 @@ static bool need_nat_keepalive(struct state *st)
 	const struct connection *c = st->st_connection;
 
 	if (!c->config->nat_keepalive) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, nat-keepalive=no)");
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, nat-keepalive=no)");
 		return false;
 	}
 
 	if (!st->hidden_variables.st_nated_host) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, not behind NAT");
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, not behind NAT");
 		return false;
 	}
 
 	/* XXX: .st_iface_endpoint, not c.interface - can be different */
 	if (!st->st_iface_endpoint->io->send_keepalive) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, needed by %s protocol",
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, needed by %s protocol",
 		     st->st_iface_endpoint->io->protocol->name);
 		return false;
 	}
@@ -221,7 +229,7 @@ void schedule_v1_nat_keepalive(struct state *st)
 		return;
 	}
 
-	pdbg(st->logger, "NAT-keep-alive: scheduled, period %jds",
+	ldbg(st->logger, "NAT-keep-alive: scheduled, period %jds",
 	     deltasecs(nat_keepalive_period));
 	event_schedule(EVENT_v1_NAT_KEEPALIVE, nat_keepalive_period, st);
 }
@@ -244,7 +252,7 @@ void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where)
 	 * established.
 	 */
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: allowing non-established IKE SA when scheduling (responder yet to process Child payloads?) "PRI_WHERE,
+		ldbg(ike->sa.logger, "NAT-keep-alive: allowing non-established IKE SA when scheduling (responder yet to process Child payloads?) "PRI_WHERE,
 		     pri_where(where));
 	}
 
@@ -254,12 +262,12 @@ void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where)
 	 * NAT open so it can later shutdown.
 	 */
 	if (ike->sa.st_connection->established_ike_sa != ike->sa.st_serialno) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: allowing IKE SA crossing-stream with "PRI_SO" when scheduling "PRI_WHERE,
+		ldbg(ike->sa.logger, "NAT-keep-alive: allowing IKE SA crossing-stream with "PRI_SO" when scheduling "PRI_WHERE,
 		     pri_so(ike->sa.st_connection->established_ike_sa),
 		     pri_where(where));
 	}
 
-	pdbg(ike->sa.logger, "NAT-keep-alive: scheduled, period %jds",
+	ldbg(ike->sa.logger, "NAT-keep-alive: scheduled, period %jds",
 	     deltasecs(nat_keepalive_period));
 	event_schedule(EVENT_v2_NAT_KEEPALIVE, nat_keepalive_period, &ike->sa);
 }
@@ -283,17 +291,17 @@ void event_v1_nat_keepalive(struct state *st)
 	 * get_sa_bundle_info() to kernel _and_ find ISAKMP SA.
 	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
-		pdbg(st->logger, "NAT-keep-alive: IPsec SA is not established");
+		ldbg(st->logger, "NAT-keep-alive: IPsec SA is not established");
 		return;
 	}
 
 	if (c->established_child_sa != st->st_serialno) {
-		pdbg(st->logger, "NAT-keep-alive: IPsec SA is not the current SA ("PRI_SO")",
+		ldbg(st->logger, "NAT-keep-alive: IPsec SA is not the current SA ("PRI_SO")",
 		     pri_so(c->established_child_sa));
 		return;
 	}
 
-	pdbg(st->logger, "NAT-keep-alive: sending keep-alive");
+	ldbg(st->logger, "NAT-keep-alive: sending keep-alive");
 	nat_traversal_send_ka(st);
 }
 #endif
@@ -307,12 +315,12 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 * its timers.
 	 */
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, as IKE SA is not established");
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, as IKE SA is not established");
 		return;
 	}
 
 	if (c->established_ike_sa != ike->sa.st_serialno) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA is not current ("PRI_SO")",
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA is not current ("PRI_SO")",
 		     pri_so(c->established_ike_sa));
 		return;
 	}
@@ -323,7 +331,7 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 */
 	if (!is_monotime_epoch(ike->sa.st_v2_msgid_windows.last_sent) &&
 	    deltasecs(monotime_diff(mononow(), ike->sa.st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA recently sent a request");
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA recently sent a request");
 		return;
 	}
 
@@ -342,104 +350,8 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 * finding the IKE SA is cheap.
 	 */
 
-	pdbg(ike->sa.logger, "NAT-keep-alive: sending keep-alive");
+	ldbg(ike->sa.logger, "NAT-keep-alive: sending keep-alive");
 	nat_traversal_send_ka(&ike->sa);
-}
-
-/*
- * Re-map entire family.
- *
- * In IKEv1 this code needs to handle orphans - the children are
- * around but the IKE (ISAKMP) SA is gone.
- */
-
-struct new_mapp_nfo {
-	so_serial_t clonedfrom;
-	const ip_endpoint new_remote_endpoint;
-};
-
-static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
-{
-	struct new_mapp_nfo *nfo = data;
-	if (pexpect(st->st_serialno == nfo->clonedfrom /*parent*/ ||
-		    st->st_clonedfrom == nfo->clonedfrom /*sibling*/)) {
-		endpoint_buf b1;
-		endpoint_buf b2;
-		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
-		ldbg(st->logger, "new NAT mapping for #%lu, was %s, now %s",
-		     st->st_serialno,
-		     str_endpoint(&st_remote_endpoint, &b1),
-		     str_endpoint(&nfo->new_remote_endpoint, &b2));
-
-		/* update it */
-		st->st_remote_endpoint = nfo->new_remote_endpoint;
-		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
-		struct connection *c = st->st_connection;
-		if (is_instance(c)) {
-			/* update remote */
-			c->remote->host.addr = endpoint_address(nfo->new_remote_endpoint);
-			/* then rebuild local<>remote host-pair */
-		}
-	}
-	return false; /* search for more */
-}
-
-/*
- * this should only be called after packet has been
- * verified/authenticated! (XXX: IKEv1?)
- *
- * XXX: Is this solving an IKEv1 only problem?  IKEv2 only needs to
- * update the IKE SA and seems to do it using update_ike_endpoints().
- */
-
-void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
-{
-
-	if (st == NULL)
-		return;
-
-	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
-	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
-		/* XXX: when is MD NULL? */
-		return;
-	}
-
-	if (md != NULL) {
-
-		/*
-		 * If source port/address has changed, update the family.
-		 *
-		 * Since IKEv1 allows orphans - parent deleted but
-		 * children live on.
-		 */
-		if (!endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
-			struct new_mapp_nfo nfo = {
-				.clonedfrom = (st->st_clonedfrom != SOS_NOBODY ? st->st_clonedfrom : st->st_serialno),
-				.new_remote_endpoint = md->sender,
-			};
-			state_by_ike_spis(st->st_ike_version,
-					  NULL /* clonedfrom */,
-					  NULL /* v1_msgid */,
-					  NULL /* role */,
-					  &st->st_ike_spis,
-					  nat_traversal_update_family_mapp_state,
-					  &nfo,
-					  __func__);
-		}
-
-		/*
-		 * If interface type has changed, update local port (500/4500)
-		 */
-		if (md->iface != st->st_iface_endpoint) {
-			endpoint_buf b1, b2;
-			dbg("NAT-T: #%lu updating local interface from %s to %s (using md->iface in %s())",
-			    st->st_serialno,
-			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
-			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
-			iface_endpoint_delref(&st->st_iface_endpoint);
-			st->st_iface_endpoint = iface_endpoint_addref(md->iface);
-		}
-	}
 }
 
 void show_setup_natt(struct show *s)

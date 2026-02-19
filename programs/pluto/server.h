@@ -44,7 +44,7 @@ struct timeout;
 struct config_setup;
 
 void check_open_fds(struct logger *logger);
-void init_ctl_socket(const struct config_setup *oco, struct logger *logger);
+void init_ctl_socket(struct logger *logger);
 void delete_ctl_socket(void);
 
 struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
@@ -56,29 +56,25 @@ extern bool listening;  /* should we pay attention to IKE messages? */
 extern void show_debug_status(struct show *s);
 extern void run_server(const char *conffile, struct logger *logger) NEVER_RETURNS;
 
-/* XXX: grr, need pointer to function else NEVER_RETURNS is ignored */
-typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
-extern void stop_server(server_stopped_cb cb);
+typedef void (server_stopped_cb)(int r, struct logger *logger);
+extern void stop_server(server_stopped_cb *cb NEVER_RETURNS);
 
-struct timer_event {
-	threadtime_t inception;
-	struct logger *logger;
-};
+typedef void (timeout_event_cb)(struct verbose verbose, vtime_t inception, void *arg);
 
 void schedule_timeout(const char *name,
 		      struct timeout **to, const deltatime_t delay,
-		      void (*cb)(void *arg, const struct timer_event *event),
-		      void *arg);
+		      timeout_event_cb *cb, void *arg);
 void destroy_timeout(struct timeout **to);
 
-typedef void (fd_accept_listener_cb)(int fd, ip_sockaddr *sa,
-				     void *arg, struct logger *logger);
+typedef void (fd_accept_listener_cb)(struct verbose verbose,
+				     int fd, ip_sockaddr *sa,
+				     void *arg);
 void attach_fd_accept_listener(const char *name,
 			       struct fd_accept_listener **fdl, int fd,
 			       fd_accept_listener_cb *cb, void *arg);
 void detach_fd_accept_listener(struct fd_accept_listener **fdl);
 
-typedef void (fd_read_listener_cb)(int fd, void *arg, struct logger *logger);
+typedef void (fd_read_listener_cb)(struct verbose verbose, int fd, void *arg);
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
 			     int fd, const char *name,
@@ -89,7 +85,7 @@ void add_fd_read_listener(int fd, const char *name,
 			  fd_read_listener_cb *cb, void *arg);
 
 extern void init_server(struct logger *logger);
-extern void free_server(void);
+extern void free_server(struct logger *logger);
 
 extern struct event_base *get_pluto_event_base(void);
 
@@ -138,12 +134,15 @@ void schedule_resume(const char *name,
 typedef void callback_cb(const char *story, struct state *st, void *context);
 void schedule_callback(const char *story, deltatime_t delay,
 		       so_serial_t serialno,
-		       callback_cb *callback, void *context);
+		       callback_cb *callback, void *context,
+		       struct logger *logger);
 
 void whack_impair_call_global_event_handler(enum global_timer type,
 					    struct logger *logger);
 void call_global_event_handler(enum global_timer type, struct logger *logger);
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
+
+unsigned nr_processors_online(void);
 
 #endif /* SERVER_H */

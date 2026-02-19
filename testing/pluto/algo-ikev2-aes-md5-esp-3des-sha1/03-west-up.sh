@@ -1,1 +1,0 @@
-ipsec auto --up algo

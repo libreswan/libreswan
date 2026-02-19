@@ -39,7 +39,7 @@ extern const struct option optarg_options[]; 	/* defined by program */
  * see below.
  */
 
-int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options);
+int optarg_getopt(struct logger *logger, int argc, char **argv);
 
 /*
  * Using OPTARG_OPTIONS[] table, which is assumed to contain METAOPT
@@ -60,16 +60,29 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
  *
  */
 
-#define METAOPT_REPLACE   "\0>"		/* warn that option was replaced */
-#define METAOPT_IGNORE "\0!"		/* warn, and ignore, option */
-#define METAOPT_FATAL "\0*"		/* fatal, use when can't be ignored */
-#define METAOPT_HEADING  "\r\a\n\t"	/* new line with heading */
+#define METAOPT_SILENT	"\0."		/* not documented; probably common alias */
+#define METAOPT_REPLACE	"\0>"		/* warn that option was replaced */
+#define METAOPT_IGNORE	"\0!"		/* warn, and ignore, option */
+#define METAOPT_FATAL	"\0*"		/* fatal, use when can't be ignored */
+
+#define METAOPT_HEADING	"\r\a\n\t"	/* new line with heading */
 
 #define REPLACE_OPT(OLD, NEW, RELEASE, ...)	OLD METAOPT_REPLACE NEW "\n" RELEASE
 #define IGNORE_OPT(OLD, RELEASE, ...)		OLD METAOPT_IGNORE "\n" RELEASE
 #define FATAL_OPT(OLD, RELEASE, ...)		OLD METAOPT_FATAL "\n" RELEASE
 #define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
+
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
+#define SILENT_OPT(OPT, ...)		OPT METAOPT_SILENT __VA_ARGS__
+
+/*
+ * Common OPTS and their names.
+ */
+
+#define ASYNC_OPTS							\
+	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
+	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
+	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
 
 void optarg_usage(const char *progname, const char *synopsis,
 		  const char *details) NEVER_RETURNS;
@@ -81,8 +94,10 @@ NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
 const char *optarg_nonempty(const struct logger *logger);
 /* returns a non-NULL string, or barfs */
 const char *optarg_empty(const struct logger *logger);
+/* returns an allocated realpath(), or barfs; must pfree() */
+char *optarg_realpath(const struct logger *logger);
 
-deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale);
+deltatime_t optarg_deltatime(const struct logger *logger);
 
 /* -1==MAX */
 uintmax_t optarg_uintmax(const struct logger *logger);
@@ -96,6 +111,8 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
 enum yn_options optarg_yn(const struct logger *logger, enum yn_options optional);
 enum yna_options optarg_yna(const struct logger *logger, enum yna_options optional);
 enum yne_options optarg_yne(const struct logger *logger, enum yne_options optional);
+
+bool optarg_bool(const struct logger *logger);
 
 /*
  * Adddres family dependent options.
@@ -144,5 +161,7 @@ enum optarg_debug {
 
 void optarg_debug(enum optarg_debug);
 void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
+
+void optarg_version(const char *suffix) NEVER_RETURNS;
 
 #endif

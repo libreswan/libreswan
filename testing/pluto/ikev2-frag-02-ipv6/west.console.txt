@@ -21,7 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add v6-tunnel
-"v6-tunnel": added IKEv2 connection
+"v6-tunnel": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -33,8 +33,9 @@ west #
 "v6-tunnel" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
 "v6-tunnel" #1: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}, initiating IKE_AUTH
 "v6-tunnel" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=key4096.testing.libreswan.org, E=user-key4096@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"v6-tunnel" #1: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "v6-tunnel" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"v6-tunnel" #2: initiator established Child SA using #1; IPsec tunnel [2001:111:1111::/48===2001:2222:222:2200::/56] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"v6-tunnel" #2: initiator established Child SA using #1; IPsec tunnel [2001:111:1111::/48===2001:2222:222:2200::/56] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  grep "fragment number" /tmp/pluto.log
 |    fragment number: 1 (00 01)
@@ -56,6 +57,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -64,6 +66,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135

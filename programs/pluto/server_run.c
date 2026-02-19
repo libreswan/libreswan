@@ -38,259 +38,268 @@
 #include "verbose.h"
 #include "log.h"
 
-bool server_run(const char *verb, const char *verb_suffix,
-		const char *cmd,
-		struct verbose verbose)
+
+bool server_runv(const char *story, const char *argv[], struct verbose verbose)
 {
-#	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (VDBGP()) {
-		int slen = strlen(cmd);
-		int i;
+	int status = server_runve_io(story, argv,
+				     /*envp*/NULL,
+				     /*input*/empty_shunk,
+				     /*save_output*/NULL,
+				     verbose,
+				     /*command_stream*/ALL_STREAMS);
+	return (status == 0);
+}
 
-		VDBG_log("executing %s%s: %s",
-			 verb, verb_suffix, cmd);
-		VDBG_log("popen cmd is %d chars long", slen);
-		for (i = 0; i < slen; i += CHUNK_WIDTH)
-			VDBG_log("cmd(%4d):%.*s:", i,
-				 slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
-				 &cmd[i]);
+bool server_runve(const char *story,
+		  const char *argv[],
+		  const char *envp[],
+		  struct verbose verbose)
+{
+	int status = server_runve_io(story, argv, envp,
+				     /*input*/empty_shunk,
+				     /*save_output*/NULL,
+				     verbose,
+				     (verbose.debug ? DEBUG_STREAM : 0));
+	return (status == 0);
+}
+
+NEVER_RETURNS
+static void child_process(const char *story,
+			  int fd[],
+			  shunk_t input,
+			  const char *argv[],
+			  const char *envp[],
+			  struct verbose verbose)
+{
+	/*
+	 * In child, connect child's STDIN to fd[0] - parent->child;
+	 * but only when it needs to remain open.
+	 */
+
+	if (input.len == 0) {
+		close(fd[0]);
+	} else if (fd[0] != STDIN_FILENO) {
+		if (dup2(fd[0], STDIN_FILENO) < 0) {
+			verror(errno, "command \"%s\": dup2(fd[0], STDIN) failed: ", story);
+			exit(127);
+		}
+		if (close(fd[0]) < 0) {
+			verror(errno, "command \"%s\": close(fd[0]) failed: ", story);
+			exit(127);
+		}
 	}
-#	undef CHUNK_WIDTH
 
+	/*
+	 * In child, connect fd[1] - child->parent - to
+	 * child's STDOUT and STDERR.
+	 */
 
-	{
-		/*
-		 * invoke the script, catching stderr and stdout
-		 * It may be of concern that some file descriptors will
-		 * be inherited.  For the ones under our control, we
-		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
-		 * Any used by library routines (perhaps the resolver or
-		 * syslog) will remain.
-		 */
-		FILE *f = popen(cmd, "r");
+	if (fd[1] != STDOUT_FILENO) {
+		if (dup2(fd[1], STDOUT_FILENO) < 0) {
+			verror(errno, "command \"%s\": dup2(fd[1], STDOUT) failed: ", story);
+			exit(127);
+		}
+	}
 
-		if (f == NULL) {
-#ifdef HAVE_BROKEN_POPEN
-			/*
-			 * See bug #1067  Angstrom Linux on a arm7 has no
-			 * popen()
-			 */
-			if (errno == ENOSYS) {
+	if (fd[1] != STDERR_FILENO) {
+		if (dup2(fd[1], STDERR_FILENO) < 0) {
+			verror(errno, "command \"%s\": dup2(fd[1], STDERR) failed: ", story);
+			exit(127);
+		}
+	}
+
+	if (fd[1] != STDOUT_FILENO && fd[1] != STDERR_FILENO) {
+		if (close(fd[1]) < 0) {
+			verror(errno, "command\"%s\": close(fd[1]) failed: ", story);
+			exit(127);
+		}
+	}
+
+	/*
+	 * In child, with redirection done, exec new command.
+	 */
+
+	if (envp == NULL) {
+		execv(argv[0], (char**)argv);
+	} else {
+		/* definition requires _GNU_SOURCE on Linux */
+		execve(argv[0], (char**)argv, (char**)envp);
+	}
+
+	/* should never reach here */
+	verror(errno, "command \"%s\": execve() failed: ", story);
+	exit(127);
+}
+
+int server_runve_io(const char *story,
+		    const char *argv[],
+		    const char *envp[],
+		    shunk_t input,
+		    chunk_t *save_output,
+		    const struct verbose verbose,
+		    enum stream command_stream)
+{
+	if (command_stream != 0) {
+		LLOG_JAMBUF(command_stream, verbose.logger, buf) {
+			jam_string(buf, "command \"");
+			jam_string(buf, story);
+			jam_string(buf, "\":");
+			for (const char **c = argv; *c != NULL; c++) {
+				jam_string(buf, " ");
 				/*
-				 * Try system(), though it will not give us
-				 * output
+				 * XXX: jam_sanitized_hunk doesn't
+				 * excape single quotes.
+				 *
+				 * XXX: should split long arguments.
+				 * Currently they are truncated.
 				 */
-				vlog("unable to popen(), falling back to system()");
-				system(cmd);
-				return true;
-			}
-#endif
-			vlog("unable to popen %s%s command",
-			     verb, verb_suffix);
-			return false;
-		}
-
-		/* log any output */
-		for (;; ) {
-			/*
-			 * if response doesn't fit in this buffer, it will
-			 * be folded
-			 */
-			char resp[256];
-
-			if (fgets(resp, sizeof(resp), f) == NULL) {
-				if (ferror(f)) {
-					llog_error(verbose.logger, errno,
-						   "fgets failed on output of %s%s command",
-						   verb, verb_suffix);
-					pclose(f);
-					return false;
-				} else {
-					passert(feof(f));
-					break;
-				}
-			} else {
-				char *e = resp + strlen(resp);
-
-				if (e > resp && e[-1] == '\n')
-					e[-1] = '\0'; /* trim trailing '\n' */
-				vlog("%s%s output: %s", verb, verb_suffix, resp);
-			}
-		}
-
-		/* report on and react to return code */
-		{
-			int r = pclose(f);
-
-			if (r == -1) {
-				llog_error(verbose.logger, errno,
-					   "pclose failed for %s%s command",
-					   verb, verb_suffix);
-				return false;
-			} else if (WIFEXITED(r)) {
-				if (WEXITSTATUS(r) != 0) {
-					vlog("%s%s command exited with status %d",
-					     verb, verb_suffix,
-					     WEXITSTATUS(r));
-					return false;
-				}
-			} else if (WIFSIGNALED(r)) {
-				vlog("%s%s command exited with signal %d",
-				     verb, verb_suffix, WTERMSIG(r));
-				return false;
-			} else {
-				vlog("%s%s command exited with unknown status %d",
-				     verb, verb_suffix, r);
-				return false;
+				jam_string(buf, "'");
+				jam_shell_quoted_hunk(buf, shunk1(*c));
+				jam_string(buf, "'");
 			}
 		}
 	}
-	return true;
-}
 
-bool server_runv(const char *argv[], const struct verbose verbose)
-{
-	char command[LOG_WIDTH];
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(command), };
-	const char *sep = "";
-	for (const char **c = argv; *c != NULL; c++) {
-		jam_string(buf, sep); sep = " ";
-		jam_string(buf, "'");
-		jam_shell_quoted_hunk(buf, shunk1(*c));
-		jam_string(buf, "'");
-	}
-	if (!vexpect(jambuf_ok(buf))) {
-		return false;
-	}
-	vlog("command: %s", command);
-
-	FILE *out = popen(command, "re");	/*'e' is an extension
-						 * for close on
-						 * exec */
-	if (out == NULL) {
-		llog_error(verbose.logger, errno, "command '%s' failed: ", command);
-		return false;
+	for (const char **p = envp; p != NULL && *p != NULL; p++) {
+		vdbg("%s", *p);
 	}
 
-	while (true) {
-		char inp[100];
-		int n = fread(inp, 1, sizeof(inp), out);
-		if (n > 0) {
-			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-				jam_string(buf, "output: ");
-				jam_sanitized_hunk(buf, shunk2(inp, n));
-			}
-			continue;
-		}
-		if (feof(out) || ferror(out)) {
-			const char *why = (feof(out) ? "eof" :
-					   ferror(out) ? "error" :
-					   "???");
-			int wstatus = pclose(out);
-			llog(RC_LOG, verbose.logger,
-			     "%s: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s",
-			     why, wstatus,
-			     bool_str(WIFEXITED(wstatus)), WEXITSTATUS(wstatus),
-			     bool_str(WIFSIGNALED(wstatus)), WTERMSIG(wstatus),
-			     bool_str(WIFSTOPPED(wstatus)), WSTOPSIG(wstatus),
-			     bool_str(WCOREDUMP(wstatus)));
-			break;
-		}
-	}
-	return true;
-}
-
-struct server_run server_runv_chunk(const char *argv[], shunk_t input,
-				    const struct verbose verbose)
-{
-	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-		jam_string(buf, "command:");
-		for (const char **arg = argv; (*arg) != NULL; arg++) {
-			jam_string(buf, " ");
-			jam_shell_quoted_hunk(buf, shunk1(*arg));
-		}
+	if (save_output != NULL) {
+		zero(save_output);
 	}
 
+	/*
+	 * fd[0] will be parent->child
+	 * fd[1] will be child->parent
+	 */
 	int fd[2];
 	if (pipe(fd) == -1) {
-		llog_error(verbose.logger, errno, "pipe(): ");
-		return (struct server_run) { .status = -1, };
+		verror(errno, "command\"%s\": pipe() failed: ", story);
+		return -1;
 	}
 
 	pid_t child = fork();
 	if (child < 0) {
-		llog_error(verbose.logger, errno, "fork(): ");
-		return (struct server_run) { .status = -1, };
+		verror(errno, "command \"%s\": fork() failed: ", story);
+		return -1;
 	}
 
 	if (child == 0) {
-
-		/* dup() write side, fd[1], of pipe to STDOUT */
-		if (fd[1] != STDOUT_FILENO) {
-			if (dup2(fd[1], STDOUT_FILENO) < 0) {
-				llog_error(verbose.logger, errno, "dup2(fd[1], STDOUT): ");
-				exit(127);
-			}
-			if (close(fd[1]) < 0) {
-				llog_error(verbose.logger, errno, "close(fd[1]): ");
-				exit(127);
-			}
-		}
-
-		/* dup() read side, fd[0], of pipe() to child's STDIN */
-		if (fd[0] != STDIN_FILENO) {
-			/* switch fd[0] to STDIN */
-			if (dup2(fd[0], STDIN_FILENO) < 0) {
-				llog_error(verbose.logger, errno, "dup2(fd[0], STDIN): ");
-				exit(127);
-			}
-			if (close(fd[0]) < 0) {
-				llog_error(verbose.logger, errno, "close(fd[0]): ");
-				exit(127);
-			}
-		}
-
-		execvp(argv[0], (char**)argv);
-		llog_error(verbose.logger, errno, "execve(): ");
-		exit(127);
+		child_process(story, fd, input, argv, envp, verbose);
 	}
 
-	if (input.len > 0 &&
-	    write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
-		llog_error(verbose.logger, errno, "partial write: ");
-		/* stumble on to waitpid() */
+	/*
+	 * PARENT: Send input to child; always close.
+	 */
+
+	if (input.len > 0) {
+		if (write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
+			verror(errno, "command \"%s\": partial write(): ", story);
+			/* stumble on to waitpid() */
+		}
 	}
 
 	if (close(fd[1]) < 0) {
-		llog_error(verbose.logger, errno, "close(fd[1])");
+		verror(errno, "command \"%s\": close(fd[1]) failed: ", story);
 		/* stumble on to waitpid() */
 	}
 
-	struct server_run result = {0};
+	/*
+	 * Drain the child's stdout; use FILE so that things break on
+	 * lines.
+	 */
+	FILE *output_file = fdopen(fd[0], "r");
+	fd[0] = -1; /* ownership transfered to OUTPUT_FILE */
+	enum stream output_stream = (save_output == NULL ? ALL_STREAMS :
+				     verbose.debug ? DEBUG_STREAM :
+				     0);
+	while (true) {
+
+		/*
+		 * If response doesn't fit in this buffer, it will be
+		 * folded.
+		 */
+		char resp[256];
+		if (fgets(resp, sizeof(resp), output_file) == NULL) {
+			if (ferror(output_file)) {
+				verror(errno,
+				       "command \"%s\": fgets() failed reading output: ",
+				       story);
+				break;
+			}
+
+			passert(feof(output_file));
+			break;
+		}
+
+		shunk_t output = shunk1(resp); /* contains '\n' */
+
+		if (output_stream != 0) {
+			/* drop '\n' */
+			unsigned len = output.len;
+			if (output.len > 0 && resp[output.len-1] == '\n') {
+				len--;
+			}
+
+			LLOG_JAMBUF(output_stream, verbose.logger, buf) {
+				jam_string(buf, "command \"");
+				jam_string(buf, story);
+				jam_string(buf, "\" output: ");
+				jam_sanitized_bytes(buf, resp, len);
+			}
+		}
+
+		if (save_output != NULL) {
+			append_chunk_hunk("output", save_output, output);
+		}
+	}
+	fclose(output_file);
+
+	/*
+	 * Now reap the child.
+	 */
 
 	while (true) {
-		char inp[100];
-		ssize_t n = read(fd[0], inp, sizeof(inp));
-		if (n > 0) {
-			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-				jam_string(buf, "output: ");
-				jam_sanitized_hunk(buf, shunk2(inp, n));
-			}
-			append_chunk_hunk("output", &result.output, shunk2(inp, n));
+
+		int status;
+		waitpid(child, &status, 0);
+
+		if (WIFCONTINUED(status)) {
+			vwarning("command \"%s\": continued", story);
 			continue;
 		}
 
-		const char *why = (n == 0 ? "EOF" : strerror(errno));
-		waitpid(child, &result.status, 0);
-		vlog("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
-		     result.status,
-		     bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
-		     bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
-		     bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
-		     bool_str(WCOREDUMP(result.status)),
-		     why);
-		break;
-	}
+		if (WIFSIGNALED(status)) {
+			vwarning("command \"%s\": terminated with signal %s (%d)",
+				 story,
+				 strsignal(WTERMSIG(status)),
+				 WTERMSIG(status));
+			return -1;
+		}
 
-	return result;
+		if (WIFEXITED(status)) {
+			unsigned code = WEXITSTATUS(status);
+			if (code != 0) {
+				vwarning("command \"%s\": exited with status %u",
+					 story, code);
+			} else if (command_stream != 0) {
+				llog(command_stream, verbose.logger,
+				     "command \"%s\": exited normally", story);
+			} else {
+				vdbg("command \"%s\": exited normally", story);
+			}
+			return code;
+		}
+
+		if (WIFSTOPPED(status)) {
+			/* should not happen */
+			vwarning("command \"%s\": stopped with signal %s (%d) but WUNTRACED not specified",
+				 story,
+				 strsignal(WSTOPSIG(status)),
+				 WSTOPSIG(status));
+			continue;
+		}
+
+		return -1;
+	}
 }

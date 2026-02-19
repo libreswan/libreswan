@@ -29,22 +29,22 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert-correct
-"nss-cert-correct": added IKEv1 connection
+"nss-cert-correct": added oriented IKEv1 connection
 east #
  ipsec auto --add nss-cert-wrong
-"nss-cert-wrong": added IKEv1 connection
+"nss-cert-wrong": added oriented IKEv1 connection
 east #
  ipsec auto --status |grep nss-cert
 "nss-cert-correct": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any[@west.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "nss-cert-correct":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.45; remote: %any;
-"nss-cert-correct":   mycert=east; my_updown=ipsec _updown;
+"nss-cert-correct":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-correct":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-correct":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-correct":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-correct":   sec_label:unset;
 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"nss-cert-correct":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"nss-cert-correct":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "nss-cert-correct":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-correct":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -59,14 +59,14 @@ east #
 "nss-cert-correct":   conn serial: $1;
 "nss-cert-wrong": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "nss-cert-wrong":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.45; remote: %any;
-"nss-cert-wrong":   mycert=east; my_updown=ipsec _updown;
+"nss-cert-wrong":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-wrong":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-wrong":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-wrong":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-wrong":   sec_label:unset;
 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
-"nss-cert-wrong":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"nss-cert-wrong":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "nss-cert-wrong":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-wrong":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

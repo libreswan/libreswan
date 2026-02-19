@@ -36,9 +36,11 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ../../guestbin/ipsec-add.sh main other
-"main": added IKEv2 connection
-"other": added IKEv2 connection
+ ipsec add main
+"main": added oriented IKEv2 connection
+east #
+ ipsec add other
+"other": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

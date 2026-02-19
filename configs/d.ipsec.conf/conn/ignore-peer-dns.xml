@@ -1,0 +1,23 @@
+<varlistentry id='conn.ignore-peer-dns'>
+  <term>
+    <option>ignore-peer-dns=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      whether to ignore received DNS configuration.  Normally, when a
+      roadwarrior connects to a remote VPN, the remote VPN server
+      sends a list of DNS domains and DNS nameserver IP addresses that
+      the roadwarrior can use to reach internal only resources through
+      the VPN. This option allows the roadwarrior to ignore the
+      server's suggestion. The roadwarrior will normally use this
+      information to update the DNS resolving process. What is changed
+      depends on the detected DNS configuration. It can modify
+      /etc/resolv.conf directly, or reconfigure a locally running DNS
+      server (unbound, knot, stubby or systemd-resolved) or inform
+      NetworkManager.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

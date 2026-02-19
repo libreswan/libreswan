@@ -1,6 +1,6 @@
 /* verbose wrapper around logger
  *
- * Copyright (C) 2024  Andrew Cagney
+ * Copyright (C) 2024-2025  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +17,10 @@
 #ifndef VERBOSE_H
 #define VERBOSE_H
 
+#include "lswcdefs.h"		/* for PRINTF_LIKE() */
+#include "where.h"
 #include "pluto_constants.h"	/* for enum stream; */
+#include "cputime.h"
 
 /*
  * Pass-by-value wrapper around logger to make it easy to generate
@@ -37,10 +40,12 @@
  */
 
 struct verbose {
-	const struct logger *logger;
+	/*const*/struct logger *logger;
 	enum stream stream;
+	bool debug;
 	int level;
 	const char *prefix;
+	where_t where;
 };
 
 /*
@@ -79,12 +84,14 @@ struct verbose {
  */
 
 #define VERBOSE(STREAM, LOGGER, PREFIX)					\
-	{								\
+	(struct verbose) {						\
 		.logger = LOGGER,					\
 			.prefix = PREFIX,				\
 			.stream = (STREAM != DEBUG_STREAM ? STREAM :	\
 				   LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
 				   NO_STREAM),				\
+			.debug = LDBGP(DBG_BASE, LOGGER),		\
+			.where = HERE,					\
 			}
 
 /*
@@ -92,17 +99,14 @@ struct verbose {
  */
 
 #define PRI_VERBOSE "%s%s%*s"
-#define pri_verbose \
-	(verbose.prefix == NULL ? "" : verbose.prefix), \
-		(verbose.prefix == NULL ? "" : ": "),	\
-		(verbose.level * 2), ""
+#define pri_verbose(VERBOSE)					\
+	((VERBOSE)->prefix == NULL ? "" : (VERBOSE)->prefix),	\
+		((VERBOSE)->prefix == NULL ? "" : ": "),	\
+		((VERBOSE)->level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just
  * a wrapper around llog(verbose.logger)
- *
- * vfatal() and verror(), like perror() add ": ", before FMT when
- * ERRNO is non-zero.
  */
 
 #define vlog(FMT, ...)						\
@@ -120,16 +124,25 @@ struct verbose {
 #define vlog_passert(WHERE, FMT, ...)				\
 	llog_passert(verbose.logger, WHERE, FMT, ##__VA_ARGS__)
 
+#if 0
+/* no - so that grep IMPAIR_STREAM finds IMPAIRs */
+#define vimpair(FMT, ...)					\
+	llog(IMPAIR_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
+#endif
+
+#define vwarning(FMT, ...)						\
+	llog(WARNING_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
+
+#define verror(ERROR, FMT, ...)					\
+	llog_errno(ERROR_STREAM, verbose.logger, ERROR, FMT, ##__VA_ARGS__)
+
 #define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
 	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
 
-#define verror(ERROR, FMT, ...)					\
-	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
-
 #define vbad(BAD) PBAD(verbose.logger, BAD)
 
-#define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
-#define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
+#define vexpect(EXPECT) PEXPECT_WHERE(verbose.logger, verbose.where, EXPECT)
+#define vassert(ASSERT) PASSERT_WHERE(verbose.logger, verbose.where, ASSERT)
 
 #define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
 #define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
@@ -141,23 +154,22 @@ struct verbose {
  * These all have the same feel as the LDBG*() series.
  */
 
-#define VDBGP()	LDBGP(DBG_BASE, verbose.logger)
-
-#define vdbg(FMT, ...)							\
-	{								\
-		if (VDBGP()) {						\
-			VDBG_log(FMT, ##__VA_ARGS__);			\
-		}							\
+#define vdbg(FMT, ...)					\
+	{						\
+		if (verbose.debug) {			\
+			VDBG_log(FMT, ##__VA_ARGS__);	\
+		}					\
 	}
 
 #define VDBG_log(FMT, ...)			\
 	llog(DEBUG_STREAM, verbose.logger,	\
 	     PRI_VERBOSE""FMT,			\
-	     pri_verbose, ##__VA_ARGS__)
+	     pri_verbose(&verbose),		\
+	     ##__VA_ARGS__)
 
 #define vdbg_errno(ERRNO, FMT, ...)				\
 	{							\
-		if (VDBGP()) {					\
+		if (verbose.debug) {				\
 			VDBG_errno(errno_, FMT, ##__VA_ARGS__);	\
 		}						\
 	}
@@ -167,13 +179,14 @@ struct verbose {
 		int errno_ = ERRNO; /* save value across va args */	\
 		llog_errno(DEBUG_STREAM, verbose.logger, errno_,	\
 			   PRI_VERBOSE""FMT,				\
-			   pri_verbose, ##__VA_ARGS__);			\
+			   pri_verbose(&verbose),			\
+			   ##__VA_ARGS__);				\
 	}
 
 #define VDBG_JAMBUF(BUF)						\
-	for (bool cond_ = VDBGP(); cond_; cond_ = false)		\
+	for (bool cond_ = verbose.debug; cond_; cond_ = false)		\
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
 
 /*
@@ -188,11 +201,11 @@ struct verbose {
 
 #define verbose(FMT, ...)						\
 	{								\
-		if (verbose.stream != 0 &&				\
-		    verbose.stream != NO_STREAM) {			\
+		if (verbose.stream != NO_STREAM) {			\
 			llog(verbose.stream, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
-			     pri_verbose, ##__VA_ARGS__);		\
+			     pri_verbose(&verbose),			\
+			     ##__VA_ARGS__);				\
 		}							\
 	}
 
@@ -200,7 +213,29 @@ struct verbose {
 	for (bool cond_ = (verbose.stream != NO_STREAM);		\
 	     cond_; cond_ = false)					\
 		LLOG_JAMBUF(verbose.stream, verbose.logger, BUF)	\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
+
+/*
+ * Verbose timing.
+ */
+
+typedef struct {
+	int level;
+	cputime_t time;
+} vtime_t;
+
+vtime_t vdbg_start_where(struct verbose *verbose,
+			 const char *fmt, ...) PRINTF_LIKE(2);
+
+#define vdbg_start(FMT, ...)				\
+	vdbg_start_where(&verbose, FMT, ##__VA_ARGS__)
+
+struct cpu_usage vdbg_stop_where(struct verbose *verbose,
+				 const vtime_t *start,
+				 const char *fmt, ...) PRINTF_LIKE(3);
+
+#define vdbg_stop(START, FMT, ...)			\
+	vdbg_stop_where(&verbose, START, FMT, ##__VA_ARGS__)
 
 #endif

@@ -1,0 +1,8 @@
+OE on-demand but with responder wanting transport mode
+
+- initiator sends tunnel mode
+
+- responder rejects tunnel mode sending back notification
+
+- since Child SA was rejected and IKE SA is on-demand (lacks +UP),
+  delete IKE SA and send notification

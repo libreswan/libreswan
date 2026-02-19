@@ -141,11 +141,11 @@ struct state *state_by_reqid(reqid_t reqid,
 		    !predicate(st, predicate_context)) {
 			continue;
 		}
-		dbg("State DB: found state #%lu in %s (%s)",
-		    st->st_serialno, st->st_state->short_name, reason);
+		ldbg(&global_logger, "State DB: found state "PRI_SO" in %s (%s)",
+		    pri_so(st->st_serialno), st->st_state->short_name, reason);
 		return st;
 	}
-	dbg("State DB: state not found (%s)", reason);
+	ldbg(&global_logger, "State DB: state not found (%s)", reason);
 	return NULL;
 }
 
@@ -185,13 +185,13 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("State DB: found %s state #%lu in %s (%s)",
+		ldbg(&global_logger, "State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
-		    st->st_serialno, st->st_state->short_name, name);
+		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
-	dbg("State DB: %s state not found (%s)",
+	ldbg(&global_logger, "State DB: %s state not found (%s)",
 	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
@@ -251,13 +251,13 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("State DB: found %s state #%lu in %s (%s)",
+		ldbg(&global_logger, "State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
-		    st->st_serialno, st->st_state->short_name, name);
+		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
-	dbg("State DB: %s state not found (%s)",
+	ldbg(&global_logger, "State DB: %s state not found (%s)",
 	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
@@ -282,10 +282,10 @@ static REHASH_DB_ENTRY(state, clonedfrom, .st_clonedfrom);
  * emancipate a Child SA (IKE -> SOS_NOBODY).
  */
 
-void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
+void update_sa_clonedfrom(struct child_sa *sa, so_serial_t clonedfrom)
 {
-	st->st_clonedfrom = clonedfrom;
-	state_db_rehash_clonedfrom(st);
+	sa->sa.st_clonedfrom = clonedfrom;
+	state_db_rehash_clonedfrom(&sa->sa);
 }
 
 /*
@@ -307,35 +307,35 @@ HASH_DB(state,
  * rehash the DB entries.
  */
 
-void update_st_ike_spis_responder(struct ike_sa *ike,
-			       const ike_spi_t *ike_responder_spi)
+void update_IKE_responder_SPI_on_initiator(struct ike_sa *ike,
+					   const ike_spi_t *ike_responder_spi)
 {
 	/* update the responder's SPI */
 	ike->sa.st_ike_spis.responder = *ike_responder_spi;
 	/* now, update the state */
-	ldbg_sa(ike, "State DB: re-hashing %s state #%lu IKE SPIr",
+	ldbg_sa(ike, "State DB: re-hashing %s state "PRI_SO" IKE SPIr",
 		ike->sa.st_connection->config->ike_info->version_name,
-		ike->sa.st_serialno);
+		pri_so(ike->sa.st_serialno));
 	state_db_rehash_ike_spis(&ike->sa);
 	/* just logs change */
 	binlog_refresh_state(&ike->sa);
 }
 
 /*
- * Re-insert the state in the database after updating the RCOOKIE, and
- * possibly the ICOOKIE.
+ * Re-insert the Child SA in the database after updating the IKE SPIs.
  *
- * ICOOKIE is only updated if icookie != NULL
+ * Used when migrating a Child SA to a new IKE SA / emancipaing an IKE
+ * SA.
  */
 
-void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
+void update_IKE_SPIs_of_sa(struct child_sa *new_ike, const ike_spis_t *ike_spis)
 {
 	/* update the responder's SPI */
 	new_ike->sa.st_ike_spis = *ike_spis;
 	/* now, update the state */
-	ldbg_sa(new_ike, "State DB: re-hashing %s state #%lu IKE SPI[ir]",
+	ldbg_sa(new_ike, "State DB: re-hashing %s state "PRI_SO" IKE SPI[ir]",
 		new_ike->sa.st_connection->config->ike_info->version_name,
-		new_ike->sa.st_serialno);
+		pri_so(new_ike->sa.st_serialno));
 	state_db_rehash_ike_spis(&new_ike->sa);
 	state_db_rehash_ike_initiator_spi(&new_ike->sa);
 	/* just logs change */
@@ -352,8 +352,7 @@ static struct list_head *state_filter_head(struct state_filter *filter)
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
-		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-			jam(buf, PRI_VERBOSE, pri_verbose);
+		VDBG_JAMBUF(buf) {
 			jam(buf, "FOR_EACH_STATE[ike_spis=");
 			jam_ike_spis(buf, filter->ike_spis);
 			jam_string(buf, "]... in ");

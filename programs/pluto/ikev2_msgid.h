@@ -89,7 +89,7 @@ struct v2_msgid_window {
 	 * to delete them after a few minutes.
 	 */
 	struct v2_incoming_fragments *incoming_fragments;
-	struct v2_outgoing_fragment *outgoing_fragments;
+	struct v2_outgoing_fragments *outgoing_fragments;
 	/*
 	 * The exchange being worked on by the initiator.
 	 */
@@ -179,5 +179,7 @@ void llog_pexpect_v2_msgid_where(where_t where, struct ike_sa *ike, const char *
 #define llog_pexpect_v2_msgid(IKE, FMT, ...) llog_pexpect_v2_msgid_where(HERE, IKE, FMT, ##__VA_ARGS__)
 
 struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
+
+void jam_v2_msgid_pending(struct jambuf *buf, struct ike_sa *ike);
 
 #endif

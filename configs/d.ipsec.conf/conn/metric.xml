@@ -1,0 +1,19 @@
+<varlistentry id='conn.metric'>
+  <term>
+    <option>metric=<replaceable>number</replaceable></option>
+  </term>
+  <listitem>
+    <para>
+      Set the metric for added routes.  This value is passed to the
+      <command>ipsec _updown</command> scripts as
+      <envar>PLUTO_METRIC</envar> (see &ipsec-updown.8;).
+    </para>
+    <para>
+      Acceptable values are positive numbers.
+    </para>
+    <para>
+      The default is <literal>1</literal>.
+    </para>
+  </listitem>
+</varlistentry>
+

@@ -25,11 +25,12 @@
 #include <sys/queue.h>		/* for TAILQ_ENTRY() */
 #include <stdint.h>
 
-#include "keywords.h"		/* for KW_roof */
+#include "ipsecconf/setup.h"
+#include "ipsecconf/conn.h"
+
 #include "deltatime.h"
 #include "ip_address.h"
 #include "authby.h"
-#include "shunt.h"		/* for SHUNT_KIND_ROOF */
 #include "end.h"
 
 struct logger;
@@ -77,9 +78,6 @@ struct starter_conn {
 	config_conn_values values;
 	struct starter_end end[END_ROOF];
 
-	enum shunt_policy shunt[SHUNT_KIND_ROOF];
-
-
 	enum {
 		STATE_INVALID,
 		STATE_LOADED,
@@ -99,7 +97,7 @@ struct starter_config {
 	struct starter_conn conn_default;
 
 	/* connections list (without %default) */
-	TAILQ_HEAD(, starter_conn) conns;
+	TAILQ_HEAD(conns_head, starter_conn) conns;
 };
 
 struct starter_config *confread_load(const char *file,
@@ -107,7 +105,9 @@ struct starter_config *confread_load(const char *file,
 				     struct logger *logger,
 				     unsigned verbosity);
 
-struct starter_config *confread_argv(const char *name, char *argv[], int start, struct logger *logger);
+struct starter_config *confread_load_argv(const char *file,
+					  const char *name, char *argv[], int start,
+					  struct logger *logger, unsigned verbosity);
 
 void confread_free(struct starter_config *cfg);
 

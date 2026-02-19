@@ -48,7 +48,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "defs.h"
 #include "rnd.h"
@@ -93,7 +93,8 @@ static deltatime_t pluto_shunt_patience; /* see kernel_init() */
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger, where_t where);
+					    struct verbose verbose,
+					    where_t where);
 
 /*
  * The priority assigned to a kernel policy.
@@ -107,11 +108,11 @@ spd_priority_t spd_priority(const struct spd *spd)
 {
 	const struct connection *c = spd->connection;
 
-	if (c->config->child_sa.priority != 0) {
+	if (c->config->child.priority != 0) {
 		ldbg(c->logger,
 		     "priority calculation overruled by connection specification of %ju (0x%jx)",
-		     c->config->child_sa.priority, c->config->child_sa.priority);
-		return (spd_priority_t) { c->config->child_sa.priority, };
+		     c->config->child.priority, c->config->child.priority);
+		return (spd_priority_t) { c->config->child.priority, };
 	}
 
 	if (is_group(c)) {
@@ -133,7 +134,7 @@ spd_priority_t spd_priority(const struct spd *spd)
 
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
-	if (is_group_instance(c)) {
+	if (is_from_group(c)) {
 		if (c->remote->host.config->authby.null) {
 			base = 3; /* opportunistic anonymous */
 		} else {
@@ -298,18 +299,18 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	}
 }
 
-static void llog_bare_shunt(enum stream stream, struct logger *logger,
+static void vlog_bare_shunt(struct verbose verbose,
 			    const struct bare_shunt *bs, const char *op)
 {
-	LLOG_JAMBUF(stream, logger, buf) {
+	VLOG_JAMBUF(buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}
 }
 
-static void ldbg_bare_shunt(const struct logger *logger, const char *op, const struct bare_shunt *bs)
+static void vdbg_bare_shunt(struct verbose verbose, const char *op, const struct bare_shunt *bs)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+	VDBG_JAMBUF(buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}
@@ -326,14 +327,15 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 					 const ip_selector *peer_client,
 					 enum shunt_policy shunt_policy,
 					 co_serial_t template_serialno,
-					 const char *why, struct logger *logger)
+					 const char *why,
+					 struct verbose verbose)
 {
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
-		llog_bare_shunt(RC_LOG, logger, *bspp,
+		vlog_bare_shunt(verbose, *bspp,
 				"CONFLICTING existing");
 	}
 
@@ -353,11 +355,11 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 
 	bs->next = bare_shunts;
 	bare_shunts = bs;
-	ldbg_bare_shunt(logger, "add", bs);
+	vdbg_bare_shunt(verbose, "add", bs);
 
 	/* report duplication; this should NOT happen */
 	if (bspp != NULL) {
-		llog_bare_shunt(RC_LOG, logger, bs,
+		vlog_bare_shunt(verbose, bs,
 				"CONFLICTING      new");
 	}
 
@@ -385,6 +387,9 @@ static const char *said_str(const ip_address dst,
 			    ipsec_spi_t spi,
 			    said_buf *buf)
 {
+	if (!log_ip) {
+		return "<prot@address>";
+	}
 	ip_said said = said_from_address_protocol_spi(dst, sa_proto, spi);
 	return str_said(&said, buf);
 }
@@ -799,13 +804,14 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 	}
 }
 
-bool get_connection_spd_conflict(const struct spd *spd,
-				 const enum routing new_routing,
-				 struct spd_owner *owner,
-				 struct bare_shunt ***bare_shunt,
-				 struct logger *logger)
+static bool get_connection_spd_conflict(struct spd *spd,
+					const enum routing new_routing,
+					struct logger *logger)
 {
+	struct spd_owner *owner = &spd->wip.conflicting.owner;
 	*owner = (struct spd_owner) {0};
+
+	struct bare_shunt ***bare_shunt = &spd->wip.conflicting.bare_shunt;
 	*bare_shunt = NULL;
 
 	const struct connection *c = spd->connection;
@@ -837,6 +843,17 @@ bool get_connection_spd_conflict(const struct spd *spd,
 	return true;
 }
 
+bool get_connection_spd_conflicts(struct connection *c,
+				  enum routing new_routing)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!get_connection_spd_conflict(spd, new_routing, c->logger)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void revert_kernel_policy(struct spd *spd,
 			  struct child_sa *child/*could be NULL*/,
 			  struct logger *logger)
@@ -845,20 +862,6 @@ void revert_kernel_policy(struct spd *spd,
 	PEXPECT(logger, child == NULL || child->sa.st_connection == c);
 	PEXPECT(logger, (logger == c->logger ||
 			 logger == child->sa.logger));
-
-	/*
-	 * Kill the firewall if just installed.
-	 */
-
-	PEXPECT(logger, spd->wip.ok);
-	if (spd->wip.installed.up) {
-		PEXPECT(logger, child != NULL);
-		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, child, logger)) {
-			ldbg(logger, "kernel: down command returned an error");
-		}
-		spd->wip.installed.up = false;
-	}
 
 	/*
 	 * Now unwind the policy.
@@ -927,7 +930,15 @@ void revert_kernel_policy(struct spd *spd,
 
 bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
 {
+	/*
+	 * Still call spd_conflicts() when a sec_label so that the
+	 * structure is zeroed (sec_labels ignore conflicts).
+	 */
 	clear_connection_spd_conflicts(c);
+	if (!get_connection_spd_conflicts(c, new_routing)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
 
 	/*
 	 * Pass +1: install / replace kernel policy where needed.
@@ -935,24 +946,9 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 	bool ok = true;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		/*
-		 * Still call find_spd_conflicts() when a sec_label so that
-		 * the structure is zeroed (sec_labels ignore conflicts).
-		 */
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.bare_shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
-
 		/*
 		 * Install/replace the policy.
 		 */
-
 		spd->wip.ok = true;
 		PEXPECT(c->logger, spd->wip.ok);
 
@@ -962,29 +958,38 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		if (!ok) {
 			break;
 		}
+	}
 
+	if (ok) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
+			/* computed above */
+			const struct spd_owner *owner = &spd->wip.conflicting.owner;
+			PEXPECT(c->logger, spd->wip.ok);
+			if (owner->bare_route == NULL) {
+				/* a new route: no deletion required, but preparation is */
+				if (!updown_connection_spd(UPDOWN_PREPARE, c, spd, c->logger))
+					ldbg(c->logger, "kernel: prepare command returned an error");
+			}
+		}
+	}
+
+	if (ok) {
 		/*
 		 * Add the route.
 		 */
-
-		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
-		PEXPECT(c->logger, spd->wip.ok);
-		if (owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
-				ldbg(c->logger, "kernel: prepare command returned an error");
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
+			/* computed above */
+			const struct spd_owner *owner = &spd->wip.conflicting.owner;
+			if (owner->bare_route == NULL) {
+				ok &= spd->wip.installed.route =
+					updown_connection_spd(UPDOWN_ROUTE, c, spd, c->logger);
+			}
+			if (!ok) {
+				break;
+			}
 		}
-
-		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-		if (owner.bare_route == NULL) {
-			ok &= spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
-		}
-
-		if (!ok) {
-			break;
-		}
-
 	}
 
 	/*
@@ -1007,7 +1012,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		PEXPECT(c->logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
-			free_bare_shunt(bspp, c->logger);
+			free_bare_shunt(bspp, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 		}
 	}
 
@@ -1030,14 +1035,14 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const char *why)
 
 {
-	struct logger *logger = &global_logger;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
 
 	selector_pair_buf sb;
-	ldbg(logger, "kernel: %s looking for %s",
+	vdbg("kernel: %s looking for %s",
 	     why, str_selector_pair(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
-		ldbg_bare_shunt(logger, "comparing", p);
+		vdbg_bare_shunt(verbose, "comparing", p);
 		if (selector_in_selector(*our_client, p->our_client) &&
 		    selector_in_selector(*peer_client, p->peer_client)) {
 			return pp;
@@ -1049,16 +1054,16 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 /*
  * Free a bare_shunt entry, given a pointer to the pointer.
  */
-void free_bare_shunt(struct bare_shunt **pp, struct logger *logger)
+void free_bare_shunt(struct bare_shunt **pp, struct verbose verbose)
 {
 	struct bare_shunt *p;
 
-	passert(pp != NULL);
+	vassert(pp != NULL);
 
 	p = *pp;
 
 	*pp = p->next;
-	ldbg_bare_shunt(logger, "delete", p);
+	vdbg_bare_shunt(verbose, "delete", p);
 	pfree(p);
 }
 
@@ -1099,7 +1104,8 @@ void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger, where_t where)
+					    struct verbose verbose,
+					    where_t where)
 {
 	/*
 	 * XXX: bare_kernel_policy() does not strip the port but this
@@ -1129,9 +1135,9 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 				  DEFAULT_KERNEL_POLICY_ID,
 				  /* bare-shunt: no sec_label XXX: ?!? */
 				  null_shunk,
-				  logger, where, "bare shunt")) {
+				  verbose.logger, where, "bare shunt")) {
 		/* ??? we could not delete a bare shunt */
-		llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete kernel policy");
+		vlog_bare_shunt(verbose, bsp, "failed to delete kernel policy");
 	}
 }
 
@@ -1145,6 +1151,8 @@ void clear_narrow_holds(const ip_selector *src_client,
 			const ip_selector *dst_client,
 			struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(src_client->ipproto);
 	struct bare_shunt **bspp = &bare_shunts;
 	while (*bspp != NULL) {
@@ -1157,8 +1165,8 @@ void clear_narrow_holds(const ip_selector *src_client,
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 		} else {
 			bspp = &(*bspp)->next;
 		}
@@ -1167,7 +1175,7 @@ void clear_narrow_holds(const ip_selector *src_client,
 
 void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
-			   struct logger *logger)
+			   const struct logger *logger)
 {
 	if (PBAD(logger, c->iface == NULL) /* aka oriented() */ ||
 	    PBAD(logger, c->iface->real_device_name == NULL)) {
@@ -1247,7 +1255,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.dst.route = route.dst.route,
 		.direction = direction,
 		.mode = route.mode,
-		.iptfs = (child->sa.st_seen_and_use_iptfs ? &c->config->child_sa.iptfs : NULL),
+		.iptfs = (child->sa.st_seen_and_use_iptfs ? &c->config->child.iptfs : NULL),
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1341,13 +1349,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * they do then strange things have been going on
 		 * since the connection was loaded).
 		 */
-		if (!kernel_alg_integ_ok(ta->ta_integ)) {
+		if (!kernel_alg_integ_ok(ta->ta_integ, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP integrity algorithm %s is not implemented or allowed",
 				ta->ta_integ->common.fqn);
 			goto fail;
 		}
-		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
+		if (!kernel_alg_encrypt_ok(ta->ta_encrypt, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s is not implemented or allowed",
 				ta->ta_encrypt->common.fqn);
@@ -1359,7 +1367,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 */
 		size_t encrypt_keymat_size;
 		if (!kernel_alg_encrypt_key_size(ta->ta_encrypt, ta->enckeylen,
-						 &encrypt_keymat_size)) {
+						 &encrypt_keymat_size, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s with key length %d not implemented or allowed",
 				ta->ta_encrypt->common.fqn, ta->enckeylen);
@@ -1403,21 +1411,21 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * cleared on outbound SA).  The kernel backend gets
 		 * to handle this.
 		 */
-		said_next->replay_window = c->config->child_sa.replay_window;
+		said_next->replay_window = c->config->child.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
-		     c->config->child_sa.replay_window);
+		     c->config->child.replay_window);
 
 		if (direction == DIRECTION_OUTBOUND &&
-		    c->config->child_sa.tfcpad != 0 &&
+		    c->config->child.tfcpad != 0 &&
 		    !child->sa.st_seen_esp_tfc_padding_not_supported) {
 			ldbg(child->sa.logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
-			     c->config->child_sa.tfcpad);
-			said_next->tfcpad = c->config->child_sa.tfcpad;
+			     c->config->child.tfcpad);
+			said_next->tfcpad = c->config->child.tfcpad;
 		}
 
 		/* IPTFS kernel options */
 		if (child->sa.st_seen_and_use_iptfs) {
-			said_next->iptfs = &c->config->child_sa.iptfs;
+			said_next->iptfs = &c->config->child.iptfs;
 			deltatime_buf dtb, idb;
 			ldbg(child->sa.logger,
 			     "kernel: IPTFS fragmentation=%s max-queue-size=%ju, packet-size=%ju %s, drop-time=%s, init-delay=%s, reorder-window=%ju",
@@ -1497,9 +1505,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
 		    LDBGP(DBG_CRYPT, child->sa.logger)) {
 			LDBG_log(child->sa.logger, "ESP encrypt key:");
-			LDBG_hunk(child->sa.logger, said_next->encrypt_key);
+			LDBG_hunk(child->sa.logger, &said_next->encrypt_key);
 			LDBG_log(child->sa.logger, "ESP integrity key:");
-			LDBG_hunk(child->sa.logger, said_next->integ_key);
+			LDBG_hunk(child->sa.logger, &said_next->integ_key);
 		}
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
@@ -1556,9 +1564,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * cleared on outbound SA).  The kernel backend gets
 		 * to handle this.
 		 */
-		said_next->replay_window = c->config->child_sa.replay_window;
+		said_next->replay_window = c->config->child.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
-		     c->config->child_sa.replay_window);
+		     c->config->child.replay_window);
 
 		if (child->sa.st_ah.trans_attrs.esn_enabled) {
 			ldbg(child->sa.logger, "kernel: Enabling ESN");
@@ -1568,7 +1576,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
 		    LDBGP(DBG_CRYPT, child->sa.logger)) {
 			LDBG_log(child->sa.logger, "AH authkey:");
-			LDBG_hunk(child->sa.logger, said_next->integ_key);
+			LDBG_hunk(child->sa.logger, &said_next->integ_key);
 		}
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
@@ -1585,15 +1593,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	switch (direction) {
 	case DIRECTION_OUTBOUND:
 		if (impair.install_ipsec_sa_outbound_state) {
-			llog(RC_LOG, child->sa.logger,
-			     "IMPAIR: kernel: install_ipsec_sa_outbound_state in %s()", __func__);
+			llog(IMPAIR_STREAM, child->sa.logger, "kernel: install_ipsec_sa_outbound_state in %s()", __func__);
 			goto fail;
 		}
 		break;
 	case DIRECTION_INBOUND:
 		if (impair.install_ipsec_sa_inbound_state && direction == DIRECTION_INBOUND) {
-			llog(RC_LOG, child->sa.logger,
-			     "IMPAIR: kernel: install_ipsec_sa_inbound_state in %s()", __func__);
+			llog(IMPAIR_STREAM, child->sa.logger, "kernel: install_ipsec_sa_inbound_state in %s()", __func__);
 			goto fail;
 		}
 		break;
@@ -1860,7 +1866,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	 * complete an IPsec SA to us.
 	 */
 	child->sa.st_connection->revival.attempt = 0;
-	child->sa.st_connection->revival.delay = deltatime(0);
+	child->sa.st_connection->revival.delay = deltatime_from_seconds(0);
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 
@@ -1957,12 +1963,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 bool was_eroute_idle(struct child_sa *child, deltatime_t since_when)
 {
 	passert(child != NULL);
-	struct ipsec_proto_info *first_proto_info =
-		(child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		 NULL);
-
+	struct ipsec_proto_info *first_proto_info = outer_ipsec_proto_info(child);
 	if (!get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND)) {
 		/* snafu; assume idle!?! */
 		return true;
@@ -2087,7 +2088,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	if (bytes > flow->bytes) {
 		flow->bytes = bytes;
 		if (lastused > 0)
-			flow->last_used = realtime(lastused);
+			flow->last_used = realtime_from_seconds(lastused);
 		else
 			flow->last_used = realnow();
 	}
@@ -2099,6 +2100,8 @@ void orphan_holdpass(struct connection *c,
 		     struct spd *sr,
 		     struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	/*
 	 * ... UPDATE kernel policy if needed.
 	 *
@@ -2107,7 +2110,7 @@ void orphan_holdpass(struct connection *c,
 	 * shunt.
 	 */
 
-	ldbg(logger, "kernel: installing bare_shunt/failure_shunt");
+	vdbg("kernel: installing bare_shunt/failure_shunt");
 
 	/* fudge up parameter list */
 	const ip_address *src_address = &sr->local->host->addr;
@@ -2116,14 +2119,14 @@ void orphan_holdpass(struct connection *c,
 
 	/* fudge up replace_bare_shunt() */
 	const struct ip_info *afi = address_type(src_address);
-	passert(afi == address_type(dst_address));
+	vassert(afi == address_type(dst_address));
 	const struct ip_protocol *protocol = protocol_from_ipproto(sr->local->client.ipproto);
 	/* ports? assumed wide? */
 	ip_selector src = selector_from_address_protocol(*src_address, protocol);
 	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	selector_pair_buf sb;
-	ldbg(logger, "kernel: replace bare shunt %s for %s",
+	vdbg("kernel: replace bare shunt %s for %s",
 	     str_selector_pair(&src, &dst, &sb), why);
 
 	/*
@@ -2177,34 +2180,33 @@ void orphan_holdpass(struct connection *c,
 			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
 				       template_serialno,
-				       why, logger);
-		ldbg_bare_shunt(logger, "replace", bs);
+				       why, verbose);
+		vdbg_bare_shunt(verbose, "replace", bs);
 	} else {
-		llog(RC_LOG, logger,
-		     "replace kernel shunt %s failed - deleting from pluto shunt table",
+		vlog("replace kernel shunt %s failed - deleting from pluto shunt table",
 		     str_selector_pair_sensitive(&src, &dst, &sb));
 	}
 
 }
 
-static void expire_bare_shunts(struct logger *logger)
+static void expire_bare_shunts(struct verbose verbose)
 {
-	ldbg(logger, "kernel: checking for aged bare shunts from shunt table to expire");
+	vdbg("kernel: checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; /*see-loop*/) {
 		struct bare_shunt *bsp = *bspp;
 		deltatime_t age = monotime_diff(mononow(), bsp->last_activity);
 
 		if (deltatime_cmp(age, <, pluto_shunt_lifetime)) {
-			ldbg_bare_shunt(logger, "keeping recent", bsp);
+			vdbg_bare_shunt(verbose, "keeping recent", bsp);
 			bspp = &bsp->next;
 			continue;
 		}
 
 		if (bsp->template_serialno == COS_NOBODY) {
-			ldbg_bare_shunt(logger, "expiring old (no template connection)", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (no template connection)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
@@ -2217,41 +2219,41 @@ static void expire_bare_shunts(struct logger *logger)
 		 */
 		struct connection *c = connection_by_serialno(bsp->template_serialno);
 		if (c == NULL) {
-			ldbg_bare_shunt(logger, "expiring old (template connection disappeard)", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (template connection disappeard)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
-		PEXPECT(logger, is_template(c));
+		vexpect(is_template(c));
 		if (!kernel_policy_installed(c)) {
-			ldbg_bare_shunt(logger, "expiring old (template connection has no kernel_policy_installed())", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (template connection has no kernel_policy_installed())", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
 		/*
 		 * It passed all checks; need to replace.
 		 */
-		ldbg_bare_shunt(logger, "expiring old (restoring template connection)", bsp);
+		vdbg_bare_shunt(verbose, "expiring old (restoring template connection)", bsp);
 		install_prospective_kernel_policy(c->child.spds.list,
 						  SHUNT_KIND_ONDEMAND,
-						  logger, HERE);
-		free_bare_shunt(bspp, logger);
+						  verbose.logger, HERE);
+		free_bare_shunt(bspp, verbose);
 	}
 }
 
-static void delete_bare_shunt_kernel_policies(struct logger *logger)
+static void delete_bare_shunt_kernel_policies(struct verbose verbose)
 {
-	ldbg(logger, "kernel: emptying bare shunt table");
+	vdbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
 		delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-						logger, HERE);
-		free_bare_shunt(&bare_shunts, logger); /* also updates BARE_SHUNTS */
+						verbose, HERE);
+		free_bare_shunt(&bare_shunts, verbose); /* also updates BARE_SHUNTS */
 	}
 }
 
@@ -2276,8 +2278,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 	if ((hard && impair.ignore_hard_expire) ||
 	    (!hard && impair.ignore_soft_expire)) {
 		address_buf a;
-		llog(RC_LOG, child->sa.logger,
-		     "IMPAIR: suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
+		llog(IMPAIR_STREAM, child->sa.logger, "suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
 		     hard ? "hard" : "soft",
 		     pri_ipsec_spi(spi),
 		     str_address(&dst, &a),
@@ -2287,11 +2288,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 
 	bool rekey = c->config->rekey;
 	bool newest = c->established_child_sa == child->sa.st_serialno;
-	struct state *st =  &child->sa;
-	struct ipsec_proto_info *pr = (st->st_esp.protocol == &ip_protocol_esp ? &st->st_esp :
-				       st->st_ah.protocol == &ip_protocol_ah ? &st->st_ah :
-				       st->st_ipcomp.protocol == &ip_protocol_ipcomp ? &st->st_ipcomp :
-				       NULL);
+	struct ipsec_proto_info *pr = outer_ipsec_proto_info(child);
 
 	bool already_softexpired = ((pr->inbound.expired[SA_SOFT_EXPIRED]) ||
 				    (pr->outbound.expired[SA_SOFT_EXPIRED]));
@@ -2390,12 +2387,12 @@ static bool kernel_initialized = false;
 
 static global_timer_cb kernel_scan_shunts;
 
-static void kernel_scan_shunts(struct logger *logger)
+static void kernel_scan_shunts(struct verbose verbose)
 {
-	expire_bare_shunts(logger);
+	expire_bare_shunts(verbose);
 }
 
-void init_kernel(const struct config_setup *oco, struct logger *logger)
+void init_kernel(struct logger *logger)
 {
 	/*
 	 * Hack to stop early startup failure cascading into kernel
@@ -2409,7 +2406,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	 * kernel policy.
 	 */
 
-	pluto_expire_shunt_interval = config_setup_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL);
+	pluto_expire_shunt_interval = config_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL);
 	if (deltasecs(pluto_expire_shunt_interval) < 0 ||
 	    deltasecs(pluto_expire_shunt_interval) > MAX_EXPIRE_SHUNT_INTERVAL_SECONDS) {
 		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
@@ -2423,7 +2420,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	 *
 	 * The shunt evictor compares the age of a shunt against this.
 	 */
-	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
+	pluto_shunt_lifetime = config_setup_deltatime(KBF_SHUNTLIFETIME);
 
 	/*
 	 * Expiration to put on bare (orphan) shunt (kernel policy).
@@ -2458,7 +2455,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	kernel_ops->poke_holes(logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
-			      pluto_expire_shunt_interval);
+			      pluto_expire_shunt_interval, logger);
 }
 
 void show_kernel_interface(struct show *s)
@@ -2472,7 +2469,7 @@ void show_kernel_interface(struct show *s)
 void shutdown_kernel(struct logger *logger)
 {
 	if (kernel_initialized) {
-		delete_bare_shunt_kernel_policies(logger);
+		delete_bare_shunt_kernel_policies(VERBOSE(DEBUG_STREAM, logger, NULL));
 		kernel_ops->plug_holes(logger);
 		kernel_ops->flush(logger);
 		kernel_ops->shutdown(logger);

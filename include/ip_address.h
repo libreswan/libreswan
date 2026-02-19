@@ -59,14 +59,13 @@ typedef struct {
 	struct ip_bytes bytes;
 } ip_address;
 
-#define PRI_ADDRESS "<address-%s:IPv%d["PRI_IP_BYTES"]>"
+#define PRI_ADDRESS "<address-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]>"
 #define pri_address(A)					\
-		((A)->ip.is_set ? "set" : "unset"),	\
-			(A)->ip.version,		\
+	((A)->ip.is_set ? "set" : "unset"),		\
+		pri_ip_version((A)->ip.version),	\
 		pri_ip_bytes((A)->bytes)
 
 void pexpect_address(const ip_address *a, where_t where);
-#define paddress(A) pexpect_address(A, HERE)
 
 /*
  * Constructors.
@@ -85,9 +84,11 @@ diag_t data_to_address(const void *data, size_t sizeof_data,
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 
 /* assumes dotted / colon notation */
-err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
+diag_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst)
+	MUST_USE_RESULT;
 /* if numeric lookup fails, try a DNS lookup */
-err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
+diag_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst)
+	MUST_USE_RESULT;
 
 /* comma/space separated list */
 

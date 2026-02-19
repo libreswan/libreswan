@@ -2,21 +2,21 @@
 'ipsec.conf' -> '/etc/ipsec.conf'
 'ipsec.secrets' -> '/etc/ipsec.secrets'
 rise #
- ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth2 if_id 1
+ ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth0 if_id 1
 rise #
  ../../guestbin/ip.sh addr add 198.18.12.12/24 dev ipsec1
 rise #
  ../../guestbin/ip.sh link set ipsec1 up
 rise #
  ../../guestbin/ip.sh addr show ipsec1
-X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 198.18.12.12/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
        valid_lft forever preferred_lft forever
 rise #
  ../../guestbin/ip.sh link show ipsec1
-X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 rise #
  ipsec _kernel policy
 rise #
@@ -28,13 +28,14 @@ rise #
  ../../guestbin/wait-until-pluto-started
 rise #
  ipsec add rise-set
-"rise-set": added IKEv2 connection
+"rise-set": added oriented IKEv2 connection
 rise #
  ipsec up rise-set
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
 "rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #

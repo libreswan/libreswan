@@ -38,18 +38,22 @@
 #include "ip_selector.h"
 #include "ip_protoport.h"
 #include "ip_packet.h"
+#include "ip_pool.h"
 #include "refcnt.h"
 #include "encap_mode.h"
 #include "verbose.h"
 #include "end.h"
 #include "send_ca_policy.h"
 #include "sendcert_policy.h"
+#include "shunt.h"
 
 #include "defs.h"
+#include "updown.h"
 #include "proposals.h"
 #include "hash_table.h"
 #include "diag.h"
 #include "ckaid.h"
+#include "auth.h"
 #include "authby.h"
 #include "routing.h"
 #include "connection_owner.h"
@@ -64,7 +68,10 @@
 #include "reqid.h"
 #include "state.h"
 #include "whack.h"
+#include "defaultroute.h"
 
+struct host_addrs;
+struct route_addrs;
 struct kernel_acquire;
 
 /*
@@ -80,17 +87,11 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  * then authenticate the IKE SA.
  */
 
-struct host_addr_config {
-	enum keyword_host type;
-	char *name;	/* string version from whack */
-	ip_address addr;
-};
-
 struct host_end_config {
 	const char *leftright;
 
-	struct host_addr_config host;
-	struct host_addr_config nexthop;
+	struct route_addr host;
+	struct route_addr nexthop;
 
 	ip_port ikeport;
 	enum tcp_options iketcp;	/* Allow TCP as fallback,
@@ -99,7 +100,7 @@ struct host_end_config {
 	/*
 	 * Proof of identity.
 	 */
-	enum keyword_auth auth;
+	enum auth auth;
 	struct authby authby;
 
 	struct id id;			/* or ID_NONE aka %any aka set to host-addr */
@@ -141,7 +142,15 @@ struct host_end_config {
 struct child_end_config {
 	const char *leftright;
 	ip_protoport protoport;
-	char *updown;
+
+	/*
+	 * XXX: should command be pre-sliced ready for passing to
+	 * execve() (depending on exec option).
+	 */
+	struct {
+		char *command;
+		bool updown_config[UPDOWN_CONFIG_ROOF];
+	} updown;
 
 	bool has_client_address_translation;		/* aka CAT */
 
@@ -157,7 +166,7 @@ struct child_end_config {
 	 * Should more than one pool for each address be allowed?
 	 * Should an addresspool combined with selectors be allowed?
 	 */
-	ip_ranges addresspools;
+	ip_pools addresspools;
 	struct addresspool *addresspool[IP_VERSION_ROOF]; /* list? */
 
 	/*
@@ -190,6 +199,14 @@ struct end_config {
 	const char *leftright;
 	struct host_end_config host;
 	struct child_end_config child;
+	/*
+	 * Things that need to be deleted, but are otherwise treated
+	 * as readonly.
+	 */
+	struct {
+		char *host;
+		char *nexthop;
+	} heap;
 };
 
 struct ike_info {
@@ -208,6 +225,7 @@ extern const struct ike_info ikev1_info;
 extern const struct ike_info ikev2_info;
 
 struct host_config {
+	const struct ip_info *afi;
 	struct cisco_host_config {
 		bool unity;
 		bool peer;
@@ -217,9 +235,53 @@ struct host_config {
 };
 
 struct child_config {
+
+	uintmax_t priority;
+	uintmax_t tfcpad;
+	uintmax_t replay_window;	/* Usually 32, KLIPS and
+					   XFRM/NETKEY support 64.
+					   See also kernel_ops
+					   .replay_window */
+	uint32_t metric;		/* metric for tunnel routes */
+	uint16_t mtu;			/* mtu for tunnel routes */
+	bool ipcomp;
+
+	struct config_iptfs {
+		bool enabled;
+		bool fragmentation;
+		uintmax_t packet_size;
+		uintmax_t max_queue_size;
+		uintmax_t reorder_window;
+		deltatime_t drop_time;
+		deltatime_t init_delay;
+	} iptfs;
+
+	enum encap_proto encap_proto;	/* ESP or AH */
+	enum encap_mode encap_mode;	/* tunnel or transport */
+	bool pfs;			/* use DH */
+
+	/*
+	 * The child proposals specified in the config file, and for
+	 * IKEv2, that proposal converted to IKEv2 form.
+	 *
+	 * IKEv2 child proposals negotiated IKE_AUTH - Child SA) can
+	 * be computed ahead of time, and are stored below.  However,
+	 * proposals negotiated during CREATE_CHILD_SA cannot.  For
+	 * instance, the CREATE_CHILD_SA may be re-keying the IKE SA
+	 * and it's DH is only determined during the initial
+	 * negotiation.
+	 */
+	struct child_proposals proposals; /* raw proposals */
+	struct ikev2_proposals *v2_ike_auth_proposals;
+
 	struct {
 		bool esp_tfc_padding_not_supported;	/* notification */
 	} send;
+
+	struct {
+		enum yna_options yna;
+		unsigned nr;
+	} clones;
 };
 
 struct config {
@@ -370,48 +432,6 @@ struct config {
 					 * device on down */
 	} vti;
 
-	struct {
-		uintmax_t priority;
-		uintmax_t tfcpad;
-		uintmax_t replay_window;	/* Usually 32, KLIPS
-						   and XFRM/NETKEY
-						   support 64.  See
-						   also kernel_ops
-						   .replay_window */
-		uint32_t metric;	/* metric for tunnel routes */
-		uint16_t mtu;		/* mtu for tunnel routes */
-		bool ipcomp;
-
-		struct config_iptfs {
-			bool enabled;
-			bool fragmentation;
-			uintmax_t packet_size;
-			uintmax_t max_queue_size;
-			uintmax_t reorder_window;
-			deltatime_t drop_time;
-			deltatime_t init_delay;
-		} iptfs;
-
-		enum encap_proto encap_proto;	/* ESP or AH */
-		enum encap_mode encap_mode;	/* tunnel or transport */
-		bool pfs;			/* use DH */
-		/*
-		 * The child proposals specified in the config file,
-		 * and for IKEv2, that proposal converted to IKEv2
-		 * form.
-		 *
-		 * IKEv2 child proposals negotiated IKE_AUTH - Child
-		 * SA) can be computed ahead of time, and are stored
-		 * below.  However, proposals negotiated during
-		 * CREATE_CHILD_SA cannot.  For instance, the
-		 * CREATE_CHILD_SA may be re-keying the IKE SA and
-		 * it's DH is only determined during the initial
-		 * negotiation.
-		 */
-		struct child_proposals proposals; /* raw proposals */
-		struct ikev2_proposals *v2_ike_auth_proposals;
-	} child_sa;
-
 	struct host_config host;
 	struct child_config child;
 
@@ -434,6 +454,8 @@ struct config {
 		bool enabled;
 		uint32_t id;
 	} ipsec_interface;
+
+	bool reject_simultaneous_ike_auth;
 
 	struct end_config end[END_ROOF];
 };
@@ -611,7 +633,7 @@ struct child_end {
 		 end_->child.lease[IPv6].ip.is_set);		\
 	})
 
-	ip_address lease[IP_VERSION_ROOF];
+	ip_cidr lease[IP_VERSION_ROOF];
 	bool has_cat;		/* add a CAT iptable rule when a valid
 				   INTERNAL_IP4_ADDRESS is received */
 };
@@ -635,8 +657,9 @@ void update_end_selector_where(struct connection *c, enum end end,
 	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
 				  NULL, HERE)
 
-void append_end_selector(struct connection_end *end, ip_selector s,
-			 const struct logger *logger, where_t where);
+void append_end_selector(struct connection_end *end,
+			 ip_selector s/*when-TBD-can-be-unset*/,
+			 struct verbose verbose);
 
 struct spd_end {
 	ip_selector client;
@@ -710,10 +733,12 @@ struct spd {
 	struct connection *connection;	/* must update after clone */
 	bool block;
 
+	/* scratch pad for route+up */
 	struct spd_wip {
 		bool ok;
 		struct {
 			struct bare_shunt **bare_shunt; /* aka orphan_kernel_policy */
+			struct spd_owner owner;
 		} conflicting;
 		struct {
 			bool kernel_policy;
@@ -721,6 +746,7 @@ struct spd {
 			bool up;		/* vs down */
 		} installed;
 	} wip;
+
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
@@ -782,7 +808,7 @@ struct connection {
 	({							\
 		bool old_ = (C)->POLICY;			\
 		bool new_ = VALUE;				\
-		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
+		ldbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
 		     #POLICY,					\
 		     bool_str(old_),				\
 		     bool_str(new_),				\
@@ -908,7 +934,7 @@ struct connection {
 
 	struct pending *pending;
 
-	struct connection_event *events[CONNECTION_EVENT_KIND_ROOF];
+	struct connection_event *events[CONNECTION_EVENT_ROOF];
 
 	/*
 	 * An extract of the original configuration information for
@@ -935,15 +961,18 @@ struct connection {
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d);
 
-diag_t add_connection(const struct whack_message *wm, struct logger *logger);
+diag_t add_connection(const struct whack_message *wm,
+		      const struct host_addrs *extracted_host_addrs,
+		      const struct logger *logger);
+
+void build_connection_host_and_proposals_from_resolve(struct connection *c,
+						      const struct host_addrs *resolved,
+						      struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,
 				     ip_address this_host_addr,
 				     ip_address that_nexthop_addr,
 				     where_t where);
-
-void delete_connection_where(struct connection **cp, where_t where);
-#define delete_connection(CP) delete_connection_where(CP, HERE)
 
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where);
 void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where);
@@ -960,7 +989,7 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 bool connection_with_name_exists(const char *name);
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
-					      const struct logger *logger);
+					      struct logger *logger);
 
 /* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
@@ -1149,9 +1178,9 @@ void vdbg_connection(const struct connection *c,
 		     const char *message, ...);
 
 void init_connection_spd(struct connection *c, struct spd *spd);
-void alloc_connection_spds(struct connection *c, unsigned nr);
-void discard_connection_spds(struct connection *c);
+void alloc_connection_spds(struct connection *c, unsigned nr, struct verbose verbose);
 void build_connection_spds_from_proposals(struct connection *c);
+void discard_connection_spds(struct connection *c);
 
 /* connections */
 
@@ -1159,7 +1188,7 @@ struct connection *alloc_connection(const char *name,
 				    struct connection *t,
 				    struct config *root_config,
 				    lset_t debugging,
-				    struct logger *logger,
+				    const struct logger *logger,
 				    where_t where);
 
 /*
@@ -1195,7 +1224,7 @@ bool can_have_sa(const struct connection *c, enum sa_kind sa_kind);
 bool never_negotiate(const struct connection *c);
 
 bool is_group(const struct connection *c);
-bool is_group_instance(const struct connection *c); /* derived from group; template or instance */
+bool is_from_group(const struct connection *c); /* derived from group; template or instance */
 
 bool is_opportunistic(const struct connection *c);
 bool is_opportunistic_group(const struct connection *c);
@@ -1203,6 +1232,8 @@ bool is_opportunistic_template(const struct connection *c);
 bool is_opportunistic_instance(const struct connection *c);
 
 bool is_xauth(const struct connection *c);
+
+bool connection_end_needs_dns(const struct connection_end *end);
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
 const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind);
@@ -1214,10 +1245,10 @@ struct child_policy child_sa_policy(const struct connection *c);
 bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
-void build_connection_proposals_from_configs(struct connection *c,
-					     const struct ip_info *host_afi,
-					     struct verbose verbose);
+void build_connection_proposals_from_hosts_and_configs(struct connection *c,
+						       struct verbose verbose);
+void delete_connection_proposals(struct connection *c);
 
-reqid_t child_reqid(const struct config *config, struct logger *logger);
+reqid_t child_reqid(const struct config *config, const struct logger *logger);
 
 #endif

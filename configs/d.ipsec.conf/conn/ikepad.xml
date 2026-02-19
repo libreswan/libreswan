@@ -1,0 +1,61 @@
+<varlistentry id='conn.ikepad'>
+  <term>
+    <option>ikepad=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Work around IKEv1 padding issues when inter-operating with other
+      IKE daemons.
+    </para>
+    <para>
+      By default, &Libreswan; pads messages
+      to a minimum of 4-bytes.  While this is allowed it may cause
+      interoperability issues.  To remove this padding, specify
+      <option>ikepad=&no;</option> (note that this does not affect
+      messages encrypted using a block-mode cipher where padding is
+      always added).
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.2, some MODECFG payloads were
+      incorrectly padded to 4-bytes which caused interoperability
+      issues.  To restore this behaviour, specify
+      <option>ikepad=&yes;</option>.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+    <para>
+      In IKEv2, this option is ignored.
+    </para>
+    <sidebar>
+      <title>
+	Background
+      </title>
+      <para>
+	It was thought that padding messages by 4-bytes was causing
+	interoperability issues with
+	&Checkpoint;
+	(<option>ikepad=&no;</option> was added as a workaround).
+	However, it's since been determined that &Racoon; also had
+	interoperability issues and the cause was the padding of some
+	XAUTH and MODECFG payloads.  Setting
+	<option>ikepad=&no;</option> fixed interoperability because it
+	was also disabling that padding.  The padding of XAUTH and
+	MODECFG was removed in &Libreswan; version 5.2.
+      </para>
+      <para>
+	Further details can be found in the RFCs, see: RFC-2409
+	section 5.3, Phase 1 Authenticated With a Revised Mode of
+	Public Key Encryption, <quote>the last byte of the padding
+	contains the number of padding bytes</quote> and <quote>there
+	will always be padding</quote>; RFC-2408 section 3.5, Proposal
+	Payload, <quote>there is no padding applied to the payload,
+	however, it can be applied at the end of the message</quote>;
+	RFC-2408 section 3.6, Transform Payload, <quote>then
+	subsequent payloads will not be aligned and any padding will
+	be added at the end of the message to make the message 4-octet
+	aligned</quote>.
+      </para>
+    </sidebar>
+  </listitem>
+</varlistentry>

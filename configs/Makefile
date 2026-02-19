@@ -1,5 +1,7 @@
 # Makefile for miscellaneous programs
+#
 # Copyright (C) 2002-2006  Michael Richardson	<mcr@xelerance.com>
+# Copyright (C) 2025 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,7 +20,7 @@ include $(top_srcdir)/mk/config.mk
 MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
 
-XMLTO_SEARCHPATH = $(abs_srcdir)/d.ipsec.conf:$(abs_srcdir):$(abs_top_srcdir)/mk
+XMLTO_SEARCHPATH = $(abs_srcdir):$(abs_top_srcdir)/mk
 
 # different mode
 ipsec.secrets.INSTFLAGS = -m 0600
@@ -34,7 +36,7 @@ CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexc
 local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE)
 
 local-clean-base:
-	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE), $(builddir)/$(file))
+	rm -f $(builddir)/*
 
 # For each group of files; first copy to the examples directory and
 # then, optionally, install into /etc (but only when
@@ -121,25 +123,37 @@ list-local-base:
 # Custom rules for ipsec.conf.5; manpages.mk should be updated to
 # mimic this behaviour.
 
-$(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/*.xml
+D_IPSEC_CONF_XML = $(srcdir)/d.ipsec.conf/*/*.xml
+D_IPSEC_CONF_EXAMPLE = $(srcdir)/d.ipsec.conf/*.example
+
+$(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml
+$(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_XML)
+$(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_EXAMPLE)
 $(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
-$(builddir)/ipsec.conf.5.ok:  $(srcdir)/d.ipsec.conf/*.xml
+
+$(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
-	for x in d.ipsec.conf/*.xml ; do \
+	for x in $(D_IPSEC_CONF_XML) ; do \
+		d=$$(basename $$(dirname $${x})) ; \
 		b=$$(basename $${x} .xml) ; \
-		if ! grep '"'$${x}'"' ipsec.conf.5.xml > /dev/null ; then \
-			echo '"'$${x}'"' missing ; \
+		f=d.ipsec.conf/$${d}/$${b}.xml ; \
+		e=$${d}.$${b} ; \
+		if ! grep '"'$${f}'"' ipsec.conf.5.xml > /dev/null ; then \
+			echo include 'ENTITY ... "'$${f}'"' missing ; \
 			exit 1 ; \
 		fi ; \
-		if ! grep '&'$${b}';' ipsec.conf.5.xml > /dev/null ; then \
-			echo $${b} missing ; \
+		if ! grep '&'$${e}';' ipsec.conf.5.xml > /dev/null ; then \
+			echo use '&'$${e}';' missing ; \
+			exit 1 ; \
+		fi ; \
+		if ! grep "id='$${d}.$${b}'" $${x} > /dev/null ; then \
+			echo anchor "id='$${d}.$${b}'" missing ; \
 			exit 1 ; \
 		fi ; \
 	done
 	touch $@
 
-$(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*.xml
-
+$(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*/*.xml
 
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk

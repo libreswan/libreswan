@@ -10,7 +10,7 @@ west #
 ipsec pluto: unexpected trailing argument: xxx
 west #
  ipsec whack --shutdown # not running
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
  ipsec pluto --efence-protect     --config /etc/ipsec.conf # >=5.3
 west #

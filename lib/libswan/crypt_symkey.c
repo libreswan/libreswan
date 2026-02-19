@@ -46,14 +46,10 @@ void init_crypt_symkey(struct logger *logger)
 	}
 }
 
-void symkey_delref_where(struct logger *logger, const char *name,
-			 PK11SymKey **key, where_t where)
+void symkey_newref_where(struct logger *logger, const char *name,
+			 PK11SymKey *key, where_t where)
 {
-	ldbg_delref_where(logger, name, (*key), where);
-	if (*key != NULL) {
-		PK11_FreeSymKey(*key);
-	}
-	*key = NULL;
+	ldbg_newref_where(logger, name, key, where);
 }
 
 PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
@@ -64,6 +60,16 @@ PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
 		PK11_ReferenceSymKey(key);
 	}
 	return key;
+}
+
+void symkey_delref_where(const struct logger *logger, const char *name,
+			 PK11SymKey **key, where_t where)
+{
+	ldbg_delref_where(logger, name, (*key), where);
+	if (*key != NULL) {
+		PK11_FreeSymKey(*key);
+	}
+	*key = NULL;
 }
 
 size_t sizeof_symkey(PK11SymKey *key)
@@ -104,7 +110,7 @@ void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK
 		} else {
 			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
-			LDBG_hunk(logger, bytes);
+			LDBG_hunk(logger, &bytes);
 			free_chunk_content(&bytes);
 		}
 	}
@@ -171,13 +177,19 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			jam_nss_error_code(buf, PR_GetError());
 		}
 		DBG_DERIVE();
-	} else if (LDBGP(DBG_REFCNT, logger)) {
+		return NULL;
+	}
+
+	symkey_newref(logger, target_name, target_key);
+
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, SPACES"result: newref ");
+			jam_string(buf, SPACES"result: ");
 			jam_symkey(buf, target_name, target_key);
 			jam_where(buf, where);
 		}
 	}
+
 	return target_key;
 #undef DBG_DERIVE
 }
@@ -244,12 +256,12 @@ static PK11SymKey *merge_symkey_symkey(const char *result_name,
 /*
  * Extract a SYMKEY from an existing SYMKEY.
  */
-static PK11SymKey *symkey_from_symkey(const char *result_name,
-				      PK11SymKey *base_key,
-				      CK_MECHANISM_TYPE target,
-				      CK_FLAGS flags,
-				      size_t key_offset, size_t key_size,
-				      where_t where, struct logger *logger)
+PK11SymKey *symkey_from_symkey(const char *result_name,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t key_offset, size_t key_size,
+			       where_t where, struct logger *logger)
 {
 	/* spell out all the parameters */
 	CK_EXTRACT_PARAMS bs = key_offset * BITS_IN_BYTE;
@@ -308,14 +320,11 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (LDBGP(DBG_REFCNT, logger)) {
-	    if (slot_key == symkey) {
-		    /* output should mimic symkey_addref() */
-		    LDBG_log(logger, "%s: slot-key@%p: addref sym-key@%p",
-			     name, slot_key, symkey);
-	    } else {
-		    LDBG_symkey(logger, name, "newref slot", slot_key);
-	    }
+	/* output should mimic symkey_addref() */
+	if (slot_key == symkey) {
+		symkey_addref(logger, name, slot_key);
+	} else {
+		symkey_newref(logger, name, slot_key);
 	}
 
 	SECItem wrapped_key;
@@ -500,43 +509,6 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 }
 
 /*
- * Extract SIZEOF_SYMKEY bytes of keying material as a PRF key.
- *
- * Offset into the SYMKEY is in BYTES.
- */
-
-PK11SymKey *prf_key_from_symkey_bytes(const char *name,
-				      const struct prf_desc *prf,
-				      size_t symkey_start_byte, size_t sizeof_symkey,
-				      PK11SymKey *source_key,
-				      where_t where, struct logger *logger)
-{
-	/*
-	 * NSS expects a key's mechanism to match the NSS algorithm
-	 * the key is intended for.  If this is wrong then the
-	 * operation fails.
-	 *
-	 * Unfortunately, some algorithms are not implemented by NSS,
-	 * so the correct key type can't always be specified.  For
-	 * those specify CKM_VENDOR_DEFINED.
-	 *
-	 * XXX: this function should be part of prf_ops.
-	 */
-	CK_FLAGS flags;
-	CK_MECHANISM_TYPE mechanism;
-	if (prf->nss.mechanism == 0) {
-		flags = 0;
-		mechanism = CKM_VENDOR_DEFINED;
-	} else {
-		flags = CKF_SIGN;
-		mechanism = prf->nss.mechanism;
-	}
-	return symkey_from_symkey(name, source_key, mechanism, flags,
-				  symkey_start_byte, sizeof_symkey,
-				  where, logger);
-}
-
-/*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *
@@ -597,31 +569,11 @@ PK11SymKey *key_from_symkey_bytes(const char *result_name,
 	}
 }
 
-/*
- * XOR a symkey with a chunk.
- *
- * XXX: hmac.c had very similar code, only, instead of
- * target=CKM_CONCATENATE_BASE_AND_DATA it used
- * target=hasher-to-ckm(hasher).
- *
- * hasher-to-ckm mapped hasher->common.alg_id to CMK vis: OAKLEY_MD5 ->
- * CKM_MD5; OAKLEY_SHA1 -> CKM_SHA_1; OAKLEY_SHA2_256 -> CKM_SHA256;
- * OAKLEY_SHA2_384 -> CKM_SHA384; OAKLEY_SHA2_512 -> CKM_SHA512; only
- * in the default case it would set target to 0x80000000????
- */
-PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs, struct logger *logger)
-{
-	return merge_symkey_bytes("result", lhs, rhs.ptr, rhs.len,
-				  CKM_XOR_BASE_AND_DATA,
-				  CKM_CONCATENATE_BASE_AND_DATA,
-				  logger);
-}
-
-PK11SymKey *cipher_symkey(const char *name,
+PK11SymKey *cipher_symkey(const char *name UNUSED,
 			  const struct encrypt_desc *cipher,
 			  unsigned bits,
 			  struct logger *logger,
-			  where_t where)
+			  where_t where UNUSED)
 {
 	bool valid_key_length = false;
 	FOR_EACH_ELEMENT(key, cipher->key_bit_lengths) {
@@ -639,6 +591,6 @@ PK11SymKey *cipher_symkey(const char *name,
 					 /*param*/NULL, BYTES_FOR_BITS(bits),
 					 /*wincx*/NULL);
 
-	ldbg_alloc(logger, name, symkey, where);
+	ldbg_newref(logger, symkey);
 	return symkey;
 }

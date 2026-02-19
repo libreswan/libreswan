@@ -42,7 +42,8 @@ struct ike_sa;
 struct msg_digest;
 enum ikev2_auth_method;
 struct child_sa;
-struct dh_desc;
+struct kem_desc;
+struct v2_message;
 struct state;
 
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
@@ -53,10 +54,12 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md);
 void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval);
 void v2_ike_sa_established(struct ike_sa *ike, where_t where);
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
-bool emit_v2KE(chunk_t g, const struct dh_desc *group, struct pbs_out *outs);
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
 void schedule_v2_replace_event(struct state *st);
-void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
-			    where_t where);
+
+void save_first_inbound_ikev2_packet(const char *why, struct ike_sa *ike,
+				     struct msg_digest *md);
+void save_first_outbound_ikev2_packet(const char *why, struct ike_sa *ike,
+				      const struct v2_message *message);
 
 #endif

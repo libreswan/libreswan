@@ -33,12 +33,12 @@ Mar 29 20:38:14 west pluto[678]: leak: string logger, item size: 56
 Mar 29 20:38:14 west pluto[678]: leak: string logger prefix, item size: 12
 Mar 29 20:38:14 west pluto[678]: leak detective found 30 leaks, total size 1166
 Mar 29 20:38:14 west systemd[1]: ipsec.service: Main process exited, code=exited, status=1/FAILURE
-Mar 29 20:38:14 west ipsec[682]: FATAL ERROR: ipsec addconn: /etc/ipsec.conf:16: unrecognized keyword 'clones'
+Mar 29 20:38:14 west ipsec[682]: ipsec addconn: FATAL ERROR: /etc/ipsec.conf:16: unrecognized keyword 'clones'
 Mar 29 20:38:14 west systemd[1]: ipsec.service: Failed with result 'exit-code'.
 Mar 29 20:38:14 west systemd[1]: Failed to start ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec.
 west #
  ipsec whack --impair suppress_retransmits
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
  echo "initdone"
 initdone
@@ -50,7 +50,7 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
  # policies and state should be multiple
 west #
@@ -59,5 +59,5 @@ west #
  ipsec _kernel policy
 west #
  ipsec auto --status | grep westnet-eastnet
-ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #

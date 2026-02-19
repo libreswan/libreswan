@@ -1,0 +1,19 @@
+<varlistentry id='conn.keyexchange'>
+  <term>
+    <option>keyexchange=&keyexchange_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301). Currently
+      the accepted values are &ikev1; and &ikev2;.
+    </para>
+    <para>
+      This option replaces ikev2=yes|no. Old values yes, propose and instist
+      all map to keyexchange=ikev2. Values no and permit are map to
+      keyexchange=ikev1.
+    </para>
+    <para>
+      The default is &ikev2;.
+    </para>
+  </listitem>
+</varlistentry>

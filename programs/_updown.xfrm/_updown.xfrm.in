@@ -803,18 +803,13 @@ doroute() {
 		;;
 	esac
     else
-	peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} | \
-	    sed "s/^.*dev \([^ ]*\) .*/\1/")
+	peer_interface=${PLUTO_INTERFACE}
     fi
 
     esp_peer_interface=$(ip -${HOST_FAMILY} -o route get ${PLUTO_NEXT_HOP} \
 	from ${PLUTO_ME} | sed "s/^.*\(dev [^ ]*\) .*/\1/")
     if [ -z "${esp_peer_interface}" ]; then
 	esp_peer_interface="dev ${PLUTO_INTERFACE}"
-    fi
-
-    if [ -z "${peer_interface}" ]; then
-	peer_interface=${PLUTO_INTERFACE}
     fi
 
     if [ "${PLUTO_XFRMI_ROUTE}" = "yes" ]; then

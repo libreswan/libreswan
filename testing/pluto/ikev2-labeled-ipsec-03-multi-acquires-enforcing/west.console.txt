@@ -14,7 +14,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
-"labeled": added IKEv2 connection
+"labeled": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -29,6 +29,7 @@ west #
 "labeled"[1] 192.1.2.23 #1: omitting CHILD SA payloads
 "labeled"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "labeled"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
  # expect policy but no states
@@ -89,6 +90,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -99,6 +101,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 west #
  ipsec _kernel policy
@@ -151,6 +154,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -161,6 +165,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 west #
  ipsec _kernel policy
@@ -195,6 +200,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -205,6 +211,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32

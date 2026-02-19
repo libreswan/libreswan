@@ -1,0 +1,16 @@
+<varlistentry id='conn.nm-configured'>
+  <term>
+    <option>nm-configured=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Mark this connection as controlled by Network Manager.
+      Currently, setting this to &yes; will cause libreswan to skip
+      reconfiguring <filename>resolv.conf</filename> when used with
+      XAUTH and ModeConfig.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -13,7 +13,7 @@ west #
  ipsec whack --label 'SAwest-east rightrsasigkey'  --keyid "@east" --pubkeyrsa "0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv"
 west #
  ipsec whack --name SAwest-east --ikev1 --encrypt --tunnel --pfs --rsasig --host "192.1.2.45"  --nexthop "192.1.2.23" --updown "ipsec _updown" --id "@west" --to --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --ipseclifetime "28800" --no-esn
-"SAwest-east": added IKEv1 connection
+"SAwest-east": added oriented IKEv1 connection
 west #
  # we can transmit in the clear
 west #
@@ -30,7 +30,7 @@ west #
 "SAwest-east" #1: Peer ID is FQDN: '@east'
 "SAwest-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "SAwest-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"SAwest-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
+"SAwest-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
 "SAwest-east" #2: sent Quick Mode request
 "SAwest-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

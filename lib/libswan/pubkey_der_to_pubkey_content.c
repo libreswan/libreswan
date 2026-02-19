@@ -39,7 +39,7 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 		form_keyid(exponent, modulus, &pkc->keyid, &size);
 		pkc->type = &pubkey_type_rsa;
 		pkc->public_key = seckey;
-		ldbg_alloc(&global_logger, "ecdsa->public_key", seckey, HERE);
+		ldbg_newref(&global_logger, pkc->public_key);
 		break;
 	}
 	case ecKey:
@@ -56,7 +56,7 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 		}
 		pkc->type = &pubkey_type_ecdsa;
 		pkc->public_key = seckey;
-		ldbg_alloc(&global_logger, "ecdsa->public_key", seckey, HERE);
+		ldbg_newref(&global_logger, pkc->public_key);
 		break;
 	}
 	default:

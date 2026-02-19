@@ -6,11 +6,11 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add north-a-dpd
-"north-a-dpd": added IKEv1 connection
+ ipsec add north-a-dpd
+"north-a-dpd": added oriented IKEv1 connection
 north #
- ipsec auto --add northnet-eastnet-b
-"northnet-eastnet-b": added IKEv1 connection
+ ipsec add northnet-eastnet-b
+"northnet-eastnet-b": added oriented IKEv1 connection
 north #
  echo "initdone"
 initdone
@@ -59,14 +59,14 @@ north #
  ipsec status | grep north-
 "north-a-dpd": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "north-a-dpd":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
-"north-a-dpd":   mycert=north; peercert=east; my_updown=ipsec _updown;
+"north-a-dpd":   mycert=north; peercert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "north-a-dpd":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "north-a-dpd":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "north-a-dpd":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "north-a-dpd":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "north-a-dpd":   sec_label:unset;
 "north-a-dpd":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"north-a-dpd":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-a-dpd":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "north-a-dpd":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "north-a-dpd":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "north-a-dpd":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

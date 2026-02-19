@@ -49,7 +49,7 @@ class Print(argutil.List):
     PATH = "path"
     RESULT = "result"
     SAVED_OUTPUT_DIRECTORY = "saved-output-directory"
-    TESTING_DIRECTORY = "testing-directory"
+    TESTINGDIR = "testingdir"
 
 
 class JsonBuilder:
@@ -152,8 +152,8 @@ def build_result(logger, result, what_to_print, b):
                 b.add(p, result, string=lambda result: str(result))
             case Print.ISSUES:
                 b.add(p, result.issues)
-            case Print.TESTING_DIRECTORY:
-                b.add(p, result.test.testing_directory())
+            case Print.TESTINGDIR:
+                b.add(p, result.test.testingdir)
             case Print.SAVED_OUTPUT_DIRECTORY:
                 b.add(p, result.test.saved_output_directory)
             case Print.TEST_COMMANDS:

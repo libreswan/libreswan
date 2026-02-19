@@ -35,32 +35,42 @@ void pluto_sd_init(struct logger *logger)
 	int ret = lswsd_watchdog_enabled(&sd_usecs);
 
 	if (ret == 0) {
-		llog(RC_LOG, logger, "systemd watchdog not enabled - not sending watchdog keepalives");
-		return;
-	}
-	if (ret < 0) {
-		llog(RC_LOG, logger, "systemd watchdog returned error %d - not sending watchdog keepalives", ret);
+		llog(RC_LOG, logger, "systemd watchdog [disabled]; not sending \"keep-alive ping\"");
 		return;
 	}
 
-	llog(RC_LOG, logger, "systemd watchdog for ipsec service configured with timeout of %"PRIu64" usecs", sd_usecs);
-	uintmax_t sd_secs = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
-	llog(RC_LOG, logger, "watchdog: sending probes every %ju secs", sd_secs);
+	if (ret < 0) {
+		/*
+		 * Can only happen when systemd set bogus watchdog
+		 * variables; fatal?
+		 */
+		llog(ERROR_STREAM, logger,
+		     "systemd watchdog [failed]; configuration call call returned error %d - not sending \"keep-alive ping\"", ret);
+		return;
+	}
+
+	uintmax_t keep_alive = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
+	llog(RC_LOG, logger,
+	     "systemd watchdog [enabled]; ipsec.service configured with timeout of %"PRIu64" usecs, sending \"keep-alive ping\" every %ju seconds",
+	     sd_usecs, keep_alive);
+
 	/* tell systemd that we have finished starting up */
-	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS, logger);
+
 	/* start the keepalive events */
 	enable_periodic_timer(EVENT_SD_WATCHDOG, sd_watchdog_event,
-			      deltatime(sd_secs));
+			      deltatime_from_seconds(keep_alive), logger);
 }
 
 /*
  * Interface for lswsd_notify(3) calls.
  */
-void pluto_sd(int action, int status)
+void pluto_sd(int action, int status, struct logger *logger)
 {
 	name_buf ab;
-	dbg("pluto_sd: executing action %s(%d), status %d",
-	    str_enum_long(&sd_action_names, action, &ab), action, status);
+	llog(LOG_STREAM/*not-whack*/, logger,
+	     "systemd watchdog: sending %s, status %d",
+	     str_enum_long(&sd_action_names, action, &ab), status);
 
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:
@@ -88,7 +98,7 @@ void pluto_sd(int action, int status)
 	}
 }
 
-void sd_watchdog_event(struct logger *unused_logger UNUSED)
+void sd_watchdog_event(struct verbose verbose)
 {
-	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS, verbose.logger);
 }

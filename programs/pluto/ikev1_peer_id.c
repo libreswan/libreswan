@@ -265,7 +265,7 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 				LDBG_log(ike->sa.logger, "received HASH:");
-				LDBG_hunk(ike->sa.logger, pbs_hash);
+				LDBG_hunk(ike->sa.logger, &pbs_hash);
 			}
 			llog(RC_LOG, ike->sa.logger,
 			     "received Hash Payload does not match computed value");
@@ -278,7 +278,7 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 	case OAKLEY_RSA_SIG:
 	{
 		shunk_t signature = pbs_in_left(&md->chain[ISAKMP_NEXT_SIG]->pbs);
-		diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
+		diag_t d = authsig_and_log_using_pubkey(ike, &hash, NULL, signature,
 							&ike_alg_hash_sha1, /*always*/
 							&pubkey_signer_raw_rsa,
 							NULL/*legacy-signature-name*/);

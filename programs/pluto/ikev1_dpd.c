@@ -127,7 +127,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			struct child_sa *child = pexpect_child_sa(sf.st);
 			ldbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
 			     pri_so(child->sa.st_serialno));
-			state_attach(&child->sa, logger);
+			whack_attach(&child->sa, logger);
 			llog_n_maybe_send_v1_delete(ike, &child->sa, HERE);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
@@ -150,7 +150,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			if (IS_PARENT_SA(sf.st)) {
 				continue;
 			}
-			state_attach(sf.st, logger);
+			whack_attach(sf.st, logger);
 			ldbg(logger,
 			     "delete IPsec SA "PRI_SO" which shares the connection",
 			     pri_so(sf.st->st_serialno));
@@ -178,7 +178,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			if (!PEXPECT(logger, IS_PARENT_SA(sf.st))) {
 				continue;
 			}
-			state_attach(sf.st, logger);
+			whack_attach(sf.st, logger);
 			ldbg(logger,
 			     "delete ISAKMP SA "PRI_SO" which shares the connection",
 			     pri_so(sf.st->st_serialno));
@@ -366,7 +366,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	deltatime_t next_delay = monotime_diff(next_time, now);
 
 	/* has there been enough activity of late? */
-	if (deltatime_cmp(next_delay, >, deltatime(0))) {
+	if (deltatime_cmp(next_delay, >, deltatime_from_seconds(0))) {
 		/* Yes, just reschedule "phase 2" */
 		monotime_buf mb1, mb2;
 		ldbg(p1->sa.logger, "DPD: not yet time for dpd event: %s < %s",

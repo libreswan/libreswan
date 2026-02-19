@@ -69,7 +69,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
-#define V2_CHILD(KIND, STORY, CAT, ...)					\
+#define V2_LARVAL_SA(KIND, STORY, CAT, ...)				\
 									\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
@@ -79,7 +79,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.child_transition = &v2_##KIND##_transition,		\
+		.v2.larval_sa_transition = &v2_##KIND##_transition,	\
 		##__VA_ARGS__,						\
 	}
 
@@ -163,87 +163,94 @@ static void jam_expected_payloads(struct jambuf *buf,
  */
 
 static const struct v2_transition v2_REKEY_IKE_I0_transition = {
-	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
+	.story      = "initiate CREATE_CHILD_SA rekey IKE SA (larval)",
 	.to = &state_v2_REKEY_IKE_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 };
 
-V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
+V2_LARVAL_SA(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_IKE_R0_transition = {
-	.story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHILD_SA rekey IKE SA request (larval)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 };
 
-V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
+V2_LARVAL_SA(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0",
+	     CAT_OPEN_IKE_SA);
 
 static const struct v2_transition v2_REKEY_IKE_I1_transition = {
-	.story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHILD_SA rekey IKE SA response (larval)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 };
 
-V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * Child states when rekeying a Child SA using CREATE_CHILD_SA.
  */
 
 static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
-	.story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
+	.story      = "initiate CREATE_CHILD_SA rekey Child SA (larval)",
 	.to = &state_v2_REKEY_CHILD_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_child_exchange,
 };
 
-V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
+V2_LARVAL_SA(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
-	.story      = "process rekey Child SA request (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHILD_SA rekey Child SA request (larval)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_child_exchange,
 };
 
-V2_CHILD(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0",
+	     CAT_OPEN_CHILD_SA);
 
 static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
-	.story      = "process rekey Child SA response (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHILD_SA rekey Child SA response (larval)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.flags = { .release_whack = true, },
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_rekey_child_exchange,
 };
 
-V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * Child states when creating a new Child SA using CREATE_CHILD_SA.
  */
 
 static const struct v2_transition v2_NEW_CHILD_I0_transition = {
-	.story      = "initiate create Child SA (CREATE_CHILD_SA)",
+	.story      = "initiate CREATE_CHILD_SA new Child SA (larval)",
 	.to = &state_v2_NEW_CHILD_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
-V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
+V2_LARVAL_SA(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_NEW_CHILD_R0_transition = {
-	.story      = "process create Child SA request (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHLD_SA create Child SA request (larval)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
-V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
-	 CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
+	     CAT_OPEN_CHILD_SA);
 
 static const struct v2_transition v2_NEW_CHILD_I1_transition = {
-	.story      = "process create Child SA response (CREATE_CHILD_SA)",
+	.story      = "process CREATE_CHILD_SA create Child SA response (larval)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange = &v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
-V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
-	 CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * IKEv2 established states.
@@ -275,7 +282,8 @@ V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
 
 /* ??? better story needed for these */
 
-V2_STATE(ZOMBIE, "deleted state", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
+V2_STATE(ZOMBIE, "deleted state",
+	 CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
@@ -405,10 +413,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 		verbose.level++;
 
 		/* message type? */
-		if (transition->exchange != md->hdr.isa_xchg) {
+		if (transition->exchange->type != md->hdr.isa_xchg) {
 			name_buf xb;
 			vdbg("exchange type does not match %s",
-				str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
+				str_enum_short(&ikev2_exchange_names,
+					       transition->exchange->type, &xb));
 			continue;
 		}
 
@@ -506,7 +515,11 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		const struct v2_exchange *exchange = (*exchangep);
 
 		verbose.level = level;
-		vdbg("trying exchange %s ...", exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "trying exchange ");
+			jam_string(buf, exchange->name);
+			jam_string(buf, " ...");
+		}
 		verbose.level++;
 
 		if (exchange->type != md->hdr.isa_xchg) {
@@ -515,7 +528,7 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		}
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->responder,
+					   &exchange->transitions.responder,
 					   message_payload_status,
 					   encrypted_payload_status);
 		if (t != NULL) {
@@ -550,9 +563,11 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		break;
 	case MESSAGE_REQUEST:
 	{
+		const struct v2_exchanges *responder_exchanges =
+			&ike->sa.st_state->v2.ike_responder_exchanges;
 		const struct v2_transition *t =
 			find_v2_exchange_transition(verbose, md,
-						    ike->sa.st_state->v2.ike_exchanges,
+						    responder_exchanges,
 						    &message_payload_status,
 						    &encrypted_payload_status);
 		if (t != NULL) {
@@ -566,7 +581,7 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		vassert(exchange != NULL);
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->response,
+					   &exchange->transitions.response,
 					   &message_payload_status,
 					   &encrypted_payload_status);
 		if (t != NULL) {
@@ -626,7 +641,7 @@ diag_t find_v2_unsecured_request_transition(struct logger *logger,
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	(*transition) = find_v2_exchange_transition(verbose, md,
-						    state->v2.ike_exchanges,
+						    &state->v2.ike_responder_exchanges,
 						    &message_payload_status, NULL);
 	if ((*transition) != NULL) {
 		return NULL; /*no-diag*/
@@ -663,7 +678,8 @@ diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
 
 	const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 	vassert(exchange != NULL);
-	(*transition) = find_v2_transition(verbose, md, exchange->response,
+	(*transition) = find_v2_transition(verbose, md,
+					   &exchange->transitions.response,
 					   &message_payload_status, NULL);
 	if (*transition != NULL) {
 		return NULL;
@@ -714,7 +730,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	case NO_MESSAGE:
 		bad_case(role);
 	case MESSAGE_REQUEST:
-		FOR_EACH_ITEM(e, ike->sa.st_state->v2.ike_exchanges) {
+		FOR_EACH_ITEM(e, &ike->sa.st_state->v2.ike_responder_exchanges) {
 			if ((*e)->type == md->hdr.isa_xchg) {
 				exchange = (*e);
 				break;
@@ -726,8 +742,10 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb));
 			return false;
 		}
-		vdbg("plausible; exchange type matches responder %s exchange",
-			exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "plausible; exchange type matches responder exchange ");
+			jam_string(buf, exchange->name);
+		}
 		break;
 	case MESSAGE_RESPONSE:
 		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
@@ -735,15 +753,19 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			return false;
 		}
 		if (exchange->type != md->hdr.isa_xchg) {
-			name_buf xb, eb;
-			llog(RC_LOG, ike->sa.logger, "unexpected %s response, expecting %s (%s); message dropped",
-			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-			     str_enum_short(&ikev2_exchange_names, exchange->type, &eb),
-			     exchange->subplot);
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+				jam_string(buf, "unexpected ");
+				jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
+				jam_string(buf, " response, expecting ");
+				jam_string(buf, exchange->name);
+				jam_string(buf, "; message dropped");
+			}
 			return false;
 		}
-		vdbg("plausible; exchange type matches outstanding %s exchange",
-		     exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "plausible; exchange type matches outstanding exchange ");
+			jam_string(buf, exchange->name);
+		}
 		break;
 	}
 
@@ -751,12 +773,12 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	 * Double check that the matching exchange is secured.
 	 */
 	if (!exchange->secured) {
-		name_buf rb;
-		name_buf xb;
-		llog_pexpect(ike->sa.logger, HERE, "%s %s (%s) exchange should be secured",
-			     str_enum_short(&ikev2_exchange_names, exchange->type, &xb),
-			     str_enum_short(&message_role_names, role, &rb),
-			     exchange->subplot);
+		LLOG_PEXPECT_JAMBUF(ike->sa.logger, HERE, buf) {
+			jam_string(buf, exchange->name);
+			jam_string(buf, " (");
+			jam_enum_short(buf, &message_role_names, role);
+			jam_string(buf, ") exchange should be secured");
+		}
 		return false;
 	}
 
@@ -844,6 +866,17 @@ void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
 	jam_string(buf, ")");
 }
 
+static void jam_v2_exchange_name(struct jambuf *buf, const struct v2_exchange *exchange, struct verbose verbose)
+{
+	if (vbad(exchange->name == NULL)) {
+		jam_enum_short(buf, &ikev2_exchange_names, exchange->type);
+		return;
+	}
+
+	jam_string(buf, exchange->name);
+	return;
+}
+
 static void vdbg_transition(struct verbose verbose,
 			    const struct v2_transition *t)
 {
@@ -853,7 +886,8 @@ static void vdbg_transition(struct verbose verbose,
 
 	VDBG_JAMBUF(buf) {
 		jam_string(buf, "->");
-		jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
+		vassert(t->exchange->name != NULL);
+		jam_v2_exchange_name(buf, t->exchange, verbose);
 		jam_string(buf, "; ");
 		switch (t->recv_role) {
 		case NO_MESSAGE:
@@ -868,6 +902,10 @@ static void vdbg_transition(struct verbose verbose,
 			break;
 		default:
 			bad_case(t->recv_role);
+		}
+		if (t->log_transition_start) {
+			jam_string(buf, "; ");
+			jam_string(buf, "log transition start");
 		}
 		jam_string(buf, "; ");
 		jam_string(buf, "payloads: ");
@@ -916,8 +954,8 @@ static void vdbg_transition(struct verbose verbose,
 
 }
 
-static void validate_state_child_transition(struct verbose verbose,
-					    const struct v2_transition *t)
+static void validate_state_larval_sa_transition(struct verbose verbose,
+						const struct v2_transition *t)
 {
 	const struct finite_state *to = t->to;
 	vassert(to != NULL);
@@ -930,7 +968,9 @@ static void validate_state_child_transition(struct verbose verbose,
 		vassert(payloads->required == LEMPTY);
 		vassert(payloads->optional == LEMPTY);
 	}
-	vassert(t->exchange != 0);
+	vassert(t->exchange != NULL);
+	vassert(!(t->exchange->log_transition_start && t->log_transition_start));
+	vassert(t->exchange->type == ISAKMP_v2_CREATE_CHILD_SA);
 	vassert(t->recv_role == 0);
 	vassert(t->processor == NULL);
 	vassert(t->llog_success == NULL);
@@ -944,18 +984,23 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vdbg_transition(verbose, transition);
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
-	vassert(transition->exchange == exchange->type);
+	vassert(transition->exchange == exchange);
+	vassert(!(transition->log_transition_start && exchange->log_transition_start));
 }
 
 static void validate_state_exchange(struct verbose verbose,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
-	name_buf ixb;
-	vdbg("=>%s (%s); secured: %s",
-	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
-	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
-	     bool_str(exchange->secured));
+	VDBG_JAMBUF(buf) {
+		jam_string(buf, "=>");
+		jam_v2_exchange_name(buf, exchange, verbose);
+		jam_string(buf, "; secured: ");
+		jam_bool(buf, exchange->secured);
+		if (exchange->log_transition_start) {
+			jam_string(buf, "; log transition start");
+		}
+	}
 	const unsigned level = ++verbose.level;
 
 	verbose.level = level;
@@ -978,31 +1023,45 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
-	if (exchange->responder != NULL) {
+	if (exchange->transitions.responder.len > 0) {
 		vdbg("responder:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->responder) {
+		FOR_EACH_ITEM(t, &exchange->transitions.responder) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_REQUEST, exchange);
 		}
 	}
 
 	verbose.level = level;
-	if (exchange->response != NULL) {
+	if (exchange->transitions.response.len > 0) {
 		vdbg("response:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->response) {
+		FOR_EACH_ITEM(t, &exchange->transitions.response) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_RESPONSE, exchange);
 		}
 	}
 
 	verbose.level = level;
-	vassert(exchange->subplot != NULL);
+
+	/* confirm NAME starts with EXCHANGE */
+	vassert(exchange->name != NULL);
+	name_buf exchange_name;
+	enum_short(&ikev2_exchange_names, exchange->type, &exchange_name);
+	shunk_t name = shunk1(exchange->name);
+	vassert(hunk_streat(&name, exchange_name.buf));
+
+	/* confirm NAME ends in "" or " (SUBPLOT)" */
+	if (name.len > 0) {
+		/* " (...)" */
+		vassert(hunk_strstarteq(name, " ("));
+		vassert(hunk_char(name, -1) == ')');
+	}
+
 	vassert(from->v2.secured == exchange->secured);
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
-	FOR_EACH_ITEM(t, exchange->responder) {
-		if (t->exchange == exchange->type) {
+	FOR_EACH_ITEM(t, &exchange->transitions.responder) {
+		if (t->exchange == exchange) {
 			found_transition = true;
 			break;
 		}
@@ -1022,20 +1081,20 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	 * Validate transitions XOR exchanges.  Can have at most one.
 	 */
 
-	vassert((from->v2.child_transition == NULL) ||
-		(from->v2.ike_exchanges == NULL));
+	vassert((from->v2.larval_sa_transition == NULL) ||
+		(from->v2.ike_responder_exchanges.len == 0));
 
-	if (from->v2.child_transition != NULL) {
+	if (from->v2.larval_sa_transition != NULL) {
 		verbose.level = level;
 		vdbg("child transition:");
 		verbose.level++;
-		validate_state_child_transition(verbose, from->v2.child_transition);
+		validate_state_larval_sa_transition(verbose, from->v2.larval_sa_transition);
+		verbose.level = level;
 	}
 
-	verbose.level = level;
 	vdbg("exchanges:");
 	verbose.level++;
-	FOR_EACH_ITEM(exchange, from->v2.ike_exchanges) {
+	FOR_EACH_ITEM(exchange, &from->v2.ike_responder_exchanges) {
 		validate_state_exchange(verbose, from, *exchange);
 	}
 }

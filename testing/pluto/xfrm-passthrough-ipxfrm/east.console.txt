@@ -13,7 +13,7 @@ east #
  ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir fwd
 east #
  ipsec auto --add west-east
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 east #
  ../../guestbin/echo-server.sh -tcp -4 7 -daemon
 listening on IPv4 TCP port 7
@@ -28,6 +28,7 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -38,6 +39,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7

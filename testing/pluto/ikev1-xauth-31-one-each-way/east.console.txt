@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add xauth-road-eastnet
-"xauth-road-eastnet": added IKEv1 connection
+"xauth-road-eastnet": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -21,7 +21,7 @@ east #
 06-east-up
 east #
  ipsec auto --add east-to-road-on-east
-"east-to-road-on-east": added IKEv1 connection
+"east-to-road-on-east": added oriented IKEv1 connection
 east #
  ipsec auto --up east-to-road-on-east
 "east-to-road-on-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
@@ -46,6 +46,7 @@ src 192.1.3.209 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -56,6 +57,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 XFRM policy:
 src 192.0.2.0/24 dst 192.1.3.209/32
 	dir out priority PRIORITY ptype main

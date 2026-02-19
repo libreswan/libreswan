@@ -54,10 +54,12 @@
 #include "crypt_ke.h"
 
 struct task {
-	const struct dh_desc *dh;
+	const struct kem_desc *dh;
 	chunk_t nonce;
 	struct dh_local_secret *local_secret;
+	chunk_t initiator_ke;
 	ke_and_nonce_cb *cb;
+	enum sa_role role;
 };
 
 static void compute_ke_and_nonce(struct logger *logger,
@@ -65,22 +67,30 @@ static void compute_ke_and_nonce(struct logger *logger,
 				 int thread_unused UNUSED)
 {
 	if (task->dh != NULL) {
-		task->local_secret = calc_dh_local_secret(task->dh, logger);
+		task->local_secret = calc_dh_local_secret(task->dh,
+							  task->role,
+							  HUNK_AS_SHUNK(&task->initiator_ke),
+							  logger);
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log(logger, "NSS: Local DH %s secret (pointer): %p",
-				 task->dh->common.fqn, task->local_secret);
+			LDBG_log(logger, "%s() %s KE (pointer): %p",
+				 __func__,
+				 task->dh->common.fqn,
+				 task->local_secret);
 		}
 	}
 	task->nonce = alloc_rnd_chunk(DEFAULT_NONCE_SIZE, "nonce");
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "generated nonce:", task->nonce);
+		LDBG_log(logger, "%s() generated nonce:", __func__);
+		LDBG_hunk(logger, &task->nonce);
 	}
 }
 
-static void cleanup_ke_and_nonce(struct task **task)
+static void cleanup_ke_and_nonce(struct task **task,
+				 struct logger *logger UNUSED)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->nonce);
+	free_chunk_content(&(*task)->initiator_ke);
 	pfreeany(*task);
 }
 
@@ -104,16 +114,21 @@ static const struct task_handler ke_and_nonce_handler = {
 void submit_ke_and_nonce(struct state *callback_sa,
 			 struct state *task_sa,
 			 struct msg_digest *md,
-			 const struct dh_desc *dh,
+			 const struct kem_desc *dh,
 			 ke_and_nonce_cb *cb,
 			 bool detach_whack,
 			 where_t where)
 {
-	struct task *task = alloc_thing(struct task, "dh");
-	task->dh = dh;
-	task->cb = cb;
-	submit_task(/*callback*/callback_sa, /*task*/task_sa, md, detach_whack,
-		    task, &ke_and_nonce_handler, where);
+	struct task task = {
+		.dh = dh,
+		.cb = cb,
+		.role = task_sa->st_sa_role,
+		.initiator_ke = clone_hunk_as_chunk(&task_sa->st_gi, "Gi"),
+	};
+	submit_task(/*callback*/callback_sa, /*task*/task_sa,
+		    md, detach_whack,
+		    clone_thing(task, "ke-and-nonce"),
+		    &ke_and_nonce_handler, where);
 }
 
 /*
@@ -147,7 +162,7 @@ void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secre
 	 * responder comes back with a vald accepted propsal and KE.
 	 */
 	if (LDBGP(DBG_CRYPT, logger)) {
-		const struct dh_desc *group = dh_local_secret_desc(local_secret);
+		const struct kem_desc *group = dh_local_secret_desc(local_secret);
 		LDBG_log(logger, "wire (crypto helper) group %s and state group %s %s",
 			 group->common.fqn,
 			 st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",

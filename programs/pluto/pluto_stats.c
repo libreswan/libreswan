@@ -150,7 +150,7 @@ void pstat_sa_started(struct state *st)
 
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
-	dbg("pstats #%lu %s started", st->st_serialno, name);
+	ldbg(st->logger, "pstats "PRI_SO" %s started", pri_so(st->st_serialno), name);
 
 	pstats_sa_started[st->st_ike_version][sa_kind]++;
 }
@@ -162,10 +162,12 @@ void pstat_sa_failed(struct state *st, enum terminate_reason r)
 	name_buf rb;
 	const char *reason = str_enum_long(&terminate_reason_names, r, &rb);
 	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
-		ldbg(st->logger, "pstats #%lu %s failed %s", st->st_serialno, name, reason);
+		ldbg(st->logger, "pstats "PRI_SO" %s failed %s",
+		     pri_so(st->st_serialno), name, reason);
 		st->st_pstats.terminate_reason = r;
 	} else {
-		ldbg(st->logger, "pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
+		ldbg(st->logger, "pstats "PRI_SO" %s re-failed %s",
+		     pri_so(st->st_serialno), name, reason);
 	}
 }
 
@@ -175,7 +177,8 @@ void pstat_sa_deleted(struct state *st)
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum_long(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
-	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
+	ldbg(st->logger, "pstats "PRI_SO" %s deleted %s",
+	     pri_so(st->st_serialno), name, reason);
 
 	pstats_sa_finished[st->st_ike_version][sa_kind][st->st_pstats.terminate_reason]++;
 
@@ -223,15 +226,16 @@ static void pstat_ike_sa_established(struct state *st)
 	/* keep IKE SA statistics */
 	if (st->st_ike_version == IKEv2) {
 		pstats_ikev2_sa++;
-		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
-		if (st->st_oakley.ta_integ != NULL)
-			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
+		pstats(ikev2_encr, st->st_oakley.ta_encrypt->ikev2_alg_id);
+		if (st->st_oakley.ta_integ != NULL) {
+			pstats(ikev2_integ, st->st_oakley.ta_integ->ikev2_alg_id);
+		}
+		pstats(ikev2_groups, st->st_oakley.ta_dh->ikev2_alg_id);
 	} else {
 		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
-		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
-		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.ta_prf->ikev1_oakley_id);
+		pstats(ikev1_groups, st->st_oakley.ta_dh->ikev1_oakley_id);
 	}
 }
 
@@ -269,17 +273,17 @@ static void pstat_child_sa_established(struct state *st)
 
 	if (st->st_esp.protocol == &ip_protocol_esp) {
 		bool nat = nat_traversal_detected(st);
-		bool tfc = (c->config->child_sa.tfcpad != 0 &&
+		bool tfc = (c->config->child.tfcpad != 0 &&
 			    !st->st_seen_esp_tfc_padding_not_supported);
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 
 		pstats_ipsec_esp++;
 		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv1_IPSEC_ID],
-			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
+			st->st_esp.trans_attrs.ta_encrypt->ikev1_ipsec_id,
+			st->st_esp.trans_attrs.ta_encrypt->ikev2_alg_id);
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
-			st->st_esp.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
+			st->st_esp.trans_attrs.ta_integ->ikev1_ipsec_id,
+			st->st_esp.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(nat, tfc, esn);
 	}
 	if (st->st_ah.protocol == &ip_protocol_ah) {
@@ -287,8 +291,8 @@ static void pstat_child_sa_established(struct state *st)
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		pstats_ipsec_ah++;
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_ah.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
-			st->st_ah.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
+			st->st_ah.trans_attrs.ta_integ->ikev1_ipsec_id,
+			st->st_ah.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(false, false, esn);
 	}
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
@@ -300,7 +304,7 @@ void pstat_sa_established(struct state *st)
 {
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
-	dbg("pstats #%lu %s established", st->st_serialno, name);
+	ldbg(st->logger, "pstats "PRI_SO" %s established", pri_so(st->st_serialno), name);
 	pstats_sa_established[st->st_ike_version][sa_kind]++;
 
 	/*
@@ -461,17 +465,17 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 
 	IKE_ALG_STATS("ikev1.encr", encrypt, IKEv1_OAKLEY_ID, pstats_ikev1_encr);
 	IKE_ALG_STATS("ikev1.integ", integ, IKEv1_OAKLEY_ID, pstats_ikev1_integ);
-	IKE_ALG_STATS("ikev1.group", dh, IKEv1_OAKLEY_ID, pstats_ikev1_groups);
+	IKE_ALG_STATS("ikev1.group", kem, IKEv1_OAKLEY_ID, pstats_ikev1_groups);
 
 	ENUM_STATS(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, "ikev2.encr", pstats_ikev2_encr);
 	ENUM_STATS(&ikev2_trans_type_integ_names, IKEv2_INTEG_HMAC_MD5_96, "ikev2.integ", pstats_ikev2_integ);
-	IKE_ALG_STATS("ikev2.group", dh, IKEv2_ALG_ID, pstats_ikev2_groups);
+	IKE_ALG_STATS("ikev2.group", kem, IKEv2_ALG_ID, pstats_ikev2_groups);
 
 	/* we log the received invalid groups and the suggested valid groups */
-	IKE_ALG_STATS("ikev2.recv.invalidke.using", dh, IKEv2_ALG_ID, pstats_invalidke_recv_u);
-	IKE_ALG_STATS("ikev2.recv.invalidke.suggesting", dh, IKEv2_ALG_ID, pstats_invalidke_recv_s);
-	IKE_ALG_STATS("ikev2.sent.invalidke.using", dh, IKEv2_ALG_ID, pstats_invalidke_sent_u);
-	IKE_ALG_STATS("ikev2.sent.invalidke.suggesting", dh, IKEv2_ALG_ID, pstats_invalidke_sent_s);
+	IKE_ALG_STATS("ikev2.recv.invalidke.using", kem, IKEv2_ALG_ID, pstats_invalidke_recv_u);
+	IKE_ALG_STATS("ikev2.recv.invalidke.suggesting", kem, IKEv2_ALG_ID, pstats_invalidke_recv_s);
+	IKE_ALG_STATS("ikev2.sent.invalidke.using", kem, IKEv2_ALG_ID, pstats_invalidke_sent_u);
+	IKE_ALG_STATS("ikev2.sent.invalidke.suggesting", kem, IKEv2_ALG_ID, pstats_invalidke_sent_s);
 
 	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_encrypt);
 	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_integ);
@@ -488,9 +492,10 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
-void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s UNUSED)
+void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s)
 {
-	dbg("clearing pluto stats");
+	struct logger *logger = show_logger(s);
+	ldbg(logger, "clearing pluto stats");
 
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;

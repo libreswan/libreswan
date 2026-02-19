@@ -24,7 +24,6 @@ static const char *updown_story[] = {
 	C(UPDOWN_UNROUTE, "unroute"),
 	C(UPDOWN_UP, "up"),
 	C(UPDOWN_DOWN, "down"),
-	C(UPDOWN_DISCONNECT_NM, "disconnectNM"), /*legacy; do not change*/
 #undef C
 };
 
@@ -41,7 +40,6 @@ static const char *updown_name[] = {
 	C(UPDOWN_UNROUTE),
 	C(UPDOWN_UP),
 	C(UPDOWN_DOWN),
-	C(UPDOWN_DISCONNECT_NM),
 #undef C
 };
 
@@ -49,4 +47,18 @@ const struct enum_names updown_names = {
 	UPDOWN_FLOOR, UPDOWN_ROOF-1,
 	ARRAY_REF(updown_name),
 	"UPDOWN_", NULL,
+};
+
+static const char *updown_config_name[] = {
+#define C(E) [E] = #E
+	C(UPDOWN_CONFIG_ASYNC),
+	C(UPDOWN_CONFIG_EXEC),
+#undef C
+};
+
+const struct enum_names updown_config_names = {
+	0, UPDOWN_CONFIG_ROOF-1,
+	ARRAY_REF(updown_config_name),
+	"UPDOWN_CONFIG_",
+	NULL,
 };

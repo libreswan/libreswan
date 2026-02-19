@@ -82,6 +82,10 @@ bool pexpect_connection_is_unrouted(struct connection *c, struct logger *, where
 bool pexpect_connection_is_disowned(struct connection *c, struct logger *, where_t where);
 void state_disowns_connection(struct state *st);
 
+void connection_oriented(struct connection *c,
+			 bool background,
+			 where_t where);
+
 void connection_route(struct connection *c, where_t where);
 void connection_unroute(struct connection *c, where_t where);
 

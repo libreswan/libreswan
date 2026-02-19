@@ -181,7 +181,8 @@ struct connection *group_instantiate(struct connection *group,
 	{								\
 		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
 		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
-		append_end_selector(END, SELECTOR, LOGGER, HERE);	\
+		struct verbose verbose_ = VERBOSE(DEBUG_STREAM, LOGGER, NULL); \
+		append_end_selector(END, SELECTOR, verbose_);		\
 	}
 
 	/*
@@ -241,9 +242,15 @@ struct connection *group_instantiate(struct connection *group,
 	t->child.reqid = child_reqid(t->config, t->logger);
 
 	PEXPECT(t->logger, oriented(t));
+
+	/*
+	 * All host/selector fields set, can enter into DB.
+	 */
 	connection_db_add(t);
 
-	/* fill in the SPDs */
+	/*
+	 * Fill in the SPDs; and add entries to the SPD db
+	 */
 	build_connection_spds_from_proposals(t);
 
 	vdbg_connection(t, verbose, HERE, "%s: from %s",
@@ -324,7 +331,6 @@ static struct connection *instantiate(struct connection *t,
 	 * endpoint and iface are unchanged.
 	 */
 	passert(oriented(d));
-	connection_db_add(d);
 
 	/* XXX: could this use the connection number? */
 	if (t->sa_marks.in.unique) {
@@ -336,6 +342,11 @@ static struct connection *instantiate(struct connection *t,
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
+
+	/*
+	 * With D initialized, enter it into the DB.
+	 */
+	connection_db_add(d);
 
 	return d;
 }
@@ -362,7 +373,7 @@ struct connection *spd_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, verbose);
 	build_connection_spds_from_proposals(d);
 
 	/* leave breadcrumb */
@@ -394,7 +405,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(p, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(p, verbose);
 	build_connection_spds_from_proposals(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
@@ -432,9 +443,9 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	 * payload into both ends.
 	 */
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
-	c->child.sec_label = clone_hunk(sec_label, __func__);
+	c->child.sec_label = clone_hunk_as_chunk(&sec_label, __func__);
 
-	build_connection_proposals_from_configs(c, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
 	build_connection_spds_from_proposals(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
@@ -462,7 +473,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, verbose);
 	build_connection_spds_from_proposals(d);
 
 	vdbg_connection(d, verbose, where, "%s: from %s",
@@ -492,7 +503,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   verbose, where);
 
 	/* real selectors are still unknown */
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, verbose);
 	build_connection_spds_from_proposals(d);
 
 	vdbg_connection(d, verbose, where, "%s: from %s",
@@ -562,12 +573,12 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			 * MODE_CFG, or hard-wired in the config
 			 * file).
 			 */
-			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				ip_selector selector = selector_from_range((*range));
+			FOR_EACH_ITEM(pool, &end->child.config->addresspools) {
+				ip_selector selector = selector_from_pool((*pool));
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector, verbose.logger, HERE);
+				append_end_selector(end, selector, verbose);
 			}
 			continue;
 		}
@@ -592,7 +603,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, selector, verbose.logger, HERE);
+			append_end_selector(end, selector, verbose);
 			continue;
 		}
 
@@ -612,7 +623,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		vexpect(is_permanent(c) || is_group(c) || is_template(c));
 		vdbg("%s selector proposals from unset host family %s",
 		     leftright, host_afi->ip_name);
-		append_end_selector(end, unset_selector, verbose.logger, HERE);
+		append_end_selector(end, unset_selector, verbose);
 #else
 		llog_pexpect(verbose.logger, HERE, "no address");
 		return false;

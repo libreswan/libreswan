@@ -1,0 +1,23 @@
+<varlistentry id='conn.dpdtimeout'>
+  <term>
+    <option>dpdtimeout=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      Set the length of time that pluto will idle without hearing back
+      from the peer.  After this period has elapsed with no response
+      and no traffic, pluto will declare the peer dead, and remove the
+      SA.  Set value bigger than <option>dpddelay</option> to
+      enable. If <option>dpdtimeout</option> is set,
+      <option>dpddelay</option> also needs to be set.
+    </para>
+    <para>
+      The default is <option>0</option> meaning disabled.
+    </para>
+    <para>
+      This option is only valid for IKEv1.  IKEv2 only uses the
+      <option>retransmit-timeout</option> (the timeout implies that
+      the IKE SA is dead).
+    </para>
+  </listitem>
+</varlistentry>

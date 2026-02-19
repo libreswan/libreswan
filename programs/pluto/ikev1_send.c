@@ -126,10 +126,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 			fh->isafrag_flags = packet_remainder_len == data_len ?
 					    ISAKMP_FRAG_LAST : 0;
 		}
-		dbg("sending IKE fragment id '%d', number '%u'%s",
-		    1, /* hard coded for now, seems to be what all the cool implementations do */
-		    fragnum,
-		    packet_remainder_len == data_len ? " (last)" : "");
+		ldbg(st->logger, "sending IKE fragment id '%d', number '%u'%s",
+		     1, /* hard coded for now, seems to be what all the cool implementations do */
+		     fragnum,
+		     (packet_remainder_len == data_len ? " (last)" : ""));
 
 		if (!send_shunks_using_state(st, where,
 					     shunk2(frag_prefix,
@@ -214,7 +214,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
-		return send_hunk_using_state(st, where, st->st_v1_tpacket);
+		return send_hunk_using_state(st, where, &st->st_v1_tpacket);
 	}
 }
 

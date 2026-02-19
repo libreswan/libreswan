@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -37,7 +37,7 @@ west #
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
@@ -48,18 +48,18 @@ west #
  # TCP will still fail
 west #
  ipsec whack --impair trigger_revival:1
-"west": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
+IMPAIR: "west": dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 "west": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #2: IKE_SA_INIT_I: retransmission; will wait 0.5 seconds for response
-"west" #2: IKE_SA_INIT_I: retransmission; will wait 1 seconds for response
-"west" #2: IKE_SA_INIT_I: retransmission; will wait 2 seconds for response
-"west" #2: IKE_SA_INIT_I: retransmission; will wait 4 seconds for response
-"west" #2: IKE_SA_INIT_I: retransmission; will wait 8 seconds for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 0.5 seconds for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 1 second for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 2 seconds for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 4 seconds for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 8 seconds for response
 "west" #2: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "west" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"west" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #2: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 "west" #2: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254

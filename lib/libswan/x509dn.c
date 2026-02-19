@@ -187,7 +187,7 @@ static err_t get_next_rdn(asn1_t *rdn,	/* input/output */
 	case ASN1_BMPSTRING:
 		break;
 	default:
-		dbg("unexpected ASN1 string type 0x%x", *value_type);
+		ldbg(&global_logger, "unexpected ASN1 string type 0x%x", *value_type);
 		return "unexpected ASN1 string type";
 	}
 
@@ -553,7 +553,7 @@ size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
 		/* error: print DN as hex string */
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "error in DN parsing: %s; bad DN:", ugh);
-			LDBG_hunk(logger, dn);
+			LDBG_hunk(logger, &dn);
 		}
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);
@@ -636,7 +636,7 @@ err_t atodn(const char *src, chunk_t *dn)
 {
 	struct logger *logger = &global_logger;
 
-	dbg("ASCII to DN <= \"%s\"", src);
+	ldbg(logger, "ASCII to DN <= \"%s\"", src);
 	*dn = empty_chunk;
 
 	/* stack of unfilled lengths */
@@ -742,7 +742,7 @@ err_t atodn(const char *src, chunk_t *dn)
 			size_t ol = strcspn(src, " =");	/* length of OID name */
 			for (op = x501rdns; ; op++) {
 				if (op == &x501rdns[elemsof(x501rdns)]) {
-					dbg("unknown OID: \"%.*s\"",
+					ldbg(logger, "unknown OID: \"%.*s\"",
 					    (int)ol, src);
 					return "unknown OID in ID_DER_ASN1_DN";
 				}
@@ -841,7 +841,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 	*dn = clone_bytes_as_chunk(dn_buf, dn_ptr - dn_buf, "atodn");
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "ASCII to DN =>"); LDBG_hunk(logger, *dn);
+		LDBG_log_hunk(logger, "ASCII to DN =>", dn);
 	}
 	return NULL;
 
@@ -854,9 +854,9 @@ err_t atodn(const char *src, chunk_t *dn)
  * compare two distinguished names by
  * comparing the individual RDNs
  */
-bool same_dn(asn1_t a, asn1_t b)
+bool same_dn(asn1_t a, asn1_t b, struct verbose verbose)
 {
-	return match_dn(a, b, NULL);	/* degenerate case of match_dn() */
+	return match_dn(a, b, NULL, verbose);	/* degenerate case of match_dn() */
 }
 
 /*
@@ -864,7 +864,7 @@ bool same_dn(asn1_t a, asn1_t b)
  * A single '*' character designates a wildcard RDN in DN b.
  * If wildcards is NULL, exact match is required.
  */
-bool match_dn(asn1_t a, asn1_t b, int *wildcards)
+bool match_dn(asn1_t a, asn1_t b, int *wildcards, struct verbose verbose)
 {
 	asn1_t rdn_a, rdn_b;
 	asn1_t attribute_a, attribute_b;
@@ -890,13 +890,13 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards)
 	{
 		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
 		if (ua != NULL) {
-			dbg("match_dn bad a: %s", ua);
+			vdbg("match_dn bad a: %s", ua);
 			return false;
 		}
 
 		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
 		if (ub != NULL) {
-			dbg("match_dn bad b: %s", ub);
+			vdbg("match_dn bad b: %s", ub);
 			return false;
 		}
 	}
@@ -917,7 +917,7 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards)
 						&value_ber_a, &value_type_a, &value_content_a,
 						&more_a);
 			if (ua != NULL) {
-				dbg("match_dn bad a[%d]: %s", n, ua);
+				vdbg("match_dn bad a[%d]: %s", n, ua);
 				return false;
 			}
 
@@ -925,7 +925,7 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards)
 						&value_ber_b, &value_type_b, &value_content_b,
 						&more_b);
 			if (ub != NULL) {
-				dbg("match_dn bad b[%d]: %s", n, ub);
+				vdbg("match_dn bad b[%d]: %s", n, ub);
 				return false;
 			}
 		}
@@ -995,11 +995,11 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards)
 		if (wildcards != NULL && *wildcards != 0) {
 			dn_buf abuf;
 			dn_buf bbuf;
-			dbg("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
-			    str_dn(a, &abuf),
-			    str_dn(b, &bbuf),
-			    *wildcards,
-			    (more_a ? "B" : "A"));
+			vdbg("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
+			     str_dn(a, &abuf),
+			     str_dn(b, &bbuf),
+			     *wildcards,
+			     (more_a ? "B" : "A"));
 		}
 		return false;
 	}
@@ -1128,7 +1128,7 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
 			     struct verbose verbose)
 {
-	bool ret = match_dn(a, b, wildcards);
+	bool ret = match_dn(a, b, wildcards, verbose);
 
 	if (!ret) {
 		vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",

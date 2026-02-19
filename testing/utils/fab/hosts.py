@@ -14,8 +14,8 @@
 
 import re
 from os import path
-
-from fab import utilsdir
+from fab.datautil import *
+from fab import testingdir
 
 class Host:
     def __init__(self, name):
@@ -26,62 +26,72 @@ class Host:
         return self.name < peer.name
 
 class Guest:
-    def __init__(self, host, platform=None, guest=None):
-        self.platform = platform  # Platform("netbsd"), ...
-        self.host = host	  # see Host("east"), ...
-        self.name = guest	  # netbsde, ...
+    def __init__(self, host, platform):
+        self.platform = platform
+        self.host = host
+        self.name = platform+host.name
     def __str__(self):
         return self.name
     def __lt__(self, peer):
         return self.name < peer.name
 
-class Set(set):
-    def __str__(self):
-        return " ".join(str(s) for s in self)
+_HOSTS = Dict() # east west rise set ...
+for xml in testingdir.glob("kvm/vm/*.xml"):
+    # STEM is .basename(.xml)
+    hostname = xml.stem
+    host = Host(hostname)
+    _HOSTS[host.name] = host
 
-HOSTS = Set()
-for xml in utilsdir.glob("../kvm/vm/*.xml"):
-    host = re.match(r'^.*/(.*).xml$', xml).group(1)
-    # For hosts, ignor E,W,N,...
-    if len(host) == 1:
-        continue
-    HOSTS.add(Host(host))
-
-# should have kvm/platform/*
-PLATFORMS = Set()
-for t in utilsdir.glob("../kvm/*/upgrade.sh"):
-    # what matched "*" in above pattern
-    p = path.basename(path.dirname(t))
+PLATFORMS = Set() # netbsd freebsd fedora ...
+for platform in testingdir.glob("kvm/platform/*/upgrade.sh"):
+    p = platform.parent.name
     PLATFORMS.add(p)
 
-GUESTS = Set()
-for host in HOSTS:
-    if host.name in ("rise", "set"):
-        for platform in PLATFORMS:
-            if platform not in "linux":
-                GUESTS.add(Guest(host, platform, guest=platform+host.name))
-        continue
-    if host.name in ("east", "west"):
-        GUESTS.add(Guest(host, platform="linux", guest=host.name))
-        for platform in PLATFORMS:
-            if platform not in "linux":
-                # netbsde et.al.
-                GUESTS.add(Guest(host, platform, guest=platform+host.name[0:1]))
-        continue
-    GUESTS.add(Guest(host, platform="linux", guest=host.name))
+_GUESTS = Dict() # netbsdrise fedoraset east freebsdwest ...
+_ALL_LINUX_GUESTS = Set() # nic east west ... ordered
+for host in sorted(_HOSTS.values()):
+    for platform in PLATFORMS:
+        guest = Guest(host, platform)
+        match platform:
+            case "linux":
+                # east west ...
+                _GUESTS[guest.name] = guest
+                _GUESTS[host.name] = guest # also add linuxEAST et.al.
+                _ALL_LINUX_GUESTS.add(guest)
+            case _:
+                if host in ("nic", "road"): # not yet
+                    continue
+                # netbsdrise netbsdnorth ...
+                _GUESTS[guest.name] = guest
+
+# NIC and EAST are special
+NIC = _GUESTS["nic"]
+EAST = _GUESTS["east"]
+
+# force NIC, EAST to be first
+LINUX_GUESTS = [NIC, EAST]
+for guest in LINUX_GUESTS:
+    _ALL_LINUX_GUESTS.remove(guest)
+LINUX_GUESTS.extend(sorted(_ALL_LINUX_GUESTS))
+
 
 # A dictionary, with GUEST_NAME (as used to manipulate the domain
 # externally) as the KEY and HOST_NAME (what `hostname` within the
 # domain would return) as the value.
 
-_LOOKUP = dict()
-for guest in GUESTS:
-    _LOOKUP[guest.name] = guest
-
-def lookup(name):
-    if name in _LOOKUP:
-        return _LOOKUP[name]
+def guest_by_guestname(guestname):
+    if guestname in _GUESTS:
+        return _GUESTS[guestname]
     return None
 
-NIC = _LOOKUP["nic"]
-EAST = _LOOKUP["east"]
+def guests():
+    return _GUESTS.values()
+
+# \b(east|west|...)\b
+_GUEST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
+def guests_by_filename(filename):
+    guestnames = _GUEST_PATTERN.findall(filename)
+    guests = List()
+    for guestname in guestnames:
+        guests.append(_GUESTS[guestname])
+    return guests

@@ -568,7 +568,7 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_SA = 1, /* Security Association */
 	ISAKMP_NEXT_P = 2, /* Proposal - See also v2_PROPOSAL_NON_LAST */
 	ISAKMP_NEXT_T = 3, /* Transform */
-	ISAKMP_NEXT_KE = 4, /* Key Exchange */
+	ISAKMP_NEXT_KE = 4, /* Key Exchange (material) */
 	ISAKMP_NEXT_ID = 5, /* Identification */
 	ISAKMP_NEXT_CERT = 6, /* Certificate */
 	ISAKMP_NEXT_CR = 7, /* Certificate Request */
@@ -948,15 +948,34 @@ enum ikev2_sec_proto_id {
  * See https://www.iana.org/assignments/ikev2-parameters
  * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
+
 enum ikev2_trans_type {
 #define IKEv2_TRANS_TYPE_FLOOR IKEv2_TRANS_TYPE_ENCR
-	IKEv2_TRANS_TYPE_ENCR = 1,
-	IKEv2_TRANS_TYPE_PRF = 2,
-	IKEv2_TRANS_TYPE_INTEG = 3,
-	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
-	IKEv2_TRANS_TYPE_ESN = 5,
-#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN+1)
+	IKEv2_TRANS_TYPE_ENCR = 1,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_PRF = 2,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_INTEG = 3,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_KEM = 4,	/* RFC 7296 + RFC 9370; IANA calls it KE but that's the BLOB, grrr */
+	IKEv2_TRANS_TYPE_ESN = 5,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_SN = 5,	/* RFC 7296 + draft-ietf-ipsecme-ikev2-rename-esn */
+	IKEv2_TRANS_TYPE_ADDKE1 = 6,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE2 = 7,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE3 = 8,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE4 = 9,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE5 = 10,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE6 = 11,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE7 = 12,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_KWA = 13,	/* draft-ietf-ipsecme-g-ikev2 */
+	IKEv2_TRANS_TYPE_GCAUTH = 14,	/* draft-ietf-ipsecme-g-ikev2 */
+#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_GCAUTH+1)
+	/*
+	 * Magic value, used by impair as a generic value for the,
+	 * ever changing, IKEv2_TRANS_TYPE_ROOF.
+	 */
+#define IKEv2_TRANS_TYPE_IMPAIR_ROOF 0xEE
+#define IKEv2_TRANS_TYPE_IMPAIR_ROOF_STRING "0xEE"
 };
+
+extern const struct enum_names ikev2_trans_type_names;
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
@@ -1047,12 +1066,114 @@ enum ikev2_trans_type_integ {
 	IKEv2_INTEG_INVALID = 65536
 };
 
+/*
+ * Transform Type 4 - Key Exchange Method Transform IDs
+ *
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8
+ */
+
+enum ikev2_trans_type_kem {
+#define IKEv2_KEM_FLOOR IKEv2_KEM_NONE
+	IKEv2_KEM_NONE = 0,	/* RFC 7296 */
+	IKEv2_KEM_MODP768 = 1,
+	IKEv2_KEM_MODP1024 = 2,
+	IKEv2_KEM_GP155 = 3, /* IKEv2 reserved */
+	IKEv2_KEM_GP185 = 4, /* IKEv2 reserved */
+	IKEv2_KEM_MODP1536 = 5, /* RFC 3526 */
+	IKEv2_KEM_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_MODP2048 = 14, /* RFC 3526 */
+	IKEv2_KEM_MODP3072 = 15, /* RFC 3526 */
+	IKEv2_KEM_MODP4096 = 16, /* RFC 3526 */
+	IKEv2_KEM_MODP6144 = 17, /* RFC 3526 */
+	IKEv2_KEM_MODP8192 = 18, /* RFC 3526 */
+	IKEv2_KEM_ECP_256 = 19, /* RFC 5903 */
+	IKEv2_KEM_ECP_384 = 20, /* RFC 5903 */
+	IKEv2_KEM_ECP_521 = 21, /* RFC 5903 */
+	IKEv2_KEM_DH22 = 22, /* RFC 5114 */
+	IKEv2_KEM_DH23 = 23, /* RFC 5114 */
+	IKEv2_KEM_DH24 = 24, /* RFC 5114 */
+	IKEv2_KEM_ECP_192 = 25, /* RFC 5114 */
+	IKEv2_KEM_ECP_224 = 26, /* RFC 5114 */
+	/* From here on, values are only valid for IKEv2 */
+	IKEv2_KEM_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
+	IKEv2_KEM_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
+	IKEv2_KEM_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+
+	IKEv2_KEM_GOST3410_2012_256 = 33,	/* RFC 9385, Sec. 6.1 */
+	IKEv2_KEM_GOST3410_2012_512 = 34,	/* RFC 9385, Sec. 6.1 */
+
+	IKEv2_KEM_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KEM_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KEM_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+#define IKEv2_KEM_ROOF (IKEv2_KEM_ML_KEM_1024 + 1)
+
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+};
+
+extern const struct enum_names ikev2_trans_type_kem_names;
+
+/*
+ * Transform Type 5 - Sequence Numbers Transform IDs.
+ */
+
 enum ikev2_trans_type_esn {
 #define IKEv2_ESN_FLOOR IKEv2_ESN_NO
 	IKEv2_ESN_NO = 0,
 	IKEv2_ESN_YES = 1,
 #define IKEv2_ESN_ROOF (IKEv2_ESN_YES+1)
 };
+
+extern const struct enum_names ikev2_trans_type_esn_names;
+
+enum ikev2_trans_type_sn {
+#define IKEv2_SN_FLOOR IKEv2_SN_32_BIT_SEQUENTIAL
+	IKEv2_SN_32_BIT_SEQUENTIAL = 0,
+	IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL = 1,
+	IKEv2_SN_32_BIT_UNSPECIFIED = 2,
+#define IKEv2_SN_ROOF (IKEv2_SN_32_BIT_UNSPECIFIED+1)
+};
+
+extern const struct enum_names ikev2_trans_type_sn_names;
+
+/*
+ * Transform Type 13 - Key Wrap Algorithm Transform IDs.
+ */
+
+enum ikev2_trans_type_kwa {
+#define IKEv2_KWA_FLOOR IKEv2_KWA_KW_5649_128
+	IKEv2_KWA_KW_5649_128 = 1,
+	IKEv2_KWA_KW_5649_192 = 2,
+	IKEv2_KWA_KW_5649_256 = 3,
+	IKEv2_KWA_KW_ARX = 4,
+#define IKEv2_KWA_ROOF (IKEv2_KWA_KW_ARX+1)
+};
+
+extern const struct enum_names ikev2_trans_type_kwa_names;
+
+/*
+ * Transform Type 14 - Group Controller Authentication Method
+ * Transform IDs.
+ */
+
+enum ikev2_trans_type_gcauth {
+#define IKEv2_GCAUTH_FLOOR IKEv2_GCAUTH_IMPLICIT
+	IKEv2_GCAUTH_IMPLICIT = 1,
+	IKEv2_GCAUTH_DIGITAL_SIGNATURE = 2,
+#define IKEv2_GCAUTH_ROOF (IKEv2_GCAUTH_DIGITAL_SIGNATURE + 1)
+};
+
+extern const struct enum_names ikev2_trans_type_gcauth_names;
 
 /*
  * RFC 4306 Section 3.3.5
@@ -1345,6 +1466,62 @@ enum ikev1_auth_method {
 	XAUTHRespRSARevisedEncryption = 65010,
 };
 
+/*
+ * IKEv1's oakley key method (aka DH).
+ *
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10
+ */
+
+enum oakley_group {
+#define OAKLEY_GROUP_FLOOR OAKLEY_GROUP_MODP768
+	OAKLEY_GROUP_MODP768 = 1,
+	OAKLEY_GROUP_MODP1024 = 2,
+	OAKLEY_GROUP_GP155 = 3, /* IKEv2 reserved */
+	OAKLEY_GROUP_GP185 = 4, /* IKEv2 reserved */
+	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
+	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
+	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
+	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
+	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
+	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
+	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_521 = 21, /* RFC 5903 */
+	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
+	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
+	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
+	/* end of IKEv1; should these be deleted? */
+	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_CURVE25519 = 31,	/* RFC-ietf-ipsecme-safecurves-05 - NOT IN TABLE */
+	OAKLEY_GROUP_CURVE448 = 32,	/* RFC-ietf-ipsecme-safecurves-05 - NOT IN TABLE */
+#define OAKLEY_GROUP_ROOF (OAKLEY_GROUP_CURVE448+1)
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+};
+
+extern const struct enum_names oakley_group_names;
+
+/*
+ * IKEv1's Oakley Group Type attribute
+ * draft-ietf-ipsec-ike-01.txt appendix A
+ */
+#define OAKLEY_GROUP_TYPE_MODP 1
+#define OAKLEY_GROUP_TYPE_ECP 2
+#define OAKLEY_GROUP_TYPE_EC2N 3
+
 
 /* typedef to make our life easier */
 typedef uint16_t oakley_auth_t;
@@ -1412,64 +1589,6 @@ enum ikev2_auth_method {
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
-
-/*
- * Oakley Group Description attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- */
-typedef enum ike_trans_type_dh oakley_group_t;
-
-/*	you must also touch: constants.c, crypto.c */
-/* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
-/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
-enum ike_trans_type_dh {
-	OAKLEY_GROUP_NONE = 0,	/* RFC 7296 */
-	OAKLEY_GROUP_MODP768 = 1,
-	OAKLEY_GROUP_MODP1024 = 2,
-	OAKLEY_GROUP_GP155 = 3, /* IKEv2 reserved */
-	OAKLEY_GROUP_GP185 = 4, /* IKEv2 reserved */
-	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
-	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
-	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
-	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
-	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
-	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
-	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
-	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
-	OAKLEY_GROUP_ECP_521 = 21, /* RFC 5903 */
-	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
-	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
-	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
-	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
-	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
-	/* From here on, values are only valid for IKEv2 */
-	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
-	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
-	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
-
-	OAKLEY_GROUP_PSTATS_ROOF
-
-	/* 33 - 32767 Unassigned */
-	/* 32768 - 65535 Reserved for private use */
-};
-/*
- * Oakley Group Type attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- */
-#define OAKLEY_GROUP_TYPE_MODP 1
-#define OAKLEY_GROUP_TYPE_ECP 2
-#define OAKLEY_GROUP_TYPE_EC2N 3
 
 /*
  * Notify messages -- error types
@@ -1608,8 +1727,14 @@ typedef enum v2_notification {
 	v2N_INVALID_GROUP_ID = 45,		/* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46,		/* draft-yeung-g-ikev2 */
 	v2N_STATE_NOT_FOUND = 47,		/* RFC-9370 */
+	v2N_TS_MAX_QUEUE = 48,			/* RFC-9611 */
+	v2N_REGISTRATION_FAILED = 49,		/* RFC-ietf-ipsecme-g-ikev2 */
+
+	/* 50-8191 Unassigned */
 
 	v2N_ERROR_PSTATS_ROOF, /* used to cap error statistics array */
+
+	/* 8192-16384 Reserved for Private Use */
 
 	/*
 	 * Status notifications.
@@ -1664,7 +1789,7 @@ typedef enum v2_notification {
 	v2N_PSK_CONFIRM = 16426,		/* RFC-6631 */
 	v2N_ERX_SUPPORTED = 16427,		/* RFC-6867 */
 	v2N_IFOM_CAPABILITY = 16428,		/* 3GPP TS 24.303 v10.6.0 annex B.2 */
-	v2N_SENDER_REQUEST_ID = 16429,		/* draft-yeung-g-ikev2 */
+	v2N_GROUP_SENDER = 16429,		/* RFC-ietf-ipsecme-g-ikev2 */
 	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
 	v2N_SIGNATURE_HASH_ALGORITHMS = 16431,	/* RFC-7427 */
 	v2N_CLONE_IKE_SA_SUPPORTED = 16432,	/* RFC-7791 */
@@ -1680,17 +1805,17 @@ typedef enum v2_notification {
 	v2N_USE_AGGFRAG = 16442,		/* RFC-9347 */
 	v2N_SUPPORTED_AUTH_METHODS = 16443,	/* draft-ietf-ipsecme-ikev2-auth-announce-10 */
 
-	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
+	v2N_SA_RESOURCE_INFO = 16444,		/* RFC-9611 */
+	v2N_USE_PPK_INT = 16445,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
+	v2N_PPK_IDENTITY_KEY = 16446,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
 
-	/* 16438 - 40959 Unassigned */
+	/* 16447 - 40959 Unassigned */
+
+	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 
 	/* 40960 - 65535 Private Use */
 
 	v2N_NULL_AUTH = 40960,
-
-	v2N_PPK_IDENTITY_KEY = 50208,		/* draft-ietf-ipsecme-ikev2--00 */
-	v2N_USE_PPK_INT = 50209,		/* draft-ietf-ipsecme-ikev2-qr-alt-04 */
-
 
 } v2_notification_t;
 
@@ -1719,14 +1844,16 @@ enum gw_identity_type {
 
 /*
  * Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4.
+ *
+ * See https://www.iana.org/assignments/ipseckey-rr-parameters/ipseckey-rr-parameters.xhtml
  */
 
 enum ipseckey_algorithm_type {
-	IPSECKEY_ALGORITHM_DSA = 1,
-	IPSECKEY_ALGORITHM_RSA = 2,
-	IPSECKEY_ALGORITHM_ECDSA = 3,
-	/* E*D*DSA? */
-	IPSECKEY_ALGORITHM_X_PUBKEY = 4, /* Subject Public Key Info - guess */
+	IPSECKEY_ALGORITHM_DSA = 1,		/* RFC 4025 */
+	IPSECKEY_ALGORITHM_RSA = 2,		/* RFC 4025 */
+	IPSECKEY_ALGORITHM_ECDSA = 3,		/* RFC 8005 (see IANA Considerations) */
+	IPSECKEY_ALGORITHM_EDDSA = 4,		/* RFC 9373 */
+	IPSECKEY_ALGORITHM_X_PUBKEY = 5,	/* Subject Public Key Info - guess */
 };
 
 extern const struct enum_names ipseckey_algorithm_type_names;
@@ -1986,7 +2113,9 @@ enum digital_signature_blob {
 	/* DIGITAL_SIGNATURE_DSA_BLOB,		.. A.2. */
 	DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,	/* A.3. */
 	DIGITAL_SIGNATURE_ECDSA_BLOB,		/* A.4. */
-#define DIGITAL_SIGNATURE_BLOB_ROOF (DIGITAL_SIGNATURE_ECDSA_BLOB+1)
+	DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
+	DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB,
+#define DIGITAL_SIGNATURE_BLOB_ROOF (DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB+1)
 };
 
 /*
@@ -2067,7 +2196,6 @@ enum digital_signature_blob {
 
 #define ASN1_RSASSA_PSS_SHA2_SIZE 67
 /* length of ASN.1 Algorithm Identifier(variable length) is 1 byte */
-#define ASN1_LEN_ALGO_IDENTIFIER 1
 
 /* A.4.1. RSASSA-PSS with Empty Parameters */
 
@@ -2108,6 +2236,18 @@ enum digital_signature_blob {
 		0x0D, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, \
 		0x03, 0x04, 0x02, 0x03, 0x05, 0x00, 0xA2, 0x03,	\
 		0x02, 0x01, 0x40
+
+/*
+ * RFC8410 EDDSA, also 8420.  Is a separate table needed?
+ */
+
+#define ASN1_EDDSA_IDENTITY_SIZE 7
+
+#define ASN1_EDDSA_IDENTITY_ED25519_BLOB		\
+	0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70
+#define ASN1_EDDSA_IDENTITY_ED448_BLOB			\
+	0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x71
+
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

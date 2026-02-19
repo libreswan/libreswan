@@ -41,7 +41,7 @@ void show_ddos(struct show *s);
 bool require_ddos_cookies(void);
 err_t drop_new_exchanges(struct logger *logger);
 
-void init_ddos(const struct config_setup *oco, struct logger *logger);
+void init_ddos(struct logger *logger);
 
 #endif
 

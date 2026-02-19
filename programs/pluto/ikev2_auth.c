@@ -42,22 +42,32 @@
 #include "ikev2_send.h"
 #include "ikev2_notification.h"
 
-struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
-				      const struct crypt_mac *idhash,
-				      const struct hash_desc *hasher,
-				      enum perspective from_the_perspective_of)
+struct v2AUTH_blobs {
+	uint32_t mid;
+	struct hash_hunk blob[8];
+	struct hash_hunks hunks;
+};
+
+static void extract_v2AUTH_blobs(const struct ike_sa *ike,
+				 const struct crypt_mac *idhash,
+				 enum perspective from_the_perspective_of,
+				 struct v2AUTH_blobs *blobs)
 {
 	struct logger *logger = ike->sa.logger;
+	zero(blobs);
 
 	enum sa_role role;
-	chunk_t firstpacket;
+	struct hash_hunk *blob = blobs->blob;
+
+	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
+		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
+		   (struct hash_hunk) {0});
+
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
-		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
 		break;
 	case REMOTE_PERSPECTIVE:
-		firstpacket = ike->sa.st_firstpacket_peer;
 		role = (ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
@@ -66,58 +76,62 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		bad_case(from_the_perspective_of);
 	}
 
-	const chunk_t *nonce;
-	const char *nonce_name;
-	chunk_t ia1;
-	chunk_t ia2;
-	switch (role) {
-	case SA_INITIATOR:
-		/* on initiator, we need to hash responders nonce */
-		nonce = &ike->sa.st_nr;
-		nonce_name = "inputs to hash2 (responder nonce)";
-		ia1 = ike->sa.st_v2_ike_intermediate.initiator;
-		ia2 = ike->sa.st_v2_ike_intermediate.responder;
-		break;
-	case SA_RESPONDER:
-		/* on responder, we need to hash initiators nonce */
-		nonce = &ike->sa.st_ni;
-		nonce_name = "inputs to hash2 (initiator nonce)";
-		ia1 = ike->sa.st_v2_ike_intermediate.responder;
-		ia2 = ike->sa.st_v2_ike_intermediate.initiator;
-		break;
-	default:
-		bad_case(role);
+	/* inbound nonce */
+	*blob++ = (role == SA_INITIATOR ? (struct hash_hunk) { "responder nonce", HUNK_REF(&ike->sa.st_nr), } :
+		   role == SA_RESPONDER ? (struct hash_hunk) { "initiator nonce", HUNK_REF(&ike->sa.st_ni), } :
+		   (struct hash_hunk) {0});
+
+	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
+	*blob++ = (struct hash_hunk) { "idhash", HUNK_REF(idhash), };
+
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		chunk_t ia1;
+		chunk_t ia2;
+		switch (role) {
+		case SA_INITIATOR:
+			ia1 = ike->sa.st_v2_ike_intermediate.initiator;
+			ia2 = ike->sa.st_v2_ike_intermediate.responder;
+			break;
+		case SA_RESPONDER:
+			ia1 = ike->sa.st_v2_ike_intermediate.responder;
+			ia2 = ike->sa.st_v2_ike_intermediate.initiator;
+			break;
+		default:
+			bad_case(role);
+		}
+		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ia1), };
+		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ia2), };
+		/* IKE AUTH's first Message ID */
+		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
+		shunk_t mid = THING_AS_HUNK(blobs->mid);
+		*blob++ = (struct hash_hunk) { "IKE_AUTH_MID", HUNK_REF(&mid), };
 	}
+
+	blobs->hunks.len = blob - blobs->blob;
+	blobs->hunks.hunk = blobs->blob;
+	PASSERT(logger, blobs->hunks.len <= elemsof(blobs->blob));
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
-		LDBG_log_hunk(logger, "%s", *nonce, nonce_name);
-		LDBG_log_hunk(logger, "idhash", *idhash);
-		if (ike->sa.st_v2_ike_intermediate.enabled) {
-			LDBG_log_hunk(logger, "IntAuth_*_I_A:", ia1);
-			LDBG_log_hunk(logger, "IntAuth_*_R_A:", ia2);
+		for (unsigned u = 0; u < blobs->hunks.len; u++) {
+			struct hash_hunk *hunk = &blobs->blob[u];
+			if (hunk->len > 0) {
+				LDBG_log_hunk(logger, "%s:", hunk, hunk->name);
+			}
 		}
 	}
-
-	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
-						 ike->sa.logger);
-	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
-	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
-	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
-	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", ia1);
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
-		/* IKE AUTH's first Message ID */
-		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
-		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, ike_auth_mid);
-		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", ike_auth_mid);
-	}
-	return crypt_hash_final_mac(&ctx);
 }
 
-enum keyword_auth local_v2_auth(struct ike_sa *ike)
+struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
+				      const struct crypt_mac *idhash,
+				      const struct hash_desc *hasher,
+				      enum perspective from_the_perspective_of)
+{
+	struct v2AUTH_blobs blobs;
+	extract_v2AUTH_blobs(ike, idhash, from_the_perspective_of, &blobs);
+	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
+}
+
+enum auth local_v2_auth(struct ike_sa *ike)
 {
 	if (ike->sa.st_v2_resume_session != NULL) {
 		return AUTH_PSK;
@@ -129,7 +143,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
 	}
 
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_auth authby = c->local->host.config->auth;
+	enum auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);
 	return authby;
 }
@@ -140,13 +154,13 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
  */
 
 enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum keyword_auth authby)
+					   enum auth authby)
 {
 	struct connection *c = ike->sa.st_connection;
 
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: forcing auth method %s",
+		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
 		     str_enum_long(&ikev2_auth_method_names,
 				   impair.force_v2_auth_method.value, &eb));
 		return impair.force_v2_auth_method.value;
@@ -160,7 +174,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_rsasig(c->local->host.config->authby));
+		pexpect(auth_in_authby(AUTH_RSASIG, c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}
@@ -192,7 +206,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_ecdsa(c->local->host.config->authby));
+		pexpect(auth_in_authby(AUTH_ECDSA, c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}
@@ -229,6 +243,21 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 			"legacy ECDSA is not implemented");
 		return IKEv2_AUTH_RESERVED;
 
+	case AUTH_EDDSA:
+		/*
+		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
+		 * indicating a preference for Digital Signature
+		 * Method, and local policy was ok with the
+		 * suggestion.
+		 */
+		pexpect(auth_in_authby(AUTH_EDDSA, c->local->host.config->authby));
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
+		}
+
+		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
+		return IKEv2_AUTH_RESERVED;
+
 	case AUTH_EAPONLY:
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
@@ -259,23 +288,22 @@ static const struct hash_desc *negotiated_hash_map[] = {
 	&ike_alg_hash_sha2_512,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_256,
-	/* RFC 8420 IDENTITY algo not supported yet */
-	/* { POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+	&ike_alg_hash_identity,
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
-	dbg("digsig: selecting negotiated hash algorithm");
+	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->common.ikev2_alg_id)) {
-			dbg("digsig:   selected hash algorithm %s",
-			    (*hash)->common.fqn);
+		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->ikev2_alg_id)) {
+			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
+			     (*hash)->common.fqn);
 			return (*hash);
 		}
-		dbg("digsig:   skipped hash algorithm %s as not negotiated",
-		    (*hash)->common.fqn);
+		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
+		     (*hash)->common.fqn);
 	}
-	dbg("DigSig: no compatible DigSig hash algo");
+	ldbg(ike->sa.logger, "DigSig: no compatible DigSig hash algo");
 	return NULL;
 }
 
@@ -283,7 +311,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outs)
 {
-	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	/* EAP only does PSK?!? */
+	enum auth authby = (ike->sa.st_eap != NULL ? AUTH_PSK : local_v2_auth(ike));
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
@@ -291,7 +320,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	};
 
 	struct pbs_out auth_pbs;
-	if (!out_struct(&a, &ikev2_auth_desc, outs, &auth_pbs)) {
+	if (!pbs_out_struct(outs, a, &ikev2_auth_desc, &auth_pbs)) {
 		return false;
 	}
 
@@ -302,7 +331,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
-		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
+		if (!pbs_out_hunk(&auth_pbs, *auth_sig, "signature")) {
 			return false;
 		}
 		break;
@@ -333,7 +362,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		bad_case(a.isaa_auth_method);
 	}
 
-	close_output_pbs(&auth_pbs);
+	close_pbs_out(&auth_pbs);
 	return true;
 }
 
@@ -363,7 +392,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	struct connection *c = ike->sa.st_connection;
 
-	if (hash_algo->common.ikev2_alg_id < 0) {
+	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
@@ -380,10 +409,10 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 	 * to determine if SHA1 is allowed at all would be cleaner.
 	 */
 
-	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
+	lset_t hash_bit = LELEM(hash_algo->ikev2_alg_id);
 	if (authby.rsasig_v1_5 && hash_algo == &ike_alg_hash_sha1) {
 		pexpect(!(c->config->sighash_policy & hash_bit));
-		dbg("skipping sighash check as PKCS#1 1.5 RSA + SHA1");
+		ldbg(ike->sa.logger, "skipping sighash check as PKCS#1 1.5 RSA + SHA1");
 	} else if (!(c->config->sighash_policy & hash_bit)) {
 		return diag("authentication failed: peer authentication requires hash algorithm %s",
 			    hash_algo->common.fqn);
@@ -400,9 +429,16 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 		return diag("authentication failed: rejecting received zero-length signature");
 	}
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
-						     REMOTE_PERSPECTIVE);
-	diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
+	struct v2AUTH_blobs blobs;
+	extract_v2AUTH_blobs(ike, idhash, REMOTE_PERSPECTIVE, &blobs);
+	struct crypt_mac hash = {0};
+	if (hash_algo == &ike_alg_hash_identity) {
+		llog(RC_LOG, ike->sa.logger, "identity hash, skipping hash calculation");
+	} else {
+		hash = crypt_hash_hunks("pubkey hash", hash_algo,
+					&blobs.hunks, ike->sa.logger);
+	}
+	diag_t d = authsig_and_log_using_pubkey(ike, &hash, &blobs.hunks, signature,
 						hash_algo, pubkey_signer,
 						signature_payload_name);
 	statetime_stop(&start, "%s()", __func__);
@@ -413,12 +449,12 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
 			     struct pbs_in *signature_pbs,
-			     const enum keyword_auth that_auth)
+			     const enum auth that_auth)
 {
 	name_buf ramb, eanb;
-	dbg("verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
-	    str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	    str_enum_short(&keyword_auth_names, that_auth, &eanb));
+	ldbg(ike->sa.logger, "verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
+	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
+	     str_enum_short(&auth_names, that_auth, &eanb));
 
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTH matches
@@ -462,13 +498,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		if (that_auth != AUTH_PSK) {
 			name_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    str_enum_long(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
-			dbg("authentication failed: PSK AUTH mismatch");
+			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
 			return d;
 		}
 
@@ -486,13 +522,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		    !ike->sa.st_connection->remote->host.config->authby.null) {
 			name_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    str_enum_long(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
-			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
+			ldbg(ike->sa.logger, "authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return d;
 		}
 
@@ -502,24 +538,23 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (that_auth != AUTH_ECDSA &&
-		    that_auth != AUTH_RSASIG) {
+		if (!digital_signature_in_authby(authby_from_auth(that_auth))) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    str_enum_long(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
 
 		shunk_t signature = pbs_in_left(signature_pbs);
 
-		dbg("digsig: looking for matching DIGSIG blob");
+		ldbg(ike->sa.logger, "digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			if ((ike->sa.st_connection->config->sighash_policy &
-			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
-				dbg("digsig:   skipping %s as not negotiated",
-				    (*hash)->common.fqn);
+			     LELEM((*hash)->ikev2_alg_id)) == LEMPTY) {
+				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
+				     (*hash)->common.fqn);
 				continue;
 			}
 
@@ -530,11 +565,12 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			 * more meaningful log message can be printed
 			 * (we're looking at you PKCS#1 1.5 RSA).
 			 */
-			dbg("digsig:   trying %s", (*hash)->common.fqn);
+			ldbg(ike->sa.logger, "digsig:   trying %s", (*hash)->common.fqn);
 			static const struct {
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
+				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
 				{ &pubkey_signer_digsig_ecdsa, { .ecdsa = true, }, },
 				{ &pubkey_signer_digsig_rsassa_pss, { .rsasig = true, }, },
 				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
@@ -544,26 +580,29 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				enum digital_signature_blob b = s->signer->digital_signature_blob;
 				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
-					dbg("digsig:     skipping %s as no blob",
-					    s->signer->name);
+					ldbg(ike->sa.logger,
+					     "digsig:     skipping %s as no blob",
+					     s->signer->name);
 					continue;
 				}
 				if (!hunk_starteq(signature, blob)) {
-					dbg("digsig:     skipping %s as blob does not match",
-					    s->signer->name);
+					ldbg(ike->sa.logger,
+					     "digsig:     skipping %s as blob does not match",
+					     s->signer->name);
 					continue;
 				};
 
-				dbg("digsig:    using signer %s and hash %s",
-				    s->signer->name, (*hash)->common.fqn);
+				ldbg(ike->sa.logger, "digsig:    using signer %s and hash %s",
+				     s->signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
 				diag_t d = pbs_in_shunk(signature_pbs, blob.len, &ignore,
 							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
-					dbg("digsig:     failing %s due to I/O error: %s",
-					    s->signer->name, str_diag(d));
+					ldbg(ike->sa.logger,
+					     "digsig:     failing %s due to I/O error: %s",
+					     s->signer->name, str_diag(d));
 					return d;
 				}
 
@@ -584,10 +623,10 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			}
 		}
 
-		dbg("digsig:   no match");
+		ldbg(ike->sa.logger, "digsig:   no match");
 		name_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    str_enum_long(&keyword_auth_names, that_auth, &an));
+			    str_enum_short(&auth_names, that_auth, &an));
 
 	}
 	default:
@@ -606,11 +645,10 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
-	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
-							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
-				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
-		dbg("submit_v2_auth_signature() died, fatal");
+				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
+				      signer, cb, HERE)) {
+		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -624,7 +662,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 {
 	struct logger *logger = ike->sa.logger;
 
-	enum keyword_auth authby = local_v2_auth(ike);
+	enum auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 
@@ -669,7 +707,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		 * Save the decision so it is available when emitting
 		 * the computed hash.
 		 */
-		dbg("digsig: selecting hash and signer");
+		ldbg(ike->sa.logger, "digsig: selecting hash and signer");
 		const char *hash_story;
 		if (ike->sa.st_v2_digsig.hash == NULL) {
 			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
@@ -683,9 +721,9 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}
-		dbg("digsig:   using hash %s %s",
-		    ike->sa.st_v2_digsig.hash->common.fqn,
-		    hash_story);
+		ldbg(ike->sa.logger,"digsig:   using hash %s %s",
+		     ike->sa.st_v2_digsig.hash->common.fqn,
+		     hash_story);
 		const char *signer_story;
 		switch (authby) {
 		case AUTH_RSASIG:
@@ -699,14 +737,18 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			break;
 		case AUTH_ECDSA:
 			/* no choice */
-			signer_story = "hardwired";
+			signer_story = "hardwired(ECDSA)";
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
+			break;
+		case AUTH_EDDSA:
+			signer_story = "hardwired(EDDSA)";
+			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
 		default:
 			bad_case(authby);
 		}
-		dbg("digsig:   using %s signer %s",
-		    ike->sa.st_v2_digsig.signer->name, signer_story);
+		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
+		     ike->sa.st_v2_digsig.signer->name, signer_story);
 
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
@@ -734,7 +776,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
 		struct hash_signature signed_signature = {
@@ -764,11 +806,10 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct pubkey_signer *signer,
 						       v2_auth_signature_cb *cb)
 {
-	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
-							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
-				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
-		dbg("submit_v2_auth_signature() died, fatal");
+				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
+				      signer, cb, HERE)) {
+		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}
 	return STF_SUSPEND;
@@ -779,7 +820,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						      v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-	enum keyword_auth authby = local_v2_auth(ike);
+	enum auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
@@ -828,13 +869,16 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		case AUTH_ECDSA:
 			signer = &pubkey_signer_digsig_ecdsa;
 			break;
+		case AUTH_EDDSA:
+			signer = &pubkey_signer_digsig_eddsa_ed25519;
+			break;
 		default:
 			bad_case(authby);
 		}
 		name_buf ana;
-		dbg("digsig:   authby %s selects signer %s",
-		    str_enum_long(&keyword_auth_names, authby, &ana),
-		    signer->name);
+		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
+		     str_enum_long(&auth_names, authby, &ana),
+		     signer->name);
 		ike->sa.st_v2_digsig.signer = signer;
 
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
@@ -860,7 +904,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
 		struct hash_signature signed_signature = {
@@ -927,7 +971,7 @@ void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike)
 		ike->sa.st_v2_id_payload.header =
 			build_v2_id_payload(&c->local->host, &data,
 					    "my IDr", ike->sa.logger);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
+		ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(&data, "my IDr");
 	}
 
 	/* will be signed in auth payload */
@@ -943,7 +987,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 	ike->sa.st_v2_id_payload.header =
 		build_v2_id_payload(&c->local->host, &data,
 				    "my IDi", ike->sa.logger);
-	ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+	ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(&data, "my IDi");
 
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 					    "st_skey_pi_nss",
@@ -1033,7 +1077,7 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 		return LELEM(AUTH_NULL);
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
+		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
 	default:
 	{
 		name_buf nb;

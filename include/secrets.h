@@ -44,6 +44,8 @@ struct pubkey;		/* forward */
 struct pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
+struct hash_hunk;
+struct hash_hunks;
 struct cert;
 
 /*
@@ -71,10 +73,23 @@ void free_pubkey_content(struct pubkey_content *pubkey_content,
 enum secret_kind {
 	/* start at one so accidental 0 will not match */
 	SECRET_PSK = 1,
+	/*
+	 * XXX: need three PUBKEY types?
+	 *
+	 * Most code doesn't care.  However the code searching for the
+	 * private key uses ID+KIND where KIND is explicitly specified
+	 * as RSA, ECDSA, et.al.  Changing that to the generic
+	 * SECRET_PUBKEY may result in the wrong key being found?
+	 *
+	 * NSS, for instance, with certutils, lets the key kind be
+	 * specified as a filter.
+	 */
 	SECRET_RSA,
+	SECRET_ECDSA, /* should not be needed */
+	SECRET_EDDSA, /* should not be needed */
+
 	SECRET_XAUTH,
 	SECRET_PPK,
-	SECRET_ECDSA, /* should not be needed */
 	SECRET_NULL,
 	SECRET_INVALID,
 };
@@ -160,33 +175,63 @@ struct hash_signature {
 struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
+	enum ipseckey_algorithm_type ipseckey_algorithm;
+	/*
+	 * This frees the fields within PKC but NOT PKC (it's assumed
+	 * the struct is in some larger object).
+	 */
 	void (*free_pubkey_content)(struct pubkey_content *pkc,
 				    const struct logger *logger);
-	/* to/from the blob in DNS's IPSECKEY's Public Key field */
-	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc,
-						   const struct logger *logger);
-	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
-						  chunk_t *ipseckey_pubkey,
-						  enum ipseckey_algorithm_type *ipseckey_algorithm);
+	/*
+	 * To/from the blob in DNS's IPSECKEY's RDATA's public key field.
+	 * pkc .type is defined before call.
+	 *
+	 * Callee should PEXPECT() that pkc.type is as expected.
+	 */
+	diag_t (*extract_pubkey_content_from_ipseckey)(shunk_t ipseckey_pubkey,
+						       struct pubkey_content *pkc,
+						       const struct logger *logger);
+	err_t (*pubkey_content_to_ipseckey)(const struct pubkey_content *pkc,
+					    chunk_t *ipseckey_pubkey,
+					    enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
-	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
-					SECKEYPublicKey *pubkey_nss,
-					SECItem *ckaid_nss,
-					const struct logger *logger);
+	err_t (*extract_pubkey_content_from_SECKEYPublicKey)(struct pubkey_content *pkc,
+							     SECKEYPublicKey *pubkey_nss,
+							     SECItem *ckaid_nss,
+							     const struct logger *logger);
 	bool (*pubkey_same)(const struct pubkey_content *lhs,
 			    const struct pubkey_content *rhs,
 			    const struct logger *logger);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
+
+	struct {
+		struct {
+			/*
+			 * For most EC algorithms, NSS's internal
+			 * public key value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There are exceptions (curve25519, for
+			 * instance) which contains no prefix and just
+			 * a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+	} nss;
 };
 
 struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
+	struct hash_signature (*sign_message)(const struct pubkey_signer *signer,
+					      const struct secret_pubkey_stuff *pks,
+					      const struct hash_hunks *hunks,
+					      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
-					   const uint8_t *hash_octets, size_t hash_len,
+					   shunk_t hash_to_sign,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
 	/*
@@ -196,30 +241,43 @@ struct pubkey_signer {
 	 * false;FATAL_DIAG=NULL: pubkey did not verify
 	 * false;FATAL_DIAG!=NULL: operation should be aborted
 	 */
-	bool (*authenticate_signature)(const struct crypt_mac *hash,
-				       shunk_t signature,
-				       struct pubkey *kr,
-				       const struct hash_desc *hash_algo,
-				       diag_t *fatal_diag,
-				       struct logger *logger);
+	bool (*authenticate_hash_signature)(const struct pubkey_signer *signer,
+					    const struct crypt_mac *hash,
+					    shunk_t signature,
+					    struct pubkey *kr,
+					    const struct hash_desc *hash_algo,
+					    diag_t *fatal_diag,
+					    struct logger *logger);
+	bool (*authenticate_message_signature)(const struct pubkey_signer *signer,
+					       const struct hash_hunks *hunks,
+					       shunk_t signature,
+					       struct pubkey *kr,
+					       diag_t *fatal_diag,
+					       struct logger *logger);
 	size_t (*jam_auth_method)(struct jambuf *,
 				  const struct pubkey_signer *,
 				  const struct pubkey *,
 				  const struct hash_desc *);
 };
 
+extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
+
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
+extern const struct pubkey_type pubkey_type_eddsa;
 
 extern const struct pubkey_signer pubkey_signer_raw_rsa;		/* IKEv1 */
 extern const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa;	/* rfc7296 */
 extern const struct pubkey_signer pubkey_signer_raw_ecdsa;		/* rfc4754 */
+/* extern const struct pubkey_signer pubkey_signer_raw_eddsa; NO SUCH IKEv2 Authentication METHOD */
 
 extern const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa;	/* rfc7427 */
 extern const struct pubkey_signer pubkey_signer_digsig_rsassa_pss;	/* rfc7427 */
 extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
+extern const struct pubkey_signer pubkey_signer_digsig_eddsa_ed25519;	/* rfc7427+ */
 
-const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
+const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
+const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *public_key);
 
 /*
  * Public Key Machinery.
@@ -228,7 +286,7 @@ const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
  * subject public key info.
  */
 struct pubkey {
-	refcnt_t refcnt;	/* reference counted! */
+	refcnt_t refcnt;	/* must be first */
 	struct id id;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
@@ -277,7 +335,7 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 			 uint32_t ttl,
 			 shunk_t dnssec_pubkey,
 			 struct pubkey **pubkey,
-			 struct logger *logger);
+			 const struct logger *logger);
 
 void add_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
 /*add+delete-using-content*/
@@ -317,6 +375,6 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,
-			       struct logger *logger) MUST_USE_RESULT;
+			       const struct logger *logger) MUST_USE_RESULT;
 
 #endif /* _SECRETS_H */

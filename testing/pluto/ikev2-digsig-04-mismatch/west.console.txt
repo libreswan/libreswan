@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -30,7 +30,7 @@ west #
 "westnet-eastnet-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "westnet-eastnet-ikev2" #1: encountered fatal error in state IKE_AUTH_I
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ikev2" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done

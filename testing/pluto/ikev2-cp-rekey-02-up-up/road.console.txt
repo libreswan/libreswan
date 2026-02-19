@@ -6,7 +6,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add eastnet-any
-"eastnet-any": added IKEv2 connection
+"eastnet-any": added oriented IKEv2 connection
 road #
  # confirm we have stock resolv.conf
 road #
@@ -22,13 +22,14 @@ road #
 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-any"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"eastnet-any"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "eastnet-any"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 5.6.7.8
 "eastnet-any"[1] 192.1.2.23 #2: Received INTERNAL_DNS_DOMAIN: libreswan.org
-"eastnet-any"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-"eastnet-any"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"eastnet-any"[1] 192.1.2.23 #2: command "up" output: updating resolvconf
+"eastnet-any"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
 up
@@ -40,7 +41,7 @@ road #
 road #
  ipsec auto --up eastnet-any
 "eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"eastnet-any"[1] 192.1.2.23 #3: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"eastnet-any"[1] 192.1.2.23 #3: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
 up

@@ -27,36 +27,42 @@
 
 const struct hash_desc *hash_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_HASH);
+	passert(alg == NULL || alg->type == &ike_alg_hash);
 	return (const struct hash_desc *)alg;
 }
 
 const struct prf_desc *prf_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_PRF);
+	passert(alg == NULL || alg->type == &ike_alg_prf);
 	return (const struct prf_desc *)alg;
 }
 
 const struct integ_desc *integ_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_INTEG);
+	passert(alg == NULL || alg->type == &ike_alg_integ);
 	return (const struct integ_desc *)alg;
 }
 
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_ENCRYPT);
+	passert(alg == NULL || alg->type == &ike_alg_encrypt);
 	return (const struct encrypt_desc *)alg;
 }
 
-const struct dh_desc *dh_desc(const struct ike_alg *alg)
+const struct kem_desc *kem_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
-	return (const struct dh_desc *)alg;
+	passert(alg == NULL || alg->type == &ike_alg_kem);
+	return (const struct kem_desc *)alg;
 }
 
 const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_IPCOMP);
+	passert(alg == NULL || alg->type == &ike_alg_ipcomp);
 	return (const struct ipcomp_desc *)alg;
+}
+
+const struct sn_desc *sn_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->type == &ike_alg_sn);
+	return (const struct sn_desc *)alg;
 }

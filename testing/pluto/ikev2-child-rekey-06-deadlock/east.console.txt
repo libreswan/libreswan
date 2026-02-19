@@ -7,18 +7,18 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep east
 "east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 "east":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
-"east":   my_updown=ipsec _updown;
+"east":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east":   sec_label:unset;
-"east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "east":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;

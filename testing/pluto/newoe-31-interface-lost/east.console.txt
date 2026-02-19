@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ # prevent stray DNS packets hitting OE - DNS not used on east in this test
+east #
+ rm /etc/resolv.conf
+east #
+ touch /etc/resolv.conf
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ ../../guestbin/wait-for.sh --match 'loaded 2, routed 1, active 0' -- ipsec auto --status
+Total IPsec connections: loaded 2, routed 1, active 0
+east #
+ echo "initdone"
+initdone
+east #

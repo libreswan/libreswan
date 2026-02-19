@@ -51,15 +51,14 @@ typedef struct {
 	unsigned maskbits;
 } ip_subnet;
 
-#define PRI_SUBNET "<subnet-%s:IPv%d["PRI_IP_BYTES"]/%u>"
+#define PRI_SUBNET "<subnet-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]/%u>"
 #define pri_subnet(S)					\
-		((S)->ip.is_set ? "set" : "unset"),	\
-			(S)->ip.version,		\
+	((S)->ip.is_set ? "set" : "unset"),		\
+		pri_ip_version((S)->ip.version),	\
 		pri_ip_bytes((S)->bytes),		\
 		(S)->maskbits
 
 void pexpect_subnet(const ip_subnet *s, where_t where);
-#define psubnet(S) pexpect_subnet(S, HERE)
 
 /*
  * Constructors
@@ -124,8 +123,9 @@ ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 uintmax_t subnet_size(const ip_subnet subnet);
 
-extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
-			   ip_subnet *dst, ip_address *nonzero_host);
+diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
+		     ip_subnet *dst, ip_address *nonzero_host)
+	MUST_USE_RESULT;
 
 /* comma/space separated list */
 

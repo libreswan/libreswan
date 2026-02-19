@@ -647,26 +647,6 @@
       </title>
 
       <para>
-	When running <command>pluto</command> under a debugger, the
-	options <option>--nofork</option> and
-	<option>--stderrlog</option> are recommended.
-      </para>
-
-      <para>
-	<command>pluto</command> is willing to produce a prodigious
-	amount of debugging information.  There are several classes of
-	debugging output, and <command>pluto</command> may be directed
-	to produce a selection of them.  All lines of debugging output
-	are prefixed with "|" to distinguish them from normal
-	diagnostic messages.
-      </para>
-
-      <para>
-	See &ipsec.conf.5; and
-	<property>plutodebug=<replaceable>options</replaceable></property>.
-      </para>
-
-      <para>
 	Very occasionally it is necessary to enable debugging early in
 	<command>pluto's</command> startup process.  The follow
 	options enable this:
@@ -699,28 +679,6 @@
 
 	<varlistentry>
           <term>
-	    <option>--debug base</option>
-	  </term>
-          <listitem>
-            <para>
-	      Enable debug-logging.
-	    </para>
-          </listitem>
-	</varlistentry>
-
-	<varlistentry>
-          <term>
-	    <option>--debug cpu-usage</option>
-	  </term>
-          <listitem>
-            <para>
-	      Enable cpu-usage logging.
-	    </para>
-          </listitem>
-	</varlistentry>
-
-	<varlistentry>
-          <term>
 	    <option>--debug <replaceable>class</replaceable></option>
 	  </term>
           <term>
@@ -732,14 +690,17 @@
           <listitem>
             <para>
 	      Enable (disable) logging of the specified debugging
-	      <replaceable>class</replaceable> (<option>--debug
-	      help</option> lists debugging classes supported by this
-	      version of <command>pluto</command>).
+	      <replaceable>class</replaceable>.
 	    </para>
           </listitem>
 	</varlistentry>
 
       </variablelist>
+
+      <para>
+	For more details, see <option>plutodebug=</option> in
+	&ipsec.conf.5;.
+      </para>
 
     </refsect2>
 

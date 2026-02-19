@@ -14,10 +14,14 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ../../guestbin/ipsec-add.sh westnet-eastnet-c westnet-eastnet-b westnet-eastnet-a
-"westnet-eastnet-c": added IKEv2 connection
-"westnet-eastnet-b": added IKEv2 connection
-"westnet-eastnet-a": added IKEv2 connection
+ ipsec add westnet-eastnet-c
+"westnet-eastnet-c": added oriented IKEv2 connection
+east #
+ ipsec add westnet-eastnet-b
+"westnet-eastnet-b": added oriented IKEv2 connection
+east #
+ ipsec add westnet-eastnet-a
+"westnet-eastnet-a": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -39,5 +43,5 @@ east #
  # there should be only one IKE_SA_INIT exchange
 east #
  grep "sent IKE_SA_INIT" /tmp/pluto.log
-"westnet-eastnet-c" #1: sent IKE_SA_INIT response to 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"westnet-eastnet-c" #1: sent IKE_SA_INIT response to 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 east #

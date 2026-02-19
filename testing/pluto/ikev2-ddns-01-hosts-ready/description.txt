@@ -1,0 +1,4 @@
+Resolve right=right.libreswan.org from /etc/hosts during load.
+
+... then manually initiate
+

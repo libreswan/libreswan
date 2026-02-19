@@ -28,8 +28,11 @@ struct logger;
 
 extern char *curl_iface;
 
+/*
+ * cURL uses LONG for timeouts, not time_t.
+ */
 #ifdef USE_LIBCURL
-err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob, struct verbose verbose);
+err_t fetch_curl(const char *url, long timeout, chunk_t *blob, struct verbose verbose);
 #endif
 
 #ifdef USE_LDAP

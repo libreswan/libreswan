@@ -1,0 +1,14 @@
+<varlistentry id='setup.myvendorid'>
+  <term>
+    <option>myvendorid=&string;</option>
+  </term>
+  <listitem>
+    <para>
+      The string to use as our vendor id (VID) when
+      <option>send-vendorid=&yes;</option>.
+    </para>
+    <para>
+      The default is <literal>OE-Libreswan-VERSION</literal>.
+    </para>
+  </listitem>
+</varlistentry>

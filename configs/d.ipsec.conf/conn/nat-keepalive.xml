@@ -1,0 +1,15 @@
+<varlistentry id='conn.nat-keepalive'>
+  <term>
+    <option>nat-keepalive=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      whether to send any NAT-T keep-alives. These one byte packets
+      prevent the NAT router from closing its port when there is not
+      enough traffic on the IPsec connection.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+  </listitem>
+</varlistentry>

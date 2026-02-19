@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015,2017-2018 Andrew Cagney
+# Copyright (C) 2015,2017-2026 Andrew Cagney
 # Copyright (C) 2015-2023 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -20,31 +20,59 @@ ifndef config.mk
 config.mk = true
 
 #
-# Configuration options.
+# Configuration options.  Include this file early!
 #
-# Sometimes the make variable is called USE_<feature> and the C macro
-# is called HAVE_<feature>, but not always.
+# USE_<package>={true,}: PUBLIC
 #
-# USE_  assume a package and enable corresponding feature
+#       Assume <package> is available; and enable any features that
+#       depend on the package.
 #
-#       For instance USE_SECCOMP assumes the seccomp library and
-#       enables the seccomp code.
+#       For instance, when USE_SECCOMP=true, the libseccomp library is
+#       assumed and the SECCOMP code is enabled in the build.
 #
-# HAVE_ variables let you tell Libreswan what system related libraries
-#       you may or maynot have
-
-# A Makefile wanting to test variables defined below has two choices:
+#       When USE_<package>=true, -DUSE_<package> is added to CFLAGS
+#       (technically USERLAND_CFLAGS) (so that code wrapped in #ifdef
+#       is enabled) and <package>_LDFLAGS is set to the list of
+#       libraries (else it is empty).
 #
-# - include config.mk early and use GNU-make's 'ifeq' statement
+#       For instance, with USE_SECCOMP=true, -DUSE_SECCOMP is added to
+#       CFLAGS, and the MAKE variable SECCOMP_LDFLAGS=-lseccomp is
+#       set.  Consequently, this is compiled:
 #
-# - include config.mk late, and use $(call if-enabled,VARIABLE,result)
+#          #ifdef USE_SECCOMP
+#          #include <seccomp.h>
+#          #endif
 #
-
-if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
-
-
-# TODO: Some creative ifeq ($(OSDEP,xxx) to automatically determine
-# where we are building on and disable things
+#       And:
+#
+#          USERLAND_LDFLAGS += $(SECCOMP_LDFLAGS)
+#
+#       adds the seccomp library.
+#
+# ENABLE_<feature>={true,false}: INTERNAL
+#
+#       For more complex build dependencies, an ENABLE_<feature> MAKE
+#       variable may also be defined.
+#
+#       Unlike USE_<package>, the MAKE variable, and corresponding C
+#       MACRO are both ALWAYS defined.  Either as "true" or "false".
+#
+#       For instance, since IPSECKEY support requires both USE_UNBOUND
+#       and USE_LDNS.  When packages are available, the MAKE variable
+#       ENABLE_IPSECKEY=true, and the C macro is defined as
+#       -DENABLE_IPSECKEY=true; otherwise ENABLE_IPSECKEY=false, and
+#       -DENABLE_IPSECKEY=false.
+#
+#       IPSECKEY code is then enabled using either:
+#
+#           #if ENABLE_IPSECKEY // NOT #ifdef ENABLE_IPSECKEY
+#
+#       or:
+#
+#           if (ENABLE_IPSECKEY)
+#
+#       (unlike #ifdef USE_<package>, #ifdef ENABLE_<feature> always
+#       succeeds)
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
@@ -89,177 +117,64 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 #
-# Error out on deprecated since 5.1 config variables.
+# Error out dead make variables
 #
-ifdef USE_NSS_AVA_COPY
-$(error ERROR: Deprecated USE_NSS_AVA_COPY variable set, please remove)
-endif
-
+# Goal is to stop attempts to build using old configs ASAP.
 #
-# Error out on deprecated since 5.0 config variables.
-#
-ifdef HAVE_IPTABLES
-$(error ERROR: Deprecated HAVE_IPTABLES variable set, use USE_IPTABLES instead)
-endif
 
-ifdef HAVE_NFTABLES
-$(error ERROR: Deprecated HAVE_NFTABLES variable set, use USE_NFTABLES instead)
-endif
+define error_removed # VERSION MACRO
+ ifdef $2
+  $$(error ERROR: $2 removed in $1)
+ endif
+endef
 
-#
-# Error out on deprecated since 4.0 config variables.
-#
-ifdef BINDIR
-$(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
-endif
+$(eval $(call error_removed, 4.0, USE_KLIPS))
+$(eval $(call error_removed, 5.1, USE_NSS_AVA_COPY))
+$(eval $(call error_removed, 5.4, HAVE_BROKEN_POPEN))
 
-ifdef PUBDIR
-$(error ERROR: Deprecated PUBDIR variable is set, use SBINDIR instead)
-endif
+define error_replaced $ VERSION MACRO REPLACEMENT
+ ifdef $2
+  \$(error ERROR: $2 replaced by $3 in $1)
+ endif
+endef
 
-ifdef EFENCE
-$(error ERROR: Deprecated EFENCE variable is set, use USE_EFENCE instead)
-endif
-
-ifdef INC_USRLOCAL
-$(error ERROR: Deprecated INC_USRLOCAL variable is set, use PREFIX instead)
-endif
-
-ifdef MANTREE
-$(error ERROR: Deprecated MANTREE variable is set, use MANDIR instead)
-endif
-
-ifdef USE_XAUTHPAM
-$(error ERROR: Deprecated USE_XAUTHPAM variable is set, use USE_AUTHPAM instead)
-endif
-
-ifdef USE_NETKEY
-$(error ERROR: Deprecated USE_NETKEY variable is set, use USE_XFRM instead)
-endif
-
-ifdef USE_KLIPS
-$(error ERROR: Deprecated USE_KLIPS variable is set, migrate to use USE_XFRM instead)
-endif
-
-ifdef INC_MANDIR
-$(error ERROR: Deprecated INC_MANDIR variable is set, use MANDIR instead)
-endif
-
-ifdef INC_DOCDIR
-$(error ERROR: Deprecated INC_DOCDIR variable is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef INC_RCDIRS
-$(error ERROR: Deprecated variable INC_RCDIRS is set, use INIT_D_DIR instead
-endif
-
-ifdef INC_RCDEFAULT
-$(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INIT_D_DIR instead)
-endif
-
-ifdef FINALLIBEXECDIR
-$(error ERROR: deprecated variable FINALLIBEXECDIR is set, use LIBEXECDIR instead)
-endif
-
-ifdef FINALMANDIR
-$(error ERROR: deprecated variable FINALMANDIR is set, use MANDIR instead)
-endif
-
-ifdef FINALCONFFILE
-$(error ERROR: deprecated variable FINALCONFFILE is set, use IPSEC_CONF instead)
-endif
-
-ifdef CONFFILE
-$(error ERROR: deprecated variable CONFFILE is set, use IPSEC_CONF instead)
-endif
-
-ifdef IPSEC_CONF
-$(error ERROR: deprecated variable IPSEC_CONF is set, use IPSEC_CONF instead)
-endif
-
-ifdef IPSEC_SECRETS_FILE
-$(error ERROR: deprecated variable IPSEC_SECRETS_FILE is set, use IPSEC_SECRETS instead)
-endif
-
-ifdef CONFDDIR
-$(error ERROR: deprecated variable CONFDDIR is set, use IPSEC_CONFDDIR instead)
-endif
-
-ifdef FINALCONFDDIR
-$(error ERROR: deprecated variable FINALCONFDDIR is set, use IPSEC_CONFDDIR instead)
-endif
-
-ifdef EXAMPLECONFDDIR
-$(error ERROR: deprecated variable EXAMPLECONFDDIR is set, use EXAMPLE_IPSEC_CONFDDIR instead)
-endif
-
-ifdef EXAMPLEFINALCONFDDIR
-$(error ERROR: deprecated variable EXAMPLEFINALCONFDDIR is set, use EXAMPLE_IPSEC_CONFDDIR instead)
-endif
-
-ifdef FINALLOGDIR
-$(error ERROR: deprecated variable FINALLOGDIR is set, use LOGDIR instead)
-endif
-
-ifdef FINALSBINDIR
-$(error ERROR: deprecated variable FINALSBINDIR is set, use SBINDIR instead)
-endif
-
-ifdef FINALVARDIR
-$(error ERROR: deprecated variable FINALVARDIR is set, use VARDIR instead)
-endif
-
-ifdef FINALPPKDIR
-$(error ERROR: deprecated variable FINALPPKDIR is set)
-endif
-
-ifdef PPKDIR
-$(error ERROR: deprecated variable PPKDIR is set)
-endif
-
-ifdef FINALSYSCONFDIR
-$(error ERROR: deprecated variable FINALSYSCONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef FINALCONFDIR
-$(error ERROR: deprecated variable FINALCONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef CONFDIR
-$(error ERROR: deprecated variable CONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef FINALDOCDIR
-$(error ERROR: deprecated variable FINALDOCDIR is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef DOCDIR
-$(error ERROR: deprecated variable DOCDIR is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef FINALINITDDIR
-$(error ERROR: deprecated variable FINALINITDDIR is set, use INIT_D_DIR instead)
-endif
-
-ifdef FINALRUNDIR
-$(error ERROR: deprecated variable FINALRUNDIR is set, use RUNDIR instead)
-endif
-
-ifdef FINALLOGROTATEDDIR
-$(error ERROR: deprecated variable FINALLOGROTATEDDIR is set, use LOGROTATEDDIR instead)
-endif
-
-ifdef EXAMPLEFINALLOGROTATEDDIR
-$(error ERROR: deprecated variable EXAMPLEFINALLOGROTATEDDIR is set, use EXAMPLE_LOGROTATEDDIR instead)
-endif
-
-ifdef FINALPAMCONFDIR
-$(error ERROR: deprecated variable FINALPAMCONFDIR is set, use PAMCONFDIR instead)
-endif
-
-ifdef EXAMPLEFINALPAMCONFDIR
-$(error ERROR: deprecated variable EXAMPLEFINALPAMCONFDIR is set, use EXAMPLE_PAMCONFDIR instead)
-endif
+$(eval $(call error_replaced, 4.0, BINDIR, LIBEXECDIR))
+$(eval $(call error_replaced, 4.0, CONFDDIR, IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, CONFDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, CONFFILE, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, DOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, EFENCE, USE_EFENCE))
+$(eval $(call error_replaced, 4.0, EXAMPLECONFDDIR, EXAMPLE_IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALCONFDDIR, EXAMPLE_IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALLOGROTATEDDIR, EXAMPLE_LOGROTATEDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALPAMCONFDIR, EXAMPLE_PAMCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFDDIR, IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFFILE, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, FINALDOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALINITDDIR, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, FINALLIBEXECDIR, LIBEXECDIR))
+$(eval $(call error_replaced, 4.0, FINALLOGDIR, LOGDIR))
+$(eval $(call error_replaced, 4.0, FINALLOGROTATEDDIR, LOGROTATEDDIR))
+$(eval $(call error_replaced, 4.0, FINALMANDIR, MANDIR))
+$(eval $(call error_replaced, 4.0, FINALPAMCONFDIR, PAMCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALPPKDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALRUNDIR, RUNDIR))
+$(eval $(call error_replaced, 4.0, FINALSBINDIR, SBINDIR))
+$(eval $(call error_replaced, 4.0, FINALVARDIR, VARDIR))
+$(eval $(call error_replaced, 4.0, INC_DOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, INC_MANDIR, MANDIR))
+$(eval $(call error_replaced, 4.0, INC_RCDEFAULT, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, INC_RCDIRS, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, INC_USRLOCAL, PREFIX))
+$(eval $(call error_replaced, 4.0, IPSEC_CONF, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, IPSEC_SECRETS_FILE, IPSEC_SECRETS))
+$(eval $(call error_replaced, 4.0, MANTREE, MANDIR))
+$(eval $(call error_replaced, 4.0, PUBDIR, SBINDIR))
+$(eval $(call error_replaced, 4.0, USE_NETKEY, USE_XFRM))
+$(eval $(call error_replaced, 4.0, USE_XAUTHPAM, USE_AUTHPAM))
+$(eval $(call error_replaced, 5.0, HAVE_IPTABLES, USE_IPTABLES))
+$(eval $(call error_replaced, 5.0, HAVE_NFTABLES, USE_NFTABLES))
 
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
@@ -286,6 +201,7 @@ WARNING_CFLAGS += -Wformat
 WARNING_CFLAGS += -Wformat-nonliteral
 WARNING_CFLAGS += -Wformat-security
 WARNING_CFLAGS += -Wundef
+WARNING_CFLAGS += -Wmissing-prototypes
 WARNING_CFLAGS += -Wmissing-declarations
 WARNING_CFLAGS += -Wredundant-decls
 WARNING_CFLAGS += -Wnested-externs
@@ -343,22 +259,22 @@ PREFIX ?= /usr/local
 # LIBEXECDIR is where sub-commands get put.  the "ipsec" command will
 # look for them when it is run.
 LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
-TRANSFORMS += 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
-TRANSFORMS += 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
+TRANSFORMS += -e 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
 USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
 SBINDIR ?= $(PREFIX)/sbin
-TRANSFORMS += 's:@@SBINDIR@@:$(SBINDIR):g'
+TRANSFORMS += -e 's:@@SBINDIR@@:$(SBINDIR):g'
 USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"$(SBINDIR)\"
 
 # where the appropriate manpage tree is located
 MANDIR ?= $(PREFIX)/share/man
-TRANSFORMS += 's:@@MANDIR@@:$(MANDIR):'
+TRANSFORMS += -e 's:@@MANDIR@@:$(MANDIR):'
 
 # where readonly configuration files go
 SYSCONFDIR ?= /etc
-TRANSFORMS += 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
+TRANSFORMS += -e 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
 
 #
 # INITSYSTEM
@@ -379,51 +295,51 @@ INSTALL_INITSYSTEM ?= true
 # During install the $(DESTDIR) prefix is added.
 
 RC_D_DIR ?= $(SYSCONFDIR)/rc.d
-TRANSFORMS += 's:@@RC_D_DIR@@:$(RC_D_DIR):g'
+TRANSFORMS += -e 's:@@RC_D_DIR@@:$(RC_D_DIR):g'
 
 EXAMPLE_RC_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(RC_D_DIR))
-TRANSFORMS += 's:@@EXAMPLE_RC_D_DIR@@:$(EXAMPLE_RC_D_DIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_RC_D_DIR@@:$(EXAMPLE_RC_D_DIR):g'
 
 # Where the INITSYSTEM=init.d scripts and examples go.  During install
 # $(DESTDIR) prefix is added.
 
 INIT_D_DIR ?= /etc/init.d
-TRANSFORMS += 's:@@INIT_D_DIR@@:$(INIT_D_DIR):g'
+TRANSFORMS += -e 's:@@INIT_D_DIR@@:$(INIT_D_DIR):g'
 
 EXAMPLE_INIT_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(INIT_D_DIR))
-TRANSFORMS += 's:@@EXAMPLE_INIT_D_DIR@@:$(EXAMPLE_INIT_D_DIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_INIT_D_DIR@@:$(EXAMPLE_INIT_D_DIR):g'
 
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
 RUNDIR ?= /run/pluto
-TRANSFORMS += 's:@@RUNDIR@@:$(RUNDIR):g'
+TRANSFORMS += -e 's:@@RUNDIR@@:$(RUNDIR):g'
 USERLAND_CFLAGS += -DIPSEC_RUNDIR=\"$(RUNDIR)\"
 
 # final configuration file
 IPSEC_CONF ?= $(SYSCONFDIR)/ipsec.conf
-TRANSFORMS += 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
+TRANSFORMS += -e 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
 USERLAND_CFLAGS += -DIPSEC_CONF=\"$(IPSEC_CONF)\"
 
 # final secrets file
 IPSEC_SECRETS ?= $(SYSCONFDIR)/ipsec.secrets
-TRANSFORMS += 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
+TRANSFORMS += -e 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
 USERLAND_CFLAGS += -DIPSEC_SECRETS=\"$(IPSEC_SECRETS)\"
 
 IPSEC_CONFDDIR ?= $(SYSCONFDIR)/ipsec.d
-TRANSFORMS += 's:@@IPSEC_CONFDDIR@@:$(IPSEC_CONFDDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_CONFDDIR@@:$(IPSEC_CONFDDIR):g'
 USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(IPSEC_CONFDDIR)\"
 
 EXAMPLE_IPSEC_CONFDDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/ipsec.d
-TRANSFORMS += 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
 
 # libreswan's sample configuration files go into ...
 EXAMPLE_IPSEC_SYSCONFDIR ?= $(PREFIX)/share/doc/libreswan
-TRANSFORMS += 's:@@EXAMPLE_IPSEC_SYSCONFDIR@@:$(EXAMPLE_IPSEC_SYSCONFDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_SYSCONFDIR@@:$(EXAMPLE_IPSEC_SYSCONFDIR):g'
 
 # where per-conn pluto logs go
 VARDIR ?= /var
-TRANSFORMS += 's:@@VARDIR@@:$(VARDIR):g'
+TRANSFORMS += -e 's:@@VARDIR@@:$(VARDIR):g'
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(VARDIR)\"
 
 #
@@ -437,10 +353,10 @@ DEFAULT_LOGLEVEL ?= LOG_WARNING
 USERLAND_CFLAGS += -DDEFAULT_LOGLEVEL=$(DEFAULT_LOGLEVEL)
 
 LOGDIR ?= $(VARDIR)/log
-TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
+TRANSFORMS += -e 's:@@LOGDIR@@:$(LOGDIR):g'
 
 LOGFILE ?= $(LOGDIR)/pluto.log
-TRANSFORMS += 's:@@LOGFILE@@:$(LOGFILE):g'
+TRANSFORMS += -e 's:@@LOGFILE@@:$(LOGFILE):g'
 USERLAND_CFLAGS += -DLOGFILE='"$(LOGFILE)"'
 
 ifeq ($(USE_LOGFILE),true)
@@ -449,13 +365,13 @@ endif
 
 # Directory for logrotate config
 LOGROTATEDDIR ?= $(SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@@LOGROTATEDDIR@@:$(LOGROTATEDDIR):g'
+TRANSFORMS += -e 's:@@LOGROTATEDDIR@@:$(LOGROTATEDDIR):g'
 EXAMPLE_LOGROTATEDDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
 
 # Where nss databases go
 NSSDIR ?= $(VARDIR)/lib/ipsec/nss
-TRANSFORMS += 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
 # Where NSS programs live (well most of them, fedora hides vfychain,
@@ -464,7 +380,7 @@ ifndef NSS_BINDIR
 NSS_BINDIR := $(shell pkg-config --variable prefix nss)/bin
 export NSS_BINDIR
 endif
-TRANSFORMS += 's:@@NSS_BINDIR@@:$(NSS_BINDIR):g'
+TRANSFORMS += -e 's:@@NSS_BINDIR@@:$(NSS_BINDIR):g'
 USERLAND_CFLAGS += -DNSS_BINDIR=\"$(NSS_BINDIR)\"
 
 DOCKER_PLUTONOFORK ?= --nofork
@@ -511,6 +427,20 @@ NSS_SMIME_LDFLAGS ?= -lsmime3
 NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
 SSL_LDFLAGS ?= -lssl3
+
+# NSS's command line utilities
+
+CERTUTIL ?= certutil
+CRLUTIL  ?= crlutil
+MODUTIL  ?= modutil
+PK12UTIL ?= pk12util
+VFYCHAIN ?= vfychain
+
+TRANSFORMS += -e 's:@@CERTUTIL@@:$(CERTUTIL):g'
+TRANSFORMS += -e 's:@@CRLUTIL@@:$(CRLUTIL):g'
+TRANSFORMS += -e 's:@@MODUTIL@@:$(MODUTIL):g'
+TRANSFORMS += -e 's:@@PK12UTIL@@:$(PK12UTIL):g'
+TRANSFORMS += -e 's:@@VFYCHAIN@@:$(VFYCHAIN):g'
 
 # -levent can mean two things?
 LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
@@ -580,9 +510,6 @@ USE_LDAP ?= false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL ?= true
 
-# For Angstrom linux with broken popen() set to true. See bug #1067
-HAVE_BROKEN_POPEN ?= false
-
 NONINTCONFIG = oldconfig
 
 include $(top_srcdir)/mk/version.mk
@@ -631,16 +558,16 @@ export LIBRESWANLIB LSWTOOLLIB
 
 SED ?= sed
 TRANSFORM_VARIABLES = $(SED) \
-			-e "s:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g" \
-			-e "s:@@INITSYSTEM@@:$(INITSYSTEM):g" \
-			-e "s:@@IPSECVERSION@@:$(IPSECVERSION):g" \
-			-e "s:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g" \
-			-e "s:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g" \
-			-e "s:@@SD_TYPE@@:$(SD_TYPE):g" \
-			-e "s:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g" \
-			-e "s:@@SHELL_BINARY@@:$(SHELL_BINARY):g" \
-			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
-			$(patsubst %, -e %, $(TRANSFORMS))
+			-e 's:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g' \
+			-e 's:@@INITSYSTEM@@:$(INITSYSTEM):g' \
+			-e 's:@@IPSECVERSION@@:$(IPSECVERSION):g' \
+			-e 's:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g' \
+			-e 's:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g' \
+			-e 's:@@SD_TYPE@@:$(SD_TYPE):g' \
+			-e 's:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g' \
+			-e 's:@@SHELL_BINARY@@:$(SHELL_BINARY):g' \
+			-e 's:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g' \
+			$(TRANSFORMS)
 
 # computing checksums; debian things different
 CKSUM ?= cksum
@@ -693,10 +620,17 @@ USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
 endif
 endif
 
-# Use a local copy of xfrm.h. This can be needed on older systems
-# that do not ship linux/xfrm.h, or when the shipped version is too
-# old. Since we ship some not-yet merged ipsec-next offload code, this
-# is currently true for basically all distro's
+# Use a local copy of xfrm.h.
+#
+# This can be needed on older systems that do not ship linux/xfrm.h,
+# or when libreswan expects header definitions only found in the
+# latest official kernel release (NOT A SNAPSHOT).  Either way, the
+# place to enable it is in linux.mk (based on the distro release) or
+# in the package file.
+#
+# DO NOT ENABLE IT HERE - in 2025/5.1 there was a SNAFU where the
+# bundled header contained experimental constants breaking systems
+# that did have up-to-date and correct headers.
 
 USE_XFRM_HEADER_COPY ?= false
 USE_XFRM_INTERFACE_IFLA_HEADER ?= false
@@ -706,24 +640,54 @@ XFRM_LIFETIME_DEFAULT ?= 30
 USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 endif
 
-# Enable support for DNSSEC. This requires the unbound and ldns
-# libraries.  The default DNSSEC root key location must be set in
-# default/*.mk; look for auto-trust-anchor-file in unbound.conf.
+# Enable builtin support for DNSSEC.
+#
+# DNSSEC requires USE_UNBOUND (but to preserve build compatibility
+# USE_UNBOUND defaults to $(USE_DNSSEC)).
+#
+# UNBOUND, in turn, requires that the default DNSSEC root key location
+# is set default/*.mk; look for auto-trust-anchor-file in
+# unbound.conf.
 
 USE_DNSSEC ?= true
-# DEFAULT_DNSSEC_ROOTKEY_FILE=<unspecified>
-
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS += -DUSE_DNSSEC
-UNBOUND_LDFLAGS ?= -lunbound -lldns
-ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
-$(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
-endif
-USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
 endif
 
+USE_UNBOUND ?= $(USE_DNSSEC)
+ifeq ($(USE_UNBOUND),true)
+USERLAND_CFLAGS += -DUSE_UNBOUND
+UNBOUND_LDFLAGS ?= -lunbound
+endif
+
+USE_LDNS ?= $(USE_DNSSEC)
+ifeq ($(USE_LDNS),true)
+USERLAND_CFLAGS += -DUSE_LDNS
+LDNS_LDFLAGS ?= -lldns
+endif
+
+ifdef DEFAULT_DNSSEC_ROOTKEY_FILE
+USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
+else ifeq ($(USE_UNBOUND),true)
+$(error USE_UNBOUND requires DEFAULT_DNSSEC_ROOTKEY_FILE)
+endif
+
+# Enable the IPsec KEY code - fetching keys via DNS?
+#
+# IPSECKEY's current implementation requires both UNBOUND and LDNS.
+# ENABLE_ variables, unlike USE_ variables are set to true/false so
+# that they can be used in code.
+
+ENABLE_IPSECKEY ?= $(if $(filter truetrue, $(USE_UNBOUND)$(USE_LDNS)),true,false)
+USERLAND_CFLAGS += -DENABLE_IPSECKEY=$(ENABLE_IPSECKEY)
+
+# Implement LABELED_IPSEC feature using SELINUX
+#
+# This is sketchy.  It should be USE_SELINUX and
+# ENABLE_LABLELED_IPSEC.
+
 ifeq ($(USE_LABELED_IPSEC),true)
-USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
+USERLAND_CFLAGS += -DUSE_LABELED_IPSEC
 endif
 
 ifeq ($(USE_SECCOMP),true)
@@ -761,7 +725,7 @@ ifeq ($(USE_CAT),true)
 USERLAND_CFLAGS += -DUSE_CAT
 endif
 
-TRANSFORMS += 's:@@USE_CAT@@:$(USE_CAT):g'
+TRANSFORMS += -e 's:@@USE_CAT@@:$(USE_CAT):g'
 
 #
 # Enable NFLOG; what ever that is.
@@ -773,7 +737,7 @@ ifeq ($(USE_NFLOG),true)
 USERLAND_CFLAGS += -DUSE_NFLOG
 endif
 
-TRANSFORMS += 's:@@USE_NFLOG@@:$(USE_NFLOG):g'
+TRANSFORMS += -e 's:@@USE_NFLOG@@:$(USE_NFLOG):g'
 
 #
 # IPTABLES vs NFTABLES
@@ -785,7 +749,7 @@ ifeq ($(USE_IPTABLES),true)
 USERLAND_CFLAGS += -DUSE_IPTABLES
 endif
 
-TRANSFORMS += 's:@@USE_IPTABLES@@:$(USE_IPTABLES):g'
+TRANSFORMS += -e 's:@@USE_IPTABLES@@:$(USE_IPTABLES):g'
 
 USE_NFTABLES ?= false
 
@@ -793,7 +757,7 @@ ifeq ($(USE_NFTABLES),true)
 USERLAND_CFLAGS += -DUSE_NFTABLES
 endif
 
-TRANSFORMS += 's:@@USE_NFTABLES@@:$(USE_NFTABLES):g'
+TRANSFORMS += -e 's:@@USE_NFTABLES@@:$(USE_NFTABLES):g'
 
 #
 # Check for conflicts between NFTABLES, IPTABLES, CAT and 
@@ -837,9 +801,14 @@ AUTHPAM_LDFLAGS ?= -lpam
 endif
 
 PAMCONFDIR ?= $(SYSCONFDIR)/pam.d
-TRANSFORMS += 's:@@PAMCONFDIR@@:$(PAMCONFDIR):g'
+TRANSFORMS += -e 's:@@PAMCONFDIR@@:$(PAMCONFDIR):g'
 EXAMPLE_PAMCONFDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/pam.d
-TRANSFORMS += 's:@@EXAMPLEPAMCONFDIR@@:$(EXAMPLE_PAMCONFDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLEPAMCONFDIR@@:$(EXAMPLE_PAMCONFDIR):g'
+
+USE_EDDSA ?= true
+ifeq ($(USE_EDDSA),true)
+USERLAND_CFLAGS += -DUSE_EDDSA
+endif
 
 #
 # Algorithms (encryption, PRF, DH, ....)
@@ -894,6 +863,31 @@ USE_DH31 ?= true
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
+
+# ML-KEM
+
+USE_ML_KEM_512 ?= false
+ifeq ($(USE_ML_KEM_512),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_512
+endif
+
+USE_ML_KEM_768 ?= true
+ifeq ($(USE_ML_KEM_768),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_768
+endif
+
+USE_ML_KEM_1024 ?= false
+ifeq ($(USE_ML_KEM_1024),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_1024
+endif
+
+# XXX: do not set this!
+USE_ML_KEM = $(sort $(filter true, $(USE_ML_KEM_512) $(USE_ML_KEM_768) $(USE_ML_KEM_1024)))
+ifeq ($(USE_ML_KEM),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM
+endif
+
+# PRFs
 
 USE_MD5 ?= true
 ifeq ($(USE_MD5),true)
@@ -973,10 +967,6 @@ ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
 endif
 
-ifeq ($(HAVE_BROKEN_POPEN),true)
-USERLAND_CFLAGS += -DHAVE_BROKEN_POPEN
-endif
-
 # Do things like create a daemon using the sequence fork()+exit().  If
 # you don't have or don't want to use fork() disable this.
 USE_FORK ?= true
@@ -1029,7 +1019,7 @@ CRYPT_LDFLAGS ?= -lcrypt
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG ?= true
 ifeq ($(USE_LIBCAP_NG),true)
-USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
+USERLAND_CFLAGS += -DUSE_LIBCAP_NG
 LIBCAP_NG_LDFLAGS ?= -lcap-ng
 endif
 

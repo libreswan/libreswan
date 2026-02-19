@@ -22,7 +22,7 @@
 #include "packet.h"		/* for struct pbs_out; */
 
 struct msg_digest;
-struct dh_desc;
+struct kem_desc;
 struct ike_sa;
 struct state;
 struct spd_end;
@@ -38,17 +38,19 @@ struct v2SK_payload {
 	struct logger *logger;
 	struct ike_sa *ike;
 	struct pbs_out pbs; /* within SK */
+	/* SKF patch points in message */
+	struct fixup sk_next_payload_field;
+	struct fixup previous_to_sk_next_payload_field;
 	/* private */
-	/* pointers into SK header+contents */
-	chunk_t payload; /* aad+wire_iv+cleartext+padding+integrity */
-	chunk_t aad;
+	shunk_t aad; /* IKE header ... SK header */
+	/* pointers into sk_header+contents */
+	chunk_t payload; /* sk_header+wire_iv+cleartext+padding+integrity */
+	shunk_t header;
 	chunk_t wire_iv;
 	chunk_t cleartext;
 	chunk_t padding;
 	chunk_t integrity;
 };
-
-bool encrypt_v2SK_payload(struct v2SK_payload *sk);
 
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
@@ -66,7 +68,8 @@ struct v2_message {
 	struct pbs_out message;
 	struct pbs_out body;
 	const char *story;
-	struct v2_outgoing_fragment **outgoing_fragments;
+	/* points into IKE SA! */
+	struct v2_outgoing_fragments **outgoing_fragments;
 	struct v2SK_payload sk; /* optional */
 };
 
@@ -79,6 +82,7 @@ bool open_v2_message(const char *story,
 		     enum payload_security security);
 
 bool close_v2_message(struct v2_message *message);
+bool record_v2_message(struct v2_message *message);
 
 bool close_and_record_v2_message(struct v2_message *message);
 
@@ -97,7 +101,8 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct v2_incoming_fragments **frags);
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags);
-struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags);
+struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags,
+						    struct logger *logger);
 
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
 

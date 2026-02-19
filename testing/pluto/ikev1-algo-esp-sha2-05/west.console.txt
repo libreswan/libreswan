@@ -9,18 +9,18 @@ west #
  ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 west #
  ipsec status |grep westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ipv4-psk-ikev1":   my_updown=ipsec _updown;
+"westnet-eastnet-ipv4-psk-ikev1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ikev1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ikev1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
-"westnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ipv4-psk-ikev1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -49,9 +49,9 @@ west #
 "westnet-eastnet-ipv4-psk-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA2_512_256 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
-"westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

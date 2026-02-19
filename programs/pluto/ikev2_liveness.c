@@ -53,7 +53,7 @@ void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 		return;
 	}
 
-	pexpect(exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange->type == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, NULL, exchange);
 }
 
@@ -67,21 +67,22 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	 * Which means DELAY is reduced.  But don't be too frequent.
 	 */
 	delay = deltatime_sub(delay, time_since_last_contact);
-	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
+	delay = deltatime_max(delay, deltatime_from_seconds(MIN_LIVENESS));
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
-		deltatime_buf db;
-		endpoint_buf remote_buf;
-		jam(buf, "liveness: #%lu scheduling next check for %s in %s seconds",
-		    child->sa.st_serialno,
-		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-		    str_deltatime(delay, &db));
-		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
-			deltatime_buf lcb;
-			jam(buf, " (%s was %s seconds ago)",
-			    reason, str_deltatime(time_since_last_contact, &lcb));
-		} else {
-			jam(buf, " (%s)", reason);
+		jam_string(buf, "liveness: ");
+		jam_so(buf, child->sa.st_serialno);
+		jam_string(buf, " scheduling next check for ");
+		jam_endpoint(buf, &child->sa.st_remote_endpoint);
+		jam_string(buf, " in ");
+		jam_deltatime(buf, delay);
+		jam_string(buf, " seconds (");
+		jam_string(buf, reason);
+		if (deltatime_cmp(time_since_last_contact, !=, deltatime_from_seconds(0))) {
+			jam_string(buf, " was ");
+			jam_deltatime(buf, time_since_last_contact);
+			jam_string(buf, " seconds ago");
 		}
+		jam_string(buf, ")");
 	}
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
@@ -95,7 +96,7 @@ static bool recent_last_contact(struct child_sa *child,
 	 * close to DELAY doesn't cause a re-schedule.
 	 */
 	deltatime_t fuzz_since_last_contact = deltatime_add(time_since_last_contact,
-							    deltatime(MIN_LIVENESS));
+							    deltatime_from_seconds(MIN_LIVENESS));
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 		jam_string(buf, "time_since_last_contact=");
 		jam_deltatime(buf, time_since_last_contact);
@@ -150,8 +151,8 @@ void event_v2_liveness(struct state *st)
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/* already logged */
-		dbg("liveness: state #%lu has no IKE SA; deleting orphaned child",
-		    st->st_serialno);
+		ldbg(st->logger, "liveness: state "PRI_SO" has no IKE SA; deleting orphaned child",
+		     pri_so(st->st_serialno));
 		event_force(EVENT_v2_DISCARD, st);
 		return;
 	}
@@ -167,8 +168,9 @@ void event_v2_liveness(struct state *st)
 	 * don't do liveness.
 	 */
 	if (c->established_child_sa != child->sa.st_serialno) {
-		dbg("liveness: #%lu was replaced by #%lu so not needed",
-		    child->sa.st_serialno, c->established_child_sa);
+		ldbg(st->logger, "liveness: "PRI_SO" was replaced by "PRI_SO" so not needed",
+		     pri_so(child->sa.st_serialno),
+		     pri_so(c->established_child_sa));
 		return;
 	}
 
@@ -182,7 +184,7 @@ void event_v2_liveness(struct state *st)
 	 * If the exchange fails, liveness will be triggered.
 	 */
 	if (v2_msgid_request_outstanding(ike)) {
-		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 				  "request outstanding");
 		return;
 	}
@@ -196,7 +198,7 @@ void event_v2_liveness(struct state *st)
 	 * liveness will be triggered.
 	 */
 	if (v2_msgid_request_pending(ike)) {
-		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 				  "request pending");
 		return;
 	}
@@ -254,11 +256,7 @@ void event_v2_liveness(struct state *st)
 	 * re-transmit requests ...
  	 */
 
-	struct ipsec_proto_info *const first_ipsec_proto =
-		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-		 child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		 NULL);
+	struct ipsec_proto_info *const first_ipsec_proto = outer_ipsec_proto_info(child);
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
 		deltatime_t since =
 			realtime_diff(realnow(), first_ipsec_proto->inbound.last_used);
@@ -268,14 +266,14 @@ void event_v2_liveness(struct state *st)
 	}
 
 	endpoint_buf remote_buf;
-	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
-	    child->sa.st_serialno,
-	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-	    ike->sa.st_serialno);
+	ldbg(st->logger, "liveness: "PRI_SO" queueing liveness probe for %s using "PRI_SO"",
+	     pri_so(child->sa.st_serialno),
+	     str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
+	     pri_so(ike->sa.st_serialno));
 	submit_v2_liveness_exchange(ike, child->sa.st_serialno);
 
 	/* in case above screws up? */
-	schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+	schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 			  "backup for liveness probe");
 }
 
@@ -367,16 +365,16 @@ stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
 static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition = {
 	.story = "liveness probe",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.exchange = &v2_INFORMATIONAL_liveness_exchange,
 	.processor = initiate_v2_INFORMATIONAL_liveness_request,
-	.llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	.llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	.timeout_event =  EVENT_RETAIN,
 };
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition[] = {
 	{ .story      = "Informational Request (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  /* strictly match empty message */
@@ -384,36 +382,32 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition
 	  .encrypted_payloads.optional = LEMPTY,
 	  .encrypted_payloads.required = LEMPTY,
 	  .processor  = process_v2_INFORMATIONAL_liveness_request,
-	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	  .llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_liveness_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
 };
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[] = {
 	{ .story      = "Informational Response (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_liveness_response,
-	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	  .llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_liveness_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
 };
 
 const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "liveness probe",
+	.name = "INFORMATIONAL (liveness probe)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_liveness_initiate_transition,
-	.responder = &v2_INFORMATIONAL_liveness_responder_transitions,
-	.response = &v2_INFORMATIONAL_liveness_response_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
+	},
 };

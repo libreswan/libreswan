@@ -7,8 +7,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add any-east # alias
-"north-any-east": added IKEv1 connection
-"road-any-east": added IKEv1 connection
+"north-any-east": added oriented IKEv1 connection
+"road-any-east": added oriented IKEv1 connection
 east #
  echo initdone
 initdone

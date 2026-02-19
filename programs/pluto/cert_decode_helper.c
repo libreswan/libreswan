@@ -103,15 +103,15 @@ static stf_status cert_decode_completed(struct state *st,
 					struct task *task)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
-	pexpect(!ike->sa.st_remote_certs.processed);
+	struct logger *logger = ike->sa.logger;
+	PEXPECT(logger, !ike->sa.st_remote_certs.processed);
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = task->verified.harmless;
 
 	/* if there's an error, log it */
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-	if (task->verified.crl_update_needed &&
-	    deltasecs(x509_crl.check_interval) > 0) {
+	if (task->verified.force_crl_update) {
 		/*
 		 * When a strict crl check fails, the certs are
 		 * deleted and X509_CRL.NEEDED is set.
@@ -126,8 +126,8 @@ static stf_status cert_decode_completed(struct state *st,
 		if (find_crl_fetch_dn(&fdn, ike->sa.st_connection)) {
 			submit_crl_fetch_request(ASN1(fdn), ike->sa.logger);
 		}
-		pexpect(task->verified.cert_chain == NULL);
-		pexpect(task->verified.pubkey_db == NULL);
+		PEXPECT(logger, task->verified.cert_chain == NULL);
+		PEXPECT(logger, task->verified.pubkey_db == NULL);
 	}
 #endif
 
@@ -135,12 +135,12 @@ static stf_status cert_decode_completed(struct state *st,
 	 * transfer certs and db to state (might be NULL).
 	 */
 
-	pexpect(st->st_remote_certs.verified == NULL);
+	PEXPECT(logger, st->st_remote_certs.verified == NULL);
 	ike->sa.st_remote_certs.verified = task->verified.cert_chain;
 	ike->sa.st_remote_certs.groundhog = task->verified.groundhog;
 	task->verified.cert_chain = NULL;
 
-	pexpect(ike->sa.st_remote_certs.pubkey_db == NULL);
+	PEXPECT(logger, ike->sa.st_remote_certs.pubkey_db == NULL);
 	ike->sa.st_remote_certs.pubkey_db = task->verified.pubkey_db;
 	task->verified.pubkey_db = NULL;
 
@@ -154,12 +154,12 @@ static stf_status cert_decode_completed(struct state *st,
 	if (task->verified.harmless) {
 		if (ike->sa.st_remote_certs.verified != NULL) {
 			CERTCertificate *end_cert = ike->sa.st_remote_certs.verified->cert;
-			passert(end_cert != NULL);
-			dbg("certificate verified OK: %s", end_cert->subjectName);
+			PASSERT(logger, end_cert != NULL);
+			ldbg(logger, "certificate verified OK: %s", end_cert->subjectName);
 		}
 	} else {
-		pexpect(ike->sa.st_remote_certs.verified == NULL);
-		pexpect(ike->sa.st_remote_certs.pubkey_db == NULL);
+		PEXPECT(logger, ike->sa.st_remote_certs.verified == NULL);
+		PEXPECT(logger, ike->sa.st_remote_certs.pubkey_db == NULL);
 		/* NSS: already logged details */
 		llog_sa(RC_LOG, ike, "X509: certificate payload rejected for this connection");
 		if (ike->sa.st_sa_role == SA_INITIATOR) {
@@ -181,11 +181,11 @@ static stf_status cert_decode_completed(struct state *st,
 	return task->cb(st, md);
 }
 
-static void cert_decode_cleanup(struct task **task)
+static void cert_decode_cleanup(struct task **task, struct logger *logger)
 {
 	release_certs(&(*task)->verified.cert_chain);	/* may be NULL */
 	free_public_keys(&(*task)->verified.pubkey_db);	/* may be NULL */
 	md_delref(&(*task)->md);
-	root_certs_delref(&(*task)->root_certs, GLOBAL_LOGGER);
+	root_certs_delref(&(*task)->root_certs, logger);
 	pfreeany((*task));
 }

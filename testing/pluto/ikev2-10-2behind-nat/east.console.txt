@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add pool-eastnet-ikev2
-"pool-eastnet-ikev2": added IKEv2 connection
+"pool-eastnet-ikev2": added oriented IKEv2 connection
 east #
  ipsec trafficstatus
 #2: "pool-eastnet-ikev2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.100/32
@@ -23,6 +23,7 @@ src 192.1.2.23 dst 192.1.2.254
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -33,6 +34,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -42,6 +44,7 @@ src 192.1.2.23 dst 192.1.2.254
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -52,6 +55,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 east #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.2.100/32

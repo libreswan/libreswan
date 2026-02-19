@@ -48,6 +48,11 @@
 #include "ip_info.h"
 #include "ip_sockaddr.h"
 
+static struct msg_digest *unpack_udp_packet(struct logger *logger,
+					    ip_endpoint sender,
+					    struct iface_endpoint *ifp,
+					    shunk_t packet);
+
 #ifdef UDP_ENCAP
 static int espinudp_enable_esp_encapsulation(int fd, struct logger *logger)
 {
@@ -117,7 +122,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		threadtime_t errqueue_start = threadtime_start();
 		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__,
 						      logger);
-		threadtime_stop(&errqueue_start, SOS_NOBODY,
+		threadtime_stop(&errqueue_start,
 				"%s() calling check_incoming_msg_errqueue()", __func__);
 		if (!errqueue_ok) {
 			return false; /* no normal message to read */
@@ -134,10 +139,9 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	ip_sockaddr from = {
 		.len = sizeof(from.sa),
 	};
-	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE]; /* ??? this buffer seems *way* too big */
-	ssize_t packet_len = recvfrom(ifp->fd, bigbuffer, sizeof(bigbuffer),
-				      /*flags*/ 0, &from.sa.sa, &from.len);
-	uint8_t *packet_ptr = bigbuffer;
+	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
+	ssize_t packet_slen = recvfrom(ifp->fd, bigbuffer, sizeof(bigbuffer),
+				       /*flags*/ 0, &from.sa.sa, &from.len);
 	int packet_errno = errno; /* save!!! */
 
 	/*
@@ -149,9 +153,10 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	ip_address sender_udp_address;
 	ip_port sender_udp_port;
 	const char *from_ugh = sockaddr_to_address_port(&from.sa.sa, from.len,
-							&sender_udp_address, &sender_udp_port);
+							&sender_udp_address,
+							&sender_udp_port);
 	if (from_ugh != NULL) {
-		if (packet_len >= 0) {
+		if (packet_slen >= 0) {
 			/* technically it worked, but returned value was useless */
 			llog(RC_LOG, logger,
 			     "recvfrom on %s returned malformed source sockaddr: %s",
@@ -181,19 +186,33 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 								 &ip_protocol_udp,
 								 sender_udp_port);
 
+	if (packet_slen < 0) {
+		endpoint_buf eb;
+		llog_errno(RC_LOG, logger, packet_errno,
+			   "recvfrom on %s from %s failed: ",
+			   str_endpoint_sensitive(&sender, &eb),
+			   ifp->ip_dev->real_device_name);
+		return NULL;
+	}
+
 	/*
 	 * Managed to decode the from address; change LOGGER to an
 	 * on-stack "from" logger so that messages can include more
 	 * context.
 	 */
-	struct logger from_logger = logger_from(logger, &sender);
-	logger = &from_logger;
+	shunk_t packet = shunk2(bigbuffer, packet_slen);
+	struct logger *md_logger = from_logger(sender);
+	whack_attach_where(md_logger, logger, HERE);
+	struct msg_digest *md = unpack_udp_packet(md_logger, sender, ifp, packet);
+	free_logger(&md_logger, HERE);
+	return md;
+}
 
-	if (packet_len < 0) {
-		llog_errno(RC_LOG, logger, packet_errno,
-			   "recvfrom on %s failed: ", ifp->ip_dev->real_device_name);
-		return NULL;
-	}
+struct msg_digest *unpack_udp_packet(struct logger *logger,
+				     ip_endpoint sender,
+				     struct iface_endpoint *ifp,
+				     shunk_t packet)
+{
 
 	/*
 	 * If the socket is in encapsulation mode (where each packet
@@ -203,18 +222,19 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	if (ifp->esp_encapsulation_enabled) {
 		uint32_t non_esp;
 
-		if (packet_len < (int)sizeof(uint32_t)) {
+		if (packet.len < (int)sizeof(uint32_t)) {
 			llog(RC_LOG, logger, "too small packet (%zd)",
-			     packet_len);
+			     packet.len);
 			return NULL;
 		}
-		memcpy(&non_esp, packet_ptr, sizeof(uint32_t));
+
+		memcpy(&non_esp, packet.ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
 			llog(RC_LOG, logger, "has no Non-ESP marker");
 			return NULL;
 		}
-		packet_ptr += sizeof(uint32_t);
-		packet_len -= sizeof(uint32_t);
+		packet.ptr += sizeof(uint32_t);
+		packet.len -= sizeof(uint32_t);
 	}
 
 	/*
@@ -224,15 +244,15 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	{
 		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
 		if (ifp->esp_encapsulation_enabled &&
-		    packet_len >= NON_ESP_MARKER_SIZE &&
-		    memeq(packet_ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
+		    packet.len >= NON_ESP_MARKER_SIZE &&
+		    memeq(packet.ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
 			llog(RC_LOG, logger,
 			     "mangled with potential spurious non-esp marker");
 			return NULL;
 		}
 	}
 
-	if (packet_len == 1 && packet_ptr[0] == 0xff) {
+	if (packet.len == 1 && *(const uint8_t*)packet.ptr == 0xff) {
 		/**
 		 * NAT-T Keep-alive packets should be discarded by kernel ESPinUDP
 		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
@@ -240,13 +260,12 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
 		endpoint_buf eb;
-		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
+		ldbg(logger, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
 		    str_endpoint(&sender, &eb)); /* sensitive? */
 		return NULL;
 	}
 
-	struct msg_digest *md = alloc_md(ifp, &sender, packet_ptr, packet_len, HERE);
-	return md;
+	return alloc_md(ifp, sender, packet.ptr, packet.len, logger, HERE);
 }
 
 #ifdef USE_XFRM_INTERFACE
@@ -299,7 +318,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 };
 
 static void udp_listen(struct iface_endpoint *ifp,
-		       struct logger *unused_logger UNUSED)
+		       const struct logger *unused_logger UNUSED)
 {
 	if (ifp->udp.read_listener == NULL) {
 		attach_fd_read_listener(&ifp->udp.read_listener, ifp->fd,
@@ -307,7 +326,7 @@ static void udp_listen(struct iface_endpoint *ifp,
 	}
 }
 
-static void udp_cleanup(struct iface_endpoint *ifp)
+static void udp_cleanup(struct iface_endpoint *ifp, const struct logger *logger UNUSED)
 {
 	detach_fd_read_listener(&ifp->udp.read_listener);
 }
@@ -376,7 +395,8 @@ const struct iface_io udp_iface_io = {
  */
 
 static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
-					size_t sizeof_buffer)
+					size_t sizeof_buffer,
+					struct logger *logger)
 {
 	if (packet_len > sizeof_buffer) {
 		/*
@@ -384,7 +404,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		 * what about the returned packet length?  Force
 		 * truncation.
 		 */
-		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
+		ldbg(logger, "MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
 		packet_len = sizeof_buffer;
 	}
 
@@ -394,11 +414,11 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		buffer += sizeof(non_ESP_marker);
 		packet_len -= sizeof(non_ESP_marker);
 		sizeof_buffer -= sizeof(non_ESP_marker);
-		dbg("MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
+		ldbg(logger, "MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
 	}
 
 	if (packet_len < sizeof(struct isakmp_hdr)) {
-		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
+		ldbg(logger, "MSG_ERRQUEUE packet is smaller than an IKE header");
 		return NULL;
 	}
 
@@ -447,19 +467,19 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		break;
 	}
 	default:
-		dbg("MSG_ERRQUEUE packet IKE header version unknown");
+		ldbg(logger, "MSG_ERRQUEUE packet IKE header version unknown");
 		return NULL;
 	}
 	if (st == NULL) {
 		name_buf ib;
-		dbg("MSG_ERRQUEUE packet has no matching %s SA",
+		ldbg(logger, "MSG_ERRQUEUE packet has no matching %s SA",
 		    str_enum_long(&ike_version_names, ike_version, &ib));
 		return NULL;
 	}
 
-	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
-	    st->st_connection->config->ike_info->version_name,
-	    st->st_serialno);
+	ldbg(st->logger, "MSG_ERRQUEUE packet matches %s SA "PRI_SO"",
+	     st->st_connection->config->ike_info->version_name,
+	     pri_so(st->st_serialno));
 	return st;
 }
 
@@ -527,17 +547,17 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					return false;
 				}
 				again_count++;
-				llog_error(logger, errno,
-					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d): ",
 					   ifp->ip_dev->real_device_name, before, again_count);
 				continue;
 			}
-			llog_error(logger, errno,
-				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s): ",
 				   ifp->ip_dev->real_device_name, before);
 			break;
 		}
-		passert(packet_len >= 0);
+		PASSERT(logger, packet_len >= 0);
 
 		/*
 		 * Getting back a truncated IKE datagram isn't a big
@@ -560,7 +580,8 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		}
 
 		struct state *sender = find_likely_sender((size_t) packet_len,
-							  buffer, sizeof(buffer));
+							  buffer, sizeof(buffer),
+							  logger);
 
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
@@ -568,7 +589,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		 * Andi says that this is a kernel bug and has fixed it.
 		 * Perhaps in 2.2.18/2.4.0.
 		 */
-		passert(emh.msg_name == &from.sa);
+		PASSERT(logger, emh.msg_name == &from.sa);
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "name:");
 			LDBG_dump(logger, emh.msg_name, emh.msg_namelen);

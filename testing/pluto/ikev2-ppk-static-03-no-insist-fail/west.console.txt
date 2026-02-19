@@ -11,18 +11,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
-"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ppk": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown;
+"westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ppk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipv4-psk-ppk":   sec_label:unset;
-"westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ipv4-psk-ppk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -54,7 +54,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "westnet-eastnet-ipv4-psk-ppk" #1: IKE_SA_INIT_I: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ppk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done

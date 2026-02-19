@@ -34,7 +34,7 @@ PASSPHRASE=$(cat ${PW})
 : Subject DN - NSS wants things local..global
 :
 
-SUBJECT="OU=Test Department, O=Libreswan,L=Toronto, ST=Ontario, C=CA"
+SUBJECT="OU=\"Test Department\", O=\"Libreswan\", L=\"Toronto\", ST=\"Ontario\", C=\"CA\""
 
 :
 : Generate the basic certificates using NSS
@@ -148,6 +148,8 @@ generate_root_ca()
     set -x
 
     echo "generating root certificiate: $@" 1>&3
+    echo 1>&3
+
     local certdir=$1 ; shift ; echo " certdir=${certdir}" 1>&3
     local ca=$1      ; shift ; echo " ca=${ca}" 1>&3
     local is_ca=$1   ; shift ; echo " is_ca=${is_ca}" 1>&3
@@ -168,10 +170,12 @@ generate_root_ca()
     echo "${serial}" > ${certdir}/${cert}.serial
     echo ${serial} > ${certdir}/root.serial
 
-    # NSS wants subject to be local..global/root
+    # NSS expects subject to be orderd local,..,global (per RFCs) and
+    # not global,..,local per OpenSSL.
     local subject=${SUBJECT}
-    subject="CN=Libreswan test CA for ${ca}, ${subject}"
-    subject="E=testing@libreswan.org, ${subject}"
+    subject="CN=\"Libreswan test CA for ${ca}\", ${subject}"
+    subject="E=\"testing@libreswan.org\", ${subject}"
+    echo " subject=${subject}" 1>&3
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
@@ -226,6 +230,7 @@ generate_cert()
     set -x
 
     echo "generating certificate: $@" 1>&3
+    echo 1>&3
 
     local certdir=$1  ; shift ; echo " certdir=${certdir}" 1>&3
     local ca=$1       ; shift ; echo " ca=${ca}" 1>&3
@@ -260,8 +265,13 @@ generate_cert()
     local cn=${cert}.${domain}			# common name
     local e=${user}@testing.libreswan.org	# email
 
-    # NSS wants subject to be local..global/root
-    local subject="E=${e}, CN=${cn}, ${SUBJECT}"
+    # NSS expects subject to be orderd local,..,global (per RFCs) and
+    # not global,..,local per OpenSSL.
+    local subject="${SUBJECT}"
+    subject="CN=\"${cn}\", ${subject}"
+    subject="E=\"${e}\", ${subject}"
+    echo " subject=${subject}" 1>&3
+
     local hash_alg=SHA256
 
     # build the SAN
@@ -374,7 +384,9 @@ otherca       otherca  other.libreswan.org    Y  certSigning,crlSigning,critical
 bc-n-ca       bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
-# generate end certs where needed
+#
+# Generate end certs that are needed.
+#
 
 while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
 
@@ -412,10 +424,16 @@ real        mainca           key4096                              1 1 1 / digita
 real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
 real        mainca           semiroad                             1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
+# Embed a comma in the user's email address
+real        mainca           comma,                               1 0 0 / digitalSignature  /
 .           otherca          other{east,west}                     1 1 1 / digitalSignature  /
 # Use the (broken) CA with BC=n to sign a cert
 .           bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
+
+#
+# Generate a multi-level certificate chain
+#
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 

@@ -27,6 +27,7 @@ OBJS += x509dn.o asn1.o oid.o
 OBJS += authby.o
 OBJS += rnd.o
 
+OBJS += auth_names.o
 OBJS += ddos_mode_names.o
 OBJS += connection_kind_names.o
 OBJS += option_names.o
@@ -66,8 +67,14 @@ OBJS += secret_pubkey_stuff_to_pubkey_der.o
 OBJS += pubkey_der_to_pubkey_content.o
 OBJS += clone_shunk_tokens.o
 OBJS += secrets.o
-OBJS += pubkey_rsa.o
-OBJS += pubkey_ecdsa.o
+
+$(OBJS): | $(builddir)/pubkey/
+OBJS += pubkey/pubkey_types.o
+OBJS += pubkey/pubkey_signer_rsa.o
+OBJS += pubkey/pubkey_signer_ecdsa.o
+OBJS += pubkey/pubkey_signer_eddsa.o
+OBJS += pubkey/pubkey_type_rsa.o
+OBJS += pubkey/pubkey_type_ecp.o
 
 OBJS += sparse_names.o
 
@@ -77,6 +84,8 @@ OBJS += ttoaddresses_num.o
 OBJS += ttobool.o
 OBJS += ttocidr_num.o
 OBJS += ttoips_num.o
+OBJS += ttopool_num.o
+OBJS += ttopools_num.o
 OBJS += ttoport.o
 OBJS += ttoprotocol.o
 OBJS += ttoprotoport.o
@@ -111,11 +120,12 @@ endif
 endif
 
 # implement resolve_default_route()
+OBJS += defaultroute.o
 ifneq ($(LINUX_VARIANT),)
-OBJS += resolve_default_route_linux.o
+OBJS += defaultroute_linux.o
 endif
 ifneq ($(BSD_VARIANT),)
-OBJS += resolve_default_route_bsd.o
+OBJS += defaultroute_bsd.o
 endif
 
 OBJS += log_ip.o
@@ -128,6 +138,7 @@ OBJS += datatot.o
 OBJS += vendorid.o
 
 OBJS += proposals.o
+OBJS += proposal_transform_names.o
 OBJS += v1_proposals.o
 OBJS += v2_proposals.o
 OBJS += esp_info.o
@@ -153,11 +164,13 @@ OBJS += ip_port_range.o
 OBJS += ip_protocol.o
 OBJS += ip_protoport.o
 OBJS += ip_range.o
+OBJS += ip_pool.o
 OBJS += ip_said.o
 OBJS += ip_selector.o
 OBJS += ip_sockaddr.o
 OBJS += ip_subnet.o
 
+OBJS += flags.o
 OBJS += lmod.o
 OBJS += lset.o
 OBJS += scale.o
@@ -167,6 +180,7 @@ OBJS += realtime.o
 OBJS += monotime.o
 OBJS += ttodeltatime.o
 OBJS += ttorealtime.o
+OBJS += cputime.o
 
 OBJS += refcnt.o
 OBJS += debug.o
@@ -175,19 +189,17 @@ OBJS += impair.o
 OBJS += cur_debugging.o
 OBJS += ldbg.o
 OBJS += cur_debugging.o
+OBJS += verbose.o
 
 OBJS += llog_base64_bytes.o
 OBJS += llog_pem_bytes.o
-OBJS += llog_errno.o
-OBJS += log_error.o
+OBJS += log_errno.o
 OBJS += fatal.o
 OBJS += bad_enum_where.o
 OBJS += bad_case_where.o
 OBJS += bad_sparse_where.o
 
 OBJS += lswglob.o
-
-OBJS += optarg.o
 
 OBJS += global_logger.o
 OBJS += jambuf.o
@@ -198,7 +210,6 @@ OBJS += llog.o
 OBJS += llog_dump.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
-OBJS += jam_stream_prefix.o
 OBJS += jam_logger.o
 OBJS += logjam.o
 
@@ -214,13 +225,17 @@ OBJS += jam_nss_secitem.o
 
 OBJS += test_buffer.o
 OBJS += ike_alg.o
-OBJS += ike_alg_dh.o
 OBJS += ike_alg_hash_identity.o
 OBJS += ike_alg_ipcomp.o
+OBJS += ike_alg_sn.o
 OBJS += ike_alg_test.o
-OBJS += ike_alg_dh_nss_ecp_ops.o
-OBJS += ike_alg_dh_nss_modp_ops.o
 OBJS += ike_alg_hash_nss_ops.o
+OBJS += ike_alg_kem.o
+OBJS += ike_alg_kem_ecp_nss_ops.o
+OBJS += ike_alg_kem_modp_nss_ops.o
+ifeq ($(USE_ML_KEM),true)
+OBJS += ike_alg_kem_ml_kem_nss_ops.o
+endif
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o
 OBJS += ike_alg_prf_mac_xcbc_ops.o
@@ -276,15 +291,12 @@ OBJS += crypt_hash.o
 OBJS += crypt_mac.o
 OBJS += crypt_prf.o
 OBJS += crypt_symkey.o
+OBJS += crypt_kem.o
 
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_prf.o
 endif
 OBJS += ikev2_prf.o
-
-ifeq ($(USE_DNSSEC),true)
-OBJS += unbound.o
-endif
 
 OBJS += names.o
 OBJS += enum_names.o
@@ -297,21 +309,49 @@ endif
 
 OBJS += autostart_names.o
 
-# always compile, won't be linked
 OBJS += seccomp_mode_names.o
+
+#
+# build dest subdirectories
+#
+
+$(builddir)/%/:
+	mkdir -p $@
+
+#
+# optarg stuff
+#
+
+$(OBJS): | $(builddir)/optarg/
+
+OBJS += optarg/optarg.o
+OBJS += optarg/optarg_address_dns.o
+OBJS += optarg/optarg_address_num.o
+
+#
+# DNS stuff
+#
+
+$(OBJS): | $(builddir)/dnssec/
+
+ifeq ($(USE_UNBOUND),true)
+OBJS += dnssec/unbound.o
+endif
+OBJS += dnssec/dnssec_config.o
+OBJS += dnssec/dnssec_rcode_stories.o
 
 #
 # whack stuff
 #
 
 $(OBJS): | $(builddir)/whack/
-$(builddir)/%/:
-	mkdir -p $@
 
 OBJS += whack/pickle.o
 OBJS += whack/send.o
 OBJS += whack/aliascomp.o
 OBJS += whack/whack_magic.o
+OBJS += whack/init_whack_message.o
+OBJS += whack/alloc_whack_message.o
 
 whack/whack_magic.o: $(builddir)/whack/whack_magic.c
 
@@ -329,13 +369,14 @@ $(builddir)/whack/whack_magic.c: whack/whack_magic.in.c
 
 $(OBJS): | $(builddir)/ipsecconf/
 
+OBJS += ipsecconf/conn.o
+OBJS += ipsecconf/setup.o
 OBJS += ipsecconf/confread.o
 OBJS += ipsecconf/confwrite.o
-OBJS += ipsecconf/starterwhack.o
-OBJS += ipsecconf/keywords.o
 OBJS += ipsecconf/interfaces.o
-OBJS += ipsecconf/config_setup.o
-
+OBJS += ipsecconf/keywords.o
+OBJS += ipsecconf/keyword_type_names.o
+OBJS += ipsecconf/starterwhack.o
 
 # Avoid flex bugs:
 #
@@ -431,11 +472,11 @@ version.o: $(builddir)/version.c
 
 IPSECVIDVERSION ?= $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 
-$(builddir)/version.c: version.in.c $(top_srcdir)/mk/version.mk
+$(builddir)/%.c: %.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@@IPSECVERSION@@/$(subst /,_,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(subst /,_,$(IPSECVIDVERSION))/' \
-	    $(srcdir)/version.in.c \
+	    $(srcdir)/$(*).in.c \
 	    > $@.tmp
 	mv $@.tmp $@
 

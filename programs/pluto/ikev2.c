@@ -36,7 +36,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 
@@ -91,6 +90,10 @@
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
+static void llog_transition_start(enum stream stream, struct logger *logger,
+				  const struct v2_transition *svm,
+				  const struct msg_digest *md);
+
 static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
 
 /*
@@ -129,12 +132,15 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
  *
  */
 
-void ldbg_v2_success(struct ike_sa *ike)
+void ldbg_success_ikev2(struct ike_sa *ike, const struct msg_digest *md)
 {
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam_logger_prefix(buf, ike->sa.logger);
 		jam_string(buf, ike->sa.st_v2_transition->story);
 		jam_string(buf, ":");
+		/* */
+		jam_string(buf, " ");
+		jam_enum_long(buf, &message_role_names, v2_msg_role(md));
 		/* IKE role, not message role */
 		switch (ike->sa.st_sa_role) {
 		case SA_INITIATOR: jam_string(buf, " responder"); break;
@@ -145,60 +151,66 @@ void ldbg_v2_success(struct ike_sa *ike)
 	}
 }
 
-void llog_v2_success_exchange_processed(struct ike_sa *ike)
+/* sent EXCHANGE request to <address> */
+void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
+					const struct msg_digest *md)
 {
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		switch (ike->sa.st_v2_transition->recv_role) {
-		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
-		case NO_MESSAGE: jam_string(buf, "initiated"); break;
-		}
-		jam_string(buf, " ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
-		jam_string(buf, "; ");
-		jam_string(buf, ike->sa.st_state->story);
-	}
-}
-
-/* sent EXCHANGE {request,response} to <address> */
-void llog_v2_success_exchange_sent_to(struct ike_sa *ike)
-{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
-		jam_string(buf, " ");
-		switch (ike->sa.st_v2_transition->recv_role) {
-		case NO_MESSAGE: jam_string(buf, "request"); break; /* new exchange */
-		case MESSAGE_REQUEST: jam_string(buf, "response"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, "request"); break;
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
+		jam_string(buf, " request to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+	}
+}
+
+void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges)
+{
+	for (unsigned i = 0; i < exchanges->len; i++) {
+		const struct v2_exchange *exchange = exchanges->list[i];
+		if (i > 0) {
+			jam_string(buf, ", ");
 		}
-		jam_string(buf, " to ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		if (i == exchanges->len - 1) {
+			jam_string(buf, "or ");
+		}
+		jam_string(buf, exchange->name);
 	}
 }
 
-void llog_v2_success_state_story(struct ike_sa *ike)
+void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
+					const struct msg_digest *md)
 {
- 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, ike->sa.st_state->story);
-	}
-}
-
-void llog_v2_success_state_story_to(struct ike_sa *ike)
-{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, ike->sa.st_state->story);
-		jam_string(buf, " to ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_string(buf, "responder processed ");
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
+		jam_string(buf, " request");
+	}
+}
+
+void llog_success_ikev2_exchange_response(struct ike_sa *ike,
+					  const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "initiator processed ");
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
+		if (v2_msgid_request_pending(ike)) {
+			jam_string(buf, ", initiating ");
+			jam_v2_msgid_pending(buf, ike);
+		}
 	}
 }
 
 /*
  * split an incoming message into payloads
  */
-struct payload_summary ikev2_decode_payloads(struct logger *log,
+struct payload_summary ikev2_decode_payloads(struct logger *logger,
 					     struct msg_digest *md,
-					     struct pbs_in *in_pbs,
+					     /*i.e., ro*/ struct pbs_in in_pbs,
 					     enum next_payload_types_ikev2 np)
 {
 	struct payload_summary summary = {
@@ -229,52 +241,85 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 	while (np != ISAKMP_NEXT_v2NONE) {
 		name_buf b;
-		dbg("Now let's proceed with payload (%s)",
-		    str_enum_long(&ikev2_payload_names, np, &b));
+		ldbg(logger, "now let's proceed with payload (%s)",
+		     str_enum_long(&ikev2_payload_names, np, &b));
+
+		/*
+		 * (*PD) is the payload digest for this payload.  It
+		 * has three^D^D four fields:
+		 *
+		 *    PAYLOAD_TYPE, the PD's payload type, from the
+		 *    previous payload's Next Payload field
+		 *
+		 *    PBS, the nested PBS within the message, with
+		 *    .start pointing at the payload header and
+		 *    .cursor pointing at the start of the payload's
+		 *    body; filled in by pbs_in_struct().
+		 *
+		 *    .PAYLOAD, the unpacked contents of the payload's
+		 *    header; filled in by pbs_in_struct()
+		 *
+		 *    NEXT, the .chain[] pointer, linking payloads of
+		 *    the same type (see also .last[]).
+		 *
+		 * All payloads, including those that have
+		 * unrecognized content, are accumulated in .digest[]
+		 * (they are not added to .chain[]).
+		 *
+		 * XXX: When de-fragmenting an IKE_INTERMEDIATE
+		 * message, the location of the last unencrypted
+		 * payload is needed so that payload's Next Payload
+		 * field can be changed from SKF to SK so that it
+		 * matches the pre-fragmentation message (for
+		 * simplicity, the field is always changed) (see
+		 * IKE_INTERMEDIATE).
+		 */
 
 		if (md->digest_roof >= elemsof(md->digest)) {
-			llog(RC_LOG, log,
-				    "more than %zu payloads in message; ignored",
-				    elemsof(md->digest));
+			llog(RC_LOG, logger, "more than %zu payloads in message; ignored",
+			     elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
 
-		/*
-		 * *pd is the payload digest for this payload.
-		 * It has three fields:
-		 *	pbs is filled in by in_struct
-		 *	payload is filled in by in_struct
-		 *	next is filled in by list linking logic
-		 */
-		struct payload_digest *const pd = md->digest + md->digest_roof;
+		struct payload_digest *const pd = &md->digest[md->digest_roof++];
 
 		/*
-		 * map the payload onto its payload descriptor which
-		 * describes how to decode it
+		 * Map the payload onto its payload descriptor which
+		 * describes how to decode it.
 		 */
 		const struct_desc *sd = v2_payload_desc(np);
 
 		if (sd == NULL) {
+
 			/*
 			 * This payload is unknown to us.  RFCs 4306
 			 * and 5996 2.5 say that if the payload has
 			 * the Critical Bit, we should be upset but if
 			 * it does not, we should just ignore it.
+			 *
+			 * Regardless, read it in so that it is
+			 * available to to the fragmentation code (and
+			 * IKE_INTERMEDIATE).
 			 */
-			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
-						 &pd->payload, sizeof(pd->payload), &pd->pbs);
+			diag_t d = pbs_in_struct(&in_pbs, &ikev2_generic_desc,
+						 &pd->payload, sizeof(pd->payload),
+						 &pd->pbs);
 			if (d != NULL) {
-				llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+				llog(RC_LOG, logger, "malformed payload in packet: %s", str_diag(d));
 				pfree_diag(&d);
 				summary.n = v2N_INVALID_SYNTAX;
-				break;
+				return summary;
 			}
+
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
 				/*
 				 * It was critical.  See RFC 5996 1.5
 				 * "Version Numbers and Forward
-				 * Compatibility"
+				 * Compatibility".
+				 *
+				 * Unrecognized critical payloads are
+				 * fatal.  Respond accordingly.
 				 */
 				const char *role;
 				switch (v2_msg_role(md)) {
@@ -288,27 +333,31 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					bad_case(v2_msg_role(md));
 				}
 				name_buf b;
-				llog(RC_LOG, log,
+				llog(RC_LOG, logger,
 				     "message %s contained an unknown critical payload type (%s)",
 				     role, str_enum_long(&ikev2_payload_names, np, &b));
+				/* add the notify payload's data */
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				summary.data[0] = np;
 				summary.data_size = 1;
-				break;
+				return summary;
 			}
+
 			name_buf eb;
-			llog(RC_LOG, log,
+			llog(RC_LOG, logger,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 			     str_enum_long(&ikev2_payload_names, np, &eb));
+			pd->payload_type = np;
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
 
 		if (np >= LELEM_ROOF) {
-			dbg("huge next-payload %u", np);
+			ldbg(logger, "huge next-payload %u", np);
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
+
 		summary.repeated |= summary.present & LELEM(np);
 		summary.present |= LELEM(np);
 
@@ -317,19 +366,19 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 		 * be.
 		 */
 		pd->payload_type = np;
-		diag_t d = pbs_in_struct(in_pbs, sd,
+		diag_t d = pbs_in_struct(&in_pbs, sd,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
-			llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+			llog(RC_LOG, logger, "malformed payload in packet: %s", str_diag(d));
 			pfree_diag(&d);
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
 
-		dbg("processing payload: %s (len=%zu)",
-		    str_enum_long(&ikev2_payload_names, np, &b),
-		    pbs_left(&pd->pbs));
+		ldbg(logger, "processing payload: %s (len=%zu)",
+		     str_enum_long(&ikev2_payload_names, np, &b),
+		     pbs_left(&pd->pbs));
 
 		/*
 		 * Place payload at the end of the chain for this
@@ -344,25 +393,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			md->last[np]->next = pd;
 			md->last[np] = pd;
 			pd->next = NULL;
-		}
-
-		/*
-		 * Go deeper:
-		 *
-		 * XXX: should this do 'deeper' analysis of packets.
-		 * For instance checking the SPI of a notification
-		 * payload?  Probably not as the value may be ignored.
-		 *
-		 * The exception is seems to be v2N - both cookie and
-		 * redirect code happen early and use the values.
-		 */
-
-		switch (np) {
-		case ISAKMP_NEXT_v2N:
-			decode_v2N_payload(log, md, pd);
-			break;
-		default:
-			break;
 		}
 
 		/*
@@ -395,7 +425,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			break;
 		}
 
-		md->digest_roof++;
 	}
 
 	return summary;
@@ -615,8 +644,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			return true;
 		}
 		}
-		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		return true;
 	}
 
@@ -684,10 +712,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * Processing of the response was completed so drop as
 		 * too old.
 		 *
-		 * XXX: Should be llog_md() but that shows up in the
-		 * whack output.  While "correct" it messes with test
-		 * output.  The old log line didn't show up because
-		 * current-state wasn't set.
+		 * XXX: Should be limited_llog_md() but that shows up
+		 * in the whack output.  While "correct" it messes
+		 * with test output.  The old log line didn't show up
+		 * because current-state wasn't set.
 		 *
 		 * Here's roughly why INITIATOR can be non-NULL:
 		 *
@@ -879,9 +907,9 @@ void ikev2_process_packet(struct msg_digest *md)
 					    expected_local_ike_role);
 	if (ike == NULL) {
 		name_buf ixb;
-		llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
-			str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		limited_llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
+				str_enum_short(&ikev2_exchange_names, ix, &ixb),
+				v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
@@ -910,10 +938,10 @@ void ikev2_process_packet(struct msg_digest *md)
 	if (!ike->sa.st_state->v2.secured) {
 		name_buf ixb;
 		/* there's no rate_llog() */
-		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
-			ike->sa.st_serialno,
-			str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		limited_llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
+				pri_so(ike->sa.st_serialno),
+				str_enum_short(&ikev2_exchange_names, ix, &ixb),
+				v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
@@ -961,19 +989,19 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		.story = "suspect message",
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = recv_role,
-		.llog_success = ldbg_v2_success,
+		.llog_success = ldbg_success_ikev2,
 	};
 	const struct v2_transition *transition = &undefined_transition;
 
 	switch (recv_role) {
 	case MESSAGE_REQUEST:
 	{
-		const struct v2_exchanges *exchanges = state->v2.ike_exchanges;
-		if (exchanges != NULL &&
-		    exchanges->len > 0) {
-			const struct v2_transitions *transitions = exchanges->list[0]->responder;
-			if (transitions != NULL &&
-			    transitions->len > 0) {
+		const struct v2_exchanges *responder_exchanges =
+			&state->v2.ike_responder_exchanges;
+		if (responder_exchanges->len > 0) {
+			const struct v2_transitions *transitions =
+				&responder_exchanges->list[0]->transitions.responder;
+			if (transitions->len > 0) {
 				transition = &transitions->list[transitions->len - 1];
 				break;
 			}
@@ -989,9 +1017,9 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		{
 			const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 			if (exchange != NULL) {
-				const struct v2_transitions *transitions = exchange->response;
-				if (transitions != NULL &&
-				    transitions->len > 0) {
+				const struct v2_transitions *transitions =
+					&exchange->transitions.response;
+				if (transitions->len > 0) {
 					transition = &transitions->list[transitions->len - 1];
 					break;
 				}
@@ -1037,6 +1065,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 
 static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike_sa *ike)
 {
+	struct logger *logger = ike->sa.logger;
 	passert(ike->sa.st_state->v2.secured);
 	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 
@@ -1049,7 +1078,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * The IKE SA always processes requests.
 		 */
 		if (md->fake_clone) {
-			llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
+			llog_sa(IMPAIR_STREAM, ike, "processing a fake (cloned) request");
 		}
 		/*
 		 * Based on the Message ID, is this a true duplicate?
@@ -1073,7 +1102,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * longer.
 		 */
 		if (md->fake_clone) {
-			llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
+			llog_sa(IMPAIR_STREAM, ike, "processing a fake (cloned) response");
 		}
 		if (is_duplicate_response(ike, md)) {
 			return;
@@ -1094,12 +1123,11 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * Remember, the unprotected IKE_SA_INIT exchange was excluded
 	 * earlier, and the IKE SA is confirmed as secure.
 	 */
-	dbg("unpacking clear payload");
+	ldbg(logger, "unpacking clear payload");
 	passert(!md->message_payloads.parsed);
-	md->message_payloads =
-		ikev2_decode_payloads(ike->sa.logger, md,
-				      &md->message_pbs,
-				      md->hdr.isa_np);
+	md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
+						     md->message_pbs,
+						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		/*
 		 * Should only respond when the message is an
@@ -1113,6 +1141,20 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * the spot
 		 */
 		return;
+	}
+
+	/*
+	 * Skip pre-processing unencrypted notifications (there should
+	 * be none, and they haven't yet had their integrity
+	 * confirmed.
+	 *
+	 * This also means that the only data structures pointing into
+	 * the packet are all found in .chain[]; and redirecting them
+	 * to reconstructed message (when fragmented) should be
+	 * easier.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		ldbg(ike->sa.logger, "ignoring unencrypted notifications");
 	}
 
 	/*
@@ -1205,17 +1247,20 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		case FRAGMENT_IGNORED:
 			return;
 		case FRAGMENTS_MISSING:
-			dbg("waiting for more fragments");
+			ldbg(logger, "waiting for more fragments");
 			return;
 		case FRAGMENTS_COMPLETE:
+			/*
+			 * Replace MD with a message constructed
+			 * starting with fragment 1 (which also
+			 * contains unencrypted payloads).
+			 */
+			protected_md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
+			if (protected_md == NULL) {
+				return;
+			}
 			break;
 		}
-		/*
-		 * Replace MD with a message constructed starting with
-		 * fragment 1 (which also contains unencrypted
-		 * payloads).
-		 */
-		protected_md = reassemble_v2_incoming_fragments(frags);
 		break;
 	}
 	case v2P(SK):
@@ -1240,6 +1285,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 
 void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	/*
 	 * The message successfully decrypted and passed integrity
 	 * protected so definitely sent by the other end of the
@@ -1267,8 +1313,9 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 * should identify the problem isn't being returned this is
 	 * the least of our problems.
 	 */
-	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md, &sk->pbs,
+	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md,
+						       sk->pbs,
 						       sk->payload.generic.isag_np);
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 		shunk_t data = shunk2(md->encrypted_payloads.data,
@@ -1276,6 +1323,18 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 		complete_protected_but_fatal_exchange(ike, md, md->encrypted_payloads.n, data);
 		return;
 	}
+
+	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(ike->sa.logger, md);
 
 	/*
 	 * XXX: is SECURED_PAYLOAD_FAILED redundant?  Earlier checks
@@ -1301,7 +1360,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	dbg("selected state microcode %s", svm->story);
+	ldbg(logger, "selected state microcode %s", svm->story);
 
 	v2_dispatch(ike, md, svm);
 }
@@ -1325,7 +1384,23 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 
-	dbg("calling processor %s", svm->story);
+	if (PBAD(logger, svm->exchange == NULL)) {
+		return;
+	}
+
+	if (svm->log_transition_start ||
+	    svm->exchange->log_transition_start) {
+		/*
+		 * This log line establishes that a secured requst has
+		 * been decrypted and is now being processed for real.
+		 *
+		 * XXX but what about liveness packets; they should
+		 * not log.
+		 */
+		llog_transition_start(RC_LOG, ike->sa.logger, svm, md);
+	} else if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		llog_transition_start(DEBUG_STREAM, ike->sa.logger, svm, md);
+	}
 
 	/*
 	 * XXX: for now pass in NULL for the child.
@@ -1345,8 +1420,8 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 * Danger! Processor did something dodgy like free the
 		 * IKE SA!
 		 */
-		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
-		    svm->story, old_ike);
+		ldbg(logger, "processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
+		     svm->story, pri_so(old_ike));
 	} else {
 		complete_v2_state_transition(ike, md, e);
 	}
@@ -1359,6 +1434,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 					struct msg_digest *md,
 					const struct v2_transition *transition)
 {
+	struct logger *logger = ike->sa.logger;
 	passert(ike != NULL);
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
@@ -1374,7 +1450,26 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	v2_msgid_finish(ike, md, HERE);
 
-	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
+	/*
+	 * XXX:
+	 *
+	 * The IKE SA "establishes" midway through processing the
+	 * IKE_AUTH exchange.  That is, after the IKE SA has been
+	 * authenticated and before any Child SA payloads are
+	 * processed.  Hence, this isn't the place to handle a
+	 * JUST-ESTABLISHED transition.
+	 *
+	 * Specifically, NATed addresses need to be updated BEFORE
+	 * Child SA payloads can be processed and Child SA kernel
+	 * state/policy installed (if it doesn't happen, they use the
+	 * wrong value).
+	 *
+	 * Suspect code trying to handle non-MOBIKE NAT (where packet
+	 * from new address triggers address change) will need to
+	 * update addresses BEFORE processing the triggering packet -
+	 * again that packet could be for a new Child SA and, hence,
+	 * needs up-to-date address information.
+	 */
 
 	change_v2_state(&ike->sa);
 	v2_msgid_schedule_next_initiator(ike);
@@ -1382,111 +1477,6 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	passert(ike->sa.st_state->kind >= STATE_IKEv2_FLOOR);
 	passert(ike->sa.st_state->kind <  STATE_IKEv2_ROOF);
 
-	bool established_after = IS_IKE_SA_ESTABLISHED(&ike->sa);
-
-	bool just_established = (!established_before && established_after);
-
-	/*
-	 * 2.23.  NAT Traversal
-	 *
-	 * [...]
-	 *
-	 * o There are cases where a NAT box decides to remove
-	 *   mappings that are still alive (for example, the keepalive
-	 *   interval is too long, or the NAT box is rebooted).  This
-	 *   will be apparent to a host if it receives a packet whose
-	 *   integrity protection validates, but has a different port,
-	 *   address, or both from the one that was associated with
-	 *   the SA in the validated packet.  When such a validated
-	 *   packet is found, a host that does not support other
-	 *   methods of recovery such as IKEv2 Mobility and
-	 *   Multihoming (MOBIKE) [MOBIKE], and that is not behind a
-	 *   NAT, SHOULD send all packets (including retransmission
-	 *   packets) to the IP address and port in the validated
-	 *   packet, and SHOULD store this as the new address and port
-	 *   combination for the SA (that is, they SHOULD dynamically
-	 *   update the address).  A host behind a NAT SHOULD NOT do
-	 *   this type of dynamic address update if a validated packet
-	 *   has different port and/or address values because it opens
-	 *   a possible DoS attack (such as allowing an attacker to
-	 *   break the connection with a single packet).  Also,
-	 *   dynamic address update should only be done in response to
-	 *   a new packet; otherwise, an attacker can revert the
-	 *   addresses with old replayed packets.  Because of this,
-	 *   dynamic updates can only be done safely if replay
-	 *   protection is enabled.  When IKEv2 is used with MOBIKE,
-	 *   dynamically updating the addresses described above
-	 *   interferes with MOBIKE's way of recovering from the same
-	 *   situation.  See Section 3.8 of [MOBIKE] for more
-	 *   information.
-	 *
-	 * XXX: so ....
-	 *
-	 * do nothing
-	 */
-	if (ike->sa.st_iface_endpoint->esp_encapsulation_enabled &&
-	    /*
-	     * Only when MOBIKE is not in the picture.
-	     */
-	    !ike->sa.st_v2_mobike.enabled &&
-	    /*
-	     * Only when responding ...
-	     */
-	    v2_msg_role(md) == MESSAGE_REQUEST &&
-	    /*
-	     * Only when the request changes the remote's endpoint ...
-	     */
-	    !endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
-	    /*
-	     * Only when the request was protected and passes
-	     * integrity ...
-	     *
-	     * Once keymat is present, only encrypted messessages with
-	     * valid integrity can successfully complete a transaction
-	     * with STF_OK.  True?  True.
-	     *
-	     * IS_IKE_SA_ESTABLISHED() better?  False.  IKE_AUTH
-	     * messages meet the above requirements.
-	     */
-	    ike->sa.hidden_variables.st_skeyid_calculated &&
-	    md->encrypted_payloads.parsed &&
-	    md->encrypted_payloads.n == v2N_NOTHING_WRONG &&
-	    /*
-	     * Only when the local IKE SA isn't behind NAT but the
-	     * remote IKE SA is ...
-	     */
-	    !ike->sa.hidden_variables.st_nated_host &&
-	    ike->sa.hidden_variables.st_nated_peer) {
-		/*
-		 * XXX: are these guards sufficient?
-		 */
-		endpoint_buf sb, mb;
-		llog_sa(RC_LOG, ike, "NAT: MOBIKE disabled, ignoring peer endpoint change from %s to %s",
-			str_endpoint(&ike->sa.st_remote_endpoint, &sb),
-			str_endpoint(&md->sender, &mb));
-#if 0
-		/*
-		 * Implementing this properly requires:
-		 *
-		 * + an audit of the above guards; are they
-		 *   sufficient?
-		 *
-		 * + an update to the IKE SA's remote endpoint per
-		 *   below
-		 *
-		 * + an update to any installed IPsec kernel state and
-		 *   policy
-		 *
-		 * While this code was added in some form in '05, the
-		 * code to update IPsec - was never implemented.  The
-		 * result was an IKE SA yet the IPsec SAs had no
-		 * traffic flow.
-		 *
-		 * See github/1529 and github/1492.
-		 */
-		ike->sa.st_remote_endpoint = md->sender;
-#endif
-	}
 	/*
 	 * Schedule for whatever timeout is specified (and shut down
 	 * any short term timers).
@@ -1500,7 +1490,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * indicate that a request is being sent and a
 		 * retransmit should already be scheduled.
 		 */
-		dbg("checking that a retransmit timeout_event was already");
+		ldbg(logger, "checking that a retransmit timeout_event was already");
 		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retransmit */
 		pexpect(ike->sa.st_v2_retransmit_event != NULL);
 		/* reverse polarity */
@@ -1534,8 +1524,8 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		const struct state_event *lifetime_event = st_v2_lifetime_event(&ike->sa);
 		if (PEXPECT(ike->sa.logger, lifetime_event != NULL)) {
 			name_buf tb;
-			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
-			     ike->sa.st_serialno,
+			ldbg(ike->sa.logger, ""PRI_SO" is retaining %s with is previously set timeout",
+			     pri_so(ike->sa.st_serialno),
 			     str_enum_long(&event_type_names, lifetime_event->ev_type, &tb));
 		}
 		break;
@@ -1553,12 +1543,10 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 	switch (transition->recv_role) {
 	case NO_MESSAGE: /* initiating a new exchange */
-		send_recorded_v2_message(ike, transition->story,
-					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 		break;
 	case MESSAGE_REQUEST: /* responding */
-		send_recorded_v2_message(ike, transition->story,
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		break;
 	case MESSAGE_RESPONSE: /* finishing exchange */
 		break;
@@ -1571,14 +1559,12 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 
         if (PBAD(ike->sa.logger, transition->llog_success == NULL)) {
-		ldbg_v2_success(ike);
+		ldbg_success_ikev2(ike, md);
 	} else {
-		transition->llog_success(ike);
+		transition->llog_success(ike, md);
 	}
 
-	if (just_established) {
-		release_whack(ike->sa.logger, HERE);
-	} else if (transition->flags.release_whack) {
+	if (transition->flags.release_whack) {
 		release_whack(ike->sa.logger, HERE);
 	}
 }
@@ -1659,7 +1645,7 @@ stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
  *     -svm->flags, story
  *   - find from_state (st might be gone)
  *   - ikev2_update_msgid_counters(md);
- *   - nat_traversal_change_port_lookup(md, st)
+ *   - ikev2_nat_change_port_lookup(md, st)
  * - !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) to gate Notify payloads/exchanges [WRONG]
  * - find note for STF_INTERNAL_ERROR
  * - find note for STF_FAIL_v1N (might not be part of result (STF_FAIL_v1N+note))
@@ -1687,10 +1673,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	pstat(stf_status, result);
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam(buf, "#%lu complete_v2_state_transition() status ", ike->sa.st_serialno);
+		jam_so(buf, ike->sa.st_serialno);
+		jam_string(buf, " complete_v2_state_transition() status ");
 		jam_enum_long(buf, &stf_status_names, result);
-		jam(buf, " transitioning from state %s to ",
-		    ike->sa.st_state->short_name);
+		jam(buf, " transitioning from state %s to ", ike->sa.st_state->short_name);
 		jam_v2_transition(buf, transition);
 	}
 
@@ -1753,8 +1739,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_RESPONDER_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
 		v2_msgid_finish(ike, md, HERE);
-		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
 		terminate_ike_family(&ike, REASON_DELETED, HERE);
@@ -1813,8 +1798,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_finish(ike, md, HERE);
-				send_recorded_v2_message(ike, "STF_FATAL",
-							 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+				send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			} else {
 				llog_pexpect_v2_msgid(ike, "exchange zombie: no FATAL message response was recorded!?!");
 			}
@@ -1854,7 +1838,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	stf_status (*resume)(struct ike_sa *ike) = arg;
 
 	if (st == NULL) {
-		dbg(" lost state for %s", story);
+		ldbg(&global_logger, " lost state for %s", story);
 		return;
 	}
 
@@ -1881,7 +1865,8 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	 */
 	if (ike->sa.st_iface_endpoint != NULL &&
 	    ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
+		ldbg(ike->sa.logger, "TCP: freeing interface as "PRI_SO" is restarting",
+		     pri_so(ike->sa.st_serialno));
 		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,
@@ -1902,9 +1887,11 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 		/*
 		 * Danger! Processor did something dodgy like free ST!
+		 *
+		 * DO NOT USE ST; it is broken.
 		 */
-		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
-		    story, old_st);
+		ldbg(&global_logger, "processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
+		     story, pri_so(old_st));
 	} else {
 		complete_v2_state_transition(ike, NULL, e);
 	}
@@ -1914,9 +1901,10 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike))
 {
-	schedule_callback("reinitiating IKE_SA_INIT", deltatime(0),
+	schedule_callback("reinitiating IKE_SA_INIT", deltatime_from_seconds(0),
 			  ike->sa.st_serialno,
-			  reinitiate_v2_ike_sa_init, resume);
+			  reinitiate_v2_ike_sa_init, resume,
+			  ike->sa.logger);
 }
 
 bool v2_notification_fatal(v2_notification_t n)
@@ -1965,8 +1953,8 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		if (!streq(st->st_connection->base_name, c->base_name)) {
 			continue;
 		}
-		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",
-		     st->st_serialno, ike->sa.st_serialno);
+		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation "PRI_SO" using IKE SA "PRI_SO"",
+		     pri_so(st->st_serialno), pri_so(ike->sa.st_serialno));
 		return true;
 	}
 
@@ -1979,28 +1967,55 @@ bool accept_v2_notification(v2_notification_t n,
 			    bool enabled)
 {
 	enum v2_pd pd = v2_pd_from_notification(n);
-	if (md->pd[pd] != NULL) {
-		if (enabled) {
-			name_buf eb, rb;
-			ldbg(logger, "accepted %s notification %s",
-			     str_enum_short(&v2_notification_names, n, &eb),
-			     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
-			return true;
-		}
-		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
+	bool responder = (v2_msg_role(md) == MESSAGE_REQUEST);
+	bool proposed = (md->pd[pd] != NULL);
+
+	if (enabled && proposed) {
+		if (responder) {
 			name_buf eb;
-			llog(RC_LOG, logger,
-			     "unsolicited %s notification response ignored",
+			ldbg(logger, "accepting proposed %s notification from initiator",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		} else {
 			name_buf eb;
-			ldbg(logger, "%s notification request ignored",
+			ldbg(logger, "responder accepted our proposed %s notification",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		}
+		return true;
+	}
+
+	if (enabled) {
+		PEXPECT(logger, !proposed);
+		if (responder) {
+			name_buf eb;
+			ldbg(logger, "acceptable %s notification was not proposed by initiator",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		} else {
+			name_buf eb;
+			ldbg(logger, "our proposed %s notification was rejected by responder",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		}
 		return false;
 	}
+
+	if (proposed) {
+		PEXPECT(logger, !enabled);
+		if (responder) {
+			name_buf eb;
+			ldbg(logger, "proposed %s notification is not enabled in responder",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		} else {
+			name_buf eb;
+			llog(RC_LOG, logger, "ignoring unsolicited %s notification in response",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		}
+		return false;
+	}
+
+	PEXPECT(logger, !proposed);
+	PEXPECT(logger, !enabled);
+
 	name_buf eb;
-	ldbg(logger, "%s neither requested nor accepted",
+	ldbg(logger, "%s notification neither proposed nor allowed",
 	     str_enum_short(&v2_notification_names, n, &eb));
 	return false;
 }
@@ -2013,7 +2028,7 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 	}
 	jam_string(buf, transition->to->short_name);
 	jam_string(buf, " (");
-	jam_enum_long(buf, &ikev2_exchange_names, transition->exchange);
+	jam_string(buf, transition->exchange->name);
 	jam_string(buf, " ");
 	jam_enum_long(buf, &message_role_names, transition->recv_role);
 	jam_string(buf, ": ");
@@ -2024,12 +2039,41 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_exchange *exchange)
 {
 	const struct finite_state *state = ike->sa.st_state;
-	ldbg(ike->sa.logger, "looking for exchange '%s' in state '%s'",
-	     exchange->subplot, state->short_name);
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam_string(buf, "looking for exchange ");
+		jam_string(buf, exchange->name);
+		jam_string(buf, " in state ");
+		jam_string(buf, state->short_name);
+	}
 	FOR_EACH_ELEMENT(f, exchange->initiate.from) {
 		if (*f == state) {
 			return true;
 		}
 	}
 	return false;
+}
+
+void llog_transition_start(enum stream stream, struct logger *logger,
+			   const struct v2_transition *svm,
+			   const struct msg_digest *md)
+{
+	LLOG_JAMBUF(stream, logger, buf) {
+
+		jam_string(buf, "processing ");
+
+		PEXPECT(logger, svm->exchange->type == md->hdr.isa_xchg);
+		jam_string(buf, svm->exchange->name);
+
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST: jam_string(buf, " request"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, " response"); break;
+		case NO_MESSAGE: break;
+		}
+
+		jam_string(buf, " from ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
+
+		jam_string(buf, " containing ");
+		jam_msg_digest_payloads(buf, md);
+	}
 }

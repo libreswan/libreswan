@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-east
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -45,7 +45,7 @@ west #
 "west-east" #2: sent Quick Mode request
 "west-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
@@ -64,8 +64,8 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
-timeout waiting 30 seconds for cat /tmp/pluto.log to match #3: IMPAIR: revival
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #3: revival'
+timeout waiting 30 seconds for cat /tmp/pluto.log to match IMPAIR: .* #3: revival
 output: |    next payload type: ISAKMP_NEXT_KE (0x4)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_IDPROT (0x2)
@@ -671,7 +671,7 @@ output: | revival: skip update_remote_port(), not an instance
 output: "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 output: | string logger: newref @0x7f18d5449fc8(0->1) (schedule_connection_event() +44 programs/pluto/connection_event.c)
 output: | "west-east": addref @0x7f18d5ea1a78(4->5) event CONNECTION_REVIVAL for "west-east":  (schedule_connection_event() +49 programs/pluto/connection_event.c)
-output: "west-east" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: output: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_ONDEMAND[ONDEMAND]
 output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (routed_negotiation_to_routed_ondemand() +911 programs/pluto/routing.c)
 output: |   found "west-east" 192.0.1.0/24===192.0.2.0/24

@@ -14,8 +14,17 @@
  * for more details.
  */
 
-#ifndef _IKEV2_REDIRECT_H
-#define _IKEV2_REDIRECT_H
+#ifndef IKEV2_REDIRECT_H
+#define IKEV2_REDIRECT_H
+
+#include <stdbool.h>
+
+#include "ip_address.h"
+
+struct msg_digest;
+struct pbs_out;
+struct ike_sa;
+struct child_sa;
 
 extern void free_global_redirect_dests(void);
 
@@ -57,9 +66,6 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *st
  * 	  peers on the machine.
  * @param ard_str comma-separated string containing the destinations.
  */
-extern void find_and_active_redirect_states(const char *conn_name,
-					    const char *active_redirect_dests,
-					    struct logger *logger);
 
 extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							       struct child_sa *child,
@@ -71,6 +77,18 @@ extern const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange;
 
 void init_global_redirect(enum global_redirect redirect, const char *redirect_to, struct logger *logger);
 void show_global_redirect(struct show *s);
-void whack_global_redirect(const struct whack_message *wm, struct show *s);
+void set_global_redirect(enum global_redirect redirect,
+			 const char *dests,
+			 struct logger *logger);
+
+struct redirect_dests {
+	char *whole;
+	unsigned next;	/* points into whole */
+	struct shunks *splits;
+};
+
+bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests);
+shunk_t next_redirect_dest(struct redirect_dests *rl);
+void free_redirect_dests(struct redirect_dests *dests);
 
 #endif

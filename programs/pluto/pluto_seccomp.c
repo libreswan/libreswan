@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "lswseccomp.h"
-#include "config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "defs.h"
 #include "log.h"
@@ -98,6 +98,8 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(getpgrp);
 		LSW_SECCOMP_ADD(getppid);
 		LSW_SECCOMP_ADD(getrandom); /* for unbound */
+		LSW_SECCOMP_ADD(getresgid);
+		LSW_SECCOMP_ADD(getresuid);
 		LSW_SECCOMP_ADD(getrlimit);
 		LSW_SECCOMP_ADD(getsockname);
 		LSW_SECCOMP_ADD(getsockopt);
@@ -181,14 +183,14 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	}
 }
 
-static enum seccomp_mode seccomp_mode(const struct config_setup *oco)
+static enum seccomp_mode seccomp_mode(void)
 {
-	return config_setup_option(oco, KBF_SECCOMP);
+	return config_setup_option(KBF_SECCOMP);
 }
 
-void init_seccomp_main(const struct config_setup *oco, struct logger *logger)
+void init_seccomp_main(struct logger *logger)
 {
-	switch (seccomp_mode(oco)) {
+	switch (seccomp_mode()) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, true, logger);
 		llog(RC_LOG, logger, "seccomp security enabled in strict mode");
@@ -205,38 +207,36 @@ void init_seccomp_main(const struct config_setup *oco, struct logger *logger)
 		llog(RC_LOG, logger, "seccomp security is not enabled");
 		break;
 	default:
-		bad_case(seccomp_mode(oco));
+		bad_case(seccomp_mode());
 	}
 
 }
 
-void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
+void init_seccomp_helper(struct logger *logger)
 {
-	const struct config_setup *oco = config_setup_singleton();
-	switch (seccomp_mode(oco)) {
+	switch (seccomp_mode()) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, false, logger);
-		llog(RC_LOG, logger, "seccomp security enabled in strict mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in strict mode");
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, false, logger);
-		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
 		/*
 		 * XXX: see above; also skip log as not helpful.
 		 */
-		ldbg(logger, "seccomp security is not enabled for crypto helper %d", helpernum);
+		ldbg(logger, "seccomp security is not enabled");
 		break;
 	default:
-		bad_case(seccomp_mode(oco));
+		bad_case(seccomp_mode());
 	}
 }
 
 void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show *s)
 {
 	struct logger *logger = show_logger(s);
-	const struct config_setup *oco = config_setup_singleton();
 
 	/*
 	 * This is a SECCOMP test, it CAN KILL pluto if successful!
@@ -252,7 +252,7 @@ void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show 
 	 * With seccomp=disabled, pluto will continue as if nothing
 	 * happened.
 	 */
-	if (seccomp_mode(oco) == SECCOMP_ENABLED) {
+	if (seccomp_mode() == SECCOMP_ENABLED) {
 		llog(RC_LOG, logger,
 		     "pluto is running with seccomp=enabled! pluto is expected to die!");
 	}
@@ -264,7 +264,7 @@ void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show 
 	if (testpid == -1) {
 		llog(RC_LOG, logger,
 		     "pluto: seccomp test syscall was blocked");
-		switch (seccomp_mode(oco)) {
+		switch (seccomp_mode()) {
 		case SECCOMP_TOLERANT:
 			llog(RC_LOG, logger,
 			     "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
@@ -274,56 +274,54 @@ void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show 
 			     "OK: seccomp security was not enabled and the rogue syscall was blocked");
 			break;
 		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
 			break;
 		default:
-			bad_case(seccomp_mode(oco));
+			bad_case(seccomp_mode());
 		}
 	} else {
 		llog(RC_LOG, logger,
 		     "pluto: seccomp test syscall was not blocked");
-		switch (seccomp_mode(oco)) {
+		switch (seccomp_mode()) {
 		case SECCOMP_TOLERANT:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was tolerant but the rogue syscall was not blocked!");
 			break;
 		case SECCOMP_DISABLED:
 			llog(RC_LOG, logger,
 			     "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
 			break;
 		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall was not blocked!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was enabled but the rogue syscall was not blocked!");
 			break;
 		default:
-			bad_case(seccomp_mode(oco));
+			bad_case(seccomp_mode());
 		}
 	}
 }
 
-void show_seccomp(const struct config_setup *oco, struct show *s)
+void show_seccomp(struct show *s)
 {
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "seccomp=");
-		jam_sparse_short(buf, &seccomp_mode_names, seccomp_mode(oco));
+		jam_sparse_short(buf, &seccomp_mode_names, seccomp_mode());
 	}
 }
 
-void seccomp_sigsys_handler(struct logger *logger)
+void seccomp_sigsys_handler(struct verbose verbose)
 {
-	const struct config_setup *oco = config_setup_singleton();
-
-	switch (seccomp_mode(oco)) {
+	switch (seccomp_mode()) {
 	case SECCOMP_ENABLED:
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0,
-		      "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
+		vfatal(PLUTO_EXIT_SECCOMP_FAIL, /*no-errno*/0,
+		       "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
 	case SECCOMP_TOLERANT:
-		llog(RC_LOG, logger, "pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
+		vlog("pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
 		return;
 	case SECCOMP_DISABLED:
-		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
-		      "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
+		vfatal(PLUTO_EXIT_FAIL, /*no-errno*/0,
+		       "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
 	}
-	bad_case(seccomp_mode(oco));
+	bad_case(seccomp_mode());
 }

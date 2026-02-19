@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aggr
-"westnet-eastnet-aggr": added IKEv1 connection
+"westnet-eastnet-aggr": added oriented IKEv1 connection
 west #
  ipsec whack --impair timeout_on_retransmit
 west #
@@ -22,9 +22,9 @@ west #
 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 "westnet-eastnet-aggr" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-"westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-aggr" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-aggr" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-aggr" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
  echo done

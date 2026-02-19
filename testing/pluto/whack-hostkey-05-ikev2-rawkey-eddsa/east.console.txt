@@ -1,0 +1,52 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ # scrub any password file
+east #
+ :> /etc/ipsec.secrets
+east #
+ # start
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # generate fresh keys
+east #
+ ../../guestbin/genhostkey.sh $PWD
+raw eddsa
+us=east them=west leftright=right
+east #
+ # fix/add hostkey config
+east #
+ cp ipsec.conf /etc/ipsec.conf
+east #
+ cat OUTPUT/east.hostkey >>/etc/ipsec.conf
+east #
+ cat OUTPUT/west.hostkey >>/etc/ipsec.conf
+east #
+ cat /etc/ipsec.conf
+# /etc/ipsec.conf - Libreswan IPsec configuration file
+config setup
+	# put the logs in /tmp for the UMLs, so that we can operate
+	# without syslogd, which seems to break on UMLs
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	dumpdir=/tmp
+	plutodebug=all
+conn hostkey
+	left=192.1.2.45
+	leftsubnet=192.0.1.0/24
+	right=192.1.2.23
+	rightsubnet=192.0.2.0/24
+	authby=eddsa
+	# right keyid: <<KEYID#1>>
+	righteddsakey=0s<<RAW-PUBKEY#1>>
+	# left keyid: <<KEYID#2>>
+	lefteddsakey=0s<<RAW-PUBKEY#2>>
+east #
+ ipsec auto --add hostkey
+"hostkey": added oriented IKEv2 connection
+east #

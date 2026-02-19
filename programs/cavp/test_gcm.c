@@ -76,7 +76,7 @@ static struct cavp_entry data[] = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.common = {
 		.fqn = "AES_GCM",
-		.algo_type =   IKE_ALG_ENCRYPT,
+		.type =   &ike_alg_encrypt,
 		.fips.approved = true,
 	},
 	.nss = {
@@ -94,7 +94,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.common = {
 		.fqn = "AES_GCM",
-		.algo_type =   IKE_ALG_ENCRYPT,
+		.type =   &ike_alg_encrypt,
 		.fips.approved = true,
 	},
 	.nss = {
@@ -112,7 +112,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.common = {
 		.fqn = "AES_GCM",
-		.algo_type =   IKE_ALG_ENCRYPT,
+		.type =   &ike_alg_encrypt,
 		.fips.approved = true,
 	},
 	.nss = {
@@ -130,7 +130,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.common = {
 		.fqn = "AES_GCM",
-		.algo_type =   IKE_ALG_ENCRYPT,
+		.type =   &ike_alg_encrypt,
 		.fips.approved = true,
 	},
 	.nss = {
@@ -190,11 +190,11 @@ static void gcm_run_test(struct logger *logger)
 							    key,
 							    HERE, logger);
 
-	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
+	chunk_t text_and_tag = clone_hunk_hunk_as_chunk(&ct, &tag, "text-and-tag");
 
 	bool result = cipher_aead(gcm_alg, DECRYPT, USE_WIRE_IV,
-				  HUNK_AS_SHUNK(salt), iv,
-				  HUNK_AS_SHUNK(aad),
+				  HUNK_AS_SHUNK(&salt), iv,
+				  HUNK_AS_SHUNK(&aad),
 				  text_and_tag,
 				  ct.len, tag.len,
 				  gcm_key,

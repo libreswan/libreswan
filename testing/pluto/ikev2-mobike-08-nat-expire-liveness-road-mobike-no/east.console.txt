@@ -11,5 +11,5 @@ east #
  ipsec whack --impair suppress_retransmits
 east #
  ipsec add east
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #

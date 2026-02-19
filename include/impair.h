@@ -24,7 +24,7 @@
 struct fd;
 struct logger;
 struct jambuf;
-struct whack_impair;
+struct whack_impairment;
 
 /*
  * Make a mess of the DDOS cookie.
@@ -138,12 +138,12 @@ struct impair {
 	enum impair_v2_transform v2_proposal_integ;
 	enum impair_v2_transform v2_proposal_dh;
 
+	/* format is <TYPE:8><ID:16> */
 	struct impair_unsigned ikev2_add_ike_transform;
 	struct impair_unsigned ikev2_add_child_transform;
 
 	bool replay_encrypted;
 	bool corrupt_encrypted;
-	bool proposal_parser;
 
 	bool allow_dns_insecure;
 	bool send_pkcs7_thingie;
@@ -170,7 +170,6 @@ struct impair {
 	struct impair_unsigned omit_v2_notification;
 
 	bool omit_v2_ike_auth_child;
-	bool ignore_v2_ike_auth_child;
 
 	bool event_check_crls;
 	bool ignore_soft_expire;
@@ -222,7 +221,7 @@ enum impair_status {
 };
 
 enum impair_status parse_impair(const char *optarg,
-				struct whack_impair *whack_impair,
+				struct whack_impairment *impairment,
 				bool enable, struct logger *logger);
 
 enum impair_message_direction {
@@ -252,7 +251,7 @@ enum impair_action {
 #endif
 };
 
-bool process_impair(const struct whack_impair *whack_impair,
+bool process_impair(const struct whack_impairment *impairment,
 		    void (*action)(enum impair_action impairment_action,
 				   unsigned impairment_param,
 				   bool whack_enable,

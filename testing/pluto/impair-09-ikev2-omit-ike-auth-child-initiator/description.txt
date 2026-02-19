@@ -1,0 +1,1 @@
+initiator impaired to omit the Child SA request in IKE_AUTH

@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add chacha
-"chacha": added IKEv2 connection
+"chacha": added oriented IKEv2 connection
 west #
  ipsec whack --impair timeout_on_retransmit
 west #
@@ -35,8 +35,9 @@ west #
 "chacha" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "chacha" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}, initiating IKE_AUTH
 "chacha" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"chacha" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "chacha" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"chacha" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}
+"chacha" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -53,6 +54,7 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 	aead rfc7539esp(chacha20,poly1305) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -62,6 +64,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src 192.0.1.0/24 dst 192.0.2.0/24

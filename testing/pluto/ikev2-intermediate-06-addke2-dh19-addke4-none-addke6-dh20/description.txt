@@ -1,0 +1,1 @@
+IKE_INTERMEDIATE with gaps - addke2=dh19;addke4=none;addke6=dh20 - should be skipped

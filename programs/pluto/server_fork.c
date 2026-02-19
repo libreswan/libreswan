@@ -78,7 +78,8 @@ static size_t jam_pid_entry(struct jambuf *buf, const struct pid_entry *entry)
 	size_t s = 0;
 	passert(entry->magic == PID_MAGIC);
 	if (entry->serialno != SOS_NOBODY) {
-		s += jam(buf, "#%lu ", entry->serialno);
+		s += jam_so(buf, entry->serialno);
+		s += jam_string(buf, " ");
 	}
 	s += jam(buf, "%s pid %d", entry->name, entry->pid);
 	return s;
@@ -106,7 +107,7 @@ static struct pid_entry *pid_entry_by_pid(const pid_t pid)
 }
 
 static void pid_entry_db_init(struct logger *logger);
-static void pid_entry_db_check(struct logger *logger);
+static void pid_entry_db_check(const struct logger *logger, where_t where);
 static void pid_entry_db_init_pid_entry(struct pid_entry *);
 static void pid_entry_db_add(struct pid_entry *);
 static void pid_entry_db_del(struct pid_entry *);
@@ -138,7 +139,7 @@ static struct pid_entry *add_pid(const char *name,
 {
 	ldbg(logger, "forked child %s %d", name, pid);
 	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
-	ldbg_alloc(&global_logger, "pid", new_pid, HERE);
+	ldbg_newref(&global_logger, new_pid);
 	new_pid->magic = PID_MAGIC;
 	new_pid->pid = pid;
 	new_pid->callback = callback;
@@ -153,12 +154,14 @@ static struct pid_entry *add_pid(const char *name,
 	return new_pid;
 }
 
-static void free_pid_entry(struct pid_entry **p)
+static void delete_pid_entry(struct pid_entry **p)
 {
+	pid_entry_db_del((*p));
 	free_logger(&(*p)->logger, HERE);
 	free_chunk_content(&(*p)->output);
 	md_delref(&(*p)->md);
-	ldbg_free(&global_logger, "pid", *p, HERE);
+	detach_fd_read_listener(&(*p)->fdl);	/* NULL is ok */
+	ldbg_delref(&global_logger, *p);
 	pfree(*p);
 	*p = NULL;
 }
@@ -180,7 +183,8 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	char buf[LOG_WIDTH/2];
 	ssize_t len = read(pid_entry->fd, buf, sizeof(buf));
 	if (len < 0) {
-		llog_error(pid_entry->logger, errno, "%s: reading fd %d failed: ",
+		llog_errno(ERROR_STREAM, pid_entry->logger, errno,
+			   "%s: reading fd %d failed: ",
 			   pid_entry->name, pid_entry->fd);
 		return false;
 	}
@@ -228,11 +232,11 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	return true; /* try again */
 }
 
-static void child_output_listener(int fd, void *arg, struct logger *logger)
+static void child_output_listener(struct verbose verbose, int fd, void *arg)
 {
 	struct pid_entry *pid_entry = arg;
-	PASSERT(logger, pid_entry->fdl != NULL);
-	PASSERT(logger, pid_entry->fd == fd);
+	vassert(pid_entry->fdl != NULL);
+	vassert(pid_entry->fd == fd);
 	drain_fd(pid_entry);
 }
 
@@ -252,7 +256,7 @@ static pid_t child_pipeline(const char *name,
 #define FD_IN 0
 #define FD_OUT 1
 	if (pipe2(fdpipe, O_CLOEXEC) < 0) {
-		llog_error(logger, errno, "pipe2() failed");
+		llog_errno(ERROR_STREAM, logger, errno, "pipe2() failed: ");
 		return -1;
 	}
 
@@ -262,7 +266,7 @@ static pid_t child_pipeline(const char *name,
 
 	case -1:
 	{
-		llog_error(logger, errno, "fork failed");
+		llog_errno(ERROR_STREAM, logger, errno, "fork failed: ");
 		return -1;
 	}
 
@@ -305,9 +309,10 @@ static pid_t child_pipeline(const char *name,
 		if (input.len > 0) {
 			ssize_t n = write(fdpipe[FD_OUT], input.ptr, input.len);
 			if (n < 0) {
-				llog_error(logger, errno, "write to %d failed", pid);
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "write to %d failed: ", pid);
 			} else if (n != (ssize_t)input.len) {
-				llog_error(logger, 0, "write to %d truncated", pid);
+				llog(ERROR_STREAM, logger, "write to %d truncated", pid);
 			}
 		}
 		close(fdpipe[FD_OUT]);
@@ -401,7 +406,7 @@ static void jam_status(struct jambuf *buf, int status)
 	jam_string(buf, ")");
 }
 
-void server_fork_sigchld_handler(struct logger *logger)
+void server_fork_sigchld_handler(struct verbose verbose)
 {
 	while (true) {
 		int status;
@@ -410,25 +415,23 @@ void server_fork_sigchld_handler(struct logger *logger)
 		switch (child) {
 		case -1: /* error? */
 			if (errno == ECHILD) {
-				dbg("waitpid returned ECHILD (no child processes left)");
+				vdbg("waitpid returned ECHILD (no child processes left)");
 			} else {
-				llog_error(logger, errno, "waitpid unexpectedly failed");
+				verror(errno, "waitpid unexpectedly failed: ");
 			}
 			return;
 		case 0: /* nothing to do */
-			dbg("waitpid returned nothing left to do (all child processes are busy)");
+			vdbg("waitpid returned nothing left to do (all child processes are busy)");
 			return;
 		default:
-			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-				jam(buf, "waitpid returned pid %d",
-					child);
+			VDBG_JAMBUF(buf) {
+				jam(buf, "waitpid returned pid %d", child);
 				jam_status(buf, status);
 			}
 			struct pid_entry *pid_entry = pid_entry_by_pid(child);
 			if (pid_entry == NULL) {
-				LLOG_JAMBUF(RC_LOG, logger, buf) {
-					jam(buf, "waitpid return unknown child pid %d",
-						child);
+				VLOG_JAMBUF(buf) {
+					jam(buf, "waitpid return unknown child pid %d", child);
 					jam_status(buf, status);
 				}
 				continue;
@@ -443,36 +446,38 @@ void server_fork_sigchld_handler(struct logger *logger)
 			struct state *st = state_by_serialno(pid_entry->serialno);
 			if (pid_entry->serialno == SOS_NOBODY) {
 				pid_entry->callback(NULL, NULL, status,
-						    HUNK_AS_SHUNK(pid_entry->output),
+						    HUNK_AS_SHUNK(&pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else if (st == NULL) {
-				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				LDBGP_JAMBUF(DBG_BASE, pid_entry->logger, buf) {
 					jam_pid_entry(buf, pid_entry);
 					jam_string(buf, " disappeared");
 				}
 				pid_entry->callback(NULL, NULL, status,
-						    HUNK_AS_SHUNK(pid_entry->output),
+						    HUNK_AS_SHUNK(&pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
 				if (LDBGP(DBG_CPU_USAGE, pid_entry->logger)) {
 					deltatime_t took = monotime_diff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
-					LDBG_log(pid_entry->logger, "#%lu waited %s for '%s' fork()",
-						 st->st_serialno, str_deltatime(took, &dtb),
+					LDBG_log(pid_entry->logger, ""PRI_SO" waited %s for '%s' fork()",
+						 pri_so(st->st_serialno),
+						 str_deltatime(took, &dtb),
 						 pid_entry->name);
 				}
 				statetime_t start = statetime_start(st);
 				const enum ike_version ike_version = st->st_ike_version;
 				stf_status ret = pid_entry->callback(st, pid_entry->md, status,
-								     HUNK_AS_SHUNK(pid_entry->output),
+								     HUNK_AS_SHUNK(&pid_entry->output),
 								     pid_entry->context,
 								     pid_entry->logger);
 				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 					/* MD.ST may have been freed! */
-					dbg("resume %s for #%lu skipped complete_v%d_state_transition()",
-					    pid_entry->name, pid_entry->serialno, ike_version);
+					ldbg(pid_entry->logger,
+					     "resume %s for "PRI_SO" skipped complete_v%d_state_transition()",
+					     pid_entry->name, pri_so(pid_entry->serialno), ike_version);
 				} else {
 					complete_state_transition(st, pid_entry->md, ret);
 				}
@@ -480,8 +485,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					       pid_entry->name);
 			}
 			/* clean it up */
-			pid_entry_db_del(pid_entry);
-			free_pid_entry(&pid_entry);
+			delete_pid_entry(&pid_entry);
 			continue;
 		}
 	}
@@ -492,7 +496,19 @@ void init_server_fork(struct logger *logger)
 	pid_entry_db_init(logger);
 }
 
-void check_server_fork(struct logger *logger)
+void check_server_fork(struct logger *logger, where_t where)
 {
-	pid_entry_db_check(logger);
+	pid_entry_db_check(logger, where);
+}
+
+void free_server_fork(struct logger *logger)
+{
+	struct pid_entry *e;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &pid_entry_db_list_head) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam_string(buf, "dropping ");
+			jam_pid_entry(buf, e);
+		}
+		delete_pid_entry(&e);
+	}
 }

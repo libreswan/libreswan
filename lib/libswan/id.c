@@ -51,7 +51,7 @@ const struct id empty_id = {
 /*
  * Convert textual form of id into a struct id.
  */
-err_t atoid(const char *src, struct id *id)
+diag_t ttoid(const char *src, struct id *id)
 {
 	*id = empty_id;
 
@@ -95,11 +95,11 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = empty_chunk;
 		err_t ugh = atodn((*src == '@') ? src + 1 : src, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s", ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = HUNK_AS_SHUNK(name),
+			.name = HUNK_AS_SHUNK(&name),
 			.scratch = name.ptr,
 		};
 		return NULL;
@@ -119,9 +119,9 @@ err_t atoid(const char *src, struct id *id)
 			&ipv4_info :
 			&ipv6_info;
 		ip_address addr;
-		err_t ugh = ttoaddress_dns(shunk1(src), afi, &addr);
-		if (ugh != NULL) {
-			return ugh;
+		diag_t d = ttoaddress_dns(shunk1(src), afi, &addr);
+		if (d != NULL) {
+			return d;
 		}
 		*id = (struct id) {
 			.kind = afi->id_ip_addr,
@@ -137,7 +137,7 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s", ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_KEY_ID,
@@ -154,7 +154,7 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s",ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
@@ -275,7 +275,7 @@ const char *str_id(const struct id *id, id_buf *buf)
 
 struct id clone_id(const struct id *src, const char *story)
 {
-	chunk_t name = clone_hunk(src->name, story);
+	chunk_t name = clone_hunk_as_chunk(&src->name, story);
 	struct id dst = {
 		.kind = src->kind,
 		.ip_addr = src->ip_addr,
@@ -336,6 +336,8 @@ bool id_is_any(const struct id *a)
 
 bool id_eq(const struct id *a, const struct id *b)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	if (a->kind != b->kind) {
 		return false;
 	}
@@ -345,7 +347,7 @@ bool id_eq(const struct id *a, const struct id *b)
 		return true; /* repeat of above for completeness */
 
 	case ID_NULL:
-		dbg("ID_NULL: id kind matches");
+		ldbg(&global_logger, "ID_NULL: id kind matches");
 		return true;
 
 	case ID_IPV4_ADDR:
@@ -376,11 +378,11 @@ bool id_eq(const struct id *a, const struct id *b)
 	}
 
 	case ID_FROMCERT:
-		dbg("%s() received ID_FROMCERT - unexpected", __func__);
-		return same_dn(a->name, b->name);
+		vdbg("%s() received ID_FROMCERT - unexpected", __func__);
+		return same_dn(a->name, b->name, verbose);
 
 	case ID_DER_ASN1_DN:
-		return same_dn(a->name, b->name);
+		return same_dn(a->name, b->name, verbose);
 
 	case ID_KEY_ID:
 		return hunk_eq(a->name, b->name);
@@ -393,7 +395,7 @@ bool id_eq(const struct id *a, const struct id *b)
 bool same_id(const struct id *a, const struct id *b)
 {
 	if (b->kind == ID_NONE || a->kind == ID_NONE) {
-		dbg("id type with ID_NONE means wildcard match");
+		ldbg(&global_logger, "id type with ID_NONE means wildcard match");
 		return true; /* it's the wildcard */
 	}
 
@@ -462,7 +464,7 @@ bool id_has_wildcards(const struct id *id)
 	}
 
 	id_buf b;
-	dbg("id %s has wildcards: %s", str_id(id, &b), bool_str(has_wildcards));
+	ldbg(&global_logger, "id %s has wildcards: %s", str_id(id, &b), bool_str(has_wildcards));
 
 	return has_wildcards;
 }

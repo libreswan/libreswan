@@ -1,0 +1,14 @@
+<varlistentry id='conn.firewall'>
+  <term>
+    <option>leftfirewall=</option>
+  </term>
+  <term>
+    <option>rightirewall=</option>
+  </term>
+  <listitem>
+    <para>
+      This option is obsolete and should not used anymore.
+    </para>
+  </listitem>
+</varlistentry>
+

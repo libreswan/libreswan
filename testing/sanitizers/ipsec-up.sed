@@ -31,7 +31,8 @@ b end-ipsec-up
 
   /^[a-z][a-z]* #$/ b end-ipsec-up
 
-  /retransmission; will wait/ b drop-ipsec-up
+  /retransmission; will wait/    b drop-ipsec-up
+  /retransmitting .*; will wait/ b drop-ipsec-up
 
 b next-ipsec-up
 

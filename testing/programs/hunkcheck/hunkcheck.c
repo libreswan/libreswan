@@ -185,11 +185,11 @@ static void check_hunk_eq(void)
 	}
 }
 
-static void check_shunk_slice(void)
+static void check_hunk_slice(void)
 {
 	static const struct test {
-		const char *l;
-		const char *r;
+		const char *hunk;
+		const char *slice;
 		int lo, hi;
 	} tests[] = {
 		{ "", "", 0, 0, },
@@ -209,15 +209,24 @@ static void check_shunk_slice(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_LR(stdout, " lo=%d hi=%d", t->lo, t->hi);
-		shunk_t l = shunk1(t->l);
-		shunk_t r = shunk1(t->r);
+		PRINTF(stdout, "hunk=%s lo=%d hi=%d slice=%s",
+		       t->hunk, t->lo, t->hi, t->slice);
+		chunk_t hunk = clone_bytes_as_chunk(t->hunk, strlen(t->hunk), "hunk");
+		shunk_t slice = shunk1(t->slice);
 
-		shunk_t t_slice = hunk_slice(l, t->lo, t->hi);
-		if (!hunk_eq(r, t_slice)) {
-			FAIL_LR("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
-				pri_shunk(t_slice), pri_shunk(r));
+		shunk_t shunk_slice = shunk_slice(hunk, t->lo, t->hi);
+		if (!hunk_eq(slice, shunk_slice)) {
+			FAIL("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			     pri_shunk(shunk_slice), pri_shunk(slice));
 		}
+
+		chunk_t chunk_slice = chunk_slice(hunk, t->lo, t->hi);
+		if (!hunk_eq(slice, chunk_slice)) {
+			FAIL("chunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			     pri_shunk(chunk_slice), pri_shunk(slice));
+		}
+
+		free_chunk_content(&hunk);
 	}
 }
 
@@ -257,8 +266,9 @@ static void check_shunk_token(void)
 
 		char t_delim = -1;
 		shunk_t t_token = shunk_token(&t_input, &t_delim, t->delims);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL_S("shunk_token() returned token '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_token), t->token);
 		}
@@ -268,7 +278,8 @@ static void check_shunk_token(void)
 			       t_delim, t->delim);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->input))) {
+		shunk_t t_input_shunk = shunk1(t->input);
+		if (!hunk_eq(t_input, t_input_shunk)) {
 			FAIL_S("shunk_token() returned input '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_input),
 			       t->input == NULL ? "NULL" : t->input);
@@ -306,13 +317,15 @@ static void check_shunk_span(void)
 
 		shunk_t t_input = shunk1(t->old);
 		shunk_t t_token = shunk_span(&t_input, t->accept);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL("shunk_span() returned token '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_token), t->token);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->new))) {
+		shunk_t t_new_shunk = shunk1(t->new);
+		if (!hunk_eq(t_input, t_new_shunk)) {
 			FAIL("shunk_span() returned new input '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_input), t->new);
 		}
@@ -337,16 +350,16 @@ static void check_shunk_clone(void)
 		const struct test *t = &tests[ti];
 		PRINT_S(stdout, "");
 		shunk_t s = shunk1(t->s);
-		chunk_t c = clone_hunk(s, "c");
+		chunk_t c = clone_hunk_as_chunk(&s, "c");
 		if (c.len != s.len) {
-			FAIL_S("clone_hunk(s).len returned %zu, expecting %zu",
+			FAIL_S("clone_hunk_as_chunk(&s).len returned %zu, expecting %zu",
 			       c.len, s.len);
 		}
 		if (c.ptr == NULL && s.ptr != NULL) {
-			FAIL_S("clone_hunk(s).ptr returned NULL, expecting non-NULL");
+			FAIL_S("clone_hunk_as_chunk(&s).ptr returned NULL, expecting non-NULL");
 		}
 		if (c.ptr != NULL && s.ptr == NULL) {
-			FAIL_S("clone_hunk(s).ptr returned non-NULL, expecting NULL");
+			FAIL_S("clone_hunk_as_chunk(&s).ptr returned non-NULL, expecting NULL");
 		}
 		free_chunk_content(&c);
 	}
@@ -359,14 +372,18 @@ static void check__hunk_char__hunk_byte(void)
 		size_t i;
 		char c;
 		int b;
+		char nc;
+		int nb;
 	} tests[] = {
 		/* empty always same */
-		{ "", 0, '\0', -1, },
-		{ "a", 0, 'a', 'a', },
-		{ "a", 1, '\0', -1, },
-		{ "ab", 0, 'a', 'a', },
-		{ "ab", 1, 'b', 'b', },
-		{ "ab", 2, '\0', -1, },
+		{ "", 0, '\0', -1, '\0', -1, },
+		{ "", 1, '\0', -1, '\0', -1, },
+		{ "a", 0, 'a', 'a', '\0', -1, },
+		{ "a", 1, '\0', -1, 'a', 'a', },
+		{ "ab", 0, 'a', 'a', 'a', 'a', },
+		{ "ab", 1, 'b', 'b', 'b', 'b', },
+		{ "ab", 2, '\0', -1, 'a', 'a', },
+		{ "ab", 3, '\0', -1, '\0', -1, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -424,56 +441,83 @@ static void check__hunk_get__hunk_put(void)
 	}
 }
 
-static void check__hunk_append(void)
+static void check__hunk_put(void)
 {
-	struct hunk_like {
-		size_t len;
-		uint8_t ptr[11];
-	} dst = {
-		.len = 0,
-		.ptr = "0123456789", /* includes trailing NUL */
-	};
+	/* keep writing to this buffer */
+	uint8_t data[11] = "0123456789"; /* includes trailing NUL */
+	const struct { char a, b; } thing = { 'a', 'b', };
 
 	/* XXX: can't test overflow as it will abort!?! */
 	struct test {
 		size_t len;
-		const char *val;
-	} tests[3] = {
-		{ 3, "str3456789" },
-		{ 5, "strZZ56789" },
-		{ 8, "strZZABC89" },
+		const char val[sizeof(data) + 1];
+	} tests[] = {
+		{ 8, "str3456789" },
+		{ 5, "strZZZ6789" },
+		{ 2, "strZZZABC9" },
+		{ 0, "strZZZABCab" },
+		/* overflow */
+		{ 0, "overflow" },
+		{ 0, "overflow" },
 	};
 
 	shunk_t str = shunk1("str");
+	chunk_t dst = chunk2(data, sizeof(data));
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("val: %zu %s", t->len, t->val);
+		PRINT("hunk_put() %zd expect: %zu %s", ti, t->len, t->val);
+
+		void *in = dst.ptr;
+		const void *out;
 
 		switch (ti) {
+
 		case 0:
-			hunk_append_hunk(&dst, str);
+			out = hunk_put_hunk(&dst, &str);
 			break;
 
 		case 1:
-			/* now try zero */
-			hunk_append_byte(&dst, 'Z', 2);
+			out = hunk_put_byte(&dst, 'Z', 3);
 			break;
 
 		case 2:
-			hunk_append_bytes(&dst, "ABC", 3);
+			out = hunk_put_bytes(&dst, "ABC", 3);
 			break;
+
+		case 3:
+			out = hunk_put_thing(&dst, thing);
+			break;
+
+		case 4:
+			if (hunk_put_byte(&dst, 'a', 1) != NULL) {
+				FAIL("hunk_put_byte() did not overflow");
+			}
+			continue;
+
+		case 5:
+			if (hunk_put_hunk(&dst, &str) != NULL) {
+				FAIL("hunk_put_hunk() did not overflow");
+			}
+			continue;
+
 		}
 
 		if (dst.len != t->len) {
-			FAIL("hunk_append_hunk() appended %zu characters, expecting %zu",
-			     dst.len, t->len);
+			FAIL("hunk_put*() space for %zu not %zu",
+			     t->len, dst.len);
 		}
-		if (!memeq(dst.ptr, t->val, sizeof(dst.ptr))) {
-			FAIL("hunk_append_hunk() value is %s, expecting %s",
-			     dst.ptr, t->val);
+		if (in != out) {
+			FAIL("hunk_put*() expecting in==out");
+		}
+
+		if (!memeq(data, t->val, sizeof(data))) {
+			FAIL("hunk_put*() value is %s, expecting %s",
+			     data, t->val);
 		}
 	}
+
+
 }
 
 static void check_hunk_char_is(void)
@@ -742,12 +786,17 @@ static void check__shunk_to_uintmax(void)
 		{ "0xfffffffffffffff",       0, UINTMAX_MAX/16, "", },
 		{ "0xffffffffffffffff",      0, UINTMAX_MAX, "", },
 		{ "0x10000000000000000",     0, 0, NULL, },
+
+		{ "-1",                      0, UINTMAX_MAX, "", },
+		{ "-1:",                     0, UINTMAX_MAX, ":", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
+
 		PRINT_S(stdout, " base=%u unsigned=%ju out=%s",
 			t->base, t->u, t->o == NULL ? "<invalid>" : t->o);
+
 		uintmax_t u;
 		err_t err;
 
@@ -760,20 +809,24 @@ static void check__shunk_to_uintmax(void)
 		bool t_ok = t->o != NULL && t->o[0] == '\0';
 		if (err != NULL) {
 			if (t_ok) {
-				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly failed: %s", t->s, err);
+				FAIL("shunk_to_uintmax(%s,cursor=NULL,%d) unexpectedly failed: %s",
+				     t->s, t->base, err);
 			} else {
-				PRINT("shunk_to_uintmax(%s,NULL) failed with: %s", t->s, err);
+				PRINT("shunk_to_uintmax(%s,cursor=NULL,%d) expected to fail, %s",
+				      t->s, t->base, err);
 			}
 		} else {
 			if (!t_ok) {
-				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly succeeded", t->s);
+				FAIL("shunk_to_uintmax(%s,cursor=NULL,%d) unexpectedly succeeded",
+				     t->s, t->base);
 			} else {
-				PRINT("shunk_to_uintmax(%s,NULL) succeeded with %ju", t->s, u);
+				PRINT("shunk_to_uintmax(%s,cursor=NULL,%d) succeeded with %ju",
+				      t->s, t->base, u);
 			}
 		}
 		if (u != (t_ok ? t->u : 0)) {
-			FAIL_S("shunk_to_uintmax(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
-			       u, u, t->u, t->u);
+			FAIL_S("shunk_to_uintmax(%s,cursor=NULL,%d) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			       t->s, t->base, u, u, t->u, t->u);
 		}
 
 		/* remainder left in O */
@@ -1078,7 +1131,7 @@ static void check__clone_hunk_as_string(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT(" input='"PRI_SHUNK"' output='%s'", pri_shunk(t->hunk), t->output);
-		char *output = clone_hunk_as_string(t->hunk, "test");
+		char *output = clone_hunk_as_string(&t->hunk, "test");
 		if (!streq(t->output, output)) {
 			FAIL("clone_hunk_as_string() output %s should be '%s'", output, t->output);
 		}
@@ -1096,7 +1149,7 @@ int main(int argc, char *argv[])
 	}
 
 	check_hunk_eq();
-	check_shunk_slice();
+	check_hunk_slice();
 	check_shunk_token();
 	check_shunk_span();
 	check_shunk_clone();
@@ -1107,7 +1160,7 @@ int main(int argc, char *argv[])
 	check_ntoh_hton_hunk();
 	check__hunk_get__hunk_put();
 	check_hunks();
-	check__hunk_append();
+	check__hunk_put();
 	check__clone_hunk_as_string();
 
 	if (report_leaks(logger)) {

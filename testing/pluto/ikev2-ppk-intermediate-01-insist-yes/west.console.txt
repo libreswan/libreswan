@@ -22,18 +22,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
-"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ppk": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown;
+"westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ppk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipv4-psk-ppk":   sec_label:unset;
-"westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ipv4-psk-ppk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -59,12 +59,14 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_INTERMEDIATE
-"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
-"westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE; processed IKE_INTERMEDIATE response, initiating IKE_INTERMEDIATE or IKE_AUTH
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
+"westnet-eastnet-ipv4-psk-ppk" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{N(PPK_IDENTITY)}
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ipv4-psk-ppk" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ipv4-psk-ppk" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet-eastnet-ipv4-psk-ppk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ipv4-psk-ppk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -77,17 +79,14 @@ done
 west #
  # confirm PPK was used
 west #
- grep "PPK used in IKE_INTERMEDIATE" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
+ grep -e '^[^|].*PPK.*used in' /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
 west #
  # confirm west sent 2 different PPK_IDENTITY_KEY notifies
 west #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
+ grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
 | PPK_ID: 50 50 4b 49  44 41
 west #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
+ grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
 | PPK_ID: 50 50 4b 49  44 42
-west #
- ipsec whack --shutdown
-Pluto is shutting down
 west #

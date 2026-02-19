@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
+/etc/hosts /tmp/hosts.west.ikev2-ddns-01-hosts-delayed /etc/hosts
+west #
+ if grep right.libreswan.org /etc/hosts ; then echo "TEST FAILED - should not have /etc/hosts entry at start" ; false ; else : ; fi
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # will be slow because of the right dns name resolution failing
+west #
+ echo "initdone"
+initdone
+west #
+ sleep 5
+west #
+ ipsec status |grep "===" # should show %dns for pending resolving
+"named": 192.0.1.0/24===192.1.2.45:4500[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+west #
+ echo "192.1.2.23 right.libreswan.org" >> /etc/hosts
+west #
+ # trigger DDNS event (saves us from waiting)
+west #
+ ipsec whack --ddns
+updating pending dns lookups
+"named" #1: initiating IKEv2 connection to 192.1.2.23 (right.libreswan.org) using UDP
+west #
+ # give conn time to establish by itself
+west #
+ sleep 3
+west #
+ # tunnel should show up in final.sh
+west #
+ echo done
+done
+west #
+ ipsec _kernel state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+west #
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #

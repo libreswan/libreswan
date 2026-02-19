@@ -1,0 +1,19 @@
+<varlistentry id='conn.modecfgclient'>
+  <term>
+    <option>leftmodecfgclient=&yn_option;</option>
+  </term>
+  <term>
+    <option>rightmodecfgclient=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Specify that the end is a Mode Config client (it can receive
+      network configuration from the server).
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>
+
+

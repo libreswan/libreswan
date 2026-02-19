@@ -25,6 +25,7 @@
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--verbose</arg>
       <arg choice="opt">--debug</arg>
+      <arg choice="opt">--quiet</arg>
       <arg choice="plain" rep="repeat">--options</arg>
     </cmdsynopsis>
 
@@ -174,6 +175,13 @@
       by parsing the remainder of the command line as &ipsec.conf.5;
       conn section key-values.  The resulting connection is then
       loaded into <command>pluto</command>.
+    </para>
+
+    <para>
+      When <option>--quiet</option> is specified, log messages from
+      &pluto; are not copied to standard output.  To avoid connection
+      messages being duplicated in the logs, &pluto;, during startup,
+      invokes <command>addconn</command> with this option.
     </para>
 
   </refsect1>

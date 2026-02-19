@@ -36,10 +36,12 @@
 #include "initiate.h"
 #include "kernel.h"		/* for struct kernel_acquire [oppo] */
 #include "acquire.h"		/* for initiate_ondemand() [oppo] */
+#include "whack_pubkey.h"
 
 static unsigned whack_initiate_connection(const struct whack_message *m,
 					  struct show *s,
-					  struct connection *c)
+					  struct connection *c,
+					  struct connection_visitor_context *context UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	switch (c->local->kind) {
@@ -48,16 +50,16 @@ static unsigned whack_initiate_connection(const struct whack_message *m,
 	case CK_PERMANENT:
 		/* abuse bool; for connection counts */
 		return initiate_connection(c,
-					   m->remote_host,
+					   m->whack.initiate.remote_host,
 					   m->whack_async/*background*/,
 					   logger);
 	case CK_LABELED_PARENT:
 	case CK_LABELED_CHILD:
 	case CK_GROUP:
 	case CK_INSTANCE:
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		llog(RC_LOG, c->logger, "cannot initiate");
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	case CK_INVALID:
 		break;
@@ -86,13 +88,13 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 	 * Initiate alias connections OLD2NEW so that they start in
 	 * the same order that they were generated.
 	 */
-	visit_root_connection(m, s, whack_initiate_connection,
-			      /*alias_order*/OLD2NEW,
-			      (struct each) {
-				      .future_tense = "initiating",
-				      .past_tense = "initiating",
-				      .log_unknown_name = true,
-			      });
+	whack_connection_roots(m, s, /*alias_order*/OLD2NEW,
+			       whack_initiate_connection, NULL,
+			       (struct each) {
+				       .future_tense = "initiating",
+				       .past_tense = "initiating",
+				       .log_unknown_name = true,
+			       });
 }
 
 void whack_acquire(const struct whack_message *wm, struct show *s)
@@ -103,6 +105,11 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 		show_rc(RC_DEAF, s,
 			"need --listen before opportunistic initiation");
 		return;
+	}
+
+	const struct whack_pubkey *pubkey = &wm->whack.acquire.pubkey;
+	if (pubkey->id != NULL) {
+		whack_pubkey(pubkey, s);
 	}
 
 	const struct whack_acquire *wa = &wm->whack.acquire;

@@ -57,12 +57,13 @@
 diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
-				   enum keyword_auth authby,
+				   enum auth authby,
 				   const struct crypt_mac *idhash,
-				   const chunk_t firstpacket,
+				   struct ro_hunk *firstpacket,
 				   struct crypt_mac *sighash)
 {
 	struct logger *logger = ike->sa.logger;
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
@@ -72,7 +73,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	ldbg(logger, "%s() called for %s to %s PSK with authby=%s resume=%s",
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
-	     str_enum_long(&keyword_auth_names, authby, &an),
+	     str_enum_long(&auth_names, authby, &an),
 	     bool_str(ike->sa.st_v2_resume_session != NULL));
 
 	/* this is the IKE_AUTH exchange, so a given */
@@ -80,8 +81,8 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 
 	chunk_t intermediate_auth = empty_chunk;
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		intermediate_auth = clone_hunk_hunk(ike->sa.st_v2_ike_intermediate.initiator,
-						    ike->sa.st_v2_ike_intermediate.responder,
+		intermediate_auth = clone_hunk_hunk_as_chunk(&ike->sa.st_v2_ike_intermediate.initiator,
+							     &ike->sa.st_v2_ike_intermediate.responder,
 						    "IntAuth_*_I_A | IntAuth_*_R");
 		/* IKE AUTH's first Message ID */
 		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
@@ -130,7 +131,6 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
          *     AUTH = prf(SK_px, <message octets>)
 	 */
 
-	chunk_t nullauth_pss;
 	const chunk_t *nonce;
 	const char *nonce_name;
 	PK11SymKey *SK_px;
@@ -142,14 +142,12 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 			/* we are initiator verifying PSK */
 			nonce_name = "Ni: initiator re-generating hash from responder";
 			nonce = &ike->sa.st_ni;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
 			SK_px = ike->sa.st_skey_pr_nss;
 			break;
 		case LOCAL_PERSPECTIVE:
 			/* we are initiator sending PSK */
 			nonce_name = "Nr: initiator generating hash for responder";
 			nonce = &ike->sa.st_nr;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
 			SK_px = ike->sa.st_skey_pi_nss;
 			break;
 		case NO_PERSPECTIVE:
@@ -164,14 +162,12 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 			/* we are responder verifying PSK */
 			nonce_name = "Nr: responder re-generating hash from initiator";
 			nonce = &ike->sa.st_nr;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
 			SK_px = ike->sa.st_skey_pi_nss;
 			break;
 		case LOCAL_PERSPECTIVE:
 			/* we are responder sending PSK */
 			nonce_name = "Ni: create: responder generating hash for initiator";
 			nonce = &ike->sa.st_ni;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
 			SK_px = ike->sa.st_skey_pr_nss;
 			break;
 		case NO_PERSPECTIVE:
@@ -193,25 +189,26 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
 		 */
-		(*sighash) = ikev2_psk_resume(ike->sa.st_oakley.ta_prf, SK_px,
-					      firstpacket, logger);
+		(*sighash) = ikev2_psk_resume(prf, SK_px,
+					      HUNK_AS_SHUNK(firstpacket),
+					      logger);
 		PASSERT(logger, sighash->len > 0);
 		return NULL;
 	}
 
 	/* pick pss */
 
-	shunk_t pss;
+	PK11SymKey *pss;
 
 	if (auth_sig != NULL) {
 		/*
 		 * Use the auth sig passed in, presumably accumulated
 		 * by repeated EAP-TLS exchanges?
 		 */
-		if (!pexpect(auth_sig->len > 0)) {
+		if (PBAD(logger, auth_sig->len == 0)) {
 			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
-		pss = HUNK_AS_SHUNK(*auth_sig);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(auth_sig), logger);
 	} else if (authby != AUTH_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
@@ -225,14 +222,14 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		}
 
 		/* XXX: this should happen during connection load */
-		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
+		const size_t key_size_min = crypt_prf_fips_key_size_min(prf);
 		if (psk->len < key_size_min) {
 			if (is_fips_mode()) {
 				id_buf idb;
 				return diag("FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 					    str_id(&c->local->host.id, &idb),
 					    psk->len,
-					    ike->sa.st_oakley.ta_prf->common.fqn,
+					    prf->common.fqn,
 					    key_size_min);
 			}
 
@@ -241,37 +238,48 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				  "WARNING: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 				  str_id(&c->local->host.id, &idb),
 				  psk->len,
-				  ike->sa.st_oakley.ta_prf->common.fqn,
+				  prf->common.fqn,
 				  key_size_min);
 		}
-		pss = HUNK_AS_SHUNK(*psk);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(psk), logger);
+		if (pss == NULL) {
+			/*
+			 * XXX: seems that this could, in theory,
+			 * happen.
+			 */
+			if (is_fips_mode()) {
+				llog_passert(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
+					     prf->common.fqn);
+			}
+			return diag("failure creating %s PRF context for digesting PSK", prf->common.fqn);
+		}
 	} else {
-		pss = HUNK_AS_SHUNK(nullauth_pss);
+		pss = symkey_addref(logger, "SK_px", SK_px);
 	}
-
-	passert(pss.len != 0);
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
-		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
-		LDBG_log_hunk(logger, "idhash:", *idhash);
-		LDBG_log_hunk(logger, "IntAuth:", intermediate_auth);
-		LDBG_log_hunk(logger, "PSK:", pss);
+		LDBG_log_hunk(logger, "%s:", nonce, nonce_name);
+		LDBG_log_hunk(logger, "idhash:", idhash);
+		LDBG_log_hunk(logger, "IntAuth:", &intermediate_auth);
+		LDBG_symkey(logger, "", "PSS:", pss);
 	}
 
 	/*
 	 * RFC 4306 2.15:
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
-	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	*sighash = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, pss,
-				  firstpacket, *nonce, idhash,
+	passert(idhash->len == prf->prf_output_size);
+	*sighash = ikev2_psk_auth(prf, pss,
+				  HUNK_AS_SHUNK(firstpacket),
+				  *nonce, idhash,
 				  intermediate_auth, ike->sa.logger);
+	symkey_delref(logger, "pss", &pss);
 	free_chunk_content(&intermediate_auth);
 	return NULL;
 }
 
-bool ikev2_create_psk_auth(enum keyword_auth authby,
+bool ikev2_create_psk_auth(enum auth authby,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
@@ -291,9 +299,9 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 	}
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = clone_hunk(signed_octets, chunk_n);
+	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_n);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "%s:", *additional_auth, chunk_n);
+		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_n);
 	}
 
 	return true;
@@ -305,7 +313,7 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
+diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
@@ -337,8 +345,8 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-	    LDBG_log_hunk(logger, "received PSK auth octets:", sig);
-	    LDBG_log_hunk(logger, "calculated PSK auth octets:", calc_hash);
+	    LDBG_log_hunk(logger, "received PSK auth octets:", &sig);
+	    LDBG_log_hunk(logger, "calculated PSK auth octets:", &calc_hash);
 	}
 
 	if (!hunk_eq(sig, calc_hash)) {
@@ -363,7 +371,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			/* XXX: log prf(prf(hash based on null or secret)) how? */
 			/* now it was authenticated */
 			jam_string(buf, "using authby=");
-			jam_enum_long(buf, &keyword_auth_names, authby);
+			jam_enum_human(buf, &auth_names, authby);
 			jam_string(buf, " and ");
 			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");

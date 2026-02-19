@@ -1,4 +1,4 @@
-ipsec auto --up road-eastnet
+ipsec up road-eastnet # sanitize-retransmits
 ../../guestbin/ping-once.sh --up 192.1.2.23
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.209

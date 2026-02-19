@@ -1,0 +1,41 @@
+<varlistentry id='conn.updown'>
+  <term>
+    <option>leftupdown=[&command;]</option>
+  </term>
+  <term>
+    <option>rightupdown=[&command;]</option>
+  </term>
+  <listitem>
+    <para>
+      The shell command to run to adjust routing and/or firewalling
+      when the status of the connection changes.  May include
+      positional parameters separated by white space (although this
+      requires enclosing the whole string in quotes); including shell
+      metacharacters is unwise.  An example to enable routing when
+      using the XFRM stack, one can use:
+    </para>
+    <para>
+      <simplelist columns='1'>
+        <member><command>updown="ipsec _updown --route yes"</command></member>
+      </simplelist>
+    </para>
+    <para>
+      To disable calling an updown script, set it to the empty string,
+      eg <option>leftupdown=</option>.
+    </para>
+    <para>
+      Connections with <option>type=</option> set to
+      <option>passthrough</option>, <option>reject</option> or
+      <option>drop</option> never run <command>ipsec _updown</command>.
+    </para>
+    <para>
+      For more information, see &ipsec-updown.8;.
+    </para>
+    <para>
+      The default is <command>ipsec _updown</command>.
+    </para>
+    <para>
+      Relevant only locally, other end need not agree on it.
+    </para>
+  </listitem>
+</varlistentry>

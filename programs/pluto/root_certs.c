@@ -32,7 +32,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 	PASSERT(logger, in_main_thread());
 
 	/* extend or set cert cache lifetime */
-	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
+	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT, logger);
 	if (root_cert_db != NULL) {
 		return refcnt_addref(root_cert_db, owner, where);
 	}
@@ -65,7 +65,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 	 */
 	threadtime_t get_time = threadtime_start();
 	CERTCertList *allcerts = PK11_ListCertsInSlot(slot);
-	threadtime_stop(&get_time, SOS_NOBODY, "%s() calling PK11_ListCertsInSlot()", __func__);
+	threadtime_stop(&get_time, "%s() calling PK11_ListCertsInSlot()", __func__);
 	if (allcerts == NULL) {
 		return root_certs;
 	}
@@ -93,7 +93,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 		CERT_AddCertToListTail(root_certs->trustcl, dup);
 	}
 	CERT_DestroyCertList(allcerts);
-	threadtime_stop(&ca_time, SOS_NOBODY, "%s() filtering CAs", __func__);
+	threadtime_stop(&ca_time, "%s() filtering CAs", __func__);
 
 	return root_certs;
 }
@@ -101,7 +101,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 void root_certs_delref_where(struct root_certs **root_certsp,
 			     struct logger *logger, where_t where)
 {
-	struct root_certs *root_certs = delref_where(root_certsp, logger, where);
+	struct root_certs *root_certs = refcnt_delref(root_certsp, logger, where);
 	if (root_certs != NULL) {
 		llog(RC_LOG, logger, "freeing root certificate cache");
 		CERT_DestroyCertList(root_certs->trustcl);
@@ -116,18 +116,20 @@ bool root_certs_empty(const struct root_certs *root_certs)
 		CERT_LIST_EMPTY(root_certs->trustcl));
 }
 
-void init_root_certs(void)
+void init_root_certs(const struct logger *logger)
 {
 	/*
 	 * Set up the timer for deleting the root certs, but don't
 	 * schedule it (it gets scheduled when the root certs are
 	 * allocated).
 	 */
-	init_oneshot_timer(EVENT_FREE_ROOT_CERTS, free_root_certs);
+	init_oneshot_timer(EVENT_FREE_ROOT_CERTS, free_root_certs, logger);
 }
 
-void free_root_certs(struct logger *logger)
+void free_root_certs(struct verbose verbose)
 {
+	struct logger *logger = verbose.logger;
+
 	passert(in_main_thread());
 
 	/*
@@ -146,10 +148,10 @@ void free_root_certs(struct logger *logger)
 	 * the call to refcnt_peek and the root_certs_delref's deletion.
 	 * The consequence is benign: only a delay of FREE_ROOT_CERTS_TIMEOUT.
 	 */
-	if (refcnt_peek_where(root_cert_db, &root_cert_db->refcnt, logger, HERE) > 1) {
+	if (refcnt_peek(root_cert_db, logger) > 1) {
 		llog(RC_LOG, logger, "root certs still in use; suspect stuck thread");
 		/* extend or set cert cache lifetime */
-		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
+		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT, logger);
 	} else {
 		root_certs_delref(&root_cert_db, logger);
 		pexpect(root_cert_db == NULL);

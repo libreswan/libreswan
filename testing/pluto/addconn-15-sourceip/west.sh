@@ -3,7 +3,7 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 
 # sourceip is shown as {my,their}_ip=
-add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
+add() { ipsec add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
 
 # sourceip=;host=;#subnet= ok
 

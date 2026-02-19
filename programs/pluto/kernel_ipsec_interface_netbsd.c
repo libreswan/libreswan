@@ -58,7 +58,7 @@ static bool netbsd_ipsec_interface_add_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	return server_runv(add, verbose);
+	return server_runv("ifconfig add", add, verbose);
 }
 
 static void netbsd_ipsec_interface_del_cidr(const char *ipsec_if_name,
@@ -79,7 +79,7 @@ static void netbsd_ipsec_interface_del_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	server_runv(delete, verbose);
+	server_runv("ifconfig delete", delete, verbose);
 }
 
 static bool netbsd_ipsec_interface_add(const char *ipsec_if_name,
@@ -93,7 +93,7 @@ static bool netbsd_ipsec_interface_add(const char *ipsec_if_name,
 		"create",
 		NULL,
 	};
-	return server_runv(create, verbose);
+	return server_runv("ifconfig create", create, verbose);
 }
 
 static bool netbsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
@@ -105,7 +105,7 @@ static bool netbsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
 		"up",
 		NULL,
 	};
-	return server_runv(up, verbose);
+	return server_runv("ifconfig up", up, verbose);
 }
 
 static bool netbsd_ipsec_interface_del(const char *ipsec_if_name,
@@ -117,7 +117,7 @@ static bool netbsd_ipsec_interface_del(const char *ipsec_if_name,
 		"destroy",
 		NULL,
 	};
-	return server_runv(destroy, verbose);
+	return server_runv("ifconfig destroy", destroy, verbose);
 }
 
 static bool netbsd_ipsec_interface_match(struct ipsec_interface_match *match UNUSED,
@@ -128,7 +128,7 @@ static bool netbsd_ipsec_interface_match(struct ipsec_interface_match *match UNU
 		match->ipsec_if_name,
 		NULL,
 	};
-	bool ok = server_runv(run, verbose);
+	bool ok = server_runv("ifconfig", run, verbose);
 	if (ok) {
 		jam_str(match->found, sizeof(match->found), match->ipsec_if_name);
 	} else {
@@ -145,19 +145,25 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 		ctl,
 		NULL,
 	};
-	struct server_run result = server_runv_chunk(sysctl, null_shunk, verbose);
-	if (result.status != 0) {
+	chunk_t output = {0};
+	int status = server_runve_io("sysctl", sysctl, NULL,
+				     /*input*/null_shunk,
+				     /*save_output*/&output,
+				     verbose,
+				     /*command_stream*/ALL_STREAMS);
+	if (status != 0) {
+		free_chunk_content(&output);
 		return "sysctl exited with a non-zero status";
 	}
-	if (result.output.len == 0) {
+	if (output.len == 0) {
 		return "sysctl exited with no output";
 	}
-	shunk_t shunk = HUNK_AS_SHUNK(result.output);
+	shunk_t shunk = HUNK_AS_SHUNK(&output);
 	err_t e = shunk_to_uintmax(shunk, &shunk, 10, value);
 	if (e != NULL) {
 		return "sysctl output is non-numeric";
 	}
-	free_chunk_content(&result.output);
+	free_chunk_content(&output);
 	return NULL;
 }
 

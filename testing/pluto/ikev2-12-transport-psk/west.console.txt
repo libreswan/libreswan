@@ -23,18 +23,18 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-"ipv4-psk-ikev2-transport": added IKEv2 connection
+"ipv4-psk-ikev2-transport": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 "ipv4-psk-ikev2-transport": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 "ipv4-psk-ikev2-transport":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"ipv4-psk-ikev2-transport":   my_updown=ipsec _updown;
+"ipv4-psk-ikev2-transport":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "ipv4-psk-ikev2-transport":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "ipv4-psk-ikev2-transport":   sec_label:unset;
-"ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "ipv4-psk-ikev2-transport":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "ipv4-psk-ikev2-transport":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -60,6 +60,7 @@ west #
 "ipv4-psk-ikev2-transport" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ipv4-psk-ikev2-transport" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ipv4-psk-ikev2-transport" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"ipv4-psk-ikev2-transport" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_TRANSPORT_MODE)}
 "ipv4-psk-ikev2-transport" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "ipv4-psk-ikev2-transport" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 DPD=passive}
 west #
@@ -96,6 +97,7 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -106,6 +108,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 west #
  ipsec _kernel policy
