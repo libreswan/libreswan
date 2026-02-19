@@ -1593,6 +1593,11 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		enum auth authby = local_v2_auth(ike);
 		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
+		if (auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
+			jam(buf, " %s with %s",
+			    ike->sa.st_v2_digsig.signer->name,
+			    ike->sa.st_v2_digsig.hash->common.fqn);
+		}
 		/* ID payload */
 		jam_string(buf, " and ");
 		jam_enum_short(buf, &ike_id_type_names, c->local->host.id.kind);
