@@ -592,9 +592,12 @@ static unsigned extract_enum_name(const char *leftright,
 
 	int match = enum_byname(names, shunk1(value));
 	if (match < 0) {
-		/* include allowed names? */
-		(*d) = diag("%s%s=%s invalid, '%s' unrecognized",
-			    leftright, name, value, value);
+		JAMBUF(buf) {
+			jam(buf, "%s%s=%s is invalid, valid options are ",
+			    leftright, name, value);
+			jam_enum_names_quoted(buf, names);
+			(*d) = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+		}
 		return 0;
 	}
 
