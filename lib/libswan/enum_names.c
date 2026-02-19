@@ -375,9 +375,8 @@ static size_t jam_enum_name_quoted(struct jambuf *buf,
 				   long val)
 {
 	size_t s = 0;
-	name_buf nb;
 	s += jam_string(buf, "\"");
-	s += jam_string(buf, str_enum_short(names, val, &nb));
+	s += jam_enum_human(buf, names, val);
 	s += jam_string(buf, "\"");
 	return s;
 }
