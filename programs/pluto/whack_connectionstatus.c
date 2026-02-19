@@ -498,23 +498,37 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 	}
 
-	SHOW_JAMBUF(s, buf) {
-		jam_string(buf, c->name);
-		jam_string(buf, ":  ");
-		const char *local_cert = cert_nickname(&c->local->host.config->cert);
-		if (local_cert != NULL) {
-			jam(buf, " mycert=%s;", local_cert);
+	const char *local_cert = cert_nickname(&c->local->host.config->cert);
+	const char *remote_cert = cert_nickname(&c->remote->host.config->cert);
+	if (local_cert != NULL || remote_cert != NULL) {
+		SHOW_JAMBUF(s, buf) {
+			jam_string(buf, c->name);
+			jam_string(buf, ":  ");
+			if (local_cert != NULL) {
+				jam(buf, " mycert=%s;", local_cert);
+			}
+			if (remote_cert != NULL) {
+				jam(buf, " peercert=%s;", remote_cert);
+			}
 		}
-		const char *remote_cert = cert_nickname(&c->remote->host.config->cert);
-		if (remote_cert != NULL) {
-			jam(buf, " peercert=%s;", remote_cert);
-		}
+	}
 
-		if (oriented(c)) {
-			/* my_updown=... */
+	if (oriented(c)) {
+		/* my_updown=... */
+		SHOW_JAMBUF(s, buf) {
+			jam_string(buf, c->name);
+			jam_string(buf, ":  ");
 			jam_updown_status(buf, "my_", c->local);
-		} else {
+		}
+	} else {
+		SHOW_JAMBUF(s, buf) {
+			jam_string(buf, c->name);
+			jam_string(buf, ":  ");
 			jam_updown_status(buf, "left", &c->end[LEFT_END]);
+		}
+		SHOW_JAMBUF(s, buf) {
+			jam_string(buf, c->name);
+			jam_string(buf, ":  ");
 			jam_updown_status(buf, "right", &c->end[LEFT_END]);
 		}
 	}
