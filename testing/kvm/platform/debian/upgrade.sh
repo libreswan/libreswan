@@ -23,7 +23,7 @@ build-essential
 flex
 gawk
 libcap-ng-dev
-libcurl4-nss-dev
+libcurl4-openssl-dev
 libevent-dev
 libldns-dev
 libnss3
