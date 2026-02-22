@@ -206,7 +206,7 @@ KVM_MAKEFLAGS ?= $(strip \
 
 VIRT_INSTALL ?= sudo virt-install
 VIRT_CPU ?= --cpu=host-passthrough
-VIRT_DISK_SIZE_GB ?= 10
+VIRT_DISK_SIZE_GB ?= 15
 VIRT_RND ?= --rng=type=random,device=/dev/random
 VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY_NAME),model=virtio
