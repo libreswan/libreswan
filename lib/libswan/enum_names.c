@@ -370,6 +370,41 @@ size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
 	return jam_enum_short(buf, en, val);
 }
 
+static size_t jam_enum_name_quoted(struct jambuf *buf,
+				   const struct enum_names *names,
+				   long val)
+{
+	size_t s = 0;
+	s += jam_string(buf, "\"");
+	s += jam_enum_human(buf, names, val);
+	s += jam_string(buf, "\"");
+	return s;
+}
+
+size_t jam_enum_names_quoted(struct jambuf *buf, const struct enum_names *names)
+{
+	size_t s = 0;
+	long e = next_enum(names, -1);
+	if (e < 0) {
+		return jam_string(buf, "EXPECTATION FAILED: no names");
+	}
+
+	s += jam_enum_name_quoted(buf, names, e);
+
+	e = next_enum(names, e);
+	while (e >= 0) {
+		long ee = next_enum(names, e);
+		if (ee < 0) {
+			s += jam_string(buf, ", and ");
+		} else {
+			s += jam_string(buf, ", ");
+		}
+		s += jam_enum_name_quoted(buf, names, e);
+		e = ee;
+	}
+	return s;
+}
+
 void check_enum_names(const struct enum_names_check *checklist)
 {
 	/* check that enum_names are well-formed */
