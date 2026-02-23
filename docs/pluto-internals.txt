@@ -126,7 +126,7 @@ invariant: for all struct connections c, d:
     => c.interface == d.interface && c.this.nexthop == d.this.nexthop
 
 There are two kinds of eroutes: shunt eroutes and ones for an IPSEC SA
-Group.  Most eroutes are associated with and are represeented in a
+Group.  Most eroutes are associated with and are represented in a
 connection.  The exception is that some HOLD and PASS shunts do not
 correspond to connections; those are represented in the bare_shunt
 table.

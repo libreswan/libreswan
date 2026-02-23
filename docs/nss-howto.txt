@@ -112,7 +112,7 @@ Import a CA:
 
 Import a cert:
     certutil -A -i <cert_file>  -n "<cert_alias>" -t "C,C,C" -d /var/lib/ipsec/nss
-    example: certutil -A -i serverCert.pemm  -n "serverCert" -t "C,C,C" -d /var/lib/ipsec/nss
+    example: certutil -A -i serverCert.pem  -n "serverCert" -t "C,C,C" -d /var/lib/ipsec/nss
 
 
 Import a client cert:
