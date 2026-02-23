@@ -210,7 +210,7 @@ kvmplutotest	ikev2-delete-06-start-both		good
 #
 # These demonstrate how to profile pluto.
 kvmplutotest	perf-memory-ikev2-psk-valgrind		wip
-kvmplutotest	perf-on-cpu-ikev2-x509-callgrind	wip
+kvmplutotest	perf-oncpu-ikev2-x509-callgrind		wip
 kvmplutotest	perf-debug-ikev2-x509-nss		skiptest # requires custom NSS
 kvmplutotest	perf-debug-ikev2-x509-gdb		skiptest # requires custom NSS
 
