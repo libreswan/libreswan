@@ -117,11 +117,11 @@ static void confwrite_value(FILE *out,
 			/* special enumeration */
 			if (values[k->field].set) {
 				int val = values[k->field].option;
-				fprintf(out, "\t%s%s=", side, k->keyname);
 				for (const struct sparse_name *kev = k->sparse_names->list;
 				     kev->name != NULL; kev++) {
 					/* XXX: INT vs UNSIGNED magic? */
 					if ((int)kev->value == val) {
+						fprintf(out, "\t%s%s=%s\n", side, k->keyname, kev->name);
 						break;
 					}
 				}
