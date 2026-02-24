@@ -9,13 +9,13 @@ west #
  echo "initdone"
 initdone
 west #
- netcap | grep pluto | sed "s/^.*pluto/pluto/" | sort
-pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto            udp      4500   dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto            udp      500    dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+ netcap | sed -n -e 's/[ \t][ \t]*/ /g' -e 's/^.*pluto/pluto/p' | sort
+pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
+pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
 west #
  echo done
 done
