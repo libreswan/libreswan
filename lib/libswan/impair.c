@@ -210,6 +210,8 @@ struct impairment impairments[] = {
 
 	U(ike_initiator_spi, "corrupt the IKE initiator SPI setting it to the <unsigned> value"),
 	U(ike_responder_spi, "corrupt the IKE responder SPI setting it to the <unsigned> value"),
+	U(ike_initiator_nonce, "corrupt the IKE initiator nonce setting it to the <unsigned>"),
+	U(ike_responder_nonce, "corrupt the IKE responder nonce setting it to the <unsigned>"),
 
 	B(ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
