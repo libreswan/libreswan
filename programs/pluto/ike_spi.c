@@ -42,17 +42,6 @@ bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs)
 		ike_spi_eq(&lhs->responder, &rhs->responder));
 }
 
-bool ike_spis_gt(const ike_spis_t *lhs, const ike_spis_t *rhs)
-{
-	int d = memcmp(lhs->initiator.bytes, rhs->initiator.bytes,
-			    sizeof(lhs->initiator.bytes));
-	if (d == 0) {
-		d = memcmp(lhs->responder.bytes, rhs->responder.bytes,
-			   sizeof(lhs->responder.bytes));
-	}
-	return d > 0;
-}
-
 static struct {
 	uint8_t bytes[SHA2_256_DIGEST_SIZE];
 } ike_spi_secret;

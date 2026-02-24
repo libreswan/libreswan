@@ -1174,7 +1174,7 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 	/* Simultaneous IKE found, we need to decide if we keep that one or current IKE.
 	 *
 	 * If simultaneous IKE is already established, we keep it. Otherwise we keep one
-	 * with higher SPI.
+	 * with higher nonce.
 	 */
 	if (simultaneous_ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) {
 		llog(RC_LOG, ike->sa.logger, "rejecting IKE_AUTH request; IKE SA "PRI_SO" already established",
@@ -1182,7 +1182,7 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 		return (struct ike_sa *) ike;
 	}
 
-	if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis, &ike->sa.st_ike_spis)) {
+	if (hunk_cmp(simultaneous_ike->sa.st_ni, ike->sa.st_ni) > 0) {
 		ldbg(ike->sa.logger, "preferring the simultaneous IKE SA "PRI_SO" over the current IKE SA "PRI_SO,
 				pri_so(simultaneous_ike->sa.st_serialno), pri_so(ike->sa.st_serialno));
 		return (struct ike_sa *) ike;
