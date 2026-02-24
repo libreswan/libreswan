@@ -145,3 +145,10 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 :
 
 dnf upgrade -y $(packages_for_build)
+
+:
+: Hobble systemd-resolved and NetworkManager
+:
+
+systemctl disable systemd-resolved.service
+systemctl disable NetworkManager.service
