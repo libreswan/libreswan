@@ -1,6 +1,24 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
+ # DANGER: when resolvconf, from systemd-resolved, is present,
+road #
+ # strongSwan unconditionally uses it over /etc/resolv.conf; this hack
+road #
+ # is to stop it.
+road #
+ #
+road #
+ # See https://github.com/strongswan/strongswan/issues/3013
+road #
+ # See https://github.com/libreswan/libreswan/issues/2635
+road #
+ test -r PATH/sbin/resolvconf && mv -v PATH/sbin/resolvconf{,.tmp}
+renamed 'PATH/sbin/resolvconf' -> 'PATH/sbin/resolvconf.tmp'
+road #
  ../../guestbin/strongswan-start.sh
+road #
+ test -r PATH/sbin/resolvconf.tmp && mv -v PATH/sbin/resolvconf{.tmp,}
+renamed 'PATH/sbin/resolvconf.tmp' -> 'PATH/sbin/resolvconf'
 road #
  echo "initdone"
 initdone
