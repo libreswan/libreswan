@@ -5,5 +5,4 @@
  DHCP=ipv4
  KeepConfiguration=no
 [DHCPV4]
- Hostname=@@PLATFORM@@
  SendHostname=false

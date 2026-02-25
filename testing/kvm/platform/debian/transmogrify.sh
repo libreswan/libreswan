@@ -10,6 +10,7 @@ export BENCHDIR=@@BENCHDIR@@
 export POOLDIR=@@POOLDIR@@
 export SOURCEDIR=@@SOURCEDIR@@
 export TESTINGDIR=@@TESTINGDIR@@
+export PLATFORM=@@PLATFORM@@
 
 :
 : fstab
