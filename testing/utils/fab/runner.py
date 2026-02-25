@@ -546,9 +546,13 @@ def _process_test_queue(domain_prefix, name_prefix,
 
     domains = List()
     for guest in hosts.guests():
+        if domain_prefix.is_dir():
+            xml=str(domain_prefix) + "/" + guest.name
+        else:
+            xml=str(domain_prefix) + guest.name
         domain = virsh.Domain(logger=logger,
-                              prefix=name_prefix,
-                              guest=guest)
+                              name=name_prefix+guest.host.name,
+                              guest=guest, xml=xml)
         domains.append(domain)
         domain.destroy()
 
