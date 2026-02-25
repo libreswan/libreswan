@@ -15,9 +15,6 @@ OBJ.*
 kvmrunner.pid
 TAGS
 tags
-modobj
-modobj24
-modobj26
 testing/*/*/OUTPUT*
 testing/*/*/NS*
 testing/x509/*/*
