@@ -131,10 +131,10 @@ static bool build_updown_exec(struct updown_exec *exec,
 				return false;
 		}
 
-		// convert the command string into a shrunk
+		// convert the command string into a shunk
 		shunk_t input = {
-				.ptr = exec->cmd,
-				.len = strlen(exec->cmd),
+			.ptr = exec->cmd,
+			.len = strlen(exec->cmd),
 		};
 
 		// get tokens by splitting on whitespace or tab by using ttoshunks
@@ -150,20 +150,17 @@ static bool build_updown_exec(struct updown_exec *exec,
 		for (unsigned i = 0; i < toks->len; i++) {
 
 			if (argv >= exec->arg + elemsof(exec->arg) - 1) {
-				// if we have too many tokens, log and return false
-				llog(RC_LOG, verbose.logger, "updown command has too many words");
+				llog(RC_LOG, verbose.logger, "updown command has too many arguments");
 				pfreeany(toks);
 				return false;
 			}
 
-			shunk_t t = toks->item[i];
+			char* s = clone_hunk_as_string(&toks->item[i], "updown arg");
 
-			//write a null terminator at the end of the token so we can use it as a C string
-			((char *)t.ptr)[t.len] = '\0';
-
-			*argv++ = t.ptr;
+			*argv++ = s;
 		}
 
+		*argv = NULL;
 		pfreeany(toks);
 
 	} else {
