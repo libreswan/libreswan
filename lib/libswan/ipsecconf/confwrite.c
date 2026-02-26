@@ -116,15 +116,9 @@ static void confwrite_value(FILE *out,
 		case kt_sparse_name:
 			/* special enumeration */
 			if (values[k->field].set) {
-				int val = values[k->field].option;
-				for (const struct sparse_name *kev = k->sparse_names->list;
-				     kev->name != NULL; kev++) {
-					/* XXX: INT vs UNSIGNED magic? */
-					if ((int)kev->value == val) {
-						fprintf(out, "\t%s%s=%s\n", side, k->keyname, kev->name);
-						break;
-					}
-				}
+				name_buf b;
+				fprintf(out, "\t%s%s=%s\n", side, k->keyname,
+					str_sparse_short(k->sparse_names, values[k->field].option, &b));
 			}
 			break;
 
