@@ -3200,6 +3200,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		extract_bool(kv(wm, END_ROOF, KWS_PAM_AUTHORIZE),
 			     /*value_when_unset*/YN_NO,
 			     &d, verbose);
+	config->ignore_peer_dns =
+		extract_bool(kv(wm, END_ROOF, KWS_IGNORE_PEER_DNS),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 
 	enum yna_options ikepad =
 		extract_yna(kv(wm, END_ROOF, KWS_IKEPAD),
