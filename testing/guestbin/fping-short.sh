@@ -54,7 +54,6 @@ fi
 op=up
 args=
 count=1
-interval=5 #long for ipv4 and just enough for ipv6 ND timeout
 FPING=${fping-fping}
 wait=5
 
@@ -68,7 +67,6 @@ while true; do
     case "$1" in
 	--up )
 	    op=up
-	    interval=${timeout}
 	    shift
 	    ;;
 	--down )
@@ -80,7 +78,6 @@ while true; do
 	    op=up
 	    count=$2
 	    wait=$(expr 1 + ${count})
-	    interval=1
 	    shift 2
 	    ;;
 	--fire-and-forget | --forget )
@@ -133,7 +130,7 @@ if [ $# -ne 1 ] ; then
     exit 1
 fi
 
-timeout=" --timeout ${wait}s"
+timeout=" --timeout ${wait}000" # milliseconds
 size=${size:+--size ${size}}
 src=${src:+--src ${src}}
 

@@ -124,6 +124,7 @@ strace
 strongswan
 strongswan-sqlite
 systemd-networkd
+systemd-resolved
 tar
 tcpdump
 tpm2-abrmd
@@ -146,18 +147,8 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 dnf upgrade -y $(packages_for_build)
 
 :
-: Pre-release and/or dropped packages that still have builds
+: Hobble systemd-resolved and NetworkManager
 :
 
-downloads="
-https://kojipkgs.fedoraproject.org//packages/xl2tpd/1.3.17/8.fc43/x86_64/xl2tpd-1.3.17-8.fc43.x86_64.rpm
-"
-
-rpms=
-for package in ${downloads} ; do
-    rpm=${cachedir}/$(basename ${package})
-    curl --location --continue-at - --output ${rpm} "${package}"
-    rpms="${rpms} ${rpm}"
-done
-
-dnf upgrade -y ${rpms}
+systemctl disable systemd-resolved.service
+systemctl disable NetworkManager.service

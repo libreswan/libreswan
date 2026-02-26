@@ -6,7 +6,7 @@ This directory is used to build a local version of NSS.
 
   then add:
 
-    include $(top_srcdir)/external/nss/Makefile.kvm.linux
+    include $(top_srcdir)/external/nss/Makefile.nss
 
   to Makefile.inc.local
 
@@ -24,7 +24,7 @@ This directory is used to build a local version of NSS.
   and then add:
 
     ifeq ($(shell hostname),linux)
-    include $(top_srcdir)/external/nss/Makefile.kvm.linux
+    include $(top_srcdir)/external/nss/Makefile.nss
     endif
 
   to Makefile.inc.local (I'm assuming your machine isn't called

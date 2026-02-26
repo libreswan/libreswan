@@ -10,6 +10,8 @@ mkdir -p ${cachedir}
 
 cat <<EOF > /etc/apt/apt.conf
 Dir::Cache ${cachedir};
+Apt::Sandbox "false";
+Apt::Sandbox::User "root";
 EOF
 
 apt-config dump | grep Dir::Cache

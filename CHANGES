@@ -11,6 +11,7 @@ v5.4 (unreleased)
   - fix plutodebug=all,add-prefix [Andrew #2338]
   - fix per-connection debug= option (experimental in v5.0) [Andrew]
   - support dns-resolver=systemd [Amirreza #2379 #2356 #2376, Andrew]
+  - better errors when invalid auto=, phase2=, and sendca= [Amrinder Singh #2625 #2492]
   - (experimental) support updown-config={async,exec} [Andrew]
   - (experimental) support subnet leases; syntax is leftaddresspool=2025::/56/64 [Andrew]
 * building:

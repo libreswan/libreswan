@@ -1,2 +1,2 @@
-netcap | grep pluto | sed "s/^.*pluto/pluto/" | sort
+netcap | sed -n -e 's/[ \t][ \t]*/ /g' -e 's/^.*pluto/pluto/p' | sort
 echo done
