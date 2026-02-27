@@ -1088,3 +1088,107 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	}
 	}
 }
+
+/*
+ * Check relevant simultaneous IKE_AUTH requests and decide
+ * which IKE SA is going to be rejected (if any). This is goint
+ * to be called when processing IKE_AUTH request from the responder
+ *
+ * Relevant:
+ *	- same connection
+ *	- initiating IKE
+ *	- non-established with IKE_AUTH request waiting for reply
+ *	- established within 1 second of processing this IKE_AUTH request
+ *
+ * Returns:
+ *  - ike: reject current IKE_AUTH request
+ *  - other IKE SA than ike: terminate it, keep ike
+ *  - NULL: no simultaneous IKE SA
+ */
+struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
+               const struct ike_sa *ike,
+               const struct msg_digest *md)
+{
+	/* Check can be disabled in a connection config */
+	if (!c->config->reject_simultaneous_ike_auth) {
+		return NULL;
+	}
+
+	/* Connection must be permanent and request must be incoming */
+	if (v2_msg_role(md) != MESSAGE_REQUEST || !is_permanent(c)) {
+		return NULL;
+	}
+
+	struct state_filter sf = {
+		.connection_serialno = c->serialno,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = ike->sa.logger,
+			.where = HERE,
+		},
+	};
+
+	struct ike_sa *simultaneous_ike = NULL;
+
+	while (next_state(&sf)) {
+		if (!IS_IKE_SA(sf.st)) {
+			continue;
+		}
+
+		struct ike_sa *candidate = pexpect_ike_sa(sf.st);
+
+		if (candidate == NULL || candidate == ike) {
+			continue;
+		} else if (candidate->sa.st_sa_role != SA_INITIATOR) {
+			continue;
+		}
+
+		/* Does candidate has IKE_AUTH request outstanding? */
+		if (v2_msgid_request_outstanding(candidate)) {
+			const struct v2_exchange *outstanding_request = candidate->sa.st_v2_msgid_windows.initiator.exchange;
+			if (outstanding_request != NULL && outstanding_request->type == ISAKMP_v2_IKE_AUTH) {
+				llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" has outstanding IKE_AUTH request",
+						pri_so(candidate->sa.st_serialno));
+				simultaneous_ike = candidate;
+				break;
+			}
+		}
+
+		/* Was candidate established within the last second of the current IKE_AUTH request arrival? */
+		if (candidate->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) {
+			deltatime_t age = monotime_diff(mononow(), candidate->sa.st_v2_msgid_windows.initiator.last_recv);
+			if (deltatime_cmp(age, <, one_second)) {
+				llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" recently established",
+						pri_so(candidate->sa.st_serialno));
+				simultaneous_ike = candidate;
+				break;
+			}
+		}
+	}
+
+	/* No simultaneous IKE found */
+	if (simultaneous_ike == NULL) {
+		return NULL;
+	}
+
+	/* Simultaneous IKE found, we need to decide if we keep that one or current IKE.
+	 *
+	 * If simultaneous IKE is already established, we keep it. Otherwise we keep one
+	 * with higher nonce.
+	 */
+	if (simultaneous_ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) {
+		llog(RC_LOG, ike->sa.logger, "rejecting IKE_AUTH request; IKE SA "PRI_SO" already established",
+				pri_so(simultaneous_ike->sa.st_serialno));
+		return (struct ike_sa *) ike;
+	}
+
+	if (hunk_cmp(simultaneous_ike->sa.st_ni, ike->sa.st_ni) > 0) {
+		ldbg(ike->sa.logger, "preferring the simultaneous IKE SA "PRI_SO" over the current IKE SA "PRI_SO,
+				pri_so(simultaneous_ike->sa.st_serialno), pri_so(ike->sa.st_serialno));
+		return (struct ike_sa *) ike;
+  } else {
+		ldbg(ike->sa.logger, "preferring the current IKE SA "PRI_SO" over the simultanoues IKE SA "PRI_SO"",
+				pri_so(ike->sa.st_serialno), pri_so(simultaneous_ike->sa.st_serialno));
+		return simultaneous_ike;
+	}
+}

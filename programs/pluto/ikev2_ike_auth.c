@@ -77,6 +77,7 @@
 #include "peer_id.h"
 #include "ddos.h"
 #include "ikev2_nat.h"
+#include "terminate.h"
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
 static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
@@ -677,6 +678,23 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		return STF_FATAL;
        }
 
+	const struct connection *c = ike->sa.st_connection;
+
+	/* If initiator has another IKE SA with IKE_AUTH request
+	 * outstanding for the same permanent connection (or recently
+	 * established one) then we keep only one of them. This is to
+	 * prevent potential crossing streams scenario.
+	 */
+	struct ike_sa *ike_to_reject = check_simultaneous_ike_auth(c, ike, md);
+	if (ike_to_reject == ike) {
+		/* Reject current IKE_AUTH request */
+		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED, empty_shunk, ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	} else if (ike_to_reject != NULL) {
+		/* Terminate the other IKE SA, continue with current */
+		terminate_ike_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA, HERE);
+	}
+
 	/*
 	 * This both decodes the initiator's ID and, when necessary,
 	 * switches connection based on that ID.
@@ -685,7 +703,6 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * switch based on the contents of the CERTREQ.
 	 */
 
-	const struct connection *c = ike->sa.st_connection;
 	bool found_ppk = false;
 
 	/*
