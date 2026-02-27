@@ -1,0 +1,8 @@
+make certain readwrite conf doesn't dump core
+
+Originally, this test was testing:
+
+    readwrite config test. if there is no authby line default should
+    be rsasaig
+
+but defaults have largely gone.

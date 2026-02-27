@@ -106,8 +106,6 @@ kvmplutotest	connalias-01-conflict				good	github/1620
 kvmplutotest	connalias-02-twoconn-ikev1			good
 kvmplutotest	connalias-02-twoconn-ikev2			good
 
-kvmplutotest	readwriteconf-01				wip
-
 kvmplutotest	algparse-01					good
 kvmplutotest	algparse-02-fips				good
 
@@ -1565,7 +1563,14 @@ kvmplutotest	whack-shutdown-01-magic			good	github/1709
 
 kvmplutotest	whack-pluto-01-startup			good	github/2048
 
+# ipsec readwriteconf
+
+kvmplutotest	whack-readwriteconf-01			good	github/2630
+
+#
 # PPK
+#
+
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
 kvmplutotest	ikev2-ppk-static-02-insist-insist		good
 kvmplutotest	ikev2-ppk-static-03-no-insist-fail		good
