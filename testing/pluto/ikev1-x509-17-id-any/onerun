@@ -5050,14 +5050,14 @@ forgetting secrets
 | processing: stop connection "ikev2-westnet-eastnet-x509-cr" (in delete_connection() at connections.c:314)
 | crl fetch request list locked by 'free_crl_fetch'
 | crl fetch request list unlocked by 'free_crl_fetch'
-shutting down interface lo/lo 127.0.0.1:4500
-shutting down interface lo/lo 127.0.0.1:500
-shutting down interface eth0/eth0 192.0.2.254:4500
-shutting down interface eth0/eth0 192.0.2.254:500
-shutting down interface eth1/eth1 192.1.2.23:4500
-shutting down interface eth1/eth1 192.1.2.23:500
-shutting down interface eth2/eth2 192.9.2.23:4500
-shutting down interface eth2/eth2 192.9.2.23:500
+shutting down interface 127.0.0.1:4500%lo
+shutting down interface 127.0.0.1:500%lo
+shutting down interface 192.0.2.254:4500%eth0
+shutting down interface 192.0.2.254:500%eth0
+shutting down interface 192.1.2.23:4500%eth1
+shutting down interface 192.1.2.23:500%eth1
+shutting down interface 192.9.2.23:4500%eth2
+shutting down interface 192.9.2.23:500%eth2
 | free_event_entry: release EVENT_NULL-pe@0x55c7806bda88
 | free_event_entry: release EVENT_NULL-pe@0x55c7806bdb88
 | free_event_entry: release EVENT_NULL-pe@0x55c7806bdc88

@@ -13,12 +13,12 @@ west #
  ipsec whack --listen > /dev/null
 west #
  ipsec status | grep "^interface"
-interface lo 127.0.0.1:UDP/4500 (NAT)
-interface lo 127.0.0.1:UDP/500
-interface eth0 192.0.1.254:UDP/4500 (NAT)
-interface eth0 192.0.1.254:UDP/500
-interface eth1 192.1.2.45:UDP/4500 (NAT)
-interface eth1 192.1.2.45:UDP/500
+interface 127.0.0.1:UDP/4500%lo (NAT)
+interface 127.0.0.1:UDP/500%lo
+interface 192.0.1.254:UDP/4500%eth0 (NAT)
+interface 192.0.1.254:UDP/500%eth0
+interface 192.1.2.45:UDP/4500%eth1 (NAT)
+interface 192.1.2.45:UDP/500%eth1
 west #
  ipsec whack --shutdown
 Pluto is shutting down
@@ -32,8 +32,8 @@ west #
  # It should only listen on 192.1.2.45 and not on 192.0.1.254
 west #
  ipsec status | grep "^interface"
-interface eth1 192.1.2.45:UDP/4500 (NAT)
-interface eth1 192.1.2.45:UDP/500
+interface 192.1.2.45:UDP/4500%eth1 (NAT)
+interface 192.1.2.45:UDP/500%eth1
 west #
  ipsec whack --shutdown
 Pluto is shutting down
