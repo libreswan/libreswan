@@ -5,14 +5,6 @@ west #
 west #
  ../../guestbin/ip.sh route add 192.0.200.0/24 via 192.1.2.23  dev eth1
 west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
@@ -20,19 +12,18 @@ west #
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec auto --add westnet-eastnet-ikev2a
+ ipsec add westnet-eastnet-ikev2a
 "westnet-eastnet-ikev2a": added oriented IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2b
+ ipsec add westnet-eastnet-ikev2b
 "westnet-eastnet-ikev2b": added oriented IKEv2 connection
-west #
- ipsec auto --add westnet-eastnet-ikev2c
-"westnet-eastnet-ikev2c": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ikev2a
+ # IKE SA #1(A), Child SA #2(A)
+west #
+ ipsec up westnet-eastnet-ikev2a
 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2a" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -44,7 +35,9 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec auto --up westnet-eastnet-ikev2b
+ # Child SA #3(B)
+west #
+ ipsec up westnet-eastnet-ikev2b
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-ikev2b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
@@ -52,29 +45,16 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
- ipsec auto --up westnet-eastnet-ikev2c
-"westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"westnet-eastnet-ikev2c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
-west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-west #
  # wait for the replace
 west #
- ../../guestbin/wait-for-pluto.sh '#5: initiating IKEv2 connection'
-"westnet-eastnet-ikev2a" #5: initiating IKEv2 connection (replacing established IKE SA #1) to 192.1.2.23 using UDP
+ ../../guestbin/wait-for-pluto.sh '#4: initiating IKEv2 connection'
+"westnet-eastnet-ikev2a" #4: initiating IKEv2 connection (replacing established IKE SA #1) to 192.1.2.23 using UDP
 west #
- ../../guestbin/wait-for-pluto.sh '#6: initiator established Child SA using #5' | sed -e 's/[a-c]"/."/'
-"westnet-eastnet-ikev2." #6: initiator established Child SA using #5; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+ ../../guestbin/wait-for-pluto.sh '#5: initiator established Child SA using'
+"westnet-eastnet-ikev2b" #5: initiator established Child SA using #4; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ../../guestbin/wait-for-pluto.sh '#7: initiator established Child SA using #5' | sed -e 's/[a-c]"/."/'
-"westnet-eastnet-ikev2." #7: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
-west #
- ../../guestbin/wait-for-pluto.sh '#8: initiator established Child SA using #5' | sed -e 's/[a-c]"/."/'
-"westnet-eastnet-ikev2." #8: initiator established Child SA using #5; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+ ../../guestbin/wait-for-pluto.sh '#6: initiator established Child SA using'
+"westnet-eastnet-ikev2a" #6: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -82,10 +62,9 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
- ipsec whack --trafficstatus |  sed -e 's/[a-c]"/."/'
-#7: "westnet-eastnet-ikev2.", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#6: "westnet-eastnet-ikev2.", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#8: "westnet-eastnet-ikev2.", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+ ipsec whack --trafficstatus
+#6: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#5: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

@@ -1,11 +1,26 @@
 Test Reauthentication of CREATE_CHILD_SA IPsec SA sharing IKE SA.
 
-West establishes 3 connections (1 IKE, with 3 Child SAs) to east.
+- WEST establishes 2 connections
 
-Because west is configured with reauth=yes it triggers a full teardown
-after 40s.
+  IKE SA #1(A)
+  Child SA #2(A), #3(B)
 
-Since verything is +UP though it should all come back.
+- because all of WEST's connections are configured with reauth=yes;
+  replace is triggered after 40 seconds
 
-(it should also delay the teardown until after the new IKE SA is
-online; later)
+  + the Child SAs Child SAs #2(A), #3(B) are torn down in OLD2NEW
+    order (i.e., B, A) (NEW2OLD would be better but less conservative)
+
+    Since they have +UP they are submitted to libevent for revival in
+    the order B, A.
+
+  + the IKE SA #1(A) is torn down
+
+  + a new IKE SA #4(A) is initiated
+
+- the reviving B, and A are added to IKE SA #4(A)'s pending queue
+
+  WARNING:
+
+  Since libevent makes no ordering guarentees, it may run these as
+  either A, B; or B, A making the test unstable.
