@@ -63,7 +63,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
 	}
 
-	msg.autostart = conn->values[KNCF_AUTO].option;
+	enum autostart autostart = conn_auto(conn);
+	msg.autostart = autostart;
 
 	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
 		return -1;
@@ -73,7 +74,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	if (dry_run) {
-		enum autostart autostart = conn->values[KNCF_AUTO].option;
 		printf("ipsec add");
 		if (autostart != 0) {
 			name_buf asb;

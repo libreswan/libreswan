@@ -163,7 +163,7 @@ static void add_conn(struct starter_conn *conn,
 
 	/* force (or clear) autostart; caller's checked it is sane */
 	if (verbose) {
-		enum autostart conn_autostart = conn->values[KNCF_AUTO].option;
+		enum autostart conn_autostart = conn_auto(conn);
 		if (conn_autostart != autostart) {
 			name_buf cab, ab;
 			fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=%s",
@@ -443,7 +443,7 @@ int main(int argc, char *argv[])
 
 		struct starter_conn *conn = NULL;
 		TAILQ_FOREACH(conn, &cfg->conns, link) {
-			enum autostart autostart = conn->values[KNCF_AUTO].option;
+			enum autostart autostart = conn_auto(conn);
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:

@@ -554,3 +554,8 @@ void confread_free(struct starter_config *cfg)
 
 	pfree(cfg);
 }
+
+enum autostart conn_auto(const struct starter_conn *conn)
+{
+	return conn->values[KNCF_AUTO].option;
+}
