@@ -604,13 +604,17 @@ static unsigned extract_enum_name(const char *leftright,
 	return match;
 }
 
+/*
+ * Use this when the lookup needs to work with both never-negotiate
+ * and normal fields.
+ */
+
 static unsigned lookup_sparse_name(const char *leftright,
-				    const char *name,
-				    const char *value,
-				    unsigned value_when_unset,
-				    const struct sparse_names *names,
-				    diag_t *d,
-				    struct verbose verbose)
+				   const char *name,
+				   const char *value,
+				   const struct sparse_names *names,
+				   diag_t *d,
+				   struct verbose verbose)
 {
 	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
 	if (sparse == NULL) {
@@ -620,7 +624,7 @@ static unsigned lookup_sparse_name(const char *leftright,
 			jam_sparse_names_quoted(buf, names);
 			(*d) = diag_jambuf(buf);
 		}
-		return value_when_unset;
+		return 0;
 	}
 
 	unsigned name_value = (sparse->value & ~NAME_FLAGS);
@@ -661,7 +665,6 @@ static unsigned extract_sparse_name(const char *leftright,
 	}
 
 	return lookup_sparse_name(leftright, name, value,
-				  value_when_unset,
 				  names, d, verbose);
 }
 
@@ -3038,12 +3041,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	enum type_options type = KS_TUNNEL;
 	if (wm->wm_type != NULL) {
 		type = lookup_sparse_name("", "type", wm->wm_type,
-					  KS_TUNNEL,
 					  &type_option_names,
 					  &d, verbose);
-	}
-	if (d != NULL) {
-		return d;
+		if (d != NULL) {
+			return d;
+		}
 	}
 
 	enum encap_mode encap_mode;
