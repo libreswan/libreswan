@@ -4,5 +4,5 @@ Configuration for ELVIS-PLUS IPsec test server.
 
 See http://ipsec.elvis.ru/en.html
 
-This needs to run on the build machine which has NATted access to the
-real world.
+This needs to run on a machine with NATTed access to the real world;
+such as NetBSD.
