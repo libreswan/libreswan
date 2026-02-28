@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec readwriteconf
+config setup
+	dumpdir=/tmp
+	logfile=/tmp/pluto.log
+	protostack=xfrm
+	logtime=no
+	logappend=no
+	ikev1-policy=accept
+	plutodebug=all
+conn west
+	left=192.1.2.45
+	left=192.1.2.45
+	leftid=@west
+	right=192.1.2.23
+	right=192.1.2.23
+	rightid=@east
+	keyexchange=ikev1
+west #
+ echo done
+done
+west #
