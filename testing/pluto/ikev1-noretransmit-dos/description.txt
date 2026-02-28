@@ -1,5 +1,0 @@
-
-This test should send 1 Main Mode packet and then confirm that responder does not
-retransmit when it receives no reply. Same for Aggressive Mode.
-
-This is testing for non-CVE bug CVE-2016-5361
