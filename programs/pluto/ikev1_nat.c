@@ -487,9 +487,10 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 		struct iface_endpoint *i = find_iface_endpoint_by_local_endpoint(new_local_endpoint);
 		if (pexpect(i != NULL)) {
 			endpoint_buf b;
-			ldbg(st->logger, "NAT: "PRI_SO" floating endpoint ended up on interface %s %s",
-			     pri_so(st->st_serialno), i->ip_dev->real_device_name,
-			     str_endpoint(&i->local_endpoint, &b));
+			ldbg(st->logger, "NAT: "PRI_SO" floating endpoint ended up on interface %s%%%s",
+			     pri_so(st->st_serialno),
+			     str_endpoint(&i->local_endpoint, &b),
+			     i->ip_dev->real_device_name);
 			iface_endpoint_delref(&st->st_iface_endpoint);
 			st->st_iface_endpoint = i;
 		}

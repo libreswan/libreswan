@@ -305,11 +305,11 @@ void process_iface_packet(struct verbose verbose, int fd, void *ifp_arg)
 		if (LDBGP(DBG_BASE, logger)) {
 			endpoint_buf sb;
 			endpoint_buf lb;
-			LDBG_log(logger, "*received %zu bytes from %s on %s %s using %s",
+			LDBG_log(logger, "*received %zu bytes from %s on %s%%%s using %s",
 				 md->packet.len,
 				 str_endpoint(&md->sender, &sb),
-				 md->iface->ip_dev->real_device_name,
 				 str_endpoint(&md->iface->local_endpoint, &lb),
+				 md->iface->ip_dev->real_device_name,
 				 md->iface->io->protocol->name);
 			shunk_t packet = HUNK_AS_SHUNK(&md->packet);
 			LDBG_hunk(logger, &packet);

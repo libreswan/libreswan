@@ -82,9 +82,9 @@ static size_t jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint
 	size_t s = 0;
 	s += jam_string(buf, "interface");
 	s += jam_string(buf, " ");
-	s += jam_string(buf, ifp->ip_dev->real_device_name);
-	s += jam_string(buf, " ");
 	s += jam_endpoint_address_protocol_port(buf, &ifp->local_endpoint);
+	s += jam_string(buf, "%");
+	s += jam_string(buf, ifp->ip_dev->real_device_name);
 	bool first = true;
 	if (ifp->esp_encapsulation_enabled) {
 		/*
@@ -313,9 +313,9 @@ static void free_dead_ifaces(struct verbose verbose)
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
-			vlog("shutting down interface %s %s",
-			     p->ip_dev->real_device_name,
-			     str_endpoint(&p->local_endpoint, &b));
+			vlog("shutting down interface %s%%%s",
+			     str_endpoint(&p->local_endpoint, &b),
+			     p->ip_dev->real_device_name);
 			some_dead = true;
 		} else if (p->ip_dev->ifd_change == IFD_ADD) {
 			some_new = true;
@@ -668,9 +668,9 @@ void listen_on_iface_endpoint(struct iface_endpoint *ifp, const struct logger *l
 {
 	ifp->io->listen(ifp, logger);
 	endpoint_buf b;
-	ldbg(logger, "setup callback for interface %s %s fd %d on %s",
-	     ifp->ip_dev->real_device_name,
+	ldbg(logger, "setup callback for interface %s%%%s fd %d on %s",
 	     str_endpoint(&ifp->local_endpoint, &b),
+	     ifp->ip_dev->real_device_name,
 	     ifp->fd, ifp->io->protocol->name);
 }
 

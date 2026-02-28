@@ -367,14 +367,14 @@ void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
 	}
 
 	endpoint_buf osb, odb, nsb, ndb;
-	llog(RC_LOG, logger, "updating IKE SA endpoint from %s:%s->%s to %s:%s->%s",
+	llog(RC_LOG, logger, "updating IKE SA endpoint from %s%%%s->%s to %s%%%s->%s",
 	     /*old*/
-	     ike->sa.st_iface_endpoint->ip_dev->real_device_name,
 	     str_endpoint_sensitive(&ike->sa.st_iface_endpoint->local_endpoint, &osb),
+	     ike->sa.st_iface_endpoint->ip_dev->real_device_name,
 	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &odb),
 	     /*new*/
-	     md->iface->ip_dev->real_device_name,
 	     str_endpoint_sensitive(&md->iface->local_endpoint, &nsb),
+	     md->iface->ip_dev->real_device_name,
 	     str_endpoint_sensitive(&md->sender, &ndb));
 
 	ike->sa.st_remote_endpoint = md->sender;
