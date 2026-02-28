@@ -94,16 +94,4 @@ west #
  ipsec _kernel state
 west #
  ipsec _kernel policy
-src 192.0.3.254/32 dst 192.0.20.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.20.0/24 dst 192.0.3.254/32
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.20.0/24 dst 192.0.3.254/32
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 west #

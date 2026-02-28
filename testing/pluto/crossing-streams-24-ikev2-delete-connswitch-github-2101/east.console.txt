@@ -19,6 +19,8 @@ east #
 east #
  ipsec whack --impair ignore_viable_parent
 east #
+ ipsec whack --impair revival # stop B comming back
+east #
  ipsec up b
 IMPAIR: "b": ignoring viable IKE SA "a" #1
 "b" #3: initiating IKEv2 connection to 192.1.2.45 using UDP
@@ -39,7 +41,7 @@ east #
 east #
  ipsec _kernel policy
 src 192.0.20.0/24 dst 192.0.3.254/32
-	dir out action block priority PRIORITY ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 east #
