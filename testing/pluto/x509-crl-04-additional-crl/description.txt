@@ -1,8 +1,0 @@
-A test should be written using another CA that has two CRL distribution points of which the first one is dead.
-
-Likely the best way of doing this is adding two CRL distributionpoints to our mainca. The first being
-nic.testing.libreswan.org and the second being nictest.testing.libreswan.org. Then all tests remain
-using only the first one. For this specific test, modify /etc/hosts to break "nic" and make "nictest"
-point to nic's IP. Then check if CRL handling still works.
-
-
