@@ -39,10 +39,10 @@ Received 0 response(s)
 west #
  ipsec auto --ready
 listening for IKE messages
-adding interface eth1 192.1.2.66:UDP/500
-adding interface eth1 192.1.2.66:UDP/4500 (NAT)
+adding interface 192.1.2.66:UDP/500%eth1
+adding interface 192.1.2.66:UDP/4500%eth1 (NAT)
 "float-east": oriented IKEv1 connection (local: left=192.1.2.66 remote: right=192.1.2.23)
-"west-float": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.66
+"west-float": connection matches both left 192.1.2.45%eth1 and right 192.1.2.66%eth1
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
@@ -64,8 +64,8 @@ west #
 west #
  ipsec auto --ready | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
 listening for IKE messages
-shutting down interface eth1 192.1.2.66:4500
-shutting down interface eth1 192.1.2.66:500
+shutting down interface 192.1.2.66:4500%eth1
+shutting down interface 192.1.2.66:500%eth1
 "float-east": terminating SAs using this connection
 "float-east" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
