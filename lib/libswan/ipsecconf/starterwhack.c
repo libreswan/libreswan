@@ -64,7 +64,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	enum autostart autostart = conn_auto(conn);
-	msg.autostart = autostart;
 
 	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
 		return -1;

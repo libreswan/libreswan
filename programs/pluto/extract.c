@@ -3598,29 +3598,33 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	switch (wm->autostart) {
+	enum autostart autostart =
+		(wm->wm_auto == NULL ? AUTOSTART_UNSET :
+		 lookup_sparse_name("", "auto",
+				    wm->wm_auto,
+				    &autostart_names,
+				    &d, verbose));
+	if (d != NULL) {
+		return d;
+	}
+
+	switch (autostart) {
 	case AUTOSTART_UP:
 	{
-		name_buf nb;
-		vdbg("autostart=%s implies +UP",
-		     str_sparse_long(&autostart_names, wm->autostart, &nb));
+		vdbg("auto=%s implies +UP", wm->wm_auto);
 		add_policy(c, policy.up);
 		break;
 	}
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
 	{
-		name_buf nb;
-		vdbg("autostart=%s implies +ROUTE",
-		     str_sparse_long(&autostart_names, wm->autostart, &nb));
+		vdbg("auto=%s implies +ROUTE", wm->wm_auto);
 		add_policy(c, policy.route);
 		break;
 	}
 	case AUTOSTART_KEEP:
 	{
-		name_buf nb;
-		vdbg("autostart=%s implies +KEEP",
-		     str_sparse_long(&autostart_names, wm->autostart, &nb));
+		vdbg("auto=%s implies +KEEP", wm->wm_auto);
 		add_policy(c, policy.keep);
 		break;
 	}

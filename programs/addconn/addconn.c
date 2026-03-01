@@ -188,7 +188,8 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		name_buf nb;
 		fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=add",
 			    str_sparse_short(&autostart_names, autostart, &nb));
-		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
+		pfreeany(conn->values[KWS_AUTO].string);
+		conn->values[KWS_AUTO].string = clone_str("add", "add");
 	}
 
 	}
