@@ -158,7 +158,7 @@ enum config_conn_keyword {
 	KWS_IPTFS_INIT_DELAY,
 	KWS_IPTFS_DROP_TIME,
 
-	KNCF_AUTO,
+	KWS_AUTO,
 
 	KWS_REQID,
 	KWS_SENDCA,

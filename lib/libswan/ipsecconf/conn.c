@@ -90,7 +90,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* these are conn statements which are not left/right */
 
-  K("auto",  LEMPTY,  kt_sparse_name,  KNCF_AUTO, .sparse_names = &autostart_names),
+  K("auto",  LEMPTY,  kt_string,  KWS_AUTO),
   K("also",  kv_duplicateok,  kt_also,  KSCF_ALSO),
   K("hostaddrfamily",  LEMPTY,  kt_string,  KWS_HOSTADDRFAMILY),
   K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),

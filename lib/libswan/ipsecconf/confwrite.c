@@ -189,9 +189,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	confwrite_side(out, &conn->end[RIGHT_END]);
 	confwrite_value(out, "", &config_conn_keywords, ARRAY_REF(conn->values));
 
-	if (conn->values[KNCF_AUTO].option != 0) {
+	enum autostart autostart = conn_auto(conn);
+	if (autostart != 0) {
 		name_buf sb;
-		cwf("auto", str_sparse_long(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
+		cwf("auto", str_sparse_long(&autostart_names, autostart, &sb));
 	}
 
 	if (verbose)

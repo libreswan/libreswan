@@ -41,6 +41,9 @@
 #include "hunk.h"		/* for char_is_space() */
 #include "ip_cidr.h"
 #include "ttodata.h"
+
+#include "sparse_names.h"
+
 #include "ipsecconf/setup.h"
 
 #include "ipsecconf/parser.h"
@@ -553,4 +556,22 @@ void confread_free(struct starter_config *cfg)
 	}
 
 	pfree(cfg);
+}
+
+enum autostart conn_auto(const struct starter_conn *conn)
+{
+	char *value = conn->values[KWS_AUTO].string;
+	if (value == NULL) {
+		return 0;
+	}
+
+	const struct sparse_name *name =
+		sparse_lookup_by_name(&autostart_names,
+				      shunk1(value));
+	if (name == NULL) {
+		/* XXX: error? */
+		return AUTOSTART_UNSET;
+	}
+
+	return name->value;
 }

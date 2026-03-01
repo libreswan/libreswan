@@ -174,7 +174,7 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	 * Scrub AUTOSTART; conns will need to be
 	 * started manually.
 	 */
-	enum autostart autostart = conn->values[KNCF_AUTO].option;
+	enum autostart autostart = conn_auto(conn);
 	switch (autostart) {
 	case AUTOSTART_UNSET:
 	case AUTOSTART_ADD:
@@ -188,7 +188,8 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		name_buf nb;
 		fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=add",
 			    str_sparse_short(&autostart_names, autostart, &nb));
-		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
+		pfreeany(conn->values[KWS_AUTO].string);
+		conn->values[KWS_AUTO].string = clone_str("add", "add");
 	}
 
 	}
@@ -556,7 +557,7 @@ int main(int argc, char *argv[])
 
 		struct starter_conn *conn = NULL;
 		TAILQ_FOREACH(conn, &cfg->conns, link) {
-			enum autostart autostart = conn->values[KNCF_AUTO].option;
+			enum autostart autostart = conn_auto(conn);
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:
@@ -649,7 +650,7 @@ int main(int argc, char *argv[])
 			}
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
+				enum autostart autostart = conn_auto(conn);
 				if (autostart == AUTOSTART_ADD) {
 					printf("%s ", conn->name);
 				}
@@ -666,7 +667,7 @@ int main(int argc, char *argv[])
 			}
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
+				enum autostart autostart = conn_auto(conn);
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_ROUTE ||
 				    autostart == AUTOSTART_ONDEMAND) {
@@ -682,7 +683,7 @@ int main(int argc, char *argv[])
 			}
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
+				enum autostart autostart = conn_auto(conn);
 				if (autostart == AUTOSTART_UP) {
 					printf("%s ", conn->name);
 				}
@@ -696,7 +697,7 @@ int main(int argc, char *argv[])
 			}
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
+				enum autostart autostart = conn_auto(conn);
 				if (autostart == AUTOSTART_IGNORE ||
 				    autostart == AUTOSTART_UNSET) {
 					printf("%s ", conn->name);

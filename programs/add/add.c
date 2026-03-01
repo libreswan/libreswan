@@ -142,7 +142,7 @@ static void fprint_conn(FILE *file,
 }
 
 static void add_conn(struct starter_conn *conn,
-		     enum autostart autostart,
+		     const char *autostart,
 		     bool dry_run,
 		     enum yn_options async,
 		     const char *alias/*possibly-NULL*/,
@@ -163,15 +163,23 @@ static void add_conn(struct starter_conn *conn,
 
 	/* force (or clear) autostart; caller's checked it is sane */
 	if (verbose) {
-		enum autostart conn_autostart = conn->values[KNCF_AUTO].option;
-		if (conn_autostart != autostart) {
-			name_buf cab, ab;
+		const char *conn_autostart = conn->values[KWS_AUTO].string;
+		if (conn_autostart == NULL) {
+			if (autostart != NULL) {
+				fprint_conn(stderr, conn, alias, "setting auto=%s",
+					    autostart);
+			}
+		} else if (autostart == NULL) {
+			fprint_conn(stderr, conn, alias, "clearing auto=%s",
+				    conn_autostart);
+		} else if (!streq(conn_autostart, autostart)) {
 			fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=%s",
-				    str_sparse_short(&autostart_names, conn_autostart, &cab),
-				    str_sparse_short(&autostart_names, autostart, &ab));
+				    conn_autostart, autostart);
 		}
 	}
-	conn->values[KNCF_AUTO].option = autostart;
+
+	pfreeany(conn->values[KWS_AUTO].string);
+	conn->values[KWS_AUTO].string = clone_str(autostart, "auto");
 
 	if (verbose) {
 		fprintf(stdout, "  sending to pluto");
@@ -190,7 +198,7 @@ static void add_conn(struct starter_conn *conn,
 }
 
 static bool find_and_add_conn_by_name(const char *connname,
-				      enum autostart autostart,
+				      const char *autostart,
 				      bool dry_run,
 				      enum yn_options async,
 				      struct starter_config *cfg,
@@ -214,7 +222,7 @@ static bool find_and_add_conn_by_name(const char *connname,
 }
 
 static bool find_and_add_conn_by_alias(const char *connname,
-				       enum autostart autostart,
+				       const char *autostart,
 				       bool dry_run,
 				       enum yn_options async,
 				       struct starter_config *cfg,
@@ -287,7 +295,7 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	bool autoall = false;
-	enum autostart autostart = AUTOSTART_UNSET; /*aka 0*/
+	const char *autostart = AUTOSTART_UNSET; /*aka 0*/
 	bool checkconfig = false;
 	const char *configfile = NULL;
 	int exit_status = 0;
@@ -318,9 +326,10 @@ int main(int argc, char *argv[])
 				     "By default, 'add' will load <connection-name> into pluto.\n");
 
 		case OPT_AUTO:
+		{
 			/* force autostart, if reasonable */
-			autostart = optarg_sparse(logger, AUTOSTART_UNSET, &autostart_names);
-			switch (autostart) {
+			enum autostart opt_autostart = optarg_sparse(logger, AUTOSTART_UNSET, &autostart_names);
+			switch (opt_autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_ADD:
 			case AUTOSTART_IGNORE:
@@ -333,7 +342,9 @@ int main(int argc, char *argv[])
 				/* sure ... */
 				break;
 			}
+			autostart = optarg;
 			continue;
+		}
 
 		case OPT_AUTOALL:
 			autoall = true;
@@ -443,7 +454,7 @@ int main(int argc, char *argv[])
 
 		struct starter_conn *conn = NULL;
 		TAILQ_FOREACH(conn, &cfg->conns, link) {
-			enum autostart autostart = conn->values[KNCF_AUTO].option;
+			enum autostart autostart = conn_auto(conn);
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:

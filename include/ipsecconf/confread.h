@@ -88,6 +88,8 @@ struct starter_conn {
 
 };
 
+enum autostart conn_auto(const struct starter_conn *conn);
+
 struct config_setup {
 	config_setup_values values;
 };
