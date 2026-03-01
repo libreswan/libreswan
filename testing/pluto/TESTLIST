@@ -846,6 +846,7 @@ kvmplutotest	ikev2-child-restart-mismatch 	good
 
 kvmplutotest	ikev2-cp-01-resolvconf		good
 kvmplutotest	ikev2-cp-01-systemd-resolved	good
+kvmplutotest	ikev2-cp-02-ignore-peer-dns	good
 
 kvmplutotest	ikev2-child-rekey		good
 kvmplutotest	ikev2-child-rekey-00		good

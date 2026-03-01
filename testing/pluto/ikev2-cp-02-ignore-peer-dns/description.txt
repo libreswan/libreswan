@@ -1,0 +1,5 @@
+Test IKEv2 with addresspool and ignore-peer-dns=yes
+
+west connects to east which sends DNS CP payloads, but west has
+ignore-peer-dns=yes so the DNS should be ignored and resolv.conf
+should remain unchanged
