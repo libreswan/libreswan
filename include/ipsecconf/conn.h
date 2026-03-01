@@ -55,10 +55,12 @@
 enum config_conn_keyword {
 	/* zero is reserved */
 
+	KSCF_ALSO = 1,
+
 	/*
 	 * Generic keywords, add more here.
 	 */
-	KWS_DEBUG = 1,
+	KWS_DEBUG,
 	KWS_HOST,
 	KWS_NEXTHOP,
 
@@ -106,7 +108,6 @@ enum config_conn_keyword {
 	KWS_PHASE2ALG,
 
 	KWS_MODECFGBANNER,
-	KSCF_ALSO,
 	KWS_REDIRECT_TO,
 	KWS_ACCEPT_REDIRECT_TO,
 	KWS_CONNALIAS,

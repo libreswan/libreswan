@@ -28,11 +28,7 @@
 
 #include "ipsecconf/conn.h"
 #include "ipsecconf/keywords.h"
-#include "xauthby.h"
-#include "xauthfail.h"
 #include "shunt.h"
-#include "sparse_names.h"
-#include "encap_proto.h"
 
 /*
  * Values for right= and left=
@@ -40,195 +36,196 @@
 
 static const struct keyword_def config_conn_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, .validity = VALIDITY, ##__VA_ARGS__ }
+#define KWS(KEYNAME, VALIDITY, FIELD) K(KEYNAME, VALIDITY, kt_string, FIELD)
 
   /*
    * This is "left=" and "right="
    */
-  K("",  kv_leftright,  kt_string,  KWS_HOST),
+  KWS("", kv_leftright, KWS_HOST),
 
-  K("debug",  LEMPTY, kt_string, KWS_DEBUG),
+  K("subnets", kv_leftright, kt_appendstrings, KWS_SUBNETS),
 
-  K("subnet",  kv_leftright,  kt_string,  KWS_SUBNET),
-  K("subnets",  kv_leftright,  kt_appendstrings,  KWS_SUBNETS),
-  K("sourceip",  kv_leftright,  kt_string,  KWS_SOURCEIP),
-  K("ikeport",  kv_leftright,  kt_string,  KWS_IKEPORT),
-  K("interface-ip", kv_leftright,  kt_string, KWS_INTERFACE_IP),
-  K("vti",  kv_leftright,  kt_string,  KWS_VTI),
-  K("nexthop",  kv_leftright,  kt_string,  KWS_NEXTHOP),
-  K("updown",  kv_leftright,  kt_string,  KWS_UPDOWN),
-  K("updown-config",  kv_leftright,  kt_string,  KWS_UPDOWN_CONFIG),
-  K("id",  kv_leftright,  kt_string,  KWS_ID),
+  KWS("debug", LEMPTY, KWS_DEBUG),
+  KWS("subnet", kv_leftright, KWS_SUBNET),
+  KWS("sourceip", kv_leftright, KWS_SOURCEIP),
+  KWS("ikeport", kv_leftright, KWS_IKEPORT),
+  KWS("interface-ip", kv_leftright, KWS_INTERFACE_IP),
+  KWS("vti", kv_leftright, KWS_VTI),
+  KWS("nexthop", kv_leftright, KWS_NEXTHOP),
+  KWS("updown", kv_leftright, KWS_UPDOWN),
+  KWS("updown-config", kv_leftright, KWS_UPDOWN_CONFIG),
+  KWS("id", kv_leftright, KWS_ID),
 
-  K("rsasigkey",  kv_leftright,  kt_string,  KWS_RSASIGKEY),
-  K("ecdsakey",  kv_leftright,  kt_string,  KWS_ECDSAKEY),
-  K("eddsakey",  kv_leftright,  kt_string,  KWS_EDDSAKEY),
-  K("pubkey",  kv_leftright,  kt_string,  KWS_PUBKEY),
+  KWS("rsasigkey", kv_leftright, KWS_RSASIGKEY),
+  KWS("ecdsakey", kv_leftright, KWS_ECDSAKEY),
+  KWS("eddsakey", kv_leftright, KWS_EDDSAKEY),
+  KWS("pubkey", kv_leftright, KWS_PUBKEY),
 
-  K("cert",  kv_leftright,  kt_string,  KWS_CERT),
-  K("ckaid",  kv_leftright,  kt_string,  KWS_CKAID),
-  K("sendcert",  kv_leftright,  kt_string,  KWS_SENDCERT),
-  K("ca",  kv_leftright,  kt_string,  KWS_CA),
-  K("xauthserver",  kv_leftright,  kt_string,  KWS_XAUTHSERVER),
-  K("xauthclient",  kv_leftright,  kt_string,  KWS_XAUTHCLIENT),
-  K("modecfgserver",  kv_leftright,  kt_string,  KWS_MODECFGSERVER),
-  K("modecfgclient",  kv_leftright,  kt_string,  KWS_MODECFGCLIENT),
-  K("username",  kv_leftright,  kt_string,  KWS_USERNAME),
-  K("addresspool",  kv_leftright,  kt_string,  KWS_ADDRESSPOOL),
-  K("auth",  kv_leftright, kt_string,  KWS_AUTH),
+  KWS("cert", kv_leftright, KWS_CERT),
+  KWS("ckaid", kv_leftright, KWS_CKAID),
+  KWS("sendcert", kv_leftright, KWS_SENDCERT),
+  KWS("ca", kv_leftright, KWS_CA),
+  KWS("xauthserver", kv_leftright, KWS_XAUTHSERVER),
+  KWS("xauthclient", kv_leftright, KWS_XAUTHCLIENT),
+  KWS("modecfgserver", kv_leftright, KWS_MODECFGSERVER),
+  KWS("modecfgclient", kv_leftright, KWS_MODECFGCLIENT),
+  KWS("username", kv_leftright, KWS_USERNAME),
+  KWS("addresspool", kv_leftright, KWS_ADDRESSPOOL),
+  KWS("auth", kv_leftright, KWS_AUTH),
 
 #ifdef USE_CAT
 # define NOSUP LEMPTY
 #else
 # define NOSUP kv_nosup
 #endif
-  K("cat",  kv_leftright|NOSUP,  kt_string,  KWS_CAT),
+  KWS("cat", kv_leftright|NOSUP, KWS_CAT),
 #undef NOSUP
 
-  K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
-  K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
-  K("groundhog",  kv_leftright,  kt_string,  KWS_GROUNDHOG),
+  KWS("protoport", kv_leftright, KWS_PROTOPORT),
+  KWS("autheap", kv_leftright, KWS_AUTHEAP),
+  KWS("groundhog", kv_leftright, KWS_GROUNDHOG),
 
   /* these are conn statements which are not left/right */
 
-  K("auto",  LEMPTY,  kt_string,  KWS_AUTO),
-  K("also",  kv_duplicateok,  kt_also,  KSCF_ALSO),
-  K("hostaddrfamily",  LEMPTY,  kt_string,  KWS_HOSTADDRFAMILY),
-  K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),
-  K("keyexchange",  LEMPTY,  kt_string,  KWS_KEYEXCHANGE),
-  K("ikev2",  LEMPTY,  kt_string,  KWS_IKEv2),
-  K("ppk",  LEMPTY, kt_string, KWS_PPK),
-  K("ppk-ids",  LEMPTY, kt_string, KWS_PPK_IDS),
-  K("intermediate",  LEMPTY, kt_string, KWS_INTERMEDIATE),
-  K("esn",  LEMPTY,  kt_string,  KWS_ESN),
-  K("decap-dscp",  LEMPTY,  kt_string,  KWS_DECAP_DSCP),
-  K("encap-dscp",  LEMPTY,  kt_string,  KWS_ENCAP_DSCP),
-  K("nopmtudisc",  LEMPTY,  kt_string,  KWS_NOPMTUDISC),
-  K("fragmentation",  LEMPTY,  kt_string,  KWS_FRAGMENTATION),
-  K("mobike",  LEMPTY,  kt_string,  KWS_MOBIKE),
-  K("narrowing",  LEMPTY,  kt_string,  KWS_NARROWING),
-  K("pam-authorize",  LEMPTY,  kt_string,  KWS_PAM_AUTHORIZE),
-  K("send-redirect",  LEMPTY,  kt_string,  KWS_SEND_REDIRECT),
-  K("redirect-to",  LEMPTY,  kt_string,  KWS_REDIRECT_TO),
-  K("accept-redirect",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT),
-  K("accept-redirect-to",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT_TO),
-  K("pfs",  LEMPTY,  kt_string,  KWS_PFS),
-  K("session-resumption",  LEMPTY,  kt_string,  KWS_SESSION_RESUMPTION),
+  K("also", kv_duplicateok, kt_also, KSCF_ALSO),
+  K("connalias", LEMPTY, kt_appendstrings, KWS_CONNALIAS),
 
-  K("nat-keepalive",  LEMPTY,  kt_string,  KWS_NAT_KEEPALIVE),
+  KWS("auto", LEMPTY, KWS_AUTO),
+  KWS("hostaddrfamily", LEMPTY, KWS_HOSTADDRFAMILY),
+  KWS("authby", LEMPTY, KWS_AUTHBY),
+  KWS("keyexchange", LEMPTY, KWS_KEYEXCHANGE),
+  KWS("ikev2", LEMPTY, KWS_IKEv2),
+  KWS("ppk", LEMPTY, KWS_PPK),
+  KWS("ppk-ids", LEMPTY, KWS_PPK_IDS),
+  KWS("intermediate", LEMPTY, KWS_INTERMEDIATE),
+  KWS("esn", LEMPTY, KWS_ESN),
+  KWS("decap-dscp", LEMPTY, KWS_DECAP_DSCP),
+  KWS("encap-dscp", LEMPTY, KWS_ENCAP_DSCP),
+  KWS("nopmtudisc", LEMPTY, KWS_NOPMTUDISC),
+  KWS("fragmentation", LEMPTY, KWS_FRAGMENTATION),
+  KWS("mobike", LEMPTY, KWS_MOBIKE),
+  KWS("narrowing", LEMPTY, KWS_NARROWING),
+  KWS("pam-authorize", LEMPTY, KWS_PAM_AUTHORIZE),
+  KWS("send-redirect", LEMPTY, KWS_SEND_REDIRECT),
+  KWS("redirect-to", LEMPTY, KWS_REDIRECT_TO),
+  KWS("accept-redirect", LEMPTY, KWS_ACCEPT_REDIRECT),
+  KWS("accept-redirect-to", LEMPTY, KWS_ACCEPT_REDIRECT_TO),
+  KWS("pfs", LEMPTY, KWS_PFS),
+  KWS("session-resumption", LEMPTY, KWS_SESSION_RESUMPTION),
 
-  K("initial-contact",  LEMPTY,  kt_string,  KWS_INITIAL_CONTACT),
-  K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_string,  KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED),
-  K("reject-simultaneous-ike-auth", LEMPTY, kt_string, KWS_REJECT_SIMULTANEOUS_IKE_AUTH),
+  KWS("nat-keepalive", LEMPTY, KWS_NAT_KEEPALIVE),
 
-  K("iptfs",  LEMPTY,  kt_string,  KWS_IPTFS),
-  K("iptfs-fragmentation",  LEMPTY,  kt_string,  KWS_IPTFS_FRAGMENTATION),
-  K("iptfs-packet-size",  LEMPTY,  kt_string,  KWS_IPTFS_PACKET_SIZE),
-  K("iptfs-max-queue-size",  LEMPTY,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE),
-  K("iptfs-reorder-window",  LEMPTY,  kt_string,  KWS_IPTFS_REORDER_WINDOW),
-  K("iptfs-init-delay",  LEMPTY,  kt_string,  KWS_IPTFS_INIT_DELAY),
-  K("iptfs-drop-time",  LEMPTY,  kt_string,  KWS_IPTFS_DROP_TIME),
+  KWS("initial-contact", LEMPTY, KWS_INITIAL_CONTACT),
+  KWS("send-esp-tfc-padding-not-supported", LEMPTY, KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED),
+  KWS("reject-simultaneous-ike-auth", LEMPTY, KWS_REJECT_SIMULTANEOUS_IKE_AUTH),
 
-  K("fake-strongswan",  LEMPTY,  kt_string,  KWS_FAKE_STRONGSWAN),
-  K("send-vendorid",  LEMPTY,  kt_string,  KWS_SEND_VENDORID),
-  K("sha2-truncbug",  LEMPTY,  kt_string,  KWS_SHA2_TRUNCBUG),
-  K("share-lease",  LEMPTY,  kt_string,  KWS_SHARE_LEASE),
-  K("ms-dh-downgrade",  LEMPTY,  kt_string,  KWS_MS_DH_DOWNGRADE),
-  K("pfs-rekey-workaround",  LEMPTY,  kt_string,  KWS_PFS_REKEY_WORKAROUND),
-  K("require-id-on-certificate",  LEMPTY,  kt_string,  KWS_REQUIRE_ID_ON_CERTIFICATE),
-  K("dns-match-id,",  LEMPTY,  kt_string,  KWS_DNS_MATCH_ID),
-  K("ipsec-max-bytes",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_BYTES),
-  K("ipsec-max-packets",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_PACKETS),
-  K("ipsec-lifetime",  LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME),
+  KWS("iptfs", LEMPTY, KWS_IPTFS),
+  KWS("iptfs-fragmentation", LEMPTY, KWS_IPTFS_FRAGMENTATION),
+  KWS("iptfs-packet-size", LEMPTY, KWS_IPTFS_PACKET_SIZE),
+  KWS("iptfs-max-queue-size", LEMPTY, KWS_IPTFS_MAX_QUEUE_SIZE),
+  KWS("iptfs-reorder-window", LEMPTY, KWS_IPTFS_REORDER_WINDOW),
+  KWS("iptfs-init-delay", LEMPTY, KWS_IPTFS_INIT_DELAY),
+  KWS("iptfs-drop-time", LEMPTY, KWS_IPTFS_DROP_TIME),
 
-  K("retransmit-timeout",  LEMPTY,  kt_string,  KWS_RETRANSMIT_TIMEOUT),
-  K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
+  KWS("fake-strongswan", LEMPTY, KWS_FAKE_STRONGSWAN),
+  KWS("send-vendorid", LEMPTY, KWS_SEND_VENDORID),
+  KWS("sha2-truncbug", LEMPTY, KWS_SHA2_TRUNCBUG),
+  KWS("share-lease", LEMPTY, KWS_SHARE_LEASE),
+  KWS("ms-dh-downgrade", LEMPTY, KWS_MS_DH_DOWNGRADE),
+  KWS("pfs-rekey-workaround", LEMPTY, KWS_PFS_REKEY_WORKAROUND),
+  KWS("require-id-on-certificate", LEMPTY, KWS_REQUIRE_ID_ON_CERTIFICATE),
+  KWS("dns-match-id,", LEMPTY, KWS_DNS_MATCH_ID),
+  KWS("ipsec-max-bytes", LEMPTY, KWS_IPSEC_MAX_BYTES),
+  KWS("ipsec-max-packets", LEMPTY, KWS_IPSEC_MAX_PACKETS),
+  KWS("ipsec-lifetime", LEMPTY, KWS_IPSEC_LIFETIME),
 
-  K("ikepad",  LEMPTY,  kt_string,  KWS_IKEPAD),
-  K("nat-ikev1-method",  LEMPTY,  kt_string,  KWS_NAT_IKEv1_METHOD),
+  KWS("retransmit-timeout", LEMPTY, KWS_RETRANSMIT_TIMEOUT),
+  KWS("retransmit-interval", LEMPTY, KWS_RETRANSMIT_INTERVAL),
 
-  K("sec-label",  LEMPTY,  kt_string,  KWS_SEC_LABEL),
+  KWS("ikepad", LEMPTY, KWS_IKEPAD),
+  KWS("nat-ikev1-method", LEMPTY, KWS_NAT_IKEv1_METHOD),
+
+  KWS("sec-label", LEMPTY, KWS_SEC_LABEL),
 
   /* Cisco interop: remote peer type */
-  K("remote-peer-type",  LEMPTY,  kt_string,  KWS_REMOTE_PEER_TYPE),
+  KWS("remote-peer-type", LEMPTY, KWS_REMOTE_PEER_TYPE),
   /* Network Manager support */
-  K("nm-configured",  LEMPTY,  kt_string,  KWS_NM_CONFIGURED),
-  K("cisco-unity",  LEMPTY,  kt_string,  KWS_CISCO_UNITY),
-  K("cisco-split",  LEMPTY,  kt_string,  KWS_CISCO_SPLIT),
+  KWS("nm-configured", LEMPTY, KWS_NM_CONFIGURED),
+  KWS("cisco-unity", LEMPTY, KWS_CISCO_UNITY),
+  KWS("cisco-split", LEMPTY, KWS_CISCO_SPLIT),
 
-  K("xauthby",  LEMPTY,  kt_string,  KWS_XAUTHBY),
-  K("xauthfail",  LEMPTY,  kt_string,  KWS_XAUTHFAIL),
-  K("modecfgpull",  LEMPTY,  kt_string,  KWS_MODECFGPULL),
-  K("modecfgdns",  LEMPTY,  kt_string,  KWS_MODECFGDNS),
-  K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
-  K("modecfgbanner",  LEMPTY,  kt_string,  KWS_MODECFGBANNER),
-  K("ignore-peer-dns",  LEMPTY,  kt_string,  KWS_IGNORE_PEER_DNS),
+  KWS("xauthby", LEMPTY, KWS_XAUTHBY),
+  KWS("xauthfail", LEMPTY, KWS_XAUTHFAIL),
+  KWS("modecfgpull", LEMPTY, KWS_MODECFGPULL),
+  KWS("modecfgdns", LEMPTY, KWS_MODECFGDNS),
+  KWS("modecfgdomains", LEMPTY, KWS_MODECFGDOMAINS),
+  KWS("modecfgbanner", LEMPTY, KWS_MODECFGBANNER),
+  KWS("ignore-peer-dns", LEMPTY, KWS_IGNORE_PEER_DNS),
 
-  K("mark",  LEMPTY,  kt_string,  KWS_MARK),
-  K("mark-in",  LEMPTY,  kt_string,  KWS_MARK_IN),
-  K("mark-out",  LEMPTY,  kt_string,  KWS_MARK_OUT),
+  KWS("mark", LEMPTY, KWS_MARK),
+  KWS("mark-in", LEMPTY, KWS_MARK_IN),
+  KWS("mark-out", LEMPTY, KWS_MARK_OUT),
 
-  K("vti-interface",  LEMPTY,  kt_string,  KWS_VTI_INTERFACE),
-  K("vti-routing",  LEMPTY,  kt_string,  KWS_VTI_ROUTING),
-  K("vti-shared",  LEMPTY,  kt_string,  KWS_VTI_SHARED),
+  KWS("vti-interface", LEMPTY, KWS_VTI_INTERFACE),
+  KWS("vti-routing", LEMPTY, KWS_VTI_ROUTING),
+  KWS("vti-shared", LEMPTY, KWS_VTI_SHARED),
 
-  K("ipsec-interface",  LEMPTY, kt_string, KWS_IPSEC_INTERFACE),
+  KWS("ipsec-interface", LEMPTY, KWS_IPSEC_INTERFACE),
 
-  K("clones", LEMPTY, kt_string, KWS_CLONES),
+  KWS("clones", LEMPTY, KWS_CLONES),
 
-  K("nic-offload",  LEMPTY,  kt_string,  KWS_NIC_OFFLOAD),
+  KWS("nic-offload", LEMPTY, KWS_NIC_OFFLOAD),
 
-  K("encapsulation",  LEMPTY,  kt_string,  KWS_ENCAPSULATION),
+  KWS("encapsulation", LEMPTY, KWS_ENCAPSULATION),
 
-  K("overlapip",  LEMPTY,  kt_string,  KWS_OVERLAPIP),
-  K("reauth",  LEMPTY,  kt_string,  KWS_REAUTH),
-  K("rekey",  LEMPTY,  kt_string,  KWS_REKEY),
-  K("rekeymargin",  LEMPTY,  kt_string,  KWS_REKEYMARGIN),
-  K("rekeyfuzz",  LEMPTY,  kt_string,  KWS_REKEYFUZZ),
-  K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
-  K("ikelifetime",  LEMPTY,  kt_string,  KWS_IKELIFETIME),
+  KWS("overlapip", LEMPTY, KWS_OVERLAPIP),
+  KWS("reauth", LEMPTY, KWS_REAUTH),
+  KWS("rekey", LEMPTY, KWS_REKEY),
+  KWS("rekeymargin", LEMPTY, KWS_REKEYMARGIN),
+  KWS("rekeyfuzz", LEMPTY, KWS_REKEYFUZZ),
+  KWS("replay-window", LEMPTY, KWS_REPLAY_WINDOW),
+  KWS("ikelifetime", LEMPTY, KWS_IKELIFETIME),
 
-  K("type",  LEMPTY,  kt_string,  KWS_TYPE),
-  K("failureshunt",  LEMPTY,  kt_string,  KWS_FAILURESHUNT),
-  K("negotiationshunt",  LEMPTY,  kt_string,  KWS_NEGOTIATIONSHUNT),
+  KWS("type", LEMPTY, KWS_TYPE),
+  KWS("failureshunt", LEMPTY, KWS_FAILURESHUNT),
+  KWS("negotiationshunt", LEMPTY, KWS_NEGOTIATIONSHUNT),
 
-  K("enable-tcp",  LEMPTY, kt_string, KWS_ENABLE_TCP),
-  K("tcp-remoteport",  LEMPTY, kt_string, KWS_TCP_REMOTEPORT),
-
-  K("connalias",  LEMPTY,  kt_appendstrings,  KWS_CONNALIAS),
+  KWS("enable-tcp", LEMPTY, KWS_ENABLE_TCP),
+  KWS("tcp-remoteport", LEMPTY, KWS_TCP_REMOTEPORT),
 
   /* attributes of the phase1 policy */
-  K("ike",  LEMPTY,  kt_string,  KWS_IKE),
+  KWS("ike", LEMPTY, KWS_IKE),
   /* attributes of the phase2 policy */
-  K("esp",  LEMPTY,  kt_string,  KWS_ESP),
-  K("ah",   LEMPTY,  kt_string,  KWS_AH),
-  K("phase2",  LEMPTY,  kt_string,  KWS_PHASE2),
-  K("phase2alg",  LEMPTY,  kt_string,  KWS_PHASE2ALG),
+  KWS("esp", LEMPTY, KWS_ESP),
+  KWS("ah",  LEMPTY, KWS_AH),
+  KWS("phase2", LEMPTY, KWS_PHASE2),
+  KWS("phase2alg", LEMPTY, KWS_PHASE2ALG),
 
-  K("compress",  LEMPTY,  kt_string,  KWS_COMPRESS),
+  KWS("compress", LEMPTY, KWS_COMPRESS),
 
   /* route metric */
-  K("metric",  LEMPTY,  kt_string,  KWS_METRIC),
+  KWS("metric", LEMPTY, KWS_METRIC),
 
   /* DPD */
-  K("dpddelay",  LEMPTY,  kt_string,  KWS_DPDDELAY),
-  K("ikev1-dpdtimeout",  LEMPTY,  kt_string,  KWS_DPDTIMEOUT),
+  KWS("dpddelay", LEMPTY, KWS_DPDDELAY),
+  KWS("ikev1-dpdtimeout", LEMPTY, KWS_DPDTIMEOUT),
 
-  K("sendca",  LEMPTY,  kt_string,  KWS_SENDCA),
+  KWS("sendca", LEMPTY, KWS_SENDCA),
 
-  K("mtu",  LEMPTY,  kt_string,  KWS_MTU),
-  K("priority",  LEMPTY,  kt_string,  KWS_PRIORITY),
-  K("tfc",  LEMPTY,  kt_string,  KWS_TFC),
-  K("reqid",  LEMPTY,  kt_string,  KWS_REQID),
+  KWS("mtu", LEMPTY, KWS_MTU),
+  KWS("priority", LEMPTY, KWS_PRIORITY),
+  KWS("tfc", LEMPTY, KWS_TFC),
+  KWS("reqid", LEMPTY, KWS_REQID),
 
 #ifdef USE_NFLOG
 # define NOSUP LEMPTY
 #else
 # define NOSUP kv_nosup
 #endif
-  K("nflog-group",  NOSUP,  kt_string,  KWS_NFLOG_GROUP),
+  KWS("nflog-group", NOSUP, KWS_NFLOG_GROUP),
 #undef NOSUP
 
-  K("aggressive",  LEMPTY,  kt_string,  KWS_AGGRESSIVE),
+  KWS("aggressive", LEMPTY, KWS_AGGRESSIVE),
 
   /*
    * Force first alias/obsolete keyword into slot following all
@@ -240,24 +237,24 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* alias for compatibility - undocumented on purpose */
 
-#define A(KEYNAME, VALIDITY, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+#define A(KEYNAME, VALIDITY, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = kt_string, .field = FIELD, ##__VA_ARGS__ }
 
-  A("aggrmode", LEMPTY,  kt_string,  KWS_AGGRESSIVE),
-  A("keylife", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
-  A("lifetime", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
-  A("phase2alg", LEMPTY,  kt_string,  KWS_ESP),	/* obsolete */
-  A("dpdtimeout", LEMPTY,  kt_string,  KWS_DPDTIMEOUT), /* old name */
+  A("aggrmode", LEMPTY, KWS_AGGRESSIVE),
+  A("keylife", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
+  A("lifetime", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
+  A("phase2alg", LEMPTY, KWS_ESP),	/* obsolete */
+  A("dpdtimeout", LEMPTY, KWS_DPDTIMEOUT), /* old name */
 #ifdef USE_NFLOG
-  A("nflog", LEMPTY,  kt_string,  KWS_NFLOG_GROUP), /* old-name */
+  A("nflog", LEMPTY, KWS_NFLOG_GROUP), /* old-name */
 #endif
-  A("salifetime", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
+  A("salifetime", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
   /* xauthusername is still used in NetworkManager-libreswan :/ */
-  A("xauthusername",  kv_leftright,  kt_string,  KWS_USERNAME), /* old alias */
-  A("ah", LEMPTY,  kt_string,  KWS_ESP),
-  A("policy-label", LEMPTY,  kt_string,  KWS_SEC_LABEL), /* obsolete variant */
+  A("xauthusername", kv_leftright, KWS_USERNAME), /* old alias */
+  A("ah", LEMPTY, KWS_ESP),
+  A("policy-label", LEMPTY, KWS_SEC_LABEL), /* obsolete variant */
   /* another alias used by NetworkManager-libreswan :/ */
-  A("remote_peer_type", LEMPTY,  kt_string,  KWS_REMOTE_PEER_TYPE),
-  A("send-no-esp-tfc", LEMPTY,  kt_string,  KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED), /*compat, but forever*/
+  A("remote_peer_type", LEMPTY, KWS_REMOTE_PEER_TYPE),
+  A("send-no-esp-tfc", LEMPTY, KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED), /*compat, but forever*/
 
   /* obsolete config setup options */
 
@@ -270,6 +267,7 @@ static const struct keyword_def config_conn_keyword[] = {
 #undef O
 #undef A
 #undef K
+#undef KWS
 };
 
 const struct keywords_def config_conn_keywords = {
