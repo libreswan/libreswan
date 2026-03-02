@@ -273,7 +273,7 @@ output: | spent 0.00085 (0.00085) milliseconds in udp_read_packet() calling chec
 output: | struct msg_digest: newref @0x7f18d5dae7a8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
 output: | struct iface_endpoint: addref @0x7f18d5eaff38(2->3) (udp_read_packet() +249 programs/pluto/iface_udp.c)
 output: | alloc logger: newref @0x7f18d5eabfc8(0->1) (udp_read_packet() +249 programs/pluto/iface_udp.c)
-output: | *received 76 bytes from 192.1.2.23:500 on eth1 192.1.2.45:500 using UDP
+output: | *received 76 bytes from 192.1.2.23:500 on 192.1.2.45:500%eth1 using UDP
 output: |   bc c8 95 c9  d9 c3 9e 07  8b db 33 11  77 d1 85 91   ..........3.w...
 output: |   05 10 02 01  00 00 00 00  00 00 00 4c  a2 0e 8f 53   ...........L...S
 output: |   57 9b a0 7c  0c f2 8c 8c  f1 30 9f 92  5d 30 5c bf   W..|.....0..]0\.
