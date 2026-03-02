@@ -942,12 +942,9 @@ static uintmax_t extract_uintmax(struct kv kv,
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
-					const char *leftright,
-					const char *name,
-					const char *value,
+					struct kv kv,
 					const struct scales *scales,
 					struct range range,
-					const struct whack_message *wm,
 					diag_t *d,
 					struct verbose verbose)
 {
@@ -956,18 +953,18 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return range.value_when_unset;
 	}
 
 	uintmax_t number;
-	diag_t diag = tto_scaled_uintmax(shunk1(value), &number, scales);
+	diag_t diag = tto_scaled_uintmax(shunk1(kv.value), &number, scales);
 	if ((*d) != NULL) {
-		(*d) = diag_diag(&diag, "%s%s=%s invalid, ", leftright, name, value);
+		(*d) = diag_diag(&diag, PRI_KV" invalid, ", pri_kv(kv));
 		return range.value_when_unset;
 	}
 
-	return check_range(story, leftright, name, number, range, d, verbose);
+	return check_range(story, kv.leftright, kv.key, number, range, d, verbose);
 }
 
 static uintmax_t extract_percent(struct kv kv,
@@ -3293,25 +3290,25 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->child.iptfs.enabled = true;
 		config->child.iptfs.packet_size =
-			extract_scaled_uintmax("", "", "iptfs-packet-size",
-					       wm->wm_iptfs_packet_size,
+			extract_scaled_uintmax("",
+					       kv(wm, END_ROOF, KWS_IPTFS_PACKET_SIZE),
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
 					       },
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
 		config->child.iptfs.max_queue_size =
-			extract_scaled_uintmax("", "", "iptfs-max-queue-size",
-					       wm->wm_iptfs_max_queue_size,
+			extract_scaled_uintmax("",
+					       kv(wm, END_ROOF, KWS_IPTFS_MAX_QUEUE_SIZE),
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
 					       },
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3343,14 +3340,14 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->child.iptfs.init_delay = iptfs_init_delay;
 
 		config->child.iptfs.reorder_window =
-			extract_scaled_uintmax("", "", "iptfs-reorder-window",
-					       wm->wm_iptfs_reorder_window,
+			extract_scaled_uintmax("",
+					       kv(wm, END_ROOF, KWS_IPTFS_REORDER_WINDOW),
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
 						       .limit.max = 65535,
 					       },
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4088,28 +4085,26 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_ipsec_max_bytes =
 			extract_scaled_uintmax("IPsec max bytes",
-					       "", "ipsec-max-bytes",
-					       wm->wm_ipsec_max_bytes,
+					       kv(wm, END_ROOF, KWS_IPSEC_MAX_BYTES),
 					       &binary_byte_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
 						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
 					       },
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
 		config->sa_ipsec_max_packets =
 			extract_scaled_uintmax("IPsec max packets",
-					       "", "ipsec-max-packets",
-					       wm->wm_ipsec_max_packets,
+					       kv(wm, END_ROOF, KWS_IPSEC_MAX_PACKETS),
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
 						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
 					       },
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4179,14 +4174,14 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
-							   "", "mtu",
-							   wm->wm_mtu,
-							   &binary_byte_scales,
-							   (struct range) {
-								   .value_when_unset = 0,
-							   },
-							   wm, &d, verbose);
+		config->child.mtu =
+			extract_scaled_uintmax("Maximum Transmission Unit",
+					       kv(wm, END_ROOF, KWS_MTU),
+					       &binary_byte_scales,
+					       (struct range) {
+						       .value_when_unset = 0,
+					       },
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
