@@ -67,7 +67,7 @@ listening for IKE messages
 shutting down interface eth1 192.1.2.45:4500
 shutting down interface eth1 192.1.2.45:500
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: terminating SAs using this connection
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 ERROR: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: send on eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP failed in delete notification: Network is unreachable (errno 101)
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: "unroute" output: RTNETLINK answers: Network is unreachable
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: "unroute" output: RTNETLINK answers: Network is unreachable

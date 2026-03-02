@@ -187,7 +187,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
-		jam(buf, " %s (%s);", st->st_state->name, st->st_state->story);
+		jam(buf, " %s;", st->st_state->story);
 
 		/*
 		 * Hunt and peck for events (needs fixing).

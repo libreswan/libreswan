@@ -30,7 +30,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-propnum
 "westnet-eastnet-propnum": terminating SAs using this connection
-"westnet-eastnet-propnum" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-propnum" #1: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-propnum" #2: ESP traffic information: in=0B out=0B
 west #
  : dump all emitted and parsed proposals onto the console

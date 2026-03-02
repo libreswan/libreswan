@@ -29,7 +29,7 @@ west #
 west #
  ipsec auto --delete ikev2
 "ikev2": terminating SAs using this connection
-"ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2" #1: deleting IKE SA (established IKE SA) and sending notification
 "ikev2" #2: ESP traffic information: in=0B out=0B
 west #
  echo done

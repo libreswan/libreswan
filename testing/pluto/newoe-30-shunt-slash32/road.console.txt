@@ -177,7 +177,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negopass.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negopass.failnone.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.failnone.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
@@ -362,7 +362,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negopass.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negopass.faildrop.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.faildrop.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
@@ -545,7 +545,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negopass.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negopass.failpass.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.failpass.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
@@ -730,7 +730,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negodrop.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negodrop.failnone.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.failnone.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
@@ -917,7 +917,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negodrop.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negodrop.faildrop.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.faildrop.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
@@ -1102,7 +1102,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : oe.negodrop.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 : oe.negodrop.failpass.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.failpass.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32

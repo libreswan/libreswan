@@ -30,7 +30,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-default
 "westnet-eastnet-aes-default": terminating SAs using this connection
-"westnet-eastnet-aes-default" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-aes-default" #1: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
 west #
  #
@@ -49,7 +49,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-128
 "westnet-eastnet-aes-128": terminating SAs using this connection
-"westnet-eastnet-aes-128" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-aes-128" #3: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
 west #
  #
@@ -68,7 +68,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-aes-256
 "westnet-eastnet-aes-256": terminating SAs using this connection
-"westnet-eastnet-aes-256" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-aes-256" #5: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
 west #
  #
@@ -87,7 +87,7 @@ west #
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
 "westnet-eastnet-aes-mix-1": terminating SAs using this connection
-"westnet-eastnet-aes-mix-1" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-aes-mix-1" #7: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
 west #
  #
@@ -106,7 +106,7 @@ west #
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
 "westnet-eastnet-aes-mix-2": terminating SAs using this connection
-"westnet-eastnet-aes-mix-2" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-aes-mix-2" #9: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
 west #
  echo done

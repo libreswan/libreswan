@@ -112,7 +112,7 @@ north #
 north #
  ipsec auto --delete north-east
 "north-east": terminating SAs using this connection
-"north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"north-east" #6: deleting IKE SA (established IKE SA) and sending notification
 "north-east" #7: command "down" output: restoring resolvconf
 "north-east" #7: ESP traffic information: in=84B out=84B
 north #

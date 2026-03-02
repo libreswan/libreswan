@@ -46,8 +46,8 @@ north #
 north #
  # ... west #1/#2 dies ...
 north #
- ../../guestbin/wait-for-pluto.sh --match '#1: ESTABLISHED_IKE_SA: .* second timeout exceeded'
-"westnet-northnet" #1: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+ ../../guestbin/wait-for-pluto.sh --match '#1: established IKE SA: .* second timeout exceeded'
+"westnet-northnet" #1: established IKE SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
 north #
  ../../guestbin/wait-for-pluto.sh --match '#2: connection is supposed to remain up'
 "westnet-northnet" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -112,8 +112,8 @@ north #
 north #
  # ... east #3/#4 dies ...
 north #
- ../../guestbin/wait-for-pluto.sh --match '#3: ESTABLISHED_IKE_SA: .* second timeout exceeded'
-"eastnet-northnet" #3: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+ ../../guestbin/wait-for-pluto.sh --match '#3: established IKE SA: .* second timeout exceeded'
+"eastnet-northnet" #3: established IKE SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
 north #
  ../../guestbin/wait-for-pluto.sh --match '#4: connection is supposed to remain up'
 "eastnet-northnet" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -182,8 +182,8 @@ north #
 north #
  # ... west #5/#6 dies ...
 north #
- ../../guestbin/wait-for-pluto.sh --match '#5: ESTABLISHED_IKE_SA: .* second timeout exceeded'
-"westnet-northnet" #5: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+ ../../guestbin/wait-for-pluto.sh --match '#5: established IKE SA: .* second timeout exceeded'
+"westnet-northnet" #5: established IKE SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
 north #
  ../../guestbin/wait-for-pluto.sh --match '#6: connection is supposed to remain up'
 "westnet-northnet" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

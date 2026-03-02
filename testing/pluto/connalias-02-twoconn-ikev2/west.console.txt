@@ -76,7 +76,7 @@ terminated 2 connections
 west #
  ipsec delete cuckold
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #4: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-cuckold" #4: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec delete cuckoo
 west #

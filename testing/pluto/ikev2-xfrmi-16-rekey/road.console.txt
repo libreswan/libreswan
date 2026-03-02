@@ -69,7 +69,7 @@ road #
 road #
  ipsec auto --add road
 "road": terminating SAs using this connection
-"road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road" #1: deleting IKE SA (established IKE SA) and sending notification
 "road" #4: ESP traffic information: in=0B out=0B
 "road": delete ipsec-interface ipsec1@NONE added by pluto
 "road": created ipsec-interface ipsec1@NONE

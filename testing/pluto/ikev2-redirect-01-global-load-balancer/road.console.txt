@@ -56,7 +56,7 @@ road #
 road #
  ipsec auto --delete road-east
 "road-east": terminating SAs using this connection
-"road-east" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road-east" #2: deleting IKE SA (established IKE SA) and sending notification
 "road-east" #3: command "down" output: restoring resolvconf
 "road-east" #3: ESP traffic information: in=84B out=84B
 road #

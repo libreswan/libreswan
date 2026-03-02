@@ -173,8 +173,8 @@ State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 IPsec SAs: total(1), authenticated(1), anonymous(0)
  
-#1: "road-east-x509-ipv4"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "road-east-x509-ipv4"[1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#1: "road-east-x509-ipv4"[1] 192.1.2.23:500 established IKE SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "road-east-x509-ipv4"[1] 192.1.2.23:500 established Child SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
  
 Bare Shunt list:
@@ -184,7 +184,7 @@ road #
 "road-east-x509-ipv4"[1] 192.1.2.23 #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 road #
  ../../guestbin/wait-for-pluto.sh '^".*#1: deleting IKE SA'
-"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 up
@@ -198,7 +198,7 @@ road #
 | event_schedule_where: EVENT_v2_EXPIRE@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: EVENT_v2_REPLACE@0xXXX timeout in N.N seconds for #3
 | #1 is retaining EVENT_v2_EXPIRE with is previously set timeout
-|   timer_event_cb: processing EVENT_v2_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
+|   timer_event_cb: processing EVENT_v2_EXPIRE-event@0xXXX for IKE SA #1 in state established IKE SA
 | #1 deleting EVENT_v2_EXPIRE
 road #
  : "re-authenticateded. The state number should 3 and 2"
@@ -346,9 +346,9 @@ State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 IPsec SAs: total(1), authenticated(1), anonymous(0)
  
-#2: "road-east-x509-ipv4"[1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
+#2: "road-east-x509-ipv4"[1] 192.1.2.23:500 established Child SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=168B ESPout=168B ESPmax=2^63B 
-#3: "road-east-x509-ipv4"[1] 192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "road-east-x509-ipv4"[1] 192.1.2.23:500 established IKE SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
  
 Bare Shunt list:
  

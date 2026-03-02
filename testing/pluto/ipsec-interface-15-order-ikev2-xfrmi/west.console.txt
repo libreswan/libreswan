@@ -79,13 +79,13 @@ X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
-"westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet4-eastnet4" #1: deleting IKE SA (established IKE SA) and sending notification
 "westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
-"westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet6-eastnet6" #3: deleting IKE SA (established IKE SA) and sending notification
 "westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B
 west #
@@ -164,13 +164,13 @@ X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
-"westnet4-eastnet4" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet4-eastnet4" #5: deleting IKE SA (established IKE SA) and sending notification
 "westnet4-eastnet4" #6: delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24] added by pluto
 "westnet4-eastnet4" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
-"westnet6-eastnet6" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet6-eastnet6" #7: deleting IKE SA (established IKE SA) and sending notification
 "westnet6-eastnet6" #8: delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64] added by pluto
 "westnet6-eastnet6" #8: ESP traffic information: in=0B out=0B
 west #
@@ -246,13 +246,13 @@ X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
-"westnet4-eastnet4" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet4-eastnet4" #9: deleting IKE SA (established IKE SA) and sending notification
 "westnet4-eastnet4" #10: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #10: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
-"westnet6-eastnet6" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet6-eastnet6" #11: deleting IKE SA (established IKE SA) and sending notification
 "westnet6-eastnet6" #12: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #12: ESP traffic information: in=0B out=0B
 "westnet6-eastnet6": delete ipsec-interface ipsec1@NONE added by pluto

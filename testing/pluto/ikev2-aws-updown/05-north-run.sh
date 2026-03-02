@@ -13,7 +13,7 @@ iptables -I OUTPUT -d 192.1.2.45 -j DROP
 
 # ... west #1/#2 dies ...
 
-../../guestbin/wait-for-pluto.sh --match '#1: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+../../guestbin/wait-for-pluto.sh --match '#1: established IKE SA: .* second timeout exceeded'
 ../../guestbin/wait-for-pluto.sh --match '#2: connection is supposed to remain up'
 ../../guestbin/wait-for-pluto.sh --match '#2: command "down" output: down: unrouting'
 ../../guestbin/wait-for-pluto.sh --match '#2: ESP traffic information'
@@ -47,7 +47,7 @@ iptables -I OUTPUT -d 192.1.2.23 -j DROP
 
 # ... east #3/#4 dies ...
 
-../../guestbin/wait-for-pluto.sh --match '#3: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+../../guestbin/wait-for-pluto.sh --match '#3: established IKE SA: .* second timeout exceeded'
 ../../guestbin/wait-for-pluto.sh --match '#4: connection is supposed to remain up'
 ../../guestbin/wait-for-pluto.sh --match '#4: command "down" output: down: unrouting'
 ../../guestbin/wait-for-pluto.sh --match '#4: ESP traffic information'
@@ -83,7 +83,7 @@ iptables -I OUTPUT -d 192.1.2.23 -j DROP
 
 # ... west #5/#6 dies ...
 
-../../guestbin/wait-for-pluto.sh --match '#5: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+../../guestbin/wait-for-pluto.sh --match '#5: established IKE SA: .* second timeout exceeded'
 ../../guestbin/wait-for-pluto.sh --match '#6: connection is supposed to remain up'
 ../../guestbin/wait-for-pluto.sh --match '#6: command "down" output: down: unrouting'
 ../../guestbin/wait-for-pluto.sh --match '#6: ESP traffic information'
