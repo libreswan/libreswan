@@ -739,25 +739,6 @@ static enum yna_options extract_yna(const char *leftright,
 				   wm, d, verbose);
 }
 
-static enum ynf_options extract_ynf(const char *leftright,
-				    const char *name,
-				    const char *value,
-				    enum ynf_options value_when_unset,
-				    const struct whack_message *wm,
-				    diag_t *d,
-				    struct verbose verbose)
-{
-	if (*d != NULL) {
-		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
-		return value_when_unset;
-	}
-
-	return extract_sparse_name(leftright, name, value,
-				   value_when_unset,
-				   &ynf_option_names,
-				   wm, d, verbose);
-}
-
 static enum yne_options extract_yne(const char *leftright,
 				    const char *name,
 				    const char *value,
@@ -3491,10 +3472,12 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* fragmentation */
 
-	enum ynf_options fragmentation = extract_ynf("", "fragmentation",
-						     wm->wm_fragmentation,
-						     /*value_when_unset*/YNF_UNSET,
-						     wm, &d, verbose);
+	enum ynf_options fragmentation =
+		extract_sparse_name("", "fragmentation",
+				    wm->wm_fragmentation,
+				    /*value_when_unset*/YNF_UNSET,
+				    &ynf_option_names,
+				    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
