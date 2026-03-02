@@ -36,7 +36,7 @@ east #
 "private-or-clear": deleting group instances
 "private-or-clear#192.1.3.0/24": deleting template instances
 "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209: terminating SAs using this connection
-"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: deleting IKE SA (established IKE SA) and sending notification
 "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #2: ESP traffic information: in=84B out=84B
 east #
  sleep 5

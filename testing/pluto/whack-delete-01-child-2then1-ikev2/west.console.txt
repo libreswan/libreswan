@@ -51,7 +51,7 @@ west #
 west #
  ipsec delete west-cuckold
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-cuckold" #1: deleting IKE SA (established IKE SA) and sending notification
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
  # non-zero counts confirm encrypted traffic flowing
