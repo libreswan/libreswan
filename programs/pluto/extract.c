@@ -587,13 +587,10 @@ static deltatime_t extract_deltatimescale(struct kv kv,
 	return deltatime;
 }
 
-static unsigned extract_enum_name(const char *leftright,
-				  const char *name,
-				  const char *value,
+static unsigned extract_enum_name(struct kv kv,
 				  unsigned value_when_unset,
 				  unsigned value_when_never_negotiate,
 				  const struct enum_names *names,
-				  const struct whack_message *wm,
 				  diag_t *d,
 				  struct verbose verbose)
 {
@@ -602,19 +599,23 @@ static unsigned extract_enum_name(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+	if (never_negotiate_string_option(kv.leftright,
+					  kv.key,
+					  kv.value,
+					  kv.wm,
+					  verbose)) {
 		return value_when_never_negotiate;
 	}
 
-	if (value == NULL) {
+	if (kv.value == NULL) {
 		return value_when_unset;
 	}
 
-	int match = enum_byname(names, shunk1(value));
+	int match = enum_byname(names, shunk1(kv.value));
 	if (match < 0) {
 		JAMBUF(buf) {
-			jam(buf, "%s%s=%s is invalid, valid options are ",
-			    leftright, name, value);
+			jam(buf, PRI_KV, pri_kv(kv));
+			jam_string(buf, " is invalid, valid options are ");
 			jam_enum_names_quoted(buf, names);
 			(*d) = diag_jambuf(buf);
 		}
@@ -1201,7 +1202,8 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 	return NULL;
 }
 
-static diag_t extract_host_end(struct host_end *host,
+static diag_t extract_host_end(enum end end,
+			       struct host_end *host,
 			       struct host_end_config *host_config,
 			       struct host_end_config *other_host_config,
 			       const struct whack_message *wm,
@@ -1626,12 +1628,12 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->eap = autheap;
 
-	enum auth auth = extract_enum_name(leftright, "auth",
-					   src->we_auth,
-					   /*value_when_unset*/AUTH_UNSET,
-					   /*value_when_never_negotiate*/AUTH_UNSET,
-					   &auth_names,
-					   wm, &d, verbose);
+	enum auth auth =
+		extract_enum_name(kv(wm, end, KWS_AUTH),
+				  /*value_when_unset*/AUTH_UNSET,
+				  /*value_when_never_negotiate*/AUTH_UNSET,
+				  &auth_names,
+				  &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2671,12 +2673,12 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto,
 					  ENCAP_PROTO_ESP);
 
 	diag_t d = NULL;
-	enum encap_proto phase2 = extract_enum_name("", "phase2",
-						    wm->wm_phase2,
-						    /*value_when_unset*/default_proto,
-						    /*value_when_never_negotiate*/ENCAP_PROTO_UNSET,
-						    &encap_proto_names,
-						    wm, &d, verbose);
+	enum encap_proto phase2 =
+		extract_enum_name(kv(wm, END_ROOF, KWS_PHASE2),
+				  /*value_when_unset*/default_proto,
+				  /*value_when_never_negotiate*/ENCAP_PROTO_UNSET,
+				  &encap_proto_names,
+				  &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2812,7 +2814,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		diag_t d;
 		int that = (this + 1) % END_ROOF;
-		d = extract_host_end(&c->end[this].host,
+		d = extract_host_end(this,
+				     &c->end[this].host,
 				     &config->end[this].host,
 				     &config->end[that].host,
 				     wm,
@@ -4217,12 +4220,12 @@ diag_t extract_connection(const struct whack_message *wm,
 				     /*value_when_unset*/YN_NO,
 				     wm, &d, verbose);
 
-		config->send_ca = extract_enum_name("", "sendca",
-						    wm->wm_sendca,
-						    /*value_when_unset*/CA_SEND_ALL,
-						    /*value_when_never_negotiate*/CA_SEND_ALL,
-						    &send_ca_policy_names,
-						    wm, &d, verbose);
+		config->send_ca =
+			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
+					  /*value_when_unset*/CA_SEND_ALL,
+					  /*value_when_never_negotiate*/CA_SEND_ALL,
+					  &send_ca_policy_names,
+					  &d, verbose);
 
 		config->xauthby = extract_sparse_name("", "xauthby",
 						      wm->wm_xauthby,
