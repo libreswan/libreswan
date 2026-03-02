@@ -563,12 +563,9 @@ static char *extract_string(const char *leftright, const char *name,
 	return clone_str(string, name);
 }
 
-static deltatime_t extract_deltatimescale(const char *leftright,
-					  const char *name,
-					  const char *value,
+static deltatime_t extract_deltatimescale(struct kv kv,
 					  enum timescale default_timescale,
 					  deltatime_t value_when_unset,
-					  const struct whack_message *wm,
 					  diag_t *d, struct verbose verbose)
 {
 	if (*d != NULL) {
@@ -576,15 +573,14 @@ static deltatime_t extract_deltatimescale(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return value_when_unset;
 	}
 
 	deltatime_t deltatime;
-	diag_t diag = ttodeltatimescale(shunk1(value), &deltatime, default_timescale);
+	diag_t diag = ttodeltatimescale(shunk1(kv.value), &deltatime, default_timescale);
 	if (diag != NULL) {
-		(*d) = diag_diag(&diag, "%s%s=%s invalid, ",
-				 leftright, name, value);
+		(*d) = diag_diag(&diag, PRI_KV" invalid, ", pri_kv(kv));
 		return value_when_unset;
 	}
 
@@ -4136,11 +4132,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		config->retransmit_interval =
-			extract_deltatimescale("", "retransmit-interval",
-					       wm->wm_retransmit_interval,
+			extract_deltatimescale(kv(wm, END_ROOF, KWS_RETRANSMIT_INTERVAL),
 					       TIMESCALE_MILLISECONDS,
 					       /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
-					       wm, &d, verbose);
+					       &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
