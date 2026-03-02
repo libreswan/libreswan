@@ -871,12 +871,9 @@ static uintmax_t check_range(const char *story,
  * default and N from an explicit value.
  */
 static uintmax_t extract_yn_uintmax(const char *story,
-				    const char *leftright,
-				    const char *name,
-				    const char *value,
+				    struct kv kv,
 				    struct range range,
 				    enum yna_options *yna,
-				    const struct whack_message *wm,
 				    diag_t *d,
 				    struct verbose verbose)
 {
@@ -887,13 +884,13 @@ static uintmax_t extract_yn_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return range.value_when_unset;
 	}
 
 	/* YN_TEXT_OPTION_NAMES excludes 0, 1, ... */
 	const struct sparse_name *sparse = sparse_lookup_by_name(&yn_text_option_names,
-								 shunk1(value));
+								 shunk1(kv.value));
 	if (sparse != NULL) {
 		/* convert YES into "auto" + default ! */
 		*yna = (sparse->value == YN_YES ? YNA_AUTO : YNA_NO);
@@ -902,9 +899,9 @@ static uintmax_t extract_yn_uintmax(const char *story,
 	}
 
 	uintmax_t number;
-	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &number);
+	err_t err = shunk_to_uintmax(shunk1(kv.value), NULL/*all*/, 0, &number);
 	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		(*d) = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
 		return range.value_when_unset;
 	}
 
@@ -914,7 +911,7 @@ static uintmax_t extract_yn_uintmax(const char *story,
 	}
 
 	(*yna) = YNA_YES; /* it was set' it was not autoset */
-	return check_range(story, leftright, name, number, range, d, verbose);
+	return check_range(story, kv.leftright, kv.key, number, range, d, verbose);
 }
 
 static uintmax_t extract_uintmax(struct kv kv,
@@ -2923,16 +2920,17 @@ diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * nr. child clones
 	 */
-	config->child.clones.nr = extract_yn_uintmax("number of replicant Child SA",
-						     "", "clones", wm->wm_clones,
-						     (struct range) {
-							     .value_when_unset = 0,
-							     .value_when_yes = nr_processors_online(),
-							     .limit.min = 1,
-							     .limit.max = UINT_MAX,
-						     },
-						     &config->child.clones.yna,
-						     wm, &d, verbose);
+	config->child.clones.nr =
+		extract_yn_uintmax("number of replicant Child SA",
+				   kv(wm, END_ROOF, KWS_CLONES),
+				   (struct range) {
+					   .value_when_unset = 0,
+					   .value_when_yes = nr_processors_online(),
+					   .limit.min = 1,
+					   .limit.max = UINT_MAX,
+				   },
+				   &config->child.clones.yna,
+				   &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
