@@ -626,18 +626,17 @@ static unsigned extract_enum_name(struct kv kv,
  * and normal fields.
  */
 
-static unsigned lookup_sparse_name(const char *leftright,
-				   const char *name,
-				   const char *value,
+static unsigned lookup_sparse_name(struct kv kv,
 				   const struct sparse_names *names,
 				   diag_t *d,
 				   struct verbose verbose)
 {
-	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
+	const struct sparse_name *sparse =
+		sparse_lookup_by_name(names, shunk1(kv.value));
 	if (sparse == NULL) {
 		JAMBUF(buf) {
-			jam(buf, "%s%s=%s is invalid, valid options are ",
-			    leftright, name, value);
+			jam(buf, PRI_KV, pri_kv(kv));
+			jam_string(buf, " is invalid, valid options are ");
 			jam_sparse_names_quoted(buf, names);
 			(*d) = diag_jambuf(buf);
 		}
@@ -649,13 +648,13 @@ static unsigned lookup_sparse_name(const char *leftright,
 	name_buf new_name;
 	switch (flag) {
 	case NAME_IMPLEMENTED_AS:
-		vwarning("%s%s \"%s\" implemented as \"%s\"",
-			 leftright, name, value,
+		vwarning(PRI_KV" implemented as \"%s\"",
+			 pri_kv(kv),
 			 str_sparse_short(names, name_value, &new_name));
 		break;
 	case NAME_RENAMED_TO:
-		vwarning("%s%s \"%s\" renamed to \"%s\"",
-			 leftright, name, value,
+		vwarning(PRI_KV" renamed to \"%s\"",
+			 pri_kv(kv),
 			 str_sparse_short(names, name_value, &new_name));
 		break;
 	}
@@ -678,8 +677,7 @@ static unsigned extract_sparse_name(struct kv kv,
 		return value_when_unset;
 	}
 
-	return lookup_sparse_name(kv.leftright, kv.key, kv.value,
-				  names, d, verbose);
+	return lookup_sparse_name(kv, names, d, verbose);
 }
 
 static bool extract_bool(struct kv kv,
@@ -2951,7 +2949,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum type_options type = KS_TUNNEL;
 	if (wm->wm_type != NULL) {
-		type = lookup_sparse_name("", "type", wm->wm_type,
+		type = lookup_sparse_name(kv(wm, END_ROOF, KWS_TYPE),
 					  &type_option_names,
 					  &d, verbose);
 		if (d != NULL) {
@@ -3512,8 +3510,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum autostart autostart =
 		(wm->wm_auto == NULL ? AUTOSTART_UNSET :
-		 lookup_sparse_name("", "auto",
-				    wm->wm_auto,
+		 lookup_sparse_name(kv(wm, END_ROOF, KWS_AUTO),
 				    &autostart_names,
 				    &d, verbose));
 	if (d != NULL) {
