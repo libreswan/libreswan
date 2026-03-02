@@ -996,10 +996,7 @@ static uintmax_t extract_percent(struct kv kv,
 	return percent;
 }
 
-static ip_cidr extract_cidr_num(const char *leftright,
-				const char *name,
-				const char *value,
-				const struct whack_message *wm,
+static ip_cidr extract_cidr_num(struct kv kv,
 				diag_t *d,
 				struct verbose verbose)
 {
@@ -1010,20 +1007,20 @@ static ip_cidr extract_cidr_num(const char *leftright,
 
 	err_t err;
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return unset_cidr;
 	}
 
 	ip_cidr cidr;
-	diag_t dd = ttocidr_num(shunk1(value), NULL, &cidr);
+	diag_t dd = ttocidr_num(shunk1(kv.value), NULL, &cidr);
 	if (dd != NULL) {
-		(*d) = diag_diag(&dd, "%s%s=%s invalid, ", leftright, name, value);
+		(*d) = diag_diag(&dd, PRI_KV" invalid, ", pri_kv(kv));
 		return unset_cidr;
 	}
 
 	err = cidr_check(cidr);
 	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		(*d) = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
 	}
 
 	return cidr;
@@ -1953,15 +1950,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(ike_version);
 	}
 
-	child_config->vti_ip = extract_cidr_num(leftright, "vti",
-						src->we_vti, wm, &d, verbose);
+	child_config->vti_ip = extract_cidr_num(kv(wm, end, KWS_VTI),
+						&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	child_config->ipsec_interface_ip =
-		extract_cidr_num(leftright, "interface-ip",
-				 src->we_interface_ip, wm, &d, verbose);
+		extract_cidr_num(kv(wm, end, KWS_INTERFACE_IP),
+				 &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
