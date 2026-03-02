@@ -25,7 +25,7 @@ west #
 "time-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; clones: no (unset);
 west #
  ipsec addconn time-wip-hex
-"time-wip-hex": failed to add connection: rekeymargin=0xA invalid, unrecognized duration multiplier "xA"
+"time-wip-hex": failed to add connection: "rekeymargin=0xA" invalid, unrecognized duration multiplier "xA"
 west #
  ipsec status | grep time-wip-hex | grep margin
 west #
