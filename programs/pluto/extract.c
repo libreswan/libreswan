@@ -739,25 +739,6 @@ static enum yna_options extract_yna(const char *leftright,
 				   wm, d, verbose);
 }
 
-static enum nic_offload_options extract_nic_offload(const char *leftright,
-				      const char *name,
-				      const char *value,
-				      enum nic_offload_options value_when_unset,
-				      const struct whack_message *wm,
-				      diag_t *d,
-				      struct verbose verbose)
-{
-	if (*d != NULL) {
-		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
-		return value_when_unset;
-	}
-
-	return extract_sparse_name(leftright, name, value,
-				   value_when_unset,
-				   &nic_offload_option_names,
-				   wm, d, verbose);
-}
-
 static void predicate_warning(const char *leftright, const char *name, const char *value,
 			      const char *p_leftright, const char *p_name, enum yn_options p,
 			      const struct whack_message *wm, diag_t *d, struct verbose verbose)
@@ -3947,10 +3928,12 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	enum nic_offload_options nic_offload = extract_nic_offload("", "nic-offload",
-								   wm->wm_nic_offload,
-								   NIC_OFFLOAD_NO,
-								   wm, &d, verbose);
+	enum nic_offload_options nic_offload =
+		extract_sparse_name("", "nic-offload",
+				    wm->wm_nic_offload,
+				    NIC_OFFLOAD_NO,
+				    &nic_offload_option_names,
+				    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
