@@ -551,16 +551,14 @@ static bool can_extract_string(const char *leftright,
 	return true;
 }
 
-static char *extract_string(const char *leftright, const char *name,
-			    const char *string,
-			    const struct whack_message *wm,
+static char *extract_string(struct kv kv,
 			    struct verbose verbose)
 {
-	if (!can_extract_string(leftright, name, string, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return NULL;
 	}
 
-	return clone_str(string, name);
+	return clone_str(kv.value, kv.key);
 }
 
 static deltatime_t extract_deltatimescale(struct kv kv,
@@ -1614,9 +1612,8 @@ static diag_t extract_host_end(enum end end,
 	host_config->xauth.client = extract_bool(leftright, "xauthclient",
 						 src->we_xauthclient,
 						 YN_NO, wm, &d, verbose);
-	host_config->xauth.username = extract_string(leftright, "xauthusername",
-						     src->we_xauthusername,
-						     wm, verbose);
+	host_config->xauth.username =
+		extract_string(kv(wm, end, KWS_USERNAME), verbose);
 	enum eap_options autheap = extract_sparse_name(leftright, "autheap",
 						       src->we_autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,
@@ -3915,9 +3912,9 @@ diag_t extract_connection(const struct whack_message *wm,
 					   wm->wm_vti_routing,
 					   /*value_when_unset*/YN_NO,
 					   wm, &d, verbose);
-	config->vti.interface = extract_string("",  "vti-interface",
-					       wm->wm_vti_interface,
-					       wm, verbose);
+	config->vti.interface =
+		extract_string(kv(wm, END_ROOF,  KWS_VTI_INTERFACE),
+			       verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4278,9 +4275,9 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->modecfg.banner = extract_string("", "modecfgbanner",
-						wm->wm_modecfgbanner,
-						wm, verbose);
+	config->modecfg.banner =
+		extract_string(kv(wm, END_ROOF, KWS_MODECFGBANNER),
+			       verbose);
 
 	/*
 	 * Marks.
