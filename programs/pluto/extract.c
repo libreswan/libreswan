@@ -917,11 +917,8 @@ static uintmax_t extract_yn_uintmax(const char *story,
 	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
-static uintmax_t extract_uintmax(const char *leftright,
-				 const char *name,
-				 const char *value,
+static uintmax_t extract_uintmax(struct kv kv,
 				 struct range range,
-				 const struct whack_message *wm,
 				 diag_t *d,
 				 struct verbose verbose)
 {
@@ -930,18 +927,18 @@ static uintmax_t extract_uintmax(const char *leftright,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return range.value_when_unset;
 	}
 
 	uintmax_t number;
-	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &number);
+	err_t err = shunk_to_uintmax(shunk1(kv.value), NULL/*all*/, 0, &number);
 	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		(*d) = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
 		return range.value_when_unset;
 	}
 
-	return check_range("", leftright, name, number, range, d, verbose);
+	return check_range("", kv.leftright, kv.key, number, range, d, verbose);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -3230,12 +3227,12 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	uintmax_t tfc = extract_uintmax("", "tfc", wm->wm_tfc,
+	uintmax_t tfc = extract_uintmax(kv(wm, END_ROOF, KWS_TFC),
 					(struct range) {
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
 					},
-					wm, &d, verbose);
+					&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3481,15 +3478,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->end[LEFT_END].host.iketcp = config->end[RIGHT_END].host.iketcp = iketcp;
 
-	uintmax_t tcp_remoteport = extract_uintmax("", "tcp-remoteport",
-						   wm->wm_tcp_remoteport,
-						   (struct range) {
-							   .value_when_unset = 4500,
-							   .value_when_yes = 4500,
-							   .limit.min = 1,
-							   .limit.max = 65535,
-						   },
-						   wm, &d, verbose);
+	uintmax_t tcp_remoteport =
+		extract_uintmax(kv(wm, END_ROOF, KWS_TCP_REMOTEPORT),
+				(struct range) {
+					.value_when_unset = 4500,
+					.value_when_yes = 4500,
+					.limit.min = 1,
+					.limit.max = 65535,
+				},
+				&d, verbose);
 	switch (iketcp) {
 	case IKE_TCP_NO:
 		if (wm->wm_tcp_remoteport != NULL) {
@@ -3643,13 +3640,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "replay-window",
-				wm->wm_replay_window,
+		extract_uintmax(kv(wm, END_ROOF, KWS_REPLAY_WINDOW),
 				(struct range) {
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 					.limit.max = kernel_ops->max_replay_window,
 				},
-				wm, &d, verbose);
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4174,12 +4170,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		config->child.metric =
-			extract_uintmax("", "metric",
-					wm->wm_metric,
+			extract_uintmax(kv(wm, END_ROOF, KWS_METRIC),
 					(struct range) {.
 						limit.min = 1,
 					},
-					wm, &d, verbose);
+					&d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4359,26 +4354,26 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "nflog-group",
-					 wm->wm_nflog_group,
-					 (struct range) {
-						 .value_when_unset = 0,
-						 .limit.min = 1,
-						 .limit.max = 65535,
-					 },
-					 wm, &d, verbose);
+	c->nflog_group =
+		extract_uintmax(kv(wm, END_ROOF, KWS_NFLOG_GROUP),
+				(struct range) {
+					.value_when_unset = 0,
+					.limit.min = 1,
+					.limit.max = 65535,
+				},
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 #endif
 
-	config->child.priority = extract_uintmax("", "priority",
-						 wm->wm_priority,
-						 (struct range) {
-							 .value_when_unset = 0,
-							 .limit.max = UINT32_MAX,
-						 },
-						 wm, &d, verbose);
+	config->child.priority =
+		extract_uintmax(kv(wm, END_ROOF, KWS_PRIORITY),
+				(struct range) {
+					.value_when_unset = 0,
+					.limit.max = UINT32_MAX,
+				},
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4411,14 +4406,14 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "reqid",
-					  wm->wm_reqid,
-					  (struct range) {
-						  .value_when_unset = 0,
-						  .limit.min = 1,
-						  .limit.max = IPSEC_MANUAL_REQID_MAX,
-					  },
-					  wm, &d, verbose);
+	uintmax_t reqid =
+		extract_uintmax(kv(wm, END_ROOF, KWS_REQID),
+				(struct range) {
+					.value_when_unset = 0,
+					.limit.min = 1,
+					.limit.max = IPSEC_MANUAL_REQID_MAX,
+				},
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
