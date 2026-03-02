@@ -714,12 +714,9 @@ static bool extract_bool(const char *leftright,
 	}
 }
 
-static enum yna_options extract_yna(const char *leftright,
-				    const char *name,
-				    const char *value,
+static enum yna_options extract_yna(struct kv kv,
 				    enum yna_options value_when_unset,
 				    enum yna_options value_when_never_negotiate,
-				    const struct whack_message *wm,
 				    diag_t *d,
 				    struct verbose verbose)
 {
@@ -728,14 +725,14 @@ static enum yna_options extract_yna(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+	if (never_negotiate_string_option(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return value_when_never_negotiate;
 	}
 
-	return extract_sparse_name(leftright, name, value,
+	return extract_sparse_name(kv.leftright, kv.key, kv.value,
 				   value_when_unset,
 				   &yna_option_names,
-				   wm, d, verbose);
+				   kv.wm, d, verbose);
 }
 
 static void predicate_warning(const char *leftright, const char *name, const char *value,
@@ -3130,11 +3127,11 @@ diag_t extract_connection(const struct whack_message *wm,
 						   /*value_when_unset*/YN_NO,
 						   wm, &d, verbose);
 
-	enum yna_options ikepad = extract_yna("", "ikepad",
-					      wm->wm_ikepad,
-					      /*value_when_unset*/YNA_UNSET,
-					      /*value_when_never_negotiate*/YNA_UNSET,
-					      wm, &d, verbose);
+	enum yna_options ikepad =
+		extract_yna(kv(wm, END_ROOF, KWS_IKEPAD),
+			    /*value_when_unset*/YNA_UNSET,
+			    /*value_when_never_negotiate*/YNA_UNSET,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3373,11 +3370,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.to = clone_str(wm->wm_redirect_to, "connection redirect_to");
 	config->redirect.accept_to = clone_str(wm->wm_accept_redirect_to,
 					       "connection accept_redirect_to");
-	enum yna_options send_redirect = extract_yna("", "send-redirect",
-						     wm->wm_send_redirect,
-						     /*value_when_unset*/YNA_UNSET,
-						     /*value_when_never_negotiate*/YNA_UNSET,
-						     wm, &d, verbose);
+	enum yna_options send_redirect =
+		extract_yna(kv(wm, END_ROOF, KWS_SEND_REDIRECT),
+			    /*value_when_unset*/YNA_UNSET,
+			    /*value_when_never_negotiate*/YNA_UNSET,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3891,11 +3888,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->encapsulation = extract_yna("", "encapsulation",
-					    wm->wm_encapsulation,
-					    /*value_when_unset*/YNA_AUTO,
-					    /*value_when_never_negotiate*/YNA_NO,
-					    wm, &d, verbose);
+	config->encapsulation =
+		extract_yna(kv(wm, END_ROOF, KWS_ENCAPSULATION),
+			    /*value_when_unset*/YNA_AUTO,
+			    /*value_when_never_negotiate*/YNA_NO,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
