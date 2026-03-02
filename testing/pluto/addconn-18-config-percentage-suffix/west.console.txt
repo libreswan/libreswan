@@ -22,7 +22,7 @@ west #
 opening file: /etc/ipsec.conf
 loading conns matching percentage-wip:
   sending to pluto
-"percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
+"percentage-wip": failed to add connection: "rekeyfuzz=10foo" invalid, expecting % character
 west #
  ipsec status | grep margin
 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%; clones: no (unset);
@@ -31,7 +31,7 @@ west #
 opening file: /etc/ipsec.conf
 loading conns matching percentage-wip:
   sending to pluto
-"percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
+"percentage-wip": failed to add connection: "rekeyfuzz=10foo" invalid, expecting % character
 west #
  ipsec status | grep margin
 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%; clones: no (unset);

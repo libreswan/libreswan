@@ -72,6 +72,30 @@
 
 static resolve_helper_cb extract_connection_resolve_continue;
 
+struct kv {
+	const struct whack_message *wm;
+	const char *leftright;
+	const char *key;
+	const char *value;
+};
+
+#define PRI_KV "\"%s%s=%s\""
+#define pri_kv(KV) (KV).leftright, (KV).key, ((KV).value == NULL ? "" : (KV).value)
+
+static struct kv kv(const struct whack_message *wm,
+		    enum end end,
+		    enum config_conn_keyword key)
+{
+	return (struct kv) {
+		.wm = wm,
+		.leftright = (end == LEFT_END ? "left" :
+			      end == RIGHT_END ? "right" :
+			      ""),
+		.key = config_conn_keywords.item[key].keyname,
+		.value = wm->conn[end].value[key],
+	};
+}
+
 static bool is_never_negotiate_type(enum type_options type)
 {
 	switch (type) {
@@ -1032,9 +1056,8 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
-static uintmax_t extract_percent(const char *leftright, const char *name, const char *value,
+static uintmax_t extract_percent(struct kv kv,
 				 uintmax_t value_when_unset,
-				 const struct whack_message *wm,
 				 diag_t *d,
 				 struct verbose verbose)
 {
@@ -1043,28 +1066,29 @@ static uintmax_t extract_percent(const char *leftright, const char *name, const 
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return value_when_unset;
 	}
 
 	/* NUMBER% */
 
 	uintmax_t percent;
-	shunk_t cursor = shunk1(value);
+	shunk_t cursor = shunk1(kv.value);
 	err_t err = shunk_to_uintmax(cursor, &cursor, /*base*/10, &percent);
 	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		(*d) = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
 		return value_when_unset;
 	}
 
 	if (!hunk_streq(cursor, "%")) {
-		(*d) = diag("%s%s=%s invalid, expecting %% character", leftright, name, value);
+		(*d) = diag(PRI_KV" invalid, expecting %% character",
+			    pri_kv(kv));
 		return value_when_unset;
 	}
 
 	if (percent > INT_MAX - 100) {
-		vlog("%s%s=%s is way to large, using %ju%%",
-		     leftright, name, value, value_when_unset);
+		vlog(PRI_KV" is way to large, using %ju%%",
+		     pri_kv(kv), value_when_unset);
 		return value_when_unset;
 	}
 
@@ -4054,10 +4078,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz",
-						      wm->wm_rekeyfuzz,
-						      SA_REPLACEMENT_FUZZ_DEFAULT,
-						      wm, &d, verbose);
+	uintmax_t rekeyfuzz_percent =
+		extract_percent(kv(wm, END_ROOF, KWS_REKEYFUZZ),
+				SA_REPLACEMENT_FUZZ_DEFAULT,
+				&d, verbose);
 
 	if (is_never_negotiate_wm(wm)) {
 		vdbg("skipping over misc settings as NEVER_NEGOTIATE");
