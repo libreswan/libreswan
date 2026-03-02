@@ -240,7 +240,10 @@
 	  </term>
           <listitem>
             <para>
-	      direct logging to standard error instead of a log file
+	      direct logging to standard error instead of a log file.
+	      When specified, overrides any
+	      <property>logfile=</property> setting from the
+	      configuration file, regardless of argument order.
 	    </para>
 	    <para>
 	      Often combined with <option>--nofork</option> debugging
@@ -257,6 +260,14 @@
 	      direct logging to
 	      <filename><replaceable>filename</replaceable></filename>
 	      instead of &syslog.3;
+	    </para>
+	    <para>
+	      When <replaceable>filename</replaceable> is empty
+	      (<option>--logfile=</option>), any
+	      <property>logfile=</property> setting from the
+	      configuration file is cleared, causing
+	      <command>pluto</command> to fall back to
+	      <option>--stderrlog</option> or &syslog.3;.
 	    </para>
 	    <para>
 	      See &ipsec.conf.5; and

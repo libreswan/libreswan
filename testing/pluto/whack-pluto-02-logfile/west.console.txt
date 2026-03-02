@@ -1,0 +1,100 @@
+../../guestbin/prep.sh
+'west.conf' -> '/etc/ipsec.conf'
+west #
+ ipsec initnss
+Initializing NSS database
+west #
+ # Test 1: --config then --logfile (command line overrides config)
+west #
+ ipsec pluto --config /etc/ipsec.conf --logfile /tmp/test.log
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --status | grep logfile=
+logfile='/tmp/test.log', logappend=no, logip=yes, audit-log=yes
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ test -s /tmp/test.log && echo "logfile /tmp/test.log has content"
+logfile /tmp/test.log has content
+west #
+ # Test 2: --logfile then --config (config overrides command line)
+west #
+ ipsec pluto --logfile /tmp/test2.log --config /etc/ipsec.conf
+warning: ipsec pluto: /etc/ipsec.conf:6: overriding earlier 'config setup' keyword with new value: logfile=/tmp/pluto.log
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --status | grep logfile=
+logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # Test 3: --config then --logfile '' (empty string, falls back to syslog)
+west #
+ ipsec pluto --config /etc/ipsec.conf --logfile ''
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --status | grep logfile=
+logfile='<syslog>', logappend=no, logip=yes, audit-log=yes
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # Test 4: --stderrlog with --selftest
+west #
+ ipsec pluto --stderrlog --selftest --config /etc/ipsec.conf > /tmp/stderr.log 2>&1
+west #
+ test -s /tmp/stderr.log && echo "stderr output captured"
+stderr output captured
+west #
+ # Test 5: --stderrlog + --logfile with --selftest (stderrlog takes precedence)
+west #
+ rm -f /tmp/ignored.log
+west #
+ ipsec pluto --stderrlog --logfile /tmp/ignored.log --selftest --config /etc/ipsec.conf > /tmp/stderr5.log 2>&1
+west #
+ test -s /tmp/stderr5.log && echo "stderr output captured"
+stderr output captured
+west #
+ test -s /tmp/ignored.log && echo "ignored.log has content" || echo "ignored.log is empty or missing"
+ignored.log is empty or missing
+west #
+ # Test 6: --logfile '' then --config (config overrides empty, restores file logging)
+west #
+ ipsec pluto --logfile '' --config /etc/ipsec.conf
+warning: ipsec pluto: /etc/ipsec.conf:6: overriding earlier 'config setup' keyword with new value: logfile=/tmp/pluto.log
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --status | grep logfile=
+logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ test -s /tmp/pluto.log && echo "logfile /tmp/pluto.log has content"
+logfile /tmp/pluto.log has content
+west #
+ # Test 7: --config then --stderrlog with --selftest (config first, stderrlog after)
+west #
+ ipsec pluto --config /etc/ipsec.conf --stderrlog --selftest > /tmp/stderr7.log 2>&1
+west #
+ test -s /tmp/stderr7.log && echo "stderr output captured"
+stderr output captured
+west #
+ # Test 8: --config then --logfile then --stderrlog with --selftest (no warning, stderr wins)
+west #
+ rm -f /tmp/ignored8.log
+west #
+ ipsec pluto --config /etc/ipsec.conf --logfile /tmp/ignored8.log --stderrlog --selftest > /tmp/stderr8.log 2>&1
+west #
+ test -s /tmp/stderr8.log && echo "stderr output captured"
+stderr output captured
+west #
+ test -s /tmp/ignored8.log && echo "ignored8.log has content" || echo "ignored8.log is empty or missing"
+ignored8.log is empty or missing
+west #

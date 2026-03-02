@@ -718,7 +718,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LOGFILE:	/* --logfile */
-			update_setup_string(KSF_LOGFILE, optarg_nonempty(logger));
+			update_setup_string(KSF_LOGFILE, optarg_empty(logger));
 			continue;
 
 		case OPT_DNSSEC_ENABLE:	/* --dnssec-enable yes|no */
