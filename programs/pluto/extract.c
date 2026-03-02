@@ -739,25 +739,6 @@ static enum yna_options extract_yna(const char *leftright,
 				   wm, d, verbose);
 }
 
-static enum yne_options extract_yne(const char *leftright,
-				    const char *name,
-				    const char *value,
-				    enum yne_options value_when_unset,
-				    const struct whack_message *wm,
-				    diag_t *d,
-				    struct verbose verbose)
-{
-	if (*d != NULL) {
-		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
-		return value_when_unset;
-	}
-
-	return extract_sparse_name(leftright, name, value,
-				   value_when_unset,
-				   &yne_option_names,
-				   wm, d, verbose);
-}
-
 static enum nic_offload_options extract_nic_offload(const char *leftright,
 				      const char *name,
 				      const char *value,
@@ -3693,10 +3674,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->child.replay_window = replay_window;
 
-	enum yne_options esn = extract_yne("", "esn",
-					   wm->wm_esn,
-					   /*value_when_unset*/YNE_UNSET,
-					   wm, &d, verbose);
+	enum yne_options esn =
+		extract_sparse_name("", "esn",
+				    wm->wm_esn,
+				    /*value_when_unset*/YNE_UNSET,
+				    &yne_option_names,
+				    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
