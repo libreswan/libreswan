@@ -2503,21 +2503,21 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 	return ok[shunt_kind][shunt_policy];
 }
 
-static enum shunt_policy extract_shunt_policy(const struct whack_message *wm,
-					      enum config_conn_keyword kws,
+static enum shunt_policy extract_shunt_policy(struct kv kv,
 					      const struct sparse_names *shunt_names,
 					      enum shunt_policy value_when_unset,
 					      diag_t *d,
 					      struct verbose verbose)
 {
-	const char *name = config_conn_keywords.item[kws].keyname;
-	const char *value = wm->conn[END_ROOF].value[kws];
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
-	enum shunt_policy shunt_policy = extract_sparse_name("", name, value,
-							     value_when_unset,
-							     shunt_names,
-							     wm, d, verbose);
-	return shunt_policy;
+	return extract_sparse_name(kv.leftright, kv.key, kv.value,
+				   value_when_unset,
+				   shunt_names,
+				   kv.wm, d, verbose);
 }
 
 static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
@@ -3584,10 +3584,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	config->negotiation_shunt = extract_shunt_policy(wm, KWS_NEGOTIATIONSHUNT,
-							 &negotiation_shunt_names,
-							 /*unset*/SHUNT_DROP,
-							 &d, verbose);
+	config->negotiation_shunt =
+		extract_shunt_policy(kv(wm, END_ROOF, KWS_NEGOTIATIONSHUNT),
+				     &negotiation_shunt_names,
+				     /*unset*/SHUNT_DROP,
+				     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3599,10 +3600,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_DROP;
 	}
 
-	config->failure_shunt = extract_shunt_policy(wm, KWS_FAILURESHUNT,
-						     &failure_shunt_names,
-						     /*unset*/SHUNT_NONE,
-						     &d, verbose);
+	config->failure_shunt =
+		extract_shunt_policy(kv(wm, END_ROOF, KWS_FAILURESHUNT),
+				     &failure_shunt_names,
+				     /*unset*/SHUNT_NONE,
+				     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
