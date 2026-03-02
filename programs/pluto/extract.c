@@ -777,25 +777,6 @@ static enum yne_options extract_yne(const char *leftright,
 				   wm, d, verbose);
 }
 
-static enum nppi_options extract_nppi(const char *leftright,
-				      const char *name,
-				      const char *value,
-				      enum nppi_options value_when_unset,
-				      const struct whack_message *wm,
-				      diag_t *d,
-				      struct verbose verbose)
-{
-	if (*d != NULL) {
-		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
-		return value_when_unset;
-	}
-
-	return extract_sparse_name(leftright, name, value,
-				   value_when_unset,
-				   &nppi_option_names,
-				   wm, d, verbose);
-}
-
 static enum nic_offload_options extract_nic_offload(const char *leftright,
 				      const char *name,
 				      const char *value,
@@ -3814,10 +3795,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	enum nppi_options ppk = extract_nppi("", "ppk",
-					     wm->wm_ppk,
-					     NPPI_UNSET,
-					     wm, &d, verbose);
+	enum nppi_options ppk =
+		extract_sparse_name("", "ppk", wm->wm_ppk,
+				    /*value_when_unset*/NPPI_UNSET,
+				    &nppi_option_names,
+				    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
