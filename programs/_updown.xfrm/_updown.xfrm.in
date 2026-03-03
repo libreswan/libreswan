@@ -26,8 +26,6 @@
 # that, and use the (left/right)updown= parameters in ipsec.conf to make
 # Libreswan use your modified updown script instead of this default one.
 
-test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
-
 LC_ALL=C
 export LC_ALL
 
@@ -243,6 +241,8 @@ export LC_ALL
 #	NFLOG
 #		is the nflog group to use
 #
+
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -x
 
 # rpm based systems
 if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then
