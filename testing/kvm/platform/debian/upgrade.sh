@@ -24,6 +24,7 @@ bison
 build-essential
 flex
 gawk
+iptables
 libcap-ng-dev
 libcurl4-openssl-dev
 libevent-dev
@@ -35,9 +36,9 @@ libpam0g-dev
 libunbound-dev
 make
 net-tools
-python3-pexpect
-pkg-config
-xmlto
-iptables
 nftables
+pkg-config
+python3-pexpect
+systemd-dev
+xmlto
 EOF
