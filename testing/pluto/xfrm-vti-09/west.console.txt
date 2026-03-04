@@ -50,7 +50,7 @@ west #
 "westnet-eastnet-vti-01" #2: command "route" output: done ip route
 "westnet-eastnet-vti-01" #2: command "up" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-01" #2: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-01" #2: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-01" #2: command "up" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-01" #2: command "up" output: done ip route
 "westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
@@ -59,11 +59,11 @@ west #
 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-vti-02" #3: command "prepare" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: command "prepare" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-02" #3: command "route" output: done ip route
 "westnet-eastnet-vti-02" #3: command "up" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "up" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-02" #3: command "up" output: RTNETLINK answers: File exists
 "westnet-eastnet-vti-02" #3: command "up" output: done ip route
 "westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
