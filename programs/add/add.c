@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	bool autoall = false;
-	const char *autostart = AUTOSTART_UNSET; /*aka 0*/
+	const char *autostart = NULL;
 	bool checkconfig = false;
 	const char *configfile = NULL;
 	int exit_status = 0;
