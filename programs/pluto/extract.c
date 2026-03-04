@@ -225,44 +225,42 @@ static diag_t check_afi(struct afi_winner *winner,
 		    leftright, name, value);
 }
 
-static diag_t extract_host_addr(struct afi_winner *winner,
+static diag_t extract_host_addr(struct kv kv,
+				struct afi_winner *winner,
 				struct route_addr *end,
-				const char *leftright,
-				const char *key,
-				const char *value,
 				struct verbose verbose)
 {
 	diag_t d;
 
-	vdbg("extracting '%s%s=%s':", leftright, key, (value == NULL ? "" : value));
+	vdbg("extracting "PRI_KV":", pri_kv(kv));
 	verbose.level++;
-	end->key = key;
+	end->key = kv.key;
 
 	/*
 	 * {left,right}: when the value '%...' a keywords,
 	 * .type is set accordingly; else .type is KH_IPADDR.
 	 */
-	if (value == NULL) {
+	if (kv.value == NULL) {
 		name_buf tb;
 		vdbg("-> %s", str_sparse_short(&keyword_host_names, end->type, &tb));
 		return NULL;
 	}
 
-	end->value = value;
+	end->value = kv.value;
 
-	if (value[0] == '%') {
+	if (kv.value[0] == '%') {
 		/* either keyword, or %interface */
-		shunk_t cursor = shunk1(value);
+		shunk_t cursor = shunk1(kv.value);
 
 		/* split %any[46] into %any + 46 */
 		char delim = '\0'; /*4|6|\0*/
 		shunk_t keyword = shunk_token(&cursor, &delim, "46");
 		if (cursor.len > 0) {
-			return diag("'%s%s=%s' contains the trailing junk '"PRI_SHUNK"'",
-				    leftright, key, value, pri_shunk(cursor));
+			return diag(PRI_KV" contains the trailing junk '"PRI_SHUNK"'",
+				    pri_kv(kv), pri_shunk(cursor));
 		}
 
-		d = check_afi(winner, leftright, key, value,
+		d = check_afi(winner, kv.leftright, kv.key, kv.value,
 			      (delim == '4' ? &ipv4_info : delim == '6' ? &ipv6_info : NULL),
 			      verbose);
 		if (d != NULL) {
@@ -281,12 +279,12 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 	/* let parser decide address, then reject after */
 
-	d = ttoaddress_num(shunk1(value), NULL, &end->addr);
+	d = ttoaddress_num(shunk1(kv.value), NULL, &end->addr);
 	if (d != NULL) {
 		pfree_diag(&d);
 	} else {
 		const struct ip_info *afi = address_info(end->addr);
-		d = check_afi(winner, leftright, key, value, afi, verbose);
+		d = check_afi(winner, kv.leftright, kv.key, kv.value, afi, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -348,23 +346,23 @@ diag_t host_addrs_from_whack_message(const struct whack_message *wm,
 		}
 	}
 
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct whack_end *we = &wm->end[lr];
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const struct whack_end *we = &wm->end[end];
 		const char *leftright = we->leftright;
-		struct route_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[end];
 
 		addrs->leftright = leftright;
 
-		d = extract_host_addr(&winner, &addrs->host,
-				      leftright, "",
-				      we->we_host, verbose);
+		d = extract_host_addr(kv(wm, end, KWS_HOST),
+				      &winner, &addrs->host,
+				      verbose);
 		if (d != NULL) {
 			return d;
 		}
 
-		d = extract_host_addr(&winner, &addrs->nexthop,
-				      leftright, "nexthop",
-				      we->we_nexthop, verbose);
+		d = extract_host_addr(kv(wm, end, KWS_NEXTHOP),
+				      &winner, &addrs->nexthop,
+				      verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -998,10 +996,7 @@ static uintmax_t extract_percent(struct kv kv,
 	return percent;
 }
 
-static ip_cidr extract_cidr_num(const char *leftright,
-				const char *name,
-				const char *value,
-				const struct whack_message *wm,
+static ip_cidr extract_cidr_num(struct kv kv,
 				diag_t *d,
 				struct verbose verbose)
 {
@@ -1012,20 +1007,20 @@ static ip_cidr extract_cidr_num(const char *leftright,
 
 	err_t err;
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return unset_cidr;
 	}
 
 	ip_cidr cidr;
-	diag_t dd = ttocidr_num(shunk1(value), NULL, &cidr);
+	diag_t dd = ttocidr_num(shunk1(kv.value), NULL, &cidr);
 	if (dd != NULL) {
-		(*d) = diag_diag(&dd, "%s%s=%s invalid, ", leftright, name, value);
+		(*d) = diag_diag(&dd, PRI_KV" invalid, ", pri_kv(kv));
 		return unset_cidr;
 	}
 
 	err = cidr_check(cidr);
 	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		(*d) = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
 	}
 
 	return cidr;
@@ -1955,15 +1950,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(ike_version);
 	}
 
-	child_config->vti_ip = extract_cidr_num(leftright, "vti",
-						src->we_vti, wm, &d, verbose);
+	child_config->vti_ip = extract_cidr_num(kv(wm, end, KWS_VTI),
+						&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	child_config->ipsec_interface_ip =
-		extract_cidr_num(leftright, "interface-ip",
-				 src->we_interface_ip, wm, &d, verbose);
+		extract_cidr_num(kv(wm, end, KWS_INTERFACE_IP),
+				 &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
