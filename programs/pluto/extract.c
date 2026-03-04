@@ -551,16 +551,14 @@ static bool can_extract_string(const char *leftright,
 	return true;
 }
 
-static char *extract_string(const char *leftright, const char *name,
-			    const char *string,
-			    const struct whack_message *wm,
+static char *extract_string(struct kv kv,
 			    struct verbose verbose)
 {
-	if (!can_extract_string(leftright, name, string, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return NULL;
 	}
 
-	return clone_str(string, name);
+	return clone_str(kv.value, kv.key);
 }
 
 static deltatime_t extract_deltatimescale(struct kv kv,
@@ -689,11 +687,8 @@ static unsigned extract_sparse_name(const char *leftright,
 				  names, d, verbose);
 }
 
-static bool extract_bool(const char *leftright,
-			 const char *name,
-			 const char *value,
+static bool extract_bool(struct kv kv,
 			 enum yn_options value_when_unset,
-			 const struct whack_message *wm,
 			 diag_t *d, struct verbose verbose)
 {
 	if (*d != NULL) {
@@ -701,10 +696,12 @@ static bool extract_bool(const char *leftright,
 		return value_when_unset;
 	}
 
-	enum yn_options yn = extract_sparse_name(leftright, name, value,
+	enum yn_options yn = extract_sparse_name(kv.leftright,
+						 kv.key,
+						 kv.value,
 						 value_when_unset,
 						 &yn_option_names,
-						 wm, d, verbose);
+						 kv.wm, d, verbose);
 	switch (yn) {
 	case YN_YES:
 		return true;
@@ -716,12 +713,9 @@ static bool extract_bool(const char *leftright,
 	}
 }
 
-static enum yna_options extract_yna(const char *leftright,
-				    const char *name,
-				    const char *value,
+static enum yna_options extract_yna(struct kv kv,
 				    enum yna_options value_when_unset,
 				    enum yna_options value_when_never_negotiate,
-				    const struct whack_message *wm,
 				    diag_t *d,
 				    struct verbose verbose)
 {
@@ -730,14 +724,14 @@ static enum yna_options extract_yna(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+	if (never_negotiate_string_option(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return value_when_never_negotiate;
 	}
 
-	return extract_sparse_name(leftright, name, value,
+	return extract_sparse_name(kv.leftright, kv.key, kv.value,
 				   value_when_unset,
 				   &yna_option_names,
-				   wm, d, verbose);
+				   kv.wm, d, verbose);
 }
 
 static void predicate_warning(const char *leftright, const char *name, const char *value,
@@ -1220,10 +1214,10 @@ static diag_t extract_host_end(enum end end,
 	diag_t d = NULL;
 	const char *leftright = host_config->leftright;
 
-	bool groundhog = extract_bool(leftright, "groundhog",
-				      src->we_groundhog,
-				      /*value_when_unset*/YN_NO,
-				      wm, &d, verbose);
+	bool groundhog =
+		extract_bool(kv(wm, end, KWS_GROUNDHOG),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1608,15 +1602,14 @@ static diag_t extract_host_end(enum end end,
 
 	/* the rest is simple copying of corresponding fields */
 
-	host_config->xauth.server = extract_bool(leftright, "xauthserver",
-						 src->we_xauthserver,
-						 YN_NO, wm, &d, verbose);
-	host_config->xauth.client = extract_bool(leftright, "xauthclient",
-						 src->we_xauthclient,
-						 YN_NO, wm, &d, verbose);
-	host_config->xauth.username = extract_string(leftright, "xauthusername",
-						     src->we_xauthusername,
-						     wm, verbose);
+	host_config->xauth.server =
+		extract_bool(kv(wm, end, KWS_XAUTHSERVER),
+			     YN_NO, &d, verbose);
+	host_config->xauth.client =
+		extract_bool(kv(wm, end, KWS_XAUTHCLIENT),
+			     YN_NO, &d, verbose);
+	host_config->xauth.username =
+		extract_string(kv(wm, end, KWS_USERNAME), verbose);
 	enum eap_options autheap = extract_sparse_name(leftright, "autheap",
 						       src->we_autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,
@@ -1791,12 +1784,12 @@ static diag_t extract_host_end(enum end end,
 	 * configured (for instance expecting leftaddresspool).
 	 */
 
-	bool modecfgserver = extract_bool(leftright, "modecfgserver",
-					  src->we_modecfgserver,
-					  YN_NO, wm, &d, verbose);
-	bool modecfgclient = extract_bool(leftright, "modecfgclient",
-					  src->we_modecfgclient,
-					  YN_NO, wm, &d, verbose);
+	bool modecfgserver =
+		extract_bool(kv(wm, end, KWS_MODECFGSERVER),
+			     YN_NO, &d, verbose);
+	bool modecfgclient =
+		extract_bool(kv(wm, end, KWS_MODECFGCLIENT),
+			     YN_NO, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1811,12 +1804,10 @@ static diag_t extract_host_end(enum end end,
 		pfree_diag(&d);
 	}
 
-	bool cat = extract_bool(leftright, "cat",
-				src->we_cat,
-				YN_NO, wm, &d, verbose);
-	bool other_cat = extract_bool(other_src->leftright, "cat",
-				      other_src->we_cat,
-				      YN_NO, wm, &d, verbose);
+	bool cat = extract_bool(kv(wm, end, KWS_CAT),
+				YN_NO, &d, verbose);
+	bool other_cat = extract_bool(kv(wm, !end, KWS_CAT),
+				      YN_NO, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1929,6 +1920,7 @@ static bool is_virt(const struct whack_end *we)
 
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
+				       enum end end,
 				       const struct whack_end *src,
 				       const struct route_addr *host_addr,
 				       ip_protoport protoport,
@@ -1944,9 +1936,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	case IKEv2:
 #ifdef USE_CAT
 	{
-		bool cat = extract_bool(leftright, "cat",
-					src->we_cat,
-					YN_NO, wm, &d, verbose);
+		bool cat = extract_bool(kv(wm, end, KWS_CAT),
+					YN_NO, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -2509,21 +2500,21 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 	return ok[shunt_kind][shunt_policy];
 }
 
-static enum shunt_policy extract_shunt_policy(const struct whack_message *wm,
-					      enum config_conn_keyword kws,
+static enum shunt_policy extract_shunt_policy(struct kv kv,
 					      const struct sparse_names *shunt_names,
 					      enum shunt_policy value_when_unset,
 					      diag_t *d,
 					      struct verbose verbose)
 {
-	const char *name = config_conn_keywords.item[kws].keyname;
-	const char *value = wm->conn[END_ROOF].value[kws];
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
-	enum shunt_policy shunt_policy = extract_sparse_name("", name, value,
-							     value_when_unset,
-							     shunt_names,
-							     wm, d, verbose);
-	return shunt_policy;
+	return extract_sparse_name(kv.leftright, kv.key, kv.value,
+				   value_when_unset,
+				   shunt_names,
+				   kv.wm, d, verbose);
 }
 
 static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
@@ -2866,13 +2857,13 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * implies that they can't.
 	 */
 
-	bool narrowing = extract_bool("", "narrowing",
-				      wm->wm_narrowing,
-				      /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
-							   wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
-							   wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
-							   YN_NO),
-				      wm, &d, verbose);
+	bool narrowing = 
+		extract_bool(kv(wm, END_ROOF, KWS_NARROWING),
+			     /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
+						  wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
+						  wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
+						  YN_NO),
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2942,19 +2933,17 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	bool pfs = extract_bool("", "pfs",
-				wm->wm_pfs,
+	bool pfs = extract_bool(kv(wm, END_ROOF, KWS_PFS),
 				/*value_when_unset*/YN_YES,
-				wm, &d, verbose);
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 	config->child.pfs = pfs;
 
-	bool compress = extract_bool("", "compress",
-				     wm->wm_compress,
+	bool compress = extract_bool(kv(wm, END_ROOF, KWS_COMPRESS),
 				     /*value_when_unset*/YN_NO,
-				     wm, &d, verbose);
+				     &d, verbose);
 	config->child.ipcomp = compress;
 
 	/*
@@ -3061,10 +3050,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	bool intermediate = extract_bool("", "intermediate",
-					 wm->wm_intermediate,
-					 /*value_when_unset*/YN_NO,
-					 wm, &d, verbose);
+	bool intermediate =
+		extract_bool(kv(wm, END_ROOF, KWS_INTERMEDIATE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3075,10 +3064,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->intermediate = intermediate;
 
-	config->session_resumption = extract_bool("", "session_resumption",
-						  wm->wm_session_resumption,
-						  /*value_when_unset*/YN_NO,
-						  wm, &d, verbose);
+	config->session_resumption =
+		extract_bool(kv(wm, END_ROOF, KWS_SESSION_RESUMPTION),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3089,30 +3078,30 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->sha2_truncbug = extract_bool("", "sha2-truncbug",
-					     wm->wm_sha2_truncbug,
-					     /*value_when_unset*/YN_NO,
-					     wm, &d, verbose);
-	config->share_lease = extract_bool("", "share_lease",
-					   wm->wm_share_lease,
-					   /*value_when_unset*/YN_YES,
-					   wm, &d, verbose);
-	config->overlapip = extract_bool("", "overlapip",
-					 wm->wm_overlapip,
-					 /*value_when_unset*/YN_NO,
-					 wm, &d, verbose);
+	config->sha2_truncbug =
+		extract_bool(kv(wm, END_ROOF, KWS_SHA2_TRUNCBUG),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	config->share_lease =
+		extract_bool(kv(wm, END_ROOF, KWS_SHARE_LEASE),
+			     /*value_when_unset*/YN_YES,
+			     &d, verbose);
+	config->overlapip =
+		extract_bool(kv(wm, END_ROOF, KWS_OVERLAPIP),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	bool ms_dh_downgrade = extract_bool("", "ms-dh-downgrade",
-					    wm->wm_ms_dh_downgrade,
-					    /*value_when_unset*/YN_NO,
-					    wm, &d, verbose);
-	bool pfs_rekey_workaround = extract_bool("", "pfs-rekey-workaround",
-						 wm->wm_pfs_rekey_workaround,
-						 /*value_when_unset*/YN_NO,
-						 wm, &d, verbose);
+	bool ms_dh_downgrade =
+		extract_bool(kv(wm, END_ROOF, KWS_MS_DH_DOWNGRADE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	bool pfs_rekey_workaround =
+		extract_bool(kv(wm, END_ROOF, KWS_PFS_REKEY_WORKAROUND),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3123,21 +3112,21 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->ms_dh_downgrade = ms_dh_downgrade;
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
-	config->dns_match_id = extract_bool("", "dns-match-id",
-					    wm->wm_dns_match_id,
-					  /*value_when_unset*/YN_NO,
-					    wm, &d, verbose);
+	config->dns_match_id =
+		extract_bool(kv(wm, END_ROOF, KWS_DNS_MATCH_ID),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	/* IKEv2 only; IKEv1 uses xauth=pam */
-	config->ikev2_pam_authorize = extract_bool("", "pam-authorize",
-						   wm->wm_pam_authorize,
-						   /*value_when_unset*/YN_NO,
-						   wm, &d, verbose);
+	config->ikev2_pam_authorize =
+		extract_bool(kv(wm, END_ROOF, KWS_PAM_AUTHORIZE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 
-	enum yna_options ikepad = extract_yna("", "ikepad",
-					      wm->wm_ikepad,
-					      /*value_when_unset*/YNA_UNSET,
-					      /*value_when_never_negotiate*/YNA_UNSET,
-					      wm, &d, verbose);
+	enum yna_options ikepad =
+		extract_yna(kv(wm, END_ROOF, KWS_IKEPAD),
+			    /*value_when_unset*/YNA_UNSET,
+			    /*value_when_never_negotiate*/YNA_UNSET,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3157,18 +3146,18 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->v1_ikepad.message = (ikepad != YNA_NO);
 	}
 
-	config->require_id_on_certificate = extract_bool("", "require-id-on-certificate",
-							 wm->wm_require_id_on_certificate,
-							 /*value_when_unset*/YN_YES,
-							 wm, &d, verbose);
+	config->require_id_on_certificate =
+		extract_bool(kv(wm, END_ROOF, KWS_REQUIRE_ID_ON_CERTIFICATE),
+			     /*value_when_unset*/YN_YES,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	bool aggressive = extract_bool("", "aggressive",
-				       wm->wm_aggressive,
-				       /*value_when_unset*/YN_NO,
-				       wm, &d, verbose);
+	bool aggressive =
+		extract_bool(kv(wm, END_ROOF, KWS_AGGRESSIVE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3181,26 +3170,26 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->aggressive = aggressive;
 
-	config->decap_dscp = extract_bool("", "decap-dscp",
-					  wm->wm_decap_dscp,
-					  /*value_when_unset*/YN_NO,
-					  wm, &d, verbose);
-	config->encap_dscp = extract_bool("", "encap-dscp",
-					  wm->wm_encap_dscp,
-					  /*value_when_unset*/YN_YES,
-					  wm, &d, verbose);
-	config->nopmtudisc = extract_bool("", "nopmtudisc",
-					  wm->wm_nopmtudisc,
-					  /*value_when_unset*/YN_NO,
-					  wm, &d, verbose);
+	config->decap_dscp =
+		extract_bool(kv(wm, END_ROOF, KWS_DECAP_DSCP),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	config->encap_dscp =
+		extract_bool(kv(wm, END_ROOF, KWS_ENCAP_DSCP),
+			     /*value_when_unset*/YN_YES,
+			     &d, verbose);
+	config->nopmtudisc =
+		extract_bool(kv(wm, END_ROOF, KWS_NOPMTUDISC),
+				/*value_when_unset*/YN_NO,
+				&d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	bool mobike = extract_bool("", "mobike",
-				   wm->wm_mobike,
-				   /*value_when_unset*/YN_NO,
-				   wm, &d, verbose);
+	bool mobike =
+		extract_bool(kv(wm, END_ROOF, KWS_MOBIKE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3247,10 +3236,10 @@ diag_t extract_connection(const struct whack_message *wm,
 
 
 	/* this warns when never_negotiate() */
-	bool iptfs = extract_bool("", "iptfs",
-				  wm->wm_iptfs,
-				  /*value_when_unset*/YN_NO,
-				  wm, &d, verbose);
+	bool iptfs =
+		extract_bool(kv(wm, END_ROOF, KWS_IPTFS),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3359,10 +3348,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * consistent and toggling iptfs= doesn't seem to change the
 	 * field.  Could warn about this but meh.
 	 */
-	config->child.iptfs.fragmentation = extract_bool("", "iptfs-fragmentation",
-							 wm->wm_iptfs_fragmentation,
-							 /*value_when_unset*/YN_YES,
-							 wm, &d, verbose);
+	config->child.iptfs.fragmentation =
+		extract_bool(kv(wm, END_ROOF, KWS_IPTFS_FRAGMENTATION),
+			     /*value_when_unset*/YN_YES,
+			     &d, verbose);
 	predicate_warning("", "iptfs-fragmentation", wm->wm_iptfs_fragmentation,
 			  "", "iptfs", iptfs,
 			  wm, &d, verbose);
@@ -3376,11 +3365,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.to = clone_str(wm->wm_redirect_to, "connection redirect_to");
 	config->redirect.accept_to = clone_str(wm->wm_accept_redirect_to,
 					       "connection accept_redirect_to");
-	enum yna_options send_redirect = extract_yna("", "send-redirect",
-						     wm->wm_send_redirect,
-						     /*value_when_unset*/YNA_UNSET,
-						     /*value_when_never_negotiate*/YNA_UNSET,
-						     wm, &d, verbose);
+	enum yna_options send_redirect =
+		extract_yna(kv(wm, END_ROOF, KWS_SEND_REDIRECT),
+			    /*value_when_unset*/YNA_UNSET,
+			    /*value_when_never_negotiate*/YNA_UNSET,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3418,10 +3407,10 @@ diag_t extract_connection(const struct whack_message *wm,
 			vwarning("IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
-		config->redirect.accept = extract_bool("", "acceept-redirect",
-						       wm->wm_accept_redirect,
-						       /*value_when_unset*/YN_NO,
-						       wm, &d, verbose);
+		config->redirect.accept =
+			extract_bool(kv(wm, END_ROOF, KWS_ACCEPT_REDIRECT),
+				     /*value_when_unset*/YN_NO,
+				     &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3520,14 +3509,14 @@ diag_t extract_connection(const struct whack_message *wm,
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->wm_connalias, "connection alias");
 
-	config->rekey = extract_bool("", "rekey",
-				     wm->wm_rekey,
-				     /*value_when_unset*/YN_YES,
-				     wm, &d, verbose);
-	config->reauth = extract_bool("", "reauth",
-				      wm->wm_reauth,
-				      /*value_when_unset*/YN_NO,
-				      wm, &d, verbose);
+	config->rekey =
+		extract_bool(kv(wm, END_ROOF, KWS_REKEY),
+			     /*value_when_unset*/YN_YES,
+			     &d, verbose);
+	config->reauth =
+		extract_bool(kv(wm, END_ROOF, KWS_REAUTH),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3590,10 +3579,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	config->negotiation_shunt = extract_shunt_policy(wm, KWS_NEGOTIATIONSHUNT,
-							 &negotiation_shunt_names,
-							 /*unset*/SHUNT_DROP,
-							 &d, verbose);
+	config->negotiation_shunt =
+		extract_shunt_policy(kv(wm, END_ROOF, KWS_NEGOTIATIONSHUNT),
+				     &negotiation_shunt_names,
+				     /*unset*/SHUNT_DROP,
+				     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3605,10 +3595,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_DROP;
 	}
 
-	config->failure_shunt = extract_shunt_policy(wm, KWS_FAILURESHUNT,
-						     &failure_shunt_names,
-						     /*unset*/SHUNT_NONE,
-						     &d, verbose);
+	config->failure_shunt =
+		extract_shunt_policy(kv(wm, END_ROOF, KWS_FAILURESHUNT),
+				     &failure_shunt_names,
+				     /*unset*/SHUNT_NONE,
+				     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3894,11 +3885,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->encapsulation = extract_yna("", "encapsulation",
-					    wm->wm_encapsulation,
-					    /*value_when_unset*/YNA_AUTO,
-					    /*value_when_never_negotiate*/YNA_NO,
-					    wm, &d, verbose);
+	config->encapsulation =
+		extract_yna(kv(wm, END_ROOF, KWS_ENCAPSULATION),
+			    /*value_when_unset*/YNA_AUTO,
+			    /*value_when_never_negotiate*/YNA_NO,
+			    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3907,17 +3898,17 @@ diag_t extract_connection(const struct whack_message *wm,
 		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 			 wm->wm_vti_interface, (unsigned) IFNAMSIZ);
 	}
-	config->vti.shared = extract_bool("", "vti-shared",
-					  wm->wm_vti_shared,
-					  /*value_when_unset*/YN_NO,
-					  wm, &d, verbose);
-	config->vti.routing = extract_bool("", "vti-routing",
-					   wm->wm_vti_routing,
-					   /*value_when_unset*/YN_NO,
-					   wm, &d, verbose);
-	config->vti.interface = extract_string("",  "vti-interface",
-					       wm->wm_vti_interface,
-					       wm, verbose);
+	config->vti.shared =
+		extract_bool(kv(wm, END_ROOF, KWS_VTI_SHARED),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	config->vti.routing =
+		extract_bool(kv(wm, END_ROOF, KWS_VTI_ROUTING),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	config->vti.interface =
+		extract_string(kv(wm, END_ROOF,  KWS_VTI_INTERFACE),
+			       verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4187,10 +4178,10 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		bool nat_keepalive = extract_bool("", "nat-keepalive",
-						  wm->wm_nat_keepalive,
-						  /*value_when_unset*/YN_YES,
-						  wm, &d, verbose);
+		bool nat_keepalive =
+			extract_bool(kv(wm, END_ROOF, KWS_NAT_KEEPALIVE),
+				     /*value_when_unset*/YN_YES,
+				     &d, verbose);
 		enum ikev1_natt_policy nat_ikev1_method =
 			extract_sparse_name("", "nat-ikev1-method",
 					    wm->wm_nat_ikev1_method,
@@ -4205,20 +4196,17 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->ikev1_natt = nat_ikev1_method;
 
 		config->send_initial_contact =
-			extract_bool("", "initial-contact",
-				     wm->wm_initial_contact,
+			extract_bool(kv(wm, END_ROOF, KWS_INITIAL_CONTACT),
 				     /*value_when_unset*/YN_NO,
-				     wm, &d, verbose);
+				     &d, verbose);
 		config->send_vid_fake_strongswan =
-			extract_bool("", "fake-strongswan",
-				     wm->wm_fake_strongswan,
+			extract_bool(kv(wm, END_ROOF, KWS_FAKE_STRONGSWAN),
 				     /*value_when_unset*/YN_NO,
-				     wm, &d, verbose);
+				     &d, verbose);
 		config->send_vendorid =
-			extract_bool("", "send-vendorid",
-				     wm->wm_send_vendorid,
+			extract_bool(kv(wm, END_ROOF, KWS_SEND_VENDORID),
 				     /*value_when_unset*/YN_NO,
-				     wm, &d, verbose);
+				     &d, verbose);
 
 		config->send_ca =
 			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
@@ -4251,10 +4239,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * modecfg/cp
 	 */
 
-	config->modecfg.pull = extract_bool("", "modecfgpull",
-					    wm->wm_modecfgpull,
-					    /*value_when_unset*/YN_NO,
-					    wm, &d, verbose);
+	config->modecfg.pull =
+		extract_bool(kv(wm, END_ROOF, KWS_MODECFGPULL),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
 
 	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",
@@ -4278,9 +4266,9 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->modecfg.banner = extract_string("", "modecfgbanner",
-						wm->wm_modecfgbanner,
-						wm, verbose);
+	config->modecfg.banner =
+		extract_string(kv(wm, END_ROOF, KWS_MODECFGBANNER),
+			       verbose);
 
 	/*
 	 * Marks.
@@ -4375,10 +4363,9 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->child.send.esp_tfc_padding_not_supported =
-		extract_bool("", "send-esp-tfc-padding-not-supported",
-			     wm->wm_send_esp_tfc_padding_not_supported,
+		extract_bool(kv(wm, END_ROOF, KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED),
 			     /*value_when_unset*/YN_NO,
-			     wm, &d, verbose);
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4387,10 +4374,9 @@ diag_t extract_connection(const struct whack_message *wm,
 		return diag("cannot specify reject-simultaneous-ike-auth for IKEv1");
 	}
 	config->reject_simultaneous_ike_auth =
-		extract_bool("", "reject-simultaneous-ike-auth",
-			     wm->wm_reject_simultaneous_ike_auth,
+		extract_bool(kv(wm, END_ROOF, KWS_REJECT_SIMULTANEOUS_IKE_AUTH),
 			     /*value_when_unset*/YN_YES,
-			     wm, &d, verbose);
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4584,7 +4570,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		d = extract_child_end_config(wm, whack_ends[end],
+		d = extract_child_end_config(wm, end, whack_ends[end],
 					     host_addrs[end],
 					     protoport[end],
 					     ike_version,
