@@ -31,7 +31,7 @@ north #
 "north-east" #2: command "prepare" output: net.ipv4.conf.vti0.disable_policy = 1
 "north-east" #2: command "prepare" output: net.ipv4.conf.vti0.rp_filter = 0
 "north-east" #2: command "prepare" output: net.ipv4.conf.vti0.forwarding = 1
-"north-east" #2: command "up" output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
+"north-east" #2: command "up" output: vti interface "vti0" already exists with parameters: vti0: ip/ip remote 192.1.2.23 local 192.1.3.33 ttl inherit key 20; perhaps need vti-shared=yes ?
 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --down 192.0.2.254

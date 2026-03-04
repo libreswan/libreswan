@@ -22,17 +22,8 @@
 # that, and use the (left/right)updown parameters in ipsec.conf to make
 # FreeS/WAN use yours instead of this default one.
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
-
-# standardize PATH, and export it for everything else's benefit;
-# should config.mk generate this?
-NSS_BINDIR="${NSS_BINDIR:-@@NSS_BINDIR@@}"
-IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
-PATH="${NSS_BINDIR}:${PATH#${NSS_BINDIR}:}"
-PATH="${IPSEC_SBINDIR}:${PATH#${IPSEC_SBINDIR}:}"
-export PATH
-
-LC_ALL=C export LC_ALL
+LC_ALL=C
+export LC_ALL
 
 # things that this script gets (from ipsec_pluto(8) man page)
 #
@@ -123,6 +114,16 @@ LC_ALL=C export LC_ALL
 #
 # 	PLUTO_VIRT_INTERFACE
 #               is the name of ipsec interface used by clear traffic in/out
+
+test $IPSEC_INIT_SCRIPT_DEBUG && set -x
+
+# standardize PATH, and export it for everything else's benefit;
+# should config.mk generate this?
+NSS_BINDIR="${NSS_BINDIR:-@@NSS_BINDIR@@}"
+IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
+PATH="${NSS_BINDIR}:${PATH#${NSS_BINDIR}:}"
+PATH="${IPSEC_SBINDIR}:${PATH#${IPSEC_SBINDIR}:}"
+export PATH
 
 # check parameter(s)
 case "$1:$*" in

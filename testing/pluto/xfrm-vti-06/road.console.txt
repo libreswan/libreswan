@@ -27,7 +27,7 @@ road #
 "road-east-vti" #2: command "prepare" output: net.ipv4.conf.vti0.disable_policy = 1
 "road-east-vti" #2: command "prepare" output: net.ipv4.conf.vti0.rp_filter = 0
 "road-east-vti" #2: command "prepare" output: net.ipv4.conf.vti0.forwarding = 1
-"road-east-vti" #2: command "up" output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
+"road-east-vti" #2: command "up" output: vti interface "vti0" already exists with parameters: vti0: ip/ip remote 192.1.2.23 local 192.1.3.209 ttl inherit key 20; perhaps need vti-shared=yes ?
 "road-east-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 road #
  # since we have vti-routing=no, no marking, so unencrypted packets are dropped

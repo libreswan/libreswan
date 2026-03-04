@@ -55,7 +55,7 @@ west #
 "westnet-eastnet-vti-01" #2: command "route" output: done ip route
 "westnet-eastnet-vti-01" #2: command "up" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-01" #2: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-01" #2: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-01" #2: command "up" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-01" #2: command "up" output: done ip route
 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -64,11 +64,11 @@ west #
 "westnet-eastnet-vti-02" #3: sent Quick Mode request
 "westnet-eastnet-vti-02" #3: command "prepare" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: command "prepare" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-02" #3: command "route" output: done ip route
 "westnet-eastnet-vti-02" #3: command "up" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: command "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: command "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: command "up" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
 "westnet-eastnet-vti-02" #3: command "up" output: RTNETLINK answers: File exists
 "westnet-eastnet-vti-02" #3: command "up" output: done ip route
 "westnet-eastnet-vti-02" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
