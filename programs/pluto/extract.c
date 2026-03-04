@@ -626,18 +626,17 @@ static unsigned extract_enum_name(struct kv kv,
  * and normal fields.
  */
 
-static unsigned lookup_sparse_name(const char *leftright,
-				   const char *name,
-				   const char *value,
+static unsigned lookup_sparse_name(struct kv kv,
 				   const struct sparse_names *names,
 				   diag_t *d,
 				   struct verbose verbose)
 {
-	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
+	const struct sparse_name *sparse =
+		sparse_lookup_by_name(names, shunk1(kv.value));
 	if (sparse == NULL) {
 		JAMBUF(buf) {
-			jam(buf, "%s%s=%s is invalid, valid options are ",
-			    leftright, name, value);
+			jam(buf, PRI_KV, pri_kv(kv));
+			jam_string(buf, " is invalid, valid options are ");
 			jam_sparse_names_quoted(buf, names);
 			(*d) = diag_jambuf(buf);
 		}
@@ -649,13 +648,13 @@ static unsigned lookup_sparse_name(const char *leftright,
 	name_buf new_name;
 	switch (flag) {
 	case NAME_IMPLEMENTED_AS:
-		vwarning("%s%s \"%s\" implemented as \"%s\"",
-			 leftright, name, value,
+		vwarning(PRI_KV" implemented as \"%s\"",
+			 pri_kv(kv),
 			 str_sparse_short(names, name_value, &new_name));
 		break;
 	case NAME_RENAMED_TO:
-		vwarning("%s%s \"%s\" renamed to \"%s\"",
-			 leftright, name, value,
+		vwarning(PRI_KV" renamed to \"%s\"",
+			 pri_kv(kv),
 			 str_sparse_short(names, name_value, &new_name));
 		break;
 	}
@@ -663,12 +662,9 @@ static unsigned lookup_sparse_name(const char *leftright,
 	return name_value;
 }
 
-static unsigned extract_sparse_name(const char *leftright,
-				    const char *name,
-				    const char *value,
+static unsigned extract_sparse_name(struct kv kv,
 				    unsigned value_when_unset,
 				    const struct sparse_names *names,
-				    const struct whack_message *wm,
 				    diag_t *d,
 				    struct verbose verbose)
 {
@@ -677,12 +673,11 @@ static unsigned extract_sparse_name(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
 		return value_when_unset;
 	}
 
-	return lookup_sparse_name(leftright, name, value,
-				  names, d, verbose);
+	return lookup_sparse_name(kv, names, d, verbose);
 }
 
 static bool extract_bool(struct kv kv,
@@ -694,12 +689,10 @@ static bool extract_bool(struct kv kv,
 		return value_when_unset;
 	}
 
-	enum yn_options yn = extract_sparse_name(kv.leftright,
-						 kv.key,
-						 kv.value,
+	enum yn_options yn = extract_sparse_name(kv,
 						 value_when_unset,
 						 &yn_option_names,
-						 kv.wm, d, verbose);
+						 d, verbose);
 	switch (yn) {
 	case YN_YES:
 		return true;
@@ -726,10 +719,10 @@ static enum yna_options extract_yna(struct kv kv,
 		return value_when_never_negotiate;
 	}
 
-	return extract_sparse_name(kv.leftright, kv.key, kv.value,
+	return extract_sparse_name(kv,
 				   value_when_unset,
 				   &yna_option_names,
-				   kv.wm, d, verbose);
+				   d, verbose);
 }
 
 static void predicate_warning(const char *leftright, const char *name, const char *value,
@@ -1605,11 +1598,11 @@ static diag_t extract_host_end(enum end end,
 			     YN_NO, &d, verbose);
 	host_config->xauth.username =
 		extract_string(kv(wm, end, KWS_USERNAME), verbose);
-	enum eap_options autheap = extract_sparse_name(leftright, "autheap",
-						       src->we_autheap,
-						       /*value_when_unset*/IKE_EAP_NONE,
-						       &eap_option_names,
-						       wm, &d, verbose);
+	enum eap_options autheap =
+		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
+				    /*value_when_unset*/IKE_EAP_NONE,
+				    &eap_option_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1742,10 +1735,10 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	host_config->sendcert = extract_sparse_name(leftright, "sendcert",
-						    src->we_sendcert,
-						    cert_defaultcertpolicy, &sendcert_policy_names,
-						    wm, &d, verbose);
+	host_config->sendcert =
+		extract_sparse_name(kv(wm, end, KWS_SENDCERT),
+				    cert_defaultcertpolicy, &sendcert_policy_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2506,10 +2499,10 @@ static enum shunt_policy extract_shunt_policy(struct kv kv,
 		return value_when_unset;
 	}
 
-	return extract_sparse_name(kv.leftright, kv.key, kv.value,
+	return extract_sparse_name(kv,
 				   value_when_unset,
 				   shunt_names,
-				   kv.wm, d, verbose);
+				   d, verbose);
 }
 
 static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
@@ -2518,38 +2511,38 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 {
 	diag_t d = NULL;
 
-	enum remote_peer_type remote_peer_type = extract_sparse_name("", "remote-peer-type",
-								     wm->wm_remote_peer_type,
-								     REMOTE_PEER_IETF,
-								     &remote_peer_type_names,
-								     wm, &d, verbose);
+	enum remote_peer_type remote_peer_type =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_REMOTE_PEER_TYPE),
+				    REMOTE_PEER_IETF,
+				    &remote_peer_type_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity",
-							  wm->wm_cisco_unity,
-							  /*value_when_unset*/YN_NO,
-							  &yn_option_names,
-							  wm, &d, verbose);
+	enum yn_options cisco_unity =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_CISCO_UNITY),
+				    /*value_when_unset*/YN_NO,
+				    &yn_option_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	enum yn_options nm_configured = extract_sparse_name("", "nm-configured",
-							    wm->wm_nm_configured,
-							    /*value_when_unset*/YN_NO,
-							    &yn_option_names,
-							    wm, &d, verbose);
+	enum yn_options nm_configured =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_NM_CONFIGURED),
+				    /*value_when_unset*/YN_NO,
+				    &yn_option_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	enum yn_options cisco_split = extract_sparse_name("", "cisco-split",
-							  wm->wm_cisco_split,
-							  /*value_when_unset*/YN_NO,
-							  &yn_option_names,
-							  wm, &d, verbose);
+	enum yn_options cisco_split =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_CISCO_SPLIT),
+				    /*value_when_unset*/YN_NO,
+				    &yn_option_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2576,20 +2569,20 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 		return 0;
 	}
 
-	enum ike_version keyexchange = extract_sparse_name("", "keyexchange",
-							   wm->wm_keyexchange,
-							   /*value_when_unset*/0,
-							   &keyexchange_option_names,
-							   wm, d, verbose);
+	enum ike_version keyexchange =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_KEYEXCHANGE),
+				    /*value_when_unset*/0,
+				    &keyexchange_option_names,
+				    d, verbose);
 	if ((*d) != NULL) {
 		return 0;
 	}
 
-	enum yn_options ikev2 = extract_sparse_name("", "ikev2",
-						    wm->wm_ikev2,
-						    /*value_when_unset*/0,
-						    &ikev2_option_names,
-						    wm, d, verbose);
+	enum yn_options ikev2 =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_IKEv2),
+				    /*value_when_unset*/0,
+				    &ikev2_option_names,
+				    d, verbose);
 	if ((*d) != NULL) {
 		return 0;
 	}
@@ -2956,7 +2949,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum type_options type = KS_TUNNEL;
 	if (wm->wm_type != NULL) {
-		type = lookup_sparse_name("", "type", wm->wm_type,
+		type = lookup_sparse_name(kv(wm, END_ROOF, KWS_TYPE),
 					  &type_option_names,
 					  &d, verbose);
 		if (d != NULL) {
@@ -3414,11 +3407,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	/* fragmentation */
 
 	enum ynf_options fragmentation =
-		extract_sparse_name("", "fragmentation",
-				    wm->wm_fragmentation,
+		extract_sparse_name(kv(wm, END_ROOF, KWS_FRAGMENTATION),
 				    /*value_when_unset*/YNF_UNSET,
 				    &ynf_option_names,
-				    wm, &d, verbose);
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3443,11 +3435,11 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* RFC 8229 TCP encap*/
 
-	enum tcp_options iketcp = extract_sparse_name("", "enable-tcp",
-						      wm->wm_enable_tcp,
-						      IKE_TCP_NO,
-						      &tcp_option_names,
-						      wm, &d, verbose);
+	enum tcp_options iketcp =
+		extract_sparse_name(kv(wm, END_ROOF, KWS_ENABLE_TCP),
+				    IKE_TCP_NO,
+				    &tcp_option_names,
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3518,8 +3510,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum autostart autostart =
 		(wm->wm_auto == NULL ? AUTOSTART_UNSET :
-		 lookup_sparse_name("", "auto",
-				    wm->wm_auto,
+		 lookup_sparse_name(kv(wm, END_ROOF, KWS_AUTO),
 				    &autostart_names,
 				    &d, verbose));
 	if (d != NULL) {
@@ -3636,11 +3627,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->child.replay_window = replay_window;
 
 	enum yne_options esn =
-		extract_sparse_name("", "esn",
-				    wm->wm_esn,
+		extract_sparse_name(kv(wm, END_ROOF, KWS_ESN),
 				    /*value_when_unset*/YNE_UNSET,
 				    &yne_option_names,
-				    wm, &d, verbose);
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3723,10 +3713,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	enum nppi_options ppk =
-		extract_sparse_name("", "ppk", wm->wm_ppk,
+		extract_sparse_name(kv(wm, END_ROOF, KWS_PPK),
 				    /*value_when_unset*/NPPI_UNSET,
 				    &nppi_option_names,
-				    wm, &d, verbose);
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3909,11 +3899,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	enum nic_offload_options nic_offload =
-		extract_sparse_name("", "nic-offload",
-				    wm->wm_nic_offload,
+		extract_sparse_name(kv(wm, END_ROOF, KWS_NIC_OFFLOAD),
 				    NIC_OFFLOAD_NO,
 				    &nic_offload_option_names,
-				    wm, &d, verbose);
+				    &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4178,11 +4167,10 @@ diag_t extract_connection(const struct whack_message *wm,
 				     /*value_when_unset*/YN_YES,
 				     &d, verbose);
 		enum ikev1_natt_policy nat_ikev1_method =
-			extract_sparse_name("", "nat-ikev1-method",
-					    wm->wm_nat_ikev1_method,
+			extract_sparse_name(kv(wm, END_ROOF, KWS_NAT_IKEv1_METHOD),
 					    /*value_when_unset*/NATT_BOTH,
 					    &nat_ikev1_method_option_names,
-					    wm, &d, verbose);
+					    &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4210,16 +4198,16 @@ diag_t extract_connection(const struct whack_message *wm,
 					  &send_ca_policy_names,
 					  &d, verbose);
 
-		config->xauthby = extract_sparse_name("", "xauthby",
-						      wm->wm_xauthby,
-						      /*value_when_unset*/XAUTHBY_FILE,
-						      &xauthby_names,
-						      wm, &d, verbose);
-		config->xauthfail = extract_sparse_name("", "xauthfail",
-							wm->wm_xauthfail,
-							/*value_when_unset*/XAUTHFAIL_HARD,
-							&xauthfail_names,
-							wm, &d, verbose);
+		config->xauthby =
+			extract_sparse_name(kv(wm, END_ROOF, KWS_XAUTHBY),
+					    /*value_when_unset*/XAUTHBY_FILE,
+					    &xauthby_names,
+					    &d, verbose);
+		config->xauthfail =
+			extract_sparse_name(kv(wm, END_ROOF, KWS_XAUTHFAIL),
+					    /*value_when_unset*/XAUTHFAIL_HARD,
+					    &xauthfail_names,
+					    &d, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");

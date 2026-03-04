@@ -30,18 +30,18 @@ west #
 "failureshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=hold
-warning: "failureshunt=hold": failureshunt "hold" implemented as "drop"
+warning: "failureshunt=hold": "failureshunt=hold" implemented as "drop"
 "failureshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=reject
-warning: "failureshunt=reject": failureshunt "reject" implemented as "drop"
+warning: "failureshunt=reject": "failureshunt=reject" implemented as "drop"
 "failureshunt=reject": added oriented IKEv2 connection
 west #
  ipsec add type=drop
 "type=drop": added oriented drop connection
 west #
  ipsec add type=reject
-warning: "type=reject": type "reject" implemented as "drop"
+warning: "type=reject": "type=reject" implemented as "drop"
 "type=reject": added oriented drop connection
 west #
  ipsec add type=passthrough
