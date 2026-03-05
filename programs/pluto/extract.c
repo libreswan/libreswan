@@ -3835,7 +3835,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_string_option("", "ike", wm->wm_ike, wm, verbose)) {
+	const struct kv ike_kv = kv(wm, END_ROOF, KWS_IKE);
+	if (never_negotiate_string_option(ike_kv.leftright, ike_kv.key, ike_kv.value, ike_kv.wm, verbose)) {
 		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
