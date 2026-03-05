@@ -559,6 +559,18 @@ static char *extract_string(struct kv kv,
 	return clone_str(kv.value, kv.key);
 }
 
+static struct ipsec_interface_config extract_ipsec_interface(struct kv kv,
+							     diag_t *d,
+							     struct verbose verbose)
+{
+	struct ipsec_interface_config ipsec_interface = {0};
+	if (can_extract_string(kv.leftright, kv.key, kv.value,
+			       kv.wm, verbose)) {
+		*d = parse_ipsec_interface(kv.value, &ipsec_interface, verbose.logger);
+	}
+	return ipsec_interface;
+}
+
 static deltatime_t extract_deltatimescale(struct kv kv,
 					  enum timescale default_timescale,
 					  deltatime_t value_when_unset,
@@ -4308,16 +4320,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * ipsec-interface
 	 */
 
-	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string("", "ipsec-interface",
-			       wm->wm_ipsec_interface,
-			       wm, verbose)) {
-		diag_t d;
-		d = parse_ipsec_interface(wm->wm_ipsec_interface, &ipsec_interface, verbose.logger);
-		if (d != NULL) {
-			return d;
-		}
-		config->ipsec_interface = ipsec_interface;
+	const struct ipsec_interface_config ipsec_interface =
+		config->ipsec_interface =
+		extract_ipsec_interface(kv(wm, END_ROOF, KWS_IPSEC_INTERFACE),
+					&d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 #ifdef USE_NFLOG
