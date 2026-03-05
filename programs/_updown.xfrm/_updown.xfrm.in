@@ -1023,6 +1023,11 @@ delnflog() {
     fi
 }
 
+RUN() {
+    echo "$@" 1>&2
+    "$@"
+}
+
 addvtiiface() {
     if [ -n "${VTI_IFACE}" ]; then
 	if [ -z "${CONNMARK_IN}" -o -z "${CONNMARK_OUT}" ]; then
@@ -1034,16 +1039,16 @@ addvtiiface() {
 		if [ "${PLUTO_CONN_KIND}" = CK_INSTANCE -o "${VTI_SHARED}" = "yes" ]; then
 		    vtipeer="0.0.0.0"
 		fi
-		ip tunnel add ${VTI_IFACE} mode vti local ${PLUTO_ME} \
+		RUN ip tunnel add ${VTI_IFACE} mode vti local ${PLUTO_ME} \
 		    remote ${vtipeer} okey ${CONNMARK_OUT%/*} \
 		    ikey ${CONNMARK_IN%/*}
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.disable_policy=1
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.rp_filter=0
 		sysctl -w net.ipv4.conf.${VTI_IFACE}.forwarding=1
 		if [ -n "${VTI_IP}" ]; then
-		   ip addr add ${VTI_IP} dev ${VTI_IFACE}
+		   RUN ip addr add ${VTI_IP} dev ${VTI_IFACE}
 		fi
-		ip link set ${VTI_IFACE} up
+		RUN ip link set ${VTI_IFACE} up
 	    else
 		# check there was no conflict if we are sharing - very
 		# sensitive to /sbin/ip differences; sigh
@@ -1079,17 +1084,15 @@ addvti() {
 		ip route list | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
 		if [ "${r}" = change ]; then
 		    # resolve LAN conflict by forcing host route for default gw
-		    gw="$(ip ro li | grep ^default | awk '{ print $3;}')"
-		    gwdev="$(ip ro li | grep ^default | awk '{ print $5;}')"
-		    # echo "ip route add ${gw} dev ${gwdev}"
-		    ip route add ${gw} dev ${gwdev} >/dev/null ||:
+		    gw="$(ip route list | grep ^default | awk '{ print $3;}')"
+		    gwdev="$(ip route list | grep ^default | awk '{ print $5;}')"
+		    RUN ip route add ${gw} dev ${gwdev} || echo "(ip route error ignored)"
 		fi
 		srcip=""
 		if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
 		    srcip=" src ${PLUTO_MY_SOURCEIP}"
 		fi
-		# echo "ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}"
-		ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
+		RUN ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
 		echo "done ip route"
 	    fi
 	fi
@@ -1099,7 +1102,7 @@ addvti() {
 delvti() {
     if [ -n "${VTI_IFACE}" -a -d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]; then
 	if [ "${VTI_ROUTING}" = yes ]; then
-	    ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
+	    RUN ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
 		src ${PLUTO_MY_SOURCEIP} ||:
 	fi
 	# TODO: we can't delete vti interface because we don't have proper reference
