@@ -556,6 +556,28 @@ static char *extract_string(struct kv kv,
 	return clone_str(kv.value, kv.key);
 }
 
+static diag_t extract_flags(struct kv kv,
+			    bool *flags,
+			    size_t nr_flags,
+			    const struct enum_names *names,
+			    struct verbose verbose)
+{
+	if (!never_negotiate_string_option(kv.leftright,
+					   kv.key,
+					   kv.value,
+					   kv.wm,
+					   verbose)) {
+		return NULL;
+	}
+
+	diag_t d = ttoflags_raw(kv.value, flags, nr_flags, names);
+	if (d != NULL) {
+		return diag_diag(&d, PRI_KV" invalid, ", pri_kv(kv));
+	}
+
+	return NULL;
+}
+
 static ip_addresses extract_addresses(struct kv kv,
 				      const struct ip_info *afi,
 				      diag_t *d,
@@ -2023,20 +2045,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 clone_str(src->we_updown, "child_config.updown"));
 	}
 
-	if (never_negotiate_string_option(leftright, "updown-config",
-					  src->we_updown_config, wm, verbose)) {
-		vdbg("never-negotiate updown-config");
-	} else {
-		d = ttoflags(src->we_updown_config,
-			     child_config->updown.updown_config,
-			     &updown_config_names);
-		if (d != NULL) {
-			return diag_diag(&d, "%s-updown-config=%s invalid, ",
-					 leftright,
-					 src->we_updown_config);
-		}
+	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
+			  ARRAY_REF(child_config->updown.updown_config),
+			  &updown_config_names,
+			  verbose);
+	if (d != NULL) {
+		return d;
 	}
-
 
 	ip_selectors *child_selectors = &child_config->selectors;
 
