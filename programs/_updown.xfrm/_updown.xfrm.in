@@ -1081,7 +1081,7 @@ addvti() {
 		# Tuomo should improve this with using ${PLUTO_MY_CLIENT_NET}
 		# echo "setting up vti routing"
 		r=add
-		ip route list dev "${VTI_IFACE}" | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
+		ip route list | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
 		if [ "${r}" = change ]; then
 		    # resolve LAN conflict by forcing host route for default gw
 		    gw="$(ip route list | grep ^default | awk '{ print $3;}')"
