@@ -4280,14 +4280,15 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	if (can_extract_string("", "modecfgdomains", wm->wm_modecfgdomains, wm, verbose)) {
-		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->wm_modecfgdomains),
+	struct kv dns_kv = kv(wm, END_ROOF, KWS_MODECFGDOMAINS);
+	if (can_extract_string(dns_kv.leftright, dns_kv.key, dns_kv.value, dns_kv.wm, verbose)) {
+		config->modecfg.domains = clone_shunk_tokens(shunk1(dns_kv.value),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
-			vlog("IKEv1 only uses the first domain in modecfgdomain=%s",
-			     wm->wm_modecfgdomains);
+			vwarning("IKEv1 only uses the first domain in "PRI_KV,
+				 pri_kv(dns_kv));
 			config->modecfg.domains[1] = null_shunk;
 		}
 	}
