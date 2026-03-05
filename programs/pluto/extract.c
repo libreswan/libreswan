@@ -559,6 +559,26 @@ static char *extract_string(struct kv kv,
 	return clone_str(kv.value, kv.key);
 }
 
+static ip_port extract_port(struct kv kv,
+			    diag_t *d,
+			    struct verbose verbose)
+{
+	ip_port port = {0};
+	if (can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		const char *err = ttoport(shunk1(kv.value), &port);
+		if (err != NULL) {
+			*d = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
+			return port;
+		}
+		if (!port_is_specified(port)) {
+			*d = diag(PRI_KV" invalid, must be in range 1-65535",
+				  pri_kv(kv));
+			return port;
+		}
+	}
+	return port;
+}
+
 static struct ipsec_interface_config extract_ipsec_interface(struct kv kv,
 							     diag_t *d,
 							     struct verbose verbose)
@@ -1755,16 +1775,10 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	if (can_extract_string(leftright, "ikeport", src->we_ikeport, wm, verbose)) {
-		err = ttoport(shunk1(src->we_ikeport), &host_config->ikeport);
-		if (err != NULL) {
-			return diag("%sikeport=%s invalid, %s", leftright,
-				    src->we_ikeport, err);
-		}
-		if (!port_is_specified(host_config->ikeport)) {
-			return diag("%sikeport=%s invalid, must be in range 1-65535",
-				    leftright, src->we_ikeport);
-		}
+	host_config->ikeport =
+		extract_port(kv(wm, end, KWS_IKEPORT), &d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
