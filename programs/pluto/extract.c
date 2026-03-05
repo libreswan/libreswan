@@ -130,26 +130,27 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 	return is_never_negotiate_type(sparse->value & ~NAME_FLAGS);
 }
 
-static void llog_never_negotiate_option(struct verbose verbose,
-					const struct whack_message *wm,
-					const char *leftright,
-					const char *name,
-					const char *value)
+static void llog_never_negotiate_option(struct kv nn_kv,
+					struct verbose verbose)
 {
-	if (value == NULL) {
+	if (nn_kv.value == NULL) {
 		/* nothing to ignore */
 		return;
 	}
-	/* need to reverse engineer type= */
-	vwarning("%s%s=%s ignored for never-negotiate (type=%s) connection",
-		 leftright, name, value, wm->wm_type);
+	/*
+	 * XXX: never-negotiate can only be true when type= is
+	 * non-NULL - when NULL type is "tunnel".
+	 */
+	struct kv type_kv = kv(nn_kv.wm, END_ROOF, KWS_TYPE);
+	vwarning(PRI_KV" ignored for never-negotiate ("PRI_KV") connection",
+		 pri_kv(nn_kv), pri_kv(type_kv));
 }
 
 static bool never_negotiate_string_option(struct kv kv,
 					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(kv.wm)) {
-		llog_never_negotiate_option(verbose, kv.wm, kv.leftright, kv.key, kv.value);
+		llog_never_negotiate_option(kv, verbose);
 		return true;
 	}
 
