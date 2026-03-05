@@ -2329,6 +2329,45 @@ static diag_t mark_parse(const char *leftright, const char *name, const char *ma
 	return NULL;
 }
 
+static diag_t extract_marks(struct kv kv,
+			    struct sa_marks *marks,
+			    struct verbose verbose)
+{
+	diag_t d;
+
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return NULL;
+	}
+
+	d = mark_parse(kv.leftright, kv.key, kv.value, &marks->in);
+	if (d != NULL) {
+		return d;
+	}
+
+	d = mark_parse(kv.leftright, kv.key, kv.value, &marks->out);
+	if (d != NULL) {
+		return d;
+	}
+
+	return NULL;
+}
+
+static diag_t extract_mark(struct kv kv,
+			   struct sa_mark *mark,
+			   struct verbose verbose)
+{
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return NULL;
+	}
+
+	if (kv.wm->wm_mark != NULL) {
+		vwarning(PRI_KV" overrides \"mark=%s\"",
+			 pri_kv(kv), kv.wm->wm_mark);
+	}
+
+	return mark_parse(kv.leftright, kv.key, kv.value, mark);
+}
+
 /*
  * Extract the connection detail from the whack message WM and store
  * them in the connection C.
@@ -4315,37 +4354,22 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_string("", "mark", wm->wm_mark, wm, verbose)) {
-		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.in);
-		if (d != NULL) {
-			return d;
-		}
-		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.out);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_marks(kv(wm, END_ROOF, KWS_MARK),
+			  &c->sa_marks, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string("", "mark-in", wm->wm_mark_in, wm, verbose)) {
-		if (wm->wm_mark != NULL) {
-			vwarning("mark-in=%s overrides mark=%s",
-				 wm->wm_mark_in, wm->wm_mark);
-		}
-		d = mark_parse("", "mark-in", wm->wm_mark_in, &c->sa_marks.in);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_mark(kv(wm, END_ROOF, KWS_MARK_IN),
+			 &c->sa_marks.in, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string("", "mark-out", wm->wm_mark_out, wm, verbose)) {
-		if (wm->wm_mark != NULL) {
-			vwarning("mark-out=%s overrides mark=%s",
-				 wm->wm_mark_out, wm->wm_mark);
-		}
-		d = mark_parse("", "mark-out", wm->wm_mark_out, &c->sa_marks.out);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_mark(kv(wm, END_ROOF, KWS_MARK_OUT),
+			 &c->sa_marks.out, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
