@@ -559,6 +559,58 @@ static char *extract_string(struct kv kv,
 	return clone_str(kv.value, kv.key);
 }
 
+static ip_addresses extract_addresses(struct kv kv,
+				      const struct ip_info *afi,
+				      diag_t *d,
+				      struct verbose verbose)
+{
+	ip_addresses addresses = {0};
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return addresses;
+	}
+
+	diag_t td = ttoaddresses_num(shunk1(kv.value), ", ", afi,
+				     &addresses);
+	if (td != NULL) {
+		*d = diag_diag(&td, PRI_KV" invalid, ", pri_kv(kv));
+		return addresses;
+	}
+
+	return addresses;
+}
+
+static ip_port extract_port(struct kv kv,
+			    diag_t *d,
+			    struct verbose verbose)
+{
+	ip_port port = {0};
+	if (can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		const char *err = ttoport(shunk1(kv.value), &port);
+		if (err != NULL) {
+			*d = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
+			return port;
+		}
+		if (!port_is_specified(port)) {
+			*d = diag(PRI_KV" invalid, must be in range 1-65535",
+				  pri_kv(kv));
+			return port;
+		}
+	}
+	return port;
+}
+
+static struct ipsec_interface_config extract_ipsec_interface(struct kv kv,
+							     diag_t *d,
+							     struct verbose verbose)
+{
+	struct ipsec_interface_config ipsec_interface = {0};
+	if (can_extract_string(kv.leftright, kv.key, kv.value,
+			       kv.wm, verbose)) {
+		*d = parse_ipsec_interface(kv.value, &ipsec_interface, verbose.logger);
+	}
+	return ipsec_interface;
+}
+
 static deltatime_t extract_deltatimescale(struct kv kv,
 					  enum timescale default_timescale,
 					  deltatime_t value_when_unset,
@@ -1743,16 +1795,10 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	if (can_extract_string(leftright, "ikeport", src->we_ikeport, wm, verbose)) {
-		err = ttoport(shunk1(src->we_ikeport), &host_config->ikeport);
-		if (err != NULL) {
-			return diag("%sikeport=%s invalid, %s", leftright,
-				    src->we_ikeport, err);
-		}
-		if (!port_is_specified(host_config->ikeport)) {
-			return diag("%sikeport=%s invalid, must be in range 1-65535",
-				    leftright, src->we_ikeport);
-		}
+	host_config->ikeport =
+		extract_port(kv(wm, end, KWS_IKEPORT), &d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
@@ -2281,6 +2327,45 @@ static diag_t mark_parse(const char *leftright, const char *name, const char *ma
 			    leftright, name, mark, sa_mark->val, sa_mark->mask);
 	}
 	return NULL;
+}
+
+static diag_t extract_marks(struct kv kv,
+			    struct sa_marks *marks,
+			    struct verbose verbose)
+{
+	diag_t d;
+
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return NULL;
+	}
+
+	d = mark_parse(kv.leftright, kv.key, kv.value, &marks->in);
+	if (d != NULL) {
+		return d;
+	}
+
+	d = mark_parse(kv.leftright, kv.key, kv.value, &marks->out);
+	if (d != NULL) {
+		return d;
+	}
+
+	return NULL;
+}
+
+static diag_t extract_mark(struct kv kv,
+			   struct sa_mark *mark,
+			   struct verbose verbose)
+{
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return NULL;
+	}
+
+	if (kv.wm->wm_mark != NULL) {
+		vwarning(PRI_KV" overrides \"mark=%s\"",
+			 pri_kv(kv), kv.wm->wm_mark);
+	}
+
+	return mark_parse(kv.leftright, kv.key, kv.value, mark);
 }
 
 /*
@@ -4227,24 +4312,22 @@ diag_t extract_connection(const struct whack_message *wm,
 			     /*value_when_unset*/YN_NO,
 			     &d, verbose);
 
-	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
-		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",
-					    /* IKEv1 doesn't do IPv6 */
-					    (ike_version == IKEv1 ? &ipv4_info : NULL),
-					    &config->modecfg.dns);
-		if (d != NULL) {
-			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->wm_modecfgdns);
-		}
+	config->modecfg.dns = extract_addresses(kv(wm, END_ROOF, KWS_MODECFGDNS),
+						(ike_version == IKEv1 ? &ipv4_info : NULL),
+						&d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string("", "modecfgdomains", wm->wm_modecfgdomains, wm, verbose)) {
-		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->wm_modecfgdomains),
+	struct kv dns_kv = kv(wm, END_ROOF, KWS_MODECFGDOMAINS);
+	if (can_extract_string(dns_kv.leftright, dns_kv.key, dns_kv.value, dns_kv.wm, verbose)) {
+		config->modecfg.domains = clone_shunk_tokens(shunk1(dns_kv.value),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
-			vlog("IKEv1 only uses the first domain in modecfgdomain=%s",
-			     wm->wm_modecfgdomains);
+			vwarning("IKEv1 only uses the first domain in "PRI_KV,
+				 pri_kv(dns_kv));
 			config->modecfg.domains[1] = null_shunk;
 		}
 	}
@@ -4271,53 +4354,34 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_string("", "mark", wm->wm_mark, wm, verbose)) {
-		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.in);
-		if (d != NULL) {
-			return d;
-		}
-		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.out);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_marks(kv(wm, END_ROOF, KWS_MARK),
+			  &c->sa_marks, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string("", "mark-in", wm->wm_mark_in, wm, verbose)) {
-		if (wm->wm_mark != NULL) {
-			vwarning("mark-in=%s overrides mark=%s",
-				 wm->wm_mark_in, wm->wm_mark);
-		}
-		d = mark_parse("", "mark-in", wm->wm_mark_in, &c->sa_marks.in);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_mark(kv(wm, END_ROOF, KWS_MARK_IN),
+			 &c->sa_marks.in, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string("", "mark-out", wm->wm_mark_out, wm, verbose)) {
-		if (wm->wm_mark != NULL) {
-			vwarning("mark-out=%s overrides mark=%s",
-				 wm->wm_mark_out, wm->wm_mark);
-		}
-		d = mark_parse("", "mark-out", wm->wm_mark_out, &c->sa_marks.out);
-		if (d != NULL) {
-			return d;
-		}
+	d = extract_mark(kv(wm, END_ROOF, KWS_MARK_OUT),
+			 &c->sa_marks.out, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
 	 * ipsec-interface
 	 */
 
-	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string("", "ipsec-interface",
-			       wm->wm_ipsec_interface,
-			       wm, verbose)) {
-		diag_t d;
-		d = parse_ipsec_interface(wm->wm_ipsec_interface, &ipsec_interface, verbose.logger);
-		if (d != NULL) {
-			return d;
-		}
-		config->ipsec_interface = ipsec_interface;
+	const struct ipsec_interface_config ipsec_interface =
+		config->ipsec_interface =
+		extract_ipsec_interface(kv(wm, END_ROOF, KWS_IPSEC_INTERFACE),
+					&d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 #ifdef USE_NFLOG
