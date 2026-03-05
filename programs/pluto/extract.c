@@ -559,6 +559,26 @@ static char *extract_string(struct kv kv,
 	return clone_str(kv.value, kv.key);
 }
 
+static ip_addresses extract_addresses(struct kv kv,
+				      const struct ip_info *afi,
+				      diag_t *d,
+				      struct verbose verbose)
+{
+	ip_addresses addresses = {0};
+	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+		return addresses;
+	}
+
+	diag_t td = ttoaddresses_num(shunk1(kv.value), ", ", afi,
+				     &addresses);
+	if (td != NULL) {
+		*d = diag_diag(&td, PRI_KV" invalid, ", pri_kv(kv));
+		return addresses;
+	}
+
+	return addresses;
+}
+
 static ip_port extract_port(struct kv kv,
 			    diag_t *d,
 			    struct verbose verbose)
@@ -4253,14 +4273,11 @@ diag_t extract_connection(const struct whack_message *wm,
 			     /*value_when_unset*/YN_NO,
 			     &d, verbose);
 
-	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
-		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",
-					    /* IKEv1 doesn't do IPv6 */
-					    (ike_version == IKEv1 ? &ipv4_info : NULL),
-					    &config->modecfg.dns);
-		if (d != NULL) {
-			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->wm_modecfgdns);
-		}
+	config->modecfg.dns = extract_addresses(kv(wm, END_ROOF, KWS_MODECFGDNS),
+						(ike_version == IKEv1 ? &ipv4_info : NULL),
+						&d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (can_extract_string("", "modecfgdomains", wm->wm_modecfgdomains, wm, verbose)) {
