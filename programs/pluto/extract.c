@@ -145,14 +145,11 @@ static void llog_never_negotiate_option(struct verbose verbose,
 		 leftright, name, value, wm->wm_type);
 }
 
-static bool never_negotiate_string_option(const char *leftright,
-					  const char *name,
-					  const char *value,
-					  const struct whack_message *wm,
+static bool never_negotiate_string_option(struct kv kv,
 					  struct verbose verbose)
 {
-	if (is_never_negotiate_wm(wm)) {
-		llog_never_negotiate_option(verbose, wm, leftright, name, value);
+	if (is_never_negotiate_wm(kv.wm)) {
+		llog_never_negotiate_option(verbose, kv.wm, kv.leftright, kv.key, kv.value);
 		return true;
 	}
 
@@ -535,7 +532,7 @@ diag_t host_addrs_from_whack_message(const struct whack_message *wm,
 static bool can_extract_string(struct kv kv,
 			       struct verbose verbose)
 {
-	if (never_negotiate_string_option(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return false;
 	}
 
@@ -562,11 +559,7 @@ static diag_t extract_flags(struct kv kv,
 			    const struct enum_names *names,
 			    struct verbose verbose)
 {
-	if (!never_negotiate_string_option(kv.leftright,
-					   kv.key,
-					   kv.value,
-					   kv.wm,
-					   verbose)) {
+	if (!never_negotiate_string_option(kv, verbose)) {
 		return NULL;
 	}
 
@@ -665,11 +658,7 @@ static unsigned extract_enum_name(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(kv.leftright,
-					  kv.key,
-					  kv.value,
-					  kv.wm,
-					  verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return value_when_never_negotiate;
 	}
 
@@ -785,7 +774,7 @@ static enum yna_options extract_yna(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return value_when_never_negotiate;
 	}
 
@@ -2034,11 +2023,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * anything.
 	 */
 	const struct kv updown_kv = kv(wm, end, KWS_UPDOWN);
-	if (never_negotiate_string_option(updown_kv.leftright,
-					  updown_kv.key,
-					  updown_kv.value,
-					  updown_kv.wm,
-					  verbose)) {
+	if (never_negotiate_string_option(updown_kv, verbose)) {
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
@@ -3855,7 +3840,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	/* IKE cipher suites */
 
 	const struct kv ike_kv = kv(wm, END_ROOF, KWS_IKE);
-	if (never_negotiate_string_option(ike_kv.leftright, ike_kv.key, ike_kv.value, ike_kv.wm, verbose)) {
+	if (never_negotiate_string_option(ike_kv, verbose)) {
 		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
