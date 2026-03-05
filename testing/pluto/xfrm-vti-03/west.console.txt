@@ -49,11 +49,16 @@ west #
 "westnet-eastnet-vti-01" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-vti-01" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-vti-01" #2: sent Quick Mode request
+"westnet-eastnet-vti-01" #2: command "prepare" output: ip tunnel add ipsec0 mode vti local 192.1.2.45 remote 0.0.0.0 okey 2 ikey 2
 "westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.disable_policy = 1
 "westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.rp_filter = 0
 "westnet-eastnet-vti-01" #2: command "prepare" output: net.ipv4.conf.ipsec0.forwarding = 1
+"westnet-eastnet-vti-01" #2: command "prepare" output: ip link set ipsec0 up
+"westnet-eastnet-vti-01" #2: command "route" output: ip route add 192.0.2.0/24 dev ipsec0
 "westnet-eastnet-vti-01" #2: command "route" output: done ip route
 "westnet-eastnet-vti-01" #2: command "up" output: vti interface already exists with identical parameters: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
+"westnet-eastnet-vti-01" #2: command "up" output: ip route add 192.1.2.254 dev eth1
+"westnet-eastnet-vti-01" #2: command "up" output: ip route change 192.0.2.0/24 dev ipsec0
 "westnet-eastnet-vti-01" #2: command "up" output: done ip route
 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -68,9 +73,13 @@ west #
 "westnet-eastnet-vti-02" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#3 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 10.0.1.0/24===10.0.2.0/24}
 "westnet-eastnet-vti-02" #4: sent Quick Mode request
 "westnet-eastnet-vti-02" #4: command "prepare" output: vti interface already exists with identical parameters: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
+"westnet-eastnet-vti-02" #4: command "route" output: ip route add 10.0.2.0/24 dev ipsec0
 "westnet-eastnet-vti-02" #4: command "route" output: done ip route
 "westnet-eastnet-vti-02" #4: command "up" output: vti interface already exists with identical parameters: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
+"westnet-eastnet-vti-02" #4: command "up" output: ip route add 192.1.2.254 dev eth1
 "westnet-eastnet-vti-02" #4: command "up" output: RTNETLINK answers: File exists
+"westnet-eastnet-vti-02" #4: command "up" output: (ip route error ignored)
+"westnet-eastnet-vti-02" #4: command "up" output: ip route change 10.0.2.0/24 dev ipsec0
 "westnet-eastnet-vti-02" #4: command "up" output: done ip route
 "westnet-eastnet-vti-02" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
