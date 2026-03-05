@@ -2033,16 +2033,20 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_string_option(leftright, "updown",
-					  src->we_updown, wm, verbose)) {
+	const struct kv updown_kv = kv(wm, end, KWS_UPDOWN);
+	if (never_negotiate_string_option(updown_kv.leftright,
+					  updown_kv.key,
+					  updown_kv.value,
+					  updown_kv.wm,
+					  verbose)) {
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown.command =
-			(src->we_updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
-			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
-			 streq(src->we_updown, "") ? NULL :
-			 clone_str(src->we_updown, "child_config.updown"));
+			(updown_kv.value == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
+			 streq(updown_kv.value, UPDOWN_DISABLED) ? NULL :
+			 streq(updown_kv.value, "") ? NULL :
+			 clone_str(updown_kv.value, "child_config.updown"));
 	}
 
 	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
