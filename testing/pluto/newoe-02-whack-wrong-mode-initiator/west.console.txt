@@ -30,7 +30,7 @@ west #
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: peer rejected Child SA  (NO_PROPOSAL_CHOSEN) and IKE SA does not have policy UP
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec _kernel state
 west #

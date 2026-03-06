@@ -32,7 +32,7 @@ road #
 road #
  ipsec auto --delete road-eastnet-ikev2
 "road-eastnet-ikev2": terminating SAs using this connection
-"road-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road-eastnet-ikev2" #1: deleting IKE SA (established IKE SA) and sending notification
 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 road #
  # should be empty for east and road

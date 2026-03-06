@@ -69,9 +69,9 @@ west #
 west #
  ipsec whack --rekey-child --name west-east/4x0 --async
 west #
- # state #1 in ESTABLISHED_IKE_SA, and #6, #7, #8 and #9 in
+ # state #1 in established IKE SA, and #6, #7, #8 and #9 in
 west #
- # ESTABLISHED_CHILD_SA anything other state is a sign of
+ # established Child SA anything other state is a sign of
 west #
  # regression
 west #

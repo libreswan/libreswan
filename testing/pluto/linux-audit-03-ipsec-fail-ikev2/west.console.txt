@@ -35,7 +35,7 @@ IMPAIR: "ikev2-ipsec-fail" #2: revival: skip scheduling CONNECTION_REVIVAL event
 west #
  ipsec auto --delete ikev2-ipsec-fail
 "ikev2-ipsec-fail": terminating SAs using this connection
-"ikev2-ipsec-fail" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-ipsec-fail" #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  echo done
 done

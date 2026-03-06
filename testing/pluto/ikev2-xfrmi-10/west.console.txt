@@ -67,7 +67,7 @@ X: ipsec17@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ipsec auto --delete west
 "west": terminating SAs using this connection
-"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west" #1: deleting IKE SA (established IKE SA) and sending notification
 "west" #2: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ip.sh -d link show ipsec17

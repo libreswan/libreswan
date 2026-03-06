@@ -115,7 +115,7 @@ road #
 road #
  ipsec auto --delete authenticated
 "authenticated": terminating SAs using this connection
-"authenticated" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"authenticated" #1: deleting IKE SA (established IKE SA) and sending notification
 IMPAIR: "authenticated" #1: send_no_delete set - not sending Delete/Notify
 "authenticated" #2: ESP traffic information: in=84B out=84B
 road #

@@ -75,7 +75,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 west #
  ipsec auto --down ikev2-west-east
 "ikev2-west-east": terminating SAs using this connection
-"ikev2-west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-west-east" #1: deleting IKE SA (established IKE SA) and sending notification
 "ikev2-west-east" #2: ESP traffic information: in=64B out=64B
 west #
  echo "done"

@@ -74,7 +74,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #2: ESP traffic information: in=84B out=84B
-"ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -88,7 +88,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #4: ESP traffic information: in=0B out=0B
-"ikev2-westnet-eastnet-x509-cr" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #3: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -102,7 +102,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #6: ESP traffic information: in=0B out=0B
-"ikev2-westnet-eastnet-x509-cr" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #5: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -116,7 +116,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #8: ESP traffic information: in=0B out=0B
-"ikev2-westnet-eastnet-x509-cr" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #7: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -130,7 +130,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #10: ESP traffic information: in=0B out=0B
-"ikev2-westnet-eastnet-x509-cr" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #9: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr" #11: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -144,7 +144,7 @@ west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
 "ikev2-westnet-eastnet-x509-cr" #12: ESP traffic information: in=0B out=0B
-"ikev2-westnet-eastnet-x509-cr" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"ikev2-westnet-eastnet-x509-cr" #11: deleting IKE SA (established IKE SA) and sending notification
 west #
  echo "done"
 done

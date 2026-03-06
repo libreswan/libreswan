@@ -98,7 +98,7 @@ listening for IKE messages
 shutting down interface eth3 192.1.3.3:4500
 shutting down interface eth3 192.1.3.3:500
 "test2": terminating SAs using this connection
-"test2" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"test2" #3: deleting IKE SA (established IKE SA) and sending notification
 ERROR: "test2" #3: send on eth3 from 192.1.3.3:500 to 192.1.3.1:500 using UDP failed in delete IKE SA: Network is unreachable (errno 101)
 "test2" #4: command "unroute" output: RTNETLINK answers: Network is unreachable
 "test2" #4: ESP traffic information: in=84B out=84B

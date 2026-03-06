@@ -59,7 +59,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp2048
 "westnet-eastnet-ikev2-modp2048": terminating SAs using this connection
-"westnet-eastnet-ikev2-modp2048" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-modp2048" #1: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-modp2048" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp3072
@@ -73,7 +73,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp3072
 "westnet-eastnet-ikev2-modp3072": terminating SAs using this connection
-"westnet-eastnet-ikev2-modp3072" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-modp3072" #3: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-modp3072" #4: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp4096
@@ -87,7 +87,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp4096
 "westnet-eastnet-ikev2-modp4096": terminating SAs using this connection
-"westnet-eastnet-ikev2-modp4096" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-modp4096" #5: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-modp4096" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp8192
@@ -101,7 +101,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp8192
 "westnet-eastnet-ikev2-modp8192": terminating SAs using this connection
-"westnet-eastnet-ikev2-modp8192" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-modp8192" #7: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-modp8192" #8: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh19
@@ -115,7 +115,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh19
 "westnet-eastnet-ikev2-dh19": terminating SAs using this connection
-"westnet-eastnet-ikev2-dh19" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-dh19" #9: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh20
@@ -129,7 +129,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh20
 "westnet-eastnet-ikev2-dh20": terminating SAs using this connection
-"westnet-eastnet-ikev2-dh20" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-dh20" #11: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-dh20" #12: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh21
@@ -143,7 +143,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh21
 "westnet-eastnet-ikev2-dh21": terminating SAs using this connection
-"westnet-eastnet-ikev2-dh21" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-dh21" #13: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-dh21" #14: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh31
@@ -157,7 +157,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh31
 "westnet-eastnet-ikev2-dh31": terminating SAs using this connection
-"westnet-eastnet-ikev2-dh31" #15: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2-dh31" #15: deleting IKE SA (established IKE SA) and sending notification
 "westnet-eastnet-ikev2-dh31" #16: ESP traffic information: in=0B out=0B
 west #
  # NOTE: we cannot do this test anymore as we support everything now in the default proposal list

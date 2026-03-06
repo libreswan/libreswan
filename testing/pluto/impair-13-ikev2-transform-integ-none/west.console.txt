@@ -39,7 +39,7 @@ IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE included when counting trans
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-"integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
 "integ" #4: initiating rekey to replace Child SA #2 using IKE SA #3
@@ -66,7 +66,7 @@ IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE excluded when counting trans
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
 "integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-"integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #3: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
 "integ" #6: initiating rekey to replace Child SA #4 using IKE SA #5
@@ -124,7 +124,7 @@ IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE excluded when counting trans
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-"integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
 "integ" #4: initiating rekey to replace Child SA #2 using IKE SA #3
@@ -151,7 +151,7 @@ IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE included when counting trans
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
 "integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-"integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"integ" #3: deleting IKE SA (established IKE SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
 "integ" #6: initiating rekey to replace Child SA #4 using IKE SA #5

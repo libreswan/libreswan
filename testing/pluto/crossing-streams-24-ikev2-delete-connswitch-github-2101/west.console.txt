@@ -80,8 +80,8 @@ Total IPsec connections: loaded 2, routed 2, active 2
 west #
  ipsec delete a
 "a": terminating SAs using this connection
-"a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"a" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"a" #1: deleting IKE SA (established IKE SA) and sending notification
+"a" #3: deleting IKE SA (established IKE SA) and sending notification
 "a" #2: ESP traffic information: in=0B out=0B
 "b" #4: ESP traffic information: in=0B out=0B
 west #

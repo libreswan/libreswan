@@ -45,7 +45,7 @@ west #
 "rekey" #5: initiating rekey to replace IKE SA #1 using IKE SA #1
 "rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
-"rekey" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"rekey" #1: deleting IKE SA (established IKE SA) and sending notification
 west #
  # do an ike rekey - but pick the conn that does not have the actual IKE SA
 west #
