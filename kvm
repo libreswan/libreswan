@@ -13,8 +13,20 @@ print-kvm-variable() {
     ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1 "${makeflags[@]}"
 }
 
-kvm_platforms=$(basename -a testing/kvm/platform/[a-z]*)
-kvm_test_host_names=$(basename -a -s .xml testing/kvm/vm/*.xml)
+kvm_platforms=$(echo $(basename -a testing/kvm/platform/[a-z]*))
+
+# Confusion because of HOST:
+#
+# HOST=what the domain things it is called - east
+# GUEST=ignoring prefix, the domain name - linuxeast
+# DOMAIN=PREFIX+GUEST - p.linuxeast
+
+kvm_build_guest_names="${kvm_platforms}"
+kvm_base_guest_names=$(echo ${kvm_platforms}    | sed -e 's;\([a-z]*\);\1-base;g')
+kvm_upgrade_guest_names=$(echo ${kvm_platforms} | sed -e 's;\([a-z]*\);\1-upgrade;g')
+
+kvm_test_host_names=$(echo $(basename -a -s .xml testing/kvm/vm/*.xml))
+
 
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_prefix=$(print-kvm-variable KVM_PREFIX)
@@ -25,13 +37,15 @@ kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
 rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 
 
-# eat newlines
+# Remember
+#
+# HOST=what the domain things it is called - east
+# GUEST=ignoring prefix, the domain name - linuxeast
+# DOMAIN=PREFIX+GUEST - p.linuxeast
 
-hosts="${kvm_test_host_names}"
-guests=
+guests="${kvm_base_guest_names} ${kvm_upgrade_guest_names} ${kvm_build_guest_names}"
 for platform in ${kvm_platforms} ; do
-    guests="${guests} ${platform} ${platform}-base ${platform}-upgrade"
-    for host in ${hosts} ; do
+    for host in ${kvm_test_host_names} ; do
 	guests="${guests} ${platform}${host}"
     done
 done
@@ -177,12 +191,12 @@ pass2help()
 
   To log into a domain:
 
-    sh <host> [ <command> ]
-	start a shell on <host> which can be a:
+    sh <guest> [ <command> ]
+	start a shell on <guest> which can be:
 	  test domain: ${kvm_test_host_names}
-	  build domain: ${kvm_build_host_names}
-	  base domain: ${kvm_base_host_names}
-	  upgrade domain: ${kvm_upgrade_host_names}
+	  build domain: ${kvm_build_guest_names}
+	  base domain: ${kvm_base_guest_names}
+	  upgrade domain: ${kvm_upgrade_guest_names}
 
   Configuration:
 
@@ -223,9 +237,10 @@ BEGIN {
 #
 #   $0 <command==$0> <word> <previous>?
 #
-# ${pass1}, ${pass2} and ${hosts} contain completion values.
+# ${pass1}, ${pass2} and ${guests} contain completion values.
 
 if test "$1" = $0 -a $# -eq 3 ; then
+    # set -x
     command=$1
     word=$2
     previous=$3
@@ -235,7 +250,7 @@ if test "$1" = $0 -a $# -eq 3 ; then
 	compgen -W "${pass1} ${pass2}" "${word}" | sort
     elif test "${previous}" = sh ; then
 	# sh hostname
-	compgen -W "${hosts}" "${word}"
+	compgen -W "${guests}" "${word}"
     elif [[ " ${pass2}" =~ " ${word}" ]] ; then
 	# word looks to be matching a command (or is empty),
 	# expand to either <command> or <directory>
@@ -271,7 +286,7 @@ if test $# -eq 0; then
     cat <<EOF
 Usage:
 
-   <modifier> ... <operation> ... <test-directory> <test-directory> ...
+   ./kvm [<modifier>...] <operation>... [<test-directory>...]
 
 EOF
     pass1help
@@ -347,7 +362,7 @@ while test $# -gt 0 ; do
 		exit 1
 	    fi
 	    # HOST, without prefix, is linux
-	    if [[ " ${hosts} " =~ " $1 " ]] ; then
+	    if [[ " ${kvm_test_host_names} " =~ " $1 " ]] ; then
 		# add prefix+linux
 		host=${kvm_prefix}linux$1
 		shift # drop HOST
