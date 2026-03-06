@@ -88,10 +88,10 @@ def guests():
     return _GUESTS.values()
 
 # \b(east|west|...)\b
-_GUEST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
+_HOST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
 def guests_by_filename(filename):
-    guestnames = _GUEST_PATTERN.findall(filename)
+    hostnames = _HOST_PATTERN.findall(filename)
     guests = List()
-    for guestname in guestnames:
-        guests.append(_GUESTS[guestname])
+    for hostname in hostnames:
+        guests.append(_GUESTS[hostname])
     return guests
