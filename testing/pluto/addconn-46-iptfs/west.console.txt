@@ -19,11 +19,11 @@ west #
 "type=passthrough-iptfs=": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec addconn --name type=passthrough-iptfs=no  type=passthrough iptfs=no
-warning: "type=passthrough-iptfs=no": iptfs=no ignored for never-negotiate (type=passthrough) connection
+warning: "type=passthrough-iptfs=no": "iptfs=no" ignored for never-negotiate ("type=passthrough") connection
 "type=passthrough-iptfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec addconn --name type=passthrough-iptfs=yes type=passthrough iptfs=yes
-warning: "type=passthrough-iptfs=yes": iptfs=yes ignored for never-negotiate (type=passthrough) connection
+warning: "type=passthrough-iptfs=yes": "iptfs=yes" ignored for never-negotiate ("type=passthrough") connection
 "type=passthrough-iptfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec addconn --name type=transport-iptfs=    type=transport #iptfs=
