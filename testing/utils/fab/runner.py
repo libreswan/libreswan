@@ -114,6 +114,12 @@ class TestDomain:
         self.domain.destroy(self.console)
         self.console = None
 
+    def stty_sane(self):
+        columns, rows = os.get_terminal_size()
+        term = os.getenv("TERM")
+        self.logger.info("resetting terminal")
+        self.console.run(f"unset LS_COLORS; export TERM={term}; stty sane rows {rows} columns {columns}")
+
 def _run_command(args, domain, command, all_verbose_txt, timeout):
 
         # all gets the new-style prompt
@@ -361,11 +367,8 @@ def _process_test(domains, args, result_stats, task, logger):
                     # Need to get domain's terminal out of noecho mode
                     # so that virsh-console can be used.  XXX: same
                     # code appears in kvmsh.py.
-                    columns, rows = os.get_terminal_size()
-                    term = os.getenv("TERM")
                     for test_domain in test_domains.values():
-                        test_domain.logger.info("resetting terminal")
-                        test_domain.console.run(f"unset LS_COLORS; export TERM={term}; stty sane rows {rows} columns {columns}")
+                        test_domain.stty_sane()
                     logger.info("stopping after boot")
                     return
 
@@ -453,26 +456,27 @@ def _process_test(domains, args, result_stats, task, logger):
 
                         if args.run_post_mortem is False:
                             logger.warning(f"+++ skipping script post-mortem.sh -- disabled +++")
+                            # leave console in sane state
+                            for test_domain in test_domains.values():
+                                test_domain.stty_sane()
                         elif guest_timed_out:
                             logger.warning(f"+++ skipping script post-mortem.sh -- {guest_timed_out} timed out +++")
                         else:
                             script = "../../guestbin/post-mortem.sh"
 
                             # Tag merged file ready for post-mortem output
-                            all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                            all_verbose_txt.write(f"{post.LHS} post-mortem {post.LHS}")
 
                             # run post mortem
                             post_mortem_ok = True
-                            for guest in test.guests:
-
-                                domain = test_domains[guest.name]
+                            for test_domain in test_domains.values():
 
                                 # Open post-mortem.  Make the the
-                                # marker look like a command
-                                domain.verbose_txt.write(f": {post.LHS} post-mortem {post.LHS}\n")
-                                _write_guest_prompt(domain, test)
+                                # marker look like a command.
+                                test_domain.verbose_txt.write(f": {post.LHS} post-mortem {post.LHS}\n")
+                                _write_guest_prompt(test_domain, test)
 
-                                status = _run_command(args, domain, script,
+                                status = _run_command(args, test_domain, script,
                                                       all_verbose_txt,
                                                       timeout=POST_MORTEM_TIMEOUT)
 
@@ -482,12 +486,12 @@ def _process_test(domains, args, result_stats, task, logger):
 
                                 # Close post-mortem.  Again make the
                                 # marker look like a command.
-                                _write_guest_prompt(domain, test)
-                                domain.verbose_txt.write(f": {post.RHS} post-mortem {post.RHS}\n")
+                                _write_guest_prompt(test_domain, test)
+                                test_domain.verbose_txt.write(f": {post.RHS} post-mortem {post.RHS}\n")
 
                                 # Finally end the file with a hanging
                                 # prompt
-                                _write_guest_prompt(domain, test)
+                                _write_guest_prompt(test_domain, test)
 
                             if post_mortem_ok:
                                 all_verbose_txt.write(f"{post.RHS} post-mortem {post.RHS}")
