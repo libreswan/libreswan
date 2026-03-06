@@ -484,6 +484,17 @@ void terminate_and_delete_connections(struct connection *c,
 		 */
 		whack_attach(c, logger);
 		terminate_and_down_and_unroute_connections(c, where);
+
+              /* connection has child sa with deferred deletion */
+              if (c->negotiating_child_sa != SOS_NOBODY) {
+                     ldbg(c->logger, "connection '%s' has children deferring deletion",
+                         c->name);
+                     /* we detach whack even though deletetion is deferred */
+		       whack_detach(c, logger);
+		       terminate_and_down_and_unroute_connections(c, where);
+                     return;
+              }
+
 		/* leave whack attached during death */
 		connection_delref(&c, logger);
 		return;
@@ -562,6 +573,10 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	/* redundant */
 	on_delete(&child->sa, skip_send_delete);
 	on_delete(&child->sa, skip_log_message);
+
+       if ((*ike)->sa.st_v2_msgid_windows.initiator.wip_sa == child) {
+         (*ike)->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+       }
 	struct connection *cc = child->sa.st_connection;
 
 	if (cc->established_child_sa == child->sa.st_serialno) {
