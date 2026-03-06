@@ -27,7 +27,6 @@ kvm_upgrade_guest_names=$(echo ${kvm_platforms} | sed -e 's;\([a-z]*\);\1-upgrad
 
 kvm_test_host_names=$(echo $(basename -a -s .xml testing/kvm/vm/*.xml))
 
-
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_prefix=$(print-kvm-variable KVM_PREFIX)
 kvm_sourcedir=$(print-kvm-variable KVM_SOURCEDIR)
@@ -125,6 +124,9 @@ pass2help()
 	delete the test results (leave the build trees and domains alone)
     keys
 	deletes test keys, and then rebuilds them
+
+    boot <test-directory>
+	boot the domains required by <test-directory>
 
   Update the expected test results (and GIT repository):
 
@@ -596,6 +598,13 @@ while test $i -lt ${#ops[@]} ; do
 	    ;;
 	check | recheck )
 	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}"
+	    ;;
+	boot )
+	    if [ "${#directories[@]}" -ne 1 -o "${directories[*]}" = "${kvm_testingdir}" ]; then
+		echo "boot expects one test directory" 1>&2
+		exit 1
+	    fi
+	    run_pid ${gnumake} kvm-check "${makeflags[@]}" KVM_TESTS="${directories[*]}" KVMRUNNER_FLAGS=--boot
 	    ;;
 	diffs )
 	    run diffs_command "${directories[@]}"

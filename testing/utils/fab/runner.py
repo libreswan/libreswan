@@ -49,10 +49,10 @@ POST_MORTEM_TIMEOUT = 120
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
-    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append", type=Path,
+    group.add_argument("--prefix", metavar="$(KVM_POOLDIR)/PREFIX", action="append", type=Path,
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
-    group.add_argument("--stop-at", metavar="SCRIPT", action="store",
-                       help="stop the test at (before executing) the specified script")
+    group.add_argument("--boot", default=False, action="store_true",
+                       help="boot the test domains, then stop")
     group.add_argument("--run-post-mortem", default=None, metavar="Y|N", type=argutil.boolean,
                        help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
     group.add_argument("--log-console-output", default=None, metavar="Y|N", type=argutil.boolean,
@@ -357,15 +357,26 @@ def _process_test(domains, args, result_stats, task, logger):
                                 # final will clean up
                                 return
 
+                if args.boot:
+                    # Need to get domain's terminal out of noecho mode
+                    # so that virsh-console can be used.  XXX: same
+                    # code appears in kvmsh.py.
+                    columns, rows = os.get_terminal_size()
+                    term = os.getenv("TERM")
+                    for test_domain in test_domains.values():
+                        test_domain.logger.info("resetting terminal")
+                        test_domain.console.run(f"unset LS_COLORS; export TERM={term}; stty sane rows {rows} columns {columns}")
+                    logger.info("stopping after boot")
+                    return
+
                 # Run the commands directly
                 with logger.time("running commands"):
 
-                        # Open output files.  Since the child is
-                    # in NO-ECHO mode, also need to fudge up
-                    # prompt and command.
+                    # Open output files.  Since the child is in
+                    # NO-ECHO mode, also need to fudge up prompt and
+                    # command.
                     #
-                    # Should output file be opened in binary
-                    # mode?
+                    # Should output file be opened in binary mode?
 
                     with open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w") as all_verbose_txt:
 
