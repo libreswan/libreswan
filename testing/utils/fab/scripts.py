@@ -75,29 +75,36 @@ def _guest_scripts(directory, logger):
 
     # Compatibility hack:
     #
-    # Find the commands matching <linux-guest>init.sh and within that
-    # force LINUX_GUESTS is ordered with "nic" then "east" first.
+    # Find the commands matching <hostname>init.sh.
+    #
+    # The array LINUX_GUESTS is ordered, ["nic", "east" ...] forcing
+    # those scripts to be run first.
 
     init_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
-        _add_script(guest.host.name+"init.sh", init_commands,
+        hostname = guest.host.name
+        _add_script(hostname+"init.sh", init_commands,
                     scripts, directory,
                     [guest], test_guests)
     logger.debug(f"init commands {test_guests} {scripts}:\n{init_commands}")
 
     # Compatibility hack:
     #
-    # Find the commands matching <linux-guest>run.sh.  These will be
-    # run second.
+    # Find the commands matching <hostname>run.sh.  These will be run
+    # second.
+    #
+    # The array LINUX_GUESTS is ordered, ["nic", "east", ...] forcing
+    # those scripts to be run first.
 
     run_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
-        _add_script(guest.host.name+"run.sh", run_commands,
+        hostname = guest.host.name
+        _add_script(hostname+"run.sh", run_commands,
                     scripts, directory,
                     [guest], test_guests)
     logger.debug(f"run commands {test_guests} {scripts}:\n{run_commands}")
 
-    # Look for scripts containing host names.
+    # Look for scripts matching \b<hostname>\b.
     #
     # Preserve the order that the host names appear in the file name.
     # For instance, the script 99-west-east.sh would be run on west
