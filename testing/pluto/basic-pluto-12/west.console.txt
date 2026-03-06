@@ -12,7 +12,7 @@ west #
 "westnet-eastnet": added oriented IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet-7
-warning: "westnet-eastnet-7": keyexchange=ikev1 ignored for never-negotiate (type=passthrough) connection
+warning: "westnet-eastnet-7": "keyexchange=ikev1" ignored for never-negotiate ("type=passthrough") connection
 "westnet-eastnet-7": added oriented passthrough connection
 west #
  ipsec auto --route westnet-eastnet-7

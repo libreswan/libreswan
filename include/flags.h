@@ -25,22 +25,22 @@
 struct enum_names;
 struct jambuf;
 
-#define ttoflags(VALUE, FLAGS, NAMES)				\
-	ttoflags_raw(VALUE, FLAGS, elemsof(FLAGS), NAMES)
+#define ttoflags(VALUE, FLAGS, NAMES)			\
+	ttoflags_raw(VALUE, ARRAY_REF(FLAGS), NAMES)
 
 diag_t ttoflags_raw(const char *value,
 		    bool *flag, size_t len,
 		    const struct enum_names *names);
 
-#define jam_flags(BUF, FLAGS, NAMES)					\
-	jam_raw_flags(BUF, FLAGS, elemsof(FLAGS), NAMES)
+#define jam_flags(BUF, FLAGS, NAMES)			\
+	jam_raw_flags(BUF, ARRAY_REF(FLAGS), NAMES)
 
 void jam_raw_flags(struct jambuf *buf,
 		   const bool *flag, size_t len,
 		   const struct enum_names *names);
 
-#define jam_flags_human(BUF, FLAGS, NAMES)					\
-	jam_raw_flags_human(BUF, FLAGS, elemsof(FLAGS), NAMES)
+#define jam_flags_human(BUF, FLAGS, NAMES)			\
+	jam_raw_flags_human(BUF, ARRAY_REF(FLAGS), NAMES)
 
 void jam_raw_flags_human(struct jambuf *buf,
 			 const bool *flag, size_t len,

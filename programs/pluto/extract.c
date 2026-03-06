@@ -130,29 +130,27 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 	return is_never_negotiate_type(sparse->value & ~NAME_FLAGS);
 }
 
-static void llog_never_negotiate_option(struct verbose verbose,
-					const struct whack_message *wm,
-					const char *leftright,
-					const char *name,
-					const char *value)
+static void llog_never_negotiate_option(struct kv nn_kv,
+					struct verbose verbose)
 {
-	if (value == NULL) {
+	if (nn_kv.value == NULL) {
 		/* nothing to ignore */
 		return;
 	}
-	/* need to reverse engineer type= */
-	vwarning("%s%s=%s ignored for never-negotiate (type=%s) connection",
-		 leftright, name, value, wm->wm_type);
+	/*
+	 * XXX: never-negotiate can only be true when type= is
+	 * non-NULL - when NULL type is "tunnel".
+	 */
+	struct kv type_kv = kv(nn_kv.wm, END_ROOF, KWS_TYPE);
+	vwarning(PRI_KV" ignored for never-negotiate ("PRI_KV") connection",
+		 pri_kv(nn_kv), pri_kv(type_kv));
 }
 
-static bool never_negotiate_string_option(const char *leftright,
-					  const char *name,
-					  const char *value,
-					  const struct whack_message *wm,
+static bool never_negotiate_string_option(struct kv kv,
 					  struct verbose verbose)
 {
-	if (is_never_negotiate_wm(wm)) {
-		llog_never_negotiate_option(verbose, wm, leftright, name, value);
+	if (is_never_negotiate_wm(kv.wm)) {
+		llog_never_negotiate_option(kv, verbose);
 		return true;
 	}
 
@@ -532,17 +530,14 @@ diag_t host_addrs_from_whack_message(const struct whack_message *wm,
 
 /* terrible name */
 
-static bool can_extract_string(const char *leftright,
-			       const char *name,
-			       const char *value,
-			       const struct whack_message *wm,
+static bool can_extract_string(struct kv kv,
 			       struct verbose verbose)
 {
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return false;
 	}
 
-	if (value == NULL) {
+	if (kv.value == NULL) {
 		return false;
 	}
 
@@ -552,11 +547,29 @@ static bool can_extract_string(const char *leftright,
 static char *extract_string(struct kv kv,
 			    struct verbose verbose)
 {
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return NULL;
 	}
 
 	return clone_str(kv.value, kv.key);
+}
+
+static diag_t extract_flags(struct kv kv,
+			    bool *flags,
+			    size_t nr_flags,
+			    const struct enum_names *names,
+			    struct verbose verbose)
+{
+	if (!never_negotiate_string_option(kv, verbose)) {
+		return NULL;
+	}
+
+	diag_t d = ttoflags_raw(kv.value, flags, nr_flags, names);
+	if (d != NULL) {
+		return diag_diag(&d, PRI_KV" invalid, ", pri_kv(kv));
+	}
+
+	return NULL;
 }
 
 static ip_addresses extract_addresses(struct kv kv,
@@ -565,7 +578,7 @@ static ip_addresses extract_addresses(struct kv kv,
 				      struct verbose verbose)
 {
 	ip_addresses addresses = {0};
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return addresses;
 	}
 
@@ -584,7 +597,7 @@ static ip_port extract_port(struct kv kv,
 			    struct verbose verbose)
 {
 	ip_port port = {0};
-	if (can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (can_extract_string(kv, verbose)) {
 		const char *err = ttoport(shunk1(kv.value), &port);
 		if (err != NULL) {
 			*d = diag(PRI_KV" invalid, %s", pri_kv(kv), err);
@@ -604,8 +617,7 @@ static struct ipsec_interface_config extract_ipsec_interface(struct kv kv,
 							     struct verbose verbose)
 {
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string(kv.leftright, kv.key, kv.value,
-			       kv.wm, verbose)) {
+	if (can_extract_string(kv, verbose)) {
 		*d = parse_ipsec_interface(kv.value, &ipsec_interface, verbose.logger);
 	}
 	return ipsec_interface;
@@ -621,7 +633,7 @@ static deltatime_t extract_deltatimescale(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return value_when_unset;
 	}
 
@@ -647,11 +659,7 @@ static unsigned extract_enum_name(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(kv.leftright,
-					  kv.key,
-					  kv.value,
-					  kv.wm,
-					  verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return value_when_never_negotiate;
 	}
 
@@ -725,7 +733,7 @@ static unsigned extract_sparse_name(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return value_when_unset;
 	}
 
@@ -767,7 +775,7 @@ static enum yna_options extract_yna(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (never_negotiate_string_option(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (never_negotiate_string_option(kv, verbose)) {
 		return value_when_never_negotiate;
 	}
 
@@ -819,7 +827,7 @@ static deltatime_t extract_deltatime(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return value_when_unset;
 	}
 
@@ -922,7 +930,7 @@ static uintmax_t extract_yn_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return range.value_when_unset;
 	}
 
@@ -962,7 +970,7 @@ static uintmax_t extract_uintmax(struct kv kv,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return range.value_when_unset;
 	}
 
@@ -988,7 +996,7 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return range.value_when_unset;
 	}
 
@@ -1012,7 +1020,7 @@ static uintmax_t extract_percent(struct kv kv,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return value_when_unset;
 	}
 
@@ -1052,7 +1060,7 @@ static ip_cidr extract_cidr_num(struct kv kv,
 
 	err_t err;
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return unset_cidr;
 	}
 
@@ -1286,7 +1294,12 @@ static diag_t extract_host_end(enum end end,
 	 */
 	struct id id = { .kind = ID_NONE, };
 	vexpect(host_config->id.kind == ID_NONE);
-	if (can_extract_string(leftright, "id", src->we_id, wm, verbose)) {
+	if (can_extract_string((struct kv) {
+				.wm = wm,
+				.leftright = leftright,
+				.key = "id",
+				.value = src->we_id,
+			}, verbose)) {
 		/*
 		 * Deal with ADDCONN's legacy ID syntax where, instead
 		 * of "\,", ",," was used to escape commas!
@@ -2010,32 +2023,25 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_string_option(leftright, "updown",
-					  src->we_updown, wm, verbose)) {
+	const struct kv updown_kv = kv(wm, end, KWS_UPDOWN);
+	if (never_negotiate_string_option(updown_kv, verbose)) {
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown.command =
-			(src->we_updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
-			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
-			 streq(src->we_updown, "") ? NULL :
-			 clone_str(src->we_updown, "child_config.updown"));
+			(updown_kv.value == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
+			 streq(updown_kv.value, UPDOWN_DISABLED) ? NULL :
+			 streq(updown_kv.value, "") ? NULL :
+			 clone_str(updown_kv.value, "child_config.updown"));
 	}
 
-	if (never_negotiate_string_option(leftright, "updown-config",
-					  src->we_updown_config, wm, verbose)) {
-		vdbg("never-negotiate updown-config");
-	} else {
-		d = ttoflags(src->we_updown_config,
-			     child_config->updown.updown_config,
-			     &updown_config_names);
-		if (d != NULL) {
-			return diag_diag(&d, "%s-updown-config=%s invalid, ",
-					 leftright,
-					 src->we_updown_config);
-		}
+	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
+			  ARRAY_REF(child_config->updown.updown_config),
+			  &updown_config_names,
+			  verbose);
+	if (d != NULL) {
+		return d;
 	}
-
 
 	ip_selectors *child_selectors = &child_config->selectors;
 
@@ -2335,7 +2341,7 @@ static diag_t extract_marks(struct kv kv,
 {
 	diag_t d;
 
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return NULL;
 	}
 
@@ -2356,7 +2362,7 @@ static diag_t extract_mark(struct kv kv,
 			   struct sa_mark *mark,
 			   struct verbose verbose)
 {
-	if (!can_extract_string(kv.leftright, kv.key, kv.value, kv.wm, verbose)) {
+	if (!can_extract_string(kv, verbose)) {
 		return NULL;
 	}
 
@@ -3834,7 +3840,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_string_option("", "ike", wm->wm_ike, wm, verbose)) {
+	const struct kv ike_kv = kv(wm, END_ROOF, KWS_IKE);
+	if (never_negotiate_string_option(ike_kv, verbose)) {
 		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
@@ -4320,7 +4327,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	struct kv dns_kv = kv(wm, END_ROOF, KWS_MODECFGDOMAINS);
-	if (can_extract_string(dns_kv.leftright, dns_kv.key, dns_kv.value, dns_kv.wm, verbose)) {
+	if (can_extract_string(dns_kv, verbose)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(dns_kv.value),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
