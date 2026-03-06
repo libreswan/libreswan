@@ -122,7 +122,7 @@ class TestDomain:
 
 def _run_command(args, domain, command, all_verbose_txt, timeout):
 
-        # all gets the new-style prompt
+        # all gets the new-style prompt including the guestname
         all_verbose_txt.write(domain.guest.name)
         all_verbose_txt.write("# ")
         # both get the command
@@ -130,8 +130,10 @@ def _run_command(args, domain, command, all_verbose_txt, timeout):
             txt.write(command)
             txt.write("\n")
 
+        # The log prefix will contain the DOMAIN name (which includes
+        # the GUEST name).
         console = domain.console
-        domain.logger.info(f"{domain.guest.name}# {command}")
+        domain.logger.info(f"{domain.host.name}# {command}")
         console.sendline(command)
 
         # Catch pexpect.TIMEOUT and pexpect.EOF.  They are turned into
