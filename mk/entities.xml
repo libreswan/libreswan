@@ -196,7 +196,7 @@
 <!ENTITY http_method_option '{&get;|&post;}'>
 <!ENTITY keyexchange_option '{&ikev1;|&ikev2;}'>
 <!ENTITY nat_ikev1_method_option '{&drafts;|&rfc;|&both;|&none;}'>
-<!ENTITY negotiationshunt_option '{&hold;|&pass;}'>
+<!ENTITY negotiationshunt_option '{&drop;|&pass;}'>
 <!ENTITY nic_offload_option '{&no;|&crypto;|&packet;}'>
 <!ENTITY phase2_option '{&esp;|&ah;}'>
 <!ENTITY ppk_option '{&no;|&propose;|&yes;|&insist;|&never;}'>
