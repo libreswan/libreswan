@@ -6,7 +6,7 @@
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 7.7.7.7
 ipsec whack --shuntstatus
 # wait on OE retransmits and rekeying - shuntstatus is empty because
-# shunt 7.7.7.7 is not bare and its conn negotiationshunt=hold, so
+# shunt 7.7.7.7 is not bare and its conn negotiationshunt=drop, so
 # ping should fail
 sleep 3
 ipsec whack --shuntstatus

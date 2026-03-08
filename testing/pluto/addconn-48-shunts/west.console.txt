@@ -15,6 +15,7 @@ west #
 "negotiationshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=hold
+warning: "negotiationshunt=hold": "negotiationshunt=hold" implemented as "drop"
 "negotiationshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=
