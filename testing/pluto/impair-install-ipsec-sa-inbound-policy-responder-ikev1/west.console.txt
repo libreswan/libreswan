@@ -692,7 +692,7 @@ output: | kernel_xfrm_policy_add() IPsec SA SPD priority set to 1757393
 output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=0 id.proto=50 optional=0 family=2 mode=0 saddr=<unset-address> daddr=<unset-address>
 output: | sendrecv_xfrm_msg() sending 25 policy %trap(allow)
 output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
-output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %trap(allow) (out) had A policy
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %trap(allow) 192.0.1.0/24===192.0.2.0/24 had A policy
 output: | "west-east" #2: routing:   ... yes
 output: | "west-east" #2: .st_on_delete.skip_send_delete no->true (delete_child_sa() +758 programs/pluto/state.c)
 output: | "west-east" #2: delete_state() skipping log_message:no
@@ -817,7 +817,7 @@ output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=0 id.proto=50 opt
 output: | sendrecv_xfrm_msg() sending 25 policy %hold(block)
 output: | job 4 helper 1 #3 quick_outI1 (dh): started
 output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
-output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %hold(block) (out) had A policy
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow %hold(block) 192.0.1.0/24===192.0.2.0/24 had A policy
 output: | "west-east" #3: routing:   ... yes
 output: | "west-east" #3: routing: stop INITIATED, ROUTED_ONDEMAND->ROUTED_NEGOTIATION, PERMANENT; ok=yes; routing_sa #0->#3 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #0->#3 (initiate_ondemand() +158 programs/pluto/acquire.c)
 output: | "west-east": delref @0x7f18d5ea1a78(5->4) "west-east" #3:  (dispatch() +2450 programs/pluto/routing.c)

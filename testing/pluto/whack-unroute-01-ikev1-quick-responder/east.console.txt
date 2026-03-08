@@ -20,7 +20,7 @@ east #
  ipsec unroute west-to-east
 "west-to-east": terminating SAs using this connection
 "west-to-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
-ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
+ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow 192.1.2.23/32===192.1.2.45/32: No such file or directory (errno 2)
 ERROR: "west-to-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-to-east" #2: failed to pull traffic counters from outbound IPsec SA
 "west-to-east" #2: ESP traffic information: in=0B out=0B
