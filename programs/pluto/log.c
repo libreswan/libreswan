@@ -81,6 +81,12 @@ void switch_log(struct logger **logger)
 	 * Hence save the new log file in LOG_FILE and switch at the
 	 * end.
 	 */
+	if (log_param.log_to_stderr) {
+		log_param.log_to_file = NULL;
+	}
+	if (log_param.log_to_file != NULL && log_param.log_to_file[0] == '\0') {
+		log_param.log_to_file = NULL;
+	}
 	PASSERT((*logger), pluto_log_file == stderr);
 	FILE *log_file = NULL;
 
