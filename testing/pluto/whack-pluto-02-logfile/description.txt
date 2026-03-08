@@ -1,0 +1,8 @@
+test --logfile and --stderrlog command-line options
+
+- --logfile /tmp/test.log writes to a file
+- --logfile '' (empty) disables file logging, falls back to syslog
+- --stderrlog writes to stderr
+- config logfile= overridden by command-line --logfile
+- --stderrlog + --logfile together: stderr wins, logfile is not written
+- reverse ordering tests: config overrides empty --logfile, config-first with stderrlog
