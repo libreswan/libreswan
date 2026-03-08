@@ -5,7 +5,7 @@
   <listitem>
     <para>
       What to do with packets during the IKE negotiation.  This should
-      almost always be left to the default &hold; value to avoid
+      almost always be left to the default &drop; value to avoid
       cleartext packet leaking.  The only reason to set this to &pass;
       is if plaintext service availability is more important than
       service security or privacy, a scenario that also implies
@@ -13,7 +13,7 @@
       <option>authby=%null</option> using Opportunistic Encryption.
     </para>
     <para>
-      The default is &hold;.
+      The default is &drop;.
     </para>
   </listitem>
 </varlistentry>
