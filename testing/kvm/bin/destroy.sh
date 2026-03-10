@@ -20,13 +20,14 @@ for domain in "$@" ; do
     if state=$(sudo virsh domstate ${domain} 2>&1); then
 	case "${state}" in
 	    "running" | "in shutdown" | "paused" )
+		# assume this is instantaneous?!?
 		RUN sudo virsh destroy ${domain} || true
 		;;
 	    * )
-		echo "Ignoring ${state} domain ${domain}"
+		echo "destroy: ignoring ${state} domain ${domain}"
 		;;
 	esac
     else
-	echo "No domain ${domain}"
+	echo "destroy: no domain ${domain}"
     fi
 done
