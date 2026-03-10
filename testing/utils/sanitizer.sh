@@ -157,7 +157,7 @@ for fixup in ${REF_CONSOLE_FIXUPS}; do
 	    cleanup ${fixup} sed
 	    ;;
 	*.awk)
-	    cleanup ${fixup} awk
+	    cleanup ${fixup} gawk
 	    ;;
 	*.sed-f) # -f sanitizers can be merged
 	    sedup ${fixup}
