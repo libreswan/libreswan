@@ -17,7 +17,7 @@ jobs:
         run: |
           dnf -y install bear clang python3-clang
           dnf -y builddep libreswan
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout Repository
       - name: Build
         run: |
