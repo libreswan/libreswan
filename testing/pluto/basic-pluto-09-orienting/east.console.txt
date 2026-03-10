@@ -11,23 +11,23 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add test1
+ ipsec add test1
 "test1": added oriented IKEv1 connection
 east #
- ipsec auto --add test2
+ ipsec add test2
 "test2": added unoriented IKEv1 connection (neither left=172.29.1.1 nor right=172.29.1.3 match an interface)
 east #
- ipsec auto --add test3
+ ipsec add test3
 "test3": added oriented IKEv1 connection
 east #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 east #
  ../../guestbin/ip.sh address add 172.29.1.3/24 dev test0
 east #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 adding interface test0 172.29.1.3:UDP/500
 adding interface test0 172.29.1.3:UDP/4500 (NAT)
@@ -36,7 +36,7 @@ adding interface test0 172.29.1.3:UDP/4500 (NAT)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 east #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"

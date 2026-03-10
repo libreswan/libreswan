@@ -11,18 +11,18 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add test1
+ ipsec add test1
 "test1": added oriented IKEv1 connection
 west #
- ipsec auto --add test2
+ ipsec add test2
 "test2": added oriented IKEv1 connection
 west #
- ipsec auto --add test3
+ ipsec add test3
 "test3": added unoriented IKEv1 connection (neither left=172.29.1.3 nor right=172.29.1.2 match an interface)
 west #
  # should establish
 west #
- ipsec auto --up test1
+ ipsec up test1 # sanitize-retransmits
 "test1" #1: initiating IKEv1 Main Mode connection
 "test1" #1: sent Main Mode request
 "test1" #1: sent Main Mode I2
@@ -35,7 +35,7 @@ west #
 west #
  ../../guestbin/ip.sh address add 172.29.1.3/24 dev test0
 west #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 adding interface test0 172.29.1.3:UDP/500
 adding interface test0 172.29.1.3:UDP/4500 (NAT)
@@ -44,7 +44,7 @@ adding interface test0 172.29.1.3:UDP/4500 (NAT)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ipsec auto --up test2
+ ipsec up test2
 "test2": we cannot identify ourselves with either end of this connection.  172.29.1.1 or 172.29.1.3 are not usable
 west #
  ../../guestbin/ip.sh address del 172.29.1.3/24 dev test0

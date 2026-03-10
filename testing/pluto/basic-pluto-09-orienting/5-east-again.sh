@@ -1,1 +1,1 @@
-ipsec auto --ready
+ipsec listen

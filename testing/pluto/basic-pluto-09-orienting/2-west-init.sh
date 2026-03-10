@@ -4,6 +4,6 @@ ip tunnel add test0 mode gre local 192.1.2.45 remote 192.1.2.23
 ../../guestbin/ip.sh link set dev test0 up
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add test1
-ipsec auto --add test2
-ipsec auto --add test3
+ipsec add test1
+ipsec add test2
+ipsec add test3
