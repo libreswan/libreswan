@@ -95,7 +95,7 @@ IMPAIR: "intermediate" #1: adding an unknown payload of type 255 to unencrypted 
 "intermediate" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "intermediate" #1: encountered fatal error in state IKE_AUTH_I
 "intermediate" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"intermediate" #1: deleting IKE SA (sent IKE_AUTH request)
+"intermediate" #1: deleting IKE sent IKE_AUTH request
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #

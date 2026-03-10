@@ -8,7 +8,7 @@ nic #
  # expect two lines of plain text - there and back
 nic #
  ../../guestbin/tcpdump.sh --stop -i eth1 -A | sed -n -e 's/.*PLAINTEXT.*/PLAINTEXT/p'
-reading from file OUTPUT/nic.newoe-15-portpass.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/nic.newoe-15-portpass.eth1.tcpdump.pcap, link-type Ethernet
 PLAINTEXT
 PLAINTEXT
 nic #

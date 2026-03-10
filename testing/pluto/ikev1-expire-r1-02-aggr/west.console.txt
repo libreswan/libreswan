@@ -24,10 +24,10 @@ west #
 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 IMPAIR: "westnet-eastnet-aggr" #1: dropping Aggressive Mode I2 packet as per impair
-IMPAIR: "westnet-eastnet-aggr" #1: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-aggr" #1: retransmit so timing out may retry
 "westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-aggr" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"westnet-eastnet-aggr" #1: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
+"westnet-eastnet-aggr" #1: deleting ISAKMP AGGR_I1 and NOT sending notification
 west #
  # we are waiting for east to expire the partial IKE state in 1+1+2+4+8+16+32 secs
 west #

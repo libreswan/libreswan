@@ -44,13 +44,13 @@ west #
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 west #
  iptables -t nat -L -n
-Chain PREROUTING (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain INPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain POSTROUTING (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 west #
  ipsec _kernel state

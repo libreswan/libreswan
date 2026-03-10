@@ -60,7 +60,7 @@ west #
 "west-east" #5: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
 "west-east" #5: received TICKET_NACK notification response to IKE_SESSION_RESUME request, retrying using IKE_SA_INIT
 "west-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #5: deleting IKE SA (sent IKE_SESSION_RESUME request)
+"west-east" #5: deleting IKE sent IKE_SESSION_RESUME request
 "west-east": reviving connection which delete IKE SA but must remain up per local policy (serial $1)
 "west-east" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east" #6: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

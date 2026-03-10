@@ -50,7 +50,7 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 3184 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
+TIMESTAMP, 3184 RSA Key Awno private key, until TIMESTAMP warning (expires in X days)
        FQDN '@road.testing.libreswan.org'
 TIMESTAMP, 3104 RSA Key AQPHFfpyJ (no private key), until TIMESTAMP warning (expires in X days)
        FQDN '@road.testing.libreswan.org'

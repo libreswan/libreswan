@@ -49,22 +49,22 @@ west #
  
 List of Public Keys:
  
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        USER_FQDN 'user-west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        FQDN '@west.testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        USER_FQDN 'west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        IPV4_ADDR '192.1.2.45'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
-TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+TIMESTAMP,  384 ECDSA Key has private key, until TIMESTAMP ok
        IPV6_ADDR '2001:db8:1:2::45'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
 west #
@@ -72,7 +72,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": terminating SAs using this connection
-"westnet-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet-eastnet-ikev2" #1: deleting IKE ESTABLISHED_IKE_SA and sending notification
 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  echo done

@@ -919,21 +919,21 @@ west #
          short_name 5: EXPIRE OK
          jam_enum_short 5: EXPIRE OK
          jam_enum_human 5: expire OK
-         match EXPIRE [short]: OK (clashed with 13)
+         match EXPIRE [short]: clashed with 13
     6 -> EVENT_v1_DISCARD
          jam_enum 6: EVENT_v1_DISCARD OK
          match EVENT_v1_DISCARD: OK
          short_name 6: DISCARD OK
          jam_enum_short 6: DISCARD OK
          jam_enum_human 6: discard OK
-         match DISCARD [short]: OK (clashed with 14)
+         match DISCARD [short]: clashed with 14
     7 -> EVENT_v1_RETRANSMIT
          jam_enum 7: EVENT_v1_RETRANSMIT OK
          match EVENT_v1_RETRANSMIT: OK
          short_name 7: RETRANSMIT OK
          jam_enum_short 7: RETRANSMIT OK
          jam_enum_human 7: retransmit OK
-         match RETRANSMIT [short]: OK (clashed with 19)
+         match RETRANSMIT [short]: clashed with 19
     8 -> EVENT_v1_CRYPTO_TIMEOUT
          jam_enum 8: EVENT_v1_CRYPTO_TIMEOUT OK
          match EVENT_v1_CRYPTO_TIMEOUT: OK
@@ -947,14 +947,14 @@ west #
          short_name 9: NAT_KEEPALIVE OK
          jam_enum_short 9: NAT_KEEPALIVE OK
          jam_enum_human 9: nat-keepalive OK
-         match NAT_KEEPALIVE [short]: OK (clashed with 20)
+         match NAT_KEEPALIVE [short]: clashed with 20
    10 -> EVENT_v1_REPLACE
          jam_enum 10: EVENT_v1_REPLACE OK
          match EVENT_v1_REPLACE: OK
          short_name 10: REPLACE OK
          jam_enum_short 10: REPLACE OK
          jam_enum_human 10: replace OK
-         match REPLACE [short]: OK (clashed with 12)
+         match REPLACE [short]: clashed with 12
    11 -> EVENT_v2_REKEY
          jam_enum 11: EVENT_v2_REKEY OK
          match EVENT_v2_REKEY: OK
@@ -3528,29 +3528,29 @@ name for -1 present (should be absent)
          jam_enum_short 17: UDP OK
          jam_enum_human 17: udp OK
   ipsec_attr_names: [2..64770)
-    2 -> SA_LIFE_DURATION (variable length)
-         jam_enum 2: SA_LIFE_DURATION (variable length) OK
-         match SA_LIFE_DURATION (variable length): OK
-         short_name 2: SA_LIFE_DURATION (variable length) OK
-         jam_enum_short 2: SA_LIFE_DURATION (variable length) OK
+    2 -> variable length
+         jam_enum 2: variable length OK
+         match variable length: OK
+         short_name 2: variable length OK
+         jam_enum_short 2: variable length OK
          jam_enum_human 2: sa-life-duration (variable length) OK
-    9 -> COMPRESS_PRIVATE_ALG (variable length)
-         jam_enum 9: COMPRESS_PRIVATE_ALG (variable length) OK
-         match COMPRESS_PRIVATE_ALG (variable length): OK
-         short_name 9: COMPRESS_PRIVATE_ALG (variable length) OK
-         jam_enum_short 9: COMPRESS_PRIVATE_ALG (variable length) OK
+    9 -> variable length
+         jam_enum 9: variable length OK
+         match variable length: OK
+         short_name 9: variable length OK
+         jam_enum_short 9: variable length OK
          jam_enum_human 9: compress-private-alg (variable length) OK
-   10 -> ECN_TUNNEL (variable length)
-         jam_enum 10: ECN_TUNNEL (variable length) OK
-         match ECN_TUNNEL (variable length): OK
-         short_name 10: ECN_TUNNEL (variable length) OK
-         jam_enum_short 10: ECN_TUNNEL (variable length) OK
+   10 -> variable length
+         jam_enum 10: variable length OK
+         match variable length: OK
+         short_name 10: variable length OK
+         jam_enum_short 10: variable length OK
          jam_enum_human 10: ecn-tunnel (variable length) OK
-  32001 -> SECCTX (variable length)
-         jam_enum 32001: SECCTX (variable length) OK
-         match SECCTX (variable length): OK
-         short_name 32001: SECCTX (variable length) OK
-         jam_enum_short 32001: SECCTX (variable length) OK
+  32001 -> variable length
+         jam_enum 32001: variable length OK
+         match variable length: OK
+         short_name 32001: variable length OK
+         jam_enum_short 32001: variable length OK
          jam_enum_human 32001: secctx (variable length) OK
   32769 -> SA_LIFE_TYPE
          jam_enum 32769: SA_LIFE_TYPE OK
@@ -4426,47 +4426,47 @@ name for -1 present (should be absent)
          jam_enum_short 16: OAKLEY_GROUP_ORDER OK
          jam_enum_human 16: oakley-group-order OK
   oakley_attr_names: [6..32785)
-    6 -> OAKLEY_GROUP_PRIME (variable length)
-         jam_enum 6: OAKLEY_GROUP_PRIME (variable length) OK
-         match OAKLEY_GROUP_PRIME (variable length): OK
-         short_name 6: OAKLEY_GROUP_PRIME (variable length) OK
-         jam_enum_short 6: OAKLEY_GROUP_PRIME (variable length) OK
+    6 -> variable length
+         jam_enum 6: variable length OK
+         match variable length: OK
+         short_name 6: variable length OK
+         jam_enum_short 6: variable length OK
          jam_enum_human 6: oakley-group-prime (variable length) OK
-    7 -> OAKLEY_GROUP_GENERATOR_ONE (variable length)
-         jam_enum 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
-         match OAKLEY_GROUP_GENERATOR_ONE (variable length): OK
-         short_name 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
-         jam_enum_short 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
+    7 -> variable length
+         jam_enum 7: variable length OK
+         match variable length: OK
+         short_name 7: variable length OK
+         jam_enum_short 7: variable length OK
          jam_enum_human 7: oakley-group-generator-one (variable length) OK
-    8 -> OAKLEY_GROUP_GENERATOR_TWO (variable length)
-         jam_enum 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
-         match OAKLEY_GROUP_GENERATOR_TWO (variable length): OK
-         short_name 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
-         jam_enum_short 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
+    8 -> variable length
+         jam_enum 8: variable length OK
+         match variable length: OK
+         short_name 8: variable length OK
+         jam_enum_short 8: variable length OK
          jam_enum_human 8: oakley-group-generator-two (variable length) OK
-    9 -> OAKLEY_GROUP_CURVE_A (variable length)
-         jam_enum 9: OAKLEY_GROUP_CURVE_A (variable length) OK
-         match OAKLEY_GROUP_CURVE_A (variable length): OK
-         short_name 9: OAKLEY_GROUP_CURVE_A (variable length) OK
-         jam_enum_short 9: OAKLEY_GROUP_CURVE_A (variable length) OK
+    9 -> variable length
+         jam_enum 9: variable length OK
+         match variable length: OK
+         short_name 9: variable length OK
+         jam_enum_short 9: variable length OK
          jam_enum_human 9: oakley-group-curve-a (variable length) OK
-   10 -> OAKLEY_GROUP_CURVE_B (variable length)
-         jam_enum 10: OAKLEY_GROUP_CURVE_B (variable length) OK
-         match OAKLEY_GROUP_CURVE_B (variable length): OK
-         short_name 10: OAKLEY_GROUP_CURVE_B (variable length) OK
-         jam_enum_short 10: OAKLEY_GROUP_CURVE_B (variable length) OK
+   10 -> variable length
+         jam_enum 10: variable length OK
+         match variable length: OK
+         short_name 10: variable length OK
+         jam_enum_short 10: variable length OK
          jam_enum_human 10: oakley-group-curve-b (variable length) OK
-   12 -> OAKLEY_LIFE_DURATION (variable length)
-         jam_enum 12: OAKLEY_LIFE_DURATION (variable length) OK
-         match OAKLEY_LIFE_DURATION (variable length): OK
-         short_name 12: OAKLEY_LIFE_DURATION (variable length) OK
-         jam_enum_short 12: OAKLEY_LIFE_DURATION (variable length) OK
+   12 -> variable length
+         jam_enum 12: variable length OK
+         match variable length: OK
+         short_name 12: variable length OK
+         jam_enum_short 12: variable length OK
          jam_enum_human 12: oakley-life-duration (variable length) OK
-   16 -> OAKLEY_GROUP_ORDER (variable length)
-         jam_enum 16: OAKLEY_GROUP_ORDER (variable length) OK
-         match OAKLEY_GROUP_ORDER (variable length): OK
-         short_name 16: OAKLEY_GROUP_ORDER (variable length) OK
-         jam_enum_short 16: OAKLEY_GROUP_ORDER (variable length) OK
+   16 -> variable length
+         jam_enum 16: variable length OK
+         match variable length: OK
+         short_name 16: variable length OK
+         jam_enum_short 16: variable length OK
          jam_enum_human 16: oakley-group-order (variable length) OK
   32769 -> OAKLEY_ENCRYPTION_ALGORITHM
          jam_enum 32769: OAKLEY_ENCRYPTION_ALGORITHM OK

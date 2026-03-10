@@ -61,7 +61,7 @@ west #
  # added to the IKE SA's message queue
 west #
  ../../guestbin/wait-for-pluto.sh '#3: adding CREATE_CHILD_SA .* request'
-"west-cuckoo" #3: adding CREATE_CHILD_SA (new Child SA) request to IKE SA #1's message queue
+"west-cuckoo" #3: adding new Child SA request to IKE SA #1's message queue
 west #
  # Now release the delete! The IKE SA and its child will die but ...
 west #

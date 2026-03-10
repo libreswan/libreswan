@@ -47,10 +47,10 @@ road #
 road #
  ipsec down road-east
 "road-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"road-east" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
 "road-east" #2: command "down" output: restoring resolvconf
 "road-east" #2: ESP traffic information: in=84B out=84B XAUTHuser=xroad
-"road-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"road-east" #1: deleting ISAKMP MAIN_I4 and sending notification
 road #
  ipsec delete road-east
 road #

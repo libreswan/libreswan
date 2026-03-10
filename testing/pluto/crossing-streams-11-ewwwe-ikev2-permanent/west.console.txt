@@ -30,7 +30,7 @@ west #
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
-"east-west" #1: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
+"east-west" #1: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or EAP
 west #
  ../../guestbin/wait-for-inbound.sh 2
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
@@ -79,11 +79,11 @@ west #
 up
 west #
  ipsec showstates
-#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#2: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
-#3: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #2; idle;
+#1: "east-west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "east-west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; idle;
+#3: "east-west":500 established Child SA; REKEY in XXs; REPLACE in XXs; IKE SA #2; idle;
 #3: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
-#4: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "east-west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #4: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
  ipsec trafficstatus

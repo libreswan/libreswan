@@ -62,10 +62,10 @@ road #
 road #
  ipsec auto --down modecfg-road-eastnet-psk
 "modecfg-road-eastnet-psk": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"modecfg-road-eastnet-psk" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"modecfg-road-eastnet-psk" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
 "modecfg-road-eastnet-psk" #2: command "down" output: restoring resolvconf
 "modecfg-road-eastnet-psk" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
-"modecfg-road-eastnet-psk" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"modecfg-road-eastnet-psk" #1: deleting ISAKMP MAIN_I4 and sending notification
 road #
  cat /etc/resolv.conf
 domain testing.libreswan.org

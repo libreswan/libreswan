@@ -25,13 +25,13 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
-IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending empty KE (g^x)
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending empty g^x
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode I2
 "westnet-eastnet-ipv4-psk" #1: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
-IMPAIR: "westnet-eastnet-ipv4-psk" #1: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: retransmit so timing out may retry
 "westnet-eastnet-ipv4-psk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk" #1: deleting ISAKMP MAIN_I2 and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk
 west #
@@ -59,16 +59,16 @@ west #
 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
 "westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP MAIN_I2 and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
-|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
-| processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: v10x11
+| processing informational 17
 "westnet-eastnet-ipv4-psk" #1: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
+|    Notify Message Type: v10x11
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #

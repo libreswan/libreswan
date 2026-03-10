@@ -9,7 +9,7 @@ nic #
 192.1.3.0/24 -> 192.1.2.254
 nic #
  ../../guestbin/tcpdump.sh --stop -i eth1 > /dev/null
-reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type Ethernet
 nic #
  ../../guestbin/nic-nat.sh 192.1.3.0/24 192.1.2.254 50000 1
 192.1.3.0/24:500 -udp-> 192.1.2.254:50500-50500
@@ -22,7 +22,7 @@ nic #
 tcpdump started
 nic #
  ../../guestbin/tcpdump.sh --stop -i eth1
-reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type Ethernet
 IP 192.1.2.254.54500 > 192.1.2.23.ipsec-nat-t: UDP-encap: ESP(spi=0xSPISPI,seq=0x2), length XXX
 IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: UDP-encap: ESP(spi=0xSPISPI,seq=0x2), length XXX
 IP 192.1.2.254 > 192.1.2.23: ICMP 192.1.2.254 udp port 44500 unreachable, length 156

@@ -45,7 +45,7 @@ west #
 "nss-cert-crl" #1: X509: certificate payload rejected for this connection
 "nss-cert-crl" #1: encountered fatal error in state IKE_AUTH_I
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert-crl" #1: deleting IKE SA (sent IKE_AUTH request)
+"nss-cert-crl" #1: deleting IKE sent IKE_AUTH request
 west #
  test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
 "nss-cert-crl" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.

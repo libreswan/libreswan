@@ -51,7 +51,7 @@ IMPAIR: "west-east" #2: kernel: install_ipsec_sa_inbound_state in setup_half_ker
 IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 ERROR: "west-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
 "west-east" #2: kernel: replace_ipsec_with_bare_kernel_policy() inbound delete failed
-"west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"west-east" #2: deleting IPsec QUICK_I1 and NOT sending notification
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #

@@ -97,9 +97,9 @@ west #
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#3: "TUNNEL-B":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "TUNNEL-B":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 west #
  sleep 60
 west #
@@ -112,15 +112,15 @@ west #
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#3: "TUNNEL-B":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "TUNNEL-B":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 west #
  ipsec auto --down TUNNEL-B
 "TUNNEL-B": terminating SAs using this connection
-"TUNNEL-B" #3: deleting IPsec SA (QUICK_I2) and sending notification
+"TUNNEL-B" #3: deleting IPsec QUICK_I2 and sending notification
 "TUNNEL-B" #3: ESP traffic information: in=84B out=84B
-"TUNNEL-B" #5: deleting ISAKMP SA (MAIN_R3) and sending notification
+"TUNNEL-B" #5: deleting ISAKMP MAIN_R3 and sending notification
 west #
  #One IKE will remain on TUNNEL-B
 west #
@@ -196,9 +196,9 @@ west #
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  ipsec auto --delete TUNNEL-B
@@ -255,9 +255,9 @@ west #
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  echo done
@@ -340,13 +340,13 @@ src 192.0.2.254/32 dst 192.0.1.254/32
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain INPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
-Chain FORWARD (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.2.254 dev eth1

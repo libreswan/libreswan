@@ -49,7 +49,7 @@ IMPAIR: "west-east" #2: kernel: install_ipsec_sa_inbound_policy in install_inbou
 "west-east" #2: state transition failed: failed
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"west-east" #2: deleting IPsec QUICK_I1 and NOT sending notification
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  # expect the on-demand kernel policy

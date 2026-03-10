@@ -41,7 +41,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2b #retransmits
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-IMPAIR: "westnet-eastnet-ikev2a" #1: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ikev2a" #1: retransmit so timing out may retry
 "westnet-eastnet-ikev2a" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ikev2a" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
@@ -55,7 +55,7 @@ west #
  # should show retransmits on west and replies on east
 west #
  grep sending /tmp/pluto.log |grep through
-| sending 732 bytes for IKE_SA_INIT request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 433 bytes for IKE_AUTH request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 373 bytes for new Child SA request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
+| sending 732 bytes for IKE_SA_INIT request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using for #1
+| sending 433 bytes for IKE_AUTH request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using for #1
+| sending 373 bytes for new Child SA request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using for #1
 west #

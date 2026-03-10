@@ -27,7 +27,7 @@ west #
 west #
  ipsec delete base
 "base": terminating SAs using this connection
-"base" #1: deleting IKE SA (sent IKE_SA_INIT request)
+"base" #1: deleting IKE sent IKE_SA_INIT request
 west #
  # try synchronously; should eventually detach
 west #
@@ -38,7 +38,7 @@ west #
 "base" #2: IKE_SA_INIT_I: 5 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "base" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "base" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"base" #2: deleting IKE SA (sent IKE_SA_INIT request)
+"base" #2: deleting IKE sent IKE_SA_INIT request
 west #
  ipsec delete base
 west #

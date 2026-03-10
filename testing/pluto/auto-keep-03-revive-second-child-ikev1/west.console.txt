@@ -50,7 +50,7 @@ west #
  ipsec down west-cuckoo
 "west-cuckoo": initiating delete of connection's IPsec SA #3 using ISAKMP SA "west-cuckold" #1
 "west-cuckoo": note: ISAKMP SA "west-cuckold" #1 will remain up: required by UP policy; in-use by "west-cuckold" #2
-"west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
+"west-cuckoo" #3: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254

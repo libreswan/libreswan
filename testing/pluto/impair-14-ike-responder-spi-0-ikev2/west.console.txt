@@ -22,7 +22,7 @@ west #
 "west-east" #1: encountered fatal error in state IKE_SA_INIT_I
 "west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
+"west-east" #1: deleting IKE sent IKE_SA_INIT request
 west #
  ipsec down west-east
 west #

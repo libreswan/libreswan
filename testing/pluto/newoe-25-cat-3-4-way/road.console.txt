@@ -62,11 +62,11 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain INPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.3.254 dev eth0
@@ -131,15 +131,15 @@ road #
 #6: "private-or-clear#192.1.3.33/32"[1] ...192.1.3.33, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='ID_NULL'
 road #
  iptables -t nat -L -n
-Chain PREROUTING (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 DNAT       all  --  192.1.2.45           10.0.10.1            policy match dir in pol ipsec to:192.1.3.209
 DNAT       all  --  192.1.2.23           10.0.10.1            policy match dir in pol ipsec to:192.1.3.209
-Chain INPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain POSTROUTING (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 SNAT       all  --  0.0.0.0/0            192.1.2.45           policy match dir out pol ipsec to:10.0.10.1
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
@@ -293,11 +293,11 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain INPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
+Chain policy ACCEPT
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.3.254 dev eth0

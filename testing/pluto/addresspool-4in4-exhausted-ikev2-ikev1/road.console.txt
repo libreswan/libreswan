@@ -23,7 +23,7 @@ road #
 "road-east" #1: modecfg: Sending IP request (MODECFG_I1)
 "road-east" #1: received Delete SA payload: self-deleting ISAKMP State #1
 "road-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"road-east" #1: deleting ISAKMP SA (MODE_CFG_I1) and NOT sending notification
+"road-east" #1: deleting ISAKMP MODE_CFG_I1 and NOT sending notification
 road #
  ../../guestbin/ping-once.sh --error -I 192.0.2.102 192.0.2.254
 bind: Cannot assign requested address

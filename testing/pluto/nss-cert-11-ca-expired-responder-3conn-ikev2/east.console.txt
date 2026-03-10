@@ -79,7 +79,7 @@ east #
 east #
  #
 east #
- # -b YYMMDDHHMMZ (yea, CC is magic)
+ # -b yea, CC is magic
 east #
  NOW=$(date +%s)
 east #

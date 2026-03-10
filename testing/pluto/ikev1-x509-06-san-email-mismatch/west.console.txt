@@ -30,7 +30,7 @@ west #
 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "san" #1: STATE_MAIN_I3: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"san" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
+"san" #1: deleting ISAKMP MAIN_I3 and NOT sending notification
 west #
  echo "done"
 done
@@ -38,5 +38,5 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: ID_USER_FQDN (0x3)
+|    ID type: 0x3
 west #

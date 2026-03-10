@@ -44,16 +44,16 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 east #
  ipsec unroute west-east
 "west-east": terminating SAs using this connection
-"west-east" #3: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
+"west-east" #3: deleting IPsec QUICK_R1 and sending notification using ISAKMP SA #1
 ERROR: "west-east" #3: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
 ERROR: "west-east" #3: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-east" #3: failed to pull traffic counters from outbound IPsec SA
 "west-east" #3: ESP traffic information: in=0B out=0B
 ERROR: "west-east" #3: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
-"west-east" #2: deleting IPsec SA (QUICK_R1) and NOT sending notification
+"west-east" #2: deleting IPsec QUICK_R1 and NOT sending notification
 ERROR: "west-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-east" #2: failed to pull traffic counters from outbound IPsec SA
 "west-east" #2: ESP traffic information: in=0B out=0B
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
-"west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+"west-east" #1: deleting ISAKMP MAIN_R3 and sending notification
 east #

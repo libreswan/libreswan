@@ -222,7 +222,7 @@ north #
 "eastnet-northnet" #7: command "unroute" output: westnet-northnet up
 north #
  ../../guestbin/wait-for-pluto.sh --match '#7: deleting IKE SA'
-"eastnet-northnet" #7: deleting IKE SA (sent IKE_SA_INIT request)
+"eastnet-northnet" #7: deleting IKE sent IKE_SA_INIT request
 north #
  # ... west #8 tries to establish and fails ...
 north #
@@ -239,7 +239,7 @@ north #
 "westnet-northnet" #8: command "unroute" output: eastnet-northnet up
 north #
  ../../guestbin/wait-for-pluto.sh --match '#8: deleting IKE SA'
-"westnet-northnet" #8: deleting IKE SA (sent IKE_SA_INIT request)
+"westnet-northnet" #8: deleting IKE sent IKE_SA_INIT request
 north #
  # unblock east ...
 north #

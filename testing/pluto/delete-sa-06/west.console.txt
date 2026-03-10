@@ -28,9 +28,9 @@ west #
 west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"westnet-eastnet" #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
+"westnet-eastnet" #2: deleting IPsec QUICK_R2 and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+"westnet-eastnet" #1: deleting ISAKMP MAIN_R3 and sending notification
 west #
  # give Delete/Notify some time
 west #

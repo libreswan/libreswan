@@ -54,7 +54,7 @@ west #
  # wait for count to reach tcpdump then dump it; dump everything
 west #
  ../../guestbin/tcpdump.sh --wait -i nflog:50 --
-reading from file OUTPUT/west.nflog-01-global-nftables.nflog.50.tcpdump.pcap, link-type NFLOG (Linux netfilter log messages)
+reading from file OUTPUT/west.nflog-01-global-nftables.nflog.50.tcpdump.pcap, link-type Linux netfilter log messages
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64

@@ -9,11 +9,11 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add distraction
-"distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
+"distraction": bad left CA string 'Something bogus': unknown OID in ignored
 "distraction": added oriented IKEv2 connection
 east #
  ipsec add resume-distraction
-"resume-distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
+"resume-distraction": bad left CA string 'Something bogus': unknown OID in ignored
 "resume-distraction": added oriented IKEv2 connection
 east #
  ipsec add any-east

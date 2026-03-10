@@ -32,9 +32,9 @@ west #
 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"aes128" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
 "aes128" #2: ESP traffic information: in=84B out=84B
-"aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128" #1: deleting ISAKMP MAIN_I4 and sending notification
 west #
  ipsec whack --impair none
 west #
@@ -53,10 +53,10 @@ IMPAIR: "aes128" #3: stripping key-length
 IMPAIR: "aes128" #3: duplicating key-length
 "aes128" #3: sent Main Mode request
 "aes128" #3: ignoring unsecured informational payload BAD_PROPOSAL_SYNTAX, length=12
-IMPAIR: "aes128" #3: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #3: retransmit so timing out may retry
 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #3: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"aes128" #3: deleting ISAKMP MAIN_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -78,10 +78,10 @@ west #
 IMPAIR: "aes128" #5: stripping key-length
 IMPAIR: "aes128" #5: duplicating key-length
 "aes128" #5: sent Quick Mode request
-IMPAIR: "aes128" #5: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #5: retransmit so timing out may retry
 "aes128" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #5: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128" #5: deleting IPsec QUICK_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -100,10 +100,10 @@ IMPAIR: "aes128" #6: stripping key-length
 IMPAIR: "aes128" #6: sending key-length attribute value 0
 "aes128" #6: sent Main Mode request
 "aes128" #6: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-IMPAIR: "aes128" #6: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #6: retransmit so timing out may retry
 "aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #6: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"aes128" #6: deleting ISAKMP MAIN_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -125,10 +125,10 @@ west #
 IMPAIR: "aes128" #8: stripping key-length
 IMPAIR: "aes128" #8: sending key-length attribute value 0
 "aes128" #8: sent Quick Mode request
-IMPAIR: "aes128" #8: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #8: retransmit so timing out may retry
 "aes128" #8: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #8: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128" #8: deleting IPsec QUICK_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -155,9 +155,9 @@ IMPAIR: "aes128" #9: not sending key-length attribute
 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128": initiating delete of connection's IPsec SA #10 and ISAKMP SA #9
-"aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
+"aes128" #10: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #9
 "aes128" #10: ESP traffic information: in=84B out=84B
-"aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128" #9: deleting ISAKMP MAIN_I4 and sending notification
 west #
  ipsec whack --impair none
 west #
@@ -179,10 +179,10 @@ west #
 IMPAIR: "aes128" #12: stripping key-length
 IMPAIR: "aes128" #12: not sending key-length attribute
 "aes128" #12: sent Quick Mode request
-IMPAIR: "aes128" #12: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #12: retransmit so timing out may retry
 "aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #12: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128" #12: deleting IPsec QUICK_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -211,9 +211,9 @@ IMPAIR: "aes128" #13: key-length-attribute:empty not implemented
 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 "aes128": initiating delete of connection's IPsec SA #14 and ISAKMP SA #13
-"aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
+"aes128" #14: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #13
 "aes128" #14: ESP traffic information: in=84B out=84B
-"aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
+"aes128" #13: deleting ISAKMP MAIN_I4 and sending notification
 west #
  ipsec whack --impair none
 west #
@@ -237,10 +237,10 @@ west #
 IMPAIR: "aes128" #16: stripping key-length
 IMPAIR: "aes128" #16: key-length-attribute:empty not implemented
 "aes128" #16: sent Quick Mode request
-IMPAIR: "aes128" #16: retransmit so timing out SA (may retry)
+IMPAIR: "aes128" #16: retransmit so timing out may retry
 "aes128" #16: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "aes128" #16: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"aes128" #16: deleting IPsec QUICK_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -269,9 +269,9 @@ west #
 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 "3des": initiating delete of connection's IPsec SA #18 and ISAKMP SA #17
-"3des" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
+"3des" #18: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #17
 "3des" #18: ESP traffic information: in=84B out=84B
-"3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
+"3des" #17: deleting ISAKMP MAIN_I4 and sending notification
 west #
  ipsec whack --impair none
 west #
@@ -289,10 +289,10 @@ west #
 IMPAIR: "3des" #19: sending key-length attribute value 0
 "3des" #19: sent Main Mode request
 "3des" #19: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-IMPAIR: "3des" #19: retransmit so timing out SA (may retry)
+IMPAIR: "3des" #19: retransmit so timing out may retry
 "3des" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "3des" #19: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+"3des" #19: deleting ISAKMP MAIN_I1 and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -318,9 +318,9 @@ IMPAIR: "3des" #20: sending key-length attribute value 192
 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 "3des": initiating delete of connection's IPsec SA #21 and ISAKMP SA #20
-"3des" #21: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #20
+"3des" #21: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #20
 "3des" #21: ESP traffic information: in=84B out=84B
-"3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification
+"3des" #20: deleting ISAKMP MAIN_I4 and sending notification
 west #
  ipsec whack --impair none
 west #

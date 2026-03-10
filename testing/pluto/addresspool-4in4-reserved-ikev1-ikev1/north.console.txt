@@ -39,10 +39,10 @@ north #
 north #
  ipsec down north-east
 "north-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"north-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"north-east" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
 "north-east" #2: command "down" output: restoring resolvconf
 "north-east" #2: ESP traffic information: in=0B out=0B
-"north-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"north-east" #1: deleting ISAKMP MAIN_I4 and sending notification
 north #
  ../../guestbin/ping-once.sh --error -I 192.0.2.101 192.0.2.254
 bind: Cannot assign requested address

@@ -102,5 +102,5 @@ Redirecting to: [initsystem]
 "algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "algo" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "algo" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"algo" #1: deleting IKE SA (sent IKE_SA_INIT request)
+"algo" #1: deleting IKE sent IKE_SA_INIT request
 west #

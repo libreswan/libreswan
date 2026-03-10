@@ -85,9 +85,9 @@ west #
 west #
  ipsec delete westnet-eastnet-vti
 "westnet-eastnet-vti": terminating SAs using this connection
-"westnet-eastnet-vti" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet-vti" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
 "westnet-eastnet-vti" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-vti" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-vti" #1: deleting ISAKMP MAIN_I4 and sending notification
 west #
  echo done
 done
