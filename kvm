@@ -288,7 +288,18 @@ if test $# -eq 0; then
     cat <<EOF
 Usage:
 
-   ./kvm [<modifier>...] <operation>... [<test-directory>...]
+   ./kvm [<options>...] [<modifiers>...] <operation>... [<test-directory>...]
+
+Options:
+
+   -n, --dry-run
+           just echo the command
+
+   -pm, --post-mortem
+           when running a single test, perform a post-mortem and then shutdown
+
+           By default, the post-mortem and shutdown steps are skipped when
+           running individual tests.
 
 EOF
     pass1help
@@ -323,8 +334,12 @@ while test $# -gt 0 ; do
 
     case "$1" in
 
-	-n )
+	-n | --dry-run )
 	    echo=echo
+	    ;;
+
+	-pm | --pm | --post-mortem )
+	    makeflags[${#makeflags[@]}]="KVM_RUN_POST_MORTEM=true"
 	    ;;
 
 	nohup )
