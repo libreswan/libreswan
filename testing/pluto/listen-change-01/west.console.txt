@@ -39,7 +39,7 @@ west #
 west #
  ../../guestbin/ip.sh address add 192.1.2.23/24 dev eth1
 west #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 adding interface eth1 192.1.2.23:UDP/500
 adding interface eth1 192.1.2.23:UDP/4500 (NAT)

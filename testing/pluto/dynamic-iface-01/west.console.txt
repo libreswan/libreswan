@@ -37,7 +37,7 @@ ARPING 192.1.2.66 from 192.1.2.66 eth1
 Sent 1 probes (1 broadcast(s))
 Received 0 response(s)
 west #
- ipsec auto --ready
+ ipsec listen
 listening for IKE messages
 adding interface eth1 192.1.2.66:UDP/500
 adding interface eth1 192.1.2.66:UDP/4500 (NAT)
@@ -62,7 +62,7 @@ west #
 west #
  # filter the error, it sometimes changes which network error happens (22 vs 101)
 west #
- ipsec auto --ready | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
+ ipsec listen | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
 listening for IKE messages
 shutting down interface eth1 192.1.2.66:4500
 shutting down interface eth1 192.1.2.66:500

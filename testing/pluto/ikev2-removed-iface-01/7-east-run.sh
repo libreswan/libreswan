@@ -1,2 +1,2 @@
-ipsec auto --ready
+ipsec listen
 ipsec auto --status | grep "[.][.][.]"
