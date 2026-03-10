@@ -145,42 +145,16 @@ _HOSTNAME_COMMAND_REGEX = re.compile(r'^(?P<hostname>[a-z]*)# ?(?P<command>.*)[\
 
 def commands(directory, logger):
 
-    # match *.sh first
-    commands = _guest_scripts(directory, logger)
-    if commands:
-        return commands
-
-    # Match experimental all.console.txt which contains the names of
-    # the domains embeded as prompts as in "DOMAIN#"
-
-    script = "all.console.txt"
-    all = path.join(directory, script)
-    if os.path.exists(all):
-        commands = Commands()
-        # read includes '\n';
-        for line in open(all, "r"):
-            # regex matches both:
-            #   <guestname># command
-            # and
-            #   # command
-            guestname_command = _HOSTNAME_COMMAND_REGEX.match(line)
-            if guestname_command:
-                guestname = guestname_command.group("hostname") # see regex
-                command = guestname_command.group("command")
-                if guestname:
-                    commands.append(Command(hosts.guest_by_guestname(guestname), command, script))
-                elif line:
-                    commands.append(Command(None, "# "+command, script))
-                else:
-                    commands.append(Command(None, "#", script))
-        return commands
-
-    # Match experimental *DOMAIN*.in, or *DOMAIN*.console.txt, which
-    # contains prompts using the domain's host names.
+    # Match experimental all-command files:
     #
-    # .in is known to work .console.txt is experimental.
+    #   *DOMAIN*.in
+    #   all.*DOMAIN*.sh
+    #
+    # which contain prompts matching the domain's host names.
+    #
+    # Need to match 'all.*.sh' before '*.sh'!
 
-    for match in ("*.in", "*.console.txt"):
+    for match in ("*.in", "all.*.sh"):
 
         scripts = glob(path.join(directory, match))
         if scripts:
@@ -220,6 +194,36 @@ def commands(directory, logger):
                         else:
                             commands.append(Command(None, "#", script))
             return commands
+
+    # match *.sh first
+    commands = _guest_scripts(directory, logger)
+    if commands:
+        return commands
+
+    # Match experimental all.console.txt which contains the names of
+    # the domains embeded as prompts as in "DOMAIN#"
+
+    script = "all.console.txt"
+    all = path.join(directory, script)
+    if os.path.exists(all):
+        commands = Commands()
+        # read includes '\n';
+        for line in open(all, "r"):
+            # regex matches both:
+            #   <guestname># command
+            # and
+            #   # command
+            guestname_command = _HOSTNAME_COMMAND_REGEX.match(line)
+            if guestname_command:
+                guestname = guestname_command.group("hostname") # see regex
+                command = guestname_command.group("command")
+                if guestname:
+                    commands.append(Command(hosts.guest_by_guestname(guestname), command, script))
+                elif line:
+                    commands.append(Command(None, "# "+command, script))
+                else:
+                    commands.append(Command(None, "#", script))
+        return commands
 
     logger.warning(f"no scripts in {directory}")
     return Commands()
