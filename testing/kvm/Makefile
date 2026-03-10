@@ -1555,7 +1555,10 @@ kvm-shutdown: $(foreach os, $(KVM_OS), kvm-shutdown-$(os))
 $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORMS)): \
 kvm-shutdown-%:
 	: $@=$*
-	: $(foreach domain, $(KVM_$($*)_DOMAINS), && $(KVMSH) --shutdown $(notdir $(domain)))
+	$(KVMSH) --shutdown $(KVM_$($*)_BASE_DOMAIN)
+	$(KVMSH) --shutdown $(KVM_$($*)_UPGRADE_DOMAIN)
+	$(KVMSH) --shutdown $(KVM_$($*)_BUILD_DOMAIN)
+	./bin/destroy.sh $(notdir $(KVM_$($*)_TEST_DOMAINS))
 
 .PHONY: kvm-clean
 
