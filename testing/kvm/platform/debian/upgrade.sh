@@ -33,12 +33,12 @@ libnss3
 libnss3-dev
 libnss3-tools
 libpam0g-dev
+libsystemd-dev
 libunbound-dev
 make
 net-tools
 nftables
 pkg-config
 python3-pexpect
-systemd-dev
 xmlto
 EOF
