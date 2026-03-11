@@ -18,7 +18,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up --asynchronous west-to-east
+ ipsec up --asynchronous west-to-east # sanitize-retransmits
 "west-to-east" #1: initiating IKEv1 Main Mode connection
 "west-to-east" #1: sent Main Mode request
 west #

@@ -1,4 +1,4 @@
-ipsec up --asynchronous west-to-east
+ipsec up --asynchronous west-to-east # sanitize-retransmits
 
 # step through the main mode exchange
 

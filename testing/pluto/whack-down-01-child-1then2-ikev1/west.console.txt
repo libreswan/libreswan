@@ -21,7 +21,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up west-cuckold
+ ipsec up west-cuckold # sanitize-retransmits
 "west-cuckold" #1: initiating IKEv1 Main Mode connection
 "west-cuckold" #1: sent Main Mode request
 "west-cuckold" #1: sent Main Mode I2
@@ -32,7 +32,7 @@ west #
 "west-cuckold" #2: sent Quick Mode request
 "west-cuckold" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ipsec up west-cuckoo
+ ipsec up west-cuckoo # sanitize-retransmits
 "west-cuckoo" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.20.0/24}
 "west-cuckoo" #3: sent Quick Mode request
 "west-cuckoo" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -47,13 +47,13 @@ west #
 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ipsec down west-cuckold
+ ipsec down west-cuckold # sanitize-retransmits
 "west-cuckold": initiating delete of connection's IPsec SA #2 using ISAKMP SA #1
 "west-cuckold": note: connection's ISAKMP SA #1 will remain up: in-use by "west-cuckoo" #3
 "west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
- ipsec down west-cuckoo
+ ipsec down west-cuckoo # sanitize-retransmits
 "west-cuckoo": initiating delete of connection's IPsec SA #3 and ISAKMP SA #1
 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
@@ -61,7 +61,7 @@ west #
 west #
  # this should not be necessary
 west #
- ipsec down west-cuckold
+ ipsec down west-cuckold # sanitize-retransmits
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

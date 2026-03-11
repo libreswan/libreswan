@@ -18,7 +18,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up --asynchronous west-to-east
+ ipsec up --asynchronous west-to-east # sanitize-retransmits
 "west-to-east" #1: initiating IKEv1 Main Mode connection
 "west-to-east" #1: sent Main Mode request
 west #
@@ -58,7 +58,7 @@ west #
  ../../guestbin/wait-for-pluto.sh '#2: sent Quick'
 "west-to-east" #2: sent Quick Mode request
 west #
- ipsec down west-to-east
+ ipsec down west-to-east # sanitize-retransmits
 "west-to-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "west-to-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 "west-to-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

@@ -1,3 +1,3 @@
-ipsec down west-cuckoo
-ipsec down west-cuckold
+ipsec down west-cuckoo # sanitize-retransmits
+ipsec down west-cuckold # sanitize-retransmits
 
