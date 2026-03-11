@@ -147,55 +147,52 @@ def commands(directory, logger):
 
     # Match experimental all-command files:
     #
-    #   *DOMAIN*.in
     #   all.*DOMAIN*.sh
     #
     # which contain prompts matching the domain's host names.
     #
     # Need to match 'all.*.sh' before '*.sh'!
 
-    for match in ("*.in", "all.*.sh"):
+    scripts = glob(path.join(directory, "all.*.sh"))
+    if scripts:
 
-        scripts = glob(path.join(directory, match))
-        if scripts:
+        # figure out the host->domain map
+        domains = hosts.Set()
+        for script in scripts:
+            guests = hosts.guests_by_filename(script);
+            domains.update(guests)
+            logger.debug(f"script {script} guests: {guests}")
+        domains = sorted(domains)
+        DOMAIN_BY_HOSTNAME = hosts.Dict()
+        for domain in domains:
+            DOMAIN_BY_HOSTNAME[domain.host.name] = domain
+        logger.debug(f"DOMAIN_BY_HOSTNAME: {DOMAIN_BY_HOSTNAME}")
 
-            # figure out the host->domain map
-            domains = hosts.Set()
-            for script in scripts:
-                guests = hosts.guests_by_filename(script);
-                domains.update(guests)
-                logger.debug(f"script {script} guests: {guests}")
-            domains = sorted(domains)
-            DOMAIN_BY_HOSTNAME = hosts.Dict()
-            for domain in domains:
-                DOMAIN_BY_HOSTNAME[domain.host.name] = domain
-            logger.debug(f"DOMAIN_BY_HOSTNAME: {DOMAIN_BY_HOSTNAME}")
+        commands = Commands()
+        for script in scripts:
+            if not path.isfile(script):
+                continue
+            logger.debug(f"script: {script}")
+            for line in open(script, "r"):
+                logger.debug(f"{line[0:-1]}")
+                # regex matches both:
+                #   <hostname># command
+                # and
+                #   # command
+                hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
+                if hostname_command:
+                    hostname = hostname_command.group("hostname")
+                    command = hostname_command.group("command")
+                    if hostname:
+                        domain = DOMAIN_BY_HOSTNAME[hostname]
+                        commands.append(Command(domain, command, script))
+                    elif line:
+                        commands.append(Command(None, "# "+command, script))
+                    else:
+                        commands.append(Command(None, "#", script))
+        return commands
 
-            commands = Commands()
-            for script in scripts:
-                if not path.isfile(script):
-                    continue
-                logger.debug(f"script: {script}")
-                for line in open(script, "r"):
-                    logger.debug(f"{line[0:-1]}")
-                    # regex matches both:
-                    #   <hostname># command
-                    # and
-                    #   # command
-                    hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
-                    if hostname_command:
-                        hostname = hostname_command.group("hostname")
-                        command = hostname_command.group("command")
-                        if hostname:
-                            domain = DOMAIN_BY_HOSTNAME[hostname]
-                            commands.append(Command(domain, command, script))
-                        elif line:
-                            commands.append(Command(None, "# "+command, script))
-                        else:
-                            commands.append(Command(None, "#", script))
-            return commands
-
-    # match *.sh first
+    # *.sh files
     commands = _guest_scripts(directory, logger)
     if commands:
         return commands
