@@ -15,6 +15,7 @@ b end-sanitize-retransmits
   / retransmitting [A-Z_]* request;/		b next-sanitize-retransmits
   / dropping [A-Z_]* response with duplicate /  b next-sanitize-retransmits
   / dropping [A-Z_]* response with in-progress /  b next-sanitize-retransmits
+  / retransmitting delete /   	   	       b next-sanitize-retransmits
   b sanitize-retransmits
 
 # drop current line (append next, delete current line)
