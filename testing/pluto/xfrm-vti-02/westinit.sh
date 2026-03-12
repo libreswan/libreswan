@@ -10,8 +10,8 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ip.sh address add 10.0.1.254 dev eth0
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-vti-01
-ipsec auto --add westnet-eastnet-vti-02
+ipsec add westnet-eastnet-vti-01
+ipsec add westnet-eastnet-vti-02
 # remove the regular route for 192.0.2.0/24
 ../../guestbin/ip.sh route del 192.0.2.0/24
 echo "initdone"

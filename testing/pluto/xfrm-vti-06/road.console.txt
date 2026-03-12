@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road-east-vti
+ ipsec add road-east-vti
 "road-east-vti": added oriented IKEv1 connection
 road #
  echo "initdone"
@@ -14,7 +14,7 @@ initdone
 road #
  ../../guestbin/ip.sh address add 192.0.3.254/24 dev eth0
 road #
- ipsec auto --up road-east-vti
+ ipsec up road-east-vti # sanitize-retransmits
 "road-east-vti" #1: initiating IKEv1 Main Mode connection
 "road-east-vti" #1: sent Main Mode request
 "road-east-vti" #1: sent Main Mode I2
@@ -37,7 +37,7 @@ road #
  ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.0.2.254
 down
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east-vti", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 road #
  ip ro add 192.0.2.254/32 dev vti0
@@ -47,7 +47,7 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  echo done
@@ -55,7 +55,7 @@ done
 road #
  # 4 dropped packets should be visible on east because road leaked them
 road #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec trafficstatus
 #2: "road-east-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  grep -v -P "\t0$" /proc/net/xfrm_stat

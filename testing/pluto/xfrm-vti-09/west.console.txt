@@ -24,10 +24,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-vti-01
+ ipsec add westnet-eastnet-vti-01
 "westnet-eastnet-vti-01": added oriented IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-vti-02
+ ipsec add westnet-eastnet-vti-02
 "westnet-eastnet-vti-02": added oriented IKEv2 connection
 west #
  # remove the regular route for 192.0.2.0/24
@@ -37,7 +37,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-vti-01
+ ipsec up westnet-eastnet-vti-01 # sanitize-retransmits
 "westnet-eastnet-vti-01" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-vti-01" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -60,7 +60,7 @@ west #
 "westnet-eastnet-vti-01" #2: command "up" output: done ip route
 "westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --up westnet-eastnet-vti-02
+ ipsec up westnet-eastnet-vti-02 # sanitize-retransmits
 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-vti-02" #3: command "prepare" output: vti interface "ipsec0" already exists with conflicting setting
@@ -84,7 +84,7 @@ west #
  ../../guestbin/ping-once.sh --error -I 10.0.1.254 10.0.2.254
 bind: Cannot assign requested address
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-vti-01", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 #3: "westnet-eastnet-vti-02", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #

@@ -1,1 +1,1 @@
-ipsec auto --up westnet-eastnet-vti
+ipsec up westnet-eastnet-vti # sanitize-retransmits

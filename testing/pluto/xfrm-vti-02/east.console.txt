@@ -8,10 +8,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-01
+ ipsec add westnet-eastnet-01
 "westnet-eastnet-01": added oriented IKEv1 connection
 east #
- ipsec auto --add westnet-eastnet-02
+ ipsec add westnet-eastnet-02
 "westnet-eastnet-02": added oriented IKEv1 connection
 east #
  echo "initdone"

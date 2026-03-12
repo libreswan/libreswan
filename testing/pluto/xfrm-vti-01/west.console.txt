@@ -32,13 +32,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-vti
+ ipsec add westnet-eastnet-vti
 "westnet-eastnet-vti": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec up westnet-eastnet-vti
+ ipsec up westnet-eastnet-vti # sanitize-retransmits
 "westnet-eastnet-vti" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-vti" #1: sent Main Mode request
 "westnet-eastnet-vti" #1: sent Main Mode I2
@@ -66,7 +66,7 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # now packets into vti0 device will get marked, and encrypted and
@@ -78,12 +78,12 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # ensure no error on delete
 west #
- ipsec auto --delete westnet-eastnet-vti
+ ipsec delete westnet-eastnet-vti
 "westnet-eastnet-vti": terminating SAs using this connection
 "westnet-eastnet-vti" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-vti" #2: ESP traffic information: in=84B out=84B
