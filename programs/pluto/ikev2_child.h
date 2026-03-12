@@ -88,4 +88,6 @@ void set_larval_v2_transition(struct child_sa *larval, const struct finite_state
 
 void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa *child);
 
+void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *child);
+
 #endif
