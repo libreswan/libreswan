@@ -99,6 +99,7 @@ packages_for_testing() {
 bind-dnssec-utils
 bind-utils
 conntrack-tools
+diffstat				used by NSRUN
 fping
 gawk
 gdb
