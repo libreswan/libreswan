@@ -143,15 +143,10 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 # On Linux, override linux defaults
 KVM_LINUX_SD_RESTART_TYPE ?= no
 KVM_LINUX_USE_EFENCE ?= true
-KVM_LINUX_USE_LABELED_IPSEC ?= true
-KVM_LINUX_USE_SECCOMP ?= true
 
 # On Alpine, do a cutdown build
 KVM_ALPINE_USE_LDNS ?= false
 KVM_ALPINE_USE_UNBOUND ?= false
-
-# On Debian, EDDSA doesn't yet exist
-KVM_DEBIAN_USE_EDDSA ?= false
 
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
