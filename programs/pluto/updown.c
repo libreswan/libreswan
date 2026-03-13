@@ -95,11 +95,16 @@ static void jam_clean_xauth_username(struct jambuf *buf,
  * note: this mutates *st by calling get_sa_bundle_info().
  */
 
+
+#define UPDOWN_ARGV_MAX 32
+
 struct updown_exec {
-	char buffer[2048];
-	const char *env[100];
-	const char *arg[4];
+    char buffer[2048];
+    const char *env[100];
+    const char *arg[UPDOWN_ARGV_MAX];
+    char cmd[512]; // writable copy of the command used for tokenization
 };
+
 
 static bool build_updown_exec(struct updown_exec *exec,
 			      const char *verb, const char *verb_suffix,
@@ -109,19 +114,65 @@ static bool build_updown_exec(struct updown_exec *exec,
 			      struct updown_env updown_env,
 			      struct verbose verbose/*C-or-CHILD*/)
 {
+
 	/*
-	 * Build argv[]
-	 */
+	* Build argv[]
+	*/
+	
+	const char *cmd = c->local->config->child.updown.command;
 	const char **argv = exec->arg;
+
 	if (c->local->config->child.updown.updown_config_exec) {
-		(*argv++) = c->local->config->child.updown.command;
+
+		// copy the command string inside exec->cmd so we can modify it for tokenization
+		if (strlcpy(exec->cmd, cmd, sizeof(exec->cmd)) >= sizeof(exec->cmd)) {
+				// if it doesn't fit, log and return false
+				llog(RC_LOG, verbose.logger, "updown command too long");
+				return false;
+		}
+
+		// convert the command string into a shunk
+		shunk_t input = {
+			.ptr = exec->cmd,
+			.len = strlen(exec->cmd),
+		};
+
+		// get tokens by splitting on whitespace or tab by using ttoshunks
+		struct shunks *toks = ttoshunks(input, " \t", EAT_EMPTY_SHUNKS);
+
+		if (toks == NULL || toks->len == 0) {
+			// if there are no tokens, log and return false
+			llog(RC_LOG, verbose.logger, "updown command is empty");
+			pfreeany(toks);
+			return false;
+		}
+
+		for (unsigned i = 0; i < toks->len; i++) {
+
+			if (argv >= exec->arg + elemsof(exec->arg) - 1) {
+				llog(RC_LOG, verbose.logger, "updown command has too many arguments");
+				pfreeany(toks);
+				return false;
+			}
+
+			char* s = clone_hunk_as_string(&toks->item[i], "updown arg");
+
+			*argv++ = s;
+		}
+
+		*argv = NULL;
+		pfreeany(toks);
+
 	} else {
-		(*argv++) = "/bin/sh";
-		(*argv++) = "-c";
-		(*argv++) = c->local->config->child.updown.command;
+		*argv++ = "/bin/sh";
+		*argv++ = "-c";
+		*argv++ = cmd;
 	}
-	(*argv++) = NULL;
+
+	*argv++ = NULL;
 	vassert(argv <= exec->arg + elemsof(exec->arg));
+	
+
 
 	/*
 	 * Build envp[]
