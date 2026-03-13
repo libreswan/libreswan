@@ -10,6 +10,7 @@ ifndef LINUX_VARIANT
   #   Fedora: ID=fedora
   #   Red Hat: ID=redhat ID_LIKE=fedora? => redhat fedora?
   #   Mint: ID=linuxmint ID_LIKE=ubuntu => linuxmint ubuntu
+  #   Ubuntu: ID=ubuntu ID_LIKE=debian => ubuntu debian
   # $(sort) gets rid of duplicates (needed?)
   export LINUX_VARIANT := $(sort $(shell sed -n -e 's/"//g' -e 's/^ID_LIKE=//p' -e 's/^ID=//p' /etc/os-release))
 endif
@@ -18,8 +19,9 @@ ifndef LINUX_VERSION_CODENAME
   # VERSION_CODENAME+UBUNTU_CODENAME, for instance:
   #  Debian: VERSION_CODENAME=buster
   #  Fedora: VERSION_CODENAME=""
-  #  Mint: UBUNTU_CODENAME=focal VERSION_CODENAME=una => focal una
-  # $(sort) gets rid of duplicates (needed?)
+  #  Mint: UBUNTU_CODENAME=focal VERSION_CODENAME=una => focal una # no debian?
+  #  Ubuntu: UBUNTU_CODENAME=jammy VERSION_CODENAME=jammy DISTRIB_CODENAME=jammy
+  # $(sort) gets rid of duplicates (needed? yes)
   export LINUX_VERSION_CODENAME := $(sort $(shell sed -n -e 's/^VERSION_CODENAME=//p' -e 's/^UBUNTU_CODENAME=//p' /etc/os-release))
 endif
 
@@ -39,29 +41,35 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
   CKSUM ?= shasum
   # https://wiki.debian.org/LTS
-  ifeq ($(LINUX_VERSION_CODENAME),bullseye) # Debian 11; until June 30 2026
+  ifeq ($(LINUX_VERSION_CODENAME),bullseye) # Debian 11; Jun 2026
+    USE_XFRM_HEADER_COPY ?= true
     USE_ML_KEM_768 ?= false
+    USE_EDDSA ?= false
+  endif
+  ifeq ($(LINUX_VERSION_CODENAME),bookworm) # Debian 12; Jun 2028
+    USE_XFRM_HEADER_COPY ?= true
+    # NSS 3.87; EDDSA>=3.99
+    USE_ML_KEM_768 ?= false
+    USE_EDDSA ?= false
+  endif
+  ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; Jun 2030
     USE_XFRM_HEADER_COPY ?= true
   endif
-  ifeq ($(LINUX_VERSION_CODENAME),bookworm) # Debian 12; until June 30 2028
+  # https://ubuntu.com/about/release-cycle
+  ifeq ($(LINUX_VERSION_CODENAME),focal) # Ubuntu 20.04.6 LTS; May 2025; Pro Apr 2030
+    USE_XFRM_HEADER_COPY ?= true
     USE_ML_KEM_768 ?= false
-    USE_XFRM_HEADER_COPY ?= true
+    USE_EDDSA ?= false
   endif
-  ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; until June 30 2030
+  ifeq ($(LINUX_VERSION_CODENAME),jammy) # Ubuntu 22.04.5 LTS; Jun 2027; Pro Apr 2032
     USE_XFRM_HEADER_COPY ?= true
-  endif
-  # https://releases.ubuntu.com/
-  ifeq ($(LINUX_VERSION_CODENAME),focal) # Ubuntu 20.04.6 LTS
+    # NSS 3.98; EDDSA>=3.99
     USE_ML_KEM_768 ?= false
-    USE_XFRM_HEADER_COPY ?= true
+    USE_EDDSA ?= false
   endif
-  ifeq ($(LINUX_VERSION_CODENAME),jammy) # Ubuntu 22.04.5 LTS
-    USE_ML_KEM_768 ?= false
+  ifeq ($(LINUX_VERSION_CODENAME),noble) # Ubuntu 24.04.3 LTS; May 2029; Pro Apr 2034
     USE_XFRM_HEADER_COPY ?= true
-  endif
-  ifeq ($(LINUX_VERSION_CODENAME),noble) # Ubuntu 24.04.3 LTS
     USE_ML_KEM_768 ?= false
-    USE_XFRM_HEADER_COPY ?= true
   endif
 endif
 
@@ -135,8 +143,8 @@ ifneq ($(USE_IPTABLES), true)
   USE_NFTABLES ?= true
 endif
 
-# Opportunistic Encryption with NAT (Client Address Translation) support
-# currently only supported on Linux
+# Opportunistic Encryption with NAT (Client Address Translation)
+# support currently only supported on Linux.
 USE_CAT ?= true
 
 # Linux NFLOG support
