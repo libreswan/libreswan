@@ -16,8 +16,9 @@ body:
     attributes:
       label: Please Tell Us About Your Operating System
       description: |
-        - what is the local machine's Operating System?<br> Please
-          include the output from `uname -a`
+        - what is the local machine's Operating System?<br>
+          Please include the output from `uname -a`.<br>
+	  For build problems, also include `/etc/os-release` (when available).
         - which Liberswan version is the local machine running?<br>
           Please include the output from `ipsec whack --version`.<br>
           You're more likely to get someones attention when the
