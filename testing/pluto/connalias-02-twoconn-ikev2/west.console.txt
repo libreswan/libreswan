@@ -16,7 +16,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up west
+ ipsec up west # sanitize-retransmits
 initiating all connections with alias "west"
 "west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckoo": queue Child SA; waiting on IKE SA "west-cuckold" #1 negotiating with 192.1.2.23
@@ -43,7 +43,7 @@ terminated 2 connections
 "west-cuckold" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckold" #2: ESP traffic information: in=0B out=0B
 west #
- ipsec up cuckold
+ ipsec up cuckold # sanitize-retransmits
 initiating all connections with alias "cuckold"
 "west-cuckold" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 initiating 1 connection
@@ -54,7 +54,7 @@ initiating 1 connection
 "west-cuckold" #4: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckold" #5: initiator established Child SA using #4; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec up cuckoo
+ ipsec up cuckoo # sanitize-retransmits
 initiating all connections with alias "cuckoo"
 "west-cuckoo" #6: initiating Child SA using IKE SA #4
 initiating 1 connection
