@@ -184,7 +184,7 @@ road #
 "road-east-x509-ipv4"[1] 192.1.2.23 #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 road #
  ../../guestbin/wait-for-pluto.sh '^".*#1: deleting IKE SA'
-"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE ESTABLISHED_IKE_SA and sending notification
+"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 up

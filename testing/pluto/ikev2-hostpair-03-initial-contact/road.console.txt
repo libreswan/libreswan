@@ -41,7 +41,7 @@ road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE ESTABLISHED_IKE_SA and sending notification
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
@@ -65,7 +65,7 @@ road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting IKE ESTABLISHED_IKE_SA and sending notification
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
@@ -89,7 +89,7 @@ road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting IKE ESTABLISHED_IKE_SA and sending notification
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B

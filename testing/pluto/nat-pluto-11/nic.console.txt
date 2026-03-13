@@ -9,15 +9,15 @@ nic #
  # Display the table, so we know it is correct.
 nic #
  iptables -t nat -L
-Chain policy ACCEPT
+Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
 DNAT       esp  --  anywhere             nic                  to:192.1.2.23
 DNAT       udp  --  anywhere             nic                  udp dpt:isakmp to:192.1.2.23
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 nic #
  echo "initdone"

@@ -50,7 +50,7 @@ east #
 east #
  #
 east #
- # -b yea, CC is magic
+ # -b YYMMDDHHMMZ (yea, CC is magic)
 east #
  ipsec vfychain -v -u 12 -p -p -a OUTPUT/new-west.crt
 Chain is good!

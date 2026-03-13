@@ -130,7 +130,7 @@ west #
  ipsec auto --down westnet-eastnet-nflog
 "westnet-eastnet-nflog": initiating delete of connection's IPsec SA #2 using ISAKMP SA #1
 "westnet-eastnet-nflog": note: connection's ISAKMP SA #1 will remain up: in-use by "west-east-nflog" #3
-"westnet-eastnet-nflog" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #
  nft list ruleset
@@ -159,9 +159,9 @@ table inet ipsec-log {
 west #
  ipsec auto --down west-east-nflog
 "west-east-nflog": initiating delete of connection's IPsec SA #3 and ISAKMP SA #1
-"west-east-nflog" #3: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA "westnet-eastnet-nflog" #1
+"west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-nflog" #1
 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
-"westnet-eastnet-nflog" #1: deleting ISAKMP MAIN_I4 and sending notification
+"westnet-eastnet-nflog" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  nft list ruleset
 table ip filter {
@@ -190,7 +190,7 @@ west #
  # wait for count to reach tcpdump then dump it
 west #
  ../../guestbin/tcpdump.sh --wait -i nflog:50 --
-reading from file OUTPUT/west.nflog-03-conns.nflog.50.tcpdump.pcap, link-type Linux netfilter log messages
+reading from file OUTPUT/west.nflog-03-conns.nflog.50.tcpdump.pcap, link-type NFLOG (Linux netfilter log messages)
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 1, length 64
@@ -209,10 +209,10 @@ west #
  # show no nflog left behind
 west #
  iptables -L -n
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 west #

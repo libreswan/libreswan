@@ -50,11 +50,11 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.2.254 dev eth1

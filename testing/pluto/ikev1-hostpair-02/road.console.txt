@@ -53,10 +53,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
-"westnet-eastnet-ipv4-psk-ikev1" #1: deleting ISAKMP MAIN_I4 and sending notification
+"westnet-eastnet-ipv4-psk-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #1: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
@@ -87,10 +87,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev1" #4: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #3
+"westnet-eastnet-ipv4-psk-ikev1" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #4: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
-"westnet-eastnet-ipv4-psk-ikev1" #3: deleting ISAKMP MAIN_I4 and sending notification
+"westnet-eastnet-ipv4-psk-ikev1" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #3: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
@@ -121,10 +121,10 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk-ikev1" #6: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #5
+"westnet-eastnet-ipv4-psk-ikev1" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #5
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #6: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
-"westnet-eastnet-ipv4-psk-ikev1" #5: deleting ISAKMP MAIN_I4 and sending notification
+"westnet-eastnet-ipv4-psk-ikev1" #5: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #5: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
@@ -163,8 +163,8 @@ road #
 #8: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, lease=192.0.2.1/32
 road #
  ipsec showstates
-#7: "westnet-eastnet-ipv4-psk-ikev1":4500 ISAKMP SA established; NAT_KEEPALIVE in XXs; RETRANSMIT in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-#8: "westnet-eastnet-ipv4-psk-ikev1":4500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #7; idle;
+#7: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_MAIN_I4 (ISAKMP SA established); NAT_KEEPALIVE in XXs; RETRANSMIT in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #7; idle;
 #8: "westnet-eastnet-ipv4-psk-ikev1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=168B ESPout=168B ESPmax=2^63B username=use3
 road #
  ipsec _kernel policy

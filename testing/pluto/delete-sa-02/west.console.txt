@@ -32,8 +32,8 @@ west #
 west #
  ipsec auto --down west-east
 "west-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"west-east" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "west-east" #2: adding bogus Notify payload after ISAKMP Delete payload
 "west-east" #2: ESP traffic information: in=0B out=0B
-"west-east" #1: deleting ISAKMP MAIN_I4 and sending notification
+"west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #

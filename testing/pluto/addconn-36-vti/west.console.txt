@@ -25,7 +25,7 @@ west #
 "addconn--vti-interface=short": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--vti-interface=long
-warning: "addconn--vti-interface=long": length of vti-interface 'very-very-very-very-long-name' exceeds 16
+warning: "addconn--vti-interface=long": length of vti-interface 'very-very-very-very-long-name' exceeds IFNAMSIZ (16)
 "addconn--vti-interface=long": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
@@ -56,7 +56,7 @@ west #
 "whack--vti-interface=short": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--vti-interface=long   --vti-interface=very-very-very-very-long-name  --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--vti-interface=long": length of vti-interface 'very-very-very-very-long-name' exceeds 16
+warning: "whack--vti-interface=long": length of vti-interface 'very-very-very-very-long-name' exceeds IFNAMSIZ (16)
 "whack--vti-interface=long": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                                      --pass --host 1.2.3.4 --to --host 5.6.7.8

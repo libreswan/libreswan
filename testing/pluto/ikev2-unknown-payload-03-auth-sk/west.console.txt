@@ -56,7 +56,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: setting (should be off) critical pa
 "westnet-eastnet-ipv4-psk-ikev2" #3: IKE SA authentication request rejected by peer: UNSUPPORTED_CRITICAL_PAYLOAD
 "westnet-eastnet-ipv4-psk-ikev2" #3: encountered fatal error in state IKE_AUTH_I
 "westnet-eastnet-ipv4-psk-ikev2" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE sent IKE_AUTH request
+"westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo done
 done

@@ -49,14 +49,14 @@ west #
 west #
  ipsec delete west-cuckoo
 "west-cuckoo": terminating SAs using this connection
-"west-cuckoo" #3: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA "west-cuckold" #1
+"west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec delete west-cuckold
 "west-cuckold": terminating SAs using this connection
-"west-cuckold" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
-"west-cuckold" #1: deleting ISAKMP MAIN_I4 and sending notification
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

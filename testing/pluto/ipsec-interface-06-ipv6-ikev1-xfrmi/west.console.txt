@@ -117,10 +117,10 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"westnet-eastnet" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64] added by pluto
 "westnet-eastnet" #2: ESP traffic information: in=312B out=312B
-"westnet-eastnet" #1: deleting ISAKMP MAIN_I4 and sending notification
+"westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ipsec auto --delete westnet-eastnet
 "westnet-eastnet": delete ipsec-interface ipsec1@NONE added by pluto

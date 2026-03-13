@@ -132,11 +132,11 @@ src 192.1.2.23/32 dst 10.0.10.2/32
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
@@ -166,9 +166,9 @@ east #
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-|    auth method: IKEv2_0xd
+|    auth method: IKEv2_AUTH_NULL (0xd)
 "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: responder established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
-|    auth method: IKEv2_0xe
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
@@ -178,7 +178,7 @@ east #
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-|    auth method: IKEv2_0xd
+|    auth method: IKEv2_AUTH_NULL (0xd)
 "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: responder established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
-|    auth method: IKEv2_0xe
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #

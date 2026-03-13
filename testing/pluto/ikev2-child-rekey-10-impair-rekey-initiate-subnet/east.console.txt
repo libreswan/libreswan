@@ -22,5 +22,5 @@ east #
  # should find a match on both east and road
 east #
  grep "Notify Message Type: v2N_TS_UNACCEPTABLE" /tmp/pluto.log
-|    Notify Message Type: v20x26
+|    Notify Message Type: v2N_TS_UNACCEPTABLE (0x26)
 east #

@@ -7,12 +7,12 @@ nic #
  ip6tables -X
 nic #
  ip6tables -t nat -L
-Chain policy ACCEPT
+Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 nic #

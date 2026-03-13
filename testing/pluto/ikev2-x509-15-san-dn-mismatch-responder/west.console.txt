@@ -26,7 +26,7 @@ west #
 "san" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "san" #1: encountered fatal error in state IKE_AUTH_I
 "san" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"san" #1: deleting IKE sent IKE_AUTH request
+"san" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  echo "done"
 done
@@ -34,7 +34,7 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: 0x9
+|    ID type: ID_DER_ASN1_DN (0x9)
 west #
  grep "RSA authentication failed" /tmp/pluto.log
 west #

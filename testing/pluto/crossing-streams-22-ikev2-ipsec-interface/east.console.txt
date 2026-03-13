@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec showstates
-#4: "static":500 sent IKE_SA_INIT request; RETRANSMIT in XXs; idle;
+#4: "static":500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 #4: pending Child SA for "static"
 #5: "static":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
 #6: "static":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #5; idle;

@@ -60,6 +60,6 @@ west #
 west #
  ipsec down west-to-east # sanitize-retransmits
 "west-to-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
-"west-to-east" #2: deleting IPsec QUICK_I1 and NOT sending notification
-"west-to-east" #1: deleting ISAKMP MAIN_I4 and sending notification
+"west-to-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"west-to-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #

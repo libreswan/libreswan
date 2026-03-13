@@ -46,8 +46,8 @@ west #
 done
 west #
  grep PKCS7 /tmp/pluto.log
-|    cert encoding: 0x1
-|    cert encoding: 0x1
+|    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
+|    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23

@@ -20,7 +20,7 @@ up
 east #
  ipsec showstates
 #2: "east-west":500 established IKE SA; RETRANSMIT in XXs; REKEY in XXs; REPLACE in XXs; newest; idle;
-#4: "east-west":500 sent CREATE_CHILD_SA request for new IPsec SA; eroute owner; idle;
+#4: "east-west":500 NEW_CHILD_I1 (sent CREATE_CHILD_SA request for new IPsec SA); eroute owner; idle;
 east #
  ipsec trafficstatus
 east #

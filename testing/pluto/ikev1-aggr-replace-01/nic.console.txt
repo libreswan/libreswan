@@ -5,21 +5,21 @@ nic #
  # Display the table, so we know it is correct.
 nic #
  iptables -t nat -L -n
-Chain policy ACCEPT
+Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 nic #
  iptables -L -n
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 nic #
  echo done.

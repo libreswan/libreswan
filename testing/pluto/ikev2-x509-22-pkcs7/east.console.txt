@@ -16,11 +16,11 @@ initdone
 east #
  grep -e 'parse IKEv2 Certificate' -e 'emit IKEv2 Certificate' -e 'ikev2 cert encoding' /tmp/pluto.log
 | ***emit IKEv2 Certificate Request Payload:
-|    ikev2 cert encoding: 0x4
+|    ikev2 cert encoding: CERT_X509_SIGNATURE (0x4)
 | **parse IKEv2 Certificate Payload:
-|    ikev2 cert encoding: 0x1
+|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 | ****emit IKEv2 Certificate Payload:
-|    ikev2 cert encoding: 0x1
+|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45

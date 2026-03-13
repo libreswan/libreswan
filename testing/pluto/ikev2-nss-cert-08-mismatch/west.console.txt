@@ -51,7 +51,7 @@ west #
 "nss-cert-incorrect" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP}
 "nss-cert-incorrect" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "nss-cert-incorrect" #3: X509: authentication failed; peer ID DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-"nss-cert-incorrect" #3: deleting IKE IKE_AUTH_I and sending notification
+"nss-cert-incorrect" #3: deleting IKE SA (IKE_AUTH_I) and sending notification
 "nss-cert-incorrect" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo done

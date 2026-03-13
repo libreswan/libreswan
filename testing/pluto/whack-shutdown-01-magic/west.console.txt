@@ -11,7 +11,7 @@ west #
  ipsec whack --shutdown
 Pluto is shutting down
 west #
- # force shutdown with current aka 0 and not
+ # force shutdown with current WHACK_MAGIC (aka 0) and not
 west #
  # WHACK_BASIC_MAGIC
 west #

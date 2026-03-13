@@ -39,8 +39,8 @@ west #
  # this shows we returned the error in IKE_AUTH
 west #
  grep "exchange type:" /tmp/pluto.log
-|    exchange type: ISAKMP_v2_0x22
-|    exchange type: ISAKMP_v2_0x22
-|    exchange type: ISAKMP_v2_0x23
-|    exchange type: ISAKMP_v2_0x23
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 west #

@@ -33,13 +33,13 @@ west #
 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 west #
  iptables -t nat -L -n
-Chain policy ACCEPT
+Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 west #
  ../../guestbin/ipsec-look.sh
@@ -101,11 +101,11 @@ src 192.1.2.45/32 dst 10.0.10.1/32
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 ROUTING TABLES
 default via 192.1.2.254 dev eth1

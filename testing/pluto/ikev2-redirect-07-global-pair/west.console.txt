@@ -31,7 +31,7 @@ west #
 "west-cuckoo" #1: IKE_SA_INIT response redirects to new gateway 192.1.3.33
 "west-cuckoo" #1: scheduling redirect 1 to 192.1.3.33
 IMPAIR: "west-cuckoo" #1: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"west-cuckoo" #1: deleting IKE sent IKE_SA_INIT request
+"west-cuckoo" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1
 IMPAIR: "west-cuckoo": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.3.33; delete IKE SA
@@ -53,7 +53,7 @@ west #
 "west-cuckold" #4: IKE_SA_INIT response redirects to new gateway 192.1.3.33
 "west-cuckold" #4: scheduling redirect 1 to 192.1.3.33
 IMPAIR: "west-cuckold" #4: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"west-cuckold" #4: deleting IKE sent IKE_SA_INIT request
+"west-cuckold" #4: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  # re-initiate the second connection; it will now match the first IKE
 west #

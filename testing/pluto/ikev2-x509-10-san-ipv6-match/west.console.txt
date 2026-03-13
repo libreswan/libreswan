@@ -15,22 +15,22 @@ west #
  
 List of Public Keys:
  
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        IPV6_ADDR '2001:db8:1:2::45'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        USER_FQDN 'user-west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        FQDN '@west.testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        USER_FQDN 'west@testing.libreswan.org'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-TIMESTAMP, 3072 RSA Key Awhas private key, until TIMESTAMP ok
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        IPV4_ADDR '192.1.2.45'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 west #
@@ -60,5 +60,5 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: 0x5
+|    ID type: ID_IPV6_ADDR (0x5)
 west #

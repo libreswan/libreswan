@@ -15,6 +15,6 @@ east #
  # confirm the right ID types were sent/received
 east #
  hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: 0x2
-|    ID type: 0x1
+|    ID type: ID_FQDN (0x2)
+|    ID type: ID_IPV4_ADDR (0x1)
 east #

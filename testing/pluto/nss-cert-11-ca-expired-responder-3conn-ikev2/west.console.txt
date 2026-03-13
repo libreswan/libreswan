@@ -58,10 +58,10 @@ west #
 "old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "old-west" #1: encountered fatal error in state IKE_AUTH_I
 "old-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"old-west" #1: deleting IKE sent IKE_AUTH request
+"old-west" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  ipsec auto --down old-west
-"old-west" #3: deleting IKE sent IKE_SA_INIT request
+"old-west" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec auto --up new-west
 "new-west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP

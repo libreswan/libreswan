@@ -14,13 +14,13 @@ nic #
 nic #
  iptables -t nat -L
 + iptables -t nat -L
-Chain policy ACCEPT
+Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-Chain policy ACCEPT
+Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 ++ x=0
 ++ test 0 -ne 0

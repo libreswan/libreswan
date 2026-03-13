@@ -73,7 +73,7 @@ IMPAIR: "road-eastnet-ikev2"[1] 192.1.2.254: dispatch REVIVAL; attempt 1 next in
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: retransmitting IKE_SA_INIT request; will wait 4 seconds for response
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: IKE_SA_INIT_I: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-"road-eastnet-ikev2"[1] 192.1.2.254 #3: deleting IKE sent IKE_SA_INIT request
+"road-eastnet-ikev2"[1] 192.1.2.254 #3: deleting IKE SA (sent IKE_SA_INIT request)
 east #
  # but road is really down, so that fails; and everything is deleted
 east #

@@ -34,7 +34,7 @@ road #
 road #
 this should wait for MOBIKE but that doesn't happen
  ../../guestbin/wait-for-pluto.sh --match 'sending .* liveness probe'
-| sending 61 bytes for liveness probe through eth0 from 192.1.3.209:4500 to 192.1.2.23:4500 using for #1
+| sending 61 bytes for liveness probe through eth0 from 192.1.3.209:4500 to 192.1.2.23:4500 using UDP (for #1)
 road #
  ../../guestbin/ping-once.sh --up -I 100.64.0.1 192.0.2.254
 up

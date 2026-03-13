@@ -35,10 +35,10 @@ west #
 west #
  ipsec auto --delete ikev1
 "ikev1": terminating SAs using this connection
-"ikev1" #2: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #1
+"ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "ikev1" #2: ESP traffic information: in=0B out=0B
 "ikev1" #2: IPCOMP traffic information: in=0B out=0B
-"ikev1" #1: deleting ISAKMP MAIN_I4 and sending notification
+"ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ipsec auto --up ikev1-aggr
 "ikev1-aggr" #3: initiating IKEv1 Aggressive Mode connection
@@ -52,10 +52,10 @@ west #
 west #
  ipsec auto --delete ikev1-aggr
 "ikev1-aggr": terminating SAs using this connection
-"ikev1-aggr" #4: deleting IPsec QUICK_I2 and sending notification using ISAKMP SA #3
+"ikev1-aggr" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 "ikev1-aggr" #4: ESP traffic information: in=0B out=0B
 "ikev1-aggr" #4: IPCOMP traffic information: in=0B out=0B
-"ikev1-aggr" #3: deleting ISAKMP AGGR_I2 and sending notification
+"ikev1-aggr" #3: deleting ISAKMP SA (AGGR_I2) and sending notification
 west #
  echo done
 done

@@ -25,10 +25,10 @@ west #
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: sending an empty KE value
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out may retry
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE sent IKE_SA_INIT request
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair none
 west #
@@ -45,7 +45,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state IKE_SA_INIT_I
 "westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE sent IKE_SA_INIT request
+"westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  echo done
 done
