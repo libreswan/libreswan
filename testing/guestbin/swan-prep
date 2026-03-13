@@ -65,8 +65,9 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
         return True
 
     cmd = ['/bin/mount', '--bind',  src, dst]
+    print(f"namespace: {cmd}")
     o = subprocess.run(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-                        encoding='utf-8')
+                       encoding='utf-8')
     if o.returncode:
         print("mount_bind failed %s" % cmd)
         if fatal:
@@ -76,6 +77,7 @@ def mount_bind(src, dst, mode=None, touch_src_file=False, mkdir_src=False, wipe_
 
 def lsw_init_dir(src, dst):
     if args.namespace:
+        print(f"namespace: bind {src} {dst}")
         return mount_bind(src, dst, mkdir_src=True,  wipe_old_dst=True, fatal=True)
     else:
         os.makedirs(dst, exist_ok=True)
@@ -85,9 +87,12 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
 
     if args.namespace:
         ns_dst="%s/%s" %(nsbasepath, dst) #copy to local NS/hostname/<path> then mount
+        print(f"namespace: copy {src} {ns_dst}")
         shutil.copy(src, ns_dst)
         if mode:
+            print(f"namespace: chmod {mode} {ns_dst}")
             os.chmod(ns_dst, mode)
+        print(f"namespace: bind {ns_dst} {dst}")
         mount_bind(ns_dst, dst)
     else:
         shutil.copy(src, dst)
@@ -290,13 +295,17 @@ if not args.dnssec:
 # nsrun set magic string SWAN_PLUTOTEST=YES in the environment
 # to identify namespace
 # echo $SWAN_PLUTOTEST
-if "SWAN_PLUTOTEST" in os.environ:
+if args.namespace:
+    print(f"namespace: --namespace")
+elif "SWAN_PLUTOTEST" in os.environ:
+    print(f"namespace: SWAN_PLUTOTEST")
     args.namespace = True
-elif not args.namespace:
+else:
     o = subprocess.run('ip netns identify', shell=True, capture_output=True, encoding="ascii", check=True,)
     namespace = o.stdout
     namespace_expect = hostname + '-' + testname
     if re.search(hostname, namespace):
+        print(f"namespace: ip netns identity")
         args.namespace = True
 
 resolve_conf = "/etc/resolv.conf"
@@ -311,6 +320,7 @@ if hostname != "nic":
 if args.namespace:
     nsbasepath ="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
     if not os.path.isdir(nsbasepath):
+        print(f"namespace: mkdir {nsbasepath}")
         os.makedirs(nsbasepath)
 else:
     nsbasepath = ''
@@ -337,6 +347,7 @@ if hostname != "nic":
     Path(daemonlogfile).touch(mode=0o777)
 
     if args.namespace :
+        print(f"namespace: {daemonlogfile} {tmplink}")
         mount_bind(daemonlogfile, tmplink, touch_src_file=True)
     else :
         os.symlink(daemonlogfile, tmplink)

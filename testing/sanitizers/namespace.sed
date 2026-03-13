@@ -1,6 +1,6 @@
 # 002 "road-eastnet-nonat" #2: route-client output: Error: Peer netns reference is invalid.
 /.*Error: Peer netns reference is invalid.$/d
-s/Error: Peer netns reference is invalid.//
+s/Error: Peer netns reference is invalid.// # redundant?
 s/brd ff:ff:ff:ff:ff:ff link-netnsid 0/brd ff:ff:ff:ff:ff:ff/
 s/qdisc noqueue state UNKNOWN group default.*$/state UNKNOWN/
 s/qdisc noqueue state UNKNOWN mode DEFAULT group default.*/state UNKNOWN/
@@ -15,4 +15,6 @@ s/qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000/state UNKNOWN
 s/ brd [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\} scope/ scope/
 s/^\(default .*\) metric 1024 pref medium/\1/g
 /^::1 dev lo proto kernel metric 256 pref medium/d
+
 /nsenter --mount/d
+/namespace: /d
