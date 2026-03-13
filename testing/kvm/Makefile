@@ -148,6 +148,11 @@ KVM_LINUX_USE_EFENCE ?= true
 KVM_ALPINE_USE_LDNS ?= false
 KVM_ALPINE_USE_UNBOUND ?= false
 
+# Force the LIBRESWAN version using $(IPSECVERSION) so that
+# libreswan's VID matches the expected output and doesn't end up with
+# something from `git`.
+KVM_IPSECVERSION ?= $(IPSECBASEVERSION)
+
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
@@ -164,6 +169,7 @@ KVM-MAKEFLAG = \
 
 KVM_MAKEFLAGS ?= $(strip \
 	-j$(call kvm-flag-value, KVM_BUILD_CPUS) \
+	IPSECVERSION=$(KVM_IPSECVERSION) \
 	$(call KVM-MAKEFLAG, KVM_ALL_ARGS) \
 	$(call KVM-MAKEFLAG, KVM_NSSDIR) \
 	$(call KVM-MAKEFLAG, KVM_NSS_CFLAGS) \
