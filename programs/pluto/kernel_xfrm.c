@@ -1085,11 +1085,18 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			xfrm_dir, sizeof(req.data), logger);
 	add_sec_label(&req.n, policy->sec_label, logger);
 
+	/*
+	 * Build "SELECTORS" for error messages.
+	 * For example: "192.0.2.0/24===192.0.1.0/24"
+	 */
+	selector_pair_buf spb;
+	str_selector_pair(src_client, dst_client, &spb);
+
 	enum expect_kernel_policy what_about_inbound =
 		(op == KERNEL_POLICY_OP_ADD ? KERNEL_POLICY_PRESENT_OR_MISSING :
 		 KERNEL_POLICY_PRESENT);
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
+				       spb.buf,
 				       logger, func);
 
 	/*
@@ -1113,7 +1120,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			ldbg(logger, "%s() adding policy forward (suspect a tunnel)", __func__);
 			info->dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
-						   policy_name, "(fwd)",
+						   policy_name, spb.buf,
 						   logger, func);
 			break;
 		default:
@@ -1171,10 +1178,15 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data), logger);
 	add_sec_label(&req.n, sec_label, logger);
 
+	/*
+	 * Build "SELECTORS" for error messages.
+	 * For example: "192.0.2.0/24===192.0.1.0/24"
+	 */
+	selector_pair_buf spb;
+	str_selector_pair(src_child, dst_child, &spb);
+
 	bool ok = sendrecv_xfrm_policy(&req.n, expect_kernel_policy, "delete",
-				       (direction == DIRECTION_OUTBOUND ? "(out)" :
-					direction == DIRECTION_INBOUND ? "(in)" :
-					NULL),
+				       spb.buf,
 				       logger, func);
 
 	/*
@@ -1195,7 +1207,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 		    __func__);
 		id->dir = XFRM_POLICY_FWD;
 		ok &= sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT_OR_MISSING,
-					   "delete", "(fwd)",
+					   "delete", spb.buf,
 					   logger, func);
 	}
 	return ok;

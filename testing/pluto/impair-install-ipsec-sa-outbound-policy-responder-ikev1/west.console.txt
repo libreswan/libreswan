@@ -876,11 +876,11 @@ output: | kernel_xfrm_policy_add() IPsec SA SPD priority set to 1757393
 output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=16389 id.proto=50 optional=0 family=2 mode=1 saddr=192.1.2.23 daddr=192.1.2.45
 output: | sendrecv_xfrm_msg() sending 25 policy IPv4
 output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
-output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 (in) had A policy
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 192.0.2.0/24===192.0.1.0/24 had A policy
 output: | kernel_xfrm_policy_add() adding policy forward (suspect a tunnel)
 output: | sendrecv_xfrm_msg() sending 25 policy IPv4
 output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
-output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 (fwd) had A policy
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 192.0.2.0/24===192.0.1.0/24 had A policy
 output: | "west-east" #2: routing:   ... yes
 output: | "west-east" #2: routing: stop ESTABLISH_INBOUND, ROUTED_NEGOTIATION->ROUTED_INBOUND_NEGOTIATION, PERMANENT; ok=yes; routing_sa #2 negotiating_ike_sa #1 established_ike_sa #1 negotiating_child_sa #2 (quick_inR1_outI2_tail() +1791 programs/pluto/ikev1_quick.c)
 output: | "west-east": delref @0x7f1c931a1a78(4->3) "west-east" #2:  (dispatch() +2450 programs/pluto/routing.c)
@@ -928,7 +928,7 @@ output: | kernel_xfrm_policy_add() IPsec SA SPD priority set to 1757393
 output: | kernel_xfrm_policy_add() adding xfrm_user_tmpl reqid=16389 id.proto=50 optional=0 family=2 mode=1 saddr=192.1.2.45 daddr=192.1.2.23
 output: | sendrecv_xfrm_msg() sending 25 policy IPv4
 output: | sendrecv_xfrm_msg() recvfrom() returned 36 bytes
-output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 (out) had A policy
+output: | kernel_ops_policy_add()   XFRM_MSG_UPDPOLICY for flow IPv4 192.0.1.0/24===192.0.2.0/24 had A policy
 output: | "west-east" #2: routing:   ... yes
 output: | kernel: running updown command "ipsec _updown" for verb prepare 
 output: | kernel: command executing prepare-client
