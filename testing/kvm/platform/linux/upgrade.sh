@@ -103,6 +103,7 @@ diffstat				used by NSRUN
 fping
 gawk
 gdb
+git					used by NSRUN
 gnutls-utils				used by soft tokens
 iptables
 kl2tpd
