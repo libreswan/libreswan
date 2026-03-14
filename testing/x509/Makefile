@@ -12,8 +12,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+# XXX: KVM tests point X509DIR at /tmp/x509: much faster then
+# /testing; avoids a p9fs bug.
+
+X509DIR ?= .
+
 .PHONY: all
 all:
-	./generate.sh .
-	./crl.sh .
-	./selfsigned.sh ./selfsigned
+	./generate.sh $(X509DIR)
+	./crl.sh $(X509DIR)
+	./selfsigned.sh $(X509DIR)/selfsigned

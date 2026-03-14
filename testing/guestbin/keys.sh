@@ -28,9 +28,7 @@ cp /testing/x509/nss-pw		      /tmp/x509
 :    - avoids p9fs write bug
 :
 
-/testing/x509/generate.sh /tmp/x509
-/testing/x509/crl.sh /tmp/x509
-/testing/x509/selfsigned.sh /tmp/x509/selfsigned
+make -C /testing/x509 X509DIR=/tmp/x509
 
 :
 : copy the certs from guest to host in a tar ball to avoid 9fs bug
