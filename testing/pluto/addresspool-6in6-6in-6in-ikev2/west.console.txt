@@ -24,19 +24,21 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west1
-no connection or alias named "west1"'
+ ipsec up west1
+no connection or alias named "west1"
 west #
- ipsec auto --up west2
-no connection or alias named "west2"'
+ ipsec up west2
+no connection or alias named "west2"
 west #
- ipsec auto --up west3
-no connection or alias named "west3"'
+ ipsec up west3
+no connection or alias named "west3"
 west #
  # ping will fail until we fix  up-client-v6 and add source address.
 west #
- ping6 -n -q -w 5 -c 2 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
-ping6: bind icmp socket: Cannot assign requested address
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:3:1::0 2001:db8:0:2::254
+unexpected status 4
+# fping  -c 1  --timeout 5000   --src 2001:db8:0:3:1::0 2001:db8:0:2::254
+fping: cannot bind source address : Cannot assign requested address
 west #
  echo done
 done

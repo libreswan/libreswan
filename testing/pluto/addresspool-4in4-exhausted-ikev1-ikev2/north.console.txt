@@ -13,7 +13,7 @@ north #
  echo initdone
 initdone
 north #
- ipsec up north-east
+ ipsec up north-east # sanitize-retransmits
 "north-east" #1: initiating IKEv1 Main Mode connection
 "north-east" #1: sent Main Mode request
 "north-east" #1: sent Main Mode I2

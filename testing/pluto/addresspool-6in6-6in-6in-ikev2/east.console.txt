@@ -5,10 +5,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east
+ ipsec add east
 "east": added oriented IKEv2 connection
 east #
- ipsec auto --status | grep east
+ ipsec status | grep east
 "east": 2001:db8:0:2::/64===2001:db8:1:2::23[@east]...%any==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
 "east":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "east":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;

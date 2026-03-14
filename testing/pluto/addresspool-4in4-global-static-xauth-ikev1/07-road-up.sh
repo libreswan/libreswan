@@ -1,1 +1,1 @@
-ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
+ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits

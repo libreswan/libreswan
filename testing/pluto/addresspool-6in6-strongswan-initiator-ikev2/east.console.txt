@@ -5,10 +5,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add rw-eastnet-ipv6
+ ipsec add rw-eastnet-ipv6
 "rw-eastnet-ipv6": added oriented IKEv2 connection
 east #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface eth1 [2001:db8:1:2::23]:UDP/4500 (NAT)

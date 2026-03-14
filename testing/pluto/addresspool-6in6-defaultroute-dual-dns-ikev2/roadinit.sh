@@ -19,5 +19,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
 # this test need --verbose to see source address selection
-ipsec auto --add --verbose road
+ipsec add --verbose road
 echo "initdone"

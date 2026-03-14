@@ -8,17 +8,17 @@ road #
 road #
  ../../guestbin/block-non-ipsec.sh
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": added oriented IKEv1 connection
 road #
  echo initdone
 initdone
 road #
- ipsec whack --impair timeout_on_retransmit
+ ipsec whack --impair revival
 road #
  # expected to fail due to overlap of IP
 road #
- ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
+ ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits
 "road-east" #1: initiating IKEv1 Main Mode connection
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2
@@ -35,6 +35,7 @@ road #
 "road-east" #1: encountered fatal error in state STATE_XAUTH_I1
 "road-east" #1: deleting ISAKMP SA (XAUTH_I1) and sending notification
 "road-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "road-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 road #
  echo done
 done

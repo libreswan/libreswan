@@ -1,4 +1,4 @@
-ipsec auto --up road
+ipsec up road
 ../../guestbin/ping-once.sh --up -I 2001:db8:0:3:1::0 2001:db8:0:2::254
 ipsec trafficstatus 
 ../../guestbin/ip-addr-show.sh

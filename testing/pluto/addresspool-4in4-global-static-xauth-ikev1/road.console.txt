@@ -7,13 +7,13 @@ road #
 road #
  ../../guestbin/block-non-ipsec.sh
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": added oriented IKEv1 connection
 road #
  echo initdone
 initdone
 road #
- ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
+ ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits
 "road-east" #1: initiating IKEv1 Main Mode connection
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2

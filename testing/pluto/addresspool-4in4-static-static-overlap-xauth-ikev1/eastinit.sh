@@ -4,5 +4,5 @@ echo "xroad:xOzlFlqtwJIu2:east-any:192.0.2.101-192.0.2.200" >> /etc/ipsec.d/pass
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair timeout_on_retransmit
-ipsec auto --add east-any
+ipsec add east-any
 echo initdone

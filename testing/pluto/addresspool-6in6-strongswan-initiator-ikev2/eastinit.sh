@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --46
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add rw-eastnet-ipv6
-ipsec auto --status
+ipsec add rw-eastnet-ipv6
+ipsec status
 echo "initdone"

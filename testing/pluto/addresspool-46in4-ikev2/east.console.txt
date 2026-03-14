@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east
+ ipsec add east
 "east": connection is using multiple addresspools
 "east": added oriented IKEv2 connection
 east #

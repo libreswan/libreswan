@@ -13,5 +13,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/ip.sh route get to 2001:db8:1:2::23
 # this test need --verbose to see source address selection
-ipsec auto --add --verbose road
+ipsec add --verbose road
 echo "initdone"

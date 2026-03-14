@@ -1,2 +1,2 @@
-ipsec up north-east
+ipsec up north-east # sanitize-retransmits
 

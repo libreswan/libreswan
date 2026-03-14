@@ -1,1 +1,1 @@
-ipsec up road-east
+ipsec up road-east # sanitize-retransmits

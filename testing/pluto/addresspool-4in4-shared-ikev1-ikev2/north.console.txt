@@ -13,7 +13,7 @@ north #
  echo initdone
 initdone
 north #
- ipsec up north-east
+ ipsec up north-east # sanitize-retransmits
 "north-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
