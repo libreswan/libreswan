@@ -117,6 +117,7 @@ def umount_all(dst):
 
 def wipe_old(dst):
     if args.namespace:
+        print(f"namespace: wipe_old {dst}")
         umount_all(dst)
     elif os.path.islink(dst) or os.path.isfile(dst):
         os.unlink(dst)
@@ -368,6 +369,7 @@ if hostname != "nic":
     wipe_old(secretsfile)
     wipe_old(nssdir)
     if nssdir != ipsecdir:
+        shutil.rmtree(f"{ipsecdir}/policies", ignore_errors=True);
         wipe_old(ipsecdir)
     wipe_old("/etc/strongswan")
 
