@@ -470,7 +470,7 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 {
         ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
         said_buf sbuf;
-
+	
         if (LDBGP(DBG_ROUTING, logger)) { 
                 LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
                         address_buf sb, db;
@@ -493,9 +493,8 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
                         jam(buf, "routing:   ... %s", bool_str(ok));
                 }       
         }               
-////////////////////////////////////////////////
-        ldbg(logger, "TEST: jam_said_sensitive called");
-        return ok;
+        
+	return ok;
 } 
 
 bool kernel_ops_detect_nic_offload(const char *name, const struct logger *logger)
