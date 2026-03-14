@@ -37,7 +37,7 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
 "algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -58,7 +58,7 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
 "algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
@@ -91,7 +91,7 @@ IMPAIR: "intermediate" #1: adding an unknown payload of type 255 to unencrypted 
 "intermediate" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
 "intermediate" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "intermediate" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"intermediate" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"intermediate" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "intermediate" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "intermediate" #1: encountered fatal error in state IKE_AUTH_I
 "intermediate" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

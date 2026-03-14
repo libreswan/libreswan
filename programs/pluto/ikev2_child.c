@@ -728,6 +728,18 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 	jam_string(buf, "}");
 }
 
+/* log TS proposal */
+void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *larval)
+{
+	FOR_EACH_ITEM(spd, &larval->sa.st_connection->child.spds) {
+		jam_string(buf, " ");
+		jam_string(buf, "[");
+		jam_selector_pair(buf, &spd->local->client,
+				  &spd->remote->client);
+		jam_string(buf, "]");
+	}
+}
+
 void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;

@@ -558,6 +558,7 @@ void llog_success_initiate_v2_CREATE_CHILD_SA_child_request(struct ike_sa *ike,
 		 */
 		jam_string(buf, " ");
 		jam_v2_success_child_sa_request_details(buf, larval);
+		jam_v2_success_ts_proposal_details(buf, larval);
 	}
 }
 
