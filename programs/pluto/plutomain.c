@@ -1076,6 +1076,7 @@ int main(int argc, char **argv)
 	/* IKEv2 ignoring OPPO? */
 	pluto_drop_oppo_null = config_setup_yn(KYN_DROP_OPPO_NULL);
 
+	pluto_ike_socket_errqueue = config_setup_yn(KYN_IKE_SOCKET_ERRQUEUE);
 	/* redirect|to */
 
 	init_global_redirect(config_setup_option(KBF_GLOBAL_REDIRECT),
