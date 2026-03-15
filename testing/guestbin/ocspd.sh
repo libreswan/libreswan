@@ -3,38 +3,54 @@
 if test $# -lt 1 ; then
     cat <<EOF 1>&2
 Usage:
-  $0 --start [ KEY ]
-  $0 --log
+  $0 start [ KEY ]
+  $0 log
 EOF
-    echo "Usage: $0 {--start,--log}" 1>&2
-    echo "Usage: $0 {--start,--log}" 1>&2
     exit 1
 fi
 
-run()
-{
+RUN() {
     echo "" "$@"
     "$@"
 }
 
-start()
-{
+CUT() {
+    echo ==== cut ====
+}
+
+TUC() {
+    echo ==== tuc ====
+}
+
+START() {
     if test "$#" -gt 0 ; then
 	key=$1
     else
 	key=nic
     fi
-    run cp /testing/x509/real/mainca/${key}.key /etc/ocspd/private/nic_key.pem
-    run cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
-    run cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
-    run cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
-    run openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
-    run restorecon -R /etc/ocspd
-    run ocspd -v -d -c /etc/ocspd/ocspd.conf
+    {
+	CUT
+	# silent but deadly; on NS there are no files
+	RUN find /etc/ocspd -ls
+	RUN rm -rf /etc/ocspd/*
+	RUN mkdir -p /etc/ocspd/private /etc/ocspd/certs /etc/ocspd/crls
+	TUC
+    }
+    RUN cp /testing/x509/real/mainca/${key}.key /etc/ocspd/private/nic_key.pem
+    RUN cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
+    RUN cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+    RUN cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
+    RUN openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+    RUN restorecon -R /etc/ocspd
+    {
+	CUT
+	RUN find /etc/ocspd -ls
+	TUC
+    }
+    RUN ocspd -v -d -c /etc/ocspd/ocspd.conf
 }
 
-log()
-{
+LOG() {
     east=$(cat /testing/x509/real/mainca/east.serial)
     west=$(cat /testing/x509/real/mainca/west.serial)
     nic=$(cat /testing/x509/real/mainca/nic.serial)
@@ -73,12 +89,12 @@ log()
 }
 
 case "$1" in
-    --start)
+    *start)
 	shift
-	start "$@"
+	START "$@"
 	;;
-    --log)
+    *log)
 	shift
-	log "$@"
+	LOG "$@"
 	;;
 esac
