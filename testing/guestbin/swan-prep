@@ -102,11 +102,13 @@ def lsw_cp_file(src, dst, mode=None, nsbasepath=''):
 
 def umount(dst):
    if os.path.islink(dst):
-        os.unlink(dst)
+       print(f"namespace: unlink {dst}")
+       os.unlink(dst)
    else:
-        cmd = "umount %s" % dst
-        subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii",
-                        check=True)
+       cmd = "umount %s" % dst
+       print(f"namespace: {cmd}")
+       subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii",
+                      check=True)
 
 def umount_all(dst):
     o = subprocess.run("mount", shell=True, capture_output=True, encoding="ascii", check=True)
