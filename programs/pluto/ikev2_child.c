@@ -69,6 +69,8 @@
 #include "iface.h"
 #include "nat_traversal.h"
 #include "ikev2_ke.h"
+#include "ikev2_auth.h"
+#include "terminate.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -1034,6 +1036,22 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		}
 	} else {
 		ldbg_sa(child, "skipping TS processing, mainly to stop tests failing but rumored to cause connection flips?!?");
+	}
+
+	/* It is possible that Child SA switched to permanent connection
+	 * where initiator has IKE SA with IKE_AUTH request outstanding
+	 * (or recently established IKE SA) in that case keep only one of
+	 * them. This is to prevent potential crossing streams scenario for
+	 * IKE AUTH exchange.
+	 */
+	struct ike_sa *ike_to_reject = check_simultaneous_ike_auth(child->sa.st_connection, ike, md);
+	if (ike_to_reject == ike) {
+		/* Reject current IKE_AUTH request */
+		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED, empty_shunk, ENCRYPTED_PAYLOAD);
+		return v2N_AUTHENTICATION_FAILED;
+	} else if (ike_to_reject != NULL) {
+		/* Terminate the other IKE SA, continue with current */
+		terminate_ike_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 	}
 
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",

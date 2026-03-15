@@ -1,0 +1,130 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair block_inbound:yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec auto --add east-west
+"east-west": added oriented IKEv2 connection
+west #
+ # Make sure WEST IKE SA nonce is lower than EAST's.
+west #
+ ipsec whack --impair ike_initiator_nonce:0x01
+west #
+ # Wait for EAST IKE_SA_INIT request.
+west #
+ ../../guestbin/wait-for-inbound.sh 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
+west #
+ # Process EAST IKE_SA_INIT request.
+west #
+ ../../guestbin/drip-inbound.sh 1 '#1: sent IKE_SA_INIT response'
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"east-west" #1: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
+west #
+ ../../guestbin/wait-for-inbound.sh 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
+west #
+ # Initial connection on WEST, wait for sent IKE_SA_INIT request and EAST response.
+west #
+ ipsec up --asynchronous east-west
+"east-west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ../../guestbin/wait-for-pluto.sh '#2: sent IKE_SA_INIT request'
+"east-west" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+west #
+ ../../guestbin/wait-for-inbound.sh 3
+IMPAIR: packet fr/om 192.1.2.23:500: blocking inbound message 3
+west #
+ # Process IKE_SA_INIT response from EAST
+west #
+ ../../guestbin/drip-inbound.sh 3 '#2: processed IKE_SA_INIT response'
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
+IMPAIR: start processing inbound drip packet 3
+IMPAIR: stop processing inbound drip packet 3
+"east-west" #2: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+west #
+ # Wait for WEST sent IKE_AUTH request
+west #
+ ../../guestbin/wait-for-pluto.sh '#2: sent IKE_AUTH request'
+"east-west" #2: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESP <0xESPESP}
+west #
+ ../../guestbin/wait-for-inbound.sh 4
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
+west #
+ # Process EAST IKE_AUTH request - crossing-stream!
+west #
+ # WEST IKE SA nonce is lower and hence it needs to drop its IKE_SA
+west #
+ ../../guestbin/drip-inbound.sh 2 '#1: IKE SA #2 has outstanding IKE_AUTH request'
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
+"east-west" #1: IKE SA #2 has outstanding IKE_AUTH request
+west #
+ ../../guestbin/wait-for-pluto.sh '#2: deleting IKE SA (sent IKE_AUTH request)'
+"east-west" #2: deleting IKE SA (sent IKE_AUTH request)
+west #
+ # Child SA established using EAST IKE SA
+west #
+ ../../guestbin/drip-inbound.sh 4 '#4: responder established Child SA using #1;'
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
+IMPAIR: start processing inbound drip packet 4
+packet from 192.1.2.23:500: IKE_AUTH response has no corresponding IKE SA; message dropped
+IMPAIR: stop processing inbound drip packet 4
+"east-west" #4: responder established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/wait-for.sh --match 'east-west' -- ipsec trafficstatus
+#4: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ ipsec showstates
+#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#4: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+west #
+ ipsec status | grep "east-west"
+"east-west": 192.1.2.45[@west]...192.1.2.23[@east]; routed-tunnel; my_ip=unset; their_ip=unset;
+"east-west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
+"east-west":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"east-west":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"east-west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"east-west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"east-west":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"east-west":   sec_label:unset;
+"east-west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
+"east-west":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"east-west":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"east-west":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"east-west":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"east-west":   v2-auth-hash-policy: none;
+"east-west":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"east-west":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"east-west":   sendca: all; our sendcert: always; their sendcert: always;
+"east-west":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-west":   nat-traversal: encapsulation:auto; keepalive:20s
+"east-west":   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #1; established Child SA: #4;
+"east-west":   conn serial: $1;
+"east-west":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"east-west":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
+#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#4: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#4: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#4: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
