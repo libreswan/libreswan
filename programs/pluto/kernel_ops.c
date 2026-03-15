@@ -465,38 +465,37 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 }
 
 bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
-			      const ip_address *src, const ip_address *dst,
-			      struct logger *logger)
+                              const ip_address *src, const ip_address *dst,
+                              struct logger *logger)
 {
-	ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
-	said_buf sbuf;
-	const char *said_story = (log_ip ? str_said(&said, &sbuf) : "<said>");
-
-	if (LDBGP(DBG_ROUTING, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			address_buf sb, db;
-			jam(buf, "routing:  %s() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
-			    __func__,
-			    str_address(src, &sb),
-			    proto == NULL ? "<NULL>" : proto->name,
-			    pri_ipsec_spi(spi),
-			    str_address(dst, &db),
-			    said_story);
-		}
-	}
-
-	passert(kernel_ops->del_ipsec_spi != NULL);
-
-	bool ok = kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
-
-	if (LDBGP(DBG_ROUTING, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "routing:   ... %s", bool_str(ok));
-		}
-	}
-
+        ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
+        said_buf sbuf;
+	
+        if (LDBGP(DBG_ROUTING, logger)) { 
+                LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+                        address_buf sb, db;
+                        jam(buf, "routing:  %s() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
+                            __func__,
+                            str_address(src, &sb),
+                            proto == NULL ? "<NULL>" : proto->name,
+                            pri_ipsec_spi(spi),
+                            str_address(dst, &db),
+                            str_said(&said, &sbuf));
+                }
+        }       
+                        
+        passert(kernel_ops->del_ipsec_spi != NULL);
+                        
+        bool ok = kernel_ops->del_ipsec_spi(spi, proto, src, dst, str_said_sensitive(&said, &sbuf), logger);
+                        
+        if (LDBGP(DBG_ROUTING, logger)) {
+                LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+                        jam(buf, "routing:   ... %s", bool_str(ok));
+                }       
+        }               
+        
 	return ok;
-}
+} 
 
 bool kernel_ops_detect_nic_offload(const char *name, const struct logger *logger)
 {
