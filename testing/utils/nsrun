@@ -3428,7 +3428,6 @@ class Docker:
         # wrappers within class below
         self.restart = self.docker_restart
         self.stop_inst = self.docker_del
-        self.start_new_inst = self.docker_add
 
     def close_pexpect_shells(self, test):
         for host in test.hosts:
@@ -3515,7 +3514,6 @@ class Namespace:
         # wrappers within class below
         self.restart = self.ns_restart
         self.stop_inst = self.ns_del
-        self.start_new_inst = self.ns_add
 
     def ns_add_guest_path(self, test, host):
         ns = "%s-%s" % (host, test.name)
