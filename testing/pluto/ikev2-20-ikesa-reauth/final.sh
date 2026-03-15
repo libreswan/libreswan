@@ -1,2 +1,2 @@
 ipsec whack --trafficstatus
-ipsec status | grep "ESTABLISHED_"
+ipsec status | grep '^#[0-9]*:.*established .* SA'
