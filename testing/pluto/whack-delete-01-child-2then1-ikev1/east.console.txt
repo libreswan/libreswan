@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east
+ ipsec add east
 "east/0x1": added oriented IKEv1 connection
 "east/0x2": added oriented IKEv1 connection
 east #
