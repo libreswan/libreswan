@@ -33,7 +33,7 @@ conn private
      leftid=%null
      rightid=%null
      right=%opportunisticgroup
-     negotiationshunt=hold
+     negotiationshunt=drop
      failureshunt=drop
      auto=ondemand
 

@@ -46,7 +46,7 @@ Bare Shunt list:
 road #
  # wait on OE retransmits and rekeying - shuntstatus is empty because
 road #
- # shunt 7.7.7.7 is not bare and its conn negotiationshunt=hold, so
+ # shunt 7.7.7.7 is not bare and its conn negotiationshunt=drop, so
 road #
  # ping should fail
 road #
