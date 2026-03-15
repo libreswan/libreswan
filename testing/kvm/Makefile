@@ -295,6 +295,9 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 KVM_OS_TEST_HOST_NAMES = east west rise set north
 KVM_LINUX_TEST_HOST_NAMES = $(KVM_OS_TEST_HOST_NAMES) road nic
 
+KVM_TEST_HOST_NAMES   = $(KVM_LINUX_TEST_HOST_NAMES)
+KVM_TEST_DOMAINS      = $(foreach prefix, $(KVM_TEST_PREFIXES), $(addprefix $(prefix), $(KVM_TEST_NAMES)))
+
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
 KVM_BUILDDIR ?= $(KVM_LOCALDIR)
@@ -306,10 +309,6 @@ KVM_$($(strip $1))_BASE_DOMAIN    = $$(KVM_BASEDIR)/$$(KVM_PREFIX)$(strip $1)-ba
 KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(KVM_UPGRADEDIR)/$$(KVM_PREFIX)$(strip $1)-upgrade
 KVM_$($(strip $1))_BUILD_DOMAIN   = $$(KVM_BUILDDIR)/$$(KVM_PREFIX)$(strip $1)
 
-KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
-KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
-KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
-
 # don't override KVM_LINUX_TEST_HOST_NAMES above
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
@@ -320,13 +319,15 @@ KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_TEST_DOMAINS)
 
+KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
+KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
+KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
+KVM_DOMAINS          += $$(KVM_$($(strip $1))_TEST_DOMAINS)
+
 endef
 
 $(foreach platform, $(KVM_PLATFORMS), \
 	$(eval $(call domains, $(platform))))
-
-KVM_TEST_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_TEST_HOST_NAMES))
-KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_TEST_DOMAINS))
 
 KVM_DOMAINS += $(KVM_BASE_DOMAINS)
 KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
@@ -1320,6 +1321,7 @@ KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_
 
 .PHONY: kvm-transmogrify kvm-uninstall
 kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
+kvm-uninstall: kvm-destroy-test-domains
 kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
@@ -1328,7 +1330,7 @@ kvm-transmogrify-%: kvm-uninstall-%
 	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
-kvm-uninstall-%:
+kvm-uninstall-%: kvm-destroy-test-domains
 	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
@@ -1481,9 +1483,8 @@ kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
 # in MiB
 KVM_TEST_MEMORY ?= 512
 
-.PRECIOUS: $(KVM_TEST_DOMAINS)
-
 define define-test-domain
+  .PRECIOUS: $(addprefix $(1), $(addprefix $(2), $(3)))
   $(addprefix $(1), $(addprefix $(2), $(3))): \
 		$(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(2)) \
 		| \
@@ -1549,12 +1550,17 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
+.PHONY: kvm-destroy-test-domains
+kvm-destroy-test-domains:
+	./bin/destroy.sh $(notdir $(KVM_TEST_DOMAINS))
+
 .PHONY: kvm-shutdown
 
+kvm-shutdown: kvm-destroy-test-domains
 kvm-shutdown: $(foreach os, $(KVM_OS), kvm-shutdown-$(os))
 
 $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORMS)): \
-kvm-shutdown-%:
+kvm-shutdown-%: kvm-destroy-test-domains
 	: $@=$*
 	./bin/shutdown.sh $(notdir $(KVM_$($*)_BASE_DOMAIN) $(KVM_$($*)_UPGRADE_DOMAIN) $(KVM_$($*)_BUILD_DOMAIN))
 	./bin/destroy.sh $(notdir $(KVM_$($*)_TEST_DOMAINS))
@@ -1695,7 +1701,7 @@ $(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
 $(call kvm-var-value,KVM_TEST_DOMAINS)
 
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
+$(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
 
 $(call kvm-var-value,KVM_BASE_DOMAINS)
 $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
