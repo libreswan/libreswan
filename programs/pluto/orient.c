@@ -215,9 +215,9 @@ static void VDBG_orient_end(struct verbose verbose, struct connection *c, enum e
 
 static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 {
-	jam_string(buf, iface->real_device_name);
-	jam_string(buf, " ");
 	jam_address(buf, &iface->local_address);
+	jam_string(buf, "%");
+	jam_string(buf, iface->real_device_name);
 }
 
 bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attached*/)
