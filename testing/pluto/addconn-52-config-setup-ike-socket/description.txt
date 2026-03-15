@@ -1,0 +1,1 @@
+ike-socket-errqueue and ike-socket-bufsize in ipsec.conf and CLI
