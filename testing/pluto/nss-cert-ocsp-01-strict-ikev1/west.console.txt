@@ -14,13 +14,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add nss-cert
+ ipsec add nss-cert
 "nss-cert": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up nss-cert
+ ipsec up nss-cert # sanitize-retransmits
 "nss-cert" #1: initiating IKEv1 Main Mode connection
 "nss-cert" #1: sent Main Mode request
 "nss-cert" #1: sent Main Mode I2

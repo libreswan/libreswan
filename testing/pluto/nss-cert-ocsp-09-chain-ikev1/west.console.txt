@@ -22,10 +22,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add nss-cert-ocsp
+ ipsec add nss-cert-ocsp
 "nss-cert-ocsp": added oriented IKEv1 connection
 west #
- ipsec auto --status |grep nss-cert-ocsp
+ ipsec connectionstatus nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert-ocsp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nss-cert-ocsp":   mycert=west_chain_endcert;
@@ -53,7 +53,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up nss-cert-ocsp
+ ipsec up nss-cert-ocsp # sanitize-retransmits
 "nss-cert-ocsp" #1: initiating IKEv1 Main Mode connection
 "nss-cert-ocsp" #1: sent Main Mode request
 "nss-cert-ocsp" #1: sent Main Mode I2

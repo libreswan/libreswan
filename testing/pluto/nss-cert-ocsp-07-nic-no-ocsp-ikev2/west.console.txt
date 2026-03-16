@@ -29,14 +29,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair timeout_on_retransmit
-west #
  ipsec whack --impair revival
 west #
- ipsec auto --add nss-cert-ocsp
+ ipsec add nss-cert-ocsp
 "nss-cert-ocsp": added oriented IKEv2 connection
 west #
- ipsec auto --status |grep nss-cert-ocsp
+ ipsec connectionstatus nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert-ocsp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nss-cert-ocsp":   mycert=revoked;
@@ -57,7 +55,7 @@ west #
 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "nss-cert-ocsp":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "nss-cert-ocsp":   sendca: all; our sendcert: always; their sendcert: always;
-"nss-cert-ocsp":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"nss-cert-ocsp":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
 "nss-cert-ocsp":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-ocsp":   routing: unrouted;
 "nss-cert-ocsp":   conn serial: $1;
@@ -65,7 +63,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up nss-cert-ocsp
+ ipsec up nss-cert-ocsp
 "nss-cert-ocsp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "nss-cert-ocsp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert-ocsp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
