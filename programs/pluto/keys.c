@@ -522,8 +522,9 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	     str_id(that_id, &that_buf),
 	     str_enum_long(&secret_kind_names, kind, &kb));
 
-	return lsw_find_secret_by_id(pluto_secrets, kind,
-				     this_id, that_id, asym);
+	return secret_find_by_id(pluto_secrets, kind,
+				 this_id, that_id, asym,
+				 VERBOSE(DEBUG_STREAM, logger, NULL));
 }
 
 /*
@@ -542,9 +543,11 @@ const struct secret_preshared_stuff *xauth_secret_by_xauthname(char *xauthname,
 		}
 	};
 
-	struct secret *best = lsw_find_secret_by_id(pluto_secrets,
-						    SECRET_XAUTH,
-						    &xa_id, NULL, true);
+	struct secret *best = secret_find_by_id(pluto_secrets,
+						SECRET_XAUTH,
+						&xa_id, NULL,
+						/*asym*/true,
+						VERBOSE(DEBUG_STREAM, logger, NULL));
 	if (best == NULL) {
 		return NULL;
 	}

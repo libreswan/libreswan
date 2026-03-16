@@ -295,36 +295,88 @@ bool secret_pubkey_same(const struct secret *lhs,
 	return lpk->content.type->pubkey_same(&lpk->content, &rpk->content, logger);
 }
 
-struct secret *lsw_find_secret_by_id(struct secret *secrets,
-				     enum secret_kind kind,
-				     const struct id *local_id,
-				     const struct id *remote_id,
-				     bool asym)
-{
-	const struct logger *logger = &global_logger;
-	enum {
-		match_none = 0,
+/*
+ * XXX: replace with proper bitset?
+ */
 
-		/* bits */
-		match_default = 1,
-		match_any = 2,
-		match_remote = 4,
-		match_local = 8
-	};
+enum secret_match {
+	match_none = 0,
+
+	/* bits */
+	match_default = 1,
+	match_any = 2,
+	match_remote = 4,
+	match_local = 8
+};
+
+static void jam_secret_match(struct jambuf *buf, lset_t match)
+{
+	/* should define an enum set */
+	jam_string(buf, "{");
+	const char *sep = "";
+	if (match & match_local) {
+		jam_string(buf, sep); sep = "+";
+		jam_string(buf, "local");
+	}
+	if (match & match_remote) {
+		jam_string(buf, sep); sep = "+";
+		jam_string(buf, " remote");
+	}
+	if (match & match_any) {
+		jam_string(buf, sep); sep = "+";
+		jam_string(buf, " any");
+	}
+	if (match & match_default) {
+		jam_string(buf, sep); sep = "+";
+		jam_string(buf, " default");
+	}
+	jam_string(buf, "}");
+}
+
+struct secret *secret_find_by_id(struct secret *secrets,
+				 enum secret_kind kind,
+				 const struct id *local_id,
+				 const struct id *remote_id,
+				 bool asym,
+				 struct verbose verbose)
+{
 	lset_t best_match = match_none;
 	struct secret *best = NULL;
 
+	VDBG_JAMBUF(buf) {
+		jam_string(buf, "looking for");
+		if (asym) {
+			jam_string(buf, " asymmetric");
+		}
+		jam_string(buf, " ");
+		jam_enum_long(buf, &secret_kind_names, kind);
+		jam_string(buf, " key ");
+		jam_id(buf, local_id);
+		if (remote_id != NULL) {
+			jam_string(buf, "<->");
+			jam_id(buf, remote_id);
+		}
+		jam_string(buf, ":");
+	}
+	verbose.level++;
+	unsigned level = verbose.level;
+
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		id_buf idl;
-		name_buf kb, skb;
-		ldbg(logger, "line %d: key type %s(%s) to type %s",
-		     s->line,
-		     str_enum_long(&secret_kind_names, kind, &kb),
-		     str_id(local_id, &idl),
-		     str_enum_long(&secret_kind_names, s->kind, &skb));
+		verbose.level = level;
+
+		VDBG_JAMBUF(buf) {
+			jam(buf, "line %d: key type ", s->line);
+			jam_enum_long(buf, &secret_kind_names, s->kind);
+			jam_string(buf, " IDs:");
+			for (struct id_list *id = s->ids; id != NULL; id = id->next) {
+				jam_string(buf, " ");
+				jam_id(buf, &id->id);
+			}
+		}
+		verbose.level++;
 
 		if (s->kind != kind) {
-			ldbg(logger, "  wrong kind");
+			vdbg("wrong kind");
 			continue;
 		}
 
@@ -368,34 +420,25 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						match |= match_remote;
 					}
 				}
-
-				id_buf idi;
-				id_buf idl;
-				id_buf idr;
-				ldbg(logger, "%d: compared key %s to %s / %s -> "PRI_LSET,
-				     idnum,
-				     str_id(&i->id, &idi),
-				     str_id(local_id, &idl),
-				     (remote_id == NULL ? "" : str_id(remote_id, &idr)),
-				     match);
 			}
 
 			/*
 			 * If our end matched the only id in the list,
 			 * default to matching any peer.
+			 *
 			 * A more specific match will trump this.
 			 */
 			if (match == match_local &&
-			    s->ids->next == NULL)
+			    s->ids->next == NULL) {
 				match |= match_default;
+			}
 		}
 
 		if (match == match_none) {
-			ldbg(logger, "  id didn't match");
+			vdbg("ID didn't match");
 			continue;
 		}
 
-		ldbg(logger, "  match="PRI_LSET, match);
 		if (match == best_match) {
 			/*
 			 * Two good matches are equally good: do they
@@ -414,7 +457,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			case SECRET_RSA:
 			case SECRET_ECDSA:
 			case SECRET_EDDSA:
-				same = secret_pubkey_same(s, best, logger);
+				same = secret_pubkey_same(s, best, verbose.logger);
 				break;
 			case SECRET_XAUTH:
 				/*
@@ -430,7 +473,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				bad_case(kind);
 			}
 			if (!same) {
-				ldbg(logger, "  multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
+				vdbg("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
 				/*
 				 * list is backwards: take latest in
 				 * list
@@ -447,7 +490,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			 * count, even when there are other ids in the
 			 * list.
 			 */
-			ldbg(logger, "  local match not asymmetric");
+			vdbg("{local} match not asymmetric");
 			continue;
 		}
 
@@ -463,21 +506,29 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			 * XXX: what combinations are missing?
 			 */
 			if (match > best_match) {
-				ldbg(logger, "  match "PRI_LSET" beats previous best_match "PRI_LSET" match=%p (line=%d)",
-				    match, best_match, s, s->line);
+				VDBG_JAMBUF(buf) {
+					jam_secret_match(buf, match);
+					jam_string(buf, " beats previous best_match ");
+					jam_secret_match(buf, best_match);
+				}
 				/* this is the best match so far */
 				best_match = match;
 				best = s;
 			} else {
-				ldbg(logger, "  match "PRI_LSET" loses to best_match "PRI_LSET,
-				    match, best_match);
+				VDBG_JAMBUF(buf) {
+					jam_secret_match(buf, match);
+					jam_string(buf, " looses to best_match ");
+					jam_secret_match(buf, best_match);
+				}
 			}
 		}
 	}
 
-	ldbg(logger, "concluding with best_match="PRI_LSET" best=%p (lineno=%d)",
-	    best_match, best,
-	    best == NULL ? -1 : best->line);
+	VDBG_JAMBUF(buf) {
+		jam_string(buf, "concluding with best_match ");
+		jam_secret_match(buf, best_match);
+		jam(buf, " (lineno=%d)", best == NULL ? -1 : best->line);
+	}
 
 	return best;
 }

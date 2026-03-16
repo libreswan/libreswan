@@ -359,11 +359,12 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *sec
 				       struct logger *logger);
 extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger);
 
-extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
-					    enum secret_kind kind,
-					    const struct id *my_id,
-					    const struct id *his_id,
-					    bool asym);
+extern struct secret *secret_find_by_id(struct secret *secrets,
+					enum secret_kind kind,
+					const struct id *my_id,
+					const struct id *his_id,
+					bool asym,
+					struct verbose verbose);
 
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
