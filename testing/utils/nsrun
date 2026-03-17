@@ -3626,8 +3626,12 @@ class Namespace:
 
         for i, host in enumerate(test.hosts):
             self.add_nsfs_files(test, host)
-            self.ns_add_network(test, test.shell[host])
-            self.ns_add_testing_dir("%s/testing" % test.args.libreswandir, test.shell[host])
+            shell = test.shell[host]
+            self.ns_add_network(test, shell)
+            self.ns_add_testing_dir("%s/testing" % test.args.libreswandir, shell)
+            # should be in Test.do_test()
+            cmd = f"cd /testing/pluto/{test.name}"
+            sudo_shell_run(cmd, shell)
 
     def ns_del(self, test, instance="previous"):
 
