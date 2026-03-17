@@ -29,8 +29,18 @@ RUN() {
 BIND() {
     local src=$1
     local dst=$2
-    RUN mkdir -p "${src}"
     RUN umount "${dst}" || true
+    RUN mount --bind "${src}" "${dst}"
+}
+
+# note the difference, RM bind empties ${src}
+
+RM_BIND() {
+    local src=${nsdir}/$1
+    local dst=$2
+    RUN umount "${dst}" || true
+    RUN mkdir -p "${src}"
+    RUN rm -rf "${src}"/*
     RUN mount --bind "${src}" "${dst}"
 }
 
@@ -53,10 +63,12 @@ RUN mkdir -p "${nsdir}"
 # BIND "${nsdir}"/etc.ipsec.d /etc/ipsec.d
 # BIND "${nsdir}"/etc.strongswan /etc/strongswan
 # BIND "${nsdir}"/tmp /tmp
-# BIND "${nsdir}"/nss /var/lib/ipsec/nss
+
+# bind and empty NSS directory
+RM_BIND nss /var/lib/ipsec/nss
 
 # bind and rebuild OCSPD's directory
-BIND "${nsdir}"/ocspd /etc/ocspd
+RM_BIND ocspd /etc/ocspd
 mkdir -p /etc/ocspd/private
 mkdir -p /etc/ocspd/certs
 mkdir -p /etc/ocspd/crls
