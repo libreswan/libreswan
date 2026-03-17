@@ -42,6 +42,10 @@
 #include "ikev2_replace.h"
 #include "orient.h"
 #include "ikev1.h"	/* for established_isakmp_sa_for_state() */
+#include "extract.h"
+#include "resolve_helper.h"
+
+static resolve_helper_callback revival_resolve_helper_callback;
 
 /*
  * This code path can't tell if the flush is due to an initiate or a
@@ -208,7 +212,6 @@ static bool scheduled_revival(struct connection *c, struct state *st/*can be NUL
 			     "scheduling redirect %u to %s",
 			     c->redirect.attempt,
 			     str_address_sensitive(&c->redirect.ip, &ab));
-
 			schedule_connection_revival(c, subplot, deltatime_zero,
 						    (impair.revival ? "redirect" : NULL),
 						    logger);
@@ -225,7 +228,6 @@ static bool scheduled_revival(struct connection *c, struct state *st/*can be NUL
 
 	schedule_revival_event(c, logger, subplot);
 	return true;
-
 }
 
 bool scheduled_connection_revival(struct connection *c, const char *subplot)
@@ -287,14 +289,88 @@ bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot)
 	return scheduled_revival(c, &ike->sa, subplot, ike->sa.logger);
 }
 
-void revive_connection(struct connection *c, const char *subplot,
+/*
+ * XXX: identical to connection_check_ddns1_continue().
+ */
+
+static void request_revival_resolve_help(struct connection *c)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+
+	/*
+	 * Pull any existing kernel policy and routing based on
+	 * current SPDs, and then delete the SPDs.
+	 *
+	 * Remember, per above, the connection isn't established.
+	 *
+	 * XXX: since the connection has at least one unknown
+	 * addresses is it even oriented or routed?  Lets find out.
+	 *
+	 * Note: disorient() also deletes any SPDs, orient() will put
+	 * them back.
+	 */
+
+	vdbg("unrouting (oriented %s, routing %s, kernel route installed %s, kernel policy installed %s)",
+	     bool_str(oriented(c)),
+	     bool_str(c->policy.route),
+	     bool_str(kernel_route_installed(c)),
+	     bool_str(kernel_policy_installed(c)));
+	connection_unroute(c, HERE);
+
+	if (oriented(c)) {
+		vdbg("disorienting");
+		disorient(c);
+	} else {
+		vdbg("already disoriented");
+	}
+
+	/*
+	 * Now that everything is torn down, start the rebuild.  Even
+	 * when resolve failed, build new proposals - gives ipsec
+	 * connsectionstatus something to display.
+	 */
+
+	delete_connection_proposals(c);
+
+	request_resolve_help(c, revival_resolve_helper_callback,
+			     /*background*/false, c->logger);
+}
+
+void revival_resolve_helper_callback(struct connection *c,
+				     const struct host_addrs *resolved_host_addrs,
+				     bool background UNUSED,
+				     struct verbose verbose)
+{
+	/*
+	 * If DNS is still outstanding, caller will have scheduled
+	 * DDNS.
+	 */
+
+	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
+		vexpect(c->remote->config->host.host.type == KH_IPHOSTNAME);
+		vlog("not resolved");
+		whack_detach(c, verbose.logger);
+		return;
+	}
+
+	if (orient(c, verbose)) {
+		/* new orientation */
+		connection_oriented(c, /*background*/true, HERE);
+	}
+
+	whack_detach(c, verbose.logger);
+}
+
+void revive_connection(struct connection *c,
+		       const char *subplot,
 		       const threadtime_t *inception)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+
 	if (c->redirect.attempt > 0) {
-		ldbg(c->logger, "redirecting connection %s", subplot);
+		vdbg("redirecting connection %s", subplot);
 	} else {
-		llog(RC_LOG, c->logger,
-		     "reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
+		vlog("reviving connection which %s but must remain up per local policy (serial "PRI_CO")",
 		     subplot, pri_co(c->serialno));
 	}
 
@@ -313,7 +389,19 @@ void revive_connection(struct connection *c, const char *subplot,
 	 * It should instead wait until the interface comes back and
 	 * then, assuming UP, initiate.
 	 */
-	if (!PEXPECT(c->logger, oriented(c))) {
+	if (vbad(!oriented(c))) {
+		return;
+	}
+
+	/*
+	 * This is the event for the second attempt at revival.
+	 *
+	 * Should this flip to trying DNS lookups?
+	 */
+
+	if (c->revival.attempt >= 2 &&
+	    c->remote->config->host.host.type == KH_IPHOSTNAME) {
+		request_revival_resolve_help(c);
 		return;
 	}
 
