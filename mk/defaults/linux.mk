@@ -70,6 +70,7 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   ifeq ($(LINUX_VERSION_CODENAME),noble) # Ubuntu 24.04.3 LTS; May 2029; Pro Apr 2034
     USE_XFRM_HEADER_COPY ?= true
     USE_ML_KEM_768 ?= false
+    USE_EDDSA ?= false
   endif
 endif
 
