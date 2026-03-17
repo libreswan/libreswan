@@ -134,8 +134,7 @@ def shell(command, out=False):
         print(command)
     status, output = subprocess.getstatusoutput(command)
     if status:
-        print(("command '%s' failed with status %d: %s" %
-               (command, status, output)))
+        print(f"command '{command}' failed with status {status}: {output}")
     elif (args.verbose or out) and output:
         print(output)
     return output
@@ -315,7 +314,6 @@ resolve_conf = "/etc/resolv.conf"
 etc_hosts = "/etc/hosts"
 
 if hostname != "nic":
-    nssdir = get_configsetup("nssdir")
     ipsecdir = get_configsetup("ipsecdir")
     configfile = get_configsetup("configfile")
     secretsfile = get_configsetup("secretsfile")
@@ -369,10 +367,7 @@ if hostname != "nic":
     # do not clean pid files or files opened by pluto, charon .. yet.
     wipe_old(configfile)
     wipe_old(secretsfile)
-    wipe_old(nssdir)
-    if nssdir != ipsecdir:
-        shutil.rmtree(f"{ipsecdir}/policies", ignore_errors=True);
-        wipe_old(ipsecdir)
+    shutil.rmtree(f"{ipsecdir}/policies", ignore_errors=True);
     wipe_old("/etc/strongswan")
 
 if args.namespace:
@@ -425,9 +420,6 @@ if hostname != "nic":
     match args.userland:
         case "libreswan":
             dst = "/run/pluto"
-            if nssdir and ipsecdir != nssdir:
-                src = "%s%s" % (nsbasepath, nssdir)
-                lsw_init_dir(src, nssdir)
         case "strongswan":
             dst="/run/strongswan"
         case _:
@@ -517,16 +509,15 @@ if args.userland in ("libreswan") and hostname != "nic" and not args.namespace:
         wipe_old("/etc/system-fips") # would work? would remove file from real system? AA_201902
 
 # Set up NSS DB
-#
-# Stuff above will have emptied and re-created the directory.
 
 if args.userland in ("libreswan") and hostname != "nic":
 
+    # clean up existing
+    nssdir = "/var/lib/ipsec/nss"
+    shell(f"rm -rf {nssdir}/*")
+
     # Determine the NSS password and save
     if args.nsspw or args.fips:
-        # Save the raw password so it can be passed to NSS commands.
-        util_pw = " -f /run/pluto/nsspw"
-        p12cmd_pw = " -k /run/pluto/nsspw"
         with open("/run/pluto/nsspw", "w") as f:
             f.write(nsspassword)
             f.write("\n")
@@ -535,12 +526,9 @@ if args.userland in ("libreswan") and hostname != "nic":
         if args.nsspw or args.fips:
             with open(ipsecdir + "/nsspassword", "w") as f:
                 if args.nsspw:
-                    f.write("NSS Certificate DB:" + nsspassword + "\n")
+                    f.write(f"NSS Certificate DB:{nsspassword}\n")
                 if args.fips:
-                    f.write("NSS FIPS 140-2 Certificate DB:" + nsspassword + "\n")
-    else:
-        util_pw = ""
-        p12cmd_pw = " -K ''"
+                    f.write(f"NSS FIPS 140-2 Certificate DB:{nsspassword}\n")
 
     match args.keys:
         case Keys.HOST:
@@ -557,10 +545,10 @@ if args.userland in ("libreswan") and hostname != "nic":
         case Keys.X509:
             print("Preparing X.509 files")
             #print("Creating NSS database containing X.509 keys and certificates")
-            shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
+            shell(f"/usr/bin/certutil -N --empty-password -d sql:{nssdir}")
         case Keys.NONE:
             print("Creating empty NSS database")
-            shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
+            shell(f"/usr/bin/certutil -N --empty-password -d sql:{nssdir}")
 
     # If needed set a password (this will upgrade any existing
     # database)
@@ -568,11 +556,11 @@ if args.userland in ("libreswan") and hostname != "nic":
     if args.nsspw or args.fips:
         with open("/tmp/pw", "w") as f:
             f.write("\n")
-        shell("/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:" + nssdir, out=True)
+        shell(f"/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:{nssdir}", out=True)
 
     # Switch on fips in the NSS db
     if args.fips:
-        shell("/usr/bin/modutil -dbdir sql:" + nssdir + " -fips true -force", out=True)
+        shell(f"/usr/bin/modutil -dbdir sql:{nssdir} -fips true -force", out=True)
 
     # this section is getting rough. could use a nice refactoring
     if args.keys == Keys.X509:
