@@ -327,6 +327,8 @@ $(OBJS): | $(builddir)/optarg/
 OBJS += optarg/optarg.o
 OBJS += optarg/optarg_address_dns.o
 OBJS += optarg/optarg_address_num.o
+OBJS += optarg/optarg_nssdir.o
+OBJS += optarg/optarg_nss_password.o
 
 #
 # DNS stuff

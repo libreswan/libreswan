@@ -23,6 +23,7 @@
 #include "ip_port.h"
 #include "lmod.h"
 
+struct nss_flags;
 struct logger;
 enum timescale;
 
@@ -83,6 +84,10 @@ int optarg_getopt(struct logger *logger, int argc, char **argv);
 	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
 	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
 	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
+
+/*
+ * Print usage then bail.
+ */
 
 void optarg_usage(const char *progname, const char *synopsis,
 		  const char *details) NEVER_RETURNS;
@@ -163,5 +168,16 @@ void optarg_debug(enum optarg_debug);
 void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
 
 void optarg_version(const char *suffix) NEVER_RETURNS;
+
+/*
+ * Options for opening the NSS directory.
+ */
+
+#define NSSDIR_OPTS							\
+	{ "nssdir\0<dir>",         required_argument,  NULL,   OPT_NSSDIR, }, /* nss-tools use -d */ \
+	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, }
+
+void optarg_nssdir(struct logger *logger);
+void optarg_nss_password(struct logger *logger, struct nss_flags *nss);
 
 #endif
