@@ -603,6 +603,7 @@ enum opt {
 	OPT_ADDKE,
 	OPT_FIPS,
 	OPT_IGNORE,
+	OPT_NSSDIR,
 	OPT_PASSWORD,
 	OPT_VERSION,
 };
@@ -620,6 +621,7 @@ const struct option optarg_options[] = {
 	{ OPT("pfs", "{yes,no}"), optional_argument, NULL, OPT_PFS, },
 	{ OPT("addke", "{yes,no}"), optional_argument, NULL, OPT_ADDKE, },
 	{ OPT("fips", "{yes,no}"), optional_argument, NULL, OPT_FIPS, },
+	NSSDIR_OPTS,
 	{ 0, 0, 0, 0 }
 };
 
@@ -689,9 +691,14 @@ int main(int argc, char *argv[])
 		case OPT_IGNORE:
 			ignore_transform_lookup_error = true;
 			continue;
-		case OPT_PASSWORD:
-			nss.password = optarg_nonempty(logger);
+
+		case OPT_NSSDIR:
+			optarg_nssdir(logger);
 			continue;
+		case OPT_PASSWORD:
+			optarg_nss_password(logger, &nss);
+			continue;
+
 		}
 		fprintf(stderr, "unknown option: %s\n", optarg);
 		exit(ERROR);
