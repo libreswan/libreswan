@@ -1090,9 +1090,13 @@ addvti() {
 		fi
 		srcip=""
 		if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
-		    srcip=" src ${PLUTO_MY_SOURCEIP}"
+                    srcip=" src ${PLUTO_MY_SOURCEIP}"
 		fi
-		RUN ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
+		metric=""
+		if [ -n "${PLUTO_METRIC}" ]; then
+                    metric=" metric ${PLUTO_METRIC}"
+		fi
+		RUN ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip} ${metric}
 		echo "done ip route"
 	    fi
 	fi
@@ -1102,8 +1106,16 @@ addvti() {
 delvti() {
     if [ -n "${VTI_IFACE}" -a -d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]; then
 	if [ "${VTI_ROUTING}" = yes ]; then
-	    RUN ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
-		src ${PLUTO_MY_SOURCEIP} ||:
+	    srcip=""
+	    if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
+                srcip=" src ${PLUTO_MY_SOURCEIP}"
+	    fi
+	    metric=""
+	    if [ -n "${PLUTO_METRIC}" ]; then
+                metric=" metric ${PLUTO_METRIC}"
+	    fi
+	    # echo "ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip} ${metric}
+	    RUN ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip} ${metric} ||:
 	fi
 	# TODO: we can't delete vti interface because we don't have proper reference
 	# counting.
