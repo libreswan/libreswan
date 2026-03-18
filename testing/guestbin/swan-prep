@@ -222,7 +222,6 @@ if os.path.isfile("/usr/libexec/ipsec/pluto"):
                  "---------------------------------------------------------------------\n")
 
 parser = argparse.ArgumentParser(description='swan-prep arguments')
-exclusive_grp_dnsserver = parser.add_mutually_exclusive_group()
 
 parser.add_argument('--testpath', '-t', action='store',
                     default=os.getcwd(), help="Test directory full path %s " % os.getcwd())
@@ -258,9 +257,6 @@ parser.add_argument('--nsspw', action='store_true',
 parser.add_argument('--fips', '-f', action='store_true',
                     help='prepare /etc/ipsec.d for running in FIPS mode')
 
-exclusive_grp_dnsserver.add_argument('--dnssec', '-d', action='store_true',
-                    help='start nsd and unbound for DNSSEC - meant only for nic')
-
 parser.add_argument('--46', '--64', action='store_true',
                     help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv46', default=False)
 parser.add_argument('--verbose', '-v', action='store_true',
@@ -284,15 +280,6 @@ if not os.path.isdir(testpath):
     sys.exit("Unknown or bad testpath '%s'" % args.testname)
 
 testname = os.path.basename(testpath)
-
-# dnssec is only run on nic, but nic isn't supposed to run swan-prep
-# ever :/ when using namespaces, nic has no eth0
-if not args.dnssec:
-    o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
-    ifname = o.stdout.split(' ')[1]
-    if o.returncode:
-        print("cannot find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
-        sys.exit(1)
 
 # nsrun set magic string SWAN_PLUTOTEST=YES in the environment
 # to identify namespace
@@ -596,64 +583,6 @@ if args.namespace:
 if hostname != "nic" and not args.ipv46:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
-
-if args.dnssec:
-    if args.namespace:
-        dst = "/etc/nsd"
-        src = "%s%s" % (nsbasepath, dst)
-        lsw_init_dir(src, dst)
-
-        dst ="/run/nsd"
-        src = "%s%s" % (nsbasepath, dst)
-        lsw_init_dir(src, dst)
-
-        src = '/testing/baseconfigs/all/etc/nsd'
-        dst = '/etc/'
-        rsync_ap(src, dst);
-    else:
-        rsync_ap('/testing/baseconfigs/all/etc/nsd/conf.d', '/etc/nsd')
-        rsync_ap('/testing/baseconfigs/all/etc/nsd/server.d', '/etc/nsd')
-
-    if args.dnssec:
-        # nsd listen on port 5353 and unbound listen on port 53
-        subprocess.getoutput("sed -i 's/port: 53$/port: 5353/' /etc/nsd/server.d/nsd-server-libreswan.conf")
-    else:
-        #nsd listen on port 53
-        subprocess.getoutput("sed -i 's/port: 5353$/port: 53/' /etc/nsd/server.d/nsd-server-libreswan.conf")
-
-    if args.namespace:
-        cmd = "../../guestbin/nsd-start.sh start"
-        output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
-    else:
-        subprocess.getoutput("systemctl start nsd")
-
-    # now unbound
-    if args.dnssec:
-        if args.namespace:
-            dst = "/etc/unbound"
-            src = "%s%s" % (nsbasepath, dst)
-
-            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-                sys.exit(1)
-
-            dst ="/run/unbound"
-            src = "%s%s" % (nsbasepath, dst)
-            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-                sys.exit(1)
-
-            if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
-                print("failed to mount_bind src=%s dst %s" % (src, dst))
-                sys.exit(1)
-
-        src = '/testing/baseconfigs/all/etc/unbound'
-        dst = '/etc/'
-        rsync_ap(src, dst);
-
-        if args.namespace:
-            cmd = "../../guestbin/unbound-start.sh restart"
-            subprocess.check_output(cmd, shell=True, timeout=120, stderr=subprocess.STDOUT)
-        else:
-            subprocess.getoutput("systemctl start unbound")
 
 if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
