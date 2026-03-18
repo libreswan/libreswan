@@ -133,10 +133,9 @@ const struct option optarg_options[] = {
 	{ "version\0",    no_argument,            NULL,   OPT_VERSION, },
 	{ "verbose\0",    no_argument,            NULL,   OPT_VERBOSE, },
 	{ "configdir\0",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
-	{ "nssdir\0",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
-	{ "password\0",   required_argument,      NULL,   OPT_PASSWORD, },
 	{ "pem\0",        no_argument,            NULL,   OPT_PEM, },
 	{ "pubkey\0",     no_argument,            NULL,   OPT_PUBKEY, },
+	NSSDIR_OPTS,
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -521,11 +520,10 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case OPT_NSSDIR:
-			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
+			optarg_nssdir(logger);
 			continue;
-
 		case OPT_PASSWORD:
-			nss.password = optarg;
+			optarg_nss_password(logger, &nss);
 			continue;
 
 		case OPT_VERBOSE:

@@ -96,8 +96,7 @@ const struct option optarg_options[] = {
 	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, },
 	{ "help\0",                no_argument,        NULL,   OPT_HELP, },
 	{ "version\0",             no_argument,        NULL,   OPT_VERSION, },
-	{ "nssdir\0<dir>",         required_argument,  NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
-	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, },
+	NSSDIR_OPTS,
 	{ "seedbits\0<bits>",      required_argument,  NULL,   OPT_SEEDBITS, },
 	{ 0, 0, NULL, 0, }
 };
@@ -171,11 +170,12 @@ int main(int argc, char *argv[])
 			optarg_version("");
 
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
-			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
+			optarg_nssdir(logger);
 			continue;
 		case OPT_PASSWORD:       /* token authentication password */
-			nss.password = optarg;
+			optarg_nss_password(logger, &nss);
 			continue;
+
 		case OPT_SEEDBITS: /* seed bits */
 			seedbits = atoi(optarg);
 			if (PK11_IsFIPS()) {
