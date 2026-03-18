@@ -1,7 +1,7 @@
 iptables -t nat -F
 iptables -F
 setenforce Permissive
-/testing/guestbin/swan-prep --dnssec
+/testing/guestbin/dnssec.sh
 dig +short  @127.0.0.1 road.testing.libreswan.org
 dig +short  @127.0.0.1 east.testing.libreswan.org
 : ==== cut ====
