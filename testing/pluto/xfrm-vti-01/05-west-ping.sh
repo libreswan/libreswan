@@ -5,7 +5,7 @@ ipsec trafficstatus
 
 # now packets into vti0 device will get marked, and encrypted and
 # counted
-../../guestbin/ip.sh route add 192.0.2.0/24 dev vti0
+../../guestbin/ip-route.sh add 192.0.2.0/24 dev vti0
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec trafficstatus
 

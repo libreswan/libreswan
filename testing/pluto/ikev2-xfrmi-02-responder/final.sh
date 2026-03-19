@@ -4,5 +4,5 @@ ipsec whack --trafficstatus
 hostname | grep east > /dev/null && ../../guestbin/tcpdump.sh --stop -i eth1
 hostname | grep east > /dev/null && ../../guestbin/ip.sh -s link show ipsec1
 hostname | grep east > /dev/null && ../../guestbin/ip.sh rule show
-hostname | grep east > /dev/null && ../../guestbin/ip.sh route show table 50
-hostname | grep east > /dev/null && ../../guestbin/ip.sh route
+hostname | grep east > /dev/null && ../../guestbin/ip-route.sh show table 50
+hostname | grep east > /dev/null && ../../guestbin/ip-route.sh

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-../../guestbin/ip.sh route
+../../guestbin/ip-route.sh
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits

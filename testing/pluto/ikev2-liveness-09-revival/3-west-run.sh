@@ -10,7 +10,7 @@ sleep 15
 
 # Setting up block; because the tunnel is up the ping doesn't trigger
 # a trap
-../../guestbin/ip.sh route add unreachable 192.1.2.23
+../../guestbin/ip-route.sh add unreachable 192.1.2.23
 ipsec _kernel policy
 ../../guestbin/ping-once.sh --error 192.1.2.23
 
@@ -30,7 +30,7 @@ ipsec _kernel policy
 
 # Remove the null route; things should recover (after a few
 # retransmits) without a trigger
-../../guestbin/ip.sh route del unreachable 192.1.2.23
+../../guestbin/ip-route.sh del unreachable 192.1.2.23
 ../../guestbin/wait-for.sh --timeout 90 --match westnet-eastnet-ikev2 -- ipsec trafficstatus
 
 # Tunnel should be back up now even without triggering traffic

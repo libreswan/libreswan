@@ -3,7 +3,7 @@ Creating empty NSS database
 west #
  ../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0:1
 west #
- ../../guestbin/ip.sh route add 192.0.200.0/24 via 192.1.2.23  dev eth1
+ ../../guestbin/ip-route.sh add 192.0.200.0/24 via 192.1.2.23  dev eth1
 west #
  ipsec start
 Redirecting to: [initsystem]

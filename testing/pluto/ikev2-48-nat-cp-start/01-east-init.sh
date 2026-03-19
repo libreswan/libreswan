@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-../../guestbin/ip.sh route
+../../guestbin/ip-route.sh
 # confirm that the network is alive
 ipsec start
 ../../guestbin/wait-until-pluto-started

@@ -24,7 +24,7 @@ ipsec whack --impair send_no_delete
 ipsec whack --shutdown
 ../../guestbin/ip.sh address del 192.1.3.209/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.210/24 dev eth0
-../../guestbin/ip.sh route add 0.0.0.0/0 via 192.1.3.254
+../../guestbin/ip-route.sh add 0.0.0.0/0 via 192.1.3.254
 # wait on OE to load; give it a different byte count
 ipsec start
 ../../guestbin/wait-until-pluto-started

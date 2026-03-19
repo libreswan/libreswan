@@ -2,7 +2,7 @@ ipsec up westnet-eastnet-vti-01 # sanitize-retransmits
 ipsec up westnet-eastnet-vti-02 # sanitize-retransmits
 
 # our two ranges should orute into the vti device
-../../guestbin/ip.sh route list
+../../guestbin/ip-route.sh list
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ../../guestbin/ping-once.sh --up -I 10.0.1.254 10.0.2.254
 ipsec trafficstatus

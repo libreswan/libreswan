@@ -8,9 +8,9 @@ west #
 west #
  ../../guestbin/ip.sh rule del pref 220 2> /dev/null > /dev/null
 west #
- ../../guestbin/ip.sh route del 192.0.2.0/24
+ ../../guestbin/ip-route.sh del 192.0.2.0/24
 west #
- ../../guestbin/ip.sh route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
+ ../../guestbin/ip-route.sh del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 west #
  ../../guestbin/ip.sh link add ipsec0 type xfrm if_id 2 dev eth0
 west #
@@ -79,7 +79,7 @@ src 192.1.2.23 dst 192.1.2.45
 west #
  ../../guestbin/ip.sh link set up dev ipsec0
 west #
- ../../guestbin/ip.sh route add 192.0.2.0/24 dev ipsec0
+ ../../guestbin/ip-route.sh add 192.0.2.0/24 dev ipsec0
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -96,13 +96,13 @@ west #
 32766:	from all lookup main
 32767:	from all lookup default
 west #
- ../../guestbin/ip.sh route
+ ../../guestbin/ip-route.sh
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 west #
- ../../guestbin/ip.sh route show table 220
+ ../../guestbin/ip-route.sh show table 220
 throw 192.0.1.0/24
 throw 192.0.2.0/24
 throw 192.1.2.0/24

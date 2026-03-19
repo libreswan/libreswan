@@ -1,8 +1,8 @@
 /testing/guestbin/swan-prep --x509 --46
 dig +short east46.testing.libreswan.org A
 dig +short east46.testing.libreswan.org AAAA
-../../guestbin/ip.sh -4 route
-../../guestbin/ip.sh -6 route
+../../guestbin/ip-route.sh -4
+../../guestbin/ip-route.sh -6
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits

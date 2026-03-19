@@ -1,4 +1,4 @@
 ipsec auto --up westnet-east-sourceip
-../../guestbin/ip.sh route list
+../../guestbin/ip-route.sh list
 
 echo done

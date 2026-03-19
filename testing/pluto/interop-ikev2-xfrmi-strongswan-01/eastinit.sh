@@ -5,11 +5,11 @@
 ../../guestbin/ip.sh link del ipsec2 2> /dev/null > /dev/null
 #shouldn't charon clean up these two rules ??
 ../../guestbin/ip.sh rule del pref 220 2> /dev/null > /dev/null
-../../guestbin/ip.sh route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
+../../guestbin/ip-route.sh del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 ../../guestbin/ip.sh link add ipsec2 type xfrm if_id 2 dev eth0
 # KVM and namespace has this route
-../../guestbin/ip.sh route del 192.0.1.0/24
+../../guestbin/ip-route.sh del 192.0.1.0/24
 ../../guestbin/ip.sh link set up dev ipsec2
-../../guestbin/ip.sh route add 192.0.1.0/24 dev ipsec2
+../../guestbin/ip-route.sh add 192.0.1.0/24 dev ipsec2
 swanctl  --load-conns
 echo "initdone"

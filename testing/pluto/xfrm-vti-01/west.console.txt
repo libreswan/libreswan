@@ -5,11 +5,11 @@ west #
 west #
  # so we remove the regular route for 192.0.2.0/24, and add default route
 west #
- ../../guestbin/ip.sh route del 192.0.2.0/24
+ ../../guestbin/ip-route.sh del 192.0.2.0/24
 west #
- ../../guestbin/ip.sh route del default
+ ../../guestbin/ip-route.sh del default
 west #
- ../../guestbin/ip.sh route add 0.0.0.0/0 via 192.1.2.23 dev eth1
+ ../../guestbin/ip-route.sh add 0.0.0.0/0 via 192.1.2.23 dev eth1
 west #
  # confirm that the network is alive
 west #
@@ -73,7 +73,7 @@ west #
 west #
  # counted
 west #
- ../../guestbin/ip.sh route add 192.0.2.0/24 dev vti0
+ ../../guestbin/ip-route.sh add 192.0.2.0/24 dev vti0
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

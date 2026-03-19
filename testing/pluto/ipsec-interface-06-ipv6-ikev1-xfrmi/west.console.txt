@@ -58,7 +58,7 @@ west #
 32766:	from all lookup main
 32767:	from all lookup default
 west #
- ../../guestbin/ip.sh route show table 50
+ ../../guestbin/ip-route.sh show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
 west #

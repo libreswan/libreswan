@@ -5,8 +5,8 @@ ipsec auto --up north
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
 ../../guestbin/ip.sh rule show
-../../guestbin/ip.sh route show table 50
-../../guestbin/ip.sh route show table 1
+../../guestbin/ip-route.sh show table 50
+../../guestbin/ip-route.sh show table 1
 # expect if_id and output-mark to be different in ip xfrm state output
 # output-mark 0x6/0xffffff
 # if_id 1

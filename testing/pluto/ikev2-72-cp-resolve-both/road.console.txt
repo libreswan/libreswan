@@ -7,14 +7,14 @@ road #
  dig +short east46.testing.libreswan.org AAAA
 2001:db8:1:2::23
 road #
- ../../guestbin/ip.sh -4 route
-default via 192.1.3.254 dev eth0 proto static
+ ../../guestbin/ip-route.sh -4
+default via 192.1.3.254 dev eth0
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
- ../../guestbin/ip.sh -6 route
+ ../../guestbin/ip-route.sh -6
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
-default via 2001:db8:1:3::254 dev eth0 proto static
+default via 2001:db8:1:3::254 dev eth0
 road #
  ipsec start
 Redirecting to: [initsystem]

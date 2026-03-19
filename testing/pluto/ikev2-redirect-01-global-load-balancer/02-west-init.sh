@@ -3,7 +3,7 @@
 # pretend to be east
 /testing/x509/import.sh real/mainca/east.p12
 
-../../guestbin/ip.sh route del 192.0.2.0/24
+../../guestbin/ip-route.sh del 192.0.2.0/24
 ifconfig eth0:1 192.0.2.254/24
 ipsec start
 ../../guestbin/wait-until-pluto-started

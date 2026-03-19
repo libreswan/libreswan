@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep  --x509
 Preparing X.509 files
 east #
- ../../guestbin/ip.sh route del default
+ ../../guestbin/ip-route.sh del default
 east #
- ../../guestbin/ip.sh route add default via 192.9.2.1
+ ../../guestbin/ip-route.sh add default via 192.9.2.1
 Error: Nexthop has invalid gateway.
 east #
  ipsec certutil -D -n west
