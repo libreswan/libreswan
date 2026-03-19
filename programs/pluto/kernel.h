@@ -289,7 +289,6 @@ struct kernel_ops {
 				     const struct ip_protocol *proto,
 				     reqid_t reqid,
 				     uintmax_t min, uintmax_t max,
-				     const char *story,	/* often SAID string */
 				     struct logger *logger);
 	bool (*del_ipsec_spi)(ipsec_spi_t spi,
 			      const struct ip_protocol *proto,

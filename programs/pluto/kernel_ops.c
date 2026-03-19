@@ -431,7 +431,6 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 				     const struct ip_protocol *proto,
 				     reqid_t reqid,
 				     uintmax_t min, uintmax_t max,
-				     const char *story,	/* often SAID string */
 				     struct logger *logger)
 {
 	if (LDBGP(DBG_ROUTING, logger)) {
@@ -446,18 +445,17 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 			jam_address(buf, dst);
 			jam(buf, " reqid=%x", reqid);
 			jam(buf, " [%jx,%jx]", min, max);
-			jam(buf, " for %s ...", story);
 		}
 	}
 
 	passert(kernel_ops->get_ipsec_spi != NULL);
 	ipsec_spi_t spi = kernel_ops->get_ipsec_spi(avoid, src, dst, proto,
-						    reqid, min, max, story, logger);
+						    reqid, min, max, logger);
 
 	if (LDBGP(DBG_ROUTING, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "routing:   ... allocated "PRI_IPSEC_SPI" for %s",
-			    pri_ipsec_spi(spi), story);
+			jam(buf, "routing:   ... allocated "PRI_IPSEC_SPI,
+			    pri_ipsec_spi(spi));
 		}
 	}
 
