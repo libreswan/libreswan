@@ -109,6 +109,8 @@ typedef struct {
 
 size_t jam_said(struct jambuf *buf, const ip_said *said);
 const char *str_said(const ip_said *said, said_buf *buf);
+size_t jam_said_sensitive(struct jambuf *buf, const ip_said *said);
+const char *str_said_sensitive(const ip_said *said, said_buf *buf);
 
 /*
  * Details.

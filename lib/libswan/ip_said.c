@@ -93,11 +93,29 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 	return s;
 }
 
+size_t jam_said_sensitive(struct jambuf *buf, const ip_said *said)
+{
+        const struct ip_info *afi;
+        size_t s = jam_sensitive_ip(buf, "said", said, &afi);
+        if (s > 0) {
+                return s;
+        }
+
+        return jam_said(buf, said);
+}
+
 const char *str_said(const ip_said *said, said_buf *buf)
 {
 	struct jambuf b = ARRAY_AS_JAMBUF(buf->buf);
 	jam_said(&b, said);
 	return buf->buf;
+}
+
+const char *str_said_sensitive(const ip_said *said, said_buf *buf)
+{
+        struct jambuf b = ARRAY_AS_JAMBUF(buf->buf);
+        jam_said_sensitive(&b, said);
+        return buf->buf;
 }
 
 const struct ip_info *said_type(const ip_said *said)

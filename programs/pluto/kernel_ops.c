@@ -470,7 +470,6 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 {
 	ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
 	said_buf sbuf;
-	const char *said_story = (log_ip ? str_said(&said, &sbuf) : "<said>");
 
 	if (LDBGP(DBG_ROUTING, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
@@ -481,13 +480,13 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 			    proto == NULL ? "<NULL>" : proto->name,
 			    pri_ipsec_spi(spi),
 			    str_address(dst, &db),
-			    said_story);
+			    str_said(&said, &sbuf));
 		}
 	}
 
 	passert(kernel_ops->del_ipsec_spi != NULL);
 
-	bool ok = kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
+	bool ok = kernel_ops->del_ipsec_spi(spi, proto, src, dst, str_said_sensitive(&said, &sbuf), logger);
 
 	if (LDBGP(DBG_ROUTING, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
