@@ -1,6 +1,6 @@
-# Libreswan
+## Libreswan
 
-The Libreswan Project   https://libreswan.org/
+The Libreswan Project https://libreswan.org/
 
 Libreswan is an Internet Key Exchange (IKE) implementation for Linux,
 FreeBSD, NetBSD and OpenBSD.  It supports IKEv1 and IKEv2 and has
@@ -8,17 +8,13 @@ support for most of the extensions (RFC + IETF drafts) related to
 IPsec, including IKEv2, X.509 Digital Certificates, NAT Traversal, and
 many others.
 
-Libreswan was forked from Openswan 2.6.38, which was forked from
+Download: https://download.libreswan.org/
+
+Git repository: https://github.com/libreswan/libreswan/
+
+_Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04.  See the CREDITS files for contributor
-acknowledgments.
-
-It can be downloaded from:
-
-    https://download.libreswan.org/
-
-A Git repository is available at:
-
-    https://github.com/libreswan/libreswan/
+acknowledgments._
 
 ## License
 
