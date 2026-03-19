@@ -53,7 +53,7 @@ class Results:
                 log("Progress:")
                 for key, values in sorted(self.counts.items()):
                     if _INTERESTING.match(key):
-                        log(f"  {key}: {len(values)}: {" ".join(values)}")
+                        log(f"  {key}: {len(values)}: {' '.join(values)}")
                     else:
                         log(f"  {key}: {len(values)}")
 
