@@ -63,7 +63,7 @@ class Results:
                 log("Details:")
                 for key, values in sorted(self.counts.items()):
                     if _INTERESTING.match(key):
-                        log(f"  {key}: {len(values)}: {" ".join(values)}")
+                        log(f"  {key}: {len(values)}: {' '.join(values)}")
                 log("Summary:")
                 for key, values in sorted(self.counts.items()):
                     log(f"  {key}: {len(values)}")
