@@ -440,10 +440,10 @@ output: |    protocol ID: PROTO_IPSEC_ESP (0x3)
 output: |    SPI size: 4 (04)
 output: |    number of transforms: 2 (02)
 output: | last substructure: saving location 'ISAKMP Security Association Payload'.'ISAKMP Proposal Payload'.'next payload type'
-output: | "west-east" #2: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff] for SPI ...
+output: | "west-east" #2: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff]
 output: | sendrecv_xfrm_msg() sending 22 Get SPI SPI
 output: | sendrecv_xfrm_msg() recvfrom() returned 256 bytes
-output: | "west-east" #2: routing:   ... allocated 575ad026 for SPI
+output: | "west-east" #2: routing:   ... allocated 575ad026
 output: | emitting 4 raw bytes of SPI SPISPI ISAKMP Proposal Payload
 output: | SPI: 57 5a d0 26
 output: | *****emit ISAKMP Transform Payload (ESP):
@@ -869,10 +869,10 @@ output: |    protocol ID: PROTO_IPSEC_ESP (0x3)
 output: |    SPI size: 4 (04)
 output: |    number of transforms: 2 (02)
 output: | last substructure: saving location 'ISAKMP Security Association Payload'.'ISAKMP Proposal Payload'.'next payload type'
-output: | "west-east" #3: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff] for SPI ...
+output: | "west-east" #3: routing:  kernel_ops_get_ipsec_spi() 192.1.2.23-ESP->192.1.2.45 reqid=4005 [1000,ffffffff]
 output: | sendrecv_xfrm_msg() sending 22 Get SPI SPI
 output: | sendrecv_xfrm_msg() recvfrom() returned 256 bytes
-output: | "west-east" #3: routing:   ... allocated a5fd303f for SPI
+output: | "west-east" #3: routing:   ... allocated a5fd303f
 output: | emitting 4 raw bytes of SPI SPISPI ISAKMP Proposal Payload
 output: | SPI: a5 fd 30 3f
 output: | *****emit ISAKMP Transform Payload (ESP):
