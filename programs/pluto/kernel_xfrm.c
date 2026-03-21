@@ -2778,7 +2778,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			       "Get SPI", "",
+			       "Get SPI", proto->name,
 			       &recv_errno, logger)) {
 		return 0;
 	}
