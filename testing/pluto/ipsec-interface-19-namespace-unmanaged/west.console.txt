@@ -42,7 +42,7 @@ X: ipsec9@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
        valid_lft forever preferred_lft forever
 west #
- ../../guestbin/ip.sh -n ns -4 route add 192.0.2.0/24 dev ipsec9
+ ../../guestbin/ip-route.sh -4 -n ns add 192.0.2.0/24 dev ipsec9
 west #
  # ../../guestbin/ip.sh monitor all all-nsid &
 west #

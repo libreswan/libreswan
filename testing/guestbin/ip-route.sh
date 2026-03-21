@@ -3,15 +3,18 @@
 set -o pipefail
 set -e
 
+v=
 n=
-if test $# -gt 0 ; then
+while test $# -gt 0 ; do
     case $1 in
-	-[46] ) n=$1 ; shift ;;
+	-[46] ) v=$1 ; shift ;;
+	-n ) n="-n $2" ; shift ; shift ;;
+	* ) break ;;
     esac
-fi
+done
 
 {
-    ip --color=never $n route "$@"
+    ip --color=never ${v} ${n} route "$@"
 } | {
     # some versions embed spaces in the middle and/or end of the
     # output (but not the beginning).

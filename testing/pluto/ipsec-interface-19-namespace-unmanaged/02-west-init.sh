@@ -17,7 +17,7 @@
 ../../guestbin/ip.sh -n ns link set ipsec9 up
 ../../guestbin/ip.sh -n ns link show ipsec9
 ../../guestbin/ip.sh -n ns addr show ipsec9
-../../guestbin/ip.sh -n ns -4 route add 192.0.2.0/24 dev ipsec9
+../../guestbin/ip-route.sh -4 -n ns add 192.0.2.0/24 dev ipsec9
 
 # ../../guestbin/ip.sh monitor all all-nsid &
 ../../guestbin/ip.sh -n ns link show ipsec9
