@@ -391,10 +391,8 @@ struct secret *secret_find_by_id(struct secret *secrets,
 		} else {
 			/* check if both ends match ids */
 			struct id_list *i;
-			int idnum = 0;
 
 			for (i = s->ids; i != NULL; i = i->next) {
-				idnum++;
 				if (id_is_any(&i->id)) {
 					/*
 					 * match any will
