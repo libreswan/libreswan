@@ -120,7 +120,7 @@ static void netlink_process_xfrm_messages(struct verbose verbose, int fd, void *
 static void netlink_process_rtm_messages(struct verbose verbose, int fd, void *arg);
 static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      unsigned expected_resp_type, struct nlm_resp *rbuf,
-			      const char *description, const char *story,
+			      const char *story,
 			      int *recv_errno,
 			      const struct logger *logger);
 static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger);
@@ -437,7 +437,7 @@ static void kernel_xfrm_flush(struct logger *logger)
 		.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(0)),
 	};
 	sendrecv_xfrm_msg(&policy, NLMSG_ERROR, &rsp,
-			  "flush", "policy",
+			  "policy",
 			  &recv_errno, logger);
 
 	struct {
@@ -450,7 +450,7 @@ static void kernel_xfrm_flush(struct logger *logger)
 		.f.proto = 0,
 	};
 	sendrecv_xfrm_msg(&state.n, NLMSG_ERROR, &rsp,
-			  "flush", "state",
+			  "state",
 			  &recv_errno, logger);
 }
 
@@ -492,8 +492,6 @@ static void llog_ext_ack(enum stream stream,
  * @param hdr - Data to be sent.
  * @param expected_resp_type - type of message expected from netlink
  * @param rbuf - Return Buffer - contains data returned from the send.
- * @param description - String - user friendly description of what is
- *                      being attempted.  Used for diagnostics
  * @param story - String
  * @return bool True if the message was successfully sent.
  */
@@ -501,13 +499,13 @@ static void llog_ext_ack(enum stream stream,
 static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      unsigned expected_resp_type,
 			      struct nlm_resp *rbuf,
-			      const char *description, const char *story,
+			      const char *story,
 			      int *recv_errno,
 			      const struct logger *logger)
 {
 	size_t len = hdr->nlmsg_len;
 
-	ldbg(logger, "%s() sending %d %s %s", __func__, hdr->nlmsg_type, description, story);
+	ldbg(logger, "%s() sending %d %s", __func__, hdr->nlmsg_type, story);
 	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_dump(logger, hdr, len);
 	}
@@ -525,18 +523,18 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	if (r < 0) {
 		name_buf sb;
 		llog_errno(ERROR_STREAM, logger, errno,
-			   "netlink write() of %s message for %s %s failed: ",
+			   "netlink write() of %s message for %s failed: ",
 			   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
-			   description, story);
+			   story);
 		return false;
 	}
 
 	if ((size_t)r != len) {
 		name_buf sb;
 		llog(ERROR_STREAM, logger,
-		     "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
+		     "netlink write() of %s message for %s truncated: %zd instead of %zu",
 		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
-		     description, story, r, len);
+		     story, r, len);
 		return false;
 	}
 
@@ -553,9 +551,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			*recv_errno = errno;
 			name_buf sb;
 			llog_errno(ERROR_STREAM, logger, errno,
-				   "netlink recvfrom() of response to our %s message for %s %s failed: ",
+				   "netlink recvfrom() of response to our %s message for %s failed: ",
 				   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
-				   description, story);
+				   story);
 			return false;
 		}
 
@@ -594,9 +592,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	if (rsp.n.nlmsg_len > (size_t) r) {
 		name_buf sb;
 		llog(RC_LOG, logger,
-		     "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
+		     "netlink recvfrom() of response to our %s message for %s was truncated: %zd instead of %zu",
 		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
-		     description, story,
+		     story,
 		     len, (size_t) rsp.n.nlmsg_len);
 		return false;
 	}
@@ -608,8 +606,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		if (expected_resp_type == NLMSG_ERROR) {
 			if (LDBGP(DBG_BASE, logger)) {
 				llog_errno(DEBUG_STREAM, logger, -rsp.u.e.error,
-					   "%s() expected netlink error response for %s %s: ",
-					   __func__, description, story);
+					   "%s() expected netlink error response for %s: ",
+					   __func__, story);
 				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
 			}
 			/* ignore */
@@ -622,8 +620,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			 * happens for netlink_add_sa().
 			 */
 			if (LDBGP(DBG_BASE, logger)) {
-				LDBG_log(logger, "%s() netlink response for %s %s included non-error error",
-					 __func__, description, story);
+				LDBG_log(logger, "%s() netlink response for %s included non-error error",
+					 __func__, story);
 				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
 			}
 			/* ignore */
@@ -631,8 +629,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			/* Probe failures are not real ERRORs */
 			llog_errno((streq(story, "Probe Test") ? ALL_STREAMS : ERROR_STREAM),
 				   logger, -rsp.u.e.error,
-				   "netlink response for %s %s: ",
-				   description, story);
+				   "netlink response for %s: ",
+				   story);
 			llog_ext_ack(RC_LOG, logger, &rsp.n);
 			return false;
 		}
@@ -642,18 +640,18 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		if (rbuf == NULL) {
 			name_buf sb1, sb2;
 			ldbg(logger,
-			     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s); discarded",
+			     "netlink recvfrom() of response to our %s message for %s was of wrong type (%s); discarded",
 			     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb1),
-			     description, story,
+			     story,
 			     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 			return true;
 		}
 
 		name_buf sb1, sb2;
 		llog(RC_LOG, logger,
-		     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
+		     "netlink recvfrom() of response to our %s message for %s was of wrong type (%s)",
 		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb1),
-		     description, story,
+		     story,
 		     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 		return false;
 	}
@@ -679,7 +677,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(hdr, NLMSG_ERROR, &rsp,
-			       "policy", story,
+			       story,
 			       &recv_errno, logger)) {
 		return false;
 	}
@@ -1442,7 +1440,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *migrate, struct logger 
 	 */
 	int recv_errno;
 	bool r = sendrecv_xfrm_msg(&req.n, NLMSG_ERROR, &rsp,
-				   "mobike", migrate->story,
+				   migrate->story,
 				   &recv_errno, logger);
 	return r && rsp.u.e.error >= 0;
 }
@@ -2070,7 +2068,7 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 
 	int recv_errno;
 	bool ret = sendrecv_xfrm_msg(&req.n, NLMSG_NOOP, NULL,
-				     "Add SA", sa->story,
+				     sa->story,
 				     &recv_errno, logger);
 	if (!ret && recv_errno == ESRCH &&
 	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
@@ -2113,7 +2111,7 @@ static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
 
 	int recv_errno;
 	return sendrecv_xfrm_msg(&req.n, NLMSG_NOOP, NULL,
-				 "Del SA", story,
+				 story,
 				 &recv_errno, logger);
 }
 
@@ -2605,7 +2603,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
-			       "Get policy", "?",
+			       "?",
 			       &recv_errno, logger)) {
 		ldbg(logger, "%s() policy died on us: dir=%d, index=%d",
 		     __func__, req.id.dir, req.id.index);
@@ -2790,7 +2788,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			       "Get SPI", proto->name,
+			       proto->name,
 			       &recv_errno, logger)) {
 		return 0;
 	}
@@ -2839,7 +2837,7 @@ static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			       "Get SA", sa->story,
+			       sa->story,
 			       &recv_errno, logger)) {
 		return false;
 	}
