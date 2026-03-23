@@ -30,14 +30,15 @@ ipsec pk12util -i OUTPUT/west.p12 -W foobar
 ipsec pk12util -i OUTPUT/east.p12 -W foobar
 ipsec certutil -K
 
-# patch up ipsec.conf
-ipsec certutil -K | awk "/ east/ { print \$4 }" > OUTPUT/east.ckaid
-ipsec certutil -K | awk "/ west/ { print \$4 }" > OUTPUT/west.ckaid
-sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf
-sed -i -e "s/@west-ckaid@/`cat OUTPUT/west.ckaid`/" /etc/ipsec.conf
+# patch up and (re)install ipsec.conf
+
+EAST_CKAID=$(ipsec certutil -K | awk '/ east/ { print $4 }')
+WEST_CKAID=$(ipsec certutil -K | awk '/ west/ { print $4 }')
+sed -e "s/@@EAST_CKAID@@/${EAST_CKAID}/" -e "s/@@WEST_CKAID@@/${WEST_CKAID}/" ipsec.conf > OUTPUT/ipsec.conf
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
-ipsec auto --status
+cp -v OUTPUT/ipsec.conf /etc/ipsec.conf
+ipsec add westnet-eastnet-ikev2
+ipsec connectionstatus westnet-eastnet-ikev2
 echo "initdone"

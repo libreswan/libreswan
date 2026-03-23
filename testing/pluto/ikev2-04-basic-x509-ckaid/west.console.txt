@@ -1,41 +1,13 @@
-# Import EAST's cert and extract its CKAID
-west #
- /testing/guestbin/swan-prep --nokeys
+/testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
-west #
- /testing/x509/import.sh real/mainca/east.end.p12
- ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -O -n east
-"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-west #
- eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
-west #
- # Import WEST's cert and extract its CKAID
-west #
- /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
-west #
- /testing/x509/import.sh real/mainca/west.p12
- ipsec pk12util -w nss-pw -i real/mainca/west.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n mainca -t CT,,
- ipsec certutil -O -n west
-"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-west #
- westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
  ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
  ipsec certutil -O -n east
-"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
- echo west ckaid: $westckaid east ckaid: $eastckaid
-west ckaid: <<CKAID#1>> east ckaid: <<CKAID#2>>
-west #
- sed -i -e "s/WESTCKAID/$westckaid/" -e "s/EASTCKAID/$eastckaid/" /etc/ipsec.conf
+ cp -v OUTPUT/ipsec.conf /etc/ipsec.conf
+'OUTPUT/ipsec.conf' -> '/etc/ipsec.conf'
 west #
  # confirm that the network is alive
 west #
@@ -58,20 +30,20 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+ ipsec connectionstatus westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[%fromcert]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ikev2":   mycert=west; peercert=east;
+"westnet-eastnet-ikev2":   peercert=east;
 "westnet-eastnet-ikev2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2":   sec_label:unset;
-"westnet-eastnet-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"westnet-eastnet-ikev2":   CAs: '%any'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "westnet-eastnet-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -80,7 +52,7 @@ west #
 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "westnet-eastnet-ikev2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-ikev2":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"westnet-eastnet-ikev2":   our idtype: %fromcert; our id=%fromcert; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "westnet-eastnet-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -92,56 +64,28 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ikev2
+ ipsec up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
-"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
-"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+"westnet-eastnet-ikev2" #1: private key matching CKAID 'a6d3608c34945e9228ffdfb60202f25437bf151d' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet-ikev2" #1: encountered fatal error in state IKE_SA_INIT_IR
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #1: deleting IKE SA (processed IKE_SA_INIT response)
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
 west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+ ipsec trafficstatus
 west #
  echo done
 done
 west #
  ipsec _kernel state
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 0, bitmap-length 0
-	dir out
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	dir in
 west #
  ipsec _kernel policy
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 west #

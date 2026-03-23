@@ -1,4 +1,4 @@
-# Import WEST's cert and extract its CKAID
+# Import WEST's private key and extract its CKAID
 east #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
@@ -9,9 +9,9 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -O -n west
 "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
- westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+ WEST_CKAID=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 east #
- # Import EAST's cert and extract its CKAID
+ # Import EAST's private key and extract its CKAID
 east #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
@@ -24,7 +24,27 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 "mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
- eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+ EAST_CKAID=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+east #
+ # edit CKAIDS into ipsec.conf
+east #
+ echo west ckaid: $westckaid east ckaid: $eastckaid
+west ckaid: east ckaid:
+east #
+ sed -e "s/@@WEST_CKAID@@/${WEST_CKAID}/" -e "s/@@EAST_CKAID@@/${EAST_CKAID}/" ipsec.conf > OUTPUT/ipsec.conf
+east #
+ # configure for real
+east #
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  /testing/x509/import.sh real/mainca/west.end.cert
  ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
@@ -32,20 +52,18 @@ east #
 "mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
- echo west ckaid: $westckaid east ckaid: $eastckaid
-west ckaid: <<CKAID#1>> east ckaid: <<CKAID#2>>
-east #
- sed -i -e "s/WESTCKAID/$westckaid/" -e "s/EASTCKAID/$eastckaid/" /etc/ipsec.conf
+ cp -v OUTPUT/ipsec.conf /etc/ipsec.conf
+'OUTPUT/ipsec.conf' -> '/etc/ipsec.conf'
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 east #
- ipsec auto --status | grep westnet-eastnet-ikev2
+ ipsec connectionstatus westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "westnet-eastnet-ikev2":   mycert=east; peercert=west;
@@ -75,37 +93,6 @@ east #
 initdone
 east #
  ipsec _kernel state
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 0, bitmap-length 0
-	dir out
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	dir in
 east #
  ipsec _kernel policy
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 east #
