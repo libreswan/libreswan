@@ -242,10 +242,7 @@ build_json()
 platform_makeflags()
 {
     for platform in ${platforms[@]} ; do
-	case ${platform_status[${platform}]} in
-	    skip ) ;;
-	    * ) echo KVM_${platform^^}=true ;;
-	esac
+	echo KVM_${platform^^}=${platform_status[${platform}]}
     done
 }
 
@@ -317,18 +314,14 @@ run_target()
     # Notice how the first stage of the pipeline saves it's status by
     # touching ${kvm_target}.ok.
 
-    if ${run} ${kvm_target} 2>&1 ; then
-	touch ${resultsdir}/${kvm_target}.ok ;
-    fi | tee ${resultsdir}/${kvm_target}.log
-
-    # Figure out and save the the result.
-
-    if test -r ${resultsdir}/${kvm_target}.ok ; then
+    if ${run} ${kvm_target} > ${resultsdir}/${kvm_target}.log 2>&1 ; then
 	result=ok
-    elif test ${status} != true ; then
-	# for instance, OpenBSD build fail is ignored.
+    elif test -n "${platform}" ; then
+	# ignore/skip platform specific failures
+	tail ${resultsdir}/${kvm_target}.log
 	result=ignored
     else
+	tail ${resultsdir}/${kvm_target}.log
 	result=failed
     fi
 
