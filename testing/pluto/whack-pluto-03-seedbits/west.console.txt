@@ -1,0 +1,52 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ sed "s/seedbits=.*$/seedbits=520/" ipsec.conf > /etc/ipsec.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep -E "^seeded" /tmp/pluto.log
+seeded 65 bytes into the NSS PRNG
+west #
+ sed "s/seedbits=.*$/seedbits=1024/" ipsec.conf > /etc/ipsec.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep -E "^seeded" /tmp/pluto.log
+seeded 128 bytes into the NSS PRNG
+west #
+ sed "s/seedbits=.*$/seedbits=2048/" ipsec.conf > /etc/ipsec.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep -E "^seeded" /tmp/pluto.log
+seeded 256 bytes into the NSS PRNG
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=1024
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ grep -E "^seeded" /tmp/pluto.log
+seeded 128 bytes into the NSS PRNG
+west #

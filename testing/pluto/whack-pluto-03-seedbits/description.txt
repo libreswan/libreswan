@@ -1,0 +1,4 @@
+This tests the seedbits= option which causes libreswan to read some
+entropy from /dev/random (blocking) to seed the NSS library.
+
+This is a BSI requirement

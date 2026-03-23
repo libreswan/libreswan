@@ -1354,8 +1354,6 @@ kvmplutotest    fips-11-ikev2-esp-dh                    good
 kvmplutotest    fips-12-ikev2-esp-dh-wrong              good
 kvmplutotest    fips-13-ikev2-x509-key2032		good
 kvmplutotest    fips-14-ikev2-x509-ecdsa		good
-# BSI seed tests
-kvmplutotest    basic-pluto-19-seedbits			good
 
 #################################################################
 # passthrough tests
@@ -1569,6 +1567,8 @@ kvmplutotest	whack-readwriteconf-01			good	github/2630
 
 kvmplutotest	whack-pluto-01-startup			good	github/2048
 kvmplutotest	whack-pluto-02-logfile			good
+# BSI seed tests
+kvmplutotest	whack-pluto-03-seedbits			good
 
 #
 # PPK
