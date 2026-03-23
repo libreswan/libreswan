@@ -229,7 +229,7 @@ static bool phase15_predicate(struct state *st, void *context)
 {
 	struct v1_msgid_filter *filter = context;
 	ldbg(st->logger,
-	     "peer and cookies match on "PRI_SO"; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
+	     "Peer and cookies match on "PRI_SO"; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
 	     pri_so(st->st_serialno), filter->msgid,
 	     st->st_v1_msgid.id, st->st_v1_msgid.phase15);
 	if (st->st_v1_msgid.phase15 == filter->msgid) {
@@ -272,7 +272,7 @@ void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *tran
 
 stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
-	llog(RC_LOG, st->logger, "unexpected message received in state %s",
+	llog(RC_LOG, st->logger, "Unexpected message received in state %s",
 	     st->st_state->name);
 	return STF_IGNORE;
 }
@@ -303,7 +303,7 @@ stf_status informational(struct state *ike_sa_or_null,
 					       md->logger);
 		PEXPECT(md->logger, md->chain[ISAKMP_NEXT_D] == NULL);
 		llog(RC_LOG, logger,
-		     "received and ignored empty informational notification payload");
+		     "Received and ignored empty informational notification payload");
 		return STF_IGNORE;
 	}
 
@@ -311,7 +311,7 @@ stf_status informational(struct state *ike_sa_or_null,
 	struct isakmp_notification *const n = &n_pld->payload.notification;
 
 	if (ike_sa_or_null == NULL) {
-		llog(RC_LOG, md->logger, "ignoring %s (%d) informational, no matching ISAKMP",
+		llog(RC_LOG, md->logger, "Ignoring %s (%d) informational, no matching ISAKMP",
 		     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 		     n->isan_type);
 		return STF_IGNORE;
@@ -330,7 +330,7 @@ stf_status informational(struct state *ike_sa_or_null,
 	 * that the handler is expected to treat them
 	 * suspiciously.
 	 */
-	ldbg(ike->sa.logger, "processing informational %s (%d)",
+	ldbg(ike->sa.logger, "Processing informational %s (%d)",
 	     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 	     n->isan_type);
 
@@ -356,7 +356,7 @@ stf_status informational(struct state *ike_sa_or_null,
 
 		ike->sa.hidden_variables.st_malformed_received++;
 		llog(RC_LOG, ike->sa.logger,
-		     "received %u malformed payload notifies",
+		     "Received %u malformed payload notifies",
 		     ike->sa.hidden_variables.st_malformed_received);
 		if (ike->sa.hidden_variables.st_malformed_sent >
 		    MAXIMUM_MALFORMED_NOTIFY / 2 &&
@@ -365,7 +365,7 @@ stf_status informational(struct state *ike_sa_or_null,
 		      st_malformed_received) >
 		     MAXIMUM_MALFORMED_NOTIFY)) {
 			llog(RC_LOG, ike->sa.logger,
-			     "too many malformed payloads (we sent %u and received %u",
+			     "Too many malformed payloads (we sent %u and received %u",
 			     ike->sa.hidden_variables.st_malformed_sent,
 			     ike->sa.hidden_variables.st_malformed_received);
 			return STF_FATAL;
@@ -375,14 +375,14 @@ stf_status informational(struct state *ike_sa_or_null,
 	default:
 		if (md->encrypted) {
 			llog(RC_LOG, ike->sa.logger,
-			     "ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
+			     "Ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
 			     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 			     md->hdr.isa_msgid,
 			     n->isan_length);
 		} else {
 			/* unsecured payloads always have MSGID=0 */
 			llog(RC_LOG, ike->sa.logger,
-			     "ignoring unsecured informational payload %s, length=%d",
+			     "Ignoring unsecured informational payload %s, length=%d",
 			     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 			     n->isan_length);
 		}
@@ -453,16 +453,16 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			if (st->st_v1_last_transition->timeout_event == EVENT_v1_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				llog(RC_LOG, st->logger,
-				     "retransmitting in response to duplicate packet; already %s",
+				     "Retransmitting in response to duplicate packet; already %s",
 				     st->st_state->name);
 				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
 			} else {
 				llog(RC_LOG, st->logger,
-				     "discarding duplicate packet -- exhausted retransmission; already %s",
+				     "Discarding duplicate packet -- exhausted retransmission; already %s",
 				     st->st_state->name);
 			}
 		} else {
-			ldbg(st->logger, PRI_SO" discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
+			ldbg(st->logger, PRI_SO" Discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
 			     pri_so(st->st_serialno), st->st_state->name,
 			     bool_str(replied), bool_str(retransmit_on_duplicate));
 		}
@@ -537,7 +537,7 @@ void process_v1_packet(struct msg_digest *md)
 			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				llog(RC_LOG, md->logger, "initial phase 1 message is invalid: its Encrypted Flag is on");
+				llog(RC_LOG, md->logger, "Initial phase 1 message is invalid: its Encrypted Flag is on");
 				send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 				return;
 			}
@@ -558,7 +558,7 @@ void process_v1_packet(struct msg_digest *md)
 					 * state that should be
 					 * discarded.
 					 */
-					llog(RC_LOG, ike->sa.logger, "discarding initial packet; already %s",
+					llog(RC_LOG, ike->sa.logger, "Discarding initial packet; already %s",
 					     ike->sa.st_state->name);
 				}
 				return;
@@ -594,7 +594,7 @@ void process_v1_packet(struct msg_digest *md)
 			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 			if (ike == NULL) {
 				llog(RC_LOG, md->logger,
-				     "phase 1 message is part of an unknown exchange");
+				     "Phase 1 message is part of an unknown exchange");
 				/* XXX Could send notification back */
 				return;
 			}
@@ -611,7 +611,7 @@ void process_v1_packet(struct msg_digest *md)
 				 * odds.
 				 */
 				llog_pexpect(md->logger, HERE,
-					     "phase 1 message matching AGGR_R0 state");
+					     "Phase 1 message matching AGGR_R0 state");
 				return;
 			}
 		}
@@ -655,9 +655,9 @@ void process_v1_packet(struct msg_digest *md)
 					LDBG_log(md->logger,
 						 "Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
 						 md->hdr.isa_msgid);
-					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:");
+					LDBG_log(md->logger, "- Unknown SA's md->hdr.isa_ike_initiator_spi.bytes:");
 					LDBG_thing(md->logger, md->hdr.isa_ike_initiator_spi);
-					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_responder_spi.bytes:");
+					LDBG_log(md->logger, "- Unknown SA's md->hdr.isa_ike_responder_spi.bytes:");
 					LDBG_thing(md->logger, md->hdr.isa_ike_responder_spi);
 				}
 				/* XXX Could send notification back */
@@ -666,7 +666,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			if (!IS_V1_ISAKMP_ENCRYPTED(ike->sa.st_state->kind)) {
 				llog(RC_LOG, ike->sa.logger,
-				     "encrypted Informational Exchange message is invalid because no key is known");
+				     "Encrypted Informational Exchange message is invalid because no key is known");
 				/* XXX Could send notification back */
 				return;
 			}
@@ -758,7 +758,7 @@ void process_v1_packet(struct msg_digest *md)
 
 		if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY) {
 			if (md->hdr.isa_np != ISAKMP_NEXT_IKE_FRAGMENTATION) {
-				ldbg(md->logger, "unfragmented Quick Mode messages need to be encrypted");
+				ldbg(md->logger, "Unfragmented Quick Mode messages need to be encrypted");
 				send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 				return;
 			}
@@ -791,12 +791,12 @@ void process_v1_packet(struct msg_digest *md)
 			if (child != NULL) {
 				if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 					ldbg(child->sa.logger,
-					     "deleted IKE (ISAKMP) SA "PRI_SO" has established Child SA in state %s",
+					     "Deleted IKE (ISAKMP) SA "PRI_SO" has established Child SA in state %s",
 					     pri_so(child->sa.st_clonedfrom),
 					     child->sa.st_state->name);
 				} else {
 					llog_pexpect(child->sa.logger, HERE,
-						     "deleted IKE (ISAKMP) SA "PRI_SO" has larval child SA in state %s",
+						     "Deleted IKE (ISAKMP) SA "PRI_SO" has larval child SA in state %s",
 						     pri_so(child->sa.st_clonedfrom),
 						     child->sa.st_state->name);
 				}
@@ -972,7 +972,7 @@ void process_v1_packet(struct msg_digest *md)
 		 *
 		 * ??? what if this is a duplicate of another message?
 		 */
-		ldbg(md->logger, "no appropriate Mode Config state yet. See if we have a Main Mode state");
+		ldbg(md->logger, "No appropriate Mode Config state yet. See if we have a Main Mode state");
 
 		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
 		if (ike == NULL) {
@@ -1035,13 +1035,13 @@ void process_v1_packet(struct msg_digest *md)
 		    ike->sa.st_v1_quirks.xauth_ack_msgid) {
 			old_state = finite_states[STATE_XAUTH_R1];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s, already XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
+			     "Switch from_state %s to %s, already XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->xauth.client &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 			old_state = finite_states[STATE_XAUTH_I0];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s, this is xauthclient and IS_PHASE1() is TRUE",
+			     "Switch from_state %s to %s, this is xauthclient and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->xauth.client &&
 			   ike->sa.st_state->kind == STATE_XAUTH_I1) {
@@ -1052,13 +1052,13 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			old_state = finite_states[STATE_XAUTH_I0];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s this is xauthclient and state == STATE_XAUTH_I1",
+			     "Switch from_state %s to %s this is xauthclient and state == STATE_XAUTH_I1",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.server &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 			old_state = finite_states[STATE_MODE_CFG_R0];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s this is modecfgserver and IS_PHASE1() is TRUE",
+			     "Switch from_state %s to %s this is modecfgserver and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.client &&
 			   ike->sa.st_connection->config->modecfg.pull == false && /* i.e.passive */
@@ -1066,18 +1066,18 @@ void process_v1_packet(struct msg_digest *md)
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 			old_state = finite_states[STATE_MODE_CFG_CLIENT_RESPONDING];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s this is modecfgclient=yes and modecfgpull=no and IS_PHASE1() is TRUE",
+			     "Switch from_state %s to %s this is modecfgclient=yes and modecfgpull=no and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.client &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 			old_state = finite_states[STATE_MODE_CFG_R1];
 			ldbg(ike->sa.logger,
-			     "switch from_state %s to %s this is modecfgclient and IS_PHASE1() is TRUE",
+			     "Switch from_state %s to %s this is modecfgclient and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else {
 			name_buf b;
 			ldbg(ike->sa.logger,
-			     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
+			     "Received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
 			     str_enum_long(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 			     ike->sa.st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
 			     ike->sa.st_connection->local->host.config->xauth.client ? " xauthclient" : "",
@@ -1170,7 +1170,7 @@ void process_v1_packet(struct msg_digest *md)
 		struct pbs_in frag_pbs;
 
 		if (st == NULL) {
-			ldbg(logger, "received IKE fragment, but have no state. Ignoring packet.");
+			ldbg(logger, "Received IKE fragment, but have no state. Ignoring packet.");
 			return;
 		}
 
@@ -1178,7 +1178,7 @@ void process_v1_packet(struct msg_digest *md)
 		PASSERT(logger, ike != NULL);
 
 		if (!ike->sa.st_connection->config->ike_frag.allow) {
-			ldbg(logger, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
+			ldbg(logger, "Discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
 			return;
 		}
 
@@ -1202,7 +1202,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		ldbg(logger, "received IKE fragment id '%d', number '%u'%s",
+		ldbg(logger, "Received IKE fragment id '%d', number '%u'%s",
 		     fraghdr.isafrag_id,
 		     fraghdr.isafrag_number,
 		     (fraghdr.isafrag_flags == 1) ? "(last)" : "");
@@ -1293,7 +1293,7 @@ void process_v1_packet(struct msg_digest *md)
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_v1_seen_fragments = true;
-					ldbg(logger, " updated IKE fragment state to respond using fragments without waiting for re-transmits");
+					ldbg(logger, " Updated IKE fragment state to respond using fragments without waiting for re-transmits");
 					break;
 				}
 			}
@@ -1379,7 +1379,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 		endpoint_buf b;
-		ldbg(logger, "received encrypted packet from %s but exponentiation still in progress",
+		ldbg(logger, "Received encrypted packet from %s but exponentiation still in progress",
 		     str_endpoint(&md->sender, &b));
 
 		/*
@@ -1393,7 +1393,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 		if (st->st_v1_background_md != NULL) {
-			ldbg(logger, "suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
+			ldbg(logger, "Suspend: Releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
 			     pri_so(st->st_serialno), st->st_v1_background_md,
 			     pri_where(HERE));
 			md_delref(&st->st_v1_background_md);
@@ -1452,7 +1452,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			    ike_or_null != NULL ? &ike_or_null->sa :
 			    NULL);
 
-	ldbg(LOGGER, "have IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
+	ldbg(LOGGER, "Have IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
 	     pri_so(ike_or_null != NULL ? ike_or_null->sa.st_serialno : SOS_NOBODY),
 	     pri_so(child_or_null != NULL ? child_or_null->sa.st_serialno : SOS_NOBODY),
 	     pri_so(SOS_NOBODY));
@@ -1472,7 +1472,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (ike_or_null == NULL) {
 			llog(RC_LOG, md->logger,
-			     "discarding encrypted message for an unknown ISAKMP SA");
+			     "Discarding encrypted message for an unknown ISAKMP SA");
 			return;
 		}
 
@@ -1481,7 +1481,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (ike->sa.st_skeyid_e_nss == NULL) {
 			llog(RC_LOG, ike->sa.logger,
-			     "discarding encrypted message because we haven't yet negotiated keying material");
+			     "Discarding encrypted message because we haven't yet negotiated keying material");
 			return;
 		}
 
@@ -1507,7 +1507,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (pbs_left(&md->message_pbs) % cipher->enc_blocksize != 0) {
 			llog(RC_LOG, ike->sa.logger,
-			     "malformed message: not a multiple of encryption blocksize");
+			     "Malformed message: not a multiple of encryption blocksize");
 			return;
 		}
 
@@ -1522,7 +1522,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger,
-				 "decrypting %u bytes using cipher algorithm %s",
+				 "Decrypting %u bytes using cipher algorithm %s",
 				 (unsigned) pbs_left(&md->message_pbs),
 				 cipher->common.fqn);
 			LDBG_log(ike->sa.logger, "IV before:");
@@ -1554,11 +1554,11 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (ike_or_null != NULL) {
 				struct ike_sa *ike = ike_or_null;
 				passert(ike != NULL);
-				llog(RC_LOG, ike->sa.logger, "packet rejected: should have been encrypted");
+				llog(RC_LOG, ike->sa.logger, "Packet rejected: should have been encrypted");
 				send_v1_notification_from_isakmp(ike, md, v1N_INVALID_FLAGS);
 				return;
 			}
-			llog(RC_LOG, md->logger, "packet rejected: should have been encrypted");
+			llog(RC_LOG, md->logger, "Packet rejected: should have been encrypted");
 			send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 			return;
 		}
@@ -1585,7 +1585,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 			if (md->digest_roof >= elemsof(md->digest)) {
 				llog(RC_LOG, LOGGER,
-				     "more than %zu payloads in message; ignored",
+				     "More than %zu payloads in message; ignored",
 				     elemsof(md->digest));
 				if (!md->encrypted) {
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
@@ -1727,7 +1727,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				}
 
 				name_buf b;
-				ldbg(LOGGER, "got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
+				ldbg(LOGGER, "Got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
 				     s, str_enum_long(&ikev1_payload_names, np, &b),
 				     needed, smc->opt_payloads);
 				needed &= ~s;
@@ -1796,7 +1796,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (LDBGP(DBG_BASE, LOGGER) &&
 		    pbs_left(&md->message_pbs) != 0) {
-			LDBG_log(LOGGER, "removing %d bytes of padding",
+			LDBG_log(LOGGER, "Removing %d bytes of padding",
 				 (int) pbs_left(&md->message_pbs));
 		}
 
@@ -1806,7 +1806,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (needed != 0) {
 			LLOG_JAMBUF(RC_LOG, LOGGER, buf) {
-				jam(buf, "message for %s is missing payloads ",
+				jam(buf, "Message for %s is missing payloads ",
 				    finite_states[from_state]->name);
 				jam_lset_short(buf, &ikev1_payload_names, "+", needed);
 			}
@@ -1831,7 +1831,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		if (md->chain[ISAKMP_NEXT_SA] != NULL &&
 		    md->hdr.isa_np != ISAKMP_NEXT_SA) {
 			llog(RC_LOG, LOGGER,
-			     "malformed Phase 1 message: does not start with an SA payload");
+			     "Malformed Phase 1 message: does not start with an SA payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
@@ -1855,7 +1855,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 		if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
 			llog(RC_LOG, LOGGER,
-			     "malformed Quick Mode message: does not start with a HASH payload");
+			     "Malformed Quick Mode message: does not start with a HASH payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
@@ -1871,7 +1871,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			while (p != NULL) {
 				if (p != &md->digest[i]) {
 					llog(RC_LOG, LOGGER,
-					     "malformed Quick Mode message: SA payload is in wrong position");
+					     "Malformed Quick Mode message: SA payload is in wrong position");
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					}
@@ -1896,19 +1896,19 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				/* at least one */
 				if (id->next == NULL) {
 					llog(RC_LOG, LOGGER,
-					     "malformed Quick Mode message: when present there must be exactly two ID payloads, only one found");
+					     "Malformed Quick Mode message: when present there must be exactly two ID payloads, only one found");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id->next->next != NULL) {
 					llog(RC_LOG, LOGGER,
-					     "malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found");
+					     "Malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
 					llog(RC_LOG, LOGGER,
-					     "malformed Quick Mode message: when present the two ID payloads must be adjacent");
+					     "Malformed Quick Mode message: when present the two ID payloads must be adjacent");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
@@ -1923,15 +1923,15 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 	 * that are ignored.
 	 */
 	if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
-		ldbg(LOGGER, "informational() will process notifications");
+		ldbg(LOGGER, "Informational() will process notifications");
 	} else if (md->chain[ISAKMP_NEXT_N] == NULL) {
-		ldbg(LOGGER, "no notification headers to play with");
+		ldbg(LOGGER, "No notification headers to play with");
 	} else if (ike_or_null == NULL) {
 		struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
 		struct isakmp_notification *const n = &p->payload.notification;
 		name_buf nname;
 		ldbg(md->logger,
-		     "ignoring informational payload %s, no corresponding state",
+		     "Ignoring informational payload %s, no corresponding state",
 		     str_enum_short(&v1_notification_names,
 				    n->isan_type,
 				    &nname));
@@ -1941,7 +1941,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * see ikev1-aggr-08-copy-r1-spis-to-i1
 		 */
 		if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-			llog(IMPAIR_STREAM, ike->sa.logger, "copying notify response SPIs to recorded message and then resending it");
+			llog(IMPAIR_STREAM, ike->sa.logger, "Copying notify response SPIs to recorded message and then resending it");
 			/* skip non-ESP marker if needed */
 			size_t skip = (ike->sa.st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 			size_t spis = sizeof(md->hdr.isa_ike_spis);
@@ -1962,7 +1962,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (md->encrypted) {
 				name_buf eb;
 				llog(RC_LOG, ike->sa.logger,
-				     "ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
+				     "Ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
 				     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 				     md->hdr.isa_msgid,
 				     n->isan_length);
@@ -1970,7 +1970,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				/* unsecured payloads always have MSGID=0 */
 				name_buf eb;
 				llog(RC_LOG, ike->sa.logger,
-				     "ignoring unsecured informational payload %s, length=%d",
+				     "Ignoring unsecured informational payload %s, length=%d",
 				     str_enum_short(&v1_notification_names, n->isan_type, &eb),
 				     n->isan_length);
 			}
@@ -2099,7 +2099,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* DANGER: MD might be NULL; ST might be NULL */
 	name_buf neb;
 	name_buf rb;
-	ldbg(logger, "complete v1 state transition with %s",
+	ldbg(logger, "Complete v1 state transition with %s",
 	     (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
 	      str_enum_long(&stf_status_names, result, &rb)));
 
@@ -2190,12 +2190,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 
 		if (md->fragvid) {
-			ldbg(st->logger, "peer supports fragmentation");
+			ldbg(st->logger, "Peer supports fragmentation");
 			st->st_v1_seen_fragmentation_supported = true;
 		}
 
 		if (md->dpd) {
-			ldbg(st->logger, "peer supports DPD");
+			ldbg(st->logger, "Peer supports DPD");
 			st->hidden_variables.st_peer_supports_dpd = true;
 			if (dpd_active_locally(st->st_connection)) {
 				ldbg(st->logger, "DPD is configured locally");
@@ -2215,7 +2215,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			st->st_v1_msgid.reserved = true;
 		}
 
-		ldbg(st->logger, "IKEv1: transition from state %s to state %s",
+		ldbg(st->logger, "IKEv1: Transition from state %s to state %s",
 		     finite_states[from_state]->name,
 		     finite_states[smc->next_state]->name);
 
@@ -2290,7 +2290,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			    impair.send_no_main_r2) {
 				/* record-only so we properly emulate packet drop */
 				record_outbound_v1_ike_msg(st, &reply_stream, smc->message);
-				llog(IMPAIR_STREAM, st->logger, "skipped sending STATE_MAIN_R2 response packet");
+				llog(IMPAIR_STREAM, st->logger, "Skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream, smc->message);
 			}
@@ -2306,7 +2306,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->hidden_variables.st_xauth_client_done &&
 		    !c->local->host.config->modecfg.client &&
 		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
-			ldbg(st->logger, "fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_v1_REPLACE");
+			ldbg(st->logger, "Fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_v1_REPLACE");
 			event_type = EVENT_v1_REPLACE;
 		}
 
@@ -2491,7 +2491,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    !st->hidden_variables.st_modecfg_started) {
 			/* note IS_V1_ISAKMP_SA_ESTABLISHED() above */
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			ldbg(ike->sa.logger, "modecfg client is starting due to %s",
+			ldbg(ike->sa.logger, "Modecfg client is starting due to %s",
 			     ike->sa.st_v1_quirks.modecfg_pull_mode ? "quirk" :
 			     "policy");
 			modecfg_send_request(ike);
@@ -2527,7 +2527,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
-			ldbg(st->logger, "waiting for modecfg set from server");
+			ldbg(st->logger, "Waiting for modecfg set from server");
 			break;
 		}
 
@@ -2566,7 +2566,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* update the previous packet history */
 		remember_received_packet(st, md);
 		llog_pexpect(st->logger, HERE,
-			     "state transition function for %s had internal error",
+			     "State transition function for %s had internal error",
 			     st->st_state->name);
 		release_pending_whacks(st, "internal error");
 		/* expire will eventually delete state? */
@@ -2578,7 +2578,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* update the previous packet history */
 		remember_received_packet(st, md);
 		llog_rc(RC_FATAL, st->logger,
-			"encountered fatal error in state %s", st->st_state->name);
+			"Encountered fatal error in state %s", st->st_state->name);
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
@@ -2620,14 +2620,14 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			SEND_NOTIFICATION(md->v1_note);
 		} else {
 			llog(RC_LOG, st->logger,
-			     "state transition failed: %s", notify_name.buf);
+			     "State transition failed: %s", notify_name.buf);
 		}
 
-		ldbg(st->logger, "state transition function for %s failed: %s",
+		ldbg(st->logger, "State transition function for %s failed: %s",
 		     st->st_state->name, notify_name.buf);
 
 		if (IS_V1_QUICK(st->st_state->kind)) {
-			ldbg(st->logger, "quick delete");
+			ldbg(st->logger, "Quick delete");
 			connection_delete_v1_state(&st, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
@@ -2669,7 +2669,7 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 	struct connection *c = ike->sa.st_connection;
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "thinking about whether to send my certificate:");
+		LDBG_log(logger, "Thinking about whether to send my certificate:");
 
 		name_buf oan;
 		name_buf ictn;
@@ -2678,11 +2678,11 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 			 str_enum_long(&ike_cert_type_names, certtype, &ictn));
 
 		name_buf cptn;
-		LDBG_log(logger, "  sendcert: %s and I did%s get a certificate request ",
+		LDBG_log(logger, " Sendcert: %s and I did%s get a certificate request ",
 			 str_sparse_long(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
 			 gotcertrequest ? "" : " not");
 
-		LDBG_log(logger, "  so %ssend cert.", send_cert ? "" : "do not ");
+		LDBG_log(logger, "  So %ssend cert.", send_cert ? "" : "Do not ");
 
 		if (!send_cert) {
 			if (ike->sa.st_oakley.auth == OAKLEY_PRESHARED_KEY) {
@@ -2733,14 +2733,14 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 
 	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		ldbg(st->logger,
-		     "send? yes, IKEv1 ISAKMP SA in state %s is established",
+		     "Send? yes, IKEv1 ISAKMP SA in state %s is established",
 		     st->st_state->short_name);
 		return pexpect_ike_sa(st);
 	}
 
 	if (IS_V1_ISAKMP_SA(st)) {
 		ldbg(st->logger,
-		     "send? no, IKEv1 ISAKMP SA in state %s is NOT established",
+		     "Send? no, IKEv1 ISAKMP SA in state %s is NOT established",
 		     st->st_state->short_name);
 		return NULL;
 	}
@@ -2754,7 +2754,7 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 		 * notification ???
 		 */
 		ldbg(st->logger,
-		     "send? no, IKEv1 IPsec SA in state %s is not established",
+		     "Send? no, IKEv1 IPsec SA in state %s is not established",
 		     st->st_state->name);
 		return NULL;
 	}
@@ -2764,13 +2764,13 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 							  viable_parent);
 	if (isakmp == NULL) {
 		ldbg(st->logger,
-		     "send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",
+		     "Send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",
 		     st->st_state->short_name);
 		return NULL;
 	}
 
 	ldbg(st->logger,
-	     "send? yes, IKEv1 IPsec SA in state %s is established and has the established ISAKMP SA "PRI_SO,
+	     "Send? yes, IKEv1 IPsec SA in state %s is established and has the established ISAKMP SA "PRI_SO,
 	     st->st_state->short_name,
 	     pri_so(isakmp->sa.st_serialno));
 	return isakmp;
@@ -2822,11 +2822,11 @@ bool verbose_v1_state_busy(const struct state *st)
 {
 	if (st == NULL) {
 		struct logger *logger = &global_logger;
-		ldbg(logger, "#null state always idle");
+		ldbg(logger, "#Null state always idle");
 		return false;
 	}
 	if (!v1_state_busy(st)) {
-		ldbg(st->logger, PRI_SO" idle", pri_so(st->st_serialno));
+		ldbg(st->logger, PRI_SO" Idle", pri_so(st->st_serialno));
 		return false;
 	}
 
@@ -2834,7 +2834,7 @@ bool verbose_v1_state_busy(const struct state *st)
 	/* XXX: why not whack? */
 	/* XXX: can this and below be merged; is there always an offloaded task? */
 	llog(RC_LOG, st->logger,
-	     "discarding packet received during asynchronous work (DNS or crypto) in %s",
+	     "Discarding packet received during asynchronous work (DNS or crypto) in %s",
 	     st->st_state->name);
 	return true;
 }
