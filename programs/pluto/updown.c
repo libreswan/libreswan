@@ -41,6 +41,8 @@
 #include "secrets.h"		/* for struct pubkey_list */
 #include "server_run.h"
 #include "server_fork.h"
+#include <string.h>
+#include <stdlib.h>
 
 static server_fork_cb updown_async_callback;
 const char *pluto_dns_resolver;
@@ -95,10 +97,16 @@ static void jam_clean_xauth_username(struct jambuf *buf,
  * note: this mutates *st by calling get_sa_bundle_info().
  */
 
+// struct updown_exec {
+// 	char buffer[2048];
+// 	const char *env[100];
+// 	const char *arg[4];
+// };
+
 struct updown_exec {
-	char buffer[2048];
-	const char *env[100];
-	const char *arg[4];
+    char buffer[2048];
+    const char *env[100];
+    const char *arg[16];  // increased size
 };
 
 static bool build_updown_exec(struct updown_exec *exec,
@@ -112,16 +120,40 @@ static bool build_updown_exec(struct updown_exec *exec,
 	/*
 	 * Build argv[]
 	 */
+	// const char **argv = exec->arg;
+	// if (c->local->config->child.updown.updown_config_exec) {
+	// 	(*argv++) = c->local->config->child.updown.command;
+	// } else {
+	// 	(*argv++) = "/bin/sh";
+	// 	(*argv++) = "-c";
+	// 	(*argv++) = c->local->config->child.updown.command;
+
+
+	// }
+	// (*argv++) = NULL;
+	// vassert(argv <= exec->arg + elemsof(exec->arg));
+
+
 	const char **argv = exec->arg;
-	if (c->local->config->child.updown.updown_config_exec) {
-		(*argv++) = c->local->config->child.updown.command;
-	} else {
-		(*argv++) = "/bin/sh";
-		(*argv++) = "-c";
-		(*argv++) = c->local->config->child.updown.command;
+
+	const char *cmd = c->local->config->child.updown.command;
+	char *cmd_copy = strdup(cmd);
+	if (cmd_copy == NULL) {
+		return false;
 	}
+
+	char *token = strtok(cmd_copy, " ");
+	while (token != NULL && argv < exec->arg + elemsof(exec->arg) - 1) {
+		(*argv++) = token;
+		token = strtok(NULL, " ");
+	}
+
 	(*argv++) = NULL;
+
 	vassert(argv <= exec->arg + elemsof(exec->arg));
+
+
+
 
 	/*
 	 * Build envp[]
