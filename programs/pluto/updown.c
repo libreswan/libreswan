@@ -134,23 +134,43 @@ static bool build_updown_exec(struct updown_exec *exec,
 	// vassert(argv <= exec->arg + elemsof(exec->arg));
 
 
-	const char **argv = exec->arg;
+const char **argv = exec->arg;
 
-	const char *cmd = c->local->config->child.updown.command;
-	char *cmd_copy = strdup(cmd);
-	if (cmd_copy == NULL) {
-		return false;
-	}
+const char *cmd = c->local->config->child.updown.command;
 
-	char *token = strtok(cmd_copy, " ");
-	while (token != NULL && argv < exec->arg + elemsof(exec->arg) - 1) {
-		(*argv++) = token;
-		token = strtok(NULL, " ");
-	}
+/* copy command into local buffer */
+char buf[1024];
+snprintf(buf, sizeof(buf), "%s", cmd);
 
-	(*argv++) = NULL;
+/* simple whitespace splitting */
+char *p = buf;
+while (*p != '\0' && argv < exec->arg + elemsof(exec->arg) - 1) {
 
-	vassert(argv <= exec->arg + elemsof(exec->arg));
+    /* skip leading spaces */
+    while (*p == ' ') {
+        p++;
+    }
+
+    if (*p == '\0') {
+        break;
+    }
+
+    (*argv++) = p;
+
+    /* find next space */
+    while (*p != '\0' && *p != ' ') {
+        p++;
+    }
+
+    if (*p == ' ') {
+        *p = '\0';
+        p++;
+    }
+}
+
+(*argv++) = NULL;
+
+vassert(argv <= exec->arg + elemsof(exec->arg));
 
 
 
