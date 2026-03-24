@@ -505,7 +505,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 {
 	size_t len = hdr->nlmsg_len;
 
-	ldbg(logger, "%s() sending %d %s", __func__, hdr->nlmsg_type, story);
+	name_buf sb;
+	ldbg(logger, "%s() sending %s %s", __func__,
+		str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb), story);
 	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_dump(logger, hdr, len);
 	}
