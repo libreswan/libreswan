@@ -77,7 +77,7 @@ func find(name, pattern,
 	name = values[value]
 	debug("value: " value)
 	debug("name: " name)
-	new = gensub("( |=0s|=)(" value ")([ ']|$)", "\\1" name "\\3", "g", old)
+	new = gensub("( |'|=0s|=)(" value ")( |'|$)", "\\1" name "\\3", "g", old)
 	debug("old: " old)
 	debug("new: " new)
 	old = new
