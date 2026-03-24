@@ -22,10 +22,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet
+ ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv1 connection
 west #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface lo 127.0.0.1:UDP/4500 (NAT)
@@ -149,7 +149,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet
+ ipsec up westnet-eastnet
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
 "westnet-eastnet" #1: sent Main Mode I2

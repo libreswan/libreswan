@@ -1,1 +1,1 @@
-ipsec auto --up westnet-eastnet
+ipsec up westnet-eastnet
