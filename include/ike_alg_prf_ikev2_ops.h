@@ -39,11 +39,13 @@ struct prf_ikev2_ops {
 				       const chunk_t Ni, const chunk_t Nr,
 				       PK11SymKey *ke_secret,
 				       struct logger *logger);
-	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	/* SKEYSEED = prf(SK_d (old), SK(0) | Ni | Nr [ | SK(1) ... | SK(n) ]) */
 	PK11SymKey *(*ike_sa_rekey_skeyseed)(const struct prf_desc *prf_desc,
 					     PK11SymKey *old_SK_d,
 					     PK11SymKey *new_ke_secret,
 					     const chunk_t Ni, const chunk_t Nr,
+					     size_t nr_additional_secrets,
+					     PK11SymKey **additional_secrets,
 					     struct logger *logger);
 	/*
 	 * IKEv2 - RFC5723 	5.1 SKEYSEED - calculation
@@ -60,11 +62,13 @@ struct prf_ikev2_ops {
 				     const shunk_t SPIi, const shunk_t SPIr,
 				     size_t required_bytes,
 				     struct logger *logger);
-	/* KEYMAT = prf+(SK_d, [ g^ir (new) | ] Ni | Nr) */
+	/* KEYMAT = prf+(SK_d, [ SK(0) | ] Ni | Nr [ | SK(1) ... | SK(n) ]) */
 	PK11SymKey *(*child_sa_keymat)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_d,
 				       PK11SymKey *new_ke_secret,
 				       const chunk_t Ni, const chunk_t Nr,
+				       size_t nr_additional_secrets,
+				       PK11SymKey **additional_secrets,
 				       size_t required_bytes,
 				       struct logger *logger);
 	/* AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <{Initiator,Responder}SignedOctets>) */

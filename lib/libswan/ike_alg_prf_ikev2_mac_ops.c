@@ -132,12 +132,14 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 }
 
 /*
- * SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)
+ * SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr | SK(1) ... | SK(n))
  */
 static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
-					PK11SymKey *SK_d_old,
-					PK11SymKey *new_ke_secret,
-					const chunk_t Ni, const chunk_t Nr,
+					 PK11SymKey *SK_d_old,
+					 PK11SymKey *new_ke_secret,
+					 const chunk_t Ni, const chunk_t Nr,
+					 size_t nr_additional_secrets,
+					 PK11SymKey **additional_secrets,
 					 struct logger *logger)
 {
 	/* key = SK_d (old) */
@@ -150,10 +152,12 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 
-	/* seed: g^ir (new) | Ni | Nr) */
+	/* seed: g^ir (new) | Ni | Nr | S(1) ... | S(n) */
 	crypt_prf_update_symkey(prf, "g^ir (new)", new_ke_secret);
 	crypt_prf_update_hunk(prf, "Ni", Ni);
 	crypt_prf_update_hunk(prf, "Nr", Nr);
+	for (size_t i = 0; i < nr_additional_secrets; i++)
+		crypt_prf_update_symkey(prf, "S(n)", additional_secrets[i]);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -209,12 +213,14 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 }
 
 /*
- * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr)
+ * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr [ | SK(1) ... | SK(n) ])
  */
 static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   PK11SymKey *SK_d,
 				   PK11SymKey *new_ke_secret,
 				   const chunk_t Ni, const chunk_t Nr,
+				   size_t nr_additional_secrets,
+				   PK11SymKey **additional_secrets,
 				   size_t required_bytes,
 				   struct logger *logger)
 {
@@ -229,6 +235,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	}
 	PK11SymKey *data;
 	if (new_ke_secret == NULL) {
+		passert(nr_additional_secrets == 0);
 		data = symkey_from_hunk("data=Ni", Ni, logger);
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	} else {
@@ -236,6 +243,9 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 		data = symkey_addref(logger, "new_ke_secret", new_ke_secret);
 		append_symkey_hunk("data+=Ni", &data, Ni, logger);
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
+		for (size_t i = 0; i < nr_additional_secrets; i++) {
+			append_symkey_symkey(&data, additional_secrets[i], logger);
+		}
 	}
 	PK11SymKey *result = prfplus(prf_desc,
 				     SK_d, data,
