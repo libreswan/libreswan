@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk
+ ipsec add westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
@@ -20,7 +20,7 @@ west #
 west #
  ipsec whack --impair timeout_on_retransmit
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk
+ ipsec up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
 IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending bogus KE (g^x) == 0 value to break DH calculations
@@ -39,10 +39,10 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk
+ ipsec add westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk
+ ipsec up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #2: sent Main Mode request
 "westnet-eastnet-ipv4-psk" #2: sent Main Mode I2

@@ -8,7 +8,7 @@ east #
 east #
  ipsec whack --impair ke_payload:omit
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv1 connection
 east #
  echo "initdone"
