@@ -98,14 +98,16 @@ packages_for_testing() {
     cat <<EOF | awk '{print $1}'
 bind-dnssec-utils
 bind-utils
+checksec
 conntrack-tools
-diffstat				used by NSRUN
+diffstat				# used by NSRUN
 fping
 gawk
 gdb
-git					used by NSRUN
-gnutls-utils				used by soft tokens
+git					# used by NSRUN
+gnutls-utils				# used by soft tokens
 iptables
+jq
 kl2tpd
 libcap-ng-utils
 linux-system-roles
@@ -120,8 +122,8 @@ python3-pexpect
 rsync
 selinux-policy-devel
 socat
-softhsm-devel				used by soft tokens
-sshpass					used by ansible-playbook
+softhsm-devel				# used by soft tokens
+sshpass					# used by ansible-playbook
 strace
 strongswan
 strongswan-sqlite
