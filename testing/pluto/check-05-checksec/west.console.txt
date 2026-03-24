@@ -1,0 +1,24 @@
+test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
+west #
+ test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
+west #
+ # default CLI output is colourised with no way to disable
+west #
+ # ulgh!
+west #
+ checksec --format=json --file=${PLUTOBIN} | jq -M
+{
+  "PATH/libexec/ipsec/pluto": {
+    "relro": "full",
+    "canary": "yes",
+    "nx": "yes",
+    "pie": "yes",
+    "rpath": "no",
+    "runpath": "no",
+    "symbols": "yes",
+    "fortify_source": "partial",
+    "fortified": "8",
+    "fortify-able": "21"
+  }
+}
+west #
