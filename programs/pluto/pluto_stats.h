@@ -54,6 +54,7 @@ extern struct pstats_bytes pstats_ike_bytes;	/* total IKE traffic */
 
 extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 extern unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
+extern unsigned long pstats_ikev1_dropped;
 extern const struct pluto_stat pstats_ikev2_sent_notifies_e; /* types of NOTIFY ERRORS */
 extern const struct pluto_stat pstats_ikev2_recv_notifies_e; /* types of NOTIFY ERRORS */
 extern const struct pluto_stat pstats_ikev2_sent_notifies_s; /* types of NOTIFY STATUS */
@@ -62,6 +63,7 @@ extern const struct pluto_stat pstats_stf_status;	     /* count state transition
 extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
+extern unsigned long pstats_ike_mangled;
 
 extern unsigned long pstats_iketcp_started[2];
 extern unsigned long pstats_iketcp_aborted[2];
