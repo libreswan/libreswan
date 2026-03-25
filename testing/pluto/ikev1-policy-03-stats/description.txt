@@ -1,0 +1,7 @@
+east is configured to reject all ikev1 packets.
+
+Three scenarios are tested to verify dropped packet counters:
+
+An ikev1 attempt should fail and increment total.ike.ikev1.dropped
+An ikev2 attempt should succeed with no counters increment
+An ikev2 with major_version_bump should increment total.ike.mangled

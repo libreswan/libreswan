@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec status |grep "ikev1-policy"
+ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=reject
+east #
+ # should fail
+east #
+ ipsec auto --add ikev1
+ipsec add: warning: /etc/ipsec.conf:13: overriding earlier 'config setup' keyword with new value: ikev1-policy=reject
+"ikev1": failed to add connection: global ikev1-policy=reject does not allow IKEv1 connections
+east #
+ # should work but unused
+east #
+ ipsec auto --add ikev2
+ipsec add: warning: /etc/ipsec.conf:13: overriding earlier 'config setup' keyword with new value: ikev1-policy=reject
+"ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && ipsec whack --globalstatus | grep -E "total.ike.ikev1.dropped|total.ike.mangled"
+total.ike.ikev1.dropped=1
+total.ike.mangled=0
+east #
+ hostname | grep west > /dev/null && ipsec whack --globalstatus | grep -E "total.ike.ikev1.dropped|total.ike.mangled"
+east #
+ hostname | grep east > /dev/null && grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log
+packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.2.45:500
+east #
