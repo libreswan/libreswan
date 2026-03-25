@@ -2,16 +2,17 @@
 
 /testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainca/west.end.p12
-WEST_CKAID=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+WEST_CKAID=$(ipsec showhostkey --list | sed -n -e 's/.*ckaid: //p')
+echo west ckaid: ${WEST_CKAID}
 
 # Import EAST's private key and extract its CKAID
 
 /testing/guestbin/swan-prep --nokeys
-/testing/x509/import.sh real/mainca/east.p12
-EAST_CKAID=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+/testing/x509/import.sh real/mainca/east.end.p12
+EAST_CKAID=$(ipsec showhostkey --list | sed -n -e 's/.*ckaid: //p')
+echo east ckaid: ${EAST_CKAID}
 
 # edit CKAIDS into ipsec.conf
-echo west ckaid: $westckaid east ckaid: $eastckaid
 sed -e "s/@@WEST_CKAID@@/${WEST_CKAID}/" -e "s/@@EAST_CKAID@@/${EAST_CKAID}/" ipsec.conf > OUTPUT/ipsec.conf
 
 # configure for real

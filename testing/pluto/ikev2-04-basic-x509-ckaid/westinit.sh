@@ -1,6 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 /testing/x509/import.sh real/mainca/east.end.cert
+/testing/x509/import.sh real/mainca/west.p12
 cp -v OUTPUT/ipsec.conf /etc/ipsec.conf
 
 # confirm that the network is alive
