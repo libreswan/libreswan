@@ -41,7 +41,7 @@ west #
 "westnet-eastnet-vti-01" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-vti-01" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-vti-01" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-vti-01" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "westnet-eastnet-vti-01" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-vti-01" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-vti-01" #2: command "prepare" output: ip tunnel add ipsec0 mode vti local 192.1.2.45 remote 0.0.0.0 okey 21 ikey 20
@@ -62,7 +62,7 @@ west #
 west #
  ipsec up westnet-eastnet-vti-02 # sanitize-retransmits
 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
+"westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [10.0.1.0/24===10.0.2.0/24]
 "westnet-eastnet-vti-02" #3: command "prepare" output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: command "prepare" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 "westnet-eastnet-vti-02" #3: command "prepare" output: wanted  : ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 21
