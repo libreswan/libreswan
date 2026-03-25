@@ -1,0 +1,62 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-eastnet
+"west-eastnet": added oriented IKEv2 connection
+west #
+ # confirm we have stock resolv.conf
+west #
+ cat /etc/resolv.conf
+domain testing.libreswan.org
+nameserver 192.1.2.254
+west #
+ echo initdone
+initdone
+west #
+ # this will ask for WEST/32, but get back an addresspool address
+west #
+ ipsec up west-eastnet
+"west-eastnet"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eastnet"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eastnet"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@GroupID'; Child SA #2 {ESP <0xESPESP} [192.1.2.45/32===192.0.2.0/24]
+"west-eastnet"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
+"west-eastnet"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
+"west-eastnet"[1] 192.1.2.23 #2: ignoring INTERNAL_IP4_DNS server address payload (ignore-peer-dns=yes)
+"west-eastnet"[1] 192.1.2.23 #2: ignoring INTERNAL_IP4_DNS server address payload (ignore-peer-dns=yes)
+"west-eastnet"[1] 192.1.2.23 #2: ignoring INTERNAL_DNS_DOMAIN 'libreswan.org' (ignore-peer-dns=yes)
+"west-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "west-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=100.64.13.2/32
+west #
+ # confirm resolv.conf was NOT updated (ignore-peer-dns=yes)
+west #
+ cat /etc/resolv.conf
+domain testing.libreswan.org
+nameserver 192.1.2.254
+west #
+ # confirm resolv.conf is unchanged on down
+west #
+ ipsec down west-eastnet
+"west-eastnet"[1] 192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"west-eastnet"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"west-eastnet"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"west-eastnet"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA)
+west #
+ cat /etc/resolv.conf
+domain testing.libreswan.org
+nameserver 192.1.2.254
+west #
+ echo done
+done
+west #

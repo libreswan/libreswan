@@ -1,0 +1,6 @@
+Test IKEv2 with addresspool with leftsubnet unset, i.e., leftts=%host/32
+
+It should fail.
+
+Instead east ignores TS and assigns an address from the addresspool.
+See When assigning a lease, libreswan ignores TS? #2698
