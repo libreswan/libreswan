@@ -47,6 +47,7 @@ unsigned long pstats_ikev1_completed;
 unsigned long pstats_ikev2_completed;
 unsigned long pstats_ikev2_redirect_failed;
 unsigned long pstats_ikev2_redirect_completed;
+unsigned long pstats_ikev1_dropped;
 unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
@@ -81,6 +82,7 @@ unsigned long pstats_ipsec_tfc;
 unsigned long pstats_ike_dpd_recv;
 unsigned long pstats_ike_dpd_sent;
 unsigned long pstats_ike_dpd_replied;
+unsigned long pstats_ike_mangled;
 unsigned long pstats_iketcp_started[2];
 unsigned long pstats_iketcp_stopped[2];
 unsigned long pstats_iketcp_aborted[2];
@@ -420,6 +422,7 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
 	show(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
 	show(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
+	show(s, "total.ike.ikev1.dropped=%lu", pstats_ikev1_dropped);
 
 	/* new */
 	for (enum ike_version v = IKE_VERSION_FLOOR; v < IKE_VERSION_ROOF; v++) {
@@ -449,6 +452,7 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show(s, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
 	show(s, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
 	show(s, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
+	show(s, "total.ike.mangled=%lu", pstats_ike_mangled);
 
 	show_bytes(s, "total.ike.traffic", &pstats_ike_bytes);
 
