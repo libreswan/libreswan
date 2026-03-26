@@ -830,7 +830,9 @@ doroute() {
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	esac
-    else
+    fi
+    # If we couldn't find peer_interface, default to PLUTO_INTERFACE
+    if [ -z "${peer_interface}" ]; then
 	peer_interface=${PLUTO_INTERFACE}
     fi
 
