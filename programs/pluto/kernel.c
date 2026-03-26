@@ -406,7 +406,7 @@ ipsec_spi_t get_ipsec_spi(const struct connection *c,
 					proto,
 					get_proto_reqid(c->child.reqid, proto, logger),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
-					"SPI", logger);
+					logger);
 }
 
 /* Generate Unique CPI numbers.
@@ -426,7 +426,7 @@ ipsec_spi_t get_ipsec_cpi(const struct connection *c, struct logger *logger)
 					get_proto_reqid(c->child.reqid, &ip_protocol_ipcomp, logger),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
-					"CPI", logger);
+					logger);
 }
 
 /*

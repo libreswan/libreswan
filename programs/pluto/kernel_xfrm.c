@@ -2759,7 +2759,6 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 				      const struct ip_protocol *proto,
 				      reqid_t reqid,
 				      uintmax_t min, uintmax_t max,
-				      const char *story,
 				      struct logger *logger)
 {
 	struct {
@@ -2791,7 +2790,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			       "Get SPI", story,
+			       "Get SPI", proto->name,
 			       &recv_errno, logger)) {
 		return 0;
 	}

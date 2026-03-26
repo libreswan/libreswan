@@ -709,7 +709,6 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const struct ip_protocol *protocol,
 					 reqid_t reqid,
 					 uintmax_t min, uintmax_t max,
-					 const char *story UNUSED,	/* often SAID string */
 					 struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
