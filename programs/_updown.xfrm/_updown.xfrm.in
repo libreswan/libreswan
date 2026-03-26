@@ -500,7 +500,7 @@ restore_systemd_resolver() {
 	    echo "clearing Domain"
             resolvectl domain "${PLUTO_INTERFACE}" ""
         fi
-   	rm -f "${DOMAIN_BACKUP}"
+	rm -f "${DOMAIN_BACKUP}"
     else
 	echo "no Domain backup to restore"
     fi
