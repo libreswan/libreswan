@@ -110,6 +110,7 @@ void process_md(struct msg_digest *md)
 			     str_diag(d));
 		}
 		pfree_diag(&d);
+		pstats_ike_mangled++;
 		return;
 	}
 
@@ -154,18 +155,21 @@ void process_md(struct msg_digest *md)
 		 * just drop them.
 		 */
 		limited_llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
+		pstats_ike_mangled++;
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 	{
 		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
 			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
+			pstats_ikev1_dropped++;
 			return;
 		}
 #ifdef USE_IKEv1
 		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
 			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
+			pstats_ikev1_dropped++;
 			return;
 		}
 
@@ -198,6 +202,7 @@ void process_md(struct msg_digest *md)
 		/* our caller will md_delref(mdp) */
 #else
 		ldbg(md->logger, "IKEv1 packet dropped"); /* dbg to prevent DoS */
+		pstats_ikev1_dropped++;
 #endif
 		break;
 	}
