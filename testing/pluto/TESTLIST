@@ -175,6 +175,7 @@ kvmplutotest	addconn-48-shunts				good
 kvmplutotest	addconn-50-send-vendorid			good
 kvmplutotest	addconn-51-config-setup-dns-resolver		good
 kvmplutotest	addconn-52-clones				good
+kvmplutotest	addconn-53-config-setup-ike-socket		good
 
 #################################################################
 # IKEv2 tests

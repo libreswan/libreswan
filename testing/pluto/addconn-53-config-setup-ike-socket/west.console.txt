@@ -1,0 +1,33 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ echo "initdone"
+initdone
+west #
+ # Test 1: options from config setup in ipsec.conf
+west #
+ ipsec pluto --config west.conf
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec status | grep "ikebuf="
+ikebuf=32768, msg_errqueue=no, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # Test 2: options from command line arguments
+west #
+ ipsec pluto --config west-cli.conf --ike-socket-errqueue=no --ike-socket-bufsize=65535
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec status | grep "ikebuf="
+ikebuf=65535, msg_errqueue=no, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0, dns-resolver=file,
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ echo done
+done
+west #
