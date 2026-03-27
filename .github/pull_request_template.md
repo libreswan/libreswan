@@ -1,3 +1,7 @@
+- did you use "AI".
+
+  We're assuming this pull-request is your, and your co-authors, work;
+  and it made available under the terms of the GPLv2+.
 
 - have you seen our [Programming
   Conventions](https://github.com/libreswan/libreswan/wiki/Hacking:-Programming-Conventions)
