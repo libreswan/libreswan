@@ -1291,15 +1291,20 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 {
 
 	SECKEYPrivateKey *private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
-#ifdef USE_EDDSA
-	ldbg(logger, "found private key %p with type %d vs edKey=%d ecKey=%d",
-	     private_key,
-	     (private_key != NULL ? private_key->keyType : 0),
-	     edKey, ecKey);
-#endif
 	if (private_key == NULL) {
 		return "NSS: cert private key not found";
 	}
+
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "found private key %p with type %d;",
+		    private_key,
+		    (private_key != NULL ? private_key->keyType : 0));
+		jam(buf, " ecKey=%d", ecKey);
+#ifdef USE_EDDSA
+		jam(buf, " edKey=%d", edKey);
+#endif
+	}
+
 	err_t err = add_private_key(secrets, pks, logger,
 				    pubk, ckaid_nss, type, private_key);
 	SECKEY_DestroyPrivateKey(private_key);
