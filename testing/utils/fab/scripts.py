@@ -183,7 +183,11 @@ def commands(directory, logger):
                 if hostname_command:
                     hostname = hostname_command.group("hostname")
                     command = hostname_command.group("command")
-                    if hostname:
+                    if hostname == "final":
+                        for host in sorted(DOMAIN_BY_HOSTNAME.keys()):
+                            domain = DOMAIN_BY_HOSTNAME[host]
+                            commands.append(Command(domain, command, script))
+                    elif hostname:
                         domain = DOMAIN_BY_HOSTNAME[hostname]
                         commands.append(Command(domain, command, script))
                     elif line:
