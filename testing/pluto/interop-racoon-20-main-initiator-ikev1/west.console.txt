@@ -12,8 +12,6 @@ west #
 west #
  ../../guestbin/start-racoon.sh
 west #
- # create a partial state on east, don't hold the hack for retransmit
-west #
  racoonctl establish-sa -w isakmp inet ${left} ${right}
 VPN connexion established
 west #
@@ -21,11 +19,7 @@ west #
 west #
  echo "spdadd ${rightsubnet}[any] ${leftsubnet}[any] any -P in  ipsec esp/tunnel/${right}-${left}/require;" | setkey -c
 west #
- # can't use -w as it is fakey, see NetBSD 59347
-west #
  racoonctl establish-sa esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
-west #
- # so instead wait for the SAs to appear
 west #
  ../../guestbin/wait-for.sh --match "${left} ${right}" -- ipsec _kernel state
 192.1.2.45 192.1.2.23 

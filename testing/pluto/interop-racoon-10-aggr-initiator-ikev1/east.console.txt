@@ -1,11 +1,13 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/prep.sh
+'east.ipsec.conf' -> '/etc/ipsec.conf'
+'east.ipsec.secrets' -> '/etc/ipsec.secrets'
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 east #
  ipsec whack --impair revival

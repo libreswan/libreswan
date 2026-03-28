@@ -1,11 +1,13 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/prep.sh
+'west.ipsec.conf' -> '/etc/ipsec.conf'
+'west.ipsec.secrets' -> '/etc/ipsec.secrets'
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
@@ -13,9 +15,7 @@ west #
  echo "initdone"
 initdone
 west #
- # create a partial state on east, don't hold the hack for retransmit
-west #
- ipsec auto --up west-east # sanitize-retransmits
+ ipsec up west-east # sanitize-retransmits
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
 "west-east" #1: sent Main Mode I2
