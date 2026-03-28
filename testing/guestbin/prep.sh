@@ -42,7 +42,7 @@ rm -rf ${etc}/ipsec.d
 mkdir ${etc}/ipsec.d
 
 for s in conf secrets ; do
-    copy_if ${etc}/ipsec.${s} ${hostname}.${s} ipsec.${s}
+    copy_if ${etc}/ipsec.${s} ${hostname}.${s} ${hostname}.ipsec.${s} ipsec.${s}
 done
 
 log_if pluto ${etc}/ipsec.conf
