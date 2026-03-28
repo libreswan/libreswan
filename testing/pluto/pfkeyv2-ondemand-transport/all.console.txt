@@ -1,31 +1,64 @@
 linuxeast# /testing/guestbin/swan-prep --46
+
 linuxeast# ipsec start
-Redirecting to: [initsystem]
+
+Redirecting to: systemctl start ipsec.service
+
 linuxeast# ../../guestbin/wait-until-pluto-started
+
+
 linuxeast# ipsec whack --impair suppress_retransmits
-linuxeast# echo "initdone"
-initdone
-netbsdwest# ../../guestbin/prep.sh
-ipsec.conf -> PATH/etc/ipsec.conf
-ipsec.secrets -> PATH/etc/ipsec.secrets
-netbsdwest# ipsec start
-Redirecting to: [initsystem]
-Initializing NSS database
-Starting pluto.
-netbsdwest# ipsec auto --add eastnet-westnet-ikev2
+
+linuxeast# ipsec add eastnet-westnet-ikev2
+
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
-netbsdwest# echo "initdone"
+
+linuxeast# echo "initdone"
+
 initdone
-netbsdwest# ipsec auto --route eastnet-westnet-ikev2
+
+netbsdwest# ../../guestbin/prep.sh
+
+ipsec.conf -> /usr/local/etc/ipsec.conf
+ipsec.secrets -> /usr/local/etc/ipsec.secrets
+
+netbsdwest# ipsec start
+
+Redirecting to: /usr/local/etc/rc.d/pluto onestart
+Initializing NSS database
+
+Starting pluto.
+
+netbsdwest# ipsec add eastnet-westnet-ikev2
+
+"eastnet-westnet-ikev2": added oriented IKEv2 connection
+
+netbsdwest# echo "initdone"
+
+initdone
+
+netbsdwest# ipsec route eastnet-westnet-ikev2
+
 netbsdwest# ipsec _kernel state
+
 No SAD entries.
+
 netbsdwest# ipsec _kernel policy
+
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
 	out ipsec
 	esp/transport//require
 	spid=1 seq=0 pid=PID
 	refcnt=0
+
+# trigger acquire
+
+netbsdwest# ../../guestbin/ping-once.sh --fire-and-forget -I 192.0.1.254 192.0.2.254
+
+fired and forgotten
+
+netbsdwest# sleep 5 # negotiate
+
 netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+
 up
