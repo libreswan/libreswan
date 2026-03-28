@@ -40,7 +40,7 @@
 #include "connection_event.h"
 #include "resolve_helper.h"
 
-static resolve_helper_cb connection_check_ddns1_continue;
+static resolve_helper_callback connection_check_ddns_resolve_helper_callback;
 
 /*
  * Call me periodically to check to see if any DDNS tunnel can come
@@ -138,18 +138,19 @@ static bool connection_check_ddns1(struct connection *c,
 
 	delete_connection_proposals(c);
 
-	request_resolve_help(c, connection_check_ddns1_continue,
+	request_resolve_help(c, connection_check_ddns_resolve_helper_callback,
 			     /*background*/false, c->logger);
 	return true;
 }
 
-void connection_check_ddns1_continue(struct connection *c,
-				     const struct host_addrs *resolved_host_addrs,
-				     bool background UNUSED,
-				     struct verbose verbose)
+void connection_check_ddns_resolve_helper_callback(struct connection *c,
+						   const struct host_addrs *resolved_host_addrs,
+						   bool background UNUSED,
+						   struct verbose verbose)
 {
 	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
 		vlog("not resolved");
+		schedule_connection_check_ddns(c, verbose);
 		whack_detach(c, verbose.logger);
 		return;
 	}

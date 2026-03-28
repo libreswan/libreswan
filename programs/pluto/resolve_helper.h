@@ -26,13 +26,13 @@ struct connection;
 struct host_addrs;
 struct dnssec_config;
 
-typedef void (resolve_helper_cb)(struct connection *c,
-				 const struct host_addrs *resolved_host_addrs,
-				 bool background,
-				 struct verbose verbose);
+typedef void (resolve_helper_callback)(struct connection *c,
+				       const struct host_addrs *resolved_host_addrs,
+				       bool background,
+				       struct verbose verbose);
 
 void request_resolve_help(struct connection *c,
-			  resolve_helper_cb *callback,
+			  resolve_helper_callback *callback,
 			  bool background,
 			  struct logger *logger);
 

@@ -70,7 +70,7 @@
 #include "connection_event.h"
 #include "resolve_helper.h"
 
-static resolve_helper_cb extract_connection_resolve_continue;
+static resolve_helper_callback extract_connection_resolve_helper_callback;
 
 struct kv {
 	const struct whack_message *wm;
@@ -4767,16 +4767,21 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	request_resolve_help(c, extract_connection_resolve_continue,
+	request_resolve_help(c, extract_connection_resolve_helper_callback,
 			     /*background*/wm->whack_async, verbose.logger);
 	return NULL;
 }
 
-void extract_connection_resolve_continue(struct connection *c,
-					 const struct host_addrs *resolved UNUSED,
-					 bool background,
-					 struct verbose verbose)
+void extract_connection_resolve_helper_callback(struct connection *c,
+						const struct host_addrs *resolved UNUSED,
+						bool background,
+						struct verbose verbose)
 {
+	if (host_addrs_need_dns(resolved, verbose)) {
+		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	}
+
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {
 		vlog("connection is using multiple %s", tss);

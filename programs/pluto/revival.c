@@ -60,7 +60,7 @@ void flush_unrouted_revival(struct connection *c)
 	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
-static bool revival_plausable(struct connection *c, struct logger *logger)
+static bool revival_plausible(struct connection *c, struct logger *logger)
 {
 	if (exiting_pluto) {
 		ldbg(logger, "revival: skilling, pluto is going down");
@@ -195,7 +195,7 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 static bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
 			      const char *subplot, struct logger *logger)
 {
-	if (!revival_plausable(c, logger)) {
+	if (!revival_plausible(c, logger)) {
 		return false;
 	}
 

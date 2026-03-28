@@ -29,7 +29,7 @@
 
 static void resolve_finish(struct connection *c,
 			   struct host_addrs *resolved,
-			   resolve_helper_cb *callback,
+			   resolve_helper_callback *callback,
 			   bool background,
 			   struct verbose verbose);
 
@@ -43,7 +43,7 @@ struct help_request {
 	struct connection *connection;
 	struct host_addrs extracted_host_addrs;
 	struct host_addrs resolved_host_addrs;
-	resolve_helper_cb *callback;
+	resolve_helper_callback *callback;
 	bool background;
 };
 
@@ -54,7 +54,7 @@ void discard_resolve_help_request_content(void *pointer, const struct logger *ow
 }
 
 void request_resolve_help(struct connection *c,
-			  resolve_helper_cb *callback,
+			  resolve_helper_callback *callback,
 			  bool background,
 			  struct logger *logger)
 {
@@ -123,18 +123,10 @@ void resolve_continue(struct help_request *request,
 
 void resolve_finish(struct connection *c,
 		    struct host_addrs *resolved,
-		    resolve_helper_cb *cb,
+		    resolve_helper_callback *callback,
 		    bool background,
 		    struct verbose verbose)
 {
-
-	unsigned need_dns = (route_addrs_need_dns(&resolved->end[LEFT_END]) +
-			     route_addrs_need_dns(&resolved->end[RIGHT_END]));
-	if (need_dns > 0) {
-		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	}
-
 	/*
 	 * Even when need DNS, try to resolve routes.  Connection can
 	 * still orient provided one of the addresses is known.
@@ -152,5 +144,5 @@ void resolve_finish(struct connection *c,
 
 	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
 
-	cb(c, resolved, background, verbose);
+	callback(c, resolved, background, verbose);
 }
