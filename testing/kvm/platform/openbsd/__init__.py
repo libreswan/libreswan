@@ -44,24 +44,27 @@ def install_base(child, param):
     #To enter Shell mode
     es(child,'.*hell?','S')
 
-    #Mounting of drive where install.conf file is located
-    es(child,'# ','mount /dev/cd0c /mnt')
-    #Copying of install.conf file
-    es(child,'# ','cp /mnt/base.conf /')
-    es(child,'# ','cp /mnt/base.sh /')
-    es(child,'# ','cp /mnt/base.disk /')
-    #Unmounting the drive
-    es(child,'# ','umount /mnt')
+    # Mounting of drive where install.conf file is located
+    es(child,'# ','mkdir -p /cdrom')
+    es(child,'# ','mount /dev/cd0c /cdrom')
+    # Copying of install.conf file
+    es(child,'# ','cp /cdrom/base.conf /')
+    es(child,'# ','cp /cdrom/base.sh /')
+    es(child,'# ','cp /cdrom/base.disk /')
+    # Unmounting the drive
+    es(child,'# ','umount /cdrom')
 
     #Installing by taking answers from install.conf file
     es(child,'# ','install -af /base.conf')
-    #This is to check if all the installation files got copied(it's slow on some systems)
+    # This is to check if all the installation files got copied (it's
+    # slow on some systems)
     while child.expect([".*install has been successfully completed!",
                         pexpect.EOF,
                         pexpect.TIMEOUT], timeout=10) != 0:
         continue
 
     # customize the install
+    es(child,'# ','mount /dev/cd0c /cdrom')
     es(child,'# ','/bin/sh -x /base.sh')
 
     #child.logfile = None

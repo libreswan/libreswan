@@ -1196,21 +1196,36 @@ $(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_ISO_RELEASE ?= 7.8
+KVM_OPENBSD_RELEASE ?= 7.8
 KVM_OPENBSD_MACHINE ?= amd64
 KVM_OPENBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' openbsd' | sort -V | tail -1))
 
-KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/$(KVM_OPENBSD_MACHINE)/
+KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_RELEASE)
 
 # not openbsd... as gets deleted by rm openbsd.*
-KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install-$(KVM_OPENBSD_MACHINE).iso
+KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_RELEASE)-install-$(KVM_OPENBSD_MACHINE).iso
 KVM_OPENBSD_ISO_HASH ?= SHA256
 KVM_OPENBSD_ISO_CKSUM ?= a228d0a1ef558b4d9ec84c698f0d3ffd13cd38c64149487cba0f1ad873be07b2
 # note: need to strip "." from version as upstream ISO file omits it
-KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
+KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/$(KVM_OPENBSD_MACHINE)/install$(subst .,,$(KVM_OPENBSD_RELEASE)).iso
 
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_OPENBSD_ISO_URL) $(KVM_OPENBSD_ISO_HASH) $(KVM_OPENBSD_ISO_CKSUM)
+
+KVM_OPENBSD_USR_TAR_GZ ?= $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_RELEASE)-src.tar.gz
+KVM_OPENBSD_USR_TAR_GZ_URL ?= $(KVM_OPENBSD_URL)/src.tar.gz
+KVM_OPENBSD_SYS_TAR_GZ ?= $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_RELEASE)-sys.tar.gz
+KVM_OPENBSD_SYS_TAR_GZ_URL ?= $(KVM_OPENBSD_URL)/sys.tar.gz
+
+$(KVM_OPENBSD_USR_TAR_GZ): | $(KVM_POOLDIR)
+	curl --continue-at - --output $@.tmp $(KVM_OPENBSD_USR_TAR_GZ_URL)
+	mv $@.tmp $@
+$(KVM_OPENBSD_SYS_TAR_GZ): | $(KVM_POOLDIR)
+	curl --continue-at - --output $@.tmp $(KVM_OPENBSD_SYS_TAR_GZ_URL)
+	mv $@.tmp $@
+
+$(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_USR_TAR_GZ)
+$(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_SYS_TAR_GZ)
 
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
 	--disk path=$(KVM_OPENBSD_BASE_DOMAIN).iso,readonly=on,device=cdrom,target.bus=sata \
@@ -1237,7 +1252,8 @@ $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
 		/base.conf=platform/openbsd/base.conf \
 		/etc/boot.conf=platform/openbsd/boot.conf \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).sh \
-		/base.disk=platform/openbsd/base.disk
+		/base.disk=platform/openbsd/base.disk \
+		/sys.tar.gz=$(KVM_OPENBSD_SYS_TAR_GZ)
 	mv $@.tmp $@
 
 ##
