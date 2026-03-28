@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add modecfg-road-east
+ ipsec add modecfg-road-east
 "modecfg-road-east": added oriented IKEv1 connection
 road #
  echo "initdone"
@@ -41,7 +41,7 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "modecfg-road-east", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.100/32
 road #
  echo done

@@ -8,10 +8,10 @@ north #
 north #
  ../../guestbin/block-non-ipsec.sh
 north #
- ipsec auto --add north-east
+ ipsec add north-east
 "north-east": added oriented IKEv1 connection
 north #
- ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name north-east --initiate
+ ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name north-east --initiate # sanitize-retransmits
 "north-east" #1: initiating IKEv1 Main Mode connection
 "north-east" #1: sent Main Mode request
 "north-east" #1: sent Main Mode I2
@@ -37,11 +37,11 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.0.2.254
 up
 north #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "north-east", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.100/32
 north #
  echo initdone
 initdone
 north #
- hostname | grep east > /dev/null && ipsec whack --trafficstatus
+ hostname | grep east > /dev/null && ipsec trafficstatus
 north #

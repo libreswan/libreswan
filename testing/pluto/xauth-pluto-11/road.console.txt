@@ -6,13 +6,13 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add xauth-road-eastnet
+ ipsec add xauth-road-eastnet
 "xauth-road-eastnet": added oriented IKEv1 connection
 road #
  echo done
 done
 road #
- ipsec auto --up xauth-road-eastnet
+ ipsec up xauth-road-eastnet # sanitize-retransmits
 "xauth-road-eastnet" #1: initiating IKEv1 Main Mode connection
 "xauth-road-eastnet" #1: sent Main Mode request
 "xauth-road-eastnet" #1: sent Main Mode I2
@@ -32,7 +32,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
  echo done

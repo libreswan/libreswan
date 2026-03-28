@@ -7,7 +7,7 @@ north #
 north #
  ../../guestbin/block-non-ipsec.sh
 north #
- ipsec auto --add north-east
+ ipsec add north-east
 "north-east": added oriented IKEv1 connection
 north #
  echo initdone
@@ -39,10 +39,10 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
 up
 north #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 north #
- hostname | grep east > /dev/null && ipsec whack --trafficstatus
+ hostname | grep east > /dev/null && ipsec trafficstatus
 north #
  hostname | grep east > /dev/null && ipsec stop
 north #

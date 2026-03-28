@@ -1,5 +1,5 @@
-ipsec auto --up north-pool
-ipsec auto --up north-subnet1
-ipsec auto --up north-subnet2
+ipsec up north-pool
+ipsec up north-subnet1
+ipsec up north-subnet2
 # Should show the lease ip is being used for all conns
-ipsec whack --trafficstatus
+ipsec trafficstatus

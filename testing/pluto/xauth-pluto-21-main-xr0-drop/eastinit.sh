@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add east-road
+ipsec add east-road
 echo initdone

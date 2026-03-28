@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add xauth-road-eastnet-psk
+ ipsec add xauth-road-eastnet-psk
 "xauth-road-eastnet-psk": added oriented IKEv1 connection
 east #
  echo "initdone"

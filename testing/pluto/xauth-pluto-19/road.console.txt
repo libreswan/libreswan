@@ -10,13 +10,13 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add modecfg-road-eastnet-psk
+ ipsec add modecfg-road-eastnet-psk
 "modecfg-road-eastnet-psk": added oriented IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
- ipsec auto --replace modecfg-road-eastnet-psk
+ ipsec replace modecfg-road-eastnet-psk
 "modecfg-road-eastnet-psk": added oriented IKEv1 connection
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk
@@ -69,13 +69,13 @@ road #
 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=use3}
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, lease=192.0.2.209/32
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.209/32
 road #
  echo done

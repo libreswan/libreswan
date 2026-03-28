@@ -10,7 +10,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add xauth-road-eastnet
+ ipsec add xauth-road-eastnet
 "xauth-road-eastnet": added oriented IKEv1 connection
 road #
  ipsec whack --impair revival
@@ -46,7 +46,7 @@ road #
 road #
  # prevent false positive on deleting I1 or I2 by redirecting to /dev/null
 road #
- ipsec auto --add xauth-road-eastnet > /dev/null
+ ipsec add xauth-road-eastnet > /dev/null
 road #
  ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
 "xauth-road-eastnet" #2: initiating IKEv1 Main Mode connection
@@ -70,7 +70,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #3: "xauth-road-eastnet", username=gooduser, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
  echo done

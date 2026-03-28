@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add modecfg-road-east
+ ipsec add modecfg-road-east
 "modecfg-road-east": added oriented IKEv1 connection
 east #
  echo "initdone"

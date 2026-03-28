@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add xauth-road-eastnet-psk
+ ipsec add xauth-road-eastnet-psk
 "xauth-road-eastnet-psk": added oriented IKEv1 connection
 road #
  echo "initdone"
@@ -65,7 +65,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #3: "xauth-road-eastnet-psk", username=nopw, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 road #
  # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT

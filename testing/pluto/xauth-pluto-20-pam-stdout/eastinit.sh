@@ -5,5 +5,5 @@ cp pluto.pam /etc/pam.d/pluto
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add xauth-road-eastnet
+ipsec add xauth-road-eastnet
 echo "initdone"

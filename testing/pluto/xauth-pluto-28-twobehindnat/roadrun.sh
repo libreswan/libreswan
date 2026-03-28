@@ -1,4 +1,4 @@
-ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
+ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits
 ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 echo done

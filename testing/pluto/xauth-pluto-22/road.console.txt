@@ -8,7 +8,7 @@ road #
 road #
  ../../guestbin/block-non-ipsec.sh
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": added oriented IKEv1 connection
 road #
  # give north time to establish first so we always get the same IP later
@@ -18,7 +18,7 @@ road #
  echo initdone
 initdone
 road #
- ipsec whack --xauthname 'use4' --xauthpass 'use1pass' --name road-east --initiate
+ ipsec whack --xauthname 'use4' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits
 "road-east" #1: initiating IKEv1 Main Mode connection
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2
@@ -44,11 +44,11 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east", username=use4, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
 road #
  echo done
 done
 road #
- hostname | grep east > /dev/null && ipsec whack --trafficstatus
+ hostname | grep east > /dev/null && ipsec trafficstatus
 road #

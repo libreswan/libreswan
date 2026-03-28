@@ -1,7 +1,7 @@
-ipsec auto --replace modecfg-road-eastnet-psk
+ipsec replace modecfg-road-eastnet-psk
 ipsec whack --status | grep modecfg-road-eastnet-psk
 ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate
-ipsec whack --trafficstatus
+ipsec trafficstatus
 ../../guestbin/ping-once.sh --up 192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 echo done

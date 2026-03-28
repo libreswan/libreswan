@@ -8,7 +8,7 @@ road #
 road #
  ../../guestbin/block-non-ipsec.sh
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": added oriented IKEv1 connection
 road #
  ipsec whack --impair suppress_retransmits
@@ -42,7 +42,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
 road #
  echo done
