@@ -150,6 +150,7 @@ void connection_check_ddns_resolve_helper_callback(struct connection *c,
 {
 	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
 		vlog("not resolved");
+		schedule_connection_check_ddns(c, verbose);
 		whack_detach(c, verbose.logger);
 		return;
 	}

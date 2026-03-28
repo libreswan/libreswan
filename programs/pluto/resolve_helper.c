@@ -127,11 +127,6 @@ void resolve_finish(struct connection *c,
 		    bool background,
 		    struct verbose verbose)
 {
-	if (host_addrs_need_dns(resolved, verbose)) {
-		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	}
-
 	/*
 	 * Even when need DNS, try to resolve routes.  Connection can
 	 * still orient provided one of the addresses is known.

@@ -4777,6 +4777,11 @@ void extract_connection_resolve_helper_callback(struct connection *c,
 						bool background,
 						struct verbose verbose)
 {
+	if (host_addrs_need_dns(resolved, verbose)) {
+		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	}
+
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {
 		vlog("connection is using multiple %s", tss);
