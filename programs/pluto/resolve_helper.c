@@ -127,10 +127,7 @@ void resolve_finish(struct connection *c,
 		    bool background,
 		    struct verbose verbose)
 {
-
-	unsigned need_dns = (route_addrs_need_dns(&resolved->end[LEFT_END]) +
-			     route_addrs_need_dns(&resolved->end[RIGHT_END]));
-	if (need_dns > 0) {
+	if (host_addrs_need_dns(resolved, verbose)) {
 		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
 	}
