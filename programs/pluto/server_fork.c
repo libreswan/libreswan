@@ -26,7 +26,7 @@
  */
 
 #ifdef __linux__
-#define _GNU_SOURCE		/* for pipe2() */
+#define _GNU_SOURCE	/* expose execvpe() and pipe2() on Linux */
 #endif
 
 #include <sys/types.h>
@@ -370,7 +370,8 @@ pid_t server_fork_exec(const char *path, char *argv[], char *envp[],
 				   logger);
 	if (pid == 0) {
 		/* child */
-		execve(path, argv, envp);
+		/* definition requires _GNU_SOURCE on Linux */
+		execvpe(path, argv, envp);
 		/* really can't printf() */
 		_exit(42);
 	}

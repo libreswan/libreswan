@@ -26,7 +26,9 @@
  * for more details.
  */
 
+#ifdef __linux__
 #define _GNU_SOURCE	/* expose execvpe() on Linux */
+#endif
 
 #include <stdlib.h>
 #include <errno.h>
