@@ -2057,9 +2057,12 @@ void llog_transition_start(enum stream stream, struct logger *logger,
 			   const struct v2_transition *svm,
 			   const struct msg_digest *md)
 {
+	bool reassembled = (v2_msg_role(md) == MESSAGE_REQUEST &&
+			    md->v2_frags_total > 0);
+
 	LLOG_JAMBUF(stream, logger, buf) {
 
-		jam_string(buf, "processing ");
+		jam_string(buf, reassembled ? "processing reassembled " : "processing ");
 
 		PEXPECT(logger, svm->exchange->type == md->hdr.isa_xchg);
 		jam_string(buf, svm->exchange->name);
@@ -2074,6 +2077,11 @@ void llog_transition_start(enum stream stream, struct logger *logger,
 		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
 
 		jam_string(buf, " containing ");
+		if (reassembled) {
+			jam(buf, "SKF[%u fragment%s] -> ",
+			    md->v2_frags_total,
+			    md->v2_frags_total == 1 ? "" : "s");
+		}
 		jam_msg_digest_payloads(buf, md);
 	}
 }
