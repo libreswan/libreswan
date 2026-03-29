@@ -1,3 +1,2 @@
-ipsec whack --impair timeout_on_retransmit
-ipsec auto --up x509
+ipsec up x509 # suppress-retransmits
 echo done

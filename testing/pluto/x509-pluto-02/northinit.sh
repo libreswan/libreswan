@@ -8,7 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
-ipsec auto --add north-east-x509-pluto-02
-ipsec auto --status | grep north-east-x509-pluto-02
+ipsec add north-east-x509-pluto-02
+ipsec connectionstatus north-east-x509-pluto-02
 
 echo "initdone"

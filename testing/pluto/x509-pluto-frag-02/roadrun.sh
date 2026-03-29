@@ -1,2 +1,2 @@
-ipsec auto --up x509
+ipsec up x509 # sanitize-retransmits
 echo done

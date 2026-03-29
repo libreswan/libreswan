@@ -2,6 +2,6 @@
 ipsec certutil -D -n north
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add north-east-x509-pluto-02
-ipsec auto --status | grep north-east-x509-pluto-02
+ipsec add north-east-x509-pluto-02
+ipsec connectionstatus north-east-x509-pluto-02
 echo "initdone"

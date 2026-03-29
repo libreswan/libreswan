@@ -16,13 +16,13 @@ road #
 road #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 road #
- ipsec auto --add x509
+ ipsec add x509
 "x509": added oriented IKEv1 connection
 road #
  echo done
 done
 road #
- ipsec auto --up x509
+ ipsec up x509 # sanitize-retransmits
 "x509" #1: initiating IKEv1 Main Mode connection
 "x509" #1: sent Main Mode request
 "x509" #1: sent Main Mode I2

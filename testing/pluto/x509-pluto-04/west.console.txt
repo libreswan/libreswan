@@ -27,7 +27,7 @@ west #
 west #
  ipsec whack --impair timeout_on_retransmit
 west #
- ipsec auto --add westnet-eastnet-x509-cr
+ ipsec add westnet-eastnet-x509-cr
 "westnet-eastnet-x509-cr": added oriented IKEv1 connection
 west #
  echo "initdone"
@@ -35,7 +35,7 @@ initdone
 west #
  # this should fail
 west #
- ipsec auto --up westnet-eastnet-x509-cr
+ ipsec up westnet-eastnet-x509-cr
 "westnet-eastnet-x509-cr" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-x509-cr" #1: sent Main Mode request
 "westnet-eastnet-x509-cr" #1: sent Main Mode I2
