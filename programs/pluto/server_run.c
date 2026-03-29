@@ -26,6 +26,8 @@
  * for more details.
  */
 
+#define _GNU_SOURCE	/* expose execvpe() on Linux */
+
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -117,13 +119,16 @@ static void child_process(const char *story,
 
 	/*
 	 * In child, with redirection done, exec new command.
+	 *
+	 * execvpe(), always available on BSD, is available on
+	 * Linux when #define _GNU_SOURCE.
 	 */
 
 	if (envp == NULL) {
-		execv(argv[0], (char**)argv);
+		execvp(argv[0], (char**)argv);
 	} else {
 		/* definition requires _GNU_SOURCE on Linux */
-		execve(argv[0], (char**)argv, (char**)envp);
+		execvpe(argv[0], (char**)argv, (char**)envp);
 	}
 
 	/* should never reach here */
