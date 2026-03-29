@@ -80,19 +80,41 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
+ PATH=$PATH:/tmp ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec add --auto=route addconn--updown-config=exec
-"addconn--updown-config=exec": added oriented IKEv2 connection
+ # usage: sleep connection
 west #
- grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
-PLUTO_CONNECTION=addconn--updown-config=exec
+ AD() { rm -f /tmp/updown.env ; ipsec add --auto=route $2 ; sleep $1 ; grep -e PLUTO_ARGV= -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env ; ipsec delete $2 ; }
+west #
+ AD 0 addconn--updown=/tmp/updown.sh
+"addconn--updown=/tmp/updown.sh": added oriented IKEv2 connection
+PLUTO_ARGV=custom
+PLUTO_CONNECTION=addconn--updown=/tmp/updown.sh
 PLUTO_VERB=route-client
-PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/silly/path
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
 west #
- ipsec delete addconn--updown-config=exec
+ AD 0 addconn--updown=/tmp/updown.sh--updown-config=exec
+"addconn--updown=/tmp/updown.sh--updown-config=exec": added oriented IKEv2 connection
+PLUTO_ARGV=custom
+PLUTO_CONNECTION=addconn--updown=/tmp/updown.sh--updown-config=exec
+PLUTO_VERB=route-client
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
+west #
+ AD 0 addconn--updown=updown.sh
+"addconn--updown=updown.sh": added oriented IKEv2 connection
+PLUTO_ARGV=custom
+PLUTO_CONNECTION=addconn--updown=updown.sh
+PLUTO_VERB=route-client
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
+west #
+ AD 0 addconn--updown=updown.sh--updown-config=exec
+"addconn--updown=updown.sh--updown-config=exec": added oriented IKEv2 connection
+PLUTO_ARGV=custom
+PLUTO_CONNECTION=addconn--updown=updown.sh--updown-config=exec
+PLUTO_VERB=route-client
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
 west #
  ipsec stop
 Redirecting to: [initsystem]

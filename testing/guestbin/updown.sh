@@ -1,5 +1,8 @@
 #!/bin/sh
 
-printenv > /tmp/updown.env
+{
+    echo PLUTO_ARGV="$@"
+    printenv
+} > /tmp/updown.env
 
 exec ipsec _updown "$@"
