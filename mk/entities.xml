@@ -54,6 +54,7 @@
 <!ENTITY crypt.3 '<citerefentry><refentrytitle>crypt</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY efence.2 '<citerefentry><refentrytitle>efence</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
 <!ENTITY exec.3 '<citerefentry><refentrytitle>exec</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY execvpe.3 '<citerefentry><refentrytitle>execvpe</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY glob.3 '<citerefentry><refentrytitle>glob</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY init.8 '<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ip.8 '<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
