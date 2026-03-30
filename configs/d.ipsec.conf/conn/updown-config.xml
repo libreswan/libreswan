@@ -13,6 +13,21 @@
       <varlistentry>
 	<term>
 	  <option>
+	    &exec;
+	  </option>
+	</term>
+	<listitem>
+	  <para>
+	    Invoke the <option>updown</option> &command; directly
+	    using &execvpe.3;.  By default, the
+	    <option>updown</option> &command; is invoked using
+	    <command>/bin/sh -c</command> (see &sh.1;).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <option>
 	    &async;
 	  </option>
 	</term>
@@ -29,26 +44,6 @@
 	  </para>
 	  <para>
 	    For more information see &ipsec-updown.8;
-	  </para>
-	  <caution>
-	    <para>
-	      This option is experimental.
-	    </para>
-	  </caution>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>
-	  <option>
-	    &exec;
-	  </option>
-	</term>
-	<listitem>
-	  <para>
-	    Assume the <option>updown</option> &command; is the path
-	    to an executable and invoke it directly using &exec.3;.
-	    Normally the <option>updown</option> &command; is invoked
-	    using <command>/bin/sh -c</command>.
 	  </para>
 	  <caution>
 	    <para>

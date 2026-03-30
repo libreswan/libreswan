@@ -29,11 +29,15 @@ ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
 
 ipsec stop
 
-PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
+PATH=$PATH:/tmp ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
 ../../guestbin/wait-until-pluto-started
 
-ipsec add --auto=route addconn--updown-config=exec
-grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
-ipsec delete addconn--updown-config=exec
+# usage: sleep connection
+AD() { rm -f /tmp/updown.env ; ipsec add --auto=route $2 ; sleep $1 ; grep -e PLUTO_ARGV= -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env ; ipsec delete $2 ; }
+
+AD 0 addconn--updown=/tmp/updown.sh
+AD 0 addconn--updown=/tmp/updown.sh--updown-config=exec
+AD 0 addconn--updown=updown.sh
+AD 0 addconn--updown=updown.sh--updown-config=exec
 
 ipsec stop

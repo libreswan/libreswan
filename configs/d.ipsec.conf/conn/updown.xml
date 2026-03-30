@@ -7,16 +7,25 @@
   </term>
   <listitem>
     <para>
-      The shell command to run to adjust routing and/or firewalling
-      when the status of the connection changes.  May include
-      positional parameters separated by white space (although this
-      requires enclosing the whole string in quotes); including shell
-      metacharacters is unwise.  An example to enable routing when
-      using the XFRM stack, one can use:
+      The &command; to run to adjust routing and/or firewalling when
+      the status of the connection changes.  By default, &command; is
+      passed to <command>/bin/sh -c</command> (see &sh.1;) and run
+      synchronously.  See <option>updown-config=</option> for how this
+      can be changed.
+    </para>
+    <para>
+      &command; may include positional parameters separated by white
+      space (this requires enclosing the whole string in quotes).
+      When invoked using &sh.1;, &command; may include metacharacters
+      (although is is considered unwise).
+    </para>
+    <para>
+      An example to enable routing when using the XFRM stack, one can
+      use:
     </para>
     <para>
       <simplelist columns='1'>
-        <member><command>updown="ipsec _updown --route yes"</command></member>
+        <member><command>leftupdown="ipsec _updown --route yes"</command></member>
       </simplelist>
     </para>
     <para>
@@ -29,7 +38,8 @@
       <option>drop</option> never run <command>ipsec _updown</command>.
     </para>
     <para>
-      For more information, see &ipsec-updown.8;.
+      For more information, see the command &ipsec-updown.8; and the
+      option <option>updown-config=</option>.
     </para>
     <para>
       The default is <command>ipsec _updown</command>.
