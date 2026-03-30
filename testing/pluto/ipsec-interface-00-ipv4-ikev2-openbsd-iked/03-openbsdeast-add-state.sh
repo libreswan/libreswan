@@ -1,1 +1,0 @@
-../../guestbin/iked.sh start
