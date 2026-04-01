@@ -808,19 +808,19 @@ size_t jam_proposal(struct jambuf *buf,
 		    (transform->type == transform_type_prf ||
 		     transform->type == transform_type_integ)) {
 			if (!jammed_prf_and_integ) {
-				for (const struct transform *integ = first_integ;
-				     integ != NULL && integ <= last_integ; integ++) {
-					s += jam_string(buf, (integ > first_integ ? "+" :
-							      first ? "" : "-"));
-					first = false;
-					s += jam_transform(buf, integ);
-				}
 				for (const struct transform *prf = first_prf;
 				     prf != NULL && prf <= last_prf; prf++) {
 					s += jam_string(buf, (prf > first_prf ? "+" :
 							      first ? "" : "-"));
 					first = false;
 					s += jam_transform(buf, prf);
+				}
+				for (const struct transform *integ = first_integ;
+				     integ != NULL && integ <= last_integ; integ++) {
+					s += jam_string(buf, (integ > first_integ ? "+" :
+							      first ? "" : "-"));
+					first = false;
+					s += jam_transform(buf, integ);
 				}
 				jammed_prf_and_integ = true;
 			}
