@@ -13,7 +13,7 @@ fi
 NOISE_FILE=$0
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-
+#the certificate is valide for 13 months fom now ? 
 :
 : clean up
 :
