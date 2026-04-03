@@ -296,7 +296,7 @@ KVM_OS_TEST_HOST_NAMES = east west rise set north
 KVM_LINUX_TEST_HOST_NAMES = $(KVM_OS_TEST_HOST_NAMES) road nic
 
 KVM_TEST_HOST_NAMES   = $(KVM_LINUX_TEST_HOST_NAMES)
-KVM_TEST_DOMAINS      = $(foreach prefix, $(KVM_TEST_PREFIXES), $(addprefix $(prefix), $(KVM_TEST_NAMES)))
+KVM_TEST_DOMAINS      = $(foreach prefix, $(KVM_TEST_PREFIXES), $(addprefix $(prefix), $(KVM_TEST_HOST_NAMES)))
 
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
@@ -1452,7 +1452,7 @@ kvm-make-install-all-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORMS)): \
-kvm-install-%:
+kvm-install-%: kvm-destroy-test-domains
 	: $@
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-base-$*
@@ -1702,8 +1702,6 @@ $(call kvm-var-value,KVM_LINUX_TEST_HOST_NAMES)
 $(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_HOST_NAMES)$(crlf))
-
-$(call kvm-var-value,KVM_TEST_DOMAINS)
 
 $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
 
