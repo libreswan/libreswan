@@ -74,6 +74,11 @@ for guest in LINUX_GUESTS:
     _ALL_LINUX_GUESTS.remove(guest)
 LINUX_GUESTS.extend(sorted(_ALL_LINUX_GUESTS))
 
+def guests():
+    return _GUESTS.values()
+
+def hosts():
+    return _HOSTS.values()
 
 # A dictionary, with GUEST_NAME (as used to manipulate the domain
 # externally) as the KEY and HOST_NAME (what `hostname` within the
@@ -83,9 +88,6 @@ def guest_by_guestname(guestname):
     if guestname in _GUESTS:
         return _GUESTS[guestname]
     return None
-
-def guests():
-    return _GUESTS.values()
 
 # \b(east|west|...)\b
 _HOST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
