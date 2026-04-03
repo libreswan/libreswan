@@ -1520,6 +1520,7 @@ define define-test-domain
 		-e '/<!--[a-z?]*-->/ { s/--> / / ; s/$$$$/ -->/ }' \
 		vm/$(strip $(3)).xml \
 		> '$$@.tmp'
+	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
 endef
 

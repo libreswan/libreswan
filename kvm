@@ -18,13 +18,14 @@ kvm_platforms=$(echo $(basename -a testing/kvm/platform/[a-z]*))
 # Confusion because of HOST:
 #
 # HOST=what the domain things it is called - east
-# GUEST=ignoring prefix, the domain name - east
+# GUEST=ignoring prefix, the domain name - linuxeast
 # DOMAIN=PREFIX+GUEST - p.linuxeast
 
 kvm_build_guest_names="${kvm_platforms}"
 kvm_base_guest_names=$(echo ${kvm_platforms}    | sed -e 's;\([a-z]*\);\1-base;g')
 kvm_upgrade_guest_names=$(echo ${kvm_platforms} | sed -e 's;\([a-z]*\);\1-upgrade;g')
-kvm_test_guest_names=$(echo $(basename -a -s .xml testing/kvm/vm/*.xml))
+
+kvm_test_host_names=$(echo $(basename -a -s .xml testing/kvm/vm/*.xml))
 
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_prefix=$(print-kvm-variable KVM_PREFIX)
@@ -41,11 +42,12 @@ rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 # GUEST=ignoring prefix, the domain name - linuxeast
 # DOMAIN=PREFIX+GUEST - p.linuxeast
 
-guests=""
-guests="${guests} ${kvm_base_guest_names}"
-guests="${guests} ${kvm_upgrade_guest_names}"
-guests="${guests} ${kvm_build_guest_names}"
-guests="${guests} ${kvm_test_guest_names}"
+guests="${kvm_base_guest_names} ${kvm_upgrade_guest_names} ${kvm_build_guest_names}"
+for platform in ${kvm_platforms} ; do
+    for host in ${kvm_test_host_names} ; do
+	guests="${guests} ${platform}${host}"
+    done
+done
 
 # Note: pass1help() is fed into AWK.  Anything that matches
 # '^____[-a-z]' is considered a Pass 1 command ('_' denotes a space).
@@ -149,19 +151,19 @@ pass2help()
 
     base [PLATFORM]
 	create a domain containing the base OS
-	creates: ${kvm_base_guest_names}
+	creates: ${kvm_base_host_names}
     upgrade [PLATFORM]
 	create the upgrade domain from the base domain
 	installs missing packages
         updates existing packages
-	creates: ${kvm_upgrade_guest_names}
+	creates: ${kvm_upgrade_host_names}
     transmogrify [PLATFORM]
 	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
-	creates: ${kvm_build_guest_names}
+	creates: ${kvm_platforms}
     build [PLATFORM]
 	build/install libreswan on the build domains
-	uses: ${kvm_build_guest_names}
+	uses: ${kvm_platforms}
     install [PLATFORM]
 	build/install libreswan, but with out documentation aka install-base
 	clones build domains to create the test domains
@@ -193,7 +195,7 @@ pass2help()
 
     sh <guest> [ <command> ]
 	start a shell on <guest> which can be:
-	  test domain: ${kvm_test_guest_names}
+	  test domain: ${kvm_test_host_names}
 	  build domain: ${kvm_build_guest_names}
 	  base domain: ${kvm_base_guest_names}
 	  upgrade domain: ${kvm_upgrade_guest_names}
@@ -375,6 +377,14 @@ while test $# -gt 0 ; do
 	    if test $# -lt 1 ; then
 		echo "missing hostname" 1>&2
 		exit 1
+	    fi
+	    # HOST, without prefix, is linux
+	    if [[ " ${kvm_test_host_names} " =~ " $1 " ]] ; then
+		# add prefix+linux
+		host=${kvm_prefix}linux$1
+		shift # drop HOST
+		echo "Connecting to ${host}" 1>&2
+		exec testing/utils/kvmsh.py ${host} "$@"
 	    fi
 	    if [[ " ${guests} " =~ " $1 " ]] ; then
 		# add prefix
