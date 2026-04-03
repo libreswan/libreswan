@@ -97,6 +97,7 @@ enum config_setup_keyword {
 
 	KBF_IKEv1_POLICY,	/* global ikev1 policy - default drop */
 	KSF_PLUTODEBUG,
+	KSF_EXAMPLE_IPSEC_SYSCONFDIR,
 	KYN_IPSEC_INTERFACE_MANAGED,
 
 #define CONFIG_SETUP_KEYWORD_ROOF (KYN_IPSEC_INTERFACE_MANAGED+1)

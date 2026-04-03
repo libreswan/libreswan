@@ -88,6 +88,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KSF_SECRETSFILE] = IPSEC_SECRETS,
 	[KSF_DUMPDIR] = IPSEC_RUNDIR,
 	[KSF_IPSECDIR] = IPSEC_CONFDDIR,
+	[KSF_EXAMPLE_IPSEC_SYSCONFDIR] = IPSEC_EXAMPLE_IPSEC_SYSCONFDIR,
 	[KSF_MYVENDORID] = libreswan_vendorid,
 #ifdef USE_LOGFILE
 	[KSF_LOGFILE] = LOGFILE,
@@ -474,6 +475,7 @@ static const struct keyword_def config_setup_keyword[] = {
   K("dumpdir",  kt_string,  KSF_DUMPDIR),
   K("ipsecdir",  kt_string,  KSF_IPSECDIR),
   K("nssdir", kt_string, KSF_NSSDIR),
+  K("sampledir", kt_string, KSF_EXAMPLE_IPSEC_SYSCONFDIR),
 
   /* these are only allowed on the command line */
   K("rundir", kt_string, KSF_RUNDIR, .validity = kv_optarg_only),
