@@ -1459,14 +1459,6 @@ kvm-install-%:
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
-$(patsubst %, kvm-install-base-%, $(KVM_PLATFORMS)): \
-kvm-install-base-%:
-	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	$(MAKE) kvm-make-install-base-$*
-	$(KVMSH) --shutdown $(KVM_PREFIX)$*
-	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
-
 $(patsubst %, kvm-install-all-%, $(KVM_PLATFORMS)): \
 kvm-install-all-%:
 	: $@
@@ -1482,10 +1474,6 @@ kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 .PHONY: kvm-install-all
 kvm-install-all: kvm-keys-ok
 kvm-install-all: $(foreach os, $(KVM_OS), kvm-install-all-$(os))
-
-.PHONY: kvm-install-base
-kvm-install-base:
-kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
 
 #
 # Create the test domains
