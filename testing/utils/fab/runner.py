@@ -544,13 +544,17 @@ def _process_test_queue(domain_prefix, name_prefix,
     logger = logutil.getLogger(logger_name)
     logger.info("preparing test domains")
 
+    for host in hosts.hosts():
+        domain = virsh.Domain(logger, f"{name_prefix}{host.name}")
+        domain.destroy()
+
     domains = List()
     for guest in hosts.guests():
         domain = virsh.Domain(logger=logger,
-                              prefix=name_prefix,
-                              guest=guest)
+                              name=name_prefix+guest.host.name,
+                              guest=guest,
+                              xml=str(domain_prefix) + guest.name)
         domains.append(domain)
-        domain.destroy()
 
     logger.info("processing test queue")
     try:

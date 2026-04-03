@@ -4,7 +4,7 @@
 -->
 
 <domain type='kvm'>
-  <name>@@DOMAIN@@</name>
+  <name>@@PREFIX@@@@DOMAIN_HOSTNAME@@</name>
   <memory unit='MiB'>@@MEMORY@@</memory>
   <vcpu>1</vcpu>
   <os>
