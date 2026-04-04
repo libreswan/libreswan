@@ -1,0 +1,38 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ echo "initdone"
+initdone
+west #
+ # Send different sized packets so that the limited log can be
+west #
+ # recognized based on the packet length.
+west #
+ # This should tickle the log limit but doesn't see #2727
+west #
+ echo "asdf" | nc -4 -u 192.1.2.23 4500
+west #
+ # This tickles demux.c's code.
+west #
+ # under limit
+west #
+ printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 4500
+west #
+ # at limit
+west #
+ printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 4500
+west #
+ # over limit -> debug log
+west #
+ printf '\0\0\0\0asd' | nc -4 -u 192.1.2.23 4500
+west #
+ # On EAST this will show the dropped packets and the log-limiter
+west #
+ # reaching its limit.  Because of a quirk in the implementation, the
+west #
+ # limit reached message appears before the final log.  After the final
+west #
+ # message there should be a debug-log message.
+west #
+ grep -e '^packet from' -e '^| dropping packet with mangled IKE header' -e '^impair: ' /tmp/pluto.log
+west #
