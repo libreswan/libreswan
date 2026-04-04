@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add common
+"common": added oriented IKEv2 connection
+east #
+ ipsec whack --impair log_rate_limit:2
+east #
+ echo "initdone"
+initdone
+east #
+ # On EAST this will show the dropped packets and the log-limiter
+east #
+ # reaching its limit.  Because of a quirk in the implementation, the
+east #
+ # limit reached message appears before the final log.  After the final
+east #
+ # message there should be a debug-log message.
+east #
+ grep -e '^packet from' -e '^| dropping packet with mangled IKE header' -e '^impair: ' /tmp/pluto.log
+impair: log_rate_limit: no -> 2
+packet from 192.1.2.45:EPHEM: has no Non-ESP marker
+packet from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=1, sd->size=28)
+packet from 192.1.2.45:EPHEM: message digest rate limited log reached limit of 2 entries
+packet from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=2, sd->size=28)
+| dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=3, sd->size=28)
+east #
