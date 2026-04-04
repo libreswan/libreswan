@@ -107,8 +107,8 @@ KVM_TRANSMOGRIFY = \
 	-e 's;@@KVM_BENCHDIR@@;$(KVM_BENCHDIR);' \
 	-e 's;@@KVM_LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@KVM_POOLDIR@@;$(KVM_POOLDIR);' \
-	-e 's;@@USER@@;$(KVM_UID);' \
-	-e 's;@@GROUP@@;$(KVM_GID);' \
+	-e 's;@@KVM_UID@@;$(KVM_UID);' \
+	-e 's;@@KVM_GID@@;$(KVM_GID);' \
 	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
 
 # The alternative is qemu:///session and it doesn't require root.

@@ -77,7 +77,7 @@
   </devices>
   <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
-    <label>@@USER@@:@@GROUP@@</label>
-    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@KVM_UID@@:@@KVM_GID@@</label>
+    <imagelabel>@@KVM_UID@@:@@KVM_GID@@</imagelabel>
   </seclabel>
 </domain>
