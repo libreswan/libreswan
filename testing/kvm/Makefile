@@ -84,7 +84,7 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 
 # The following are added by the "caller":
 #
-# @@SOURCEDIR@@ and @@TESTINGDIR@@: these are only pinned down during
+# @@KVM_SOURCEDIR@@ and @@KVM_TESTINGDIR@@: these are only pinned down during
 # transmogrify (changing KVM_SOURCEDIR and re-running transmogrify is
 # expected to work); hence they are only added explicitly.
 #
@@ -104,9 +104,9 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 KVM_TRANSMOGRIFY = \
 	sed \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
-	-e 's;@@BENCHDIR@@;$(KVM_BENCHDIR);' \
-	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
-	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
+	-e 's;@@KVM_BENCHDIR@@;$(KVM_BENCHDIR);' \
+	-e 's;@@KVM_LOCALDIR@@;$(KVM_LOCALDIR);' \
+	-e 's;@@KVM_POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
 	-e 's;@@GROUP@@;$(KVM_GID);' \
 	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
@@ -1395,8 +1395,8 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 		-e 's;@@PLATFORM@@;$*;' \
 		-e 's;@@HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
+		-e 's;@@KVM_SOURCEDIR@@;$(KVM_SOURCEDIR);' \
+		-e 's;@@KVM_TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 		platform/$*/transmogrify.sh \
 		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -1512,8 +1512,8 @@ define define-test-domain
 		-e 's;@@DOMAIN_PLATFORM@@;$(strip $(2));' \
 		-e 's;@@DOMAIN_HOSTNAME@@;$(strip $(3));' \
 		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
-		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
+		-e 's;@@KVM_SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
+		-e 's;@@KVM_TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
 		-e 's/<!--[a-z?]*\($(strip $(2))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \

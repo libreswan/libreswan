@@ -104,8 +104,8 @@ ptyfs           /dev/pts        ptyfs   rw
 procfs          /proc           procfs  rw
 tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25
 tmpfs           /tmp            tmpfs   rw
-@@GATEWAY@@:@@POOLDIR@@ /pool   nfs     rw
-@@GATEWAY@@:@@BENCHDIR@@ /bench nfs     rw
+@@GATEWAY@@:@@KVM_POOLDIR@@ /pool   nfs     rw
+@@GATEWAY@@:@@KVM_BENCHDIR@@ /bench nfs     rw
 EOF
 
 

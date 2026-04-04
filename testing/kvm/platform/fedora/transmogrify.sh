@@ -4,10 +4,10 @@ set -xe ; exec < /dev/null
 
 export GATEWAY=@@GATEWAY@@
 export PREFIX=@@PREFIX@@
-export BENCHDIR=@@BENCHDIR@@
-export POOLDIR=@@POOLDIR@@
-export SOURCEDIR=@@SOURCEDIR@@
-export TESTINGDIR=@@TESTINGDIR@@
+export BENCHDIR=@@KVM_BENCHDIR@@
+export POOLDIR=@@KVM_POOLDIR@@
+export SOURCEDIR=@@KVM_SOURCEDIR@@
+export TESTINGDIR=@@KVM_TESTINGDIR@@
 export PLATFORM=@@PLATFORM@@
 
 title()

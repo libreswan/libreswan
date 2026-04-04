@@ -31,8 +31,8 @@ rm /mnt/etc/rc.firsttime
 
 mkdir -p /mnt/pool /mnt/bench
 cat <<EOF | tee -a /mnt/etc/fstab
-@@GATEWAY@@:@@POOLDIR@@  /pool  nfs rw,tcp 0 0
-@@GATEWAY@@:@@BENCHDIR@@ /bench nfs rw,tcp 0 0
+@@GATEWAY@@:@@KVM_POOLDIR@@  /pool  nfs rw,tcp 0 0
+@@GATEWAY@@:@@KVM_BENCHDIR@@ /bench nfs rw,tcp 0 0
 EOF
 
 
