@@ -5,7 +5,7 @@
 
 <domain type='kvm'>
   <name>@@DOMAIN@@</name>
-  <memory unit='MiB'>@@MEMORY@@</memory>
+  <memory unit='MiB'>@@DOMAIN_MEMORY@@</memory>
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>

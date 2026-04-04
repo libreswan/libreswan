@@ -11,7 +11,7 @@ cp -v /bench/testing/kvm/systemd/hostnamer.service /etc/systemd/system
 # f42 doesn't have /usr/local/sbin; ${PLATFORM} passed down in
 # environment
 mkdir -p /usr/local/sbin
-sed -e "s/@@PLATFORM@@/${PLATFORM}/" \
+sed -e "s/@@DOMAIN_PLATFORM@@/${PLATFORM}/" \
     /bench/testing/kvm/systemd/hostnamer.sh \
     > /usr/local/sbin/hostnamer.sh
 chmod a+x /usr/local/sbin/hostnamer.sh

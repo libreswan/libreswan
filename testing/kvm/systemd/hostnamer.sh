@@ -10,7 +10,7 @@ host()
 }
 
 # this will fail for the build domains; falling through and setting
-# @@PLATFORM@@.
+# @@DOMAIN_PLATFORM@@.
 
 ip address show | tee /dev/console
 macs=$(ip address show | awk '$1 == "link/ether" { print $2 }')
@@ -31,5 +31,5 @@ for mac in ${macs} ; do
      esac
 done
 
-echo hostnamer: defaulting to @@PLATFORM@@
-host @@PLATFORM@@
+echo hostnamer: defaulting to @@DOMAIN_PLATFORM@@
+host @@DOMAIN_PLATFORM@@
