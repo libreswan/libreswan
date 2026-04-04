@@ -5,7 +5,7 @@ set -xe ; exec < /dev/null
 # update /etc/fstab with current /source and /testing
 
 export GATEWAY=@@GATEWAY@@
-export PREFIX=@@PREFIX@@
+export PREFIX=@@KVM_PREFIX@@
 export BENCHDIR=@@KVM_BENCHDIR@@
 export POOLDIR=@@KVM_POOLDIR@@
 export SOURCEDIR=@@KVM_SOURCEDIR@@

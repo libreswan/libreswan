@@ -2,7 +2,7 @@
 
 set -xe ; exec < /dev/null
 
-PREFIX=@@PREFIX@@
+PREFIX=@@KVM_PREFIX@@
 
 # create a package cache directory
 

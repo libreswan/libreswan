@@ -4,7 +4,7 @@ exec </dev/null
 set -xe
 set -o pipefail
 
-PREFIX=@@PREFIX@@
+PREFIX=@@KVM_PREFIX@@
 
 :
 : disable useless repos
