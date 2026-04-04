@@ -131,6 +131,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KYN_LOGIP] = "yes",
 	[KYN_LOGTIME] = "yes",
 	[KYN_LOGAPPEND] = "yes",
+	[KYN_LOGLIMIT] = "yes",
 
 	[KYN_AUDIT_LOG] = "yes",
 	[KYN_UNIQUEIDS] = "yes",
@@ -460,6 +461,7 @@ static const struct keyword_def config_setup_keyword[] = {
   K("logtime",  kt_sparse_name,  KYN_LOGTIME, .sparse_names = &yn_option_names),
   K("logappend",  kt_sparse_name,  KYN_LOGAPPEND, .sparse_names = &yn_option_names),
   K("logip",  kt_sparse_name,  KYN_LOGIP, .sparse_names = &yn_option_names),
+  K("loglimit",  kt_sparse_name,  KYN_LOGLIMIT, .sparse_names = &yn_option_names),
   K("audit-log",  kt_sparse_name,  KYN_AUDIT_LOG, .sparse_names = &yn_option_names),
 
 #ifdef USE_DNSSEC
