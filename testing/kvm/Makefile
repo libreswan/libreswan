@@ -84,16 +84,16 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 
 # The following are added by the "caller":
 #
-# @@SOURCEDIR@@ and @@TESTINGDIR@@: these are only pinned down during
+# @@KVM_SOURCEDIR@@ and @@KVM_TESTINGDIR@@: these are only pinned down during
 # transmogrify (changing KVM_SOURCEDIR and re-running transmogrify is
 # expected to work); hence they are only added explicitly.
 #
-# @@PLATFORM@@: it's often $(*), the "%" in a pattern target such as
+# @@DOMAIN_PLATFORM@@: it's often $(*), the "%" in a pattern target such as
 # as "/pool/b.%", but not always; let caller specify.
 #
 # When defining domains this is added:
 #
-# @@HOSTNAME@@: it's either @@PLATFORM@@ (i.e., $(*)) or the per-test
+# @@DOMAIN_HOSTNAME@@: it's either @@DOMAIN_PLATFORM@@ (i.e., $(*)) or the per-test
 # name; let caller specify.
 #
 # @@DOMAIN@@: it's probably $(notdir $@), but easier to let caller
@@ -104,12 +104,12 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 KVM_TRANSMOGRIFY = \
 	sed \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
-	-e 's;@@BENCHDIR@@;$(KVM_BENCHDIR);' \
-	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
-	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
-	-e 's;@@USER@@;$(KVM_UID);' \
-	-e 's;@@GROUP@@;$(KVM_GID);' \
-	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
+	-e 's;@@KVM_BENCHDIR@@;$(KVM_BENCHDIR);' \
+	-e 's;@@KVM_LOCALDIR@@;$(KVM_LOCALDIR);' \
+	-e 's;@@KVM_POOLDIR@@;$(KVM_POOLDIR);' \
+	-e 's;@@KVM_UID@@;$(KVM_UID);' \
+	-e 's;@@KVM_GID@@;$(KVM_GID);' \
+	-e 's;@@KVM_PREFIX@@;$(KVM_PREFIX);'
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -971,7 +971,7 @@ $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;debian;' \
+		-e 's;@@DOMAIN_PLATFORM@@;debian;' \
 		platform/debian/base.sh \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
@@ -1027,7 +1027,7 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
 
 $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;fedora;' \
+		-e 's;@@DOMAIN_PLATFORM@@;fedora;' \
 		$(KVM_FEDORA_KICKSTART_FILE) \
 		> $@.tmp
 	mv $@.tmp $@
@@ -1070,7 +1070,7 @@ $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
 $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;freebsd;' \
+		-e 's;@@DOMAIN_PLATFORM@@;freebsd;' \
 		$(KVM_FREEBSD_BASE_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
@@ -1120,7 +1120,7 @@ $(KVM_LINUX_BASE_DOMAIN): | $(KVM_LINUX_BASE_DOMAIN).ks
 
 $(KVM_LINUX_BASE_DOMAIN).ks: | $(KVM_LINUX_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;linux;' \
+		-e 's;@@DOMAIN_PLATFORM@@;linux;' \
 		$(KVM_LINUX_KICKSTART_FILE) \
 		> $@.tmp
 	mv $@.tmp $@
@@ -1171,7 +1171,7 @@ $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;netbsd;' \
+		-e 's;@@DOMAIN_PLATFORM@@;netbsd;' \
 		$(KVM_NETBSD_BASE_SH) \
 		> $(KVM_NETBSD_BASE_DOMAIN).sh
 	: this mangles file/directory names
@@ -1240,7 +1240,7 @@ $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
 $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;openbsd;' \
+		-e 's;@@DOMAIN_PLATFORM@@;openbsd;' \
 		platform/openbsd/base.sh \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
@@ -1312,8 +1312,8 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;$*;' \
-		-e 's;@@HOSTNAME@@;$*;' \
+		-e 's;@@DOMAIN_PLATFORM@@;$*;' \
+		-e 's;@@DOMAIN_HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
 		platform/$*/upgrade.sh \
 		> $@.sh
@@ -1392,11 +1392,11 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PLATFORM@@;$*;' \
-		-e 's;@@HOSTNAME@@;$*;' \
+		-e 's;@@DOMAIN_PLATFORM@@;$*;' \
+		-e 's;@@DOMAIN_HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
+		-e 's;@@KVM_SOURCEDIR@@;$(KVM_SOURCEDIR);' \
+		-e 's;@@KVM_TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 		platform/$*/transmogrify.sh \
 		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -1511,9 +1511,9 @@ define define-test-domain
 		-e 's;@@DOMAIN_PREFIX@@;$(notdir $(1));' \
 		-e 's;@@DOMAIN_PLATFORM@@;$(strip $(2));' \
 		-e 's;@@DOMAIN_HOSTNAME@@;$(strip $(3));' \
-		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
-		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
+		-e 's;@@DOMAIN_MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
+		-e 's;@@KVM_SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
+		-e 's;@@KVM_TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
 		-e 's/<!--[a-z?]*\($(strip $(2))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \

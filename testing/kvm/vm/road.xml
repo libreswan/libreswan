@@ -5,12 +5,12 @@
 
 <domain type='kvm'>
   <name>@@DOMAIN@@</name>
-  <memory unit='MiB'>@@MEMORY@@</memory>
+  <memory unit='MiB'>@@DOMAIN_MEMORY@@</memory>
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
-    <!--linux?--> <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
-    <!--linux?--> <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
+    <!--linux?--> <kernel>@@KVM_POOLDIR@@/@@KVM_PREFIX@@linux.vmlinuz</kernel>
+    <!--linux?--> <initrd>@@KVM_POOLDIR@@/@@KVM_PREFIX@@linux.initramfs</initrd>
     <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@DOMAIN_HOSTNAME@@</cmdline>
     <!--bsd?--> <boot dev='hd'/>
   </os>
@@ -27,7 +27,7 @@
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='unsafe'/>
-      <source file='@@LOCALDIR@@/@@PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
+      <source file='@@KVM_LOCALDIR@@/@@KVM_PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
@@ -38,15 +38,15 @@
 	used when installing packages.
     -->
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@TESTINGDIR@@'/>
+      <source dir='@@KVM_TESTINGDIR@@'/>
       <target dir='testing'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@SOURCEDIR@@'/>
+      <source dir='@@KVM_SOURCEDIR@@'/>
       <target dir='source'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@POOLDIR@@'/>
+      <source dir='@@KVM_POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
     <!-- eth0: ROAD-NIC-NORTH -->
@@ -71,7 +71,7 @@
   </devices>
   <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
-    <label>@@USER@@:@@GROUP@@</label>
-    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@KVM_UID@@:@@KVM_GID@@</label>
+    <imagelabel>@@KVM_UID@@:@@KVM_GID@@</imagelabel>
   </seclabel>
 </domain>

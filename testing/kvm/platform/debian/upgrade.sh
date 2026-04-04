@@ -2,7 +2,7 @@
 
 set -xe
 
-PREFIX=@@PREFIX@@
+PREFIX=@@KVM_PREFIX@@
 
 cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
 

@@ -2,7 +2,7 @@
 
 set -xe ; exec < /dev/null
 
-PREFIX=@@PREFIX@@
+PREFIX=@@KVM_PREFIX@@
 
 cat <<EOF | tee /etc/pkg_install.conf
 PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/10.0/All

@@ -16,7 +16,7 @@ systemctl enable systemd-networkd-wait-online.service
 rm -f /etc/hostname
 rm -f /etc/systemd/network/*
 cp -v /bench/testing/kvm/systemd/network/*.network /etc/systemd/network/
-sed -i -e "s/@@PLATFORM@@/${PLATFORM}/" /etc/systemd/network/*.network
+sed -i -e "s/@@DOMAIN_PLATFORM@@/${PLATFORM}/" /etc/systemd/network/*.network
 
 # test specific configs; bound using ethernet addresses
 

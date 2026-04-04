@@ -3,11 +3,11 @@
 set -xe ; exec < /dev/null
 
 GATEWAY=@@GATEWAY@@
-PREFIX=@@PREFIX@@
-BENCHDIR=@@BENCHDIR@@
-POOLDIR=@@POOLDIR@@
-SOURCEDIR=@@SOURCEDIR@@
-TESTINGDIR=@@TESTINGDIR@@
+PREFIX=@@KVM_PREFIX@@
+BENCHDIR=@@KVM_BENCHDIR@@
+POOLDIR=@@KVM_POOLDIR@@
+SOURCEDIR=@@KVM_SOURCEDIR@@
+TESTINGDIR=@@KVM_TESTINGDIR@@
 
 # update /etc/fstab with current /source and /testing
 mkdir -p /source /testing
