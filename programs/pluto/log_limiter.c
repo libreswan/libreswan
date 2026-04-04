@@ -81,9 +81,14 @@ enum stream log_limiter_stream(struct logger *logger, enum log_limiter log_limit
 
 	pthread_mutex_lock(&limiter->mutex);
 	{
-		if (limiter->count > limit) {
+		/*
+		 * Add this message to count; don't use limit-1 as
+		 * that suffers from unsigned underflow.
+		 */
+		unsigned count = limiter->count + 1;
+		if (count > limit) {
 			limiting = OVER_LIMIT;
-		} else if (limiter->count == limit) {
+		} else if (count == limit) {
 			limiting = AT_LIMIT;
 			limiter->count++;
 		} else {
