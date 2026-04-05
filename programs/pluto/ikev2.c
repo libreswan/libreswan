@@ -2075,5 +2075,11 @@ void llog_transition_start(enum stream stream, struct logger *logger,
 
 		jam_string(buf, " containing ");
 		jam_msg_digest_payloads(buf, md);
+
+		if (md->v2_frags_total > 0) {
+			jam(buf, " reassembled from %u fragment%s",
+			    md->v2_frags_total,
+			    md->v2_frags_total == 1 ? "" : "s");
+		}
 	}
 }

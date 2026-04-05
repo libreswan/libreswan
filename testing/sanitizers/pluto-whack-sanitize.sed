@@ -27,3 +27,4 @@ s/SN: 0x[a-f0-9]*/SN: 0xXX/
 s/ aged [0-9]*\.[0-9]*s / /
 
 /ERROR: asynchronous network error report/d
+s/ reassembled from [0-9][0-9]* fragments/ reassembled from N fragments/g
