@@ -7,6 +7,7 @@ east# echo "initdone"
 
 west# ../../guestbin/prep.sh
 west# ipsec start
+west# ../../guestbin/wait-until-pluto-started
 west# ipsec add eastnet-westnet-ikev2
 west# echo "initdone"
 

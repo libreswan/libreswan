@@ -29,6 +29,9 @@ Initializing NSS database
 
 Starting pluto.
 
+netbsdwest# ../../guestbin/wait-until-pluto-started
+
+
 netbsdwest# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection

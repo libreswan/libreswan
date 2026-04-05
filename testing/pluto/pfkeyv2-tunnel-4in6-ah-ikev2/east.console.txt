@@ -10,7 +10,7 @@ Starting pluto.
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add eastnet-westnet-ikev2
+ ipsec add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 east #
  ipsec whack --impair suppress_retransmits

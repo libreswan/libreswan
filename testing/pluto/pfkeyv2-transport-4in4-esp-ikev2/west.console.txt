@@ -8,13 +8,13 @@ Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 west #
- ipsec auto --add eastnet-westnet-ikev2
+ ipsec add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up eastnet-westnet-ikev2
+ ipsec up eastnet-westnet-ikev2
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-westnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}, initiating IKE_AUTH

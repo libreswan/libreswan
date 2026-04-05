@@ -13,9 +13,8 @@ Starting pluto.
 netbsdeast# ../../guestbin/wait-until-pluto-started
 
 
-netbsdeast# ipsec auto --add eastnet-westnet-ikev2
+netbsdeast# ipsec add eastnet-westnet-ikev2
 
-WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
 netbsdeast# ipsec whack --impair suppress_retransmits
@@ -39,9 +38,8 @@ Starting pluto.
 netbsdwest# ../../guestbin/wait-until-pluto-started
 
 
-netbsdwest# ipsec auto --add eastnet-westnet-ikev2
+netbsdwest# ipsec add eastnet-westnet-ikev2
 
-WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
 netbsdwest# echo "initdone"
@@ -52,9 +50,8 @@ netbsdwest# ../../guestbin/ping-once.sh --down -I 2001:db8:0:1::254 2001:db8:0:2
 
 down
 
-netbsdwest# ipsec auto --up eastnet-westnet-ikev2
+netbsdwest# ipsec up eastnet-westnet-ikev2
 
-WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-westnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}, initiating IKE_AUTH
