@@ -14,19 +14,33 @@ east #
  echo "initdone"
 initdone
 east #
- # On EAST this will show the dropped packets and the log-limiter
+ # Grep east's log for all rate-limited UDP events and the limiter sentinel.
 east #
- # reaching its limit.  Because of a quirk in the implementation, the
+ # Columns: plain RC_LOG lines start with 'packet from',
 east #
- # limit reached message appears before the final log.  After the final
+ #          debug-stream (over-limit) lines start with '| ',
 east #
- # message there should be a debug-log message.
+ #          impair lines start with 'impair: '
 east #
- grep -e '^packet from' -e '^| dropping packet with mangled IKE header' -e '^impair: ' /tmp/pluto.log
+ grep -e '^packet from' \
+east #
+      -e '^| ' \
+east #
+      -e '^impair: ' \
+east #
+      /tmp/pluto.log
 impair: log_rate_limit: no -> 2
+packet from 192.1.2.45:EPHEM: too small packet (2)
 packet from 192.1.2.45:EPHEM: has no Non-ESP marker
-packet from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=1, sd->size=28)
 packet from 192.1.2.45:EPHEM: message digest rate limited log reached limit of 2 entries
+packet from 192.1.2.45:EPHEM: mangled with potential spurious non-esp marker
+| NAT-T keep-alive
+packet from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=1, sd->size=28)
 packet from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=2, sd->size=28)
 | dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=3, sd->size=28)
+east #
+ # Verify pstats_ike_mangled reflects all drops including suppressed ones.
+east #
+ ipsec globalstatus | grep total.ike.mangled
+total.ike.mangled=7
 east #

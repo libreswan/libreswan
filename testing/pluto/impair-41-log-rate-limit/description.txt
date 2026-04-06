@@ -1,3 +1,8 @@
 IKEv2: force the log-limiter code to kick in
 
-- west keeps initiating bogs exchanges
+- west sends crafted UDP packets to east on both port 500 and port 4500
+- exercises iface_udp.c paths: too-small, no Non-ESP marker, spurious
+  non-ESP marker, NAT-T keep-alive
+- exercises demux.c path: mangled IKE header
+- verifies rate-limiter sentinel fires at limit and suppresses beyond
+- verifies pstats_ike_mangled increments even when logs are suppressed
