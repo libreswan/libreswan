@@ -45,6 +45,7 @@
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
 #include "log_limiter.h"
+#include "pluto_stats.h"
 #include "ip_info.h"
 #include "ip_sockaddr.h"
 
@@ -223,14 +224,16 @@ struct msg_digest *unpack_udp_packet(struct logger *logger,
 		uint32_t non_esp;
 
 		if (packet.len < (int)sizeof(uint32_t)) {
-			llog(RC_LOG, logger, "too small packet (%zd)",
-			     packet.len);
+			limited_llog(logger, MD_LOG_LIMITER, "too small packet (%zd)",
+				     packet.len);
+			pstats_ike_mangled++;
 			return NULL;
 		}
 
 		memcpy(&non_esp, packet.ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
-			llog(RC_LOG, logger, "has no Non-ESP marker");
+			limited_llog(logger, MD_LOG_LIMITER, "has no Non-ESP marker");
+			pstats_ike_mangled++;
 			return NULL;
 		}
 		packet.ptr += sizeof(uint32_t);
@@ -246,8 +249,9 @@ struct msg_digest *unpack_udp_packet(struct logger *logger,
 		if (ifp->esp_encapsulation_enabled &&
 		    packet.len >= NON_ESP_MARKER_SIZE &&
 		    memeq(packet.ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
-			llog(RC_LOG, logger,
-			     "mangled with potential spurious non-esp marker");
+			limited_llog(logger, MD_LOG_LIMITER,
+				     "mangled with potential spurious non-esp marker");
+			pstats_ike_mangled++;
 			return NULL;
 		}
 	}
