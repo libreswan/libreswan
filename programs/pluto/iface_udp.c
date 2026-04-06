@@ -263,9 +263,8 @@ struct msg_digest *unpack_udp_packet(struct logger *logger,
 		 * can reach this point. Complain and discard them.
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
-		endpoint_buf eb;
-		ldbg(logger, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
-		    str_endpoint(&sender, &eb)); /* sensitive? */
+		limited_llog(logger, MD_LOG_LIMITER, "NAT-T keep-alive");
+		pstats_ike_mangled++;
 		return NULL;
 	}
 
