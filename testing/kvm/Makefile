@@ -1556,6 +1556,8 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 .PHONY: kvm-destroy-test-domains
 kvm-destroy-test-domains:
 	./bin/destroy.sh $(notdir $(KVM_TEST_DOMAINS))
+	: legacy, could also be defined
+	./kvm-uninstall-domain.sh $(KVM_TEST_DOMAINS)
 
 .PHONY: kvm-shutdown
 
