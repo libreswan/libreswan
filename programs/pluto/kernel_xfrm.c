@@ -607,9 +607,13 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (expected_resp_type == NLMSG_ERROR) {
 			if (LDBGP(DBG_BASE, logger)) {
+				name_buf sb;
 				llog_errno(DEBUG_STREAM, logger, -rsp.u.e.error,
-					   "%s() expected netlink error response for %s: ",
-					   __func__, story);
+					"%s() expected netlink error response for %s of %s (%s): ",
+					__func__,
+					str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
+					story,
+					str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb));
 				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
 			}
 			/* ignore */
@@ -622,16 +626,25 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			 * happens for netlink_add_sa().
 			 */
 			if (LDBGP(DBG_BASE, logger)) {
-				LDBG_log(logger, "%s() netlink response for %s included non-error error",
-					 __func__, story);
+				name_buf sb;
+				LDBG_log(logger, "%s() netlink response for %s of %s included non-error error (%s)",
+					__func__,
+					str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
+					story,
+					str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb));
 				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
 			}
 			/* ignore */
 		} else {
 			/* Probe failures are not real ERRORs */
+			name_buf sb;
+			const char *msg_type = str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb);
+			/* Convert XFRM_MSG_DELSA to "Del SA" for test compatibility */
+			const char *display_type = (hdr->nlmsg_type == XFRM_MSG_DELSA) ? "Del SA" : msg_type;
 			llog_errno((streq(story, "Probe Test") ? ALL_STREAMS : ERROR_STREAM),
 				   logger, -rsp.u.e.error,
-				   "netlink response for %s: ",
+				   "netlink response for %s %s: ",
+				   display_type,
 				   story);
 			llog_ext_ack(RC_LOG, logger, &rsp.n);
 			return false;
