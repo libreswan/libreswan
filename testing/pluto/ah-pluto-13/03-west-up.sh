@@ -1,1 +1,1 @@
-ipsec auto --up westnet-eastnet-ah-sha1-pfs
+ipsec up westnet-eastnet-ah-sha1-pfs
