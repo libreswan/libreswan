@@ -46,14 +46,13 @@ TIMEOUT = 10
 
 class Domain:
 
-    def __init__(self, logger, name=None, prefix=None, guest=None):
+    def __init__(self, logger, name=None, guest=None, xml=None):
         # Use the term "domain" just like virsh
-        self.name = name or prefix+guest.name
+        self.name = name
         self.guest = guest
         self.logger = logger.nest(self.name)
-        self.debug_handler = None
         self.logger.debug("domain created")
-        self._mounts = None
+        self._xml = xml;
         # ._console is three state: None when state unknown; False
         # when shutdown (by us); else the console.
         self._console = None
@@ -185,7 +184,10 @@ class Domain:
 
         self._console = None # status unknown
 
-        command = _VIRSH + ["start", self.name, "--console"]
+        if self._xml:
+            command = _VIRSH + ["create", "--console", self._xml]
+        else:
+            command = _VIRSH + ["start", "--console", self.name]
         return self.__console(command, START_TIMEOUT)
 
     def console(self):
