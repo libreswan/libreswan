@@ -1044,14 +1044,14 @@ $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 #
 # - use what ever libvirt supports
 
-KVM_FREEBSD_RELEASE ?= 14.3
+KVM_FREEBSD_RELEASE ?= 14.4
 KVM_FREEBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' freebsd' | sort -V | tail -1))
 
 KVM_FREEBSD_URL ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/$(KVM_FREEBSD_RELEASE)
 
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/FreeBSD-$(KVM_FREEBSD_RELEASE)-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO_HASH ?= SHA256
-KVM_FREEBSD_ISO_CKSUM ?= f564822bc72d420d1e1a6faacb72f6056d828fcf539dfafd52e08503ef5fab68
+KVM_FREEBSD_ISO_CKSUM ?= ade3d84e77fc601d1207ced8d6dd8952c3fb7685afa3cf6b6b44d76ed94b2d8e
 KVM_FREEBSD_ISO_URL ?= $(KVM_FREEBSD_URL)/$(notdir $(KVM_FREEBSD_ISO))
 
 $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
