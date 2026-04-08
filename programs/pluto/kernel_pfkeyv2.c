@@ -666,14 +666,11 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 
 #ifdef __OpenBSD__
 	/*
-	 * OpenBSD probably supports these algorithms, but forgets to
-	 * mention them.
-	 *
-	 * See https://marc.info/?l=openbsd-bugs&m=177017688300753
-	 * See https://github.com/libreswan/libreswan/issues/2607
+	 * OpenBSD doesn't support NULL integrity - can't exactly
+	 * blame them - and expects 0 aka unset when configuring AEAD.
+	 * This is a place holder so that the parser accepts
+	 * AEAD-NULL.
 	 */
-	kernel_alg_add(&ike_alg_encrypt_aes_gcm_16.common, verbose.logger);
-	kernel_alg_add(&ike_alg_encrypt_chacha20_poly1305.common, verbose.logger);
 	kernel_alg_add(&ike_alg_integ_none.common, verbose.logger);
 #endif
 }
