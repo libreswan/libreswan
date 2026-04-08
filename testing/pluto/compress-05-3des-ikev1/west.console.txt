@@ -22,10 +22,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-esp-3des-alg
+ ipsec add westnet-eastnet-esp-3des-alg
 "westnet-eastnet-esp-3des-alg": added oriented IKEv1 connection
 west #
- ipsec auto --status | grep westnet-eastnet-esp-3des-alg
+ ipsec status | grep westnet-eastnet-esp-3des-alg
 "westnet-eastnet-esp-3des-alg": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-esp-3des-alg":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-esp-3des-alg":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -52,7 +52,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-esp-3des-alg
+ ipsec up westnet-eastnet-esp-3des-alg # sanitize-retransmits
 "westnet-eastnet-esp-3des-alg" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-esp-3des-alg" #1: sent Main Mode request
 "westnet-eastnet-esp-3des-alg" #1: sent Main Mode I2
@@ -67,7 +67,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-esp-3des-alg", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done

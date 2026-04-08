@@ -22,7 +22,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-compress
+ ipsec add westnet-eastnet-compress
 "westnet-eastnet-compress": added oriented IKEv1 connection
 west #
  ipsec whack --connectionstatus --name westnet-eastnet-compress
@@ -51,7 +51,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-compress
+ ipsec up westnet-eastnet-compress # sanitize-retransmits
 "westnet-eastnet-compress" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-compress" #1: sent Main Mode request
 "westnet-eastnet-compress" #1: sent Main Mode I2
@@ -138,7 +138,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
 west #
  # test compression via large pings that can be compressed on IPCOMP SA
@@ -155,7 +155,7 @@ west #
  ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus | sed -e 's/Bytes=\([1-9]\)[0-9][0-9],/Bytes=\1nn,/g'
+ ipsec trafficstatus | sed -e 's/Bytes=\([1-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, maxBytes=2^63B, id='@east'
 west #
  ipsec _kernel state
@@ -221,7 +221,7 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 west #
- ipsec auto --down westnet-eastnet-compress | sed -e 's/=\([1-9]\)[0-9][0-9]B/=\1nnB/g'
+ ipsec down westnet-eastnet-compress | sed -e 's/=\([1-9]\)[0-9][0-9]B/=\1nnB/g'
 "westnet-eastnet-compress": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet-compress" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB

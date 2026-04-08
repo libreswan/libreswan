@@ -8,7 +8,7 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair timeout_on_retransmit
-ipsec auto --add westnet-eastnet-compress
-ipsec auto --status | grep westnet-eastnet-compress
+ipsec add westnet-eastnet-compress
+ipsec status | grep westnet-eastnet-compress
 echo "initdone"
 ipsec whack --impair revival

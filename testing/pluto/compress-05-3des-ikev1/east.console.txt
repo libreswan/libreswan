@@ -6,10 +6,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-esp-3des-alg
+ ipsec add westnet-eastnet-esp-3des-alg
 "westnet-eastnet-esp-3des-alg": added oriented IKEv1 connection
 east #
- ipsec auto --status | grep westnet-eastnet-esp-3des-alg
+ ipsec status | grep westnet-eastnet-esp-3des-alg
 "westnet-eastnet-esp-3des-alg": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-esp-3des-alg":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "westnet-eastnet-esp-3des-alg":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -35,6 +35,9 @@ east #
 east #
  echo "initdone"
 initdone
+east #
+ ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
+"westnet-eastnet-esp-3des-alg" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45

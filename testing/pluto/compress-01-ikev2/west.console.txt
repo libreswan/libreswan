@@ -24,10 +24,10 @@ west #
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec auto --add westnet-eastnet-ipcomp
+ ipsec add westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep westnet-eastnet-ipcomp
+ ipsec status | grep westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipcomp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ipcomp":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -54,7 +54,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipcomp
+ ipsec up westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipcomp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -87,7 +87,7 @@ lifetime current:\	  8028(bytes), 1(packets)\
 west #
  # Need to edit packets.
 west #
- ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
+ ipsec trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=1nn, outBytes=1nn, maxBytes=2^63B, id='@east'
 west #
  ipsec _kernel state

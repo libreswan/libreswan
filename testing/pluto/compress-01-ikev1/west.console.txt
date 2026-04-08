@@ -22,10 +22,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-compress
+ ipsec add westnet-eastnet-compress
 "westnet-eastnet-compress": added oriented IKEv1 connection
 west #
- ipsec auto --status | grep westnet-eastnet-compress
+ ipsec status | grep westnet-eastnet-compress
 "westnet-eastnet-compress": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-compress":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-compress":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -51,7 +51,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-compress
+ ipsec up westnet-eastnet-compress # sanitize-retransmits
 "westnet-eastnet-compress" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-compress" #1: sent Main Mode request
 "westnet-eastnet-compress" #1: sent Main Mode I2
@@ -91,7 +91,7 @@ west #
  ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
+ ipsec trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, maxBytes=2^63B, id='@east'
 west #
  echo done

@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipcomp
+ ipsec add westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": added oriented IKEv2 connection
 east #
  echo "initdone"

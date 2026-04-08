@@ -11,13 +11,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipcomp
+ ipsec add westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipcomp
+ ipsec up westnet-eastnet-ipcomp # sanitize-retransmits
 "westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipcomp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -63,7 +63,7 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 west #
- ipsec auto --down westnet-eastnet-ipcomp
+ ipsec down westnet-eastnet-ipcomp
 "westnet-eastnet-ipcomp": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-ipcomp" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipcomp" #2: ESP traffic information: in=0B out=0B

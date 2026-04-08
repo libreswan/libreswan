@@ -1,3 +1,3 @@
-ipsec auto --up westnet-eastnet-ipcomp
+ipsec up westnet-eastnet-ipcomp # sanitize-retransmits
 ipsec _kernel state
-ipsec auto --down westnet-eastnet-ipcomp
+ipsec down westnet-eastnet-ipcomp

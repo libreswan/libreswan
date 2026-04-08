@@ -1,4 +1,1 @@
 ipsec up westnet-eastnet-compress # sanitize-retransmits
-ipsec _kernel state
-ipsec _kernel policy
-echo up
