@@ -7,7 +7,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
+ ipsec add roadnet-eastnet-ipv4-psk-ikev2
 "roadnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 east #
  echo "initdone"

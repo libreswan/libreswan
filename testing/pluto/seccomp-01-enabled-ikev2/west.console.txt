@@ -1,0 +1,56 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ # why manually start?
+west #
+ mkdir -p /var/run/pluto
+west #
+ ipsec pluto --config /etc/ipsec.conf
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add nss-cert
+"nss-cert": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up nss-cert # sanitize-retransmits
+"nss-cert" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"nss-cert" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"nss-cert" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"nss-cert" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.0.1.254/32===192.0.2.254/32]
+"nss-cert" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr} reassembled from N fragments
+"nss-cert" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"nss-cert" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec down nss-cert
+"nss-cert": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"nss-cert" #1: sent INFORMATIONAL request to delete IKE SA
+"nss-cert" #2: ESP traffic information: in=0B out=0B
+"nss-cert" #1: deleting IKE SA (established IKE SA)
+west #
+ # pluto should still be running
+west #
+ pidof pluto > /dev/null || echo not running?
+west #
+ # whack socket will hang because pluto is expected to die
+west #
+ ipsec whack --seccomp-crashtest & disown ; sleep 2
+[x] PID
+pluto is running with seccomp=enabled! pluto is expected to die!
+Performing seccomp security test using getsid() syscall
+west #
+ # pluto should not be running anymore
+west #
+ pidof pluto
+west #
+ # one entry of SECCOMP activating should show up in the log
+west #
+ ausearch -r -m seccomp -ts boot | sed "s/ip=.*/ip=XXX/"
+type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=XXX
+west #
+ # don't leave post-mortem.sh thinking pluto is running
+west #
+ rm /run/pluto/pluto.ctl
+west #

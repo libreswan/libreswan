@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add nss-cert
+ ipsec add nss-cert
 "nss-cert": added oriented IKEv1 connection
 east #
  echo "initdone"

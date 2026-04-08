@@ -1,5 +1,5 @@
-ipsec auto --up nss-cert
-ipsec auto --down nss-cert
+ipsec up nss-cert # sanitize-retransmits
+ipsec down nss-cert
 # pluto should still be running
 pidof pluto > /dev/null || echo not running?
 # whack socket will hang because pluto is expected to die

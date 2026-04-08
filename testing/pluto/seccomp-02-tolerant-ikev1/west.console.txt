@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- # why manually start?
+ # why start pluto directly?
 west #
  mkdir -p /var/run/pluto
 west #
@@ -9,13 +9,13 @@ west #
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add nss-cert
+ ipsec add nss-cert
 "nss-cert": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up nss-cert
+ ipsec up nss-cert # sanitize-retransmits
 "nss-cert" #1: initiating IKEv1 Main Mode connection
 "nss-cert" #1: sent Main Mode request
 "nss-cert" #1: sent Main Mode I2
@@ -27,33 +27,35 @@ west #
 "nss-cert" #2: sent Quick Mode request
 "nss-cert" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ipsec auto --down nss-cert
+ ipsec down nss-cert
 "nss-cert": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "nss-cert" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "nss-cert" #2: ESP traffic information: in=0B out=0B
 "nss-cert" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
- # pluto should still be running
+ # pluto should survive this and report back
 west #
- pidof pluto > /dev/null || echo not running?
-west #
- # whack socket will hang because pluto is expected to die
-west #
- ipsec whack --seccomp-crashtest & disown ; sleep 2
-[x] PID
-pluto is running with seccomp=enabled! pluto is expected to die!
+ ipsec whack --seccomp-crashtest
 Performing seccomp security test using getsid() syscall
+pluto: seccomp test syscall was not blocked
+ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!
 west #
- # pluto should not be running anymore
+ # no log entries should appear
 west #
- pidof pluto
+ ausearch -r -m seccomp -ts boot
 west #
- # one entry of SECCOMP activating should show up in the log
+ echo done
+done
 west #
- ausearch -r -m seccomp -ts boot | sed "s/ip=.*/ip=XXX/"
-type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=XXX
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         u,u,u
+mainca                                                       CT,, 
+east                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
 west #
- # don't leave post-mortem.sh thinking pluto is running
-west #
- rm /run/pluto/pluto.ctl
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #

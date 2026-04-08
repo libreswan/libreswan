@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add nss-cert
+"nss-cert": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainca                                                       CT,, 
+west                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
