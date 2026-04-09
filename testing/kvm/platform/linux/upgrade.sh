@@ -98,14 +98,16 @@ packages_for_testing() {
     cat <<EOF | awk '{print $1}'
 bind-dnssec-utils
 bind-utils
+c++				# Building NSS
 checksec
 conntrack-tools
-diffstat				# used by NSRUN
+diffstat			# used by NSRUN
 fping
 gawk
 gdb
-git					# used by NSRUN
-gnutls-utils				# used by soft tokens
+git				# used by NSRUN
+gnutls-utils			# used by soft tokens
+gyp				# Building NSS
 iptables
 jq
 kl2tpd
@@ -114,6 +116,7 @@ linux-system-roles
 nc
 net-tools
 nftables
+ninja				# Building NSS
 nsd
 ocspd
 openssl
@@ -122,13 +125,14 @@ python3-pexpect
 rsync
 selinux-policy-devel
 socat
-softhsm-devel				# used by soft tokens
-sshpass					# used by ansible-playbook
+softhsm-devel			# used by soft tokens
+sshpass				# used by ansible-playbook
 strace
 strongswan
 strongswan-sqlite
 systemd-networkd
 systemd-resolved
+systemtap			# performance profiling
 tar
 tcpdump
 tpm2-abrmd

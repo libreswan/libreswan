@@ -10,13 +10,17 @@ This directory is used to build a local version of NSS.
 
   to Makefile.inc.local
 
-- for a kvm build:
+- add dependencies to KVM machine
+
+  (linux build domain should have this pre-installed)
 
     $ ./kvm sh linux
-
     linux#  dnf install gyp ninja c++ ...?
 
-    linux#  make -C /source/external/nss
+- build from within the KVM
+
+    $ ./kvm sh linux
+    linux# make -C /source/external/nss
 
   -> there are likely missing packages, above is a guess
   -> it may take several attempts; mecurial download can fail
