@@ -393,6 +393,8 @@ struct impairment impairments[] = {
 
 	B(ignore_viable_parent, "always initiate a new IKE SA (ignoring any existing viable parent)"),
 
+	U(truncate_signed_hash, "truncate HASH being signed to N bytes"),
+
 #undef U
 #undef B
 #undef V

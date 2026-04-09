@@ -208,6 +208,7 @@ struct impair {
 
 	bool ignore_viable_parent;
 
+	struct impair_unsigned truncate_signed_hash;
 	/*
 	 * add more here
 	 */
