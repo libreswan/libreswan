@@ -130,8 +130,6 @@ sshpass				# used by ansible-playbook
 strace
 strongswan
 strongswan-sqlite
-systemd-networkd
-systemd-resolved
 systemtap			# performance profiling
 tar
 tcpdump
@@ -142,11 +140,13 @@ wireshark-cli
 EOF
 }
 
+
 :
 : Install build dependencies, testing, and kernel packages
 :
 
 dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
+
 
 :
 : Upgrade build dependencies
@@ -154,9 +154,23 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 
 dnf upgrade -y $(packages_for_build)
 
+
 :
-: Hobble systemd-resolved and NetworkManager
+: INSTALL and DISABLE systemd-networkd and systemd-resolved
+:
+: - put back /etc/resolv.conf trashed by systemd-resolved
+: - systemd-networkd has not configs, hence ...
+: - leave NetworkManager enabled
+: - transmogrify.sh will configure systemd-networkd
 :
 
-systemctl disable systemd-resolved.service
-systemctl disable NetworkManager.service
+ls -l /etc/resolv.conf # file
+
+dnf install -y systemd-networkd systemd-resolved
+dnf upgrade -y systemd-networkd systemd-resolved
+systemctl disable systemd-resolved.service systemd-networkd.service
+systemctl enable NetworkManager # to be sure
+
+ls -l /etc/resolv.conf # link ARGH
+rm /etc/resolv.conf
+touch /etc/resolv.conf
