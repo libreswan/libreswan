@@ -17,3 +17,6 @@ east #
 east #
  # now back to WEST
 east #
+ grep "received delete request for" /tmp/pluto.log
+"east-west" #1: received delete request for ESP Child SA with outbound SPI SPISPI; Child SA not found
+east #

@@ -20,7 +20,7 @@ s/comp\([.:]\)[a-z0-9]\{2,8\}@/comp\1COMPSPIi@/g
 
 #
 
-s/ SPI [0-9a-f][0-9a-f]* / SPI SPISPI /
+s/ SPI [0-9a-f][0-9a-f]*\([ ;]\)/ SPI SPISPI\1/
 
 # don't change seq number "0" entries
 s/seq in:[1-9][0-9]* out:[0-9]*/seq in:XXXXX out:YYYYY/g

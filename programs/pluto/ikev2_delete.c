@@ -383,8 +383,8 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 				if (child == NULL) {
 					name_buf b;
 					llog_sa(RC_LOG, ike,
-						"received delete request for %s Child SA with outbound SPI "PRI_IPSEC_SPI" but corresponding state not found",
-						str_enum_long(&ikev2_delete_protocol_id_names,
+						"received delete request for %s Child SA with outbound SPI "PRI_IPSEC_SPI"; Child SA not found",
+						str_enum_short(&ikev2_delete_protocol_id_names,
 							  v2del->isad_protoid, &b),
 						pri_ipsec_spi(outbound_spi));
 					continue;
