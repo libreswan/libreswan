@@ -168,7 +168,7 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
 							  const struct crypt_mac *expected_hash,
 							  shunk_t signature,
 							  struct pubkey *pubkey,
-							  const struct hash_desc *unused_hash_algo UNUSED,
+							  const struct hash_desc *hash_alg,
 							  diag_t *fatal_diag,
 							  struct logger *logger)
 {
@@ -188,58 +188,25 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
  		LDBG_hunk(logger, expected_hash);
 	}
 
-	/*
-	 * Use the same space used by the out going hash.
-	 */
-
-	SECItem decrypted_signature = {
-		.type = siBuffer,
-	};
-
-	if (SECITEM_AllocItem(NULL, &decrypted_signature, signature.len) == NULL) {
-		llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
-		return false;
-	}
+	/* NSS doesn't do const */
+	SECItem hash_item =
+		same_shunk_as_secitem(HUNK_AS_SHUNK(expected_hash), siBuffer);
 
 	/* NSS doesn't do const */
-	const SECItem encrypted_signature = {
-		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, signature.ptr),
-		.len  = signature.len,
-	};
+	SECItem signature_item =
+		same_shunk_as_secitem(signature, siBuffer);
 
-	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
-			       lsw_nss_get_password_context(logger)) != SECSuccess) {
-		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
+	if (VFY_VerifyDigestDirect(&hash_item,
+				   seckey_public,
+				   &signature_item,
+				   /*pubkey algorithm*/SEC_OID_PKCS1_RSA_ENCRYPTION,
+				   /*hash algorithm*/hash_alg->nss.oid_tag,
+				   lsw_nss_get_password_context(logger)) != SECSuccess) {
+		ldbg_nss_error(logger, "NSS VFY_VerifyDigest() failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "NSS RSA verify: decrypted sig: ");
-			jam_nss_secitem(buf, &decrypted_signature);
-		}
-	}
-
-	/*
-	 * Expect the matching hash to appear at the end.  See above
-	 * for length check.  It may, or may not, be prefixed by a
-	 * PKCS#1 1.5 RSA ASN.1 blob.
-	 */
-	passert(decrypted_signature.len >= expected_hash->len);
-	uint8_t *start = (decrypted_signature.data
-			  + decrypted_signature.len
-			  - expected_hash->len);
-	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		ldbg(logger, "RSA Signature NOT verified");
-		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 	*fatal_diag = NULL;
 	return true;
 }
