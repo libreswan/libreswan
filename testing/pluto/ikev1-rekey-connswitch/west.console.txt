@@ -97,9 +97,9 @@ west #
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#3: "TUNNEL-B":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "TUNNEL-B":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 west #
  sleep 60
 west #
@@ -112,9 +112,9 @@ west #
 "TUNNEL-B":   conn serial: $3;
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#3: "TUNNEL-B":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "TUNNEL-B":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 west #
  ipsec auto --down TUNNEL-B
 "TUNNEL-B": terminating SAs using this connection
@@ -196,9 +196,9 @@ west #
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  ipsec auto --delete TUNNEL-B
@@ -255,9 +255,9 @@ west #
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
 "TUNNEL-C":   conn serial: $1;
 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-#2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "TUNNEL-A":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
-#4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "TUNNEL-C":500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  echo done
