@@ -22,7 +22,7 @@ up
 west #
  # bring up the tunnel
 west #
- ipsec auto --up SAwest-east
+ ipsec up SAwest-east # sanitize-retransmits
 "SAwest-east" #1: initiating IKEv1 Main Mode connection
 "SAwest-east" #1: sent Main Mode request
 "SAwest-east" #1: sent Main Mode I2
@@ -41,19 +41,17 @@ up
 west #
  # show the tunnel!
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "SAwest-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # "Time to shut down my computer!"...
 west #
- ipsec whack --shutdown
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
 west #
- # ...but unless the delete SA is acknowledged, this ping will fail,
+ # ...but unless the delete SA is acknowledged, this ping will fail, as
 west #
- # as our peer still routed us
-west #
- sleep 5
+ # our peer still routed us
 west #
  ../../guestbin/ping-once.sh --up 192.1.2.23
 up
