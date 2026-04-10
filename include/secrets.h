@@ -231,7 +231,7 @@ struct pubkey_signer {
 					      const struct hash_hunks *hunks,
 					      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
-					   shunk_t hash_to_sign,
+					   const struct crypt_mac *hash_to_sign,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
 	/*

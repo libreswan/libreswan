@@ -45,7 +45,7 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
-						 shunk_t hash_to_sign,
+						 const struct crypt_mac *hash_to_sign,
 						 const struct hash_desc *hash_alg,
 						 struct logger *logger)
 {
@@ -58,7 +58,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 
 
 	/* point HASH to sign at HASH_VAL */
-	SECItem nss_hash_to_sign = same_shunk_as_secitem(hash_to_sign, siBuffer);
+	SECItem nss_hash_to_sign = same_shunk_as_secitem(HUNK_AS_SHUNK(hash_to_sign), siBuffer);
 
 	/* point signature at the SIG_VAL buffer */
 	struct hash_signature signature = {0};
@@ -168,7 +168,7 @@ const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 };
 
 static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_stuff *pks,
-						    shunk_t hash_to_sign,
+						    const struct crypt_mac *hash_to_sign,
 						    const struct hash_desc *hash_algo_unused UNUSED,
 						    struct logger *logger)
 {
@@ -181,7 +181,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 	ldbgf(DBG_CRYPT, logger, "ECDSA_sign_hash: Started using NSS");
 
 	/* point HASH to sign at HASH_VAL */
-	SECItem nss_hash_to_sign = same_shunk_as_secitem(hash_to_sign, siBuffer);
+	SECItem nss_hash_to_sign = same_shunk_as_secitem(HUNK_AS_SHUNK(hash_to_sign), siBuffer);
 
 	/* point signature at the SIG_VAL buffer */
 	uint8_t raw_signature_data[sizeof(struct hash_signature)];
