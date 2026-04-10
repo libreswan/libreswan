@@ -889,8 +889,6 @@ kvmplutotest	ikev1-delete-sa-04		good
 kvmplutotest	ikev2-delete-sa-04		good
 kvmplutotest	delete-sa-05			good
 kvmplutotest	delete-sa-06			good
-kvmplutotest	delete-sa-08-rhbz1311360	good
-kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
 kvmplutotest	ikev1-28-huge-lifetime		good	github/695
 

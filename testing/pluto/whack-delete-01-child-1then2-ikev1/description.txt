@@ -12,3 +12,6 @@ ISAKMP SA and delete happens immediately there's no time to establish
 an ISAKMP SA to carry the delete.
 
 Consequently EAST ends up with a lingering IPsec SA.
+
+This was also https://bugzilla.redhat.com/show_bug.cgi?id=1311360
+but we can't see that.
