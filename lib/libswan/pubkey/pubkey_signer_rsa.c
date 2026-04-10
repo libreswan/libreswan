@@ -90,58 +90,19 @@ static bool RSA_authenticate_hash_signature_raw_rsa(const struct pubkey_signer *
  		LDBG_hunk(logger, expected_hash);
 	}
 
-	/*
-	 * Use the same space used by the out going hash.
-	 */
-
-	SECItem decrypted_signature = {
-		.type = siBuffer,
-	};
-
-	if (SECITEM_AllocItem(NULL, &decrypted_signature, signature.len) == NULL) {
-		llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
-		return false;
-	}
-
 	/* NSS doesn't do const */
-	const SECItem encrypted_signature = {
-		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, signature.ptr),
-		.len  = signature.len,
-	};
+	const SECItem signature_secitem =
+		same_shunk_as_secitem(signature, siBuffer);
+	const SECItem expected_hash_secitem =
+		same_shunk_as_secitem(HUNK_AS_SHUNK(expected_hash), siBuffer);
 
-	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
-			       lsw_nss_get_password_context(logger)) != SECSuccess) {
-		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
+	if (PK11_Verify(seckey_public, &signature_secitem, &expected_hash_secitem,
+			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "NSS RSA verify: decrypted sig: ");
-			jam_nss_secitem(buf, &decrypted_signature);
-		}
-	}
-
-	/*
-	 * Expect the matching hash to appear at the end.  See above
-	 * for length check.  It may, or may not, be prefixed by a
-	 * PKCS#1 1.5 RSA ASN.1 blob.
-	 */
-	passert(decrypted_signature.len >= expected_hash->len);
-	uint8_t *start = (decrypted_signature.data
-			  + decrypted_signature.len
-			  - expected_hash->len);
-	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		ldbg(logger, "RSA Signature NOT verified");
-		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 	*fatal_diag = NULL;
 	return true;
 }
