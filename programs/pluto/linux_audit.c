@@ -80,7 +80,6 @@ bool linux_audit_enabled(void)
 
 bool linux_audit_init(bool do_audit, struct logger *logger)
 {
-	llog(RC_LOG, logger, "Linux audit support [enabled]");
 	/*
 	 * Always probe for audit support!  Just don't always log
 	 * records.
