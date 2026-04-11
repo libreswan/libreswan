@@ -11,15 +11,9 @@ east #
  echo "initdone"
 initdone
 east #
- # wait over one minute to ensure no EVENT_v1_REPLACE lingered and started something
-east #
- sleep 45
-east #
- sleep 30
-east #
  # There should be no IKE SA and no IPsec SA
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 east #
  # east howvever, should be attempting to connect to west because it has auto=start
 east #

@@ -11,40 +11,33 @@ initdone
 west #
  # wait for east to initiate to us
 west #
- sleep 30
+ ../../guestbin/wait-for-pluto.sh --match '#1: .* established'
+"west-east-auto" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 west #
- ipsec whack --trafficstatus
+ ../../guestbin/wait-for-pluto.sh --match '#2: .* established'
+"west-east-auto" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec trafficstatus
 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # use delete, not down - because east has auto=start
 west #
- ipsec auto --delete west-east-auto
+ ipsec delete west-east-auto
 "west-east-auto": terminating SAs using this connection
 "west-east-auto" #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
 "west-east-auto" #2: ESP traffic information: in=0B out=0B
 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
- # give Delete/Notify some time
-west #
- sleep 5
-west #
  # no IPsec SA should be there. No ISAKMP SA should be there either
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 west #
- ipsec status |grep west-east
-west #
- # wait over one minute to ensure no EVENT_v1_REPLACE lingered and started something
-west #
- sleep 45
-west #
- sleep 30
+ ipsec connectionstatus
+Connection list:
+ 
+Total IPsec connections: loaded 0, routed 0, active 0
 west #
  # There should be no IKE SA and no IPsec SA
 west #
- ipsec whack --trafficstatus
-west #
- # east howvever, should be attempting to connect to west because it has auto=start
-west #
- ipsec status |grep RETRANSMIT | sed "s/RETRANSMIT in .*$/RETRANSMIT in .../"
+ ipsec trafficstatus
 west #

@@ -13,7 +13,7 @@ initdone
 east #
  # There should be no established IKE SA and no established IPsec SA
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 east #
  # only on east, pluto should be attempting to connect to west because it has auto=start
 east #

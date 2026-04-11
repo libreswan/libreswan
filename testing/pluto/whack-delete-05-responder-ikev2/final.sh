@@ -1,5 +1,5 @@
 # There should be no established IKE SA and no established IPsec SA
-ipsec whack --trafficstatus
+ipsec trafficstatus
 # only on east, pluto should be attempting to connect to west because it has auto=start
 ipsec showstates
 # confirm the revive conn code triggered on east
