@@ -31,7 +31,7 @@
 
 #include "lswalloc.h"
 
-bool leak_detective = false;	/* must not change after first alloc! */
+bool leak_detective = true;	/* default enabled; --no-leak-detective temporarily disables - see issue #2725 */
 
 /*
  * memory allocation
@@ -130,9 +130,7 @@ static union mhdr *pmhdr_where(void *ptr, where_t where)
 void pmemory_where(void *ptr, where_t where)
 {
 	passert(ptr != NULL);
-	if (leak_detective) {
-		pmhdr_where(ptr, where);
-	}
+	pmhdr_where(ptr, where);
 }
 
 /* protects updates to the leak-detective linked list */
@@ -183,27 +181,19 @@ static void *allocate(void *(*alloc)(size_t), size_t size, const char *name)
 		size = 1;
 	}
 
-	if (leak_detective) {
-		/* fail on overflow */
-		if (sizeof(union mhdr) + size < size)
-			return NULL;
+	/* fail on overflow */
+	if (sizeof(union mhdr) + size < size)
+		return NULL;
 
-		p = alloc(sizeof(union mhdr) + size);
-	} else {
-		p = alloc(size);
-	}
+	p = alloc(sizeof(union mhdr) + size);
 
 	if (p == NULL) {
 		llog_passert(&global_logger, HERE,
 			     "unable to allocate %zu bytes for %s", size, name);
 	}
 
-	if (leak_detective) {
-		install_allocation(p, size, name);
-		return p + 1;
-	} else {
-		return p;
-	}
+	install_allocation(p, size, name);
+	return p + 1;
 }
 
 void *uninitialized_malloc(size_t size, const char *name)
@@ -213,18 +203,14 @@ void *uninitialized_malloc(size_t size, const char *name)
 
 void pfree(void *ptr)
 {
-	if (leak_detective) {
-		passert(ptr != NULL);
-		union mhdr *p = pmhdr_where(ptr, HERE);
-		remove_allocation(p);
-		/* stomp on memory!   Is another byte value better? */
-		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
-		/* put back magic */
-		p->i.magic = ~LEAK_MAGIC;
-		free(p);
-	} else {
-		free(ptr);
-	}
+	passert(ptr != NULL);
+	union mhdr *p = pmhdr_where(ptr, HERE);
+	remove_allocation(p);
+	/* stomp on memory!   Is another byte value better? */
+	memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
+	/* put back magic */
+	p->i.magic = ~LEAK_MAGIC;
+	free(p);
 }
 
 bool report_leaks(struct logger *logger)
@@ -371,26 +357,23 @@ void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 {
 	if (ptr == NULL) {
 		return uninitialized_malloc(new_size, name);
-	} else if (leak_detective) {
-		union mhdr *p = pmhdr_where(ptr, HERE);
-		remove_allocation(p);
-		p = realloc(p, sizeof(union mhdr) + new_size);
-		if (p == NULL) {
-			llog_passert(&global_logger, HERE,
-				     "unable to reallocate %zu bytes for %s", new_size, name);
-		}
-		install_allocation(p, new_size, name);
-		return p+1;
-	} else {
-		return realloc(ptr, new_size);
 	}
+	union mhdr *p = pmhdr_where(ptr, HERE);
+	remove_allocation(p);
+	p = realloc(p, sizeof(union mhdr) + new_size);
+	if (p == NULL) {
+		llog_passert(&global_logger, HERE,
+			     "unable to reallocate %zu bytes for %s", new_size, name);
+	}
+	install_allocation(p, new_size, name);
+	return p+1;
 }
 
 void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name)
 {
 	if (*ptr == NULL) {
 		passert(old_size == 0);
-	} else if (leak_detective) {
+	} else {
 		union mhdr *p = pmhdr_where(*ptr, HERE);
 		passert(p->i.size == old_size);
 	}
