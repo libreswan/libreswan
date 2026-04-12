@@ -29,7 +29,6 @@
       <sbr/>
       <arg choice="opt">--nofork</arg>
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
-      <arg choice="opt">--leak-detective</arg>
       <arg choice="opt">--efence-protect</arg>
       <sbr/>
       <arg choice="opt">--stderrlog</arg>
@@ -195,16 +194,6 @@
 	      </variablelist>
 	    </para>
           </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term>
-	    <option>--leak-detective</option>
-	  </term>
-	  <listitem>
-	    <para>
-	      enable leak detective
-	    </para>
-	  </listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term>
