@@ -12,13 +12,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev2
+ ipsec add ikev2
 "ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up ikev2
+ ipsec up ikev2
 "ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -27,7 +27,7 @@ west #
 "ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east-v2' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "ikev2" #2: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec auto --delete ikev2
+ ipsec delete ikev2
 "ikev2": terminating SAs using this connection
 "ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "ikev2" #2: ESP traffic information: in=0B out=0B

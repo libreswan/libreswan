@@ -1,3 +1,3 @@
-ipsec auto --up ikev2
-ipsec auto --delete ikev2
+ipsec up ikev2
+ipsec delete ikev2
 echo done

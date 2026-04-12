@@ -10,10 +10,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev1
+ ipsec add ikev1
 "ikev1": added oriented IKEv1 connection
 east #
- ipsec auto --add ikev1-aggr
+ ipsec add ikev1-aggr
 "ikev1-aggr": added oriented IKEv1 connection
 east #
  echo "initdone"

@@ -8,7 +8,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev2-ipsec-fail
+ ipsec add ikev2-ipsec-fail
 "ikev2-ipsec-fail": added oriented IKEv2 connection
 west #
  #ipsec whack --impair timeout_on_retransmit
@@ -22,7 +22,7 @@ west #
 west #
  # See description of limitations of this test
 west #
- ipsec auto --up ikev2-ipsec-fail
+ ipsec up ikev2-ipsec-fail
 "ikev2-ipsec-fail" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-ipsec-fail" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-ipsec-fail" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -33,7 +33,7 @@ west #
 "ikev2-ipsec-fail" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "ikev2-ipsec-fail" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
- ipsec auto --delete ikev2-ipsec-fail
+ ipsec delete ikev2-ipsec-fail
 "ikev2-ipsec-fail": terminating SAs using this connection
 "ikev2-ipsec-fail" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #

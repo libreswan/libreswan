@@ -4,5 +4,5 @@ echo '@psk-west-v2 @psk-east-v2: PSK "ThisIsHereToMisMatch"' >> /etc/ipsec.secre
 echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add ikev2
+ipsec add ikev2
 echo "initdone"

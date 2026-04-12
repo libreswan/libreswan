@@ -12,10 +12,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev1-failtest
+ ipsec add ikev1-failtest
 "ikev1-failtest": added oriented IKEv1 connection
 west #
- ipsec auto --add ikev1-aggr-failtest
+ ipsec add ikev1-aggr-failtest
 "ikev1-aggr-failtest": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
@@ -25,22 +25,18 @@ initdone
 west #
  # IKEv1 fail tests
 west #
- ipsec auto --up ikev1-failtest # sanitze-retransmits
+ ipsec up ikev1-failtest
 "ikev1-failtest" #1: initiating IKEv1 Main Mode connection
 "ikev1-failtest" #1: sent Main Mode request
 "ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-"ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-"ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-"ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 second for response
-"ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
-"ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+"ikev1-failtest" #1: STATE_MAIN_I1: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 "ikev1-failtest" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "ikev1-failtest" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "ikev1-failtest" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
- ipsec auto --delete ikev1-failtest
+ ipsec delete ikev1-failtest
 west #
- ipsec auto --up ikev1-aggr-failtest  # sanitize-retransmits
+ ipsec up ikev1-aggr-failtest
 "ikev1-aggr-failtest" #2: initiating IKEv1 Aggressive Mode connection
 "ikev1-aggr-failtest" #2: sent Aggressive Mode request
 "ikev1-aggr-failtest" #2: Peer ID is FQDN: '@east-v1'
@@ -50,7 +46,7 @@ west #
 IMPAIR: "ikev1-aggr-failtest" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "ikev1-aggr-failtest" #2: deleting ISAKMP SA (AGGR_I1) and NOT sending notification
 west #
- ipsec auto --delete ikev1-aggr-failtest
+ ipsec delete ikev1-aggr-failtest
 west #
  echo done
 done
