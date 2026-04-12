@@ -14,4 +14,4 @@ initdone
 east #
  ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-east # 
+east #

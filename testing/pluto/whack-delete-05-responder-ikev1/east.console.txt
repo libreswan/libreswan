@@ -11,12 +11,20 @@ east #
  echo "initdone"
 initdone
 east #
+ # Confirm that east is trying to revive; note that with IKEv1, the
+east #
+ # Child (IPsec) SAs, and then the IKE (IPsec) SA gets deleted.  The
+east #
+ # below is the Child SA trying to revive using the doomed IKE SA.
+east #
+ # When the IKE SA is deleted, there'll be a further revival but with a
+east #
+ # few seconds delay.
+east #
+ ../../guestbin/wait-for-pluto.sh --match '#2: connection is supposed to remain up'
+"west-east-auto" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+east #
  # There should be no IKE SA and no IPsec SA
 east #
  ipsec trafficstatus
-east #
- # east howvever, should be attempting to connect to west because it has auto=start
-east #
- ipsec status |grep RETRANSMIT | sed "s/RETRANSMIT in .*$/RETRANSMIT in .../"
-#5: "west-east-auto":500 sent Main Mode request; RETRANSMIT in ...
 east #

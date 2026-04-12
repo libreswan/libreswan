@@ -9,7 +9,7 @@ ipsec _kernel policy
 # retransmit, scheduled for 10s, will unstick it.
 ipsec whack --impair drop_outbound:1
 ipsec whack --rekey-ike --asynchronous --name labeled
-../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
+../../guestbin/wait-for.sh --match 'request to rekey' -- ipsec whack --showstates
 
 # Trigger traffic using the predefined ping_t context.  Because the
 # rekey SA is stuck it will start on the old #1 IKE SA's queue and

@@ -14,7 +14,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec status | grep eastnet | sed "s/192.1.2.254:[0-9]* STATE_/192.1.2.254:PORT STATE_/"
+ ipsec status | grep eastnet | sed "s/192.1.2.254:[0-9]* /192.1.2.254:PORT /"
 "roadnet-eastnet-ipv4-psk-ikev2": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...%any[%fromcert]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "roadnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.23; remote: %any;
 "roadnet-eastnet-ipv4-psk-ikev2":   mycert=east;
@@ -65,9 +65,9 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   conn serial: $2, instantiated from: $1;
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
-#1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:EPHEM ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
-#3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:EPHEM ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:EPHEM ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
+#1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT established IKE SA; REKEY in XXs; REPLACE in XXs; idle;
+#3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 east #
  # should show no hits
