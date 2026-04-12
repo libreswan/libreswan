@@ -8,7 +8,7 @@ ipsec _kernel state
 ipsec _kernel policy
 
 # start pluto
-ipsec pluto --config /usr/local/etc/ipsec.conf --leak-detective
+ipsec pluto --config /usr/local/etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
 
 # check policy/state gone

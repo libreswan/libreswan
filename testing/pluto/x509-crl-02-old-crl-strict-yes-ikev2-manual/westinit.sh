@@ -6,7 +6,7 @@
 
 ipsec certutil -L
 
-ipsec pluto --config /etc/ipsec.conf --leak-detective
+ipsec pluto --config /etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival
