@@ -478,7 +478,8 @@ endif
 ifeq ($(INITSYSTEM),systemd)
 USE_SYSTEMD_WATCHDOG ?= true
 SD_RESTART_TYPE ?= on-failure
-SD_PLUTO_OPTIONS ?= --leak-detective
+# Note: leak-detective is now always enabled by default in the code
+SD_PLUTO_OPTIONS ?=
 SYSTEMUNITDIR ?= $(shell $(PKG_CONFIG) systemd --variable=systemdsystemunitdir)
 SYSTEMTMPFILESDIR ?= $(shell $(PKG_CONFIG) systemd --variable=tmpfilesdir)
 TMPFILESDIR ?= $(DESTDIR)$(SYSTEMTMPFILESDIR)
