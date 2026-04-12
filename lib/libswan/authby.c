@@ -228,6 +228,8 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_EAPONLY: return (struct authby) {
 			AUTHBY_EAPONLY,
 		};
+	case AUTH_DIGSIG:
+		return supported_ikev2_digsig_auth_payloads();
 	}
 	bad_case(auth);
 }
