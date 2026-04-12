@@ -885,8 +885,6 @@ kvmplutotest	delete-ikev1-sa-04-multi-initiator	good
 kvmplutotest	delete-ikev1-sa-04-multi-responder	wip	github/1876
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-02			good
-kvmplutotest	delete-sa-05			good
-kvmplutotest	delete-sa-06			good
 kvmplutotest	ikev1-27-uniqueid		good
 kvmplutotest	ikev1-28-huge-lifetime		good	github/695
 

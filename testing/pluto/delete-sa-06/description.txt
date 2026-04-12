@@ -1,6 +1,0 @@
-Test for ikev1 delete/notify send from responder.
-
-This test uses auto=start on east and auto=add on west,
-so that west can become the "responder" to send the --down
-command. Since east has auto=start, it should immediastely
-bring the connection back up.
