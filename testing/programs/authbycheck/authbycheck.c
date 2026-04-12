@@ -84,7 +84,17 @@ int main(int argc, char *argv[])
 			FAIL("str_authby(%u) != none", auth);
 		}
 
+		/* AUTH_DIGSIG sets all digital signature bits,
+		 * skip disjointness checks */
+		if (auth == AUTH_DIGSIG) {
+			continue;
+		}
+
 		for (enum auth alt = AUTH_FLOOR; alt < AUTH_ROOF; alt++) {
+
+			if (alt == AUTH_DIGSIG) {
+				continue;
+			}
 
 			struct authby altby = authby_from_auth(alt);
 
