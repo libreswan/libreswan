@@ -81,10 +81,10 @@ case "$1" in
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
 		ipsec checknss > /dev/null
 		ipsec checknflog > /dev/null
-		exec ipsec pluto --config @@IPSEC_CONF@@ --leak-detective
+		exec ipsec pluto --config @@IPSEC_CONF@@
 		;;
 	    "" )
-		what="ipsec pluto --logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@ --leak-detective"
+		what="ipsec pluto --logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@"
 		echo "Redirecting to: ${what} [start manually]"
 		exec ${what}
 		;;
@@ -231,7 +231,7 @@ case "$1" in
 	    namespaces )
 		echo "Redirecting to: namespaces"
 		ipsec whack --shutdown
-		exec ipsec pluto --config @@IPSEC_CONF@@ --leak-detective
+		exec ipsec pluto --config @@IPSEC_CONF@@
 		;;
 	    "" )
 		echo "Redirecting to: [stop start manually]"
