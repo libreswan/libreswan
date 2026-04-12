@@ -1,0 +1,5 @@
+Same as ikev2-x509-21-multicert-ecdsa.
+East has two road-warrior conns both allowing rsasig and ecdsa.
+West initiates with an ECDSA cert, but east is impaired to be legacy.
+West should sign using legacy ECDSA and east should still connswitch
+to rw-specific.
