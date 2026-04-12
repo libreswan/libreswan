@@ -94,9 +94,19 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
+		/* AUTH_DIGSIG sets all digital signature bits,
+		 * skip disjointness checks */
+		if (auth == AUTH_DIGSIG) {
+			continue;
+		}
+
 		for (enum auth alt = AUTH_FLOOR; alt < AUTH_ROOF; alt++) {
 
 			if (alt == AUTH_EAPONLY) {
+				continue;
+			}
+
+			if (alt == AUTH_DIGSIG) {
 				continue;
 			}
 

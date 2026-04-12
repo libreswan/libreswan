@@ -698,7 +698,13 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		PEXPECT(logger, pks->content.type == type);
+		if (pks->content.type != type) {
+			ldbg(logger,
+			     "private key matching certificate '%s' has type %s but %s is needed",
+			     nickname, pks->content.type->name, type->name);
+			return NULL;
+		}
+
 		ldbg(logger, "connection %s's %s private key found in NSS DB using cert",
 		     c->name, type->name);
 		return pks;
