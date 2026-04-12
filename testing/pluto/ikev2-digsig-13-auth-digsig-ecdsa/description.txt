@@ -1,0 +1,3 @@
+Initiator auth=digsig, responder auth=ecdsa, both with ECDSA certs.
+auth=digsig detects the ECDSA cert and signs with ECDSA.
+Connection should establish.
