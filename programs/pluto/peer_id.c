@@ -346,17 +346,19 @@ static bool score_host_connection(const struct ike_sa *ike,
 		 * what the remote end has sent in the
 		 * IKE_AUTH request.
 		 *
-		 * XXX: this is too strict.  For
-		 * instance, given a connection that
-		 * allows both both ECDSA and RSASIG
-		 * then because .auth=rsasig
-		 * (preferred) the below will reject
-		 * ECDSA?
+		 * Check the peer's proposed auth type against
+		 * the connection's remote authby policy.
 		 */
-		if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
-			vdbg("skipping because mismatched authby");
-			return false;
+		for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
+			if (LHAS(proposed_authbys, auth)) {
+				if (!auth_in_authby(auth, d->remote->host.config->authby)) {
+					vdbg("skipping because mismatched authby");
+					return false;
+				}
+				break;
+			}
 		}
+
 		/* check that the chosen one has a key */
 		switch (d->remote->host.config->auth) {
 		case AUTH_PSK:
@@ -387,6 +389,20 @@ static bool score_host_connection(const struct ike_sa *ike,
 						  ike->sa.logger) == NULL) {
 				vdbg("skipping because ECDSA and no private key");
 				return false;	/* no key */
+			}
+			break;
+		case AUTH_DIGSIG:
+			if (get_local_private_key(d, &pubkey_type_rsa,
+						  ike->sa.logger) == NULL &&
+			    get_local_private_key(d, &pubkey_type_ecdsa,
+						  ike->sa.logger) == NULL
+#ifdef USE_EDDSA
+			    && get_local_private_key(d, &pubkey_type_eddsa,
+						  ike->sa.logger) == NULL
+#endif
+			    ) {
+				vdbg("skipping because DIGSIG and no private key");
+				return false;   /* no key */
 			}
 			break;
 		default:

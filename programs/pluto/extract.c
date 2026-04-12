@@ -1749,6 +1749,7 @@ static diag_t extract_host_end(enum end end,
 	case AUTH_RSASIG:
 	case AUTH_ECDSA:
 	case AUTH_EDDSA:
+	case AUTH_DIGSIG:
 		authby_mask = authby_from_auth(auth);
 		break;
 	case AUTH_PSK:

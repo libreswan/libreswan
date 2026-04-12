@@ -34,6 +34,7 @@
 #include "connections.h"
 #include "nat_traversal.h"
 #include "keys.h"
+#include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "secrets.h"
 #include "ikev2_message.h"
 #include "ikev2.h"
@@ -129,6 +130,27 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	struct v2AUTH_blobs blobs;
 	extract_v2AUTH_blobs(ike, idhash, from_the_perspective_of, &blobs);
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
+}
+
+/* Get the key type of the local certificate, returns NULL on failure. */
+static const struct pubkey_type *get_cert_key_type(struct ike_sa *ike)
+{
+	const struct connection *c = ike->sa.st_connection;
+	CERTCertificate *nss_cert = c->local->host.config->cert.nss_cert;
+	if (nss_cert == NULL) {
+		ldbg(ike->sa.logger, "no certificate available");
+		return NULL;
+	}
+
+	SECKEYPublicKey *pubkey = CERT_ExtractPublicKey(nss_cert);
+	if (pubkey == NULL) {
+		ldbg(ike->sa.logger, "cannot extract public key from certificate");
+		return NULL;
+	}
+
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubkey);
+	SECKEY_DestroyPublicKey(pubkey);
+	return type;
 }
 
 enum auth local_v2_auth(struct ike_sa *ike)
@@ -257,6 +279,51 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 
 		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
 		return IKEv2_AUTH_RESERVED;
+
+	case AUTH_DIGSIG:
+		/*
+		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
+		 * indicating a preference for Digital Signature
+		 * Method, and local policy was ok with the
+		 * suggestion.
+		 */
+		pexpect(auth_in_authby(AUTH_DIGSIG, c->local->host.config->authby));
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
+		}
+
+		/* Legacy fallbacks */
+		{
+			const struct pubkey_type *type = get_cert_key_type(ike);
+			if (type == NULL) {
+				llog_sa(RC_LOG, ike,
+					"certificate required for legacy fallback");
+				return IKEv2_AUTH_RESERVED;
+			}
+
+			if (type == &pubkey_type_rsa &&
+			    c->local->host.config->authby.rsasig_v1_5) {
+				return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
+			}
+
+			if (type == &pubkey_type_ecdsa) {
+				if (c->config->sighash_policy & POL_SIGHASH_SHA2_512) {
+					return IKEv2_AUTH_ECDSA_SHA2_512_P521;
+				}
+				if (c->config->sighash_policy & POL_SIGHASH_SHA2_384) {
+					return IKEv2_AUTH_ECDSA_SHA2_384_P384;
+				}
+				if (c->config->sighash_policy & POL_SIGHASH_SHA2_256) {
+					return IKEv2_AUTH_ECDSA_SHA2_256_P256;
+				}
+			}
+
+			/*
+			 * Nothing acceptable, try to log something helpful.
+			 */
+			llog_sa(RC_LOG, ike, "no legacy auth method for %s key", type->name);
+			return IKEv2_AUTH_RESERVED;
+		}
 
 	case AUTH_EAPONLY:
 		/*
@@ -744,6 +811,27 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			signer_story = "hardwired(EDDSA)";
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
+		case AUTH_DIGSIG: {
+			const struct connection *c = ike->sa.st_connection;
+			const struct pubkey_type *type = get_cert_key_type(ike);
+			if (type == &pubkey_type_rsa && c->local->host.config->authby.rsasig) {
+				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_rsassa_pss;
+				signer_story = "from cert(RSA)";
+			} else if (type == &pubkey_type_ecdsa && c->local->host.config->authby.ecdsa) {
+				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
+				signer_story = "from cert(ECDSA)";
+			} else if (type == &pubkey_type_eddsa && c->local->host.config->authby.eddsa) {
+				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
+				signer_story = "from cert(EDDSA)";
+			} else {
+				llog_sa(RC_LOG, ike, "certificate required to select signer");
+				record_v2N_response(ike->sa.logger, ike, md,
+						    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+						    ENCRYPTED_PAYLOAD);
+				return STF_FATAL;
+			}
+			break;
+		}
 		default:
 			bad_case(authby);
 		}
@@ -872,6 +960,21 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		case AUTH_EDDSA:
 			signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
+		case AUTH_DIGSIG: {
+			const struct connection *c = ike->sa.st_connection;
+			const struct pubkey_type *type = get_cert_key_type(ike);
+			if (type == &pubkey_type_rsa && c->local->host.config->authby.rsasig) {
+				signer = &pubkey_signer_digsig_rsassa_pss;
+			} else if (type == &pubkey_type_ecdsa && c->local->host.config->authby.ecdsa) {
+				signer = &pubkey_signer_digsig_ecdsa;
+			} else if (type == &pubkey_type_eddsa && c->local->host.config->authby.eddsa) {
+				signer = &pubkey_signer_digsig_eddsa_ed25519;
+			} else {
+				llog_sa(RC_LOG, ike, "certificate required to select signer");
+				return STF_FATAL;
+			}
+			break;
+		}
 		default:
 			bad_case(authby);
 		}
@@ -1048,8 +1151,8 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
  * Convert the proposed connections into something this responder
  * might accept.
  *
- * + DIGITAL_SIGNATURE code seems a bit dodgy, should this be looking
- * inside the auth proposal to see what is actually required?
+ * DIGITAL_SIGNATURE peeks at the AlgorithmIdentifier length
+ * (first byte, RFC 7427 section 3) to determine the concrete type.
  *
  * + the legacy ECDSA_SHA2* methods also seem to be a bit dodgy,
  * shouldn't they also specify the SHA algorithm so that can be
@@ -1076,8 +1179,28 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 		return LELEM(AUTH_PSK);
 	case IKEv2_AUTH_NULL:
 		return LELEM(AUTH_NULL);
-	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
+	case IKEv2_AUTH_DIGITAL_SIGNATURE: {
+		shunk_t sig = pbs_in_left(&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+		if (sig.len == 0) {
+			llog(RC_LOG, ike->sa.logger, "empty DIGITAL_SIGNATURE payload");
+			return LEMPTY;
+		}
+
+		size_t alg_id_len = hunk_byte(sig, 0);
+		switch (alg_id_len) {
+		case ASN1_PKCS1_1_5_RSA_SIZE:
+		case ASN1_RSASSA_PSS_SHA2_SIZE:
+			return LELEM(AUTH_RSASIG);
+		case ASN1_ECDSA_SHA2_SIZE:
+			return LELEM(AUTH_ECDSA);
+		case ASN1_EDDSA_IDENTITY_SIZE:
+			return LELEM(AUTH_EDDSA);
+		default:
+			llog(RC_LOG, ike->sa.logger,
+			     "unknown AlgorithmIdentifier length %zu", alg_id_len);
+			return LEMPTY;
+		}
+	}
 	default:
 	{
 		name_buf nb;
