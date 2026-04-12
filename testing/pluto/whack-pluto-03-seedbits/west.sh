@@ -22,3 +22,9 @@ ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=1024
 ../../guestbin/wait-until-pluto-started
 ipsec whack --shutdown
 grep -E "^seeded" /tmp/pluto.log
+
+# Test with custom seeddev
+ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=520 --seeddev /dev/urandom
+../../guestbin/wait-until-pluto-started
+ipsec whack --shutdown
+grep -E "^seeded" /tmp/pluto.log

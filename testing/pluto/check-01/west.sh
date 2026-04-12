@@ -12,3 +12,6 @@ valgrind --quiet $(ipsec -n _ttodatacheck -r)
 
 # Need to disable DNS tests; localhost is ok
 valgrind --quiet $(ipsec -n _ipcheck --dns=hosts-file) > /dev/null || echo failed
+
+# Test seedbits and seeddev option handling
+valgrind --quiet $(ipsec -n _seedbitscheck --seedbits 520 --seeddev /dev/urandom)

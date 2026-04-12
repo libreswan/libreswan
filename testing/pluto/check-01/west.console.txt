@@ -31,3 +31,9 @@ west #
  valgrind --quiet $(ipsec -n _ipcheck --dns=hosts-file) > /dev/null || echo failed
 ipsec _ipcheck: leak detective found no leaks
 west #
+ # Test seedbits and seeddev option handling
+west #
+ valgrind --quiet $(ipsec -n _seedbitscheck --seedbits 520 --seeddev /dev/urandom)
+seedbits=520
+seeddev=/dev/urandom
+west #
