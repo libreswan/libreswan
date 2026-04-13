@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2022 Andrew Cagney
+# Copyright (C) 2015-2026  Andrew Cagney
 # Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -75,6 +75,7 @@ OBJS += pubkey/pubkey_signer_ecdsa.o
 OBJS += pubkey/pubkey_signer_eddsa.o
 OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
+OBJS += pubkey/pubkey_sign_hash.o
 
 OBJS += sparse_names.o
 

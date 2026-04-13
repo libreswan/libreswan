@@ -260,6 +260,12 @@ struct pubkey_signer {
 				  const struct hash_desc *);
 };
 
+struct hash_signature pubkey_sign_hash(const struct pubkey_signer *signer,
+				       const struct secret_pubkey_stuff *pks,
+				       const struct crypt_mac *hash_to_sign,
+				       const struct hash_desc *hash_alg,
+				       struct logger *logger);
+
 extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
 
 extern const struct pubkey_type pubkey_type_rsa;

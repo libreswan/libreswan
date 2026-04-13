@@ -40,14 +40,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 					       const struct hash_desc *hash_algo,
 					       struct logger *logger)
 {
-	ldbg(logger, "%s: started using NSS", __func__);
-
 	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
-		return (struct hash_signature) { .len = 0, };
-	}
-
-	if (!pexpect(pks->private_key != NULL)) {
-		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -176,13 +169,6 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 						     const struct hash_desc *hash_algo,
 						     struct logger *logger)
 {
-	ldbg(logger, "%s: started using NSS", __func__);
-
-	if (!pexpect(pks->private_key != NULL)) {
-		ldbg(logger, "no private key!");
-		return (struct hash_signature) { .len = 0, };
-	}
-
 	SECItem digest = same_shunk_as_secitem(HUNK_AS_SHUNK(hash_to_sign), siBuffer);
 
 	/*
@@ -317,13 +303,6 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
-	ldbg(logger, "%s: started using NSS", __func__);
-
-	if (!pexpect(pks->private_key != NULL)) {
-		ldbg(logger, "no private key!");
-		return (struct hash_signature) { .len = 0, };
-	}
-
 	SECItem data = same_shunk_as_secitem(HUNK_AS_SHUNK(hash_to_sign), siBuffer);
 
 	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
