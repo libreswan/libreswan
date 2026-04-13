@@ -1,2 +1,3 @@
 ipsec whack --trafficstatus
-ipsec status | grep "ESTABLISHED_"
+# either west or westnet-eastnet-ikev2
+ipsec connectionstatus | grep "established .* SA"
