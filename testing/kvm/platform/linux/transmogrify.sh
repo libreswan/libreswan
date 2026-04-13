@@ -10,16 +10,11 @@ export SOURCEDIR=@@KVM_SOURCEDIR@@
 export TESTINGDIR=@@KVM_TESTINGDIR@@
 export PLATFORM=@@DOMAIN_PLATFORM@@
 
-TITLE()
-{
-    :
-    : $*
-    :
-}
-
 RUN()
 {
-    TITLE "$@"
+    :
+    : "$@"
+    :
     "$@"
 }
 
@@ -51,7 +46,10 @@ mv /etc/fstab.tmp /etc/fstab
 
 systemctl disable NetworkManager
 
-TITLE /etc/hosts
+
+:
+: /etc/hosts
+:
 
 # add easy names so we can jump from vm to vm and map from IP address
 # to hostname
@@ -64,7 +62,9 @@ cat <<EOF >> /etc/hosts
 EOF
 
 
-TITLE add swan to paths
+:
+: add swan to paths
+:
 
 cat <<EOF > /etc/profile.d/swanpath.sh
 # add swan test binaries to path
@@ -84,7 +84,9 @@ EOF
 restorecon -R /etc/profile.d/swanpath.sh
 
 
-TITLE /usr/bin/swan-...
+:
+: /usr/bin/swan-...
+:
 
 ln -vs /testing/guestbin/swan-prep /usr/bin/swan-prep
 ln -vs /testing/guestbin/swan-build /usr/bin/swan-build
@@ -94,7 +96,9 @@ ln -vs /testing/guestbin/swan-run /usr/bin/swan-run
 restorecon -R /usr/bin/swan-*
 
 
-TITLE enable entropy
+:
+: enable entropy
+:
 
 cat <<EOF > /etc/modules-load.d/virtio-rng.conf
 # load virtio RNG device to get entropy from the host
@@ -104,14 +108,18 @@ EOF
 restorecon -R /etc/modules-load.d/virtio-rng.conf
 
 
-TITLE ensure we can get coredumps
+:
+: ensure we can get coredumps
+:
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
 echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 restorecon -R /etc/security/limits.conf /etc/sysconfig/pluto
 
 
-TITLE bind
+:
+: bind
+:
 
 # and bind config - can be run on all hosts (to prevent network DNS
 # packets) as well as on nic
@@ -124,7 +132,9 @@ cp -av /bench/testing/baseconfigs/all/etc/bind/* /etc/bind/
 restorecon -R /etc/bind
 
 
-TITLE ssh
+:
+: ssh
+:
 
 mkdir -p /etc/ssh
 chown -v 755 /etc/ssh
@@ -140,14 +150,18 @@ echo "MaxAuthTries 32" >> /etc/ssh/sshd_config
 restorecon -R /root/.ssh /etc/ssh
 
 
-TITLE replace root/.bash_profile
+:
+: replace root/.bash_profile
+:
 
 for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
 
-TITLE files mysteriously needed for systemd-networkd too
+:
+: files mysteriously needed for systemd-networkd too
+:
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -157,7 +171,9 @@ done
 restorecon -R /etc/sysconfig/
 
 
-TITLE fixup /etc/sysctl.conf
+:
+: fixup /etc/sysctl.conf
+:
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -167,13 +183,17 @@ restorecon -R /etc/sysctl.conf
 sysctl -q -p || true # still expected to fail!
 
 
-TITLE run unbound-keygen once
+:
+: run unbound-keygen once
+:
 
 systemctl start unbound-keygen.service
 systemctl disable unbound-anchor.timer
 
 
-TITLE Clobber some annoying services
+:
+: Clobber some annoying services
+:
 
 # System Security Services Daemon (i.e., real PAM)
 RUN systemctl disable sssd.service
@@ -191,7 +211,9 @@ RUN systemctl mask user@0.service
 RUN systemctl mask user-runtime-dir@0.service
 
 
-TITLE install any custom RPMs
+:
+: install any custom RPMs
+:
 
 for rpmdir in /bench/linux-rpms /pool/${PREFIX}linux-rpms ; do
     # directory is not called linux-transmogrify.* as a cleanup would
@@ -203,10 +225,13 @@ for rpmdir in /bench/linux-rpms /pool/${PREFIX}linux-rpms ; do
 done
 
 
-TITLE save the latest kernels
+:
+: save the linux kernel for later direct booting
+:
 
 # The Saved kernel is called linux.* so that cleaning up transmogrify,
 # using `make uninstall`, cleans up the files.
+
 kernel=$(ls /boot/vmlinuz-* | sort -V | tail -1)
 cp -vf ${kernel} /pool/${PREFIX}linux.vmlinuz
 ramfs=$(ls /boot/initramfs-*.img | sort -V | tail -1)
@@ -216,10 +241,14 @@ cp -vf ${ramfs} /pool/${PREFIX}linux.initramfs
 # libvirt/761 where the file ownership is flip-flops between ROOT and
 # WHOAMI - a u=r,go= file when owned by ROOT isn't accessible by QEMU
 # when running as WHOAMI.
+
 chmod go+r  /pool/${PREFIX}linux.vmlinuz
 chmod go+r /pool/${PREFIX}linux.initramfs
 
-TITLE finally ... SElinux fixup with errors in /tmp/chcon.log
+
+:
+: finally ... SElinux fixup with errors in /tmp/chcon.log
+:
 
 mount /testing
 chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true

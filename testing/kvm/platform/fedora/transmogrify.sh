@@ -10,16 +10,11 @@ export SOURCEDIR=@@KVM_SOURCEDIR@@
 export TESTINGDIR=@@KVM_TESTINGDIR@@
 export PLATFORM=@@DOMAIN_PLATFORM@@
 
-title()
+RUN()
 {
     :
-    : $*
+    : "$@"
     :
-}
-
-run()
-{
-    title "$@"
     "$@"
 }
 
@@ -52,7 +47,10 @@ mv /etc/fstab.tmp /etc/fstab
 
 systemctl disable NetworkManager
 
-title /etc/hosts
+
+:
+: /etc/hosts
+:
 
 # add easy names so we can jump from vm to vm and map from IP address
 # to hostname
@@ -65,7 +63,9 @@ cat <<EOF >> /etc/hosts
 EOF
 
 
-title add swan to paths
+:
+: add swan to paths
+:
 
 cat <<EOF > /etc/profile.d/swanpath.sh
 # add swan test binaries to path
@@ -85,7 +85,9 @@ EOF
 restorecon -R /etc/profile.d/swanpath.sh
 
 
-title /usr/bin/swan-...
+:
+: /usr/bin/swan-...
+:
 
 ln -vs /testing/guestbin/swan-prep /usr/bin/swan-prep
 ln -vs /testing/guestbin/swan-build /usr/bin/swan-build
@@ -95,7 +97,9 @@ ln -vs /testing/guestbin/swan-run /usr/bin/swan-run
 restorecon -R /usr/bin/swan-*
 
 
-title enable entropy
+:
+: enable entropy
+:
 
 cat <<EOF > /etc/modules-load.d/virtio-rng.conf
 # load virtio RNG device to get entropy from the host
@@ -105,14 +109,18 @@ EOF
 restorecon -R /etc/modules-load.d/virtio-rng.conf
 
 
-title ensure we can get coredumps
+:
+: ensure we can get coredumps
+:
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
 echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 restorecon -R /etc/security/limits.conf /etc/sysconfig/pluto
 
 
-title bind
+:
+: bind
+:
 
 # and bind config - can be run on all hosts (to prevent network DNS
 # packets) as well as on nic
@@ -125,7 +133,9 @@ cp -av /bench/testing/baseconfigs/all/etc/bind/* /etc/bind/
 restorecon -R /etc/bind
 
 
-title ssh
+:
+: ssh
+:
 
 mkdir -p /etc/ssh
 chown -v 755 /etc/ssh
@@ -141,14 +151,18 @@ echo "MaxAuthTries 32" >> /etc/ssh/sshd_config
 restorecon -R /root/.ssh /etc/ssh
 
 
-title replace root/.bash_profile
+:
+: replace root/.bash_profile
+:
 
 for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
 
-title files mysteriously needed for systemd-networkd too
+:
+: files mysteriously needed for systemd-networkd too
+:
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -158,7 +172,9 @@ done
 restorecon -R /etc/sysconfig/
 
 
-title fixup /etc/sysctl.conf
+:
+: fixup /etc/sysctl.conf
+:
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -168,30 +184,36 @@ restorecon -R /etc/sysctl.conf
 sysctl -q -p || true # still expected to fail!
 
 
-title run unbound-keygen once
+:
+: run unbound-keygen once
+:
 
 systemctl start unbound-keygen.service
 
 
-title Clobber some annoying services
+:
+: Clobber some annoying services
+:
 
 # System Security Services Daemon (i.e., real PAM)
-run systemctl disable sssd.service
-run systemctl disable chronyd.service #NTP
-# run systemctl mask systemd-user-sessions.service # doesn't work
-run systemctl mask modprobe@drm.service
-run systemctl mask dev-mqueue.mount
-run systemctl mask dev-hugepages.mount
-run systemctl mask systemd-vconsole-setup.service
-run systemctl mask sys-kernel-tracing.mount
-run systemctl mask sys-kernel-debug.mount
-run systemctl mask systemd-repart.service
-run systemctl mask systemd-homed.service
-run systemctl mask user@0.service
-run systemctl mask user-runtime-dir@0.service
+RUN systemctl disable sssd.service
+RUN systemctl disable chronyd.service #NTP
+# RUN systemctl mask systemd-user-sessions.service # doesn't work
+RUN systemctl mask modprobe@drm.service
+RUN systemctl mask dev-mqueue.mount
+RUN systemctl mask dev-hugepages.mount
+RUN systemctl mask systemd-vconsole-setup.service
+RUN systemctl mask sys-kernel-tracing.mount
+RUN systemctl mask sys-kernel-debug.mount
+RUN systemctl mask systemd-repart.service
+RUN systemctl mask systemd-homed.service
+RUN systemctl mask user@0.service
+RUN systemctl mask user-runtime-dir@0.service
 
 
-title finally ... SElinux fixup with errors in /tmp/chcon.log
+:
+: finally ... SElinux fixup with errors in /tmp/chcon.log
+:
 
 mount /testing
 chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true
