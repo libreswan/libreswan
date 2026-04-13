@@ -157,7 +157,7 @@ static size_t RSA_jam_auth_method(struct jambuf *buf,
 }
 
 const struct pubkey_signer pubkey_signer_raw_rsa = {
-	.name = "RSA",
+	.name = "raw RSA",
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_raw_sign_hash,
