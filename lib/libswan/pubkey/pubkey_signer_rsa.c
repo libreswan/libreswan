@@ -275,7 +275,7 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 						       const struct crypt_mac *expected_hash,
 						       shunk_t signature,
 						       struct pubkey *pubkey,
-						       const struct hash_desc *hash_algo,
+						       const struct hash_desc *hash_alg,
 						       diag_t *fatal_diag,
 						       struct logger *logger)
 {
@@ -296,19 +296,20 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 	}
 
 	/*
-	 * Convert the signature into raw form (NSS doesn't do const).
+	 * Convert the signature and expected hash into SECItems (NSS
+	 * doesn't do const).
 	 */
 
-	const SECItem encrypted_signature = {
-		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, signature.ptr),
-		.len  = signature.len,
-	};
+	const SECItem signature_item =
+		same_shunk_as_secitem(signature, siBuffer); /* cast away const */
+	const SECItem expected_hash_item =
+		same_shunk_as_secitem(HUNK_AS_SHUNK(expected_hash), siBuffer); /* cast away const */
 
+#if 1
 	/*
 	 * Digital signature scheme with RSA-PSS
 	 */
-	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
+	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_alg->nss.rsa_pkcs_pss_params;
 	if (!pexpect(mech != NULL)) {
 		ldbg(logger, "NSS RSA verify: hash algorithm not supported");
 		/* internal error? */
@@ -322,21 +323,62 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 		.len = sizeof(*mech),
 	};
 
-	struct crypt_mac hash_data = *expected_hash; /* cast away const */
-	const SECItem expected_hash_item = {
-		.len = hash_data.len,
-		.data = hash_data.ptr,
-		.type = siBuffer,
-	};
-
 	if (PK11_VerifyWithMechanism(seckey_public, CKM_RSA_PKCS_PSS,
-				     &hash_mech_item, &encrypted_signature,
+				     &hash_mech_item, &signature_item,
 				     &expected_hash_item,
 				     lsw_nss_get_password_context(logger)) != SECSuccess) {
 		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
+#else
+	/*
+	 * See https://bugzilla.mozilla.org/show_bug.cgi?id=1753113
+	 *
+	 * XXX: this dies in ... when trying to recover a PKCS 1.5
+	 * signature.
+	 *
+	 * VFY_VerifyDigestDirect():
+	 *
+	 * Calls * sec_GetCombinedMech (
+	 * SEC_OID_PKCS1_RSA_PSS_SIGNATURE SEC_OID_SHA512 ) which
+	 * returns CKM_SHA512_RSA_PKCS_PSS.
+	 *
+	 * Calls vfy_VerifyDigest() ...
+	 *
+	 * vfy_VerifyDigest() calls vfy_CreateContext ( key, sig,
+	 * encAlg=SEC_OID_PKCS1_RSA_PSS_SIGNATURE
+	 * hashAlg=SEC_OID_SHA512 mech=CKM_SHA512_RSA_PKCS_PSS
+	 * prehash=1), note the code:
+	 *
+	 *   // RSA-PSS algorithm can be used with both rsaKey and rsaPssKey
+	 *   type = seckey_GetKeyType(encAlg); // rsaPssKey
+	 *   key->keyType; // rsaKey
+	 *
+	 * because TYPE isn't rsaKey it doesn't try to unpack the digest.
+	 *
+	 * vfy_VerifyDigest() then executes executes:
+	 *
+	 *   switch (key->keyType) { // i.e., rsaKey
+	 *      case rsaKey:
+	 *        // PSS isn't handled here for VerifyDigest. SSL
+	 *        // calls PK11_Verify directly
+	 *        rv = verifyPKCS1DigestInfo(cx, digest);
+	 *
+	 * which fails digest->data is empty that's unset because this
+	 * is rsaPssKey.
+	 */
+	if (VFY_VerifyDigestDirect(&expected_hash_item,
+				   seckey_public,
+				   &signature_item,
+				   /*signature algorithm*/SEC_OID_PKCS1_RSA_PSS_SIGNATURE,/*GUESS*/
+				   /*hash algorithm*/hash_alg->nss.oid_tag,
+				   lsw_nss_get_password_context(logger)) != SECSuccess) {
+		ldbg_nss_error(logger, "NSS VFY_VerifyDigestDirect() failed");
+		*fatal_diag = NULL;
+		return false;
+	}
+#endif
 
 	*fatal_diag = NULL;
 	return true;
