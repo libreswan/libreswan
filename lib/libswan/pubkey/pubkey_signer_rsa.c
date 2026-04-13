@@ -66,7 +66,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 	return sig;
 }
 
-static bool RSA_authenticate_hash_signature_raw_rsa(const struct pubkey_signer *signer UNUSED,
+static bool RSA_authenticate_hash_signature_raw_rsa(const struct pubkey_signer *signer,
 						    const struct crypt_mac *expected_hash,
 						    shunk_t signature,
 						    struct pubkey *pubkey,
@@ -83,9 +83,11 @@ static bool RSA_authenticate_hash_signature_raw_rsa(const struct pubkey_signer *
 		return false;
 	}
 
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, expected_hash);
+ 	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS: %s: verifying that signature (once decrypted):", signer->name);
+		LDBG_hunk(logger, &signature);
+		LDBG_log(logger, "matches hash:");
+ 		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -201,7 +203,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 	return signature;
 }
 
-static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_signer *signer UNUSED,
+static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_signer *signer,
 							  const struct crypt_mac *expected_hash,
 							  shunk_t signature,
 							  struct pubkey *pubkey,
@@ -218,9 +220,11 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
 		return false;
 	}
 
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, expected_hash);
+ 	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS: %s: verifying that signature (once decrypted):", signer->name);
+		LDBG_hunk(logger, &signature);
+		LDBG_log(logger, "matches hash:");
+ 		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -339,7 +343,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 	return sig;
 }
 
-static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signer *signer UNUSED,
+static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signer *signer,
 						       const struct crypt_mac *expected_hash,
 						       shunk_t signature,
 						       struct pubkey *pubkey,
@@ -356,9 +360,11 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 		return false;
 	}
 
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, expected_hash);
+ 	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS: %s: verifying that signature (once decrypted):", signer->name);
+		LDBG_hunk(logger, &signature);
+		LDBG_log(logger, "matches hash:");
+ 		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
