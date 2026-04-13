@@ -10,11 +10,16 @@ export SOURCEDIR=@@KVM_SOURCEDIR@@
 export TESTINGDIR=@@KVM_TESTINGDIR@@
 export PLATFORM=@@DOMAIN_PLATFORM@@
 
-RUN()
+TITLE()
 {
     :
-    : "$@"
+    : $*
     :
+}
+
+RUN()
+{
+    TITLE "$@"
     "$@"
 }
 
@@ -46,10 +51,7 @@ mv /etc/fstab.tmp /etc/fstab
 
 systemctl disable NetworkManager
 
-
-:
-: /etc/hosts
-:
+TITLE /etc/hosts
 
 # add easy names so we can jump from vm to vm and map from IP address
 # to hostname
@@ -62,9 +64,7 @@ cat <<EOF >> /etc/hosts
 EOF
 
 
-:
-: add swan to paths
-:
+TITLE add swan to paths
 
 cat <<EOF > /etc/profile.d/swanpath.sh
 # add swan test binaries to path
@@ -84,9 +84,7 @@ EOF
 restorecon -R /etc/profile.d/swanpath.sh
 
 
-:
-: /usr/bin/swan-...
-:
+TITLE /usr/bin/swan-...
 
 ln -vs /testing/guestbin/swan-prep /usr/bin/swan-prep
 ln -vs /testing/guestbin/swan-build /usr/bin/swan-build
@@ -96,9 +94,7 @@ ln -vs /testing/guestbin/swan-run /usr/bin/swan-run
 restorecon -R /usr/bin/swan-*
 
 
-:
-: enable entropy
-:
+TITLE enable entropy
 
 cat <<EOF > /etc/modules-load.d/virtio-rng.conf
 # load virtio RNG device to get entropy from the host
@@ -108,18 +104,14 @@ EOF
 restorecon -R /etc/modules-load.d/virtio-rng.conf
 
 
-:
-: ensure we can get coredumps
-:
+TITLE ensure we can get coredumps
 
 echo " * soft core unlimited" >> /etc/security/limits.conf
 echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 restorecon -R /etc/security/limits.conf /etc/sysconfig/pluto
 
 
-:
-: bind
-:
+TITLE bind
 
 # and bind config - can be run on all hosts (to prevent network DNS
 # packets) as well as on nic
@@ -132,9 +124,7 @@ cp -av /bench/testing/baseconfigs/all/etc/bind/* /etc/bind/
 restorecon -R /etc/bind
 
 
-:
-: ssh
-:
+TITLE ssh
 
 mkdir -p /etc/ssh
 chown -v 755 /etc/ssh
@@ -150,18 +140,14 @@ echo "MaxAuthTries 32" >> /etc/ssh/sshd_config
 restorecon -R /root/.ssh /etc/ssh
 
 
-:
-: replace root/.bash_profile
-:
+TITLE replace root/.bash_profile
 
 for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
 
-:
-: files mysteriously needed for systemd-networkd too
-:
+TITLE files mysteriously needed for systemd-networkd too
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -171,9 +157,7 @@ done
 restorecon -R /etc/sysconfig/
 
 
-:
-: fixup /etc/sysctl.conf
-:
+TITLE fixup /etc/sysctl.conf
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
@@ -183,17 +167,13 @@ restorecon -R /etc/sysctl.conf
 sysctl -q -p || true # still expected to fail!
 
 
-:
-: run unbound-keygen once
-:
+TITLE run unbound-keygen once
 
 systemctl start unbound-keygen.service
 systemctl disable unbound-anchor.timer
 
 
-:
-: Clobber some annoying services
-:
+TITLE Clobber some annoying services
 
 # System Security Services Daemon (i.e., real PAM)
 RUN systemctl disable sssd.service
@@ -211,9 +191,7 @@ RUN systemctl mask user@0.service
 RUN systemctl mask user-runtime-dir@0.service
 
 
-:
-: install any custom RPMs
-:
+TITLE install any custom RPMs
 
 for rpmdir in /bench/linux-rpms /pool/${PREFIX}linux-rpms ; do
     # directory is not called linux-transmogrify.* as a cleanup would
@@ -241,10 +219,7 @@ cp -vf ${ramfs} /pool/${PREFIX}linux.initramfs
 chmod go+r  /pool/${PREFIX}linux.vmlinuz
 chmod go+r /pool/${PREFIX}linux.initramfs
 
-
-:
-: finally ... SElinux fixup with errors in /tmp/chcon.log
-:
+TITLE finally ... SElinux fixup with errors in /tmp/chcon.log
 
 mount /testing
 chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true
