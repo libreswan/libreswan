@@ -455,7 +455,7 @@ OBJS += ipsecconf/parser.tab.o
 $(OBJS): $(builddir)/ipsecconf/parser.tab.h
 ipsecconf/parser.tab.o: $(builddir)/ipsecconf/parser.tab.c
 
-$(builddir)/ipsecconf/parser.tab.c: ipsecconf/parser.y
+$(builddir)/ipsecconf/parser.tab.c: ipsecconf/parser.y | $(builddir)/ipsecconf/
 	$(BISON) ${BISONOSFLAGS} -v --defines=$(@D)/parser.tab.h -o $(@D)/parser.tab.c.tmp $<
 	sed -i -e '/^#line/ s;".*parser.tab.h";"$(@D)/parser.tab.h";' $(@D)/parser.tab.h
 	sed -i -e '/^#line/ s;".*parser.tab.c.tmp";"$(@D)/parser.tab.c";' $(@D)/parser.tab.c.tmp
