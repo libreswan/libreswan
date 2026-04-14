@@ -212,6 +212,13 @@ RUN systemctl mask user-runtime-dir@0.service
 
 
 :
+: save the linux kernel for later direct booting
+:
+
+/bench/testing/kvm/bin/save-fedora-kernel.sh
+
+
+:
 : finally ... SElinux fixup with errors in /tmp/chcon.log
 :
 
