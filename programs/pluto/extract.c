@@ -1663,6 +1663,18 @@ static diag_t extract_host_end(enum end end,
 			     YN_NO, &d, verbose);
 	host_config->xauth.username =
 		extract_string(kv(wm, end, KWS_USERNAME), verbose);
+
+	if (ike_version == IKEv2) {
+		if (src->we_xauthserver != NULL) {
+			vwarning("IKEv2 connection ignores \"%sxauthserver=%s\"", 
+				leftright, src->we_xauthserver);
+		}
+		if (src->we_xauthclient != NULL) {
+			vwarning("IKEv2 connection ignores \"%sxauthclient=%s\"", 
+				leftright, src->we_xauthclient);
+		}
+	}
+
 	enum eap_options autheap =
 		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
 				    /*value_when_unset*/IKE_EAP_NONE,
@@ -4300,6 +4312,17 @@ diag_t extract_connection(const struct whack_message *wm,
 					    /*value_when_unset*/XAUTHFAIL_HARD,
 					    &xauthfail_names,
 					    &d, verbose);
+
+		if (ike_version == IKEv2) {
+			if (wm->wm_xauthby != NULL) {
+				vwarning("IKEv2 connection ignores xauthby=%s",
+					 wm->wm_xauthby);
+			}
+			if (wm->wm_xauthfail != NULL) {
+				vwarning("IKEv2 connection ignores xauthfail=%s",
+					 wm->wm_xauthfail);
+			}
+		}
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");
