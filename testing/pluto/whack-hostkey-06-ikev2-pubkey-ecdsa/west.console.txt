@@ -47,10 +47,10 @@ conn hostkey
 	# left keyid: <<KEYID#2>>
 	leftpubkey=<<PEM-PUBKEY#2>>
 west #
- ipsec auto --add hostkey
+ ipsec add hostkey
 "hostkey": added oriented IKEv2 connection
 west #
- ipsec auto --up hostkey
+ ipsec up hostkey # sanitize-retransmits
 "hostkey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "hostkey" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "hostkey" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

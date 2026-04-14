@@ -6,4 +6,4 @@ cat OUTPUT/east.ckaid >>/etc/ipsec.conf
 cat OUTPUT/west.pub >>/etc/ipsec.conf
 cat /etc/ipsec.conf
 
-ipsec auto --add hostkey
+ipsec add hostkey

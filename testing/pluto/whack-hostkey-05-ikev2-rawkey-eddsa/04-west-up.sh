@@ -1,1 +1,1 @@
-ipsec auto --up hostkey
+ipsec up hostkey # sanitize-retransmits
