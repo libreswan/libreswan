@@ -43,7 +43,6 @@ mv /etc/fstab.tmp /etc/fstab
 :
 
 . /bench/testing/kvm/systemd/transmogrify-networkd.sh
-. /bench/testing/kvm/systemd/transmogrify-hostnamer.sh
 
 systemctl disable NetworkManager
 

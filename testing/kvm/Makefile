@@ -1532,7 +1532,7 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 				$(test_prefix), \
 				$(platform), \
 				$(host), \
-				$(if $(filter linux, $(platform)), linux, bsd))))))
+				$(if $(filter linux fedora, $(platform)), linux, bsd))))))
 
 #
 # Get rid of (almost) everything
