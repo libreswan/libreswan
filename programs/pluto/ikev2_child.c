@@ -598,7 +598,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 child_proposals, verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		name_buf nb;
-		vlog("%s failed, responder SA processing returned %s",
+		vdbg("%s failed, responder SA processing returned %s",
 		     what, str_enum_short(&v2_notification_names, n, &nb));
 		return n;
 	}
