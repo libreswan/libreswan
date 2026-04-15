@@ -1,1 +1,1 @@
-grep '^[^|].*NO_PROPOSAL_CHOSEN' /tmp/pluto.log
+grep '^[^|].*no local proposal' /tmp/pluto.log
