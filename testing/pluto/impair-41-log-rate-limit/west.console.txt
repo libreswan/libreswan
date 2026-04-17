@@ -38,3 +38,13 @@ west #
 west #
  printf '\0\0\0\0asd' | nc -4 -u 192.1.2.23 500
 west #
+ # Grep east's log for all rate-limited UDP events and the limiter sentinel.
+west #
+ # Columns: plain RC_LOG lines start with 'packet from',
+west #
+ #          debug-stream (over-limit) lines start with '| ',
+west #
+ #          impair lines start with 'impair: '
+west #
+ grep -e '^packet from' -e '^| dropping packet with mangled IKE header' -e '^impair: ' /tmp/pluto.log
+west #
