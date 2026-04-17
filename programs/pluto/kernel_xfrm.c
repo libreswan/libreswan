@@ -123,8 +123,6 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      const char *story,
 			      int *recv_errno,
 			      const struct logger *logger);
-static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger);
-static err_t xfrm_directional_ipsec_sa_is_enabled(struct logger *logger);
 
 static struct {
 	bool icmpv6;

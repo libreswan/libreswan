@@ -640,7 +640,7 @@ static void register_satype(const struct ip_protocol *protocol, struct verbose v
 	}
 }
 
-static void kernel_pfkeyv2_init(struct logger *logger)
+static void pfkeyv2_init(struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("initializing PFKEY V2");
@@ -675,7 +675,7 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 #endif
 }
 
-static void kernel_pfkeyv2_flush(struct logger *logger)
+static void pfkeyv2_flush(struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("flushing");
@@ -690,12 +690,12 @@ static void kernel_pfkeyv2_flush(struct logger *logger)
 #endif
 }
 
-static void kernel_pfkeyv2_poke_holes(struct logger *logger)
+static void pfkeyv2_poke_holes(struct logger *logger)
 {
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
 
-static void kernel_pfkeyv2_plug_holes(struct logger *logger)
+static void pfkeyv2_plug_holes(struct logger *logger)
 {
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
@@ -1331,13 +1331,13 @@ static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b
 }
 #endif
 
-static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
-				      enum direction dir,
-				      const ip_selector *src_client,
-				      const ip_selector *dst_client,
-				      const struct kernel_policy *policy,
-				      deltatime_t use_lifetime UNUSED,
-				      struct logger *logger, const char *func)
+static bool pfkeyv2_policy_add(enum kernel_policy_op op,
+			       enum direction dir,
+			       const ip_selector *src_client,
+			       const ip_selector *dst_client,
+			       const struct kernel_policy *policy,
+			       deltatime_t use_lifetime UNUSED,
+			       struct logger *logger, const char *func)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() ...", func);
@@ -1538,15 +1538,15 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	return msg_sendrecv(&req, &resp, verbose);
 }
 
-static bool kernel_pfkeyv2_policy_del(enum direction direction,
-				      enum expect_kernel_policy expect_kernel_policy,
-				      const ip_selector *src_child,
-				      const ip_selector *dst_child,
-				      const struct sa_marks *sa_marks UNUSED,
-				      const struct ipsec_interface *ipsec_interface,
-				      enum kernel_policy_id policy_id,
-				      const shunk_t sec_label UNUSED,
-				      struct logger *logger, const char *func)
+static bool pfkeyv2_policy_del(enum direction direction,
+			       enum expect_kernel_policy expect_kernel_policy,
+			       const ip_selector *src_child,
+			       const ip_selector *dst_child,
+			       const struct sa_marks *sa_marks UNUSED,
+			       const struct ipsec_interface *ipsec_interface,
+			       enum kernel_policy_id policy_id,
+			       const shunk_t sec_label UNUSED,
+			       struct logger *logger, const char *func)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() policy_id=%u ...", func, policy_id);
@@ -1793,24 +1793,24 @@ static void pfkeyv2_process_msg(struct verbose verbose, int fd UNUSED, void *arg
 	process_pending_queue(verbose);
 }
 
-static void kernel_pfkeyv2_shutdown(struct logger *logger)
+static void pfkeyv2_shutdown(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 }
 
-static err_t kernel_directional_ipsec_is_enabled(struct logger *logger)
-{
-	ldbg(logger, "%s() called; nothing to do", __func__);
-	return "not supported";
-}
-
-static err_t kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+static err_t pfkeyv2_directional_ipsec_sa_is_enabled(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 	return "not supported";
 }
 
-static err_t kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
+static err_t pfkeyv2_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+{
+	ldbg(logger, "%s() called; nothing to do", __func__);
+	return "not supported";
+}
+
+static err_t pfkeyv2_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 	return "not supported";
@@ -1842,20 +1842,20 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.max_replay_window = UINT8_MAX * 8, /* packets */
 #endif
 
-	.init = kernel_pfkeyv2_init,
-	.flush = kernel_pfkeyv2_flush,
-	.poke_holes = kernel_pfkeyv2_poke_holes,
-	.plug_holes = kernel_pfkeyv2_plug_holes,
-	.shutdown = kernel_pfkeyv2_shutdown,
+	.init = pfkeyv2_init,
+	.flush = pfkeyv2_flush,
+	.poke_holes = pfkeyv2_poke_holes,
+	.plug_holes = pfkeyv2_plug_holes,
+	.shutdown = pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
 	.del_ipsec_spi = pfkeyv2_del_ipsec_spi,
 	.add_sa = pfkeyv2_add_sa,
 	.get_kernel_state = pfkeyv2_get_kernel_state,
-	.policy_del = kernel_pfkeyv2_policy_del,
-	.policy_add = kernel_pfkeyv2_policy_add,
+	.policy_del = pfkeyv2_policy_del,
+	.policy_add = pfkeyv2_policy_add,
 	.ipsec_interface = &kernel_ipsec_interface_ifconfig,
-	.directional_ipsec_sa_is_enabled = kernel_directional_ipsec_is_enabled,
-	.iptfs_ipsec_sa_is_enabled = kernel_iptfs_ipsec_sa_is_enabled,
-	.migrate_ipsec_sa_is_enabled = kernel_migrate_ipsec_sa_is_enabled,
+	.directional_ipsec_sa_is_enabled = pfkeyv2_directional_ipsec_sa_is_enabled,
+	.iptfs_ipsec_sa_is_enabled = pfkeyv2_iptfs_ipsec_sa_is_enabled,
+	.migrate_ipsec_sa_is_enabled = pfkeyv2_migrate_ipsec_sa_is_enabled,
 };
