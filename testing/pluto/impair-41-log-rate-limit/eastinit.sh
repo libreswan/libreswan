@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add common
-ipsec whack --impair log_rate_limit:2
+ipsec whack --impair log_rate_limit:6
 echo "initdone"
