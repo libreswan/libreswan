@@ -18,23 +18,22 @@ from glob import glob
 from os import path
 
 from fab.datautil import *
-
 from fab import argutil
 from fab import hosts
 
-# In Command GUEST can be None because it is a blank line or comment.
+# In Command GUEST can be None because LINE (the command) is either a
+# blank line or a comment.
 
 class Command:
-    def __init__(self, guest, line, script):
+    def __init__(self, guest, line, script, line_nr):
         self.guest = guest
         self.line = line
         self.script = script
+        self.line_nr = line_nr
     def __str__(self):
         if self.guest:
-            if self.script:
-                return self.script+" "+self.guest.name + "# " + self.line
-            return self.guest.name + "# " + self.line
-        return self.line
+            return f"{self.script}:{self.line_nr}: {self.guest.name}# {self.line}"
+        return f"{self.script}:{self.line_nr}: {self.line}"
 
 class Commands(list):
     def __str__(self):
@@ -52,11 +51,13 @@ def _scripts(directory):
     return scripts
 
 def _add_script_commands(script, commands, directory, guest):
+    line_nr = 0
     for line in open(os.path.join(directory, script), "r"):
+        line_nr += 1
         # toss blank lines and trailing '\n'
         line = line.strip()
         if line:
-            commands.append(Command(guest, line, script))
+            commands.append(Command(guest, line, script, line_nr))
 
 def _add_script(script, commands, scripts, directory,
                 script_guests, test_guests):
@@ -66,12 +67,15 @@ def _add_script(script, commands, scripts, directory,
             test_guests.add(guest)
             _add_script_commands(script, commands, directory, guest)
 
+
+# *.sh
+
 def _guest_scripts(directory, logger):
     """Return a list of {guestname:, path:} to run"""
 
     scripts = _scripts(directory)
-    logger.debug(f"scripts: {scripts}");
-    test_guests = hosts.Set()
+    logger.debug(f"*.sh scripts: {scripts}");
+    guests = Set()
 
     # Compatibility hack:
     #
@@ -83,10 +87,11 @@ def _guest_scripts(directory, logger):
     init_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
         hostname = guest.host.name
-        _add_script(hostname+"init.sh", init_commands,
+        _add_script(f"{hostname}init.sh",
+                    init_commands,
                     scripts, directory,
-                    [guest], test_guests)
-    logger.debug(f"init commands {test_guests} {scripts}:\n{init_commands}")
+                    [guest], guests)
+    logger.debug(f"*init.sh: guests: {guests} scripts: {scripts}; {init_commands}")
 
     # Compatibility hack:
     #
@@ -99,10 +104,10 @@ def _guest_scripts(directory, logger):
     run_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
         hostname = guest.host.name
-        _add_script(hostname+"run.sh", run_commands,
+        _add_script(f"{hostname}run.sh", run_commands,
                     scripts, directory,
-                    [guest], test_guests)
-    logger.debug(f"run commands {test_guests} {scripts}:\n{run_commands}")
+                    [guest], guests)
+    logger.debug(f"*run.sh: guests: {guests} scripts: {scripts}; {run_commands}")
 
     # Look for scripts matching \b<hostname>\b.
     #
@@ -115,8 +120,8 @@ def _guest_scripts(directory, logger):
         _add_script(script, ordered_commands,
                     scripts, directory,
                     hosts.guests_by_filename(script),
-                    test_guests)
-    logger.debug(f"ordered commands {test_guests} {scripts}:\n{ordered_commands}")
+                    guests)
+    logger.debug(f"*HOSTNAME*.sh commands guests: {guests} scripts: {scripts}; {ordered_commands}")
 
     # Part compatibility hack.
     #
@@ -126,90 +131,103 @@ def _guest_scripts(directory, logger):
     final_commands = Commands()
     _add_script("final.sh", final_commands,
                 scripts, directory,
-                sorted(test_guests), test_guests)
-    logger.debug(f"final commands {test_guests} {scripts}:\n{final_commands}")
+                sorted(guests), guests)
+    logger.debug(f"final.sh: guests: {guests} scripts: {scripts}; {final_commands}")
 
-    all_commands = Commands()
-    all_commands.extend(init_commands)
-    all_commands.extend(run_commands)
-    all_commands.extend(ordered_commands)
-    all_commands.extend(final_commands)
+    commands = Commands()
+    commands.extend(init_commands)
+    commands.extend(run_commands)
+    commands.extend(ordered_commands)
+    commands.extend(final_commands)
+    guests = Sorted(guests)
 
-    logger.debug(f"all commands {test_guests} {scripts}:\n{all_commands}")
-    return all_commands
+    logger.debug(f"commands: guests: {guests} scripts: {scripts}; {commands}")
+    return (guests, commands)
 
-# for line in open("r").line includes; when <guest> is blank, a
-# comment is assumed.
+# Return the tupple (GUESTS, COMMANDS)
 
 _HOSTNAME_COMMAND_REGEX = re.compile(r'^(?P<hostname>[a-z]*)# ?(?P<command>.*)[\n]$')
 
 def commands(directory, logger):
 
-    # Match experimental all-command files:
+    # Match experimental all.*GUESTNAME*.sh file.
     #
-    #   all.*DOMAIN*.sh
+    # GUESTNAME == <PLATFORM><HOSTNAME> identifies the domains to
+    # boot.  Within the file are 'HOST# ...' lines identifying the
+    # HOST to run the command on.
     #
-    # which contain prompts matching the domain's host names.
-    #
-    # Need to match 'all.*.sh' before '*.sh'!
+    # Match this before '*.sh' so that '*.sh" isn't confused by
+    # guestnames.
 
     scripts = glob(path.join(directory, "all.*.sh"))
     if scripts:
 
-        # figure out the host->domain map
-        domains = hosts.Set()
-        for script in scripts:
-            guests = hosts.guests_by_filename(script);
-            domains.update(guests)
-            logger.debug(f"script {script} guests: {guests}")
-        domains = sorted(domains)
-        DOMAIN_BY_HOSTNAME = hosts.Dict()
-        for domain in domains:
-            DOMAIN_BY_HOSTNAME[domain.host.name] = domain
-        logger.debug(f"DOMAIN_BY_HOSTNAME: {DOMAIN_BY_HOSTNAME}")
+        if len(scripts) > 1:
+            logger.error(f"multiple script files: {' '.join(scripts)}");
+            return (None, None)
+
+        script = scripts[0];
+        if not path.isfile(script):
+            logger.error(f"script {script} is not a file?!?")
+            return (None, None)
+
+        # figure out the host->guest map
+        guests = hosts.guests_by_filename(script)
+        logger.debug(f"script: {script}; guests: {guests};")
+
+        GUEST_BY_HOSTNAME = Dict()
+        for guest in guests:
+            GUEST_BY_HOSTNAME[guest.host.name] = guest
+        logger.debug(f"GUEST_BY_HOSTNAME: {GUEST_BY_HOSTNAME}")
 
         commands = Commands()
-        for script in scripts:
-            if not path.isfile(script):
-                continue
-            logger.debug(f"script: {script}")
-            for line in open(script, "r"):
-                logger.debug(f"{line[0:-1]}")
-                # regex matches both:
-                #   <hostname># command
-                # and
-                #   # command
-                hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
-                if hostname_command:
-                    hostname = hostname_command.group("hostname")
-                    command = hostname_command.group("command")
-                    if hostname == "final":
-                        for host in sorted(DOMAIN_BY_HOSTNAME.keys()):
-                            domain = DOMAIN_BY_HOSTNAME[host]
-                            commands.append(Command(domain, command, script))
-                    elif hostname:
-                        domain = DOMAIN_BY_HOSTNAME[hostname]
-                        commands.append(Command(domain, command, script))
-                    elif line:
-                        commands.append(Command(None, "# "+command, script))
-                    else:
-                        commands.append(Command(None, "#", script))
-        return commands
+        line_nr = 0
+        for line in open(script, "r"):
+            line_nr += 1
+            logger.debug(f"{line[0:-1]}")
+            # regex matches both:
+            #   <hostname># command
+            # and
+            #   # command
+            hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
+            if hostname_command:
+                hostname = hostname_command.group("hostname")
+                command = hostname_command.group("command")
+                if hostname == "final":
+                    for guest in sorted(guests):
+                        commands.append(Command(guest, command, script, line_nr))
+                elif hostname:
+                    guest = GUEST_BY_HOSTNAME[hostname]
+                    commands.append(Command(guest, command, script, line_nr))
+                elif line:
+                    commands.append(Command(None, f"# {command}", script, line_nr))
+                else:
+                    commands.append(Command(None, "#", script, line_nr))
+
+        guests = Sorted(guests)
+        logger.debug(f"commands {guests}; {scripts};{commands}")
+        return (guests, commands)
 
     # *.sh files
-    commands = _guest_scripts(directory, logger)
-    if commands:
-        return commands
+    #
+    # Need to match '*.sh' AFTER '*.sh'.
+    guests, commands = _guest_scripts(directory, logger)
+    logger.debug(f"{guests} {commands}")
+    if guests:
+        return (guests, commands)
 
     # Match experimental all.console.txt which contains the names of
-    # the domains embeded as prompts as in "DOMAIN#"
+    # the guests embeded as prompts as in "GUEST#"
 
     script = "all.console.txt"
-    all = path.join(directory, script)
-    if os.path.exists(all):
+    all_console_txt = path.join(directory, script)
+    guests = Set()
+    if os.path.exists(all_console_txt):
         commands = Commands()
         # read includes '\n';
-        for line in open(all, "r"):
+        line_nr = 0
+        for line in open(all_console_txt, "r"):
+            line_nr += 1
             # regex matches both:
             #   <guestname># command
             # and
@@ -219,12 +237,17 @@ def commands(directory, logger):
                 guestname = guestname_command.group("hostname") # see regex
                 command = guestname_command.group("command")
                 if guestname:
-                    commands.append(Command(hosts.guest_by_guestname(guestname), command, script))
+                    guest = hosts.guest_by_guestname(guestname)
+                    commands.append(Command(guest, command, script, line_nr))
+                    guests.add(guest)
                 elif line:
-                    commands.append(Command(None, "# "+command, script))
+                    commands.append(Command(None, f"# {command}", script, line_nr))
                 else:
-                    commands.append(Command(None, "#", script))
-        return commands
+                    commands.append(Command(None, "#", script, line_nr))
+
+        guests = Sorted(guests)
+        logger.debug(f"commands {guests} {scripts}:\n{commands}")
+        return (guests, commands)
 
     logger.warning(f"no scripts in {directory}")
-    return Commands()
+    return (None, None)

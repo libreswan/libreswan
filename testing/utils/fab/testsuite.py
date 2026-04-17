@@ -75,21 +75,12 @@ class Test:
             self.saved_output_directory = None
 
         # Get an ordered list of {guest_name:,command:} to run.
-        self.commands = scripts.commands(self.directory, self.logger)
-
-        # Just assume any non-empty guests mentioned in scripts needs
-        # to run.
-        guests = hosts.Set()
-        for command in self.commands:
-            if command.guest:
-                guests.add(command.guest)
-        self.guests = sorted(guests)
+        self.guests, self.commands = scripts.commands(self.directory, self.logger)
 
         # remember all the platforms that are required
         platforms = hosts.Set()
-        for guest in guests:
-            if guest.platform:
-                platforms.add(guest.platform)
+        for guest in self.guests:
+            platforms.add(guest.platform)
         self.platforms = sorted(platforms)
 
     def __str__(self):

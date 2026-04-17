@@ -21,3 +21,8 @@ class Dict(dict):
 class List(list):
     def __str__(self):
         return " ".join(str(s) for s in self)
+
+def Sorted(iterable):
+    l = List(iterable)
+    l.sort()
+    return l
