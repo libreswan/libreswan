@@ -14,6 +14,6 @@ east #
  echo "initdone"
 initdone
 east #
- grep '^[^|].*no local proposal' /tmp/pluto.log
+ grep -Ee '^[^|].*(no local proposal|NO_PROPOSAL_CHOSEN)' /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #2: no local proposal matches remote proposals 1:ESP:ENCR=AES_CBC_128;ENCR=AES_CBC_256;INTEG=HMAC_SHA1_96;ESN=YES;ESN=NO
 east #

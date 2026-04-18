@@ -29,7 +29,7 @@ west #
  echo done
 done
 west #
- grep '^[^|].*NO_PROPOSAL_CHOSEN' /tmp/pluto.log
+ grep -Ee '^[^|].*(no local proposal|NO_PROPOSAL_CHOSEN)' /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 west #
