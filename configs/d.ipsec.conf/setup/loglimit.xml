@@ -1,0 +1,25 @@
+<varlistentry id='setup.loglimit'>
+  <term>
+    <option>loglimit=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether pluto's internal log rate limiting is enabled.  When
+      enabled, pluto limits the number of repetitive log messages
+      (such as malformed packets or bad certificates) to prevent
+      excessive logging under heavy load.  Setting this to
+      <option>&no;</option> disables all rate limiters, allowing every
+      log message to be emitted.  This is useful for debugging or
+      when full log visibility is required.
+    </para>
+    <para>
+      The rate limit counters are reset once every hour.
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+    <para>
+      This option was added in Libreswan 5.4.
+    </para>
+  </listitem>
+</varlistentry>
