@@ -15,12 +15,14 @@
  */
 
 #include <pthread.h>    /* Must be the first include file; XXX: why? */
+#include <limits.h>     /* for UINT_MAX */
 
 #include "log_limiter.h"
 #include "log.h"
 
 #include "defs.h"
 #include "demux.h"
+#include "ipsecconf/setup.h"
 
 static global_timer_cb reset_log_limiter;	/* type check */
 
@@ -31,6 +33,7 @@ struct limiter {
 	const unsigned limit;
 	volatile unsigned count;
 	const char *what;
+	bool unlimited;
 };
 
 struct limiter log_limiters[LOG_LIMITER_ROOF] = {
@@ -58,6 +61,9 @@ struct limiter log_limiters[LOG_LIMITER_ROOF] = {
 
 static unsigned log_limit(const struct limiter *limiter)
 {
+	if (limiter->unlimited) {
+		return UINT_MAX;
+	}
 	if (impair.log_rate_limit.enabled) {
 		return impair.log_rate_limit.value;
 	}
@@ -155,4 +161,14 @@ void init_log_limiter(struct logger *logger)
 			      reset_log_limiter,
 			      RESET_LOG_LIMITER_FREQUENCY,
 			      logger);
+
+	// loglimit=no disables all rate limiters 
+	if (!config_setup_yn(KYN_LOGLIMIT)) {
+		FOR_EACH_ELEMENT(limiter, log_limiters) {
+			limiter->unlimited = true;
+		}
+		llog(RC_LOG, logger, "log rate limiting [disabled]");
+	} else {
+		llog(RC_LOG, logger, "log rate limiting [enabled]");
+	}
 }

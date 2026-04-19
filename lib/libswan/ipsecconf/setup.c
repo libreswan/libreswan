@@ -127,6 +127,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
 #endif
 
+	[KYN_LOGLIMIT] = "yes",
 	[KYN_LOGIP] = "yes",
 	[KYN_LOGTIME] = "yes",
 	[KYN_LOGAPPEND] = "yes",
@@ -456,6 +457,7 @@ static const struct keyword_def config_setup_keyword[] = {
   K("plutodebug", kt_string, KSF_PLUTODEBUG),
 
   K("logfile",  kt_string,  KSF_LOGFILE),
+  K("loglimit",  kt_sparse_name,  KYN_LOGLIMIT, .sparse_names = &yn_option_names),
   K("logtime",  kt_sparse_name,  KYN_LOGTIME, .sparse_names = &yn_option_names),
   K("logappend",  kt_sparse_name,  KYN_LOGAPPEND, .sparse_names = &yn_option_names),
   K("logip",  kt_sparse_name,  KYN_LOGIP, .sparse_names = &yn_option_names),

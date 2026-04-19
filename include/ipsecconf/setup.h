@@ -65,6 +65,7 @@ enum config_setup_keyword {
 	KYN_LOGTIME,
 	KYN_LOGAPPEND,
 	KYN_LOGIP,
+	KYN_LOGLIMIT,
 	KYN_LOGSTDERR, /*no matching option*/
 	KYN_AUDIT_LOG,
 	KBF_IKE_SOCKET_BUFSIZE,
