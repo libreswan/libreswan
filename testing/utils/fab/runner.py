@@ -74,16 +74,29 @@ class Task:
 
 class TestDomain:
 
-    def __init__(self, domain, test, logger):
-        self.test = test
-        # Get the domain
-        self.logger = logger
-        self.domain = domain
+    def __init__(self, test, domain_prefix, guest, logger):
+
         self.verbose_txt = None
         self.console = None
-        self.host = domain.guest.host # east, west ...
-        self.guest = domain.guest     # netbsde, ...
-        self.name = domain.name
+        self.test = test
+        # netbsdeast
+        self.guest = guest
+        # p.east
+        self.name = (domain_prefix.is_dir() and guest.host.name
+                     or f"{domain_prefix.name}{guest.host.name}")
+        # /path/to/p.east
+        self.xml = (domain_prefix.is_dir() and str(domain_prefix) + "/" + guest.name
+                    or str(domain_prefix) + guest.name)
+
+        domain = virsh.Domain(logger=logger,
+                              name=self.name,
+                              guest=self.guest,
+                              xml=self.xml)
+        domain.nest(logger, test.name + " ")
+
+        # Get the domain
+        self.logger = domain.logger
+        self.domain = domain
 
     def __str__(self):
         return self.name
@@ -133,7 +146,7 @@ def _run_command(args, domain, command, all_verbose_txt, timeout):
         # The log prefix will contain the DOMAIN name (which includes
         # the GUEST name).
         console = domain.console
-        domain.logger.info(f"{domain.host.name}# {command}")
+        domain.logger.info(f"{domain.guest.host.name}# {command}")
         console.sendline(command)
 
         # Catch pexpect.TIMEOUT and pexpect.EOF.  They are turned into
@@ -189,21 +202,14 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
 def executor_qsize_hack(executor):
     return executor._work_queue.qsize()
 
-def _test_domains(logger, test, domains):
+def _test_domains(logger, test, domain_prefix):
 
     test_domains = Dict()
-    unused_domains = Set()
-    for domain in domains:
-        domain.nest(logger, test.name + " ")
-        # new test domain
-        if domain.guest in test.guests:
-            test_domain = TestDomain(domain, test, domain.logger)
-            test_domains[domain.guest.name] = test_domain
-        else:
-            unused_domains.add(domain)
 
-    logger.info("unused domains: %s",
-                " ".join(str(e) for e in unused_domains))
+    for guest in test.guests:
+        test_domain = TestDomain(test, domain_prefix, guest, logger)
+        test_domains[guest.name] = test_domain
+
     logger.info("test domains: %s",
                 " ".join(str(e) for e in test_domains.values()))
 
@@ -269,12 +275,12 @@ def _skip_test(task, args, result_stats, logger):
 def _write_guest_prompt(domain, test):
     f = domain.verbose_txt
     f.write("[root@");
-    f.write(domain.host.name)
+    f.write(domain.guest.host.name)
     f.write(" ")
     f.write(test.name)
     f.write("]# ")
 
-def _process_test(domains, args, result_stats, task, logger):
+def _process_test(domain_prefix, args, result_stats, task, logger):
 
     test = task.test
     old_result = None
@@ -293,7 +299,7 @@ def _process_test(domains, args, result_stats, task, logger):
         if _skip_test(task, args, result_stats, logger):
             return
 
-        test_domains = _test_domains(logger, test, domains)
+        test_domains = _test_domains(logger, test, domain_prefix)
 
         # Running the test ...
         #
@@ -542,30 +548,21 @@ def _process_test_queue(domain_prefix, name_prefix,
     # New (per-thread/process) logger!
     logger_name = (name_prefix and name_prefix or "kvmrunner")
     logger = logutil.getLogger(logger_name)
+
     logger.info("preparing test domains")
 
     for host in hosts.hosts():
         domain = virsh.Domain(logger, f"{name_prefix}{host.name}")
         domain.destroy()
 
-    domains = List()
-    for guest in hosts.guests():
-        if domain_prefix.is_dir():
-            xml=str(domain_prefix) + "/" + guest.name
-        else:
-            xml=str(domain_prefix) + guest.name
-        domain = virsh.Domain(logger=logger,
-                              name=name_prefix+guest.host.name,
-                              guest=guest, xml=xml)
-        domains.append(domain)
-
     logger.info("processing test queue")
+
     try:
         while True:
             task = test_queue.get(block=False)
             task_logger_name = task.test.name + (name_prefix and " " + name_prefix or "")
             task_logger = logger.nest(task_logger_name)
-            _process_test(domains, args, result_stats, task, task_logger)
+            _process_test(domain_prefix, args, result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:
