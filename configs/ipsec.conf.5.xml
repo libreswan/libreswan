@@ -156,6 +156,7 @@
 <!ENTITY setup.dnssec-enable SYSTEM "d.ipsec.conf/setup/dnssec-enable.xml">
 <!ENTITY setup.dnssec-rootkey-file SYSTEM "d.ipsec.conf/setup/dnssec-rootkey-file.xml">
 <!ENTITY setup.dumpdir SYSTEM "d.ipsec.conf/setup/dumpdir.xml">
+<!ENTITY setup.exampledir SYSTEM "d.ipsec.conf/setup/exampledir.xml">
 <!ENTITY setup.expire-lifetime SYSTEM "d.ipsec.conf/setup/expire-lifetime.xml">
 <!ENTITY setup.expire-shunt-interval SYSTEM "d.ipsec.conf/setup/expire-shunt-interval.xml">
 <!ENTITY setup.global-redirect SYSTEM "d.ipsec.conf/setup/global-redirect.xml">
@@ -451,6 +452,7 @@
       &setup.statsbin;
       &setup.ipsecdir;
       &setup.nssdir;
+      &setup.exampledir;
       &setup.secretsfile;
       &setup.seccomp;
       &setup.dnssec-enable;

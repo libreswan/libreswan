@@ -1,0 +1,21 @@
+<varlistentry id='setup.exampledir'>
+  <term>
+    <option>exampledir=&directory;</option>
+  </term>
+  <listitem>
+    <para>
+      Specifies the directory where libreswan's sample configuration
+      files are installed.  This includes files such as
+      <filename>ipsec.conf-sample</filename> and
+      <filename>ipsec.secrets-sample</filename>.
+      Packaging systems can use this option to specify where these
+      files are installed on the target system.
+    </para>
+    <para>
+      The default is <filename>@@EXAMPLE_IPSEC_SYSCONFDIR@@</filename>.
+    </para>
+    <para>
+      This option was added in Libreswan 5.4.
+    </para>
+  </listitem>
+</varlistentry>
