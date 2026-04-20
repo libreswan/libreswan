@@ -1,9 +1,9 @@
-<refsect1 id='sect.units'>
+<refsect2 id='sect.units'>
   <title>
     UNITS
   </title>
 
-  <refsect2 id='unit_bytes'>
+  <refsect3 id='unit_bytes'>
     <title>
       BYTE COUNTS AND BINARY DATA
     </title>
@@ -38,9 +38,9 @@
 	</varlistentry>
       </variablelist>
     </para>
-  </refsect2>
+  </refsect3>
 
-  <refsect2 id='unit_duration'>
+  <refsect3 id='unit_duration'>
     <title>
       DURATION
     </title>
@@ -123,6 +123,6 @@
       For instance, the following are each equivalent: 1ms and 1000us;
       0.5s and 500ms; 1.5h and 90m.
     </para>
-  </refsect2>
+  </refsect3>
 
-</refsect1>
+</refsect2>

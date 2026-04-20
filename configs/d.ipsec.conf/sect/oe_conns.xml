@@ -1,4 +1,4 @@
-<refsect1 id='sect.oe_conns'>
+<refsect2 id='sect.oe_conns'>
   <title>
     OPPORTUNISTIC CONNS
   </title>
@@ -9,4 +9,4 @@
   </para>
   <programlisting><xi:include  href="d.ipsec.conf/oe_conns.example"  parse="text"
   xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
-</refsect1>
+</refsect2>

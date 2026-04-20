@@ -1,7 +1,7 @@
-<refsect1 id='sect.connsections'>
+<refsect2 id='sect.overview'>
 
   <title>
-    DESCRIPTION
+    Overview
   </title>
 
   <para>
@@ -171,4 +171,4 @@
     <option>also</option> parameters.
   </para>
 
-</refsect1>
+</refsect2>

@@ -1,4 +1,4 @@
-<refsect1 id='sect.policy_group_files'>
+<refsect2 id='sect.policy_group_files'>
   <title>
     POLICY GROUP FILES
   </title>
@@ -43,4 +43,4 @@
     details from <option>private</option>, except that its right
     client is 192.0.2.3.
   </para>
-</refsect1>
+</refsect2>

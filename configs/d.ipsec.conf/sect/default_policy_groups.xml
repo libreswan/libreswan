@@ -1,4 +1,4 @@
-<refsect1 id='sect.default_policy_groups'>
+<refsect2 id='sect.default_policy_groups'>
   <title>
     DEFAULT POLICY GROUPS
   </title>
@@ -10,4 +10,4 @@
     <option>clear-or-private</option> (respond to requests for
     encryption), <option>clear</option> and <option>block</option>.
   </para>
-</refsect1>
+</refsect2>

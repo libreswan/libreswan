@@ -24,9 +24,9 @@
 <!ENTITY sect.exampleleftright SYSTEM "d.ipsec.conf/sect/exampleleftright.xml">
 
 <!ENTITY sect.choosing_a_connection SYSTEM "d.ipsec.conf/sect/choosing_a_connection.xml">
-<!ENTITY sect.connsections SYSTEM "d.ipsec.conf/sect/connsections.xml">
 <!ENTITY sect.default_policy_groups SYSTEM "d.ipsec.conf/sect/default_policy_groups.xml">
 <!ENTITY sect.oe_conns SYSTEM "d.ipsec.conf/sect/oe_conns.xml">
+<!ENTITY sect.overview SYSTEM "d.ipsec.conf/sect/overview.xml">
 <!ENTITY sect.policy_group_files SYSTEM "d.ipsec.conf/sect/policy_group_files.xml">
 <!ENTITY sect.units SYSTEM "d.ipsec.conf/sect/units.xml">
 
@@ -214,13 +214,16 @@
     <refpurpose>IPsec configuration and connections</refpurpose>
   </refnamediv>
 
-  &sect.connsections;
-  &sect.units;
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+ 
+    &sect.overview;
+    &sect.units;
 
-  <refsect1 id='conn_sections'>
+  <refsect2 id='conn_sections'>
     &sect.exampleleftright;
 
-    <refsect2 id='conn_parameters__general'>
+    <refsect3 id='conn_parameters__general'>
       <title>
 	CONN PARAMETERS:  GENERAL
       </title>
@@ -267,9 +270,9 @@
 	own <option>updown</option> script, which makes the
 	appropriate adjustments for his system.
       </para>
-    </refsect2>
+    </refsect3>
 
-    <refsect2 id='conn_parameters__automatic_keying'>
+    <refsect3 id='conn_parameters__automatic_keying'>
       <title>
 	CONN PARAMETERS:  AUTOMATIC KEYING
       </title>
@@ -377,10 +380,10 @@
 	&conn.debug;
 	&conn.reject-simultaneous-ike-auth;
       </variablelist>
-    </refsect2>
-  </refsect1>
+    </refsect3>
+  </refsect2>
 
-  <refsect1 id='config_sections'>
+  <refsect2 id='config_sections'>
     <title>
       CONFIG SECTIONS
     </title>
@@ -454,12 +457,14 @@
       &setup.ipsec-interface-managed;
       &setup.dns-resolver;
     </variablelist>
-  </refsect1>
+  </refsect2>
 
   &sect.oe_conns;
   &sect.policy_group_files;
   &sect.default_policy_groups;
   &sect.choosing_a_connection;
+
+  </refsect1>
 
   <refsect1 id='files'>
     <title>
