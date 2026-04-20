@@ -249,3 +249,6 @@
 <!ENTITY PaulWouters '<personname><firstname>Paul</firstname><surname>Wouters</surname></personname>'>
 <!ENTITY AndrewCagney '<personname><firstname>Andrew</firstname><surname>Cagney</surname></personname>'>
 <!ENTITY HenrySpencer '<personname><firstname>Henry</firstname><surname>Spencer</surname></personname>'>
+<!ENTITY TuomoSoini '<personname><firstname>Tuomo</firstname><surname>Soini</surname></personname>'>
+<!ENTITY Rishabh '<personname><firstname>Rishabh</firstname></personname>'>
+<!ENTITY BradyJohnson '<personname><firstname>Brady</firstname><surname>Johnson</surname></personname>'>

@@ -286,14 +286,14 @@
     <title>HISTORY</title>
     <para>
       Written for the &Libreswan; project by
-      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>.
+      <author>&AndrewCagney;</author>.
     </para>
   </refsect1>
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
-    <para>
-      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
-    </para>
+    <simplelist type='inline'>
+      <member><author>&AndrewCagney;</author></member>
+    </simplelist>
   </refsect1>
 </refentry>

@@ -112,8 +112,8 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
-    <para>
-      <author><personname><firstname>Tuomo</firstname><surname>Soini</surname></personname></author>
-    </para>
+    <simplelist type='inline'>
+      <member><author>&TuomoSoini;</author></member>
+    </simplelist>
   </refsect1>
 </refentry>

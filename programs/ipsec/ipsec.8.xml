@@ -445,9 +445,9 @@
   </refsect1>
   <refsect1 id='author'>
     <title>AUTHOR</title>
-    <para>
-      <author><personname><firstname>Tuomo</firstname><surname>Soini</surname></personname></author>,
-      <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>
-    </para>
+    <simplelist type='inline'>
+      <member><author>&TuomoSoini;</author></member>
+      <member><author>&AndrewCagney;</author></member>
+    </simplelist>
   </refsect1>
 </refentry>
