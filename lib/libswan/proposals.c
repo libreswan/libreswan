@@ -1338,8 +1338,10 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	 *
 	 *     <encrypt>-<PRF>...
 	 *
-	 * When PRF succeeds, the proposal is assumed to be
-	 * <encrypt>-<prf>[-<kem>] (i.e., <integ> can't follow).
+	 * When PRF succeeds, optionally try to also parse <INTEG>
+	 * that follows (i.e., <encrypt>-<prf>-<integ>[-<kem>]).
+	 * If the next token isn't a valid INTEG, backtrack and
+	 * let the caller handle it (likely as KEM).
 	 *
 	 * The merge code will then either build the INTEG from the
 	 * PRF or, when AEAD, set INTEG to NONE.
@@ -1356,6 +1358,53 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
 		vdbg("<encrypt>-<PRF> succeeded");
+		/*
+		 * After PRF succeeds, optionally try to parse <INTEG>
+		 * that follows, as in <encrypt>-<prf>-<INTEG>[-<kem>].
+		 * If the next token isn't a valid INTEG algorithm,
+		 * backtrack and return with just PRF (the caller will
+		 * try the remaining tokens as KEM).
+		 */
+		if (tokens->curr.token.ptr != NULL &&
+		    tokens->prev.delim != ';' &&
+		    parser->protocol->integ) {
+			struct tokens saved_tokens = (*tokens);
+			const unsigned saved_len = proposal->transforms.len;
+
+			if (parse_transform_algorithms(parser, proposal,
+						       transform_type_integ,
+						       tokens, verbose) &&
+			    !proposal_integ_none(proposal)) {
+				/*
+				 * INTEG parse succeeded and isn't NONE.
+				 * Verify the token is FQN integ (not
+				 * also valid as PRF).  If it also
+				 * resolves as PRF, the proposal is
+				 * ambiguous (<prf>-<prf>) and must be
+				 * rejected.
+				 */
+				struct tokens check_tokens = saved_tokens;
+				unsigned check_len = proposal->transforms.len;
+				bool also_prf = parse_transform_algorithms(
+					parser, proposal,
+					transform_type_prf,
+					&check_tokens, verbose);
+				pfree_diag(&parser->diag);
+				realloc_data(&proposal->transforms, check_len);
+
+				if (!also_prf) {
+					vdbg("<encrypt>-<PRF>-<INTEG> succeeded");
+					return true;
+				}
+				vdbg("<encrypt>-<PRF>-<INTEG> ambiguous (also valid PRF), backtracking");
+			}
+
+			/* INTEG failed, NONE or was ambigous; backtrack - remaining tokens may be KEM */
+			vdbg("<encrypt>-<PRF>-<INTEG>, backtracking");
+			pfree_diag(&parser->diag);
+			(*tokens) = saved_tokens;
+			realloc_data(&proposal->transforms, saved_len);
+		}
 		return true;
 	}
 
@@ -1410,6 +1459,14 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	if (tokens->curr.token.ptr == NULL /*more?*/ ||
 	    tokens->prev.delim == ';' /*;KEM>*/) {
 		return true;
+	}
+	/*
+	 * Reaching here means INTEG was already consumed from the
+	 * proposal string before PRF.  Warn: the order is encrypt-prf-integ-kem.
+	 */
+	if (!proposal_integ_none(proposal)) {
+		llog(parser->policy->stream, parser->policy->logger,
+		     "WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order");
 	}
 
 	vdbg("trying <encrypt>-<prf>-<INTEG>");
@@ -1621,7 +1678,17 @@ bool parse_proposal(struct proposal_parser *parser,
 					       pri_shunk(tokens.curr.token));
 				return false;
 			}
-
+			/*
+			 * Warn when integ= is specified explicitly before prf=.
+			 * The new-syntax order is encrypt-prf-integ-kem;
+			 * specifying integ before prf produces confusing output.
+			 */
+			if (tmp == transform_type_integ &&
+			    transform_type <= transform_type_prf &&
+			    parser->protocol->prf) {
+				llog(parser->policy->stream, parser->policy->logger,
+				     "WARNING: IKE proposal has integ= specified before prf=; use encrypt-prf-integ-kem order");
+			}
 			vdbg("switching from '%s' transforms to '%s' transforms",
 			     transform_type->name,
 			     tmp->name);
