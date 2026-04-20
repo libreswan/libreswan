@@ -79,6 +79,7 @@ class TestDomain:
         self.verbose_txt = None
         self.console = None
         self.test = test
+
         # netbsdeast
         self.guest = guest
         # p.east
@@ -88,22 +89,19 @@ class TestDomain:
         self.xml = (domain_prefix.is_dir() and str(domain_prefix) + "/" + guest.name
                     or str(domain_prefix) + guest.name)
 
-        domain = virsh.Domain(logger=logger,
-                              name=self.name,
-                              guest=self.guest,
-                              xml=self.xml)
-        domain.nest(logger, test.name + " ")
-
-        # Get the domain
-        self.logger = domain.logger
-        self.domain = domain
+        self.logger = logger.nest(f"{test.name} {self.name}")
+        self.domain = virsh.Domain(logger=logger,
+                                   name=self.name,
+                                   guest=self.guest,
+                                   xml=self.xml)
+        self.domain.logger = self.logger # hack to get right domain
 
     def __str__(self):
         return self.name
 
     def open(self):
         # open the output file
-        guest = self.domain.guest
+        guest = self.guest
         output = os.path.join(self.test.output_directory,
                               guest.host.name + ".console.verbose.txt")
         # buffering=1 is line buffered

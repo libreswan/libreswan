@@ -60,12 +60,6 @@ class Domain:
     def __str__(self):
         return "domain " + self.name
 
-    def nest(self, logger, prefix):
-        self.logger = logger.nest(prefix + self.name)
-        if self._console:
-            self._console.logger = self.logger
-        return self.logger
-
     def _run_status_output(self, command, verbose=False):
         if verbose:
             self.logger.info("running: %s", command)
