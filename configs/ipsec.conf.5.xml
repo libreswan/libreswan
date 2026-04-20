@@ -507,10 +507,12 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
-    <simplelist type='inline'>
-      <member><author>&PaulWouters;</author></member>
-      <member><author>&AndrewCagney;</author></member>
-    </simplelist>
+    <para>
+      <simplelist type='inline'>
+	<member><author>&PaulWouters;</author></member>
+	<member><author>&AndrewCagney;</author></member>
+      </simplelist>
+    </para>
   </refsect1>
 
 </refentry>

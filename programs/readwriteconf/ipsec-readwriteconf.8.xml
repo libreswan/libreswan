@@ -51,8 +51,8 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
-    <simplelist type='inline'>
-      <member><author>&PaulWouters;</author></member>
-    </simplelist>
+    <para>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+    </para>
   </refsect1>
 </refentry>
