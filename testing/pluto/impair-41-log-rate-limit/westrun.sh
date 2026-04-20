@@ -1,4 +1,4 @@
-# ── port 4500 (esp_encapsulation_enabled) ──────────────────────────────────
+# -- port 4500 (esp_encapsulation_enabled) ----------------------------------
 # iface_udp.c: "too small packet" — packet shorter than 4 bytes (sizeof uint32_t)
 printf 'ab' | nc -4 -u 192.1.2.23 4500
 
@@ -12,7 +12,7 @@ printf '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0' | nc -4 -u 192.1.2.23 4500
 # iface_udp.c: "NAT-T keep-alive" — single 0xff byte with Non-ESP marker prefix
 printf '\0\0\0\0\xff' | nc -4 -u 192.1.2.23 4500
 
-# ── port 500 (plain IKE, no esp_encapsulation) ──────────────────────────────
+# -- port 500 (plain IKE, no esp_encapsulation) ------------------------------
 # demux.c: "dropping packet with mangled IKE header" — under limit
 printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
 # demux.c: at limit — sentinel fires here

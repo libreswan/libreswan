@@ -4,7 +4,7 @@ west #
  echo "initdone"
 initdone
 west #
- # ── port 4500 (esp_encapsulation_enabled) ──────────────────────────────────
+ # -- port 4500 (esp_encapsulation_enabled) ----------------------------------
 west #
  # iface_udp.c: "too small packet" — packet shorter than 4 bytes (sizeof uint32_t)
 west #
@@ -24,7 +24,7 @@ west #
 west #
  printf '\0\0\0\0\xff' | nc -4 -u 192.1.2.23 4500
 west #
- # ── port 500 (plain IKE, no esp_encapsulation) ──────────────────────────────
+ # -- port 500 (plain IKE, no esp_encapsulation) ------------------------------
 west #
  # demux.c: "dropping packet with mangled IKE header" — under limit
 west #
