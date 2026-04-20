@@ -106,7 +106,7 @@ elif ${core} ; then
     SKIP as pluto core dumped
 elif test ! -s /tmp/pluto.log ; then
     SKIP as pluto.log was empty
-elif grep 'leak-detective disabled' /tmp/pluto.log ; then
+elif grep 'leak-detective \[disabled\]' /tmp/pluto.log ; then
     SKIP as leak-detective was disabled
 elif grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
     FAIL

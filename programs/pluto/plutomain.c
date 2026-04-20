@@ -1445,11 +1445,11 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "Linux audit support [%s]",
 	     (audit_ok ? "enabled" : "disabled"));
 #else
-	llog(RC_LOG, logger, "Linux audit support [DISABLED]");
+	llog(RC_LOG, logger, "Linux audit support [disabled]");
 #endif
 
 	llog(RC_LOG, logger, leak_detective ?
-	     "leak-detective enabled" : "leak-detective disabled");
+	     "leak-detective [enabled]" : "leak-detective [disabled]");
 
 	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
