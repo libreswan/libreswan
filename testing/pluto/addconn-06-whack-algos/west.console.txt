@@ -10,8 +10,8 @@ west #
  ipsec whack --name whack----rsasig      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
 "whack----rsasig": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec whack --name whack-----ecdsa      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa  --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack-----ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec whack --name whack----ecdsa       --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa  --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
+"whack----ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--defaults      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
 "whack--defaults": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
@@ -38,4 +38,18 @@ west #
  ipsec connectionstatus | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
 IKEv2
 IKEv2
+west #
+ ipsec whack --name whack--ike-aes_gcm --ike aes_gcm --host 1.2.3.4 --to --host 5.6.7.8
+"whack--ike-aes_gcm": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec whack --name whack--esp-aes_gcm --esp aes_gcm --host 1.2.3.4 --to --host 5.6.7.8
+"whack--esp-aes_gcm": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec whack --name whack--ah-sha2_256 --ah sha2_256 --host 1.2.3.4 --to --host 5.6.7.8
+"whack--ah-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec connectionstatus | grep algorithms:
+"whack--ah-sha2_256":   AH algorithms: HMAC_SHA2_256_128
+"whack--esp-aes_gcm":   ESP algorithms: AES_GCM_16
+"whack--ike-aes_gcm":   IKE algorithms: AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
