@@ -44,7 +44,7 @@ help:
 	@echo
 	@echo "   make base && sudo make install-base"
 	@echo
-	@echo "See the files INSTALL and README for more general information,"
+	@echo "See the file README.md for more general information,"
 	@echo
 	@echo "To build debian packages: make deb"
 	@echo "To build fedora/rhel/centos rpms: make rpm"
