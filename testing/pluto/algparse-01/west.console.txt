@@ -496,12 +496,22 @@ algparse -v1 'ike=aes_ccm' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported by IKEv1
 algparse -v1 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v1 'ike=aes-sha2-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1' is not recognized
 algparse -v1 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v1 'ike=aes-sha1_96-sha2_256_128-ecp_521' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 'ike=aes-sha1_96-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 'ike=aes-sha1-sha1_96-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1_96' is not recognized
+algparse -v1 'ike=aes-sha2-sha1_96-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1_96' is not recognized
 algparse -v1 'ike=aes-sha2_256+sha1_96' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes-sha2_256+sha1_96-sha2_512' (expect ERROR)
@@ -556,6 +566,8 @@ algparse -v1 'ike=aes_gcm-none;modp2048' (expect ERROR)
 algparse -v1 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
+algparse -v1 'ike=aes_gcm-sha2-none-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
@@ -1059,12 +1071,22 @@ algparse -v1 -pfs 'ike=aes_ccm' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v1 -pfs 'ike=aes-sha2-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1' is not recognized
 algparse -v1 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v1 -pfs 'ike=aes-sha1_96-sha2_256_128-ecp_521' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 -pfs 'ike=aes-sha1_96-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -v1 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
+algparse -v1 -pfs 'ike=aes-sha1-sha1_96-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1_96' is not recognized
+algparse -v1 -pfs 'ike=aes-sha2-sha1_96-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1_96' is not recognized
 algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect ERROR)
@@ -1119,6 +1141,8 @@ algparse -v1 -pfs 'ike=aes_gcm-none;modp2048' (expect ERROR)
 algparse -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
+	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
+algparse -v1 -pfs 'ike=aes_gcm-sha2-none-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -v1 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
@@ -1613,19 +1637,36 @@ algparse -v2 'ike=aes_ccm' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
 algparse -v2 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v2 'ike=aes-sha2-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1' is not recognized
 algparse -v2 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v2 'ike=aes-sha1_96-sha2_256_128-ecp_521' (expect ERROR)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	ERROR: IKE Pseudorandom Function (KDF) 'sha2_256_128' is not recognized
+algparse -v2 'ike=aes-sha1_96-sha1-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1-DH21
 algparse -v2 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -v2 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH21
+algparse -v2 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
@@ -1689,6 +1730,8 @@ algparse -v2 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
+algparse -v2 'ike=aes_gcm-sha2-none-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 'ike=,' (expect ERROR)
@@ -2133,19 +2176,36 @@ algparse -v2 -pfs 'ike=aes_ccm' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
 algparse -v2 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v2 -pfs 'ike=aes-sha2-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1' is not recognized
 algparse -v2 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -v2 -pfs 'ike=aes-sha1_96-sha2_256_128-ecp_521' (expect ERROR)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	ERROR: IKE Pseudorandom Function (KDF) 'sha2_256_128' is not recognized
+algparse -v2 -pfs 'ike=aes-sha1_96-sha1-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1-DH21
 algparse -v2 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -v2 -pfs 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH21
+algparse -v2 -pfs 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
@@ -2209,6 +2269,8 @@ algparse -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
+algparse -v2 -pfs 'ike=aes_gcm-sha2-none-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 -pfs 'ike=,' (expect ERROR)
@@ -2653,19 +2715,36 @@ algparse -addke -v2 -pfs 'ike=aes_ccm' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_ccm' is not supported
 algparse -addke -v2 -pfs 'ike=aes-sha1-sha2-ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -addke -v2 -pfs 'ike=aes-sha2-sha1-ecp_521' (expect ERROR)
+	ERROR: IKE Key Exchange Method (DH) 'sha1' is not recognized
 algparse -addke -v2 -pfs 'ike=aes-sha2-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'sha2' is not recognized
+algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha2_256_128-ecp_521' (expect ERROR)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	ERROR: IKE Pseudorandom Function (KDF) 'sha2_256_128' is not recognized
+algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha1-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1-DH21
 algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -addke -v2 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
+	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+algparse -addke -v2 -pfs 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH21
+algparse -addke -v2 -pfs 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
 algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -addke -v2 -pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
+ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
 	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
 algparse -addke -v2 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
@@ -2729,6 +2808,8 @@ algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
+algparse -addke -v2 -pfs 'ike=aes_gcm-sha2-none-modp2048' (expect ERROR)
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -addke -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -addke -v2 -pfs 'ike=,' (expect ERROR)

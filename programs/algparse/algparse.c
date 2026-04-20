@@ -499,14 +499,19 @@ static void test_ike(struct logger *logger)
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
 
-	/* quads: <encrypt>-<integ>-<prf>[-;]<kem> */
-
-	/* can't follow valid <prf> with <integ> */
+	/* bad: <prf>-<prf> */
 	ike(false, "aes-sha1-sha2-ecp_521");
+	ike(false, "aes-sha2-sha1-ecp_521");
 	ike(false, "aes-sha2-sha2;ecp_521");
-	/* good; integ forced by fqn sha1_96 */
+	/* bad: <integ>-<integ> */
+	ike(false, "aes-sha1_96-sha2_256_128-ecp_521");
+	/* good: <fqn-integ>-<prf>; */
+	ike(ike_version == IKEv2, "aes-sha1_96-sha1-ecp_521");
 	ike(ike_version == IKEv2, "aes-sha1_96-sha2-ecp_521");
 	ike(ike_version == IKEv2, "aes-sha1_96-sha2;ecp_521");
+	/* good: <prf>-<fqn-integ>; NEW IKEv2 SYNTAX */
+	ike(ike_version == IKEv2, "aes-sha1-sha1_96-ecp_521");
+	ike(ike_version == IKEv2, "aes-sha2-sha1_96-ecp_521");
 	/* need to back out all PRFs */
 	ike(ike_version == IKEv2, "aes-sha2_256+sha1_96");
 	ike(ike_version == IKEv2, "aes-sha2_256+sha1_96-sha2_512");
@@ -547,6 +552,7 @@ static void test_ike(struct logger *logger)
 	ike(ike_version == IKEv2, "aes_gcm-none;modp2048");
 	ike(false, "aes_gcm-sha1-none-modp2048"); /* old syntax */
 	ike(false, "aes_gcm-sha1-none;modp2048"); /* old syntax */
+	ike(false, "aes_gcm-sha2-none-modp2048");
 
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
 
