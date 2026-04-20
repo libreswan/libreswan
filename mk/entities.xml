@@ -244,3 +244,8 @@
 
 <!ENTITY opt_async '<group choice="plain"><arg choice="opt">--bg[={yes,no}</arg><arg choice="opt">--asynchronous[={yes,no}]</arg></group>'>
 
+<!-- people -->
+
+<!ENTITY PaulWouters '<personname><firstname>Paul</firstname><surname>Wouters</surname></personname>'>
+<!ENTITY AndrewCagney '<personname><firstname>Andrew</firstname><surname>Cagney</surname></personname>'>
+<!ENTITY HenrySpencer '<personname><firstname>Henry</firstname><surname>Spencer</surname></personname>'>

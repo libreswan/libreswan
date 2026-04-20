@@ -23,16 +23,11 @@
 
 <!ENTITY sect.exampleleftright SYSTEM "d.ipsec.conf/sect/exampleleftright.xml">
 
-<!ENTITY sect.author SYSTEM "d.ipsec.conf/sect/author.xml">
-<!ENTITY sect.bugs SYSTEM "d.ipsec.conf/sect/bugs.xml">
 <!ENTITY sect.choosing_a_connection SYSTEM "d.ipsec.conf/sect/choosing_a_connection.xml">
 <!ENTITY sect.connsections SYSTEM "d.ipsec.conf/sect/connsections.xml">
 <!ENTITY sect.default_policy_groups SYSTEM "d.ipsec.conf/sect/default_policy_groups.xml">
-<!ENTITY sect.files SYSTEM "d.ipsec.conf/sect/files.xml">
-<!ENTITY sect.history SYSTEM "d.ipsec.conf/sect/history.xml">
 <!ENTITY sect.oe_conns SYSTEM "d.ipsec.conf/sect/oe_conns.xml">
 <!ENTITY sect.policy_group_files SYSTEM "d.ipsec.conf/sect/policy_group_files.xml">
-<!ENTITY sect.see_also SYSTEM "d.ipsec.conf/sect/see_also.xml">
 <!ENTITY sect.units SYSTEM "d.ipsec.conf/sect/units.xml">
 
 <!ENTITY conn.accept-redirect SYSTEM "d.ipsec.conf/conn/accept-redirect.xml">
@@ -465,10 +460,54 @@
   &sect.policy_group_files;
   &sect.default_policy_groups;
   &sect.choosing_a_connection;
-  &sect.files;
-  &sect.see_also;
-  &sect.history;
-  &sect.bugs;
-  &sect.author;
+
+  <refsect1 id='files'>
+    <title>
+      FILES
+    </title>
+    <!-- this indents, which is broken -->
+    <simplelist>
+      <member><filename>@@IPSEC_CONF@@</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/policies/clear</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/policies/clear-or-private</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/policies/private-or-clear</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/policies/private</filename></member>
+      <member><filename>@@IPSEC_CONFDDIR@@/policies/block</filename></member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1 id='sect.see_also'>
+    <title>
+      SEE ALSO
+    </title>
+    <para>
+      <simplelist type='inline'>
+	<member>&ipsec.8;</member>
+	<member>&ipsec-rsasigkey.8;</member>
+      </simplelist>
+    </para>
+  </refsect1>
+
+  <refsect1 id='history'>
+    <title>
+      HISTORY
+    </title>
+    <para>
+      Designed for the FreeS/WAN project &lt;<ulink
+      url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
+      by &HenrySpencer;.
+    </para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <simplelist type='inline'>
+	<member><author>&PaulWouters;</author></member>
+	<member><author>&AndrewCagney;</author></member>
+      </simplelist>
+    </para>
+  </refsect1>
 
 </refentry>
