@@ -564,7 +564,11 @@ enum opt {
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
 	CD_SESSION_RESUMPTION,
+
 	CD_IKE,
+	CD_ESP,
+	CD_AH,
+
 	CD_TCP,
 	CD_TCP_REMOTE_PORT,
 	CD_SENDCA,
@@ -578,7 +582,6 @@ enum opt {
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
 	CD_NARROWING,
-	CD_ESP,
 	CD_INTERMEDIATE,
 	CD_OVERLAPIP,
 	CD_MS_DH_DOWNGRADE,
@@ -927,10 +930,11 @@ const struct option optarg_options[] = {
 	{ "rekeyfuzz\0", required_argument, NULL, CD_REKEYFUZZ },
 	{ IGNORE_OPT("keyingtries", "5.0"), required_argument, NULL, 0 },
 	{ "replay-window\0", required_argument, NULL, CD_REPLAY_WINDOW },
-	{ "ike\0",    required_argument, NULL, CD_IKE },
-	{ "ikealg\0", required_argument, NULL, CD_IKE },
+	{ OPT("ike", "<ike-proposals>"), required_argument, NULL, CD_IKE },
+	{ REPLACE_OPT("ikealg", "ike", "5.4"), required_argument, NULL, CD_IKE },
+	{ OPT("esp", "<esp-proposals>"), required_argument, NULL, CD_ESP },
+	{ OPT("ah", "<ah-proposals>"), required_argument, NULL, CD_AH },
 	{ FATAL_OPT("pfsgroup", "5.3"), required_argument, NULL, 0 },
-	{ "esp\0", required_argument, NULL, CD_ESP },
 	{ "remote-peer-type\0", required_argument, NULL, CD_REMOTE_PEER_TYPE },
 	{ "nic-offload\0", required_argument, NULL, CD_NIC_OFFLOAD},
 
@@ -1856,9 +1860,11 @@ int main(int argc, char **argv)
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
 			msg.wm_ike = optarg;
 			continue;
-
 		case CD_ESP:	/* --esp <esp_alg1,esp_alg2,...> */
 			msg.wm_esp = optarg;
+			continue;
+		case CD_AH:
+			msg.wm_ah = optarg;
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
