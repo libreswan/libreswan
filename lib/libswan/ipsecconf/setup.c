@@ -1,6 +1,7 @@
 /* ipsec.conf's config setup for Libreswan
  *
  * Copyright (C) 2025 Andrew Cagney
+ * Copyright (C) 2026 Anish Singh Rawat
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -525,6 +526,7 @@ static const struct keyword_def config_setup_keyword[] = {
 #undef NOSUP
 
   K("virtual-private",  kt_string,  KSF_VIRTUAL_PRIVATE),
+  K("seeddev",  kt_string,  KSF_SEEDDEV),
   K("seedbits",  kt_unsigned,  KBF_SEEDBITS),
   K("keep-alive",  kt_seconds,  KBF_KEEP_ALIVE),
 

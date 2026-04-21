@@ -115,6 +115,8 @@ enum opt {
 	OPT_DEBUG,
 	OPT_PEM,
 	OPT_PUBKEY,
+	OPT_SEEDDEV,
+	OPT_SEEDBITS,
 	OPT_VERSION,
 };
 
@@ -524,6 +526,12 @@ int main(int argc, char *argv[])
 			continue;
 		case OPT_PASSWORD:
 			optarg_nss_password(logger, &nss);
+			continue;
+		case OPT_SEEDDEV:
+			optarg_seeddev(logger);
+			continue;
+		case OPT_SEEDBITS:
+			optarg_seedbits(logger);
 			continue;
 
 		case OPT_VERBOSE:

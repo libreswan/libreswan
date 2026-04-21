@@ -329,6 +329,8 @@ OBJS += optarg/optarg_address_dns.o
 OBJS += optarg/optarg_address_num.o
 OBJS += optarg/optarg_nssdir.o
 OBJS += optarg/optarg_nss_password.o
+OBJS += optarg/optarg_seeddev.o
+OBJS += optarg/optarg_seedbits.o
 
 #
 # DNS stuff

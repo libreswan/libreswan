@@ -2,6 +2,7 @@
  * NSS boilerplate stuff, for libreswan.
  *
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2026 Anish Singh Rawat
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,12 +20,17 @@
 #include <secmod.h>
 #include <keyhi.h>
 #include <nss.h>	/* for NSS_Initialize() */
+#include <unistd.h>	/* for open/read/close */
+#include <errno.h>	/* for errno */
+#include <fcntl.h>	/* for O_RDONLY */
 
 #include "ipsecconf/setup.h"
 #include "lswnss.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "fips_mode.h"
+#include "constants.h"  /* for BYTES_FOR_BITS */
+#include "pluto_constants.h"  /* for PLUTO_EXIT_FAIL */
 
 static char *get_nss_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 static char *get_nss_file_password(const char *token, const char *password_file, struct logger *logger);
@@ -318,4 +324,67 @@ static char *get_nss_file_password(const char *token, const char *password_file,
 	     password_file, token);
 	PORT_Free(passwords);
 	return NULL;
+}
+
+/*
+ * Seed NSS PRNG with entropy from a random device.
+ *
+ * Some government Three Letter Agencies require that NSS reads additional
+ * bits from /dev/random and feed these into the NSS RNG before drawing random
+ * from the NSS library, despite the NSS library itself already seeding its
+ * internal state. This process can block for an extended time during startup,
+ * depending on the entropy of the system. Therefore the default is to not
+ * perform this redundant seeding. If specifying a value, it is recommended
+ * to specify at least 460 bits (for FIPS) or 440 bits (for BSI).
+ */
+void lsw_nss_seed_rng(int seedbits, struct logger *logger)
+{
+	SECStatus rv;
+	int seedbytes = BYTES_FOR_BITS(seedbits);
+	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
+
+	/*
+	 * lsw_random - get some random bytes from /dev/random (or wherever)
+	 * NOTE: This is only used for additional seeding of the NSS RNG
+	 */
+	size_t ndone;
+	int dev;
+	ssize_t got;
+	const char *device = config_setup_string(KSF_SEEDDEV);
+	if (device == NULL) {
+		device = "/dev/random";
+	}
+
+	dev = open(device, O_RDONLY);
+	if (dev < 0) {
+		llog_errno(RC_LOG, logger, errno,
+			   "could not open %s: ", device);
+		exit(PLUTO_EXIT_FAIL);
+	}
+
+	ndone = 0;
+	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...",
+	     (int) seedbytes * BITS_IN_BYTE, device);
+	while (ndone < (size_t)seedbytes) {
+		got = read(dev, buf + ndone, seedbytes - ndone);
+		if (got < 0) {
+			llog_errno(RC_LOG, logger, errno,
+				   "read error on %s: ", device);
+			close(dev);
+			exit(PLUTO_EXIT_FAIL);
+		}
+		if (got == 0) {
+			llog(RC_LOG, logger, "eof on %s!?!", device);
+			close(dev);
+			exit(PLUTO_EXIT_FAIL);
+		}
+		ndone += got;
+	}
+
+	close(dev);
+
+	rv = PK11_RandomUpdate(buf, seedbytes);
+	passert(rv == SECSuccess);
+	messupn(buf, seedbytes);
+	pfree(buf);
 }

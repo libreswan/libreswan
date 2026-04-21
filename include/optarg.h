@@ -1,6 +1,7 @@
 /* getopt parsing, for libreswan
  *
  * Copyright (C) 2023,2024 Andrew Cagney
+ * Copyright (C) 2026 Anish Singh Rawat
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -175,9 +176,13 @@ void optarg_version(const char *suffix) NEVER_RETURNS;
 
 #define NSSDIR_OPTS							\
 	{ "nssdir\0<dir>",         required_argument,  NULL,   OPT_NSSDIR, }, /* nss-tools use -d */ \
-	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, }
+	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, }, \
+	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, }, \
+	{ "seedbits\0<bits>",      required_argument,  NULL,   OPT_SEEDBITS, }
 
 void optarg_nssdir(struct logger *logger);
 void optarg_nss_password(struct logger *logger, struct nss_flags *nss);
+void optarg_seeddev(struct logger *logger);
+uintmax_t optarg_seedbits(struct logger *logger);
 
 #endif

@@ -1,6 +1,7 @@
 /* ipsec.conf's config setup for Libreswan
  *
  * Copyright (C) 2025  Andrew Cagney
+ * Copyright (C) 2026 Anish Singh Rawat
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,6 +40,7 @@ enum config_setup_keyword {
 	KSF_STATSBIN,
 	KSF_IPSECDIR,
 	KSF_NSSDIR,
+	KSF_SEEDDEV,
 	KSF_SECRETSFILE,
 	KSF_MYVENDORID,
 	KSF_LOGFILE,

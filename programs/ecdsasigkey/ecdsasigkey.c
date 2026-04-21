@@ -84,9 +84,9 @@ enum opt {
 	OPT_DEBUG = 256,
 	OPT_VERSION,
 	OPT_VERBOSE,
-	OPT_SEEDDEV,
 	OPT_NSSDIR,
 	OPT_PASSWORD,
+	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 	OPT_HELP,
 };
@@ -94,46 +94,16 @@ enum opt {
 const struct option optarg_options[] = {
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",            no_argument,        NULL,   OPT_VERBOSE, },
-	{ "seeddev\0<bits>",      required_argument,  NULL,   OPT_SEEDDEV, },
-	{ "seedbits\0<bits>",     required_argument,  NULL,   OPT_SEEDBITS, },
 	{ "help\0",               no_argument,        NULL,   OPT_HELP, },
 	{ "version\0",            no_argument,        NULL,   OPT_VERSION, },
 	NSSDIR_OPTS,
 	{ 0,            0,      NULL,   0, }
 };
-char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
 static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger);
-static void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
-
-/*
- * UpdateRNG - Updates NSS's PRNG with user generated entropy
- *
- * pluto and rsasigkey use the NSS crypto library as its random source.
- * Some government Three Letter Agencies require that pluto reads additional
- * bits from /dev/random and feed these into the NSS RNG before drawing random
- * from the NSS library, despite the NSS library itself already seeding its
- * internal state. This process can block pluto or rsasigkey for an extended
- * time during startup, depending on the entropy of the system. Therefore
- * the default is to not perform this redundant seeding. If specifying a
- * value, it is recommended to specify at least 460 bits (for FIPS) or 440
- * bits (for BSI).
- */
-static void UpdateNSS_RNG(int seedbits, struct logger *logger)
-{
-	SECStatus rv;
-	int seedbytes = BYTES_FOR_BITS(seedbits);
-	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
-
-	lsw_random(seedbytes, buf, logger);
-	rv = PK11_RandomUpdate(buf, seedbytes);
-	passert(rv == SECSuccess);
-	messupn(buf, seedbytes);
-	pfree(buf);
-}
 
 int main(int argc, char *argv[])
 {
@@ -161,7 +131,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_SEEDDEV:       /* nonstandard random device for seed */
-			device = optarg;
+			optarg_seeddev(logger);
 			continue;
 
 		case OPT_HELP:       /* help */
@@ -242,7 +212,7 @@ static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger)
 	}
 
 	/* Do some random-number initialization. */
-	UpdateNSS_RNG(seedbits, logger);
+	lsw_nss_seed_rng(seedbits, logger);
 	privkey = PK11_GenerateKeyPair(slot,
 				       CKM_EC_KEY_PAIR_GEN,
 				       ecdsaparams, &pubkey,
@@ -286,43 +256,6 @@ static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger)
 		SECKEY_DestroyPublicKey(pubkey);
 
 	shutdown_nss();
-}
-
-/*
- * lsw_random - get some random bytes from /dev/random (or wherever)
- * NOTE: This is only used for additional seeding of the NSS RNG
- */
-static void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
-{
-	size_t ndone;
-	int dev;
-	ssize_t got;
-
-	dev = open(device, 0);
-	if (dev < 0) {
-		fprintf(stderr, "%s: could not open %s (%s)\n", progname,
-			device, strerror(errno));
-		exit(1);
-	}
-
-	ndone = 0;
-	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
-		    (int) nbytes * BITS_IN_BYTE, device);
-	while (ndone < nbytes) {
-		got = read(dev, buf + ndone, nbytes - ndone);
-		if (got < 0) {
-			fprintf(stderr, "%s: read error on %s (%s)\n", progname,
-				device, strerror(errno));
-			exit(1);
-		}
-		if (got == 0) {
-			fprintf(stderr, "%s: eof on %s!?!\n", progname, device);
-			exit(1);
-		}
-		ndone += got;
-	}
-
-	close(dev);
 }
 
 /*
