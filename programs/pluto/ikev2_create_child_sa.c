@@ -1446,6 +1446,20 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	pexpect(larval_child->sa.st_sa_kind_when_established == CHILD_SA);
 
 	/*
+	 * If the connection of larval child gets deleted while waiting for the
+	 * CREATE_CHILD_SA response, childs deletetion is deferred and now is the
+	 * time to delete it properly.
+	 */
+	struct connection *c = larval_child->sa.st_connection;
+	if (!c->policy.up && !c->policy.keep) {
+		llog_sa(RC_LOG, larval_child,
+			"connection was deleted while waiting for CREATE_CHILD_SA response, sending DELETE");
+		submit_v2_delete_exchange(ike, larval_child);
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+		return STF_OK;
+	}
+
+	/*
 	 * Drive the larval Child SA's state machine.
 	 */
 	set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
@@ -2174,7 +2188,21 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-        pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
+	/*
+	 * If the connection of larval child gets deleted while waiting for the
+	 * CREATE_CHILD_SA response, childs deletetion is deferred and now is the
+	 * time to delete it properly.
+	 */
+	struct connection *c = (*larval_child)->sa.st_connection;
+	if (!c->policy.up && !c->policy.keep) {
+	  llog_sa(RC_LOG, (*larval_child),
+		  "connection was deleted while waiting for CREATE_CHILD_SA response, sending DELETE");
+	  submit_v2_delete_exchange(ike, *larval_child);
+	  ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+	  return STF_OK;
+	}
+
+	pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
 
 	stf_status status = STF_ROOF; /*IKE;place holder*/
 

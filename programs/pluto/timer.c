@@ -483,6 +483,18 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			terminate_ike_family(&ike, REASON_DELETED, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
+
+			/*
+			 * If larval child deletion was deferred, we detach it from its
+			 * initiating IKE so that timeout-initiated child teardown can
+			 * delete it without deferring again.
+			 */
+			if (st->st_clonedfrom != SOS_NOBODY) {
+				struct ike_sa *ike = ike_sa_by_serialno(st->st_clonedfrom);
+				if (ike != NULL && ike->sa.st_v2_msgid_windows.initiator.wip_sa == child) {
+					ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+				}
+			}
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
 		st = NULL;
