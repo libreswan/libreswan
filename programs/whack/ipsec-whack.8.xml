@@ -218,7 +218,9 @@
       <arg choice="opt">--rekeyfuzz
       <replaceable>percentage</replaceable></arg>
 
-      <arg choice="opt">--esp <replaceable>esp-algos</replaceable></arg>
+      <arg choice="opt">--ike <replaceable>ike-proposal</replaceable></arg>
+      <arg choice="opt">--esp <replaceable>esp-proposal</replaceable></arg>
+      <arg choice="opt">--ah <replaceable>ah-proposal</replaceable></arg>
 
       <arg choice="opt">--dontrekey</arg>
 
@@ -2149,15 +2151,20 @@
 
 	<varlistentry>
           <term>
-	    <option>--esp <replaceable>esp-algos</replaceable></option>
+	    <option>--ike <replaceable>ike-proposals</replaceable></option>
+	  </term>
+          <term>
+	    <option>--esp <replaceable>esp-proposals</replaceable></option>
+	  </term>
+          <term>
+	    <option>--ah <replaceable>ah-proposals</replaceable></option>
 	  </term>
           <listitem>
             <para>
-	      ESP encryption/authentication algorithm to be used for
-	      the connection (phase2 aka IPsec SA). The options must
-	      be suitable as a value of &ipsec-spi.8;.  See
+	      The algorithms to propose and accept when negitiating
+	      either an IKE (ISAKMP) SA or Child (IPsec) SA.  See
 	      &ipsec.conf.5; for a detailed description of the
-	      algorithm format.
+	      <replaceable>proposal</replaceable> format.
 	    </para>
           </listitem>
 	</varlistentry>
