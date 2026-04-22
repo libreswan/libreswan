@@ -44,6 +44,7 @@ enum config_setup_keyword {
 	KSF_SECRETSFILE,
 	KSF_MYVENDORID,
 	KSF_LOGFILE,
+	KSF_EXAMPLEDIR,
 	KSF_RUNDIR,		/* placeholder, no option */
 	KSF_DNSSEC_ROOTKEY_FILE,
 	KSF_DNSSEC_ANCHORS,

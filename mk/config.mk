@@ -336,6 +336,7 @@ TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
 # libreswan's sample configuration files go into ...
 EXAMPLE_IPSEC_SYSCONFDIR ?= $(PREFIX)/share/doc/libreswan
 TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_SYSCONFDIR@@:$(EXAMPLE_IPSEC_SYSCONFDIR):g'
+USERLAND_CFLAGS += -DEXAMPLE_IPSEC_SYSCONFDIR=\"$(EXAMPLE_IPSEC_SYSCONFDIR)\"
 
 # where per-conn pluto logs go
 VARDIR ?= /var

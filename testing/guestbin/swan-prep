@@ -304,6 +304,7 @@ if hostname != "nic":
     ipsecdir = get_configsetup("ipsecdir")
     configfile = get_configsetup("configfile")
     secretsfile = get_configsetup("secretsfile")
+    exampledir = get_configsetup("exampledir")
 
 if args.namespace:
     nsbasepath ="%s/NS/%s" % (testpath, hostname) #will create testpath/NS/hostname/*
@@ -423,10 +424,10 @@ if hostname != "nic":
             os.mkdir("/etc/ipsec.d/policies")
 
             copy_config_file(hostname, testpath, "/etc/ipsec.conf",
-                             default="/usr/local/share/doc/libreswan/ipsec.conf-sample",
+                             default=os.path.join(exampledir, "ipsec.conf-sample"),
                              nsprefix=nsbasepath)
             copy_config_file(hostname, testpath, "/etc/ipsec.secrets",
-                             default="/usr/local/share/doc/libreswan/ipsec.secrets-sample",
+                             default=os.path.join(exampledir, "ipsec.secrets-sample"),
                              nsprefix=nsbasepath)
 
         case "strongswan":
