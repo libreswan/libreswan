@@ -12,7 +12,7 @@ west #
 Redirecting to: [initsystem]
 west #
  grep -E "^seeded" /tmp/pluto.log
-seeded 65 bytes into the NSS PRNG
+seeded 65 bytes into the NSS PRNG from /dev/random
 west #
  sed "s/seedbits=.*$/seedbits=1024/" ipsec.conf > /etc/ipsec.conf
 west #
@@ -25,7 +25,7 @@ west #
 Redirecting to: [initsystem]
 west #
  grep -E "^seeded" /tmp/pluto.log
-seeded 128 bytes into the NSS PRNG
+seeded 128 bytes into the NSS PRNG from /dev/random
 west #
  sed "s/seedbits=.*$/seedbits=2048/" ipsec.conf > /etc/ipsec.conf
 west #
@@ -38,7 +38,7 @@ west #
 Redirecting to: [initsystem]
 west #
  grep -E "^seeded" /tmp/pluto.log
-seeded 256 bytes into the NSS PRNG
+seeded 256 bytes into the NSS PRNG from /dev/random
 west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=1024
 west #
@@ -48,5 +48,17 @@ west #
 Pluto is shutting down
 west #
  grep -E "^seeded" /tmp/pluto.log
-seeded 128 bytes into the NSS PRNG
+seeded 128 bytes into the NSS PRNG from /dev/random
+west #
+ # Test with custom seeddev
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=520 --seeddev /dev/urandom
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ grep -E "^seeded" /tmp/pluto.log
+seeded 65 bytes into the NSS PRNG from /dev/urandom
 west #

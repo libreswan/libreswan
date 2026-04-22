@@ -1,10 +1,12 @@
-Verify pluto's enum tables
+Verify pluto's enum tables and option handling
 
 In addition to performing internal consistency checks, this test dumps
 out and then compares the value of all enums.  This is to ensure that
 enum changes don't have unintentional consequences - for instance
 modifying an enum value that goes across the wire (as part of the IKE
 or whack protocol).
+
+Also tests that --seedbits and --seeddev options are properly handled.
 
 To update run:
 

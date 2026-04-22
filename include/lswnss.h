@@ -2,6 +2,7 @@
  * NSS boilerplate stuff, for libreswan.
  *
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2026 Anish Singh Rawat
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -101,6 +102,13 @@ void shutdown_nss(void);
 	})
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
+
+/*
+ * Seed NSS PRNG with entropy from a random device.
+ * This is used by keygen tools to satisfy TLA requirements.
+ * Returns void; may exit on fatal errors.
+ */
+void lsw_nss_seed_rng(int seedbits, struct logger *logger);
 
 /*
  * These get the error using the thread-local PR_GetError() which

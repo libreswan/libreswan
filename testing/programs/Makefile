@@ -25,6 +25,7 @@ SUBDIRS += ipcheck
 SUBDIRS += jambufcheck
 SUBDIRS += kernel
 SUBDIRS += keyidcheck
+SUBDIRS += seedbitscheck
 SUBDIRS += timecheck
 SUBDIRS += ttodatacheck
 SUBDIRS += vendoridcheck

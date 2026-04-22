@@ -82,57 +82,88 @@
 enum opt {
 	OPT_DEBUG = 256,
 	OPT_VERBOSE,
-	OPT_SEEDDEV,
 	OPT_HELP,
 	OPT_VERSION,
 	OPT_NSSDIR,
 	OPT_PASSWORD,
+	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 };
 
 const struct option optarg_options[] = {
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",             no_argument,        NULL,   OPT_VERBOSE, },
-	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, },
 	{ "help\0",                no_argument,        NULL,   OPT_HELP, },
 	{ "version\0",             no_argument,        NULL,   OPT_VERSION, },
 	NSSDIR_OPTS,
-	{ "seedbits\0<bits>",      required_argument,  NULL,   OPT_SEEDBITS, },
 	{ 0, 0, NULL, 0, }
 };
 
-char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
 void rsasigkey(int nbits, int seedbits, struct logger *logger);
-void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 /*
- * UpdateRNG - Updates NSS's PRNG with user generated entropy
+ * generate an RSA signature key
  *
- * pluto and rsasigkey use the NSS crypto library as its random source.
- * Some government Three Letter Agencies require that pluto reads additional
- * bits from /dev/random and feed these into the NSS RNG before drawing random
- * from the NSS library, despite the NSS library itself already seeding its
- * internal state. This process can block pluto or rsasigkey for an extended
- * time during startup, depending on the entropy of the system. Therefore
- * the default is to not perform this redundant seeding. If specifying a
- * value, it is recommended to specify at least 460 bits (for FIPS) or 440
- * bits (for BSI).
+ * e is fixed at F4.
  */
-static void UpdateNSS_RNG(int seedbits, struct logger *logger)
+void rsasigkey(int nbits, int seedbits, struct logger *logger)
 {
-	SECStatus rv;
-	int seedbytes = BYTES_FOR_BITS(seedbits);
-	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
+	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
+	SECKEYPrivateKey *privkey = NULL;
+	SECKEYPublicKey *pubkey = NULL;
 
-	lsw_random(seedbytes, buf, logger);
-	rv = PK11_RandomUpdate(buf, seedbytes);
-	assert(rv == SECSuccess);
-	messupn(buf, seedbytes);
-	pfree(buf);
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
+	if (slot == NULL) {
+		/* already logged */
+		shutdown_nss();
+		exit(1);
+	}
+
+	/* Do some random-number initialization. */
+	lsw_nss_seed_rng(seedbits, logger);
+	privkey = PK11_GenerateKeyPair(slot,
+				       CKM_RSA_PKCS_KEY_PAIR_GEN,
+				       &rsaparams, &pubkey,
+				       PR_TRUE,
+				       PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
+				       lsw_nss_get_password_context(logger));
+	/* inTheToken, isSensitive, passwordCallbackFunction */
+	if (privkey == NULL) {
+		fprintf(stderr,
+			"%s: key pair generation failed: \"%d\"\n", progname,
+			PORT_GetError());
+		return;
+	}
+
+	char *hex_ckaid;
+	{
+		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(privkey);
+		if (ckaid == NULL) {
+			fprintf(stderr, "%s: 'CKAID' calculation failed\n", progname);
+			exit(1);
+		}
+		hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
+		SECITEM_FreeItem(ckaid, PR_TRUE);
+	}
+
+	PORT_Assert(pubkey != NULL);
+	fprintf(stderr, "Generated RSA key pair with CKAID %s was stored in the NSS database\n",
+		hex_ckaid);
+	fprintf(stderr, "The public key can be displayed using: ipsec showhostkey --left --ckaid %s\n",
+		hex_ckaid);
+
+	if (hex_ckaid != NULL)
+		free(hex_ckaid);
+	if (privkey != NULL)
+		SECKEY_DestroyPrivateKey(privkey);
+	if (pubkey != NULL)
+		SECKEY_DestroyPublicKey(pubkey);
+
+	shutdown_nss();
 }
 
 int main(int argc, char *argv[])
@@ -160,7 +191,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_SEEDDEV:       /* nonstandard random device for seed */
-			device = optarg;
+			optarg_seeddev(logger);
 			continue;
 
 		case OPT_HELP:       /* help */
@@ -247,104 +278,6 @@ int main(int argc, char *argv[])
 }
 
 /*
- * generate an RSA signature key
- *
- * e is fixed at F4.
- */
-void rsasigkey(int nbits, int seedbits, struct logger *logger)
-{
-	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
-	SECKEYPrivateKey *privkey = NULL;
-	SECKEYPublicKey *pubkey = NULL;
-
-	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
-	if (slot == NULL) {
-		/* already logged */
-		shutdown_nss();
-		exit(1);
-	}
-
-	/* Do some random-number initialization. */
-	UpdateNSS_RNG(seedbits, logger);
-	privkey = PK11_GenerateKeyPair(slot,
-				       CKM_RSA_PKCS_KEY_PAIR_GEN,
-				       &rsaparams, &pubkey,
-				       PR_TRUE,
-				       PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
-				       lsw_nss_get_password_context(logger));
-	/* inTheToken, isSensitive, passwordCallbackFunction */
-	if (privkey == NULL) {
-		fprintf(stderr,
-			"%s: key pair generation failed: \"%d\"\n", progname,
-			PORT_GetError());
-		return;
-	}
-
-	char *hex_ckaid;
-	{
-		SECItem *ckaid = PK11_GetLowLevelKeyIDForPrivateKey(privkey);
-		if (ckaid == NULL) {
-			fprintf(stderr, "%s: 'CKAID' calculation failed\n", progname);
-			exit(1);
-		}
-		hex_ckaid = strdup(conv(ckaid->data, ckaid->len, 16));
-		SECITEM_FreeItem(ckaid, PR_TRUE);
-	}
-
-	PORT_Assert(pubkey != NULL);
-	fprintf(stderr, "Generated RSA key pair with CKAID %s was stored in the NSS database\n",
-		hex_ckaid);
-	fprintf(stderr, "The public key can be displayed using: ipsec showhostkey --left --ckaid %s\n",
-		hex_ckaid);
-
-	if (hex_ckaid != NULL)
-		free(hex_ckaid);
-	if (privkey != NULL)
-		SECKEY_DestroyPrivateKey(privkey);
-	if (pubkey != NULL)
-		SECKEY_DestroyPublicKey(pubkey);
-
-	shutdown_nss();
-}
-
-/*
- * lsw_random - get some random bytes from /dev/random (or wherever)
- * NOTE: This is only used for additional seeding of the NSS RNG
- */
-void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
-{
-	size_t ndone;
-	int dev;
-	ssize_t got;
-
-	dev = open(device, 0);
-	if (dev < 0) {
-		fprintf(stderr, "%s: could not open %s (%s)\n", progname,
-			device, strerror(errno));
-		exit(1);
-	}
-
-	ndone = 0;
-	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
-		    (int) nbytes * BITS_IN_BYTE, device);
-	while (ndone < nbytes) {
-		got = read(dev, buf + ndone, nbytes - ndone);
-		if (got < 0) {
-			fprintf(stderr, "%s: read error on %s (%s)\n", progname,
-				device, strerror(errno));
-			exit(1);
-		}
-		if (got == 0) {
-			fprintf(stderr, "%s: eof on %s!?!\n", progname, device);
-			exit(1);
-		}
-		ndone += got;
-	}
-
-	close(dev);
-}
-
-/*
    - conv - convert bits to output in specified datatot format
  * NOTE: result points into a STATIC buffer
  */
@@ -354,15 +287,10 @@ static const char *conv(const unsigned char *bits, size_t nbytes, int format)
 	size_t n;
 
 	n = datatot(bits, nbytes, format, convbuf, sizeof(convbuf));
-	if (n == 0) {
-		fprintf(stderr, "%s: can't-happen convert error\n", progname);
-		exit(1);
-	}
-	if (n > sizeof(convbuf)) {
-		fprintf(stderr,
-			"%s: can't-happen convert overflow (need %d)\n",
-			progname, (int) n);
-		exit(1);
+	if (n > 0) {
+		convbuf[n] = '\0';
+	} else {
+		convbuf[0] = '\0';
 	}
 	return convbuf;
 }

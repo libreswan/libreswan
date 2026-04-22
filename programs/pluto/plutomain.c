@@ -223,7 +223,10 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 	size_t ndone;
 	int dev;
 	ssize_t got;
-	const char *device = "/dev/random";
+	const char *device = config_setup_string(KSF_SEEDDEV);
+	if (device == NULL) {
+		device = "/dev/random";
+	}
 
 	dev = open(device, 0);
 	if (dev < 0) {
@@ -245,7 +248,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 		ndone += got;
 	}
 	close(dev);
-	ldbg(logger, "read %zu bytes from /dev/random for NSS PRNG", nbytes);
+	ldbg(logger, "read %zu bytes from %s for NSS PRNG", nbytes, device);
 }
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)
@@ -268,7 +271,11 @@ static void init_seedbits(struct logger *logger)
 
 		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
 		SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
-		llog(RC_LOG, logger, "seeded %d bytes into the NSS PRNG", seedbytes);
+		const char *device = config_setup_string(KSF_SEEDDEV);
+		if (device == NULL) {
+			device = "/dev/random";
+		}
+		llog(RC_LOG, logger, "seeded %d bytes into the NSS PRNG from %s", seedbytes, device);
 		passert(rv == SECSuccess);
 		messupn(buf, seedbytes);
 		pfree(buf);
@@ -372,6 +379,7 @@ enum opt {
 	OPT_VIRTUAL_PRIVATE,
 	OPT_NHELPERS,
 	OPT_EXPIRE_SHUNT_INTERVAL,
+	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 	OPT_IKEV1_SECCTX_ATTR_TYPE,
 	OPT_IKEV1_REJECT,
@@ -447,6 +455,7 @@ const struct option optarg_options[] = {
 	{ OPT("keep-alive", "<delay-seconds>"), required_argument, NULL, OPT_KEEP_ALIVE },
 	{ OPT("virtual-private", "<network-list>"), required_argument, NULL, OPT_VIRTUAL_PRIVATE },
 	{ OPT("expire-shunt-interval", "<seconds>"), required_argument, NULL, OPT_EXPIRE_SHUNT_INTERVAL },
+	{ OPT("seeddev", "<device>"), required_argument, NULL, OPT_SEEDDEV },
 	{ OPT("seedbits", "number"), required_argument, NULL, OPT_SEEDBITS },
 	/* really an attribute type, not a value */
 	{ OPT("ikev1-secctx-attr-type", "<number>"), required_argument, NULL, OPT_IKEV1_SECCTX_ATTR_TYPE },
@@ -685,6 +694,12 @@ int main(int argc, char **argv)
 		case OPT_NHELPERS:	/* --nhelpers */
 			update_setup_option(KBF_NHELPERS, optarg_uintmax(logger));
 			continue;
+
+		case OPT_SEEDDEV:	/* --seeddev */
+		{
+			optarg_seeddev(logger);
+			continue;
+		}
 
 		case OPT_SEEDBITS:	/* --seedbits */
 		{
