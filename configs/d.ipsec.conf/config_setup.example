@@ -1,3 +1,2 @@
 config setup
     logfile=/var/log/pluto.log
-    plutodebug=all

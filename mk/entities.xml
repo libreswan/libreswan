@@ -81,6 +81,7 @@
 
 <!ENTITY ipsec-_plutorun.8 '<citerefentry><refentrytitle>ipsec-_plutorun</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-add.8 '<citerefentry><refentrytitle>ipsec-add</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-addconn.8 '<citerefentry><refentrytitle>ipsec-addconn</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-algparse.8 '<citerefentry><refentrytitle>ipsec-algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-briefconnectionstatus.8 '<citerefentry><refentrytitle>ipsec-briefconnectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-briefstatus.8 '<citerefentry><refentrytitle>ipsec-briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
