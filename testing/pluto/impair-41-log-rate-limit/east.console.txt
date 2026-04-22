@@ -93,3 +93,82 @@ packet from 192.1.2.23:EPHEM: message digest rate limited log reached limit of 2
 packet from 192.1.2.23:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=6, sd->size=28)
 | dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=7, sd->size=28)
 east #
+ # ----------------------------------
+east #
+ # disable loglimit - should ignore impair
+east #
+ # ----------------------------------
+east #
+ set -e 's/.*loglimit=.*/\tloglimit=no/' ipsec.conf > /etc/ipsec.conf
+east #
+ ipsec restart
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair log_rate_limit:1 # suppress last
+east #
+ # demux.c: "dropping packet with mangled IKE header" - under limit
+east #
+ printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
+east #
+ # demux.c: at limit - sentinel ignored
+east #
+ printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
+east #
+ DROPPED
+impair: log_rate_limit: no -> 2
+packet from 192.1.2.23:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=5, sd->size=28)
+packet from 192.1.2.23:EPHEM: message digest rate limited log reached limit of 2 entries
+packet from 192.1.2.23:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=6, sd->size=28)
+| dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=7, sd->size=28)
+east #
+ # ----------------------------------
+east #
+ # disable loglimit - should ignore impair
+east #
+ # ----------------------------------
+east #
+ grep '^log rate' /tmp/pluto.log # default is loglimit=yes
+log rate limiting [enabled]
+east #
+ sed -e 's/.*loglimit=.*/\tloglimit=yes/' ipsec.conf > /etc/ipsec.conf
+east #
+ ipsec stop
+Redirecting to: [initsystem]
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ grep '^log rate' /tmp/pluto.log
+log rate limiting [enabled]
+east #
+ sed -e 's/.*loglimit=.*/\tloglimit=no/' ipsec.conf > /etc/ipsec.conf
+east #
+ ipsec restart
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ grep '^log rate' /tmp/pluto.log
+log rate limiting [disabled]
+east #
+ ipsec whack --impair log_rate_limit:1 # suppress last
+east #
+ # demux.c: "dropping packet with mangled IKE header" - under limit
+east #
+ printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
+east #
+ # demux.c: at limit - sentinel ignored
+east #
+ printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
+east #
+ # don't expect limiter
+east #
+ DROPPED
+impair: log_rate_limit: no -> 1
+packet from 192.1.2.23:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=5, sd->size=28)
+packet from 192.1.2.23:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=6, sd->size=28)
+east #

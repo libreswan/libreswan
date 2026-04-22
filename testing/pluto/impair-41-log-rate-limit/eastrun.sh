@@ -46,3 +46,44 @@ printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
 printf '\0\0\0\0asd' | nc -4 -u 192.1.2.23 500
 
 DROPPED
+
+# ----------------------------------
+# disable loglimit - should ignore impair
+# ----------------------------------
+
+set -e 's/.*loglimit=.*/\tloglimit=no/' ipsec.conf > /etc/ipsec.conf
+ipsec restart
+../../guestbin/wait-until-pluto-started
+ipsec whack --impair log_rate_limit:1 # suppress last
+
+# demux.c: "dropping packet with mangled IKE header" - under limit
+printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
+# demux.c: at limit - sentinel ignored
+printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
+
+DROPPED
+
+# ----------------------------------
+# disable loglimit - should ignore impair
+# ----------------------------------
+
+grep '^log rate' /tmp/pluto.log # default is loglimit=yes
+
+sed -e 's/.*loglimit=.*/\tloglimit=yes/' ipsec.conf > /etc/ipsec.conf
+ipsec stop
+ipsec start
+../../guestbin/wait-until-pluto-started
+grep '^log rate' /tmp/pluto.log
+
+sed -e 's/.*loglimit=.*/\tloglimit=no/' ipsec.conf > /etc/ipsec.conf
+ipsec restart
+../../guestbin/wait-until-pluto-started
+grep '^log rate' /tmp/pluto.log
+ipsec whack --impair log_rate_limit:1 # suppress last
+# demux.c: "dropping packet with mangled IKE header" - under limit
+printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
+# demux.c: at limit - sentinel ignored
+printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
+
+# don't expect limiter
+DROPPED
