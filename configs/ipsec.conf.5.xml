@@ -171,6 +171,7 @@
 <!ENTITY setup.listen-udp SYSTEM "d.ipsec.conf/setup/listen-udp.xml">
 <!ENTITY setup.logappend SYSTEM "d.ipsec.conf/setup/logappend.xml">
 <!ENTITY setup.logfile SYSTEM "d.ipsec.conf/setup/logfile.xml">
+<!ENTITY setup.loglimit SYSTEM "d.ipsec.conf/setup/loglimit.xml">
 <!ENTITY setup.logip SYSTEM "d.ipsec.conf/setup/logip.xml">
 <!ENTITY setup.logtime SYSTEM "d.ipsec.conf/setup/logtime.xml">
 <!ENTITY setup.max-halfopen-ike SYSTEM "d.ipsec.conf/setup/max-halfopen-ike.xml">
@@ -435,6 +436,7 @@
       &setup.logfile;
       &setup.logappend;
       &setup.logip;
+      &setup.loglimit;
       &setup.audit-log;
       &setup.logtime;
       &setup.ddos-mode;
