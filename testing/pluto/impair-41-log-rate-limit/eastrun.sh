@@ -1,4 +1,20 @@
-# -- port 4500 (esp_encapsulation_enabled) ----------------------------------
+# Grep east's log for all rate-limited UDP events and the limiter
+# sentinel.
+#
+# Columns: plain RC_LOG lines start with 'packet from',
+#          debug-stream (over-limit) lines start with '| ',
+#          impair lines start with 'impair: '
+
+DROPPED() { grep -e '^packet from' -e '^| dropping packet with mangled IKE header' -e '^impair: ' /tmp/pluto.log ; }
+
+# ----------------------------------
+# port 4500 (esp_encapsulation_enabled)
+# ----------------------------------
+
+ipsec restart
+../../guestbin/wait-until-pluto-started
+ipsec whack --impair log_rate_limit:3 # suppress last
+
 # iface_udp.c: "too small packet" - packet shorter than 4 bytes (sizeof uint32_t)
 printf 'ab' | nc -4 -u 192.1.2.23 4500
 
@@ -12,10 +28,21 @@ printf '\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0' | nc -4 -u 192.1.2.23 4500
 # iface_udp.c: "NAT-T keep-alive" - single 0xff byte with Non-ESP marker prefix
 printf '\0\0\0\0\xff' | nc -4 -u 192.1.2.23 4500
 
-# -- port 500 (plain IKE, no esp_encapsulation) ------------------------------
+DROPPED
+
+# ----------------------------------
+# port 500 (plain IKE, no esp_encapsulation)
+# ----------------------------------
+
+ipsec restart
+../../guestbin/wait-until-pluto-started
+ipsec whack --impair log_rate_limit:2 # suppress last
+
 # demux.c: "dropping packet with mangled IKE header" - under limit
 printf '\0\0\0\0a' | nc -4 -u 192.1.2.23 500
 # demux.c: at limit - sentinel fires here
 printf '\0\0\0\0as' | nc -4 -u 192.1.2.23 500
 # demux.c: over limit - suppressed to debug log
 printf '\0\0\0\0asd' | nc -4 -u 192.1.2.23 500
+
+DROPPED
