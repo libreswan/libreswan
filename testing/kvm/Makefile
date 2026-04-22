@@ -1321,6 +1321,10 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 		/bin/sh -x /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown after upgrade succeeds
 	$(KVMSH) --shutdown $(notdir $@)
+	: confirm network is still working,
+	: a messed up upgrade can leave no network
+	$(KVMSH) $(notdir $@) -- /bench/testing/guestbin/ping-once.sh --up google.com
+	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
 KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_PACKAGES)

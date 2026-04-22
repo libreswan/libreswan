@@ -98,18 +98,25 @@ packages_for_testing() {
     cat <<EOF | awk '{print $1}'
 bind-dnssec-utils
 bind-utils
+c++				# Building NSS
+checksec
 conntrack-tools
+diffstat			# used by NSRUN
 fping
 gawk
 gdb
-gnutls-utils				used by soft tokens
+git				# used by NSRUN
+gnutls-utils			# used by soft tokens
+gyp				# Building NSS
 iptables
+jq
 kl2tpd
 libcap-ng-utils
 linux-system-roles
 nc
 net-tools
 nftables
+ninja				# Building NSS
 nsd
 ocspd
 openssl
@@ -118,13 +125,12 @@ python3-pexpect
 rsync
 selinux-policy-devel
 socat
-softhsm-devel				used by soft tokens
-sshpass					used by ansible-playbook
+softhsm-devel			# used by soft tokens
+sshpass				# used by ansible-playbook
 strace
 strongswan
 strongswan-sqlite
-systemd-networkd
-systemd-resolved
+systemtap			# performance profiling
 tar
 tcpdump
 tpm2-abrmd
@@ -134,11 +140,13 @@ wireshark-cli
 EOF
 }
 
+
 :
 : Install build dependencies, testing, and kernel packages
 :
 
 dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
+
 
 :
 : Upgrade build dependencies
@@ -146,9 +154,23 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 
 dnf upgrade -y $(packages_for_build)
 
+
 :
-: Hobble systemd-resolved and NetworkManager
+: INSTALL and DISABLE systemd-networkd and systemd-resolved
+:
+: - put back /etc/resolv.conf trashed by systemd-resolved
+: - systemd-networkd has not configs, hence ...
+: - leave NetworkManager enabled
+: - transmogrify.sh will configure systemd-networkd
 :
 
-systemctl disable systemd-resolved.service
-systemctl disable NetworkManager.service
+ls -l /etc/resolv.conf # file
+
+dnf install -y systemd-networkd systemd-resolved
+dnf upgrade -y systemd-networkd systemd-resolved
+systemctl disable systemd-resolved.service systemd-networkd.service
+systemctl enable NetworkManager # to be sure
+
+ls -l /etc/resolv.conf # link ARGH
+rm /etc/resolv.conf
+touch /etc/resolv.conf
