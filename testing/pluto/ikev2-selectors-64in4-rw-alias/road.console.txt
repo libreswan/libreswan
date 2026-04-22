@@ -10,7 +10,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road
+ ipsec add road
 "road/1x1": connection is using multiple sourceips
 "road/1x1": added oriented IKEv2 connection
 warning: "road": skipping mismatched leftsubnets=2001:db8:0:30::/64 rightsubnets=192.0.2.0/24
@@ -21,7 +21,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec up road
+ ipsec up road # sanitize-retransmits
 initiating all connections with alias "road"
 "road/1x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road/2x2": queue Child SA; waiting on IKE SA "road/1x1" #1 negotiating with 192.1.2.23

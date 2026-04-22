@@ -10,7 +10,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road
+ ipsec add road
 "road": connection is using multiple subnets
 "road": added oriented IKEv2 connection
 road #

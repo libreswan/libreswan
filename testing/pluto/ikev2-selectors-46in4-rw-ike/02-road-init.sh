@@ -4,5 +4,5 @@
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add road
+ipsec add road
 echo "initdone"
