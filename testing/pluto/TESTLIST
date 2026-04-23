@@ -301,6 +301,7 @@ kvmplutotest	ikev2-ddns-02-unbound-ready		good
 kvmplutotest	ikev2-ddns-02-unbound-delayed		good
 kvmplutotest	ikev2-ddns-03-manual-delayed		good
 kvmplutotest	ikev2-ddns-04-revival-hosts		good
+kvmplutotest	ikev2-ddns-04-revival-unbound		good
 
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nhelpers0		good

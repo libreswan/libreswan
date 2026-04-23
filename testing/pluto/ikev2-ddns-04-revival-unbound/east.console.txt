@@ -1,0 +1,24 @@
+/testing/guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+east #
+ echo "192.1.2.23 right.libreswan.org" >> /etc/hosts
+east #
+ ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
+/etc/hosts /tmp/hosts.east.ikev2-ddns-04-revival-hosts /etc/hosts
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add named
+"named": added oriented IKEv2 connection
+east #
+ ipsec stop
+Redirecting to: [initsystem]
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+east # 
