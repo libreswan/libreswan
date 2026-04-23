@@ -3,7 +3,7 @@
 # expect no holes; not ipsec-kernel-policy.sh as that filters
 ipsec _kernel policy
 
-ipsec pluto --config /etc/ipsec.conf --leak-detective
+ipsec pluto --config /etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
 
 # expect holes; not ipsec-kernel-policy.sh as that filters

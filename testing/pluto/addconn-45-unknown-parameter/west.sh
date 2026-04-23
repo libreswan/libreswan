@@ -16,7 +16,7 @@ ipsec addconn --debug --config /dne.conf
 # broken config setup
 
 # will fail
-ipsec pluto --config bad-config-setup-key.conf
+ipsec pluto --no-leak-detective --config bad-config-setup-key.conf
 # should fail but doesn't, hence shutdown
 ipsec pluto --config bad-config-setup-value.conf
 ipsec whack --shutdown
@@ -29,7 +29,7 @@ cp /tmp/pluto.log OUTPUT/obsolete-config-setup-key.log
 # broken conn section; should be grumpy but ignored
 
 # will fail
-ipsec pluto --config bad-conn-key.conf
+ipsec pluto --leak-detective=no --config bad-conn-key.conf
 # should fail?
 ipsec pluto --config bad-conn-value.conf
 ipsec whack --shutdown

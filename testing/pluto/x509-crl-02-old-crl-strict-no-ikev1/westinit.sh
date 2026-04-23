@@ -7,7 +7,7 @@
 ipsec certutil -L
 
 # need to pass impair into pluto
-ipsec pluto --config /etc/ipsec.conf --leak-detective --impair event_check_crls
+ipsec pluto --config /etc/ipsec.conf --impair event_check_crls
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival

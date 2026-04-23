@@ -10,8 +10,8 @@ ipsec pluto --efence-protect     --config /etc/ipsec.conf # >=5.3
 ../../guestbin/wait-until-pluto-started
 ipsec whack --shutdown
 
-# leak-detective
-ipsec pluto --leak-detective --config /etc/ipsec.conf
+# leak-detective is now always enabled by default
+ipsec pluto --config /etc/ipsec.conf
 # wait to startup to finish; shutting down early causes leaks.
 ../../guestbin/wait-until-pluto-started
 ipsec whack --shutdown

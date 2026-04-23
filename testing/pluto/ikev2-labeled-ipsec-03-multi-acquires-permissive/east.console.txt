@@ -107,7 +107,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  >>>>>>>>>> post-mortem >>>>>>>>>>../../guestbin/post-mortem.sh
    PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
-      1     552     552     552 ?             -1 Ssl      0   0:00 PATH/libexec/ipsec/pluto --leak-detective --config /etc/ipsec.conf --nofork
+      1     552     552     552 ?             -1 Ssl      0   0:00 PATH/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork
 :
 : checking shutting down pluto
 :

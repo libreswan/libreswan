@@ -803,9 +803,9 @@
 
       <para>
 	If you are investigating a potential memory leak in pluto,
-	start pluto with the --leak-detective option.  Before the leak
-	causes the system or pluto to die, shut down pluto in the regular
-	way. pluto will display a list of leaks it has detected.
+	shut down pluto in the regular way. pluto will display a list
+	of leaks it has detected, as leak-detective is now always
+	enabled by default.
       </para>
 
       <para>

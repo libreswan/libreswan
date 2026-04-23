@@ -1,1 +1,2 @@
-PLUTO_OPTIONS="--leak-detective"
+# Note: leak-detective is now always enabled by default
+PLUTO_OPTIONS=""

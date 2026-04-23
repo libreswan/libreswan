@@ -1,2 +1,3 @@
 # Put extra pluto command line options you want here
-PLUTO_OPTIONS=" "
+# Note: leak-detective is now always enabled by default
+PLUTO_OPTIONS=""

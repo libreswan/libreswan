@@ -6,7 +6,7 @@ RUN()
     "$@"
 }
 
-RUN ipsec pluto --config $1 --leak-detective
+RUN ipsec pluto --config $1
 RUN ../../guestbin/wait-until-pluto-started
 RUN grep '^[^|].*OCSP' /tmp/pluto.log
 RUN ipsec whack --shutdown

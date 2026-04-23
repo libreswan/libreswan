@@ -44,6 +44,7 @@
 #include "lswversion.h"
 #include "fips_mode.h"
 #include "lswnss.h"
+#include "lswalloc.h"
 #include "defs.h"
 #include "x509_ocsp.h"
 #include "server_fork.h"		/* for init_server_fork() */
@@ -394,6 +395,7 @@ enum opt {
 	OPT_VENDORID,
 	OPT_SELFTEST,
 	OPT_LEAK_DETECTIVE,
+	OPT_NO_LEAK_DETECTIVE,
 };
 
 const struct option optarg_options[] = {
@@ -413,7 +415,6 @@ const struct option optarg_options[] = {
 	{ REPLACE_OPT("foodgroupsdir", "ipsecdir", "3.9"), required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
 	{ OPT("nssdir", "<dirname>"), required_argument, NULL, OPT_NSSDIR },	/* nss-tools use -d */
 	{ OPT("nhelpers", "<number>"), required_argument, NULL, OPT_NHELPERS },
-	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
 	{ OPT("efence-protect"), no_argument, NULL, OPT_EFENCE_PROTECT, },
 
 	{ OPT("dnssec-enable", "<bool>"), required_argument, NULL, OPT_DNSSEC_ENABLE },
@@ -506,6 +507,8 @@ const struct option optarg_options[] = {
 	{ OPT("debug", "help|<debug-flags>"), required_argument, NULL, OPT_DEBUG, },
 	{ OPT("impair", "help|<impairment>"), required_argument, NULL, OPT_IMPAIR, },
 	{ OPT("selftest"), no_argument, NULL, OPT_SELFTEST },
+	{ OPT("leak-detective"), optional_argument, NULL, OPT_LEAK_DETECTIVE },
+	{ OPT("no-leak-detective"), no_argument, NULL, OPT_NO_LEAK_DETECTIVE },
 
 	{ 0, 0, 0, 0 }
 };
@@ -597,17 +600,10 @@ int main(int argc, char **argv)
 	 * Some options MUST be processed before the first malloc()
 	 * call, so scan for them here:
 	 *
-	 * - leak-detective is immutable, it must come before the
-	 *   first malloc()
-	 *
 	 * - efence-protect seems to be less strict, but enabling it
 	 *   early must be a good thing (TM) right?
 	 */
 	for (int i = 1; i < argc; ++i) {
-		if (streq(argv[i], "--leak-detective")) {
-			leak_detective = true;
-			continue;
-		}
 #ifdef USE_EFENCE
 		if (streq(argv[i], "--efence-protect")) {
 			EF_PROTECT_BELOW = 1;
@@ -663,17 +659,6 @@ int main(int argc, char **argv)
 		case OPT_HELP:	/* --help */
 			/* writes to STDOUT so <<| more>> works */
 			optarg_usage("ipsec pluto", "", "");
-
-		case OPT_LEAK_DETECTIVE:	/* --leak-detective */
-			/*
-			 * This flag was already processed at the start of main()
-			 * because leak_detective must be immutable from before
-			 * the first alloc().
-			 * If this option is specified, we must have already
-			 * set it at the start of main(), so assert it.
-			 */
-			passert(leak_detective);
-			continue;
 
 		case OPT_DUMPDIR:	/* --dumpdir */
 			update_setup_string(KSF_DUMPDIR, optarg_nonempty(logger));
@@ -1037,6 +1022,29 @@ int main(int argc, char **argv)
 			}
 			continue;
 		}
+
+		case OPT_LEAK_DETECTIVE: /* --leak-detective */
+			/* optional_argument: --leak-detective, --leak-detective=no, --leak-detective=yes */
+			if (optarg != NULL) {
+				/* explicit value provided */
+				bool enabled = optarg_bool(logger);
+				if (enabled) {
+					llog(RC_LOG, logger, "warning: --leak-detective is now the default and can be omitted");
+				} else {
+					llog(RC_LOG, logger, "warning: --leak-detective=no is deprecated; use --no-leak-detective instead (temporarily)");
+					leak_detective = false;
+				}
+			} else {
+				/* no argument: --leak-detective */
+				llog(RC_LOG, logger, "warning: --leak-detective is now the default and can be omitted");
+			}
+			continue;
+
+		case OPT_NO_LEAK_DETECTIVE: /* --no-leak-detective */
+			llog(RC_LOG, logger, "warning: --no-leak-detective is deprecated and will be removed in a future release");
+			leak_detective = false;
+			continue;
+
 		/* no default: instead ... */
 		}
 

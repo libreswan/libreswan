@@ -34,7 +34,8 @@ west #
 west #
  # will fail
 west #
- ipsec pluto --config bad-config-setup-key.conf
+ ipsec pluto --no-leak-detective --config bad-config-setup-key.conf
+ipsec pluto: warning: --no-leak-detective is deprecated and will be removed in a future release
 FATAL ERROR: ipsec pluto: bad-config-setup-key.conf:7: unrecognized 'config setup' keyword 'unknown'
 systemd watchdog: sending action: stopping, status 1
 west #
@@ -62,7 +63,8 @@ west #
 west #
  # will fail
 west #
- ipsec pluto --config bad-conn-key.conf
+ ipsec pluto --leak-detective=no --config bad-conn-key.conf
+ipsec pluto: warning: --leak-detective=no is deprecated; use --no-leak-detective instead (temporarily)
 FATAL ERROR: ipsec pluto: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
 systemd watchdog: sending action: stopping, status 1
 west #

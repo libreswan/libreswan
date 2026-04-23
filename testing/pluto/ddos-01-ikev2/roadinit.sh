@@ -255,7 +255,7 @@
 ../../guestbin/ip.sh address add 192.1.3.253/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.254/24 dev eth0
 
-ipsec pluto --config /etc/ipsec.conf --leak-detective
+ipsec pluto --config /etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
 
 echo "initdone"

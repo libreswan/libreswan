@@ -53,7 +53,7 @@ west #
  # ocsp-uri= broken
 west #
  ./run.sh ocsp-uri-broken.conf
- ipsec pluto --config ocsp-uri-broken.conf --leak-detective
+ ipsec pluto --config ocsp-uri-broken.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
@@ -65,7 +65,7 @@ west #
  # ocsp-trustname= broken
 west #
  ./run.sh ocsp-trustname-broken.conf
- ipsec pluto --config ocsp-trustname-broken.conf --leak-detective
+ ipsec pluto --config ocsp-trustname-broken.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
@@ -77,7 +77,7 @@ west #
  # both ocsp-trustname= and ocsp-uri broken
 west #
  ./run.sh ocsp-broken.conf
- ipsec pluto --config ocsp-broken.conf --leak-detective
+ ipsec pluto --config ocsp-broken.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
@@ -89,7 +89,7 @@ west #
  # ocsp-uri= wrong
 west #
  ./run.sh ocsp-uri-wrong.conf
- ipsec pluto --config ocsp-uri-wrong.conf --leak-detective
+ ipsec pluto --config ocsp-uri-wrong.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
@@ -101,7 +101,7 @@ west #
  # ocsp-uri= missing
 west #
  ./run.sh ocsp-uri-missing.conf
- ipsec pluto --config ocsp-uri-missing.conf --leak-detective
+ ipsec pluto --config ocsp-uri-missing.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
@@ -113,7 +113,7 @@ west #
  # ocsp-trustname= missing
 west #
  ./run.sh ocsp-trustname-missing.conf
- ipsec pluto --config ocsp-trustname-missing.conf --leak-detective
+ ipsec pluto --config ocsp-trustname-missing.conf
  ../../guestbin/wait-until-pluto-started
  grep ^[^|].*OCSP /tmp/pluto.log
 NSS: OCSP [enabled]
