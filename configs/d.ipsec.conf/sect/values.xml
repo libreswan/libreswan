@@ -1,15 +1,15 @@
-<refsect2 id='sect.units'>
+<refsect2 id='sect.values'>
   <title>
-    UNITS
+    Values
   </title>
 
-  <refsect3 id='unit_bytes'>
+  <refsect3 id='sect.values.bytes'>
     <title>
-      BYTE COUNTS AND BINARY DATA
+      Byte Counts And Binary Data
     </title>
     <para>
       Options, such as <option>ipsec-max-bytes</option>, that expect a
-      numeric byte count, also accept deciml fractions, and the
+      numeric byte count, also accept decimal fractions, and the
       following multipliers as a suffix:
       <variablelist>
 	<varlistentry>
@@ -40,9 +40,9 @@
     </para>
   </refsect3>
 
-  <refsect3 id='unit_duration'>
+  <refsect3 id='sect.values.duration'>
     <title>
-      DURATION
+      Duration
     </title>
     <para>
       Options, such as <option>retransmit-timeout</option>, that
@@ -123,6 +123,69 @@
       For instance, the following are each equivalent: 1ms and 1000us;
       0.5s and 500ms; 1.5h and 90m.
     </para>
+  </refsect3>
+
+  <refsect3 id='sect.values.proposals'>
+    <title>Proposals</title>
+
+    <para>
+      The options <option>ike=</option>, <option>esp=</option>, and
+      <option>ah=</option> expect algorithm proposals to follow the
+      following syntax:
+    </para>
+
+    <programlisting id='sect.values.proposals.syntax'><xi:include
+    href="d.ipsec.conf/sect/proposals.txt"  parse="text"
+    xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    </programlisting>
+
+    <para>
+      Proposals are not required.  When omitted, &Libreswan; will
+      provide suitable defaults (see &ipsec-algparse.8;).  Similarly,
+      when an algorithm is omitted from a proposal, &Libreswan; will,
+      again, provide suitable defaults.
+    </para>
+
+    <para>
+      Including KEM algorithms in either an &ESP; or &AH; proposal is
+      not recommended.  When a proposal requires KEM algorithms (for
+      instance when PFS is enabled) the proposal will automatically
+      include the KEM algorithm negotiated during the IKE exchange.
+    </para>
+
+    <para>
+      Enabled cryptographic algorithms and default proposals are
+      logged by &pluto; during startup (see &ipsec-pluto.8;).
+    </para>
+
+    <note>
+      <para>
+	Some distributions, such as Fedora and RHEL/CentOS, use a
+	System Wide Crypto Policy to specify the default
+	<option>ike=</option> and <option>esp=</option> proposals.
+	Specifying your own <option>ike=</option> (or
+	<option>esp=</option>) proposal means overriding all these
+	system or software recommended defaults, but can be necessary
+	at times.
+      </para>
+    </note>
+
+    <note>
+      <para>
+	Using a PRF (KDF) algorithm that is different to the INTEGRITY
+	(hash) algorithm is not recommended.
+      </para>
+    </note>
+
+    <para>
+      The ";TYPE=ALGORITHMS" syntax was added in &Libreswan; 5.4.
+      Support for "ENCRYPTION-INTEGRITY-PRF" in &IKE; proposals was
+      deprecated in &Libreswan; 5.4.  Support for
+      "ENCRYPTION-PRF-INTEGRITY" in &IKE; proposals was added in
+      &Libreswan; 5.4, however, other than to work-around
+      interoperability problems its, use is strongly discouraged.
+    </para>
+
   </refsect3>
 
 </refsect2>

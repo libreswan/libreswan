@@ -8,8 +8,10 @@
     example:
   </para>
 
-  <programlisting id='sect.exampleleftright'><xi:include  href="d.ipsec.conf/exampleleftright.example"  parse="text"
-  xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+  <programlisting id='sect.exampleleftright'><xi:include
+  href="d.ipsec.conf/exampleleftright.example"  parse="text"
+  xmlns:xi="http://www.w3.org/2001/XInclude"/>
+  </programlisting>
 
   <para>
     A note on terminology...  In automatic keying, there are two

@@ -1,0 +1,47 @@
+PROPOSALS = PROPOSAL { "," PROPOSAL }
+
+(* IKEv1 *)
+
+PROPOSAL = ALGORITHM
+           { "-" ALGORITHM }
+           [ ";" KEM_ALGORITHM ]
+
+ALGORITHM = ENCRYPTION_ALGORITHM |
+            PRF_ALGORITHM(*KDF*) |
+            INTEGRITY_ALGORITHM |
+            KEM_ALGORITHM(*DH*)
+
+(* IKEv2 *)
+
+PROPOSAL = [ ALGORITHMS
+             { "-" ALGORITHMS }
+             [ ";" KEM_ALGORITHM ] ]
+           { ";" TYPE "=" ALGORITHMS }
+
+ALGORITHMS = ENCRYPTION_ALGORITHMS |
+             PRF_ALGORITHMS(*KDF*) |
+             INTEGRITY_ALGORITHMS |
+             KEM_ALGORITHMS(*DH*) |
+             SN_ALGORITHMS
+
+TYPE_ALGORITHMS = "encrypt=" ENCRYPTION_ALGORITHMS |
+                  "prf=" PRF_ALGORITHMS |
+                  "integ=" INTEGRITY_ALGORITHMS |
+                  "kem=" KEM_ALGORITHMS |
+                  "sn=" SN_ALGORITHMS |
+                  "addke1=" KEM_ALGORITHMS |
+                  "addke2=" KEM_ALGORITHMS |
+                  ...
+
+ENCRYPTION_ALGORITHMS = ENCRYPTION_ALGORITHM { "+" ENCRYPTION_ALGORITHM }
+PRF_ALGORITHMS        = PRF_ALGORITHM { "+" PRF_ALGORITHM }
+INTEGRITY_ALGORITHMS  = INTEGRITY_ALGORITHM { "+" INTEGRITY_ALGORITHM }
+KEM_ALGORITHMS        = KEM_ALGORITHM { "+" KEM_ALGORITHM }
+SN_ALGORITHMS         = SN_ALGORITHM { "+" SN_ALGORITHM }
+ADDKE_ALGORITHMS      = KEM_ALGORITHMS
+
+ENCRYPTION_ALGORITHM = "aes" | "aes_gcm" | ...
+PRF_ALGORITHM        = "sha1" | "sha2_256" | ...
+INTEGRITY_ALGORITHM  = "sha1_96" | "sha2_256_128" | ...
+KEM_ALGORITHM        = "modp2048" | "dh19" | "ml_kem_768" | ...
+SN_ALGORITHM         = "yes" | "no" | "32-bit-sequential" | ...

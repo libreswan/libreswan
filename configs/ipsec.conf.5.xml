@@ -28,7 +28,7 @@
 <!ENTITY sect.oe_conns SYSTEM "d.ipsec.conf/sect/oe_conns.xml">
 <!ENTITY sect.overview SYSTEM "d.ipsec.conf/sect/overview.xml">
 <!ENTITY sect.policy_group_files SYSTEM "d.ipsec.conf/sect/policy_group_files.xml">
-<!ENTITY sect.units SYSTEM "d.ipsec.conf/sect/units.xml">
+<!ENTITY sect.values SYSTEM "d.ipsec.conf/sect/values.xml">
 
 <!ENTITY conn.accept-redirect SYSTEM "d.ipsec.conf/conn/accept-redirect.xml">
 <!ENTITY conn.accept-redirect-to SYSTEM "d.ipsec.conf/conn/accept-redirect-to.xml">
@@ -220,7 +220,7 @@
     <title>DESCRIPTION</title>
  
     &sect.overview;
-    &sect.units;
+    &sect.values;
 
     <refsect2 id='config_setup'>
       <title>
@@ -233,10 +233,10 @@
 	setup</option> section containing:
       </para>
 
-      <programlisting>
-	<xi:include href="d.ipsec.conf/config_setup.example"
-		    parse="text"
-		    xmlns:xi="http://www.w3.org/2001/XInclude"/>
+      <programlisting><xi:include
+      href="d.ipsec.conf/config_setup.example"
+      parse="text"
+      xmlns:xi="http://www.w3.org/2001/XInclude"/>
       </programlisting>
 
       <para>
