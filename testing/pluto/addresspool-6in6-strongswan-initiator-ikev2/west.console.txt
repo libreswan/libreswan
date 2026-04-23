@@ -12,22 +12,20 @@ down
 west #
  ../../guestbin/strongswan-start.sh
 west #
+ swanctl --load-conns
+loaded connection 'west'
+successfully loaded 1 connections, 0 unloaded
+west #
  echo "initdone"
 initdone
 west #
  strongswan up rw-eastnet-ipv6
-initiating IKE_SA rw-eastnet-ipv6[1] to 2001:db8:1:2::23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 2001:db8:1:2::45[500] to 2001:db8:1:2::23[500] (XXX bytes)
-received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept key exchange method MODP_2048, it requested ECP_256
-initiating IKE_SA rw-eastnet-ipv6[1] to 2001:db8:1:2::23
+initiating IKE_SA west[1] to 2001:db8:1:2::23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 2001:db8:1:2::45[500] to 2001:db8:1:2::23[500] (XXX bytes)
 received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
-selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/ECP_256
+selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA rw-eastnet-ipv6{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR6 DNS6) SA TSi TSr N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
@@ -36,10 +34,10 @@ received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR6) SA TSi TSr ]
 authentication of 'east' with pre-shared key successful
 installing new virtual IP 2001:db8:0:3:1::
-IKE_SA rw-eastnet-ipv6[1] established between 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
-scheduling reauthentication in XXXs
+IKE_SA west[1] established between 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
-selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
+selected proposal: ESP:AES_CBC_128/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA rw-eastnet-ipv6{1} established with SPIs SPISPI_i SPISPI_o and TS 2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
 connection 'rw-eastnet-ipv6' established successfully
 west #
@@ -62,7 +60,7 @@ Bypass LAN 2001:db8:1:2::/64:  2001:db8:1:2::/64 === 2001:db8:1:2::/64 PASS
 Bypass LAN fe80::/64:  fe80::/64 === fe80::/64 PASS
 Bypass LAN 2001:db8:0:3:1::/128:  2001:db8:0:3:1::/128 === 2001:db8:0:3:1::/128 PASS
 Security Associations (1 up, 0 connecting):
-rw-eastnet-ipv6[1]: ESTABLISHED XXX second ago, 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
+        west[1]: ESTABLISHED XXX second ago, 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
 rw-eastnet-ipv6{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 rw-eastnet-ipv6{1}:   2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
 west #
