@@ -142,7 +142,7 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 			echo include 'ENTITY ... "'$${f}'"' missing ; \
 			exit 1 ; \
 		fi ; \
-		if ! grep '&'$${e}';' ipsec.conf.5.xml > /dev/null ; then \
+		if ! grep '&'$${e}';' ipsec.conf.5.xml d.ipsec.conf/sect/*.xml > /dev/null ; then \
 			echo use '&'$${e}';' missing ; \
 			exit 1 ; \
 		fi ; \

@@ -1,0 +1,85 @@
+<refsect2 id='sect.config_setup'>
+  <title>
+    Config Setup Section
+  </title>
+  <para>
+    The <option>config setup</option> section overrides preset
+    configuration parameters.  For instance, to change the location of
+    &pluto;'s log file, include a <option>config setup</option>
+    section containing:
+  </para>
+
+  <programlisting><xi:include
+  href="d.ipsec.conf/config_setup.example"
+  parse="text"
+  xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
+
+  <para>
+    To display a configuration parameter's preset, the command
+    <command>ipsec addconn --configsetup
+    <replaceable>parameter</replaceable></command> can be used.  This
+    is especially useful for obtaining the location of directories,
+    such as the &NSS; Database directory, that vary across systems.
+  </para>
+
+  <para>
+    The currently-accepted configuration parameters are:
+    <variablelist>
+      &setup.audit-log;
+      &setup.crl-strict;
+      &setup.crl-timeout;
+      &setup.crlcheckinterval;
+      &setup.curl-iface;
+      &setup.ddos-ike-threshold;
+      &setup.ddos-mode;
+      &setup.dns-resolver;
+      &setup.dnssec-anchors;
+      &setup.dnssec-enable;
+      &setup.dnssec-rootkey-file;
+      &setup.dumpdir;
+      &setup.exampledir;
+      &setup.expire-lifetime;
+      &setup.expire-shunt-interval;
+      &setup.global-redirect-to;
+      &setup.global-redirect;
+      &setup.ike-socket-bufsize;
+      &setup.ike-socket-errqueue;
+      &setup.ikev1-policy;
+      &setup.ipsec-interface-managed;
+      &setup.ipsecdir;
+      &setup.keep-alive;
+      &setup.listen-tcp;
+      &setup.listen-udp;
+      &setup.listen;
+      &setup.logappend;
+      &setup.logfile;
+      &setup.logip;
+      &setup.loglimit;
+      &setup.logtime;
+      &setup.max-halfopen-ike;
+      &setup.myvendorid;
+      &setup.nflog-all;
+      &setup.nhelpers;
+      &setup.nssdir;
+      &setup.ocsp-cache-max-age;
+      &setup.ocsp-cache-min-age;
+      &setup.ocsp-cache-size;
+      &setup.ocsp-enable;
+      &setup.ocsp-method;
+      &setup.ocsp-strict;
+      &setup.ocsp-timeout;
+      &setup.ocsp-trustname;
+      &setup.ocsp-uri;
+      &setup.plutodebug;
+      &setup.protostack;
+      &setup.seccomp;
+      &setup.secretsfile;
+      &setup.seedbits;
+      &setup.shuntlifetime;
+      &setup.statsbin;
+      &setup.syslog;
+      &setup.uniqueids;
+      &setup.virtual-private;
+    </variablelist>
+  </para>
+</refsect2>
