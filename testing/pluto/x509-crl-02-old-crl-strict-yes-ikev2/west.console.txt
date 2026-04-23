@@ -27,7 +27,7 @@ nic                                                          P,,
 west #
  # need to pass impair into pluto
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective --impair event_check_crls
+ ipsec pluto --config /etc/ipsec.conf --impair event_check_crls
 ipsec pluto: impair: event_check_crls: no -> yes
 west #
  ../../guestbin/wait-until-pluto-started

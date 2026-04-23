@@ -19,7 +19,7 @@ x ipsec.service - Internet Key Exchange (IKE) Protocol Daemon for IPsec
              man:ipsec.conf(5)
     Process: 655 ExecStartPre=PATH/sbin/ipsec checknss (code=exited, status=0/SUCCESS)
     Process: 660 ExecStartPre=PATH/sbin/ipsec checknflog (code=exited, status=0/SUCCESS)
-    Process: 678 ExecStart=PATH/libexec/ipsec/pluto --leak-detective --config /etc/ipsec.conf --nofork (code=exited, status=1/FAILURE)
+    Process: 678 ExecStart=PATH/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork (code=exited, status=1/FAILURE)
     Process: 679 ExecStopPost=PATH/sbin/ipsec stopnflog (code=exited, status=0/SUCCESS)
    Main PID: 678 (code=exited, status=1/FAILURE)
      Status: "Exited."

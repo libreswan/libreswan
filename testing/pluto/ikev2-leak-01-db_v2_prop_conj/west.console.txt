@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec pluto --config /etc/ipsec.conf
 west #
  ../../guestbin/wait-until-pluto-started
 west #

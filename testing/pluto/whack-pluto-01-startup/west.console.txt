@@ -21,9 +21,9 @@ west #
  ipsec whack --shutdown
 Pluto is shutting down
 west #
- # leak-detective
+ # leak-detective is now always enabled by default
 west #
- ipsec pluto --leak-detective --config /etc/ipsec.conf
+ ipsec pluto --config /etc/ipsec.conf
 west #
  # wait to startup to finish; shutting down early causes leaks.
 west #

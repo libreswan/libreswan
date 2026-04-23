@@ -40,7 +40,7 @@ west #
  grep -E "^seeded" /tmp/pluto.log
 seeded 256 bytes into the NSS PRNG from /dev/random
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=1024
+ ipsec pluto --config /etc/ipsec.conf --seedbits=1024
 west #
  ../../guestbin/wait-until-pluto-started
 west #
@@ -52,7 +52,7 @@ seeded 128 bytes into the NSS PRNG from /dev/random
 west #
  # Test with custom seeddev
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective --seedbits=520 --seeddev /dev/urandom
+ ipsec pluto --config /etc/ipsec.conf --seedbits=520 --seeddev /dev/urandom
 west #
  ../../guestbin/wait-until-pluto-started
 west #

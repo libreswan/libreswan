@@ -9,7 +9,7 @@ east #
 east #
  #ipsec start
 east #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec pluto --config /etc/ipsec.conf
 east #
  ../../guestbin/wait-until-pluto-started
 east #

@@ -5,7 +5,7 @@ west #
 west #
  ipsec _kernel policy
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec pluto --config /etc/ipsec.conf
 west #
  ../../guestbin/wait-until-pluto-started
 west #

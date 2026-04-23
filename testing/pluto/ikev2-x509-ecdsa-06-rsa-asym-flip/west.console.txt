@@ -26,7 +26,7 @@ west #
 west #
  #ipsec start
 west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec pluto --config /etc/ipsec.conf
 west #
  ../../guestbin/wait-until-pluto-started
 west #
