@@ -1,0 +1,6 @@
+IKEv2 permanent reject crossing outstanding IKE_AUTH requests
+
+Both sides initiate simultaneously, IKE_AUTH requests cross over the
+network. WEST should detect the simultaneous initiation and since WEST
+IKE_SA has lower nonce it drops its own IKE SA and it lets EAST IKE SA
+to proceed.

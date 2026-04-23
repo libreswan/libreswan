@@ -1710,6 +1710,9 @@ kvmplutotest	crossing-streams-11-wewwe-ikev2-permanent	good	github/557
 kvmplutotest	crossing-streams-11-wwewe-ikev2-permanent	wip	github/557
 kvmplutotest	crossing-streams-11-wwwee-ikev2-permanent	wip	github/557
 
+kvmplutotest  crossing-streams-12-ikev2-permanent-ike-auth-east good github/2447
+kvmplutotest  crossing-streams-12-ikev2-permanent-ike-auth-west good github/2447
+
 kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-sa-init	good	github/1635
 kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-auth	good	github/1635
 
