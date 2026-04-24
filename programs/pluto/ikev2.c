@@ -1237,7 +1237,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * is released by the caller).
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
-	struct msg_digest *protected_md; /* MUST md_delref() */
+	struct msg_digest *protected_md = NULL; /* MUST md_delref(); must set */
 	switch (md->message_payloads.present & (v2P(SK) | v2P(SKF))) {
 	case v2P(SKF):
 	{
@@ -1276,6 +1276,14 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		/* packet decode should have rejected this */
 		llog_pexpect(ike->sa.logger, HERE,
 			     "message contains both SK and SKF payloads");
+		return;
+	}
+
+	/*
+	 * LTO which thinks collect_v2_incoming_fragment() can return
+	 * something other than above leaving pointer NULL.
+	 */
+	if (PBAD(logger, protected_md == NULL)) {
 		return;
 	}
 
