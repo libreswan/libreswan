@@ -160,9 +160,6 @@ def choose_config_file(hostname, testpath, config_path, strict, default=None):
             if strict is True and fuzzy is True:
                 # strict so ignore fuzzy match
                 continue
-            if strict is False and fuzzy is False:
-                # non-strict should not match HOSTNAME.CONFIG_FILE
-                sys.exit("config file %s conflicts with %s" % (p, hostname + extension))
             if path:
                 sys.exit("conflicting files %s %s in test directory" % (p, path))
             path = p
@@ -197,7 +194,8 @@ def get_configsetup(key):
     return o.stdout.strip()
 
 def copy_config_file(hostname, testpath, config_path,
-                     strict=False, optional=False, nsprefix="", default=None):
+                     strict=False, optional=False,
+                     nsprefix="", default=None):
     src = choose_config_file(hostname, testpath, config_path, strict,
                              default=default)
     if src:
