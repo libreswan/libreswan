@@ -505,7 +505,10 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 #define clone_bytes_as_hunk(TYPE, PTR, LEN)				\
 	({								\
 		TYPE *h_ = overalloc_thing(TYPE, LEN);			\
-		memcpy(h_->ptr, (PTR), (LEN));				\
+		/* gcc14+LTO w/ LEN=0 thinks there is a -ve move */	\
+		if ((LEN) > 0) {					\
+			memcpy(h_->ptr, (PTR), (LEN));			\
+		}							\
 		h_->len = LEN;						\
 		h_;							\
 	})
