@@ -35,6 +35,11 @@ OBJS += test_ikev1_psk.o
 OBJS += test_ikev1_dsa.o
 USERLAND_CFLAGS += -DUSE_IKEv1
 endif
+
+# With LTO and leak-detective (now default), the compiler gets confused
+# about the bounds in clone_bytes_as_hunk() with flexible array members.
+# This should suppress the false positive.
+USERLAND_CFLAGS += -Wno-stringop-overflow
 OBJS += test_ikev2.o
 OBJS += test_sha.o
 OBJS += test_hmac.o
