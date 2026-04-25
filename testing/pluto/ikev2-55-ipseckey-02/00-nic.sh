@@ -1,4 +1,4 @@
 setenforce Permissive
-../../guestbin/start-dns.sh
+../../guestbin/nic-dnssec.sh start
 echo done
 : ==== end ====

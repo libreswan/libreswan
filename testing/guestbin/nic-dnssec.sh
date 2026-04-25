@@ -3,6 +3,16 @@
 # not -e; systemctl has strange exit codes
 set -u
 
+if test $(hostname) != nic ; then
+    echo "$0: ignoring as not running on NIC" 1>&2
+    exit 0
+fi
+
+if test "$#" -ne 1 || test "$1" != start ; then
+    echo "$0: usage: start" 1>&2
+    exit 0
+fi
+
 # Stop systemctl going all graphical
 LC_CTYPE=C
 export LC_CTYPE

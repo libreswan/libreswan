@@ -4,7 +4,7 @@ nic #
 nic #
  setenforce Permissive
 nic #
- /testing/guestbin/start-dns.sh
+ /testing/guestbin/nic-dnssec.sh start
 nic #
  echo "initdone"
 initdone
