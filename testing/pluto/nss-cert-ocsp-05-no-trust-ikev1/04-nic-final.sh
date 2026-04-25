@@ -1,1 +1,1 @@
-../../guestbin/ocspd.sh --log
+../../guestbin/nic-ocspd.sh --log
