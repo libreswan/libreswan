@@ -59,6 +59,7 @@ void request_resolve_help(struct connection *c,
 			  struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vexpect(!oriented(c));
 	struct host_addrs raw_addrs = host_addrs_from_connection_config(c);
 	if (host_addrs_need_dns(&raw_addrs, verbose)) {
 		struct help_request *request = alloc_help_request("resolve helper",

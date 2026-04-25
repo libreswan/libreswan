@@ -1,0 +1,8 @@
+Resolve right=right.libreswan.org from /etc/hosts during revival
+
+- connection establishes using right.libreswan.org
+- host entry redirected to new right.libreswan.org
+- connection fails; how?
+- revival attempt 1 fails
+- connection switches to DDNS
+- DDNS succeeds
