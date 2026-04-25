@@ -1,7 +1,7 @@
 /testing/guestbin/prep.sh --hostkeys
-'north.conf' -> '/etc/ipsec.conf'
-'/testing/baseconfigs/north/etc/ipsec.d/cert9.db' -> '/var/lib/ipsec/nss/cert9.db'
-'/testing/baseconfigs/north/etc/ipsec.d/key4.db' -> '/var/lib/ipsec/nss/key4.db'
+north.ipsec.conf -> /etc/ipsec.conf
+/testing/baseconfigs/north/etc/ipsec.d/cert9.db -> /var/lib/ipsec/nss/cert9.db
+/testing/baseconfigs/north/etc/ipsec.d/key4.db -> /var/lib/ipsec/nss/key4.db
 north #
  # ensure that clear text does not get through
 north #
@@ -40,7 +40,7 @@ north #
  echo done
 done
 north #
- ipsec up north-east-l2tp
+ ipsec up north-east-l2tp # sanitize-retransmits
 "north-east-l2tp" #1: initiating IKEv1 Main Mode connection
 "north-east-l2tp" #1: sent Main Mode request
 "north-east-l2tp" #1: sent Main Mode I2
@@ -68,7 +68,7 @@ north #
 north #
  # testing passthrough of non-l2tp/ipsec traffic
 north #
- echo quit | socat - TCP:192.0.2.254:7
+  echo quit | socat - TCP:192.0.2.254:7
 quit
 north #
  ../../guestbin/ip.sh address show dev ppp0 | sed -e 's/ qdisc.*$//' -e '/inet6/,$ d'

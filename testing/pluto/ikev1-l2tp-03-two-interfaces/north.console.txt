@@ -1,5 +1,5 @@
 /testing/guestbin/prep.sh
-'ipsec.conf' -> '/etc/ipsec.conf'
+ipsec.conf -> /etc/ipsec.conf
 north #
  ipsec initnss
 Initializing NSS database
@@ -55,7 +55,7 @@ north #
  echo done
 done
 north #
- ipsec up l2tp-north-to-east-on-north
+ ipsec up l2tp-north-to-east-on-north # sanitize-retransmits
 "l2tp-north-to-east-on-north" #1: initiating IKEv1 Main Mode connection
 "l2tp-north-to-east-on-north" #1: sent Main Mode request
 "l2tp-north-to-east-on-north" #1: sent Main Mode I2

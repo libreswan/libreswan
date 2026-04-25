@@ -13,8 +13,8 @@ set #
 up
 set #
  ../../guestbin/prep.sh
-'ipsec.conf' -> '/etc/ipsec.conf'
-'ipsec.secrets' -> '/etc/ipsec.secrets'
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 set #
  ipsec initnss
 Initializing NSS database

@@ -13,6 +13,7 @@ NNTOALL() {
 
 for f in $1/0*.sh ; do
     h=$(case $f in
+	    *nic*) echo nic ;;
 	    *east*) echo east ;;
 	    *west* ) echo west ;;
 	    *rise* ) echo rise ;;

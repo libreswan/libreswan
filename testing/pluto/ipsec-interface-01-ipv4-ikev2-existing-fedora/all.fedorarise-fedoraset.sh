@@ -39,7 +39,7 @@ rise# ipsec start
 rise# ../../guestbin/wait-until-pluto-started
 rise# 
 rise# ipsec add rise-set
-rise# ipsec up rise-set
+rise# ipsec up rise-set # sanitize-retransmits
 
 # set 05-fedoraset-ping.sh
 

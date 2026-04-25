@@ -40,17 +40,17 @@ rise_sunnet=${sunnet}.12
 set_sunnet=${sunnet}.15
 set_westnet=${westnet}.15
 
-in=
+sh=
 
 # connectivity HOST name-of-dest ...
 
 connectivity()
 {
     local source=$1 ; shift
-    echo "# ${source} to $@" >> ${in}
+    echo "# ${source} to $@" >> ${sh}
     for dest in "$@" ; do
 	dest_ip=$(eval echo \$${dest})
-	echo "${source}# ../../guestbin/ping-once.sh --up ${dest_ip} # ${dest}" >> ${in}
+	echo "${source}# ../../guestbin/ping-once.sh --up ${dest_ip} # ${dest}" >> ${sh}
     done
 }
 
@@ -101,20 +101,20 @@ EOF
     esac
 
     # start again
-    in=${dir}/${platform}east-${platform}west-${platform}rise-${platform}set-nic-${platform}north.in
-    rm -f ${in}
-    do_not_modify > ${in}
+    sh=${dir}/all.${platform}east-${platform}west-${platform}rise-${platform}set-nic-${platform}north.sh
+    rm -f ${sh}
+    do_not_modify > ${sh}
 
-    echo "" >> ${in}
-cat <<EOF > ${in}
+    echo "" >> ${sh}
+cat <<EOF > ${sh}
 nic# : make certain NIC is running
 EOF
 
     # bring up all the networks
 
     for host in east west rise set north ; do
-	echo "" >> ${in}
-	cat <<EOF >> ${in}
+	echo "" >> ${sh}
+	cat <<EOF >> ${sh}
 ${host}# ifconfig ${eth}0 | grep -e 'inet ' -e 'inet6 .*2001:'
 ${host}# ifconfig ${eth}1 | grep -e 'inet ' -e 'inet6 .*2001:'
 EOF
@@ -154,8 +154,8 @@ conn rise-set
 EOF
 
     for host in rise set ; do
-	echo "" >> ${in}
-	cat <<EOF >> ${in}
+	echo "" >> ${sh}
+	cat <<EOF >> ${sh}
 ${host}# ../../guestbin/prep.sh
 ${host}# ipsec initnss
 ${host}# ipsec start
@@ -163,8 +163,8 @@ ${host}# ../../guestbin/wait-until-pluto-started
 ${host}# ipsec add rise-set
 EOF
     done
-    cat <<EOF >> ${in}
-rise# ipsec up rise-set
+    cat <<EOF >> ${sh}
+rise# ipsec up rise-set # sanitize-retransmits
 EOF
 
 done

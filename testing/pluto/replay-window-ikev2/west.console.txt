@@ -1,6 +1,6 @@
 ../../guestbin/prep.sh
-'ipsec.conf' -> '/etc/ipsec.conf'
-'ipsec.secrets' -> '/etc/ipsec.secrets'
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 west #
  ipsec start
 Redirecting to: [initsystem]

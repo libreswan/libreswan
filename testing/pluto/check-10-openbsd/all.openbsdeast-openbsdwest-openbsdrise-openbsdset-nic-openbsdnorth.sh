@@ -48,4 +48,4 @@ set# ipsec initnss
 set# ipsec start
 set# ../../guestbin/wait-until-pluto-started
 set# ipsec add rise-set
-rise# ipsec up rise-set
+rise# ipsec up rise-set # sanitize-retransmits

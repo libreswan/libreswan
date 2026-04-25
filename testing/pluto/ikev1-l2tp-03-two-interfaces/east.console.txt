@@ -1,5 +1,5 @@
 /testing/guestbin/prep.sh
-'ipsec.conf' -> '/etc/ipsec.conf'
+ipsec.conf -> /etc/ipsec.conf
 east #
  ipsec initnss
 Initializing NSS database

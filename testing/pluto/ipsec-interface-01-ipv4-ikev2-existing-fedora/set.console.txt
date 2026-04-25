@@ -1,6 +1,6 @@
 ../../guestbin/prep.sh
-'ipsec.conf' -> '/etc/ipsec.conf'
-'ipsec.secrets' -> '/etc/ipsec.secrets'
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 set #
  ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth0 if_id 0x1
 set #

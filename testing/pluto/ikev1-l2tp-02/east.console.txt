@@ -1,7 +1,7 @@
 /testing/guestbin/prep.sh --hostkeys
-'east.conf' -> '/etc/ipsec.conf'
-'/testing/baseconfigs/east/etc/ipsec.d/cert9.db' -> '/var/lib/ipsec/nss/cert9.db'
-'/testing/baseconfigs/east/etc/ipsec.d/key4.db' -> '/var/lib/ipsec/nss/key4.db'
+east.ipsec.conf -> /etc/ipsec.conf
+/testing/baseconfigs/east/etc/ipsec.d/cert9.db -> /var/lib/ipsec/nss/cert9.db
+/testing/baseconfigs/east/etc/ipsec.d/key4.db -> /var/lib/ipsec/nss/key4.db
 east #
  ipsec start
 Redirecting to: [initsystem]

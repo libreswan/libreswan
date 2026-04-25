@@ -61,7 +61,7 @@ rise #
 "rise-set": command "ifconfig": exited normally
 "rise-set": added oriented IKEv2 connection
 rise #
- ipsec up rise-set
+ ipsec up rise-set # sanitize-retransmits
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
 "rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
