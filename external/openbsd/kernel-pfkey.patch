@@ -1,19 +1,14 @@
-diff ea7513787810d64759a3a840e5b3fcc10e202581 96a3a92b24082e4bc76c9bd018c02a4377fcaf0d
-commit - ea7513787810d64759a3a840e5b3fcc10e202581
-commit + 96a3a92b24082e4bc76c9bd018c02a4377fcaf0d
-blob - 0c5340831b78f5e8b86ad581205ab7fc18614daf
-blob + d8e434b1aa8767e09a03ce8a663e5d75aacae605
---- sys/net/pfkeyv2.c
-+++ sys/net/pfkeyv2.c
-@@ -102,7 +102,10 @@ static const struct sadb_alg ealgs[] = {
-        { SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
-        { SADB_X_EALG_CAST, 64, 40, 128},
-        { SADB_X_EALG_AES, 128, 128, 256},
--       { SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32}
-+       { SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32},
-+       { SADB_X_EALG_AESGCM16, 64, 128 + 32, 256 + 32},
-+       { SADB_X_EALG_AESGMAC, 64, 128 + 32, 256 + 32},
-+       { SADB_X_EALG_CHACHA20POLY1305, 64, 256 + 32, 256 + 32}
+--- sys/net/pfkeyv2.c.orig	Tue Sep 16 21:50:11 2025
++++ sys/net/pfkeyv2.c	Sat Apr 25 11:53:50 2026
+@@ -102,7 +102,10 @@
+ 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
+ 	{ SADB_X_EALG_CAST, 64, 40, 128},
+ 	{ SADB_X_EALG_AES, 128, 128, 256},
+-	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32}
++	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32},
++	{ SADB_X_EALG_AESGCM16, 64, 128 + 32, 256 + 32},
++	{ SADB_X_EALG_AESGMAC, 64, 128 + 32, 256 + 32},
++	{ SADB_X_EALG_CHACHA20POLY1305, 64, 256 + 32, 256 + 32}
  };
-
+ 
  static const struct sadb_alg aalgs[] = {
