@@ -88,6 +88,11 @@ LOG() {
     }
 }
 
+if test $(hostname) != nic ; then
+    echo "$0: command ignored, this isn't NIC" 1>&2
+    exit 0
+fi
+
 case "$1" in
     *start)
 	shift

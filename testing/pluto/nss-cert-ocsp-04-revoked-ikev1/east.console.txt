@@ -62,6 +62,6 @@ initdone
 east #
  test -r /tmp/pluto/log && grep -e '^[^|].*certificate revoked' -e ERROR /tmp/pluto.log
 east #
- ../../guestbin/ocspd.sh --log
--- No entries --
+ ../../guestbin/nic-ocspd.sh --log
+../../guestbin/nic-ocspd.sh: command ignored, this isn't NIC
 east #

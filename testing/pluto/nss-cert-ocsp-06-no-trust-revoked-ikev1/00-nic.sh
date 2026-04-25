@@ -1,3 +1,3 @@
 #start ocsp server here
-../../guestbin/ocspd.sh --start
+../../guestbin/nic-ocspd.sh --start
 echo "done."

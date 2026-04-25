@@ -1,1 +1,1 @@
-../../guestbin/ocspd.sh --start
+../../guestbin/nic-ocspd.sh --start

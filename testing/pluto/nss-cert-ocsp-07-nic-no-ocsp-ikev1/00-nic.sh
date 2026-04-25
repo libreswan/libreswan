@@ -1,3 +1,3 @@
 #start ocsp server here
-../../guestbin/ocspd.sh --start nic-no-ocsp
+../../guestbin/nic-ocspd.sh --start nic-no-ocsp
 echo "done."
