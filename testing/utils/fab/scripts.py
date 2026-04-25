@@ -194,6 +194,7 @@ def commands(directory, logger):
                 hostname = hostname_command.group("hostname")
                 command = hostname_command.group("command")
                 if hostname == "final":
+                    # Yes, FINAL.SH is run on NIC!
                     for guest in sorted(guests):
                         commands.append(Command(guest, command, script, line_nr))
                 elif hostname:
