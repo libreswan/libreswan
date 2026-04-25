@@ -4,13 +4,7 @@ nic #
 nic #
  setenforce Permissive
 nic #
- /testing/guestbin/dnssec.sh
-nic #
- dig +short  @127.0.0.1 road.testing.libreswan.org
-192.1.3.209
-nic #
- dig +short  @127.0.0.1 east.testing.libreswan.org
-192.1.2.23
+ /testing/guestbin/start-dns.sh
 nic #
  echo "initdone"
 initdone
