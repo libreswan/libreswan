@@ -1,0 +1,13 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ /bin/time -o OUTPUT/$(hostname).time /testing/guestbin/start-dns.sh
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
+nic #
+ echo done
+done
+nic #
