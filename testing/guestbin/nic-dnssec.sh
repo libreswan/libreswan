@@ -44,8 +44,8 @@ echo ==== tuc ====
 echo starting dns
 echo ==== cut ====
 
-/testing/guestbin/nsd-start.sh start
-/testing/guestbin/unbound-start.sh start
+/testing/guestbin/nsd.sh start
+/testing/guestbin/unbound.sh start
 
 # grr, dig writes dns lookup failures to stdout.  Need to save stdout
 # and then, depending on the exit code, display it.
