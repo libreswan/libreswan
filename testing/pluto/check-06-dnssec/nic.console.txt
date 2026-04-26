@@ -1,6 +1,8 @@
-setenforce Permissive
+iptables -t nat -F
 nic #
- /testing/guestbin/nic-dnssec.sh start
+ iptables -F
+nic #
+ /bin/time -o OUTPUT/$(hostname).time /testing/guestbin/nic-dnssec.sh start
 starting dns
 digging for road.testing.libreswan.org IPSECKEY
 Everything went well, including things like NXDOMAIN.

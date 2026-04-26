@@ -4,13 +4,11 @@ nic #
 nic #
  setenforce Permissive
 nic #
- /testing/guestbin/dnssec.sh
-nic #
- dig +short  @127.0.0.1 road.testing.libreswan.org
-192.1.3.209
-nic #
- dig +short  @127.0.0.1 east.testing.libreswan.org
-192.1.2.23
+ /testing/guestbin/nic-dnssec.sh start
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
 nic #
  echo "initdone"
 initdone

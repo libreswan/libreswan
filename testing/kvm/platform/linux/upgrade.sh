@@ -133,6 +133,7 @@ strongswan-sqlite
 systemtap			# performance profiling
 tar
 tcpdump
+time				# /bin/time
 tpm2-abrmd
 valgrind
 vim-enhanced

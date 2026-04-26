@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+east #
+ dig west.testing.libreswan.org
+; <<>> DiG 9.18.48 <<>> west.testing.libreswan.org
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: DNSID
+;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;west.testing.libreswan.org.	IN	A
+;; ANSWER SECTION:
+west.testing.libreswan.org. 86400 IN	A	192.1.2.45
+;; Query time: MS msec
+;; SERVER: 192.1.2.254#53(192.1.2.254) (UDP)
+;; WHEN: TIMESTAMP
+;; MSG SIZE  rcvd: 71
+east #
+ echo "initdone"
+initdone
+east #

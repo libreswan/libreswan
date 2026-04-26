@@ -1,6 +1,6 @@
 setenforce Permissive
 nic #
- ../../guestbin/start-dns.sh
+ ../../guestbin/nic-dnssec.sh start
 starting dns
 digging for road.testing.libreswan.org IPSECKEY
 Everything went well, including things like NXDOMAIN.

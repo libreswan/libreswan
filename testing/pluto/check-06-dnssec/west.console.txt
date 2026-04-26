@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/wait-until-alive 192.1.2.254
+destination 192.1.2.254 is alive
+west #
+ dig east.testing.libreswan.org
+; <<>> DiG 9.18.48 <<>> east.testing.libreswan.org
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: DNSID
+;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+;; QUESTION SECTION:
+;east.testing.libreswan.org.	IN	A
+;; ANSWER SECTION:
+east.testing.libreswan.org. 86400 IN	A	192.1.2.23
+;; Query time: MS msec
+;; SERVER: 192.1.2.254#53(192.1.2.254) (UDP)
+;; WHEN: TIMESTAMP
+;; MSG SIZE  rcvd: 71
+west #
+ dig +short east.testing.libreswan.org IPSECKEY | sort
+10 0 2 . AQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmT z/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Z i+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40p Ai67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1ka ZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9W X60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLt N9AJ1QePae+pmc5NGneeOcQ488VRUUjv
+west #
+ dig +short @192.1.2.254 east.testing.libreswan.org
+192.1.2.23
+west #
+ dig +short @192.1.2.254 chaos version.server txt
+"unbound 1.23.1"
+west #
+ dig +short @192.1.2.254 -p 5353 east.testing.libreswan.org
+192.1.2.23
+west #
+ dig +short @192.1.2.254 -p 5353 chaos version.server txt
+"NSD 4.14.2"
+west #
+ echo done
+done
+west #

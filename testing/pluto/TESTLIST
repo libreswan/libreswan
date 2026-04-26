@@ -58,6 +58,7 @@ kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
 kvmplutotest	check-04-pki			good
 kvmplutotest	check-05-checksec		good
+kvmplutotest	check-06-dnssec			good
 
 # per-os sniff tests
 
@@ -1309,7 +1310,6 @@ kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
 #################################################################
 
 kvmplutotest	dnssec-pluto-01					good
-kvmplutotest	dnssec-dig-test-1				wip
 kvmplutotest 	ikev2-55-ipseckey-01				good
 kvmplutotest 	ikev2-55-ipseckey-02				good
 kvmplutotest 	ikev2-55-ipseckey-03				good
