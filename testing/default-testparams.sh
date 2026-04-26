@@ -35,6 +35,7 @@ REF_CONSOLE_FIXUPS+=" strongswan.sed"
 REF_CONSOLE_FIXUPS+=" linux-audit.sed"
 
 # The following sanitizers are written to only modify specific commands
+
 REF_CONSOLE_FIXUPS+=" ipsec-kernel-state.sed"		# includes ip xfrm state
 REF_CONSOLE_FIXUPS+=" ipsec-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS+=" nft.sed"
@@ -42,6 +43,7 @@ REF_CONSOLE_FIXUPS+=" ephemeral-ports.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-certutil.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-up.sed"
 REF_CONSOLE_FIXUPS+=" pem.sed"
+REF_CONSOLE_FIXUPS+=" dig.sed"
 
 # all.console.txt gets it's own list; add as necessary.  .sed-f
 # scripts are all run from a single sed!
