@@ -1,6 +1,4 @@
-#need swan-prep for ipv6 forwarding
-nic #
- /testing/guestbin/swan-prep --46
+# IPv6 is enabled by default on NIC
 nic #
  ip6tables -F
 nic #
