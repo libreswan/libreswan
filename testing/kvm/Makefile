@@ -598,10 +598,8 @@ kvm-%: kvm-ready kvm-web
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
 
-# clean up; accept pretty much everything
-KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
-.PHONY: $(KVM_TEST_CLEAN_TARGETS)
-$(KVM_TEST_CLEAN_TARGETS):
+.PHONY: kvm-clean-check
+kvm-clean-check:
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
 
 .PHONY: kvm-results
@@ -645,11 +643,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: generate the keys using $(KVM_KEYS_DOMAIN)
 	:
-	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) /testing/guestbin/keys.sh
-	:
-	: extract the tarball containing the keys
-	:
-	cd $(KVM_TESTINGDIR)/x509 && tar xf kvm-keys.tar && rm kvm-keys.tar
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /testing/x509
 	:
 	: Also regenerate the DNSSEC keys
 	:
@@ -660,8 +654,8 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
 	touch $@
 
-.PHONY: kvm-clean-keys kvm-keys-clean
-kvm-clean-keys kvm-keys-clean:
+.PHONY: kvm-clean-keys
+kvm-clean-keys:
 	: careful output mixed with repo files
 	rm -rf $(KVM_TESTINGDIR)/x509/*/
 	rm -f $(KVM_KEYS)
@@ -1543,6 +1537,7 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 #
 # After running the operation, kvm-install will:
 #
+# kvm-clean-check:                                                    install
 # kvm-clean-keys:                                               keys, install
 # kvm-clean:                               transmogrify, build, keys, install
 # kvm-uninstall:                           transmogrify, build,       install
@@ -1579,7 +1574,6 @@ kvm-shutdown-%: kvm-destroy-test-domains
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
-	rm -rf OBJ.kvm.*
 
 .PHONY: kvm-uninstall
 

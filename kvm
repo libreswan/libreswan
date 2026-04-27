@@ -86,6 +86,8 @@ pass2help()
 	control with Makefile.inc.local:KVM_{FEDORA,FREEBSD,NETBSD,OPENBSD,ALPINE,DEBIAN}=true
     check [ <test-directory> ... ]
 	run the testsuite
+    clean-check
+        delete the test results
 
   Examine the test results:
 
@@ -118,10 +120,11 @@ pass2help()
 	deletes build domains
 	deletes test results
 	deletes test keys
-    check-clean
-	delete the test results (leave the build trees and domains alone)
+
     keys
 	deletes test keys, and then rebuilds them
+    clean-keys
+        delete test keys
 
     boot <test-directory>
 	boot the domains required by <test-directory>
@@ -365,7 +368,9 @@ while test $# -gt 0 ; do
 	unresolved ) ops[${#ops[@]}]=unresolved ;;
 	test   )     ops[${#ops[@]}]=check ;;
 	retest )     ops[${#ops[@]}]=recheck ;;
-	test-clean ) ops[${#ops[@]}]=check-clean ;;
+	check-clean ) ops[${#ops[@]}]=clean-check ;;
+	test-clean ) ops[${#ops[@]}]=clean-check ;;
+	keys-clean ) ops[${#ops[@]}]=clean-keys ;;
 	all )        ops[${#ops[@]}]=install-all ;;
 	all-* )        ops[${#ops[@]}]=install-$1 ;;
 
@@ -598,7 +603,7 @@ while test $i -lt ${#ops[@]} ; do
         shutdown* | uninstall* | downgrade* | demolish* | purge* )
 	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
-	gateway | config | check-clean | clean )
+	gateway | config | clean | keys | clean-keys | clean-check )
 	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
 	check | recheck )
@@ -632,9 +637,6 @@ while test $i -lt ${#ops[@]} ; do
 	    ;;
 	patch )
 	    run diffs_command "${directories[@]}" | patch -p1
-	    ;;
-	keys )
-	    run_pid ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}"
 	    ;;
 	restart )
 	    run sudo systemctl restart libvirtd
