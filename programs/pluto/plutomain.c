@@ -86,6 +86,7 @@
 #include "ddos.h"
 #include "helper.h"
 #include "resolve_helper.h"	/* for init_resolve_helper() */
+#include "kernel_alg.h"	
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -586,6 +587,56 @@ static deltatime_t check_config_deltatime(enum config_setup_keyword kw,
 	return time;
 }
 
+/*
+ * Dump expanded default proposals at startup when debugging.
+ */
+static void log_default_proposals(struct logger *logger)
+{
+	static const struct {
+		const char *name;
+		enum ike_version version;
+		struct proposal_parser *(*parser)(const struct proposal_policy *policy);
+		bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
+	} protos[] = {
+		{ "IKE", IKEv2, ike_proposal_parser, ike_alg_is_ike, },
+		{ "ESP", IKEv2, esp_proposal_parser, kernel_alg_is_ok, },
+		{ "AH",  IKEv2, ah_proposal_parser,  kernel_alg_is_ok, },
+#ifdef USE_IKEv1
+		{ "IKE", IKEv1, ike_proposal_parser, ike_alg_is_ike, },
+		{ "ESP", IKEv1, esp_proposal_parser, kernel_alg_is_ok, },
+		{ "AH",  IKEv1, ah_proposal_parser,  kernel_alg_is_ok, },
+#endif
+	};
+
+	for (unsigned i = 0; i < elemsof(protos); i++) {
+		const struct proposal_policy policy = {
+			.version = protos[i].version,
+			.alg_is_ok = protos[i].alg_is_ok,
+			.pfs = true,
+			.check_pfs_vs_ke = false,
+			.logger = logger,
+			.stream = LOG_STREAM,
+			.ignore_transform_lookup_error = true,
+		};
+
+		struct proposal_parser *parser = protos[i].parser(&policy);
+		struct proposals *proposals = proposals_from_str(parser, NULL);
+		if (proposals != NULL) {
+			llog(RC_LOG, logger, "%sdefault IKEv%d %s proposals:",
+			     (is_fips_mode() ? "FIPS " : ""),
+			     protos[i].version,
+			     protos[i].name);
+			FOR_EACH_PROPOSAL(proposals, proposal) {
+				LLOG_JAMBUF(RC_LOG, logger, buf) {
+					jam_string(buf, "  ");
+					jam_proposal(buf, proposal);
+				}
+			}
+			free_proposals(&proposals);
+		}
+		free_proposal_parser(&parser);
+	}
+}
 #ifdef USE_EFENCE
 extern int EF_PROTECT_BELOW;
 extern int EF_PROTECT_FREE;
@@ -1535,6 +1586,7 @@ int main(int argc, char **argv)
 	start_helpers(nhelpers, logger);
 
 	init_kernel(logger);
+	log_default_proposals(logger);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
