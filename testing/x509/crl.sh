@@ -22,7 +22,7 @@ run()
 
 #
 
-day=$((60 * 60 * 24))
+day=$((60 * 60 * 24))   # in seconds
 now=$(date -u +%s)	# seconds since epoch
 
 format='+%Y%m%d%H%M%SZ'
@@ -41,6 +41,7 @@ update=${past}
 nextupdate=${present}
 addcert `cat ${certdir}/revoked.serial` ${past}
 EOF
+openssl crl -inform DER -in ${crl} -outform PEM -out $(dirname ${crl})/$(basename ${crl} .crl).pem
 
 # this CRL is up-to-date
 
@@ -53,3 +54,4 @@ update=${present}
 nextupdate=${future}
 addcert $(cat ${certdir}/revoked.serial) ${present}
 EOF
+openssl crl -inform DER -in ${crl} -outform PEM -out $(dirname ${crl})/$(basename ${crl} .crl).pem
