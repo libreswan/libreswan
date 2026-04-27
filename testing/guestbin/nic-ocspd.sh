@@ -40,7 +40,7 @@ START() {
     RUN cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
     RUN cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
     RUN cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
-    RUN openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+    RUN cp /testing/x509/real/mainca/crl-is-up-to-date.pem /etc/ocspd/crls/revoked_crl.pem
     RUN restorecon -R /etc/ocspd
     {
 	CUT
