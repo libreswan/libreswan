@@ -113,17 +113,25 @@ kvmplutotest	algparse-02-fips				good
 
 #################################################################
 #
-# Test parsing/loading ipsec.conf connection options
+# Test (and pin down) parsing and verifing ipsec.conf connection
+# parameters.
 #
-# Connections can be loaded using add, addconn, and whack. In an ideal
-# world these would cover all possible ipsec.conn connection options.
-# The tests are named addconn- as, originally, that was the command
-# that did most of the heavy lifting.
+# Connections can be loaded using:
 #
-# See whack-add-NN-* for tests messing with add options.
+#   ipsec add CONNECTION        - parses ipsec.conf to parameters
+#                                 must for ipsec.conf parser
+#   ipsec addconn --name ...    - uses parameters from command line
+#                                 good for parameter checks
+#   ipsec whack ... --to ... "  - bespoke construction
+#                                 verify legacy / bespoke code
+#
+# In an ideal world there would be an addconn-NN-parameter test for
+# all parameters.  The tests are named addconn- as, originally, that
+# was the command that did most of the heavy lifting.
 #
 #################################################################
 
+kvmplutotest	addconn-01-left-is-right			good
 kvmplutotest	addconn-02-many-routes				good
 kvmplutotest	addconn-04-config-path				good
 kvmplutotest	addconn-05-bogus-left-interface			good

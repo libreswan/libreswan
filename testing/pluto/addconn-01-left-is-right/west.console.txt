@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add --config missing-prefix.conf   missing-prefix
+ipsec add: FATAL ERROR: missing-prefix.conf:6: keyword "subnet" requires "left" or "right" prefix
+west #
+ ipsec add --config implied-prefix.conf   implied-prefix
+ipsec add: FATAL ERROR: implied-prefix.conf:5: keyword "updown" requires "left" or "right" prefix
+west #
+ ipsec connectionstatus implied-prefix   | grep updown
+west #
+ ipsec add --config redundant-prefix.conf redundant-prefix
+"redundant-prefix": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=1.2.3.4 match an interface)
+west #
+ ipsec connectionstatus redundant-prefix | grep updown
+"redundant-prefix":   leftupdown=left updown; leftupdown-config=noasync,noexec;
+"redundant-prefix":   rightupdown=left updown; rightupdown-config=noasync,noexec;
+west #
