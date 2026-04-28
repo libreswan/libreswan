@@ -45,15 +45,13 @@ body:
           If you're using VTI then please try IPsec Interfaces.
         - please do not include screen grabs<br>
           Instead format console output using triple-backticks
-      placeholder: |
-        If possible, include `ipsec.conf` (wrapped in markdown's
-        tripple backticks)
+        - if possible, include `ipsec.conf` (wrapped in markdown's tripple backticks)
     validations:
       required: true
   - type: textarea
     attributes:
       label: Please Tell Us What Happened?
-      placeholder: |
+      description: |
         Please also tell us, what you think should happen.<br>
         - include relevant log output wrapped in triple-backticks
           + include the log of the connection being loaded<br>
