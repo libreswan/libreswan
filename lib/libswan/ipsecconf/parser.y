@@ -713,13 +713,9 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 					break;
 				}
 
-#if 0 /* see github#663 */
-				continue;
-#else
-				parser_warning(parser, 0, "%s= is being treated as right-%s=",
-					       k->keyname, k->keyname);
-				right = true;
-#endif
+				parser_fatal(parser, 0, "keyword \"%s\" requires \"left\" or \"right\" prefix",
+					     k->keyname);
+				return false;
 			}
 			found = k;
 			break;

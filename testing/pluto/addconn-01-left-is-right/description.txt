@@ -1,0 +1,17 @@
+check parameter= is rejected when {left,right}prefix is required
+
+It was being interpreted as rightparameter=.  For instance updown= was
+silently interpreted to rightupdown=.
+
+In 5.3 a warning was added.
+
+In 5.4 the warning was changed to an error (i.e., the connection add
+is rejected).
+
+If code ever uses kv_both on a parameter.  For instance:
+
+-  KWS("updown", kv_leftright, KWS_UPDOWN),
++  KWS("updown", kv_both|kv_leftright, KWS_UPDOWN),
+
+so that "updown=..." implies both {left,right}updown=), then this test
+should be updated to also test that case.  For now it has stubs.
