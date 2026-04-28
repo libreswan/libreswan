@@ -1317,7 +1317,7 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 	$(KVMSH) --shutdown $(notdir $@)
 	: confirm network is still working,
 	: a messed up upgrade can leave no network
-	$(KVMSH) $(notdir $@) -- /bench/testing/guestbin/ping-once.sh --up 8.8.8.8
+	$(KVMSH) $(notdir $@) -- /bench/testing/guestbin/ping-once.sh --up -4 libreswan.org
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
