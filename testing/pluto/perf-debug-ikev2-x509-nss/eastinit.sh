@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n west
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/east.p12
 mkdir /tmp/tmpnss-east
 export NSS_DISABLE_UNLOAD=no
 export NSS_SDB_USE_CACHE=yes

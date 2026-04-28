@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n west
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/east.p12
 # add second identity/cert
 #/testing/x509/import.sh otherca/othereast.p12
 /testing/x509/import.sh real/mainca/north.p12
