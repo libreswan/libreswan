@@ -592,49 +592,48 @@ static deltatime_t check_config_deltatime(enum config_setup_keyword kw,
  */
 static void log_default_proposals(struct logger *logger)
 {
-	static const struct {
-		const char *name;
-		enum ike_version version;
-		struct proposal_parser *(*parser)(const struct proposal_policy *policy);
-		bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
-	} protos[] = {
-		{ "IKE", IKEv2, ike_proposal_parser, ike_alg_is_ike, },
-		{ "ESP", IKEv2, esp_proposal_parser, kernel_alg_is_ok, },
-		{ "AH",  IKEv2, ah_proposal_parser,  kernel_alg_is_ok, },
+	static const enum ike_version versions[] = {
+		IKEv2,
 #ifdef USE_IKEv1
-		{ "IKE", IKEv1, ike_proposal_parser, ike_alg_is_ike, },
-		{ "ESP", IKEv1, esp_proposal_parser, kernel_alg_is_ok, },
-		{ "AH",  IKEv1, ah_proposal_parser,  kernel_alg_is_ok, },
+		IKEv1,
 #endif
 	};
 
-	for (unsigned i = 0; i < elemsof(protos); i++) {
-		const struct proposal_policy policy = {
-			.version = protos[i].version,
-			.alg_is_ok = protos[i].alg_is_ok,
-			.pfs = true,
-			.check_pfs_vs_ke = false,
-			.logger = logger,
-			.stream = LOG_STREAM,
-			.ignore_transform_lookup_error = true,
-		};
+	for (const struct ike_alg_protocol **pp = ike_alg_protocols;
+	     *pp != NULL; pp++) {
+		const struct ike_alg_protocol *protocol = *pp;
 
-		struct proposal_parser *parser = protos[i].parser(&policy);
-		struct proposals *proposals = proposals_from_str(parser, NULL);
-		if (proposals != NULL) {
-			llog(RC_LOG, logger, "%sdefault IKEv%d %s proposals:",
-			     (is_fips_mode() ? "FIPS " : ""),
-			     protos[i].version,
-			     protos[i].name);
-			FOR_EACH_PROPOSAL(proposals, proposal) {
-				LLOG_JAMBUF(RC_LOG, logger, buf) {
-					jam_string(buf, "  ");
-					jam_proposal(buf, proposal);
+		for (unsigned v = 0; v < elemsof(versions); v++) {
+
+			const struct proposal_policy policy = {
+				.version = versions[v],
+				.alg_is_ok = protocol->pfs_vs_dh
+					? kernel_alg_is_ok
+					: protocol->alg_is_ok,
+				.pfs = true,
+				.check_pfs_vs_ke = false,
+				.logger = logger,
+				.stream = LOG_STREAM,
+				.ignore_transform_lookup_error = true,
+			};
+
+			struct proposal_parser *parser = protocol->parser(&policy);
+			struct proposals *proposals = proposals_from_str(parser, NULL);
+			if (proposals != NULL) {
+				llog(RC_LOG, logger, "%sdefault IKEv%d %s proposals:",
+				     (is_fips_mode() ? "FIPS " : ""),
+				     versions[v],
+				     protocol->name);
+				FOR_EACH_PROPOSAL(proposals, proposal) {
+					LLOG_JAMBUF(RC_LOG, logger, buf) {
+						jam_string(buf, "  ");
+						jam_proposal(buf, proposal);
+					}
 				}
+				free_proposals(&proposals);
 			}
-			free_proposals(&proposals);
+			free_proposal_parser(&parser);
 		}
-		free_proposal_parser(&parser);
 	}
 }
 #ifdef USE_EFENCE
