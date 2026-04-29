@@ -27,6 +27,7 @@ Other options:
 
   --error		expect a strange error code
   --runcon		wrap ping command in specified runconn command
+  -4 | -6		select IP version for when <destination> is a DNS name
 EOF
     exit 1
 fi
@@ -34,6 +35,7 @@ fi
 op=
 runcon=
 args=
+ipv=
 
 while test $# -gt 0 && expr x"$1" : x"-" > /dev/null; do
     case "$1" in
@@ -75,6 +77,9 @@ while test $# -gt 0 && expr x"$1" : x"-" > /dev/null; do
 	    shift
 	    interface=$1
 	    ;;
+	-[46] )
+	    ipv=" $1"
+	    ;;
 	-*)
 	    echo "Unrecognized common option: $1" 1>&2
 	    exit 1
@@ -96,7 +101,7 @@ if test $# -ne 1 ; then
     exit 1
 fi
 
-# use a heuristic to figure out ping vs ping6
+# use a heuristic to figure out ping vs fping
 
 case $(uname -s) in
     *BSD )
@@ -119,7 +124,7 @@ case ${ping} in
 	interface=${interface:+--src ${interface}}
 	timeout=" --timeout ${wait}000"
 	size=${size:+--size ${size}}
-	nodns=
+	noreversedns=
 	;;
     ping )
 	interface=${interface:+-I ${interface}}
@@ -127,7 +132,7 @@ case ${ping} in
 	# <interval> greater than the wait <deadline>.
 	timeout=" -i $(expr 1 + ${wait}) -w ${wait}"
 	size=${size:+-s ${size} -p 00}
-	nodns=-n
+	noreversedns=-n
 	;;
 esac
 
@@ -135,7 +140,7 @@ esac
 # invoke ping is subject to change, it is hidden from the test
 # results).
 
-ping="${ping} ${nodns} -c 1 ${timeout} ${size} ${args} ${interface} "$@""
+ping="${ping}${ipv} ${noreversedns} -c 1 ${timeout} ${size} ${args} ${interface} "$@""
 if test -n "${runcon}" ; then
     ping="runcon ${runcon} ${ping}"
 fi
