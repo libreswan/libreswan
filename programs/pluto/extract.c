@@ -4452,7 +4452,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->reject_simultaneous_ike_auth =
 		extract_bool(kv(wm, END_ROOF, KWS_REJECT_SIMULTANEOUS_IKE_AUTH),
-			     /*value_when_unset*/YN_YES,
+			     /*value_when_unset*/YN_NO,
 			     &d, verbose);
 	if (d != NULL) {
 		return d;

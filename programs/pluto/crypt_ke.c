@@ -52,6 +52,7 @@
 #include "ike_alg.h"
 #include "crypt_dh.h"
 #include "crypt_ke.h"
+#include "impair.h"
 
 struct task {
 	const struct kem_desc *dh;
@@ -79,6 +80,17 @@ static void compute_ke_and_nonce(struct logger *logger,
 		}
 	}
 	task->nonce = alloc_rnd_chunk(DEFAULT_NONCE_SIZE, "nonce");
+
+	if (impair.ike_initiator_nonce.enabled && task->role == SA_INITIATOR) {
+		uint8_t pattern = (uint8_t)impair.ike_initiator_nonce.value;
+		memset(task->nonce.ptr, pattern, task->nonce.len);
+		llog(IMPAIR_STREAM, logger, "forcing IKE initiator nonce to all 0x%02x bytes", pattern);
+	} else if (impair.ike_responder_nonce.enabled && task->role == SA_RESPONDER) {
+		uint8_t pattern = (uint8_t)impair.ike_responder_nonce.value;
+		memset(task->nonce.ptr, pattern, task->nonce.len);
+		llog(IMPAIR_STREAM, logger, "forcing IKE responder nonce to all 0x%02x bytes", pattern);
+	}
+
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s() generated nonce:", __func__);
 		LDBG_hunk(logger, &task->nonce);

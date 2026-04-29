@@ -11,7 +11,7 @@
       the revival mechanism ensures connection retry.
     </para>
     <para>
-      The default is &yes;.
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>
