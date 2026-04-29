@@ -1,19 +1,23 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec certutil -D -n road
-east #
- ipsec certutil -D -n west
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add nss-cert
+ ipsec add nss-cert
 "nss-cert": added oriented IKEv2 connection
 east #
- ipsec auto --status |grep nss-cert
+ ipsec status |grep nss-cert
 "nss-cert": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=unset; their_ip=unset;
 "nss-cert":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "nss-cert":   mycert=east;

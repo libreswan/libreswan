@@ -1,9 +1,9 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n road
-ipsec certutil -D -n east
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.p12
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add nss-cert-incorrect
-ipsec auto --add nss-cert-correct
+ipsec add nss-cert-incorrect
+ipsec add nss-cert-correct
 ipsec whack --impair suppress_retransmits
 echo "initdone"
