@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n east 
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.p12 
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
 ipsec start

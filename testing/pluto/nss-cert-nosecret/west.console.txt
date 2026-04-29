@@ -1,7 +1,13 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n east
+ /testing/x509/import.sh real/mainca/west.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -47,27 +53,6 @@ End certificate "west" - SN: 0xXX
   not before: TIMESTAMP
   not after: TIMESTAMP
   3072 bit RSA: has private key
- 
-End certificate "road" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-End certificate "north" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-End certificate "nic" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
  
 List of X.509 CA Certificates:
  
@@ -133,9 +118,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west                                                         u,u,u
 mainca                                                       CT,, 
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
 west #
  ipsec auto --listall
  
@@ -173,27 +155,6 @@ End certificate "west" - SN: 0xXX
   not before: TIMESTAMP
   not after: TIMESTAMP
   3072 bit RSA: has private key
- 
-End certificate "road" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-End certificate "north" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-End certificate "nic" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
  
 List of X.509 CA Certificates:
  

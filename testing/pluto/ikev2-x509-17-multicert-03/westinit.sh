@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n east
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.p12
 /testing/x509/import.sh otherca/otherwest.p12
 ipsec checknss --settrusts
 ipsec start
