@@ -1,0 +1,3 @@
+Initiator auth=digsig, responder authby=rsa-sha1, both with RSA certs.
+Initiator should fall back to legacy RSA-SHA1.
+Connection should establish.

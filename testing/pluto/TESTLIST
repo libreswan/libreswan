@@ -506,6 +506,8 @@ kvmplutotest	ikev2-x509-17-multicert-rightid-san-wildcard	good
 kvmplutotest	ikev2-x509-18-multicert-rightid		good
 kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
 kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
+kvmplutotest	ikev2-x509-21-multicert-ecdsa		good
+kvmplutotest	ikev2-x509-21-multicert-ecdsa-legacy	good
 
 kvmplutotest	ikev2-x509-22-pkcs7			good
 kvmplutotest	ikev2-x509-23-no-ca			good
@@ -1312,6 +1314,16 @@ kvmplutotest	ikev2-digsig-02-legacy			good
 kvmplutotest	ikev2-digsig-03-rsa-sha2		good
 kvmplutotest	ikev2-digsig-04-mismatch		good
 kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
+kvmplutotest	ikev2-digsig-06-auth-digsig		good
+kvmplutotest	ikev2-digsig-07-auth-digsig-mixed-certs		good
+kvmplutotest	ikev2-digsig-08-auth-digsig-mixed-certs-flip	good
+kvmplutotest	ikev2-digsig-09-auth-digsig-rsasig	good
+kvmplutotest	ikev2-digsig-10-auth-digsig-rsa1	good
+kvmplutotest	ikev2-digsig-11-auth-digsig-rsasig-mixed-certs	good
+kvmplutotest	ikev2-digsig-12-auth-digsig-ecdsa-mixed-certs	good
+kvmplutotest	ikev2-digsig-13-auth-digsig-ecdsa		good
+kvmplutotest	ikev2-digsig-14-auth-digsig-ecdsa-flip		good
+kvmplutotest	ikev2-digsig-15-auth-digsig-ecdsa-legacy	good
 
 #################################################################
 # DNSSEC tests

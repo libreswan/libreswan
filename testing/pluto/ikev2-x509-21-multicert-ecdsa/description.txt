@@ -1,0 +1,3 @@
+East has two road-warrior conns both allowing rsasig and ecdsa. 
+West initiates with an ECDSA cert. 
+East should connswitch to rw-specific by DN match.

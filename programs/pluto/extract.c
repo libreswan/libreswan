@@ -1713,6 +1713,11 @@ static diag_t extract_host_end(enum end end,
 
 	struct authby authby = whack_authby;
 
+	/* auth=digsig without explicit authby= gets all digital signature bits */
+	if (auth == AUTH_DIGSIG && wm->wm_authby == NULL) {
+		authby = AUTHBY_DIGITAL_SIGNATURE;
+	}
+
 	/*
 	 * IKEv1 only allows symetric authentication using authby=
 	 * ({left,right}auth= can be asymetric).
@@ -1761,6 +1766,7 @@ static diag_t extract_host_end(enum end end,
 	case AUTH_RSASIG:
 	case AUTH_ECDSA:
 	case AUTH_EDDSA:
+	case AUTH_DIGSIG:
 		authby_mask = authby_from_auth(auth);
 		break;
 	case AUTH_PSK:
