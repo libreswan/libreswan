@@ -903,5 +903,19 @@ const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id);
 const struct sn_desc *sn_desc_by_sadb_calg_id(unsigned id);
+/*
+ * Protocol table shared by algparse and pluto.
+ */
 
+struct proposal_policy;
+struct proposal_parser;
+
+struct ike_alg_protocol {
+	const char *name;
+	struct proposal_parser *(*parser)(const struct proposal_policy *policy);
+	bool pfs_vs_dh;
+	bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
+};
+
+extern const struct ike_alg_protocol *ike_alg_protocols[];
 #endif /* _IKE_ALG_H */

@@ -86,6 +86,7 @@
 #include "ddos.h"
 #include "helper.h"
 #include "resolve_helper.h"	/* for init_resolve_helper() */
+#include "kernel_alg.h"	
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -586,6 +587,55 @@ static deltatime_t check_config_deltatime(enum config_setup_keyword kw,
 	return time;
 }
 
+/*
+ * Dump expanded default proposals at startup when debugging.
+ */
+static void log_default_proposals(struct logger *logger)
+{
+	static const enum ike_version versions[] = {
+		IKEv2,
+#ifdef USE_IKEv1
+		IKEv1,
+#endif
+	};
+
+	for (const struct ike_alg_protocol **pp = ike_alg_protocols;
+	     *pp != NULL; pp++) {
+		const struct ike_alg_protocol *protocol = *pp;
+
+		for (unsigned v = 0; v < elemsof(versions); v++) {
+
+			const struct proposal_policy policy = {
+				.version = versions[v],
+				.alg_is_ok = protocol->pfs_vs_dh
+					? kernel_alg_is_ok
+					: protocol->alg_is_ok,
+				.pfs = true,
+				.check_pfs_vs_ke = false,
+				.logger = logger,
+				.stream = LOG_STREAM,
+				.ignore_transform_lookup_error = true,
+			};
+
+			struct proposal_parser *parser = protocol->parser(&policy);
+			struct proposals *proposals = proposals_from_str(parser, NULL);
+			if (proposals != NULL) {
+				llog(RC_LOG, logger, "%sdefault IKEv%d %s proposals:",
+				     (is_fips_mode() ? "FIPS " : ""),
+				     versions[v],
+				     protocol->name);
+				FOR_EACH_PROPOSAL(proposals, proposal) {
+					LLOG_JAMBUF(RC_LOG, logger, buf) {
+						jam_string(buf, "  ");
+						jam_proposal(buf, proposal);
+					}
+				}
+				free_proposals(&proposals);
+			}
+			free_proposal_parser(&parser);
+		}
+	}
+}
 #ifdef USE_EFENCE
 extern int EF_PROTECT_BELOW;
 extern int EF_PROTECT_FREE;
@@ -1535,6 +1585,7 @@ int main(int argc, char **argv)
 	start_helpers(nhelpers, logger);
 
 	init_kernel(logger);
+	log_default_proposals(logger);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);

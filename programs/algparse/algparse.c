@@ -25,49 +25,10 @@ static int failures = 0;
 
 enum expect { FAIL = false, PASS = true, COUNT, };
 
-/*
- * Kernel not available so fake it.
- */
-static bool kernel_alg_is_ok(const struct ike_alg *alg,
-			     const struct logger *logger)
-{
-	if (alg->type == &ike_alg_kem) {
-		/* require an in-process/ike implementation of DH */
-		return ike_alg_is_ike(alg, logger);
-	} else {
-		/* no kernel to ask! */
-		return true;
-	}
-}
-
 typedef void (protocol_t)(enum expect expected, const char *, struct logger *logger);
 
-struct protocol {
-	const char *name;
-	struct proposal_parser *(*parser)(const struct proposal_policy *policy);
-	bool pfs_vs_dh;
-	bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
-};
 
-const struct protocol ike_protocol = {
-	"ike", ike_proposal_parser, .pfs_vs_dh = false, .alg_is_ok = ike_alg_is_ike,
-};
-
-const struct protocol ah_protocol = {
-	"ah", ah_proposal_parser, .pfs_vs_dh = true, .alg_is_ok = kernel_alg_is_ok,
-};
-
-const struct protocol esp_protocol = {
-	"esp", esp_proposal_parser, .pfs_vs_dh = true, .alg_is_ok = kernel_alg_is_ok,
-};
-
-const struct protocol *protocols[] = {
-	&ike_protocol,
-	&ah_protocol,
-	&esp_protocol,
-};
-
-static void check(const struct protocol *protocol,
+static void check(const struct ike_alg_protocol *protocol,
 		  enum expect expected,
 		  const char *algstr,
 		  struct logger *logger)
@@ -155,17 +116,18 @@ static void check(const struct protocol *protocol,
 
 static void all(const char *algstr, struct logger *logger)
 {
-	FOR_EACH_ELEMENT(protocolp, protocols) {
-		const struct protocol *protocol = (*protocolp);
-		check(protocol, COUNT, algstr, logger);
+	for (const struct ike_alg_protocol **protocolp = ike_alg_protocols;
+	     *protocolp != NULL; protocolp++) {
+		check(*protocolp, COUNT, algstr, logger);
 	}
 }
 
 static void test_proposal(const char *arg, struct logger *logger)
 {
 	const char *eq = strchr(arg, '=');
-	FOR_EACH_ELEMENT(protocolp, protocols) {
-		const struct protocol *protocol = (*protocolp);
+	for (const struct ike_alg_protocol **protocolp = ike_alg_protocols;
+	     *protocolp != NULL; protocolp++) {
+		const struct ike_alg_protocol *protocol = *protocolp;
 		if (streq(arg, protocol->name)) {
 			check(protocol, COUNT, NULL, logger);
 			return;
@@ -185,7 +147,7 @@ static void test_proposal(const char *arg, struct logger *logger)
 
 static void test_esp(struct logger *logger)
 {
-#define esp(EXPECTED, ALGSTR) check(&esp_protocol, EXPECTED, ALGSTR, logger)
+#define esp(EXPECTED, ALGSTR) check(ike_alg_protocols[1], EXPECTED, ALGSTR, logger)
 
 	esp(true, NULL);
 	esp(false, "");
@@ -424,7 +386,7 @@ static void test_esp(struct logger *logger)
 
 static void test_ah(struct logger *logger)
 {
-#define ah(EXPECTED, ALGSTR) check(&ah_protocol, EXPECTED, ALGSTR, logger)
+#define ah(EXPECTED, ALGSTR) check(ike_alg_protocols[2], EXPECTED, ALGSTR, logger)
 
 	ah(true, NULL);
 	ah(false, "");
@@ -483,7 +445,7 @@ static void test_ah(struct logger *logger)
 static void test_ike(struct logger *logger)
 {
 
-#define ike(EXPECTED, ALGSTR) check(&ike_protocol, EXPECTED, ALGSTR, logger)
+#define ike(EXPECTED, ALGSTR) check(ike_alg_protocols[0], EXPECTED, ALGSTR, logger)
 
 	ike(true, NULL);
 	ike(false, "");
