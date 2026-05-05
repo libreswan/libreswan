@@ -78,15 +78,6 @@ int optarg_getopt(struct logger *logger, int argc, char **argv);
 #define SILENT_OPT(OPT, ...)		OPT METAOPT_SILENT __VA_ARGS__
 
 /*
- * Common OPTS and their names.
- */
-
-#define ASYNC_OPTS							\
-	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
-	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
-	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
-
-/*
  * Print usage then bail.
  */
 
@@ -151,6 +142,22 @@ unsigned optarg_ipproto(const struct logger *logger);
  */
 
 void optarg_verbose(const struct logger *logger, lset_t start);
+
+/*
+ * Standard options and their names.
+ */
+
+/*
+ * Parse --asynchronous et.al.
+ *
+ * Specifies that the WHACK / ADD operation should be run in the
+ * background.
+ */
+
+#define ASYNC_OPTS							\
+	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
+	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
+	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
 
 /*
  * parse --debug and --no-debug options.  The option may be followed
