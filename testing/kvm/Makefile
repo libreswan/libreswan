@@ -1299,7 +1299,7 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 		--noautoconsole
 	: Copy/transmogrify upgrade.sh in this directory, KVM_BENCHDIR,
 	: to KVM_POOLDIR where it can be run from within the VM.
-	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
+	: Do not use upgrade.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;$*;' \
@@ -1359,7 +1359,7 @@ $(KVM_BUILD_DOMAINS): \
 $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 		$(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade \
 		| \
-		platform/%/transmogrify.sh \
+		transmogrify/%.sh \
 		$(KVM_BUILDDIR)/ \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
@@ -1391,7 +1391,7 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
 		-e 's;@@KVM_SOURCEDIR@@;$(KVM_SOURCEDIR);' \
 		-e 's;@@KVM_TESTINGDIR@@;$(KVM_TESTINGDIR);' \
-		platform/$*/transmogrify.sh \
+		transmogrify/$(*).sh \
 		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
