@@ -242,8 +242,10 @@
 <!ENTITY milliseconds '<replaceable>milliseconds</replaceable>&duration_unit;'>
 
 <!-- command line options -->
+<!-- cant use <replaceable><filename>! -->
 
 <!ENTITY opt_async '<group choice="plain"><arg choice="opt">--bg[={yes,no}</arg><arg choice="opt">--asynchronous[={yes,no}]</arg></group>'>
+<!ENTITY nss_opts '<arg choice="opt">--nssdir <replaceable>directory</replaceable></arg> <arg choice="opt">--nsspw <replaceable>password</replaceable></arg> <arg choice="opt">--seeddev <replaceable>device</replaceable></arg> <arg choice="opt">--seedbits <replaceable>bits</replaceable></arg>'>
 
 <!-- people -->
 

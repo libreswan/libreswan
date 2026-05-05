@@ -19,11 +19,9 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec ecdsasigkey</command>
-      <arg choice='opt'>--verbose </arg>
-      <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
-      <arg choice='opt'>--seed <replaceable>numbits</replaceable></arg>
-      <arg choice='opt'>--nssdir <replaceable>nssdir</replaceable></arg>
-      <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
+      <arg choice='opt'>--verbose</arg>
+      &nss_opts;
+      <sbr/>
       <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
       <arg choice='opt'>curvename</arg>
     </cmdsynopsis>
