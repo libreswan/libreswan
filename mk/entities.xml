@@ -237,7 +237,7 @@
 
 <!ENTITY percent '<replaceable>percent</replaceable><literal>;&#37;</literal>'>
 
-<!ENTITY duration_unit '<literal>us</literal>|<literal>ms</literal>|<literal>s</literal>|<literal>m</literal>|<literal>h</literal>|<literal>d</literal>|<literal>w</literal>]'>
+<!ENTITY duration_unit '[<literal>us</literal>|<literal>ms</literal>|<literal>s</literal>|<literal>m</literal>|<literal>h</literal>|<literal>d</literal>|<literal>w</literal>]'>
 <!ENTITY seconds '<replaceable>seconds</replaceable>&duration_unit;'>
 <!ENTITY milliseconds '<replaceable>milliseconds</replaceable>&duration_unit;'>
 
