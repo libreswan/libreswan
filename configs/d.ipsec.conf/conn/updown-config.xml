@@ -53,9 +53,11 @@
 	</listitem>
       </varlistentry>
     </variablelist>
+
     <para>
-      The option <option>updown-config=</option> was added in
+      History: <option>updown-config=</option> was added in
       &Libreswan; 5.4.
     </para>
+
   </listitem>
 </varlistentry>

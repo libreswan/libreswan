@@ -18,8 +18,11 @@
     <para>
       The default is &yes;.
     </para>
+
     <para>
-      This option was added in Libreswan 5.4.
+      History: <option>loglimit=</option> was added in &Libreswan;
+      5.4.
     </para>
+
   </listitem>
 </varlistentry>

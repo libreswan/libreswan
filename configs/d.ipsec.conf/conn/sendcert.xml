@@ -42,10 +42,11 @@
     </para>
 
     <para>
-      This option was added in &Libreswan; 2.5.14; in &Libreswan;
-      2.28, the default was changed from <option>sendifasked</option>
-      to <option>always</option>; and in &Libreswan; 3.0, the related
-      and obsolete global option <option>nocrsend=</option> was
+      History: <option>sendcert=</option> was added in &Libreswan;
+      2.5.14 with the default <option>sendifasked</option>; in
+      &Libreswan; 2.28, the default was changed to
+      <option>always</option>; in &Libreswan; 3.0, the related and
+      obsolete global parameter <option>nocrsend=</option> was
       removed.
     </para>
 

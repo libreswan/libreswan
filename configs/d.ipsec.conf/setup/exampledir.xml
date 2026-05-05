@@ -14,8 +14,11 @@
     <para>
       The default is <filename>@@EXAMPLE_IPSEC_SYSCONFDIR@@</filename>.
     </para>
+
     <para>
-      This option was added in Libreswan 5.4.
+      History: <option>exampledir=</option> was added in &Libreswan;
+      5.4.
     </para>
+
   </listitem>
 </varlistentry>

@@ -32,13 +32,6 @@
       participant only.
     </para>
 
-    <note>
-      <para>
-	Support for specifying multiple selectors and the protocol and
-	port was added in &Libreswan; version 5.
-      </para>
-    </note>
-
     <important>
       <title>
 	IKEv1
@@ -84,6 +77,11 @@
 	should be converted to use the selector syntax.
       </para>
     </important>
+
+    <para>
+      History: support for specifying multiple selectors, the
+      protocol, and the port was added in &Libreswan; 5.0.
+    </para>
 
   </listitem>
 </varlistentry>
