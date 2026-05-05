@@ -178,17 +178,19 @@ void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
 void optarg_version(const char *suffix) NEVER_RETURNS;
 
 /*
- * Options for opening the NSS directory.
+ * Options for opening the NSS database.
  */
 
-#define NSSDIR_OPTS							\
-	{ "nssdir\0<dir>",         required_argument,  NULL,   OPT_NSSDIR, }, /* nss-tools use -d */ \
-	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, }, \
-	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, }, \
-	{ "seedbits\0<bits>",      required_argument,  NULL,   OPT_SEEDBITS, }
+#define NSS_OPTS							\
+	{ OPT("nssdir", "<dir>"),     required_argument,  NULL, OPT_NSSDIR, }, /* nss-tools use -d */ \
+	{ OPT("nsspw", "<password>"), required_argument,  NULL, OPT_NSSPW, }, \
+	{ SILENT_OPT("password", "<password>"),  required_argument,  NULL,   OPT_NSSPW, }, \
+	{ OPT("seeddev", "<device>"), required_argument,  NULL, OPT_SEEDDEV, }, \
+	{ OPT("seedbits", "<bits>"),  required_argument,  NULL, OPT_SEEDBITS, }
 
 void optarg_nssdir(struct logger *logger);
-void optarg_nss_password(struct logger *logger, struct nss_flags *nss);
+void optarg_nsspw(struct logger *logger, struct nss_flags *nss);
+
 void optarg_seeddev(struct logger *logger);
 uintmax_t optarg_seedbits(struct logger *logger);
 

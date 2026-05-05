@@ -110,11 +110,11 @@ enum opt {
 	OPT_PRECIDENCE,
 	OPT_RSAID,
 	OPT_DUMP,
-	OPT_PASSWORD,
 	OPT_CKAID,
 	OPT_DEBUG,
 	OPT_PEM,
 	OPT_PUBKEY,
+	OPT_NSSPW,
 	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 	OPT_VERSION,
@@ -137,7 +137,7 @@ const struct option optarg_options[] = {
 	{ "configdir\0",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
 	{ "pem\0",        no_argument,            NULL,   OPT_PEM, },
 	{ "pubkey\0",     no_argument,            NULL,   OPT_PUBKEY, },
-	NSSDIR_OPTS,
+	NSS_OPTS,
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -524,8 +524,8 @@ int main(int argc, char *argv[])
 		case OPT_NSSDIR:
 			optarg_nssdir(logger);
 			continue;
-		case OPT_PASSWORD:
-			optarg_nss_password(logger, &nss);
+		case OPT_NSSPW:
+			optarg_nsspw(logger, &nss);
 			continue;
 		case OPT_SEEDDEV:
 			optarg_seeddev(logger);

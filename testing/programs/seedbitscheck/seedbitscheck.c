@@ -23,14 +23,14 @@
 
 enum opt {
 	OPT_NSSDIR = 256,
-	OPT_PASSWORD,
+	OPT_NSSPW,
 	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 	OPT_HELP,
 };
 
 const struct option optarg_options[] = {
-	NSSDIR_OPTS,
+	NSS_OPTS,
 	{ OPT("help"), no_argument, NULL, OPT_HELP },
 	{ 0, 0, NULL, 0 }
 };
@@ -50,12 +50,17 @@ int main(int argc, char **argv)
 		}
 
 		switch ((enum opt)c) {
+
 		case OPT_NSSDIR:
 			optarg_nssdir(logger);
 			continue;
-		case OPT_PASSWORD:
+		case OPT_NSSPW:
+#if 0
 			/* Not used in this test, but required for NSSDIR_OPTS */
+			optarg_nsspw(logger, &nss);
+#endif
 			continue;
+
 		case OPT_SEEDBITS:
 			expected_seedbits = optarg_seedbits(logger);
 			seen_seedbits = true;
@@ -65,6 +70,7 @@ int main(int argc, char **argv)
 			expected_seeddev = optarg;
 			seen_seeddev = true;
 			continue;
+
 		case OPT_HELP:
 			optarg_usage("ipsec _seedbitscheck", "[--seedbits <number>] [--seeddev <device>]", "");
 		default:
