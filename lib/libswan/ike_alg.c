@@ -1425,3 +1425,48 @@ void init_ike_alg(struct logger *logger)
 	 */
 	log_ike_algs(logger);
 }
+/*
+ * Shared protocol table for IKE, ESP, and AH.
+ * Pluto can override alg_is_ok
+ * in the proposal_policy with the real kernel_alg_is_ok.
+ */
+
+static bool default_alg_is_ok(const struct ike_alg *alg,
+			      const struct logger *logger)
+{
+	if (alg->type == &ike_alg_kem) {
+		/* require an in-process/ike implementation of DH */
+		return ike_alg_is_ike(alg, logger);
+	} else {
+		/* no kernel to ask! */
+		return true;
+	}
+}
+
+static const struct ike_alg_protocol ike_alg_ike_protocol = {
+	.name = "ike",
+	.parser = ike_proposal_parser,
+	.pfs_vs_dh = false,
+	.alg_is_ok = ike_alg_is_ike,
+};
+
+static const struct ike_alg_protocol ike_alg_esp_protocol = {
+	.name = "esp",
+	.parser = esp_proposal_parser,
+	.pfs_vs_dh = true,
+	.alg_is_ok = default_alg_is_ok,
+};
+
+static const struct ike_alg_protocol ike_alg_ah_protocol = {
+	.name = "ah",
+	.parser = ah_proposal_parser,
+	.pfs_vs_dh = true,
+	.alg_is_ok = default_alg_is_ok,
+};
+
+const struct ike_alg_protocol *ike_alg_protocols[] = {
+	&ike_alg_ike_protocol,
+	&ike_alg_esp_protocol,
+	&ike_alg_ah_protocol,
+	NULL,
+};

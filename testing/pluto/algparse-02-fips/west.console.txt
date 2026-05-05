@@ -2820,6 +2820,12 @@ FIPS Integrity Algorithm:
 FIPS Key Exchange Method (DH):
 FIPS IP Compression:
 FIPS Sequence Number:
+FIPS default IKEv2 ike proposals:
+FIPS default IKEv1 ike proposals:
+FIPS default IKEv2 esp proposals:
+FIPS default IKEv1 esp proposals:
+FIPS default IKEv2 ah proposals:
+FIPS default IKEv1 ah proposals:
 west #
  # Check pluto algorithm list.
 west #
