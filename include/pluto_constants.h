@@ -333,7 +333,7 @@ typedef enum {
  */
 #define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
 
-#define EXCHANGE_TIMEOUT_DELAY	   	deltatime_from_seconds(200) /* seconds before giving up on an exchange */
+#define EXCHANGE_TIMEOUT_DELAY	   	deltatime_from_seconds(30) /* seconds before giving up on an exchange */
 
 #define MAXIMUM_INVALID_KE_RETRANS 3
 
