@@ -1281,7 +1281,7 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 		$(KVM_BASEDIR)/$(KVM_PREFIX)%-base \
 		| \
 		$(KVM_UPGRADEDIR)/ \
-		platform/%/upgrade.sh \
+		upgrade/%.sh \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
 	./kvm-uninstall-domain.sh $@
@@ -1297,15 +1297,18 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 		$(VIRT_BENCHDIR) \
 		--import \
 		--noautoconsole
-	: Copy/transmogrify upgrade.sh in this directory, KVM_BENCHDIR,
-	: to KVM_POOLDIR where it can be run from within the VM.
-	: Do not use upgrade.sh from KVM_TESTINGDIR where tests live,
+
+	: Copy/transmogrify upgrade/PLATFORM.sh in this directory,
+	: KVM_BENCHDIR,to KVM_POOLDIR where it can be run from
+	: within the VM.
+	:
+	: Do not use KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;$*;' \
 		-e 's;@@DOMAIN_HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		platform/$*/upgrade.sh \
+		upgrade/$(*).sh \
 		> $@.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
