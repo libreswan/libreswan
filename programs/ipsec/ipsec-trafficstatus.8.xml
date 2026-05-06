@@ -102,7 +102,10 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
+    <!-- generated using ./mk/authors.sh programs/ipsec/ipsec-trafficstatus.8.xml "" -->
     <simplelist type='inline'>
+      <member><author>&AndrewCagney;</author></member>
+      <member><author>&PaulWouters;</author></member>
       <member><author>&TuomoSoini;</author></member>
     </simplelist>
   </refsect1>

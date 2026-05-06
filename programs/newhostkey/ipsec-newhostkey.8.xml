@@ -181,9 +181,16 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
+    <!-- generated using ./mk/authors.sh programs/newhostkey/ipsec-newhostkey.8.xml "" -->
     <simplelist type='inline'>
+      <member><author>&AndrewCagney;</author></member>
+      <member><author>&DaikiUeno;</author></member>
+      <member><author>&DanielKahnGillmor;</author></member>
+      <member><author>&D.HughRedelmeier;</author></member>
+      <member><author>&JoseQuaresma;</author></member>
+      <member><author>&MichaelRichardson;</author></member>
       <member><author>&PaulWouters;</author></member>
+      <member><author>&TuomoSoini;</author></member>
     </simplelist>
   </refsect1>
 </refentry>
-

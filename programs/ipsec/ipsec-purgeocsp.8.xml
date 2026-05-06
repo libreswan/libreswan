@@ -96,7 +96,9 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
+    <!-- generated using ./mk/authors.sh programs/ipsec/ipsec-purgeocsp.8.xml "" -->
     <simplelist type='inline'>
+      <member><author>&AndrewCagney;</author></member>
       <member><author>&TuomoSoini;</author></member>
     </simplelist>
   </refsect1>

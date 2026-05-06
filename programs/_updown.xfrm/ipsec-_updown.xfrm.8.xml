@@ -46,8 +46,15 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
+    <!-- generated using ./mk/authors.sh programs/_updown.xfrm/ipsec-_updown.xfrm.8.xml "" -->
     <simplelist type='inline'>
+      <member><author>&AndrewCagney;</author></member>
+      <member><author>&DanielKahnGillmor;</author></member>
+      <member><author>&JoseQuaresma;</author></member>
+      <member><author>&KenBantoft;</author></member>
+      <member><author>&MichaelRichardson;</author></member>
       <member><author>&PaulWouters;</author></member>
+      <member><author>&TuomoSoini;</author></member>
     </simplelist>
   </refsect1>
 </refentry>

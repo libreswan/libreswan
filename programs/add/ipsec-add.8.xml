@@ -289,9 +289,10 @@
 
   <refsect1 id='author'>
     <title>AUTHOR</title>
+    <!-- generated using ./mk/authors.sh programs/add/ipsec-add.8.xml "" -->
     <simplelist type='inline'>
-      <member><author>&TuomoSoini;</author></member>
       <member><author>&AndrewCagney;</author></member>
+      <member><author>&TuomoSoini;</author></member>
     </simplelist>
   </refsect1>
 </refentry>

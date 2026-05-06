@@ -249,9 +249,37 @@
 
 <!-- people -->
 
-<!ENTITY PaulWouters '<personname><firstname>Paul</firstname><surname>Wouters</surname></personname>'>
+<!-- to make up an authors list
+
+-->
+
+<!ENTITY aamrindersingh '<personname><firstname>Amrinder</firstname><surname>Singh</surname></personname>'>
 <!ENTITY AndrewCagney '<personname><firstname>Andrew</firstname><surname>Cagney</surname></personname>'>
-<!ENTITY HenrySpencer '<personname><firstname>Henry</firstname><surname>Spencer</surname></personname>'>
-<!ENTITY TuomoSoini '<personname><firstname>Tuomo</firstname><surname>Soini</surname></personname>'>
-<!ENTITY Rishabh '<personname><firstname>Rishabh</firstname></personname>'>
+<!ENTITY AntonyAntony '<personname><firstname>Antony</firstname><surname>Antony</surname></personname>'>
 <!ENTITY BradyJohnson '<personname><firstname>Brady</firstname><surname>Johnson</surname></personname>'>
+<!ENTITY D.HughRedelmeier '<personname><firstname>D. Hugh</firstname><surname>Redelmeier</surname></personname>'>
+<!ENTITY DaikiUeno '<personname><firstname>Daiki</firstname><surname>Ueno</surname></personname>'>
+<!ENTITY DanielKahnGillmor '<personname><firstname>Daniel Kahn</firstname><surname>Gillmor</surname></personname>'>
+<!ENTITY DavidMcCullough '<personname><firstname>David</firstname><surname>McCullough</surname></personname>'>
+<!ENTITY HaraldJenny '<personname><firstname>Harald</firstname><surname>Jenny</surname></personname>'>
+<!ENTITY HenrySpencer '<personname><firstname>Henry</firstname><surname>Spencer</surname></personname>'>
+<!ENTITY JoseQuaresma '<personname><firstname>Jose</firstname><surname>Quaresma</surname></personname>'>
+<!ENTITY KenBantoft '<personname><firstname>Ken</firstname><surname>Bantoft</surname></personname>'>
+<!ENTITY KimB.Heino '<personname><firstname>Kim B.</firstname><surname>Heino</surname></personname>'>
+<!ENTITY Max-JulianPogner '<personname><firstname>Max-Julian</firstname><surname>Pogner</surname></personname>'>
+<!ENTITY MichaelRichardson '<personname><firstname>Michael</firstname><surname>Richardson</surname></personname>'>
+<!ENTITY OndrejMoris '<personname><firstname>Ondrej</firstname><surname>Moris</surname></personname>'>
+<!ENTITY PaulWouters '<personname><firstname>Paul</firstname><surname>Wouters</surname></personname>'>
+<!ENTITY PhilippeVouters '<personname><firstname>Philippe</firstname><surname>Vouters</surname></personname>'>
+<!ENTITY PietroMonteiro '<personname><firstname>Pietro</firstname><surname>Monteiro</surname></personname>'>
+<!ENTITY Rishabh '<personname><firstname>Rishabh</firstname></personname>'>
+<!ENTITY SahanaPrasad '<personname><firstname>Sahana</firstname><surname>Prasad</surname></personname>'>
+<!ENTITY ShubhamKumar '<personname><firstname>Shubham</firstname><surname>Kumar</surname></personname>'>
+<!ENTITY SimonDeziel '<personname><firstname>Simon</firstname><surname>Deziel</surname></personname>'>
+<!ENTITY TuomoSoini '<personname><firstname>Tuomo</firstname><surname>Soini</surname></personname>'>
+<!ENTITY VukasinKaradzic '<personname><firstname>Vukasin</firstname><surname>Karadzic</surname></personname>'>
+<!ENTITY WesHardaker '<personname><firstname>Wes</firstname><surname>Hardaker</surname></personname>'>
+<!ENTITY WolfgangNothdurft '<personname><firstname>Wolfgang</firstname><surname>Nothdurft</surname></personname>'>
+<!ENTITY MattRogers '<personname><firstname>Matt</firstname><surname>Rogers</surname></personname>'>
+<!ENTITY ANISH-SR '<personname><firstname>Anish</firstname><surname>Singh Rawat</surname></personname>'>
+<!ENTITY vinnu124 '<personname><firstname>Vinayak</firstname><surname>Sandur</surname></personname>'>
