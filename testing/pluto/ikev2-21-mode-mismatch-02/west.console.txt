@@ -33,7 +33,7 @@ west #
 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "ipv4-psk-ikev2-transport":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "ipv4-psk-ikev2-transport":   sendca: all; our sendcert: always; their sendcert: always;
-"ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "ipv4-psk-ikev2-transport":   nat-traversal: encapsulation:auto; keepalive:20s
 "ipv4-psk-ikev2-transport":   routing: unrouted;
 "ipv4-psk-ikev2-transport":   conn serial: $1;

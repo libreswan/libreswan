@@ -43,7 +43,7 @@ west #
 "west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request
-"west-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"west-east" #2: STATE_QUICK_I1: 30 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
@@ -659,7 +659,7 @@ output: | #2 STATE_QUICK_I1: retransmits: current time 72.704425
 output: | #2 STATE_QUICK_I1: retransmits: retransmit count 0 exceeds limit? NO
 output: | #2 STATE_QUICK_I1: retransmits: deltatime 60 exceeds limit? YES
 output: | #2 STATE_QUICK_I1: retransmits: monotime 59.98014 exceeds limit? NO
-output: "west-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+output: "west-east" #2: STATE_QUICK_I1: 30 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 output: | pstats #2 ikev1.ipsec failed too-many-retransmits
 output: | clone logger: newref @0x7f18d54cefc8(0->1) (teardown_child() +1217 programs/pluto/routing.c)
 output: | "west-east" #2: attach whack fd@0x7f18d5ea9fe8 to logger 0x7f18d54cefc8 slot 0 (teardown_child() +1217 programs/pluto/routing.c)

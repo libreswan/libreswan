@@ -55,7 +55,7 @@ east #
 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-A":   our idtype: FQDN; our id=@east.testing.libreswan.org; their idtype: FQDN; their id=@someone.testing.libreswan.org
 "road-A":   sendca: none; our sendcert: always; their sendcert: always;
-"road-A":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"road-A":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-A":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-A":   routing: unrouted;
 "road-A":   conn serial: $1;
@@ -79,7 +79,7 @@ east #
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-chain-B":   our idtype: FQDN; our id=@east.testing.libreswan.org; their idtype: FQDN; their id=@west_chain_endcert.testing.libreswan.org
 "road-chain-B":   sendca: none; our sendcert: always; their sendcert: always;
-"road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;
 "road-chain-B":   conn serial: $2;

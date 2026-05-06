@@ -57,7 +57,7 @@ north #
 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x1":   our idtype: FQDN; our id=@north; their idtype: FQDN; their id=@east
 "north-eastnets/0x1":   sendca: all; our sendcert: always; their sendcert: always;
-"north-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"north-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "north-eastnets/0x1":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x1":   routing: routed-tunnel; established Child SA: #2;
 "north-eastnets/0x1":   conn serial: $1;
@@ -82,7 +82,7 @@ north #
 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x2":   our idtype: FQDN; our id=@north; their idtype: FQDN; their id=@east
 "north-eastnets/0x2":   sendca: all; our sendcert: always; their sendcert: always;
-"north-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"north-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "north-eastnets/0x2":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x2":   routing: routed-tunnel; established IKE SA: #1; established Child SA: #3;
 "north-eastnets/0x2":   conn serial: $2;

@@ -228,7 +228,7 @@ Connection list:
 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear-or-private":   our idtype: NULL; our id=ID_NULL; their idtype: NULL; their id=ID_NULL
 "clear-or-private":   sendca: all; our sendcert: always; their sendcert: always;
-"clear-or-private":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"clear-or-private":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "clear-or-private":   nat-traversal: encapsulation:auto; keepalive:20s
 "clear-or-private":   routing: unrouted;
 "clear-or-private":   conn serial: $2;
@@ -249,7 +249,7 @@ Connection list:
 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private":   our idtype: NULL; our id=ID_NULL; their idtype: NULL; their id=ID_NULL
 "private":   sendca: all; our sendcert: always; their sendcert: always;
-"private":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"private":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "private":   nat-traversal: encapsulation:auto; keepalive:20s
 "private":   routing: unrouted;
 "private":   conn serial: $4;
@@ -270,7 +270,7 @@ Connection list:
 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear":   our idtype: NULL; our id=ID_NULL; their idtype: NULL; their id=ID_NULL
 "private-or-clear":   sendca: all; our sendcert: always; their sendcert: always;
-"private-or-clear":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"private-or-clear":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "private-or-clear":   nat-traversal: encapsulation:auto; keepalive:20s
 "private-or-clear":   routing: unrouted;
 "private-or-clear":   conn serial: $3;
@@ -290,7 +290,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear#192.1.2.0/24":   our idtype: NULL; our id=ID_NULL; their idtype: NULL; their id=ID_NULL
 "private-or-clear#192.1.2.0/24":   sendca: all; our sendcert: always; their sendcert: always;
-"private-or-clear#192.1.2.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"private-or-clear#192.1.2.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "private-or-clear#192.1.2.0/24":   nat-traversal: encapsulation:auto; keepalive:20s
 "private-or-clear#192.1.2.0/24":   routing: unrouted;
 "private-or-clear#192.1.2.0/24":   conn serial: $9, instantiated from: $3;

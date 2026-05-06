@@ -103,7 +103,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "westnet-eastnet-ipv4-psk-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
@@ -127,7 +127,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-ipv4-psk-ikev2"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-ipv4-psk-ikev2"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
 "westnet-eastnet-ipv4-psk-ikev2"[1]:   conn serial: $2, instantiated from: $1;

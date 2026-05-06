@@ -115,7 +115,7 @@ Connection list:
 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-northnet-ipv4-psk":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-northnet-ipv4-psk":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-northnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-northnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-northnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-northnet-ipv4-psk":   routing: unrouted;
 "westnet-northnet-ipv4-psk":   conn serial: $1;
