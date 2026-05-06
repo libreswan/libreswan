@@ -21,15 +21,14 @@
       <command>ipsec</command>
       <arg choice='plain'><replaceable>newhostkey</replaceable></arg>
       <group choice='opt'>
-	<arg choice='opt'>--quiet </arg>
-	<arg choice='opt'>--verbose </arg>
+	<arg choice='plain'>--quiet</arg>
+	<arg choice='plain'>--verbose</arg>
       </group>
-      <arg choice='opt'>--nssdir<replaceable>nssdir</replaceable></arg>
-      <arg choice='opt'>--password <replaceable>password</replaceable></arg>
+      &nss_opts;
+      <sbr/>
       <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
       <arg choice='opt'>--curve <replaceable>curve</replaceable></arg>
       <arg choice='opt'>--keytype <replaceable>rsa|ecdsa</replaceable></arg>
-      <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 

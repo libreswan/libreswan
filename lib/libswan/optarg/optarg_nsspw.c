@@ -16,7 +16,7 @@
 #include "optarg.h"
 #include "lswnss.h"
 
-void optarg_nss_password(struct logger *logger UNUSED, struct nss_flags *nss)
+void optarg_nsspw(struct logger *logger UNUSED, struct nss_flags *nss)
 {
 	nss->password = optarg;
 }

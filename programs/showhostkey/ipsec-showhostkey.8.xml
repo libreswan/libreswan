@@ -21,7 +21,9 @@
     <cmdsynopsis>
       <command>ipsec showhostkey</command>
 
-      <arg>--verbose</arg>
+      <arg choice='opt'>--verbose</arg>
+      &nss_opts;
+      <sbr/>
 
       <arg choice='req'>
 	<group choice='plain'>
@@ -42,14 +44,10 @@
 	  <arg choice='plain'>--rsaid <replaceable>rsaid</replaceable></arg>
 	</group>
       </arg>
-    <sbr/>
+      <sbr/>
 
-    <arg>--gateway <replaceable>gateway</replaceable></arg>
-    <arg>--precedence <replaceable>precedence</replaceable></arg>
-    <sbr/>
-
-    <arg>--nssdir <replaceable>nssdir</replaceable></arg>
-    <arg>--password <replaceable>password</replaceable></arg>
+      <arg>--gateway <replaceable>gateway</replaceable></arg>
+      <arg>--precedence <replaceable>precedence</replaceable></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>

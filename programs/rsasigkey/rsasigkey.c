@@ -85,7 +85,7 @@ enum opt {
 	OPT_HELP,
 	OPT_VERSION,
 	OPT_NSSDIR,
-	OPT_PASSWORD,
+	OPT_NSSPW,
 	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 };
@@ -95,7 +95,7 @@ const struct option optarg_options[] = {
 	{ "verbose\0",             no_argument,        NULL,   OPT_VERBOSE, },
 	{ "help\0",                no_argument,        NULL,   OPT_HELP, },
 	{ "version\0",             no_argument,        NULL,   OPT_VERSION, },
-	NSSDIR_OPTS,
+	NSS_OPTS,
 	{ 0, 0, NULL, 0, }
 };
 
@@ -190,10 +190,6 @@ int main(int argc, char *argv[])
 			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
-		case OPT_SEEDDEV:       /* nonstandard random device for seed */
-			optarg_seeddev(logger);
-			continue;
-
 		case OPT_HELP:       /* help */
 			optarg_usage("ipsec rsasigkey", "[<keybits>]", "");
 
@@ -203,8 +199,8 @@ int main(int argc, char *argv[])
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
 			optarg_nssdir(logger);
 			continue;
-		case OPT_PASSWORD:       /* token authentication password */
-			optarg_nss_password(logger, &nss);
+		case OPT_NSSPW:       /* token authentication password */
+			optarg_nsspw(logger, &nss);
 			continue;
 
 		case OPT_SEEDBITS: /* seed bits */
@@ -217,6 +213,10 @@ int main(int argc, char *argv[])
 				}
 			}
 			continue;
+		case OPT_SEEDDEV:       /* nonstandard random device for seed */
+			optarg_seeddev(logger);
+			continue;
+
 		}
 
 		bad_case(c);

@@ -572,7 +572,7 @@ enum opt {
 	OPT_FIPS,
 	OPT_IGNORE,
 	OPT_NSSDIR,
-	OPT_PASSWORD,
+	OPT_NSSPW,
 	OPT_SEEDDEV,
 	OPT_SEEDBITS,
 	OPT_VERSION,
@@ -591,7 +591,7 @@ const struct option optarg_options[] = {
 	{ OPT("pfs", "{yes,no}"), optional_argument, NULL, OPT_PFS, },
 	{ OPT("addke", "{yes,no}"), optional_argument, NULL, OPT_ADDKE, },
 	{ OPT("fips", "{yes,no}"), optional_argument, NULL, OPT_FIPS, },
-	NSSDIR_OPTS,
+	NSS_OPTS,
 	{ 0, 0, 0, 0 }
 };
 
@@ -665,8 +665,8 @@ int main(int argc, char *argv[])
 		case OPT_NSSDIR:
 			optarg_nssdir(logger);
 			continue;
-		case OPT_PASSWORD:
-			optarg_nss_password(logger, &nss);
+		case OPT_NSSPW:
+			optarg_nsspw(logger, &nss);
 			continue;
 		case OPT_SEEDDEV:
 			optarg_seeddev(logger);

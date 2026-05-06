@@ -24,39 +24,37 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec algparse</command>
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--debug</arg>
+      &nss_opts;
+      <sbr/>
       <group>
-	<arg choice="plain">-v1</arg>
-	<arg choice="plain">-v2</arg>
-	<arg choice="plain">-v</arg>
-	<arg choice="plain">-verbose</arg>
-	<arg choice="plain">-debug</arg>
-	<arg choice="plain">-p1</arg>
-	<arg choice="plain">-p2</arg>
+	<arg choice="plain">--v1</arg>
+	<arg choice="plain">--v2</arg>
+	<arg choice="plain">--v</arg>
+	<arg choice="plain">--p1</arg>
+	<arg choice="plain">--p2</arg>
 	<arg choice="plain">
-	  -pfs
+	  --pfs
 	  <group choice="req">
 	    <arg choice="plain">yes</arg>
 	    <arg choice="plain">no</arg>
 	  </group>
 	</arg>
 	<arg choice="plain">
-	  -fips
+	  --fips
 	  <group choice="req">
 	    <arg choice="plain">yes</arg>
 	    <arg choice="plain">no</arg>
 	  </group>
 	</arg>
-	<arg choice="plain">-ignore</arg>
-	<arg choice="plain">-impair</arg>
-	<arg choice="plain">
-	  -nsspw
-	  <replaceable>password</replaceable>
-	</arg>
+	<arg choice="plain">--ignore</arg>
+	<arg choice="plain">--impair</arg>
       </group>
       <sbr/>
       <group choice="req">
-	<arg choice="plain">-tp</arg>
-	<arg choice="plain">-ta</arg>
+	<arg choice="plain">--tp</arg>
+	<arg choice="plain">--ta</arg>
 	<arg choice="plain">ike=<replaceable>proposals</replaceable></arg>
 	<arg choice="plain">esp=<replaceable>proposals</replaceable></arg>
 	<arg choice="plain">ah=<replaceable>proposals</replaceable></arg>
