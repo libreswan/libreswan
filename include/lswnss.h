@@ -92,13 +92,6 @@ void shutdown_nss(void);
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
 /*
- * Seed NSS PRNG with entropy from a random device.
- * This is used by keygen tools to satisfy TLA requirements.
- * Returns void; may exit on fatal errors.
- */
-void lsw_nss_seed_rng(int seedbits, struct logger *logger);
-
-/*
  * These get the error using the thread-local PR_GetError() which
  * should always be set (or is passed in).
  *

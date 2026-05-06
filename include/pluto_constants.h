@@ -66,6 +66,8 @@ extern const struct sparse_names ikev2_option_names;
 
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
+#define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
+
 /*
  * XFRM_INF is a uint64_t, hence use that to define upper bound of
  * constant.

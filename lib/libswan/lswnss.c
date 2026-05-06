@@ -34,6 +34,7 @@
 
 static char *get_nss_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 static char *get_nss_file_password(const char *token, const char *password_file, struct logger *logger);
+static void seed_prng(struct logger *logger);
 
 static struct nss_flags shutdown_flags;
 static const char *nss_password;
@@ -157,6 +158,8 @@ void init_nss(const char *configdir /*CAN-BE-NULL*/,
 			pfree_diag(&d);
 		}
 	}
+
+	seed_prng(logger);
 }
 
 void shutdown_nss(void)
@@ -331,16 +334,23 @@ static char *get_nss_file_password(const char *token, const char *password_file,
 /*
  * Seed NSS PRNG with entropy from a random device.
  *
- * Some government Three Letter Agencies require that NSS reads additional
- * bits from /dev/random and feed these into the NSS RNG before drawing random
- * from the NSS library, despite the NSS library itself already seeding its
- * internal state. This process can block for an extended time during startup,
- * depending on the entropy of the system. Therefore the default is to not
- * perform this redundant seeding. If specifying a value, it is recommended
- * to specify at least 460 bits (for FIPS) or 440 bits (for BSI).
+ * Some government Three Letter Agencies require that NSS reads
+ * additional bits from /dev/random and feed these into the NSS RNG
+ * before drawing random from the NSS library, despite the NSS library
+ * itself already seeding its internal state.  This process can block
+ * for an extended time during startup, depending on the entropy of
+ * the system.  Therefore the default is to not perform this redundant
+ * seeding.  If specifying a value, it is recommended to specify at
+ * least 460 bits (for FIPS) or 440 bits (for BSI).
  */
-void lsw_nss_seed_rng(int seedbits, struct logger *logger)
+
+void seed_prng(struct logger *logger)
 {
+	uintmax_t seedbits = config_setup_option(KBF_SEEDBITS);
+	if (seedbits == 0) {
+		return;
+	}
+
 	SECStatus rv;
 	int seedbytes = BYTES_FOR_BITS(seedbits);
 	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
