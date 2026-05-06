@@ -44,7 +44,6 @@ for xml in testingdir.glob("kvm/vm/*.xml"):
 
 PLATFORMS = Set() # netbsd freebsd fedora ...
 for platform in testingdir.glob("kvm/platform/[a-z]*/"):
-    print(platform.name, platform.parent.name)
     p = platform.name
     PLATFORMS.add(p)
 
