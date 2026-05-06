@@ -4216,7 +4216,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->retransmit_timeout =
 			extract_deltatime(kv(wm, END_ROOF, KWS_RETRANSMIT_TIMEOUT),
-					  deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT),
+					  RETRANSMIT_TIMEOUT_DEFAULT,
 					  &d, verbose);
 		if (d != NULL) {
 			return d;
