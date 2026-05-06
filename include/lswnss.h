@@ -72,7 +72,8 @@ struct nss_flags {
  * If something goes wrong, fatal(PLUTO_EXIT_FAIL, logger, ...) is called.
  */
 
-void init_nss(const char *config_dir, struct nss_flags flags, struct logger *logger);
+void init_nss(const char *config_dir /*CAN-BE-NULL*/,
+	      struct nss_flags flags, struct logger *logger);
 void shutdown_nss(void);
 
 /*

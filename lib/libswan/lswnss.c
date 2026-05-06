@@ -38,7 +38,8 @@ static char *get_nss_file_password(const char *token, const char *password_file,
 static struct nss_flags shutdown_flags;
 static const char *nss_password;
 
-static diag_t setup(const char *configdir, struct nss_flags flags, struct logger *logger)
+static diag_t setup(const char *configdir/*CAN-BE-NULL*/,
+		    struct nss_flags flags, struct logger *logger)
 {
 	/*
 	 * Turn (possibly NULL) CONFIGDIR into (possibly NULL) nssdir
@@ -145,7 +146,8 @@ static diag_t setup(const char *configdir, struct nss_flags flags, struct logger
 	return NULL;
 }
 
-void init_nss(const char *configdir, struct nss_flags flags, struct logger *logger)
+void init_nss(const char *configdir /*CAN-BE-NULL*/,
+	      struct nss_flags flags, struct logger *logger)
 {
 	nss_password = flags.password;
 	diag_t d = setup(configdir, flags, logger);

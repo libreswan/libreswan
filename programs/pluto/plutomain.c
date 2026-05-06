@@ -253,12 +253,6 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 	ldbg(logger, "read %zu bytes from %s for NSS PRNG", nbytes, device);
 }
 
-static void pluto_init_nss(const char *nssdir, struct logger *logger)
-{
-	init_nss(nssdir, (struct nss_flags) { .open_readonly = true}, logger);
-	llog(RC_LOG, logger, "NSS crypto library initialized");
-}
-
 /*
  * This exists purely to make the BSI happy.  We do not inflict this
  * on other users
@@ -988,7 +982,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
+			optarg_nssdir(logger);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -1382,7 +1376,12 @@ int main(int argc, char **argv)
 	connection_db_init(logger);
 	spd_db_init(logger);
 
-	pluto_init_nss(config_setup_nssdir(), logger);
+	/* If this goes wrong, function does not return */
+	init_nss(config_setup_nssdir(),
+		 (struct nss_flags) { .open_readonly = true},
+		 logger);
+	llog(RC_LOG, logger, "NSS crypto library initialized");
+
 	init_seedbits(logger);
 	init_demux(logger);
 
