@@ -67,8 +67,6 @@
 # define MAXBITS 521
 #endif
 
-#define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
-
 struct curve {
 	const char *name;
 	SECOidTag tag;
@@ -102,7 +100,7 @@ const struct option optarg_options[] = {
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
-static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger);
+static void ecdsasigkey(SECOidTag curve, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 int main(int argc, char *argv[])
@@ -110,7 +108,7 @@ int main(int argc, char *argv[])
 	log_to_stderr = false;
 	struct logger *logger = tool_logger(argc, argv);
 
-	int seedbits = DEFAULT_SEED_BITS;
+	update_setup_option(KBF_SEEDBITS, DEFAULT_SEED_BITS);
 	SECOidTag curve = SEC_OID_UNKNOWN;
 	struct nss_flags nss = {0};
 
@@ -130,9 +128,6 @@ int main(int argc, char *argv[])
 			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
-		case OPT_SEEDDEV:       /* nonstandard random device for seed */
-			optarg_seeddev(logger);
-			continue;
 
 		case OPT_HELP:       /* help */
 			optarg_usage("ipsec ecdsasigkey", "[<curve-name>]", "");
@@ -148,15 +143,12 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_SEEDBITS: /* seed bits */
-			seedbits = atoi(optarg);
-			if (PK11_IsFIPS()) {
-				if (seedbits < DEFAULT_SEED_BITS) {
-					fprintf(stderr, "%s: FIPS mode does not allow < %d seed bits\n",
-						progname, DEFAULT_SEED_BITS);
-					exit(1);
-				}
-			}
+			optarg_seedbits(logger);
 			continue;
+		case OPT_SEEDDEV:       /* nonstandard random device for seed */
+			optarg_seeddev(logger);
+			continue;
+
 		}
 
 		bad_case(c);
@@ -183,16 +175,17 @@ int main(int argc, char *argv[])
 	 * Don't fetch the config options until after they have been
 	 * processed, and really are "constant".
 	 */
+
 	init_nss(config_setup_nssdir(), nss, logger);
 
-	ecdsasigkey(curve, seedbits, logger);
+	ecdsasigkey(curve, logger);
 	exit(0);
 }
 
 /*
  * generate an ECDSA signature key
  */
-static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger)
+static void ecdsasigkey(SECOidTag curve, struct logger *logger)
 {
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
@@ -211,8 +204,6 @@ static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger)
 		exit(1);
 	}
 
-	/* Do some random-number initialization. */
-	lsw_nss_seed_rng(seedbits, logger);
 	privkey = PK11_GenerateKeyPair(slot,
 				       CKM_EC_KEY_PAIR_GEN,
 				       ecdsaparams, &pubkey,

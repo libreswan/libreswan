@@ -74,8 +74,6 @@
 # define MAXBITS 20000
 #endif
 
-#define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
-
 /* No longer use E=3 to comply to FIPS 186-4, section B.3.1 */
 #define F4	65537
 
@@ -102,7 +100,7 @@ const struct option optarg_options[] = {
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
-void rsasigkey(int nbits, int seedbits, struct logger *logger);
+void rsasigkey(int nbits, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
 /*
@@ -110,7 +108,7 @@ static const char *conv(const unsigned char *bits, size_t nbytes, int format);
  *
  * e is fixed at F4.
  */
-void rsasigkey(int nbits, int seedbits, struct logger *logger)
+void rsasigkey(int nbits, struct logger *logger)
 {
 	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
 	SECKEYPrivateKey *privkey = NULL;
@@ -123,8 +121,6 @@ void rsasigkey(int nbits, int seedbits, struct logger *logger)
 		exit(1);
 	}
 
-	/* Do some random-number initialization. */
-	lsw_nss_seed_rng(seedbits, logger);
 	privkey = PK11_GenerateKeyPair(slot,
 				       CKM_RSA_PKCS_KEY_PAIR_GEN,
 				       &rsaparams, &pubkey,
@@ -171,7 +167,7 @@ int main(int argc, char *argv[])
 	log_to_stderr = false;
 	struct logger *logger = tool_logger(argc, argv);
 
-	int seedbits = DEFAULT_SEED_BITS;
+	update_setup_option(KBF_SEEDBITS, DEFAULT_SEED_BITS);
 	struct nss_flags nss = {0};
 
 	while (true) {
@@ -204,14 +200,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_SEEDBITS: /* seed bits */
-			seedbits = atoi(optarg);
-			if (PK11_IsFIPS()) {
-				if (seedbits < DEFAULT_SEED_BITS) {
-					fprintf(stderr, "%s: FIPS mode does not allow < %d seed bits\n",
-						progname, DEFAULT_SEED_BITS);
-					exit(1);
-				}
-			}
+			optarg_seedbits(logger);
 			continue;
 		case OPT_SEEDDEV:       /* nonstandard random device for seed */
 			optarg_seeddev(logger);
@@ -273,7 +262,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	rsasigkey(nbits, seedbits, logger);
+	rsasigkey(nbits, logger);
 	exit(0);
 }
 

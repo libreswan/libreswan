@@ -214,77 +214,6 @@ static const char compile_time_interop_options[] = ""
 ;
 
 /*
- * This function MUST NOT be used for anything else!
- * It is used to seed the NSS PRNG based on --seedbits pluto argument
- * or the seedbits= * config setup option in ipsec.conf.
- * Everything else that needs random MUST use get_rnd_bytes()
- * This function MUST NOT be changed to use /dev/urandom.
- */
-static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *logger)
-{
-	size_t ndone;
-	int dev;
-	ssize_t got;
-	const char *device = config_setup_string(KSF_SEEDDEV);
-	if (device == NULL) {
-		device = "/dev/random";
-	}
-
-	dev = open(device, 0);
-	if (dev < 0) {
-		fatal(PLUTO_EXIT_NSS_FAIL, logger, errno, "could not open %s", device);
-	}
-
-	ndone = 0;
-	ldbg(logger, "need %d bits random for extra seeding of the NSS PRNG",
-	     (int) nbytes * BITS_IN_BYTE);
-
-	while (ndone < nbytes) {
-		got = read(dev, buf + ndone, nbytes - ndone);
-		if (got < 0) {
-			fatal(PLUTO_EXIT_NSS_FAIL, logger, errno, "read error on %s", device);
-		}
-		if (got == 0) {
-			fatal(PLUTO_EXIT_NSS_FAIL, logger, /*no-errno*/0, "EOF on %s!?!\n",  device);
-		}
-		ndone += got;
-	}
-	close(dev);
-	ldbg(logger, "read %zu bytes from %s for NSS PRNG", nbytes, device);
-}
-
-static void pluto_init_nss(const char *nssdir, struct logger *logger)
-{
-	init_nss(nssdir, (struct nss_flags) { .open_readonly = true}, logger);
-	llog(RC_LOG, logger, "NSS crypto library initialized");
-}
-
-/*
- * This exists purely to make the BSI happy.  We do not inflict this
- * on other users
- */
-
-static void init_seedbits(struct logger *logger)
-{
-	uintmax_t seedbits = config_setup_option(KBF_SEEDBITS);
-	if (seedbits != 0) {
-		int seedbytes = BYTES_FOR_BITS(seedbits);
-		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
-
-		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
-		SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
-		const char *device = config_setup_string(KSF_SEEDDEV);
-		if (device == NULL) {
-			device = "/dev/random";
-		}
-		llog(RC_LOG, logger, "seeded %d bytes into the NSS PRNG from %s", seedbytes, device);
-		passert(rv == SECSuccess);
-		messupn(buf, seedbytes);
-		pfree(buf);
-	}
-}
-
-/*
  * Table of Pluto command-line options.
  *
  * For getopt_long(3), but with twists.
@@ -731,21 +660,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SEEDDEV:	/* --seeddev */
-		{
 			optarg_seeddev(logger);
 			continue;
-		}
-
 		case OPT_SEEDBITS:	/* --seedbits */
-		{
-			/* Why not allow zero aka disable? */
-			uintmax_t seedbits = optarg_uintmax(logger);
-			if (seedbits == 0) {
-				optarg_fatal(logger, "seedbits must be an integer > 0");
-			}
-			update_setup_option(KBF_SEEDBITS, seedbits);
+			optarg_seedbits(logger);
 			continue;
-		}
 
 		case OPT_IKEV1_SECCTX_ATTR_TYPE:	/* --secctx-attr-type */
 			llog(RC_LOG, logger, "--secctx-attr-type not supported");
@@ -988,7 +907,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
+			optarg_nssdir(logger);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -1382,8 +1301,12 @@ int main(int argc, char **argv)
 	connection_db_init(logger);
 	spd_db_init(logger);
 
-	pluto_init_nss(config_setup_nssdir(), logger);
-	init_seedbits(logger);
+	/* If this goes wrong, function does not return */
+	init_nss(config_setup_nssdir(),
+		 (struct nss_flags) { .open_readonly = true},
+		 logger);
+	llog(RC_LOG, logger, "NSS crypto library initialized");
+
 	init_demux(logger);
 
 	if (is_fips_mode()) {

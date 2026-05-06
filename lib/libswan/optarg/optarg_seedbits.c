@@ -24,9 +24,9 @@ uintmax_t optarg_seedbits(struct logger *logger)
 	if (seedbits == 0) {
 		optarg_fatal(logger, "seedbits must be an integer > 0");
 	}
-	
+
 	/* Store in config setup for programs like pluto that use it */
 	update_setup_option(KBF_SEEDBITS, seedbits);
-	
+
 	return seedbits;
 }
