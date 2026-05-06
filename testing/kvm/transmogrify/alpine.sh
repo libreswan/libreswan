@@ -25,7 +25,7 @@ rc-update add staticroute
 # HOSTNAME and interface configuration based on interfaces (it saves
 # the result in /etc/network/interfaces and /etc/route.conf.
 
-cp -v /bench/testing/kvm/platform/alpine/hostname.sh /etc/init.d/hostname
+cp -v /bench/testing/kvm/transmogrify/alpine.hostname.sh /etc/init.d/hostname
 chmod a+x /etc/init.d/hostname
 cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/rc.hostname
 

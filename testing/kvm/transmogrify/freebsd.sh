@@ -26,10 +26,10 @@ for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
-cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/
-cp -v /bench/testing/kvm/platform/freebsd/dhclient.conf /etc/
-cp -v /bench/testing/kvm/platform/freebsd/rc.conf /etc/
-cp -v /bench/testing/kvm/platform/freebsd/auto_master /etc/
+cp -v /bench/testing/kvm/rc.d/rc.hostname                   /etc/rc.hostname
+cp -v /bench/testing/kvm/transmogrify/freebsd.dhclient.conf /etc/dhclient.conf
+cp -v /bench/testing/kvm/transmogrify/freebsd.rc.conf       /etc/rc.conf
+cp -v /bench/testing/kvm/transmogrify/freebsd.auto_master   /etc/auto_master
 
 # suppress motd
 touch /root/.hushlogin

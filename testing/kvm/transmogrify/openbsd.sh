@@ -16,18 +16,18 @@ sed -i -e '/source/d' -e '/testing/d' /etc/fstab
 cat <<EOF | tee -a /etc/fstab
 ${GATEWAY}:${SOURCEDIR}   /source   nfs  rw,tcp
 ${GATEWAY}:${TESTINGDIR}  /testing  nfs  rw,tcp
-${GATEWAY}:${POOLDIR}     /pool  nfs  rw,tcp
+${GATEWAY}:${POOLDIR}     /pool     nfs  rw,tcp
 EOF
 
-cp -v /bench/testing/kvm/platform/openbsd/rc.conf.local /etc/rc.conf.local
+cp -v /bench/testing/kvm/transmogrify/openbsd.rc.conf.local /etc/rc.conf.local
 chmod a+r /etc/rc.conf.local
 
 cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/
 chmod a+x /etc/rc.hostname
 
-cp -v /bench/testing/kvm/platform/openbsd/rc.network /etc/
+cp -v /bench/testing/kvm/transmogrify/openbsd.rc.network    /etc/rc.network
 chmod a+x /etc/rc.network
-cp -v /bench/testing/kvm/platform/openbsd/hostname.vio0 /etc/
+cp -v /bench/testing/kvm/transmogrify/openbsd.hostname.vio0 /etc/hostname.vio0
 
 chsh -s /usr/local/bin/bash root
 
