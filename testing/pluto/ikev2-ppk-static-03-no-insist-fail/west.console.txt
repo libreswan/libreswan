@@ -32,7 +32,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ppk":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-ipv4-psk-ppk":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-ipv4-psk-ppk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-ipv4-psk-ppk":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ppk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
@@ -52,7 +52,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"westnet-eastnet-ipv4-psk-ppk" #1: IKE_SA_INIT_I: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"westnet-eastnet-ipv4-psk-ppk" #1: IKE_SA_INIT_I: 30 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ipv4-psk-ppk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (sent IKE_SA_INIT request)

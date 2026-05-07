@@ -255,12 +255,12 @@ enum event_type {
  */
 #define EVENT_v1_SEND_XAUTH_DELAY_MS	80 /* milliseconds */
 
-#define RETRANSMIT_TIMEOUT_DEFAULT	60  /* seconds */
+#define RETRANSMIT_TIMEOUT_DEFAULT	deltatime_from_seconds(30)  /* seconds */
 #ifndef RETRANSMIT_INTERVAL_DEFAULT_MS
 # define RETRANSMIT_INTERVAL_DEFAULT_MS	500 /* wait time doubled each retransmit - in milliseconds */
 #endif
-#define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
-#define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
+#define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
+#define EVENT_v1_PAM_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
 
 #define REVIVE_CONN_DELAY	deltatime_from_seconds(5) /* seconds */
 #define REVIVE_CONN_DELAY_MAX   deltatime_from_seconds(300) /* Do not delay more than 5 minutes per attempt */
@@ -333,7 +333,7 @@ typedef enum {
  */
 #define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
 
-#define EXCHANGE_TIMEOUT_DELAY	   	deltatime_from_seconds(200) /* seconds before giving up on an exchange */
+#define EXCHANGE_TIMEOUT_DELAY	   	deltatime_from_seconds(30) /* seconds before giving up on an exchange */
 
 #define MAXIMUM_INVALID_KE_RETRANS 3
 

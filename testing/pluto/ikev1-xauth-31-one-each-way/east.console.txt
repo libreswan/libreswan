@@ -26,7 +26,7 @@ east #
  ipsec auto --up east-to-road-on-east
 "east-to-road-on-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "east-to-road-on-east" #3: sent Quick Mode request
-"east-to-road-on-east" #3: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"east-to-road-on-east" #3: STATE_QUICK_I1: 30 second timeout exceeded after 6 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "east-to-road-on-east" #3: starting keying attempt 2 of an unlimited number, but releasing whack
 east #
  ../../guestbin/ipsec-look.sh

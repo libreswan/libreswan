@@ -30,7 +30,7 @@ west #
 "tmp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "tmp":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "tmp":   sendca: all; our sendcert: always; their sendcert: always;
-"tmp":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"tmp":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "tmp":   nat-traversal: encapsulation:auto; keepalive:20s
 "tmp":   routing: unrouted;
 "tmp":   conn serial: $1;
@@ -63,7 +63,7 @@ west #
 "path":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "path":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "path":   sendca: all; our sendcert: always; their sendcert: always;
-"path":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"path":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "path":   nat-traversal: encapsulation:auto; keepalive:20s
 "path":   routing: unrouted;
 "path":   conn serial: $1;

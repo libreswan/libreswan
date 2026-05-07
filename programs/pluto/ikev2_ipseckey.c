@@ -85,7 +85,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		 */
 
 		uint32_t ttl = dns_pubkey->ttl;
-		uint32_t ttl_used = max(ttl, (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+		uint32_t ttl_used = max(ttl, (uint32_t)deltasecs(RETRANSMIT_TIMEOUT_DEFAULT));
 		char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
 
 		if (ttl_used == ttl) {

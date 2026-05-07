@@ -28,7 +28,7 @@ east #
 "westnet-eastnet-esp-null":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-esp-null":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
 "westnet-eastnet-esp-null":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-esp-null":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-esp-null":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-esp-null":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-esp-null":   routing: unrouted;
 "westnet-eastnet-esp-null":   conn serial: $1;

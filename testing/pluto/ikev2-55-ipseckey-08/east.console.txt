@@ -28,7 +28,7 @@ east #
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 "east-any":   sendca: all; our sendcert: always; their sendcert: always;
-"east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;
 "east-any":   conn serial: $1;

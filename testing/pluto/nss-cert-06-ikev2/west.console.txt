@@ -46,7 +46,7 @@ west #
 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "nss-cert":   our idtype: FQDN; our id=@west.testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "nss-cert":   sendca: all; our sendcert: always; their sendcert: always;
-"nss-cert":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"nss-cert":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "nss-cert":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert":   routing: unrouted;
 "nss-cert":   conn serial: $1;

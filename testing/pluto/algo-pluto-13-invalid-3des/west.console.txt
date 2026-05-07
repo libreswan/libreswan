@@ -58,7 +58,7 @@ west #
 "westnet-eastnet-aes256" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 "westnet-eastnet-aes256" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=3DES_CBC_333-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-aes256" #2: sent Quick Mode request
-"westnet-eastnet-aes256" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"westnet-eastnet-aes256" #2: STATE_QUICK_I1: 30 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "westnet-eastnet-aes256" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-aes256" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-aes256" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification

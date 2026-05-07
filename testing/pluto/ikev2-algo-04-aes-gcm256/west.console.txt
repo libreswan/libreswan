@@ -133,7 +133,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-ipv4-psk-ikev2-gcm-c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-ipv4-psk-ikev2-gcm-c":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   conn serial: $1;
