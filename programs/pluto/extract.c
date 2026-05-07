@@ -3224,20 +3224,6 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	bool intermediate =
-		extract_bool(kv(wm, END_ROOF, KWS_INTERMEDIATE),
-			     /*value_when_unset*/YN_NO,
-			     &d, verbose);
-	if (d != NULL) {
-		return d;
-	}
-	if (intermediate) {
-		if (ike_version < IKEv2) {
-			return diag("intermediate requires IKEv2");
-		}
-	}
-	config->intermediate = intermediate;
-
 	config->session_resumption =
 		extract_bool(kv(wm, END_ROOF, KWS_SESSION_RESUMPTION),
 			     /*value_when_unset*/YN_NO,
@@ -3937,6 +3923,20 @@ diag_t extract_connection(const struct whack_message *wm,
 	     c->config->ike_info->version_name,
 	     c->name, str_connection_policies(c, &pb));
 
+	bool intermediate =
+		extract_bool(kv(wm, END_ROOF, KWS_INTERMEDIATE),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (intermediate) {
+		if (ike_version < IKEv2) {
+			return diag("intermediate requires IKEv2");
+		}
+	}
+	config->intermediate = intermediate;
+
 	/* IKE cipher suites */
 
 	const struct kv ike_kv = kv(wm, END_ROOF, KWS_IKE);
@@ -3972,6 +3972,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			jam_proposals(buf, c->config->ike_proposals.p);
 		}
 
+		config->intermediate |=
+			proposals_have_intermediate(c->config->ike_proposals.p);
+
 		if (c->config->ike_version == IKEv2) {
 			vdbg("constructing local IKE proposals for %s",
 			     c->name);
@@ -3983,6 +3986,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					  config->v2_ike_proposals,
 					  "IKE SA proposals (connection add)");
 		}
+
 	}
 
 	/* ESP or AH cipher suites (but not both) */
@@ -4036,6 +4040,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			jam_string(buf, "ESP/AH string values: ");
 			jam_proposals(buf, c->config->child.proposals.p);
 		};
+
+		config->intermediate |=
+			proposals_have_intermediate(c->config->ike_proposals.p);
 
 		/*
 		 * For IKEv2, also generate the Child proposal that
