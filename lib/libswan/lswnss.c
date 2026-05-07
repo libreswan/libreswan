@@ -351,34 +351,31 @@ void seed_prng(struct logger *logger)
 		return;
 	}
 
-	SECStatus rv;
-	int seedbytes = BYTES_FOR_BITS(seedbits);
+	uintmax_t seedbytes = BYTES_FOR_BITS(seedbits);
 	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 	/*
 	 * lsw_random - get some random bytes from /dev/random (or wherever)
 	 * NOTE: This is only used for additional seeding of the NSS RNG
 	 */
-	size_t ndone;
-	int dev;
-	ssize_t got;
 	const char *device = config_setup_string(KSF_SEEDDEV);
 	if (device == NULL) {
 		device = "/dev/random";
 	}
 
-	dev = open(device, O_RDONLY);
+	ldbg(logger, "getting %ju random seed bytes for NSS from %s...",
+	     seedbytes * BITS_IN_BYTE, device);
+
+	int dev = open(device, O_RDONLY);
 	if (dev < 0) {
 		llog_errno(RC_LOG, logger, errno,
 			   "could not open %s: ", device);
 		exit(PLUTO_EXIT_FAIL);
 	}
 
-	ndone = 0;
-	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...",
-	     (int) seedbytes * BITS_IN_BYTE, device);
+	uintmax_t ndone = 0;
 	while (ndone < (size_t)seedbytes) {
-		got = read(dev, buf + ndone, seedbytes - ndone);
+		ssize_t got = read(dev, buf + ndone, seedbytes - ndone);
 		if (got < 0) {
 			llog_errno(RC_LOG, logger, errno,
 				   "read error on %s: ", device);
@@ -395,7 +392,10 @@ void seed_prng(struct logger *logger)
 
 	close(dev);
 
-	rv = PK11_RandomUpdate(buf, seedbytes);
+	llog(RC_LOG, logger, "seeded %ju bits into the NSS PRNG from %s",
+	     ndone * BITS_IN_BYTE, device);
+
+	SECStatus rv = PK11_RandomUpdate(buf, seedbytes);
 	passert(rv == SECSuccess);
 	messupn(buf, seedbytes);
 	pfree(buf);
