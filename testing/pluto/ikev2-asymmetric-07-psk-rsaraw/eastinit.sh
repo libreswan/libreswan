@@ -4,6 +4,6 @@ echo '# when get_preshared_key() can deal with asymmetric, we can narrow it down
 echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
-ipsec auto --status | grep westnet-eastnet-ikev2
+ipsec add westnet-eastnet-ikev2
+ipsec connectionstatus westnet-eastnet-ikev2
 echo "initdone"

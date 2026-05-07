@@ -6,12 +6,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added unoriented IKEv2 connection (neither left=192.1.2.46 nor right=192.1.2.24 match an interface)
 east #
  # should be unoriented
 east #
- ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
+ ipsec connectionstatus westnet-eastnet-ikev2 | grep "[.][.][.]"
 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unoriented; my_ip=unset; their_ip=unset;
 east #
  ../../guestbin/ip.sh address add 192.1.2.24/24 dev eth1
@@ -26,7 +26,7 @@ loading secrets from "/etc/ipsec.secrets"
 east #
  # should be oriented
 east #
- ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
+ ipsec connectionstatus westnet-eastnet-ikev2 | grep "[.][.][.]"
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.24[@east]...192.1.2.46===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 east #
  echo "initdone"
