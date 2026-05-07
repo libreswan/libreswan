@@ -201,6 +201,7 @@ bool proposal_impaired(const struct proposal *proposal);
 
 unsigned nr_proposals(const struct proposals *proposals);
 bool default_proposals(const struct proposals *proposals);
+bool proposals_have_intermediate(const struct proposals *proposals);
 
 void free_proposals(struct proposals **proposals);
 

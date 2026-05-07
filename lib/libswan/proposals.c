@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2020 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2026 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -151,6 +151,8 @@ struct proposal {
 
 struct proposals {
 	bool defaulted;
+	bool intermediate;
+	unsigned nr;
 	struct proposal *proposals;
 };
 
@@ -339,11 +341,12 @@ struct proposal *next_proposal(const struct proposals *proposals,
 
 unsigned nr_proposals(const struct proposals *proposals)
 {
-	unsigned nr = 0;
-	FOR_EACH_PROPOSAL(proposals, proposal) {
-		nr++;
-	}
-	return nr;
+	return proposals->nr;
+}
+
+bool proposals_have_intermediate(const struct proposals *proposals)
+{
+	return proposals->intermediate;
 }
 
 static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
@@ -986,16 +989,36 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		free_proposals(&proposals);
 		return NULL;
 	}
+
 	if (proposals->proposals == NULL) {
 		free_proposals(&proposals);
 		return NULL;
 	}
+
 	if (parser->policy->check_pfs_vs_ke &&
 	    !proposals_pfs_vs_ke_check(parser, proposals)) {
 		passert(parser->diag != NULL);
 		free_proposals(&proposals);
 		return NULL;
 	}
+
+	FOR_EACH_PROPOSAL(proposals, proposal) {
+		proposals->nr++;
+	}
+
+	FOR_EACH_PROPOSAL(proposals, proposal) {
+		DATA_FOR_EACH(transform, &proposal->transforms) {
+			if (transform->type->index >= PROPOSAL_TRANSFORM_addke1 &&
+			    transform->type->index <= PROPOSAL_TRANSFORM_addke7){
+				proposals->intermediate = true;
+				break;
+			}
+		}
+		if (proposals->intermediate) {
+			break;
+		}
+	}
+
 	return proposals;
 }
 
@@ -1553,7 +1576,8 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		/*
 		 * Parse additional key exchanges.
 		 */
-		if (parser->policy->addke) {
+		if (parser->policy->addke ||
+		    typed_how == TRANSFORM_TYPE_EXPLICIT) {
 			return parse_transform_algorithms(parser, proposal,
 							  transform_type, tokens,
 							  verbose);
@@ -1673,15 +1697,18 @@ bool parse_proposal(struct proposal_parser *parser,
 				return false;
 			}
 
-			if (tmp >= transform_roof) {
+			if (parser->policy->version == IKEv1 &&
+			    tmp >= transform_roof) {
 				proposal_error(parser, "transform '"PRI_SHUNK"' invalid",
 					       pri_shunk(tokens.curr.token));
 				return false;
 			}
+
 			/*
-			 * Warn when integ= is specified explicitly before prf=.
-			 * The new-syntax order is encrypt-prf-integ-kem;
-			 * specifying integ before prf produces confusing output.
+			 * Warn when integ= is specified explicitly
+			 * before prf=.  The new-syntax order is
+			 * encrypt-prf-integ-kem; specifying integ
+			 * before prf produces confusing output.
 			 */
 			if (tmp == transform_type_integ &&
 			    transform_type <= transform_type_prf &&
