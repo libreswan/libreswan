@@ -355,13 +355,12 @@ void seed_prng(struct logger *logger)
 	unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 	/*
-	 * lsw_random - get some random bytes from /dev/random (or wherever)
-	 * NOTE: This is only used for additional seeding of the NSS RNG
+	 * lsw_random - get some random bytes from /dev/random (or
+	 * wherever) NOTE: This is only used for additional seeding of
+	 * the NSS RNG
 	 */
 	const char *device = config_setup_string(KSF_SEEDDEV);
-	if (device == NULL) {
-		device = "/dev/random";
-	}
+	PASSERT(logger, device != NULL);
 
 	ldbg(logger, "getting %ju random seed bytes for NSS from %s...",
 	     seedbytes * BITS_IN_BYTE, device);

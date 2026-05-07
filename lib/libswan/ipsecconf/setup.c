@@ -141,6 +141,8 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KYN_LISTEN_UDP] = "yes",
 	[KYN_LISTEN_TCP] = "no",
 
+	[KSF_SEEDDEV] = "/dev/random",
+
 };
 
 const struct config_setup *config_setup_updates(void)
