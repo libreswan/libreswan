@@ -21,10 +21,10 @@ west #
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ppk
+ ipsec add westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
+ ipsec connectionstatus westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -48,14 +48,12 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
 west #
- ipsec whack --impair suppress_retransmits
-west #
  ipsec whack --impair revival
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ppk
+ ipsec up westnet-eastnet-ipv4-psk-ppk # sanitize-retransmits
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -69,7 +67,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-ipv4-psk-ppk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done

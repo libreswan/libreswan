@@ -10,10 +10,10 @@ west #
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ppk
+ ipsec add westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
+ ipsec connectionstatus westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -48,7 +48,7 @@ west #
 west #
  # this should fail
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ppk
+ ipsec up westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)

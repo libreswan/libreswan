@@ -6,14 +6,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress_retransmits
-west #
  ipsec whack --impair revival
 west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20'                     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20
@@ -35,7 +33,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none'                -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20-none
@@ -58,7 +56,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none-ml_kem_768' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none-ml_kem_768'     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20-none-ml_kem_768
@@ -81,7 +79,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-none' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-none'       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20-modp8192-none
@@ -104,7 +102,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-ml_kem_768' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-ml_kem_768' -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20-modp8192-ml_kem_768
