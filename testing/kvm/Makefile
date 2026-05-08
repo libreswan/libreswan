@@ -312,7 +312,6 @@ KVM_$($(strip $1))_BUILD_DOMAIN   = $$(KVM_BUILDDIR)/$$(KVM_PREFIX)$(strip $1)
 # don't override KVM_LINUX_TEST_HOST_NAMES above
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
-KVM_$($(strip $1))_LEGACY_DOMAINS    = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), e w n)))
 
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
@@ -1348,7 +1347,6 @@ kvm-uninstall-%: kvm-destroy-test-domains
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	: delete generated dependencies missed by above
-	./kvm-uninstall-domain.sh $(KVM_$($*)_LEGACY_DOMAINS)
 	rm -f $(KVM_$($*)_BUILD_DOMAIN).*
 	rm -f $(KVM_$($*)_BUILD_DOMAIN)
 	: transmogrify.sh is in /pool
