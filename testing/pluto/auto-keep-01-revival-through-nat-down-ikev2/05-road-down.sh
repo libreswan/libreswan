@@ -1,1 +1,1 @@
-ipsec auto --down road-eastnet-ikev2
+ipsec down road-eastnet-ikev2

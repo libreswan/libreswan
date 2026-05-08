@@ -1,5 +1,5 @@
-ipsec up west-cuckold
-ipsec up west-cuckoo
+ipsec up west-cuckold # sanitize-retransmits
+ipsec up west-cuckoo # sanitize-retransmits
 
 ../../guestbin/ping-once.sh --up 192.0.2.254
 ../../guestbin/ping-once.sh --up 192.0.20.254

@@ -9,7 +9,7 @@ re-use the existing NAT mapping to establish a new tunnel.
 auto=keep is the same as auto=add except it adds POLICY_UP to the
 connection, so a delete will trigger the revive code.
 
-NOTE: there is no ipsec auto --keep conn command yet
+NOTE: there is no ipsec keep conn command yet
 
 road uses a non-standard leftikeport, so nic does not assign port
 4500 of road to its own port 4500, as that way we cannot test

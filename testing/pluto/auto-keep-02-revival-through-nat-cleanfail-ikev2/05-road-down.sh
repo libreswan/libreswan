@@ -1,1 +1,1 @@
-ipsec auto --delete road-eastnet-ikev2
+ipsec delete road-eastnet-ikev2

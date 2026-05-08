@@ -5,7 +5,7 @@ ipsec _kernel policy
 
 # Now trigger the revival.  Since ROAD is down it will fail.  And
 # being KEEP further revivals are abandoned.
-ipsec whack --impair trigger_revival:2
+ipsec whack --impair trigger_revival:2 # sanitize-retransmits
 
 # since the NAT port is still open road should allow recovery
 ../../guestbin/wait-for-pluto.sh '^".*#4: initiator established Child SA using #3'

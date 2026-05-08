@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- #ipsec auto --add east
+ #ipsec add east
 east #
  echo "initdone"
 initdone

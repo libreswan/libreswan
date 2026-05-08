@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- # loaded via ipsec.conf - no ipsec auto --keep yet
+ # loaded via ipsec.conf - no ipsec keep yet
 east #
  # Late in the game there will be a revival attempt; make it pause so
 east #
@@ -50,7 +50,7 @@ east #
 east #
  # being KEEP further revivals are abandoned.
 east #
- ipsec whack --impair trigger_revival:2
+ ipsec whack --impair trigger_revival:2 # sanitize-retransmits
 IMPAIR: "road-eastnet-ikev2"[1] 192.1.2.254: dispatch REVIVAL; attempt 1 next in 5s to 192.1.2.254:6666 via 192.1.2.23:4500; received Delete/Notify
 "road-eastnet-ikev2"[1] 192.1.2.254: reviving connection which received Delete/Notify but must remain up per local policy (serial $2)
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: initiating IKEv2 connection to 192.1.2.254 using UDP
