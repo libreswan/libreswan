@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2025 Andrew Cagney
+# Copyright (C) 2015-2026 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -309,13 +309,15 @@ KVM_$($(strip $1))_BASE_DOMAIN    = $$(KVM_BASEDIR)/$$(KVM_PREFIX)$(strip $1)-ba
 KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(KVM_UPGRADEDIR)/$$(KVM_PREFIX)$(strip $1)-upgrade
 KVM_$($(strip $1))_BUILD_DOMAIN   = $$(KVM_BUILDDIR)/$$(KVM_PREFIX)$(strip $1)
 
-# don't override KVM_LINUX_TEST_HOST_NAMES above
-KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
-KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
-
 KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
 KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
+
+# don't override KVM_LINUX_TEST_HOST_NAMES above
+KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
+KVM_$($(strip $1))_TEST_XML          = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
+
+KVM_TEST_XML += $$(KVM_$($(strip $1))_TEST_XML)
 
 endef
 
@@ -1333,7 +1335,7 @@ kvm-transmogrify-%: kvm-uninstall-%
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
 kvm-uninstall-%: kvm-destroy-test-domains
 	: $@=$*
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	rm -f $(KVM_$($*)_TEST_XML)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	: delete generated dependencies missed by above
 	rm -f $(KVM_$($*)_BUILD_DOMAIN).*
@@ -1436,20 +1438,16 @@ kvm-make-install-all-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORMS)): \
-kvm-install-%: kvm-destroy-test-domains
+kvm-install-%: kvm-destroy-test-domains | $(KVM_TEST_XML)
 	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-base-$*
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
-	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 $(patsubst %, kvm-install-all-%, $(KVM_PLATFORMS)): \
-kvm-install-all-%:
+kvm-install-all-%: | $(KVM_TEST_XML)
 	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-all-$*
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
-	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 .PHONY: kvm-install
 kvm-install: kvm-keys-ok
@@ -1541,8 +1539,6 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 .PHONY: kvm-destroy-test-domains
 kvm-destroy-test-domains:
 	./bin/destroy.sh $(notdir $(KVM_TEST_DOMAINS))
-	: legacy, could also be defined
-	./kvm-uninstall-domain.sh $(KVM_TEST_DOMAINS)
 
 .PHONY: kvm-shutdown
 
@@ -1552,8 +1548,9 @@ kvm-shutdown: $(foreach os, $(KVM_OS), kvm-shutdown-$(os))
 $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORMS)): \
 kvm-shutdown-%: kvm-destroy-test-domains
 	: $@=$*
-	./bin/shutdown.sh $(notdir $(KVM_$($*)_BASE_DOMAIN) $(KVM_$($*)_UPGRADE_DOMAIN) $(KVM_$($*)_BUILD_DOMAIN))
-	./bin/destroy.sh $(notdir $(KVM_$($*)_TEST_DOMAINS))
+	./bin/shutdown.sh $(notdir $(KVM_$($*)_BASE_DOMAIN))
+	./bin/shutdown.sh $(notdir $(KVM_$($*)_UPGRADE_DOMAIN))
+	./bin/shutdown.sh $(notdir $(KVM_$($*)_BUILD_DOMAIN))
 
 .PHONY: kvm-clean
 
@@ -1688,12 +1685,13 @@ $(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_HOST_NAMES)$(crlf))
 
-$(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
-
 $(call kvm-var-value,KVM_BASE_DOMAINS)
 $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
 $(call kvm-var-value,KVM_BUILD_DOMAINS)
 $(call kvm-var-value,KVM_TEST_DOMAINS)
+
+ $(call kvm-var-value,KVM_TEST_XML)
+$(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_XML)$(crlf))
 
 $(call kvm-var-value,KVM_GATEWAY_ADDRESS)
 $(call kvm-var-value,KVM_GATEWAY_NAME)
