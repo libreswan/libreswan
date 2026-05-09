@@ -313,25 +313,14 @@ KVM_$($(strip $1))_BUILD_DOMAIN   = $$(KVM_BUILDDIR)/$$(KVM_PREFIX)$(strip $1)
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
 
-KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
-KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
-KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
-KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_TEST_DOMAINS)
-
 KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
 KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
-KVM_DOMAINS          += $$(KVM_$($(strip $1))_TEST_DOMAINS)
 
 endef
 
 $(foreach platform, $(KVM_PLATFORMS), \
 	$(eval $(call domains, $(platform))))
-
-KVM_DOMAINS += $(KVM_BASE_DOMAINS)
-KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
-KVM_DOMAINS += $(KVM_BUILD_DOMAINS)
-KVM_DOMAINS += $(KVM_TEST_DOMAINS)
 
 #
 # Domains
@@ -1705,10 +1694,6 @@ $(call kvm-var-value,KVM_BASE_DOMAINS)
 $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
 $(call kvm-var-value,KVM_BUILD_DOMAINS)
 $(call kvm-var-value,KVM_TEST_DOMAINS)
-
-$(call kvm-var-value,KVM_DOMAINS)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_DOMAINS)$(crlf))
 
 $(call kvm-var-value,KVM_GATEWAY_ADDRESS)
 $(call kvm-var-value,KVM_GATEWAY_NAME)
