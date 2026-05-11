@@ -1123,6 +1123,31 @@ static bool teardown_child_dispatch_ok(struct connection *c,
 
 static void teardown_child_post_op(const struct routing_annex *e)
 {
+	struct child_sa *child = *e->child;
+	struct state *st = &child->sa;
+
+	/*
+	 * If (cuckoo) larval child has CREATE_CHILD_SA request outstanding, its
+	 * deletion is deferred until the response arrives or until its timeout.
+	 */
+	if (st->st_clonedfrom != SOS_NOBODY && !IS_CHILD_SA_ESTABLISHED(st)) {
+		struct ike_sa *ike = ike_sa_by_serialno(st->st_clonedfrom);
+		if (ike != NULL && ike->sa.st_v2_msgid_windows.initiator.wip_sa == child && ike->sa.st_viable_parent) {
+			llog(RC_LOG, st->logger,
+				"deletion of larval child #%u for connection '%s' deferred (pending CREATE_CHILD_SA response)",
+				st->st_serialno, st->st_connection->name);
+
+			/*
+			 * Since we deferred deletion we also need to restore negotiating_child_sa
+			 * that was cleared by teardown. With that weeding visit won't attempt to
+			 * delete it again.
+			 */
+			st->st_connection->negotiating_child_sa = st->st_serialno;
+			*e->child = NULL;
+			return;
+		}
+	}
+
 	delete_child_sa(e->child);
 }
 
