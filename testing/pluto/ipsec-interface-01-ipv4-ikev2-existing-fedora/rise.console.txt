@@ -34,18 +34,14 @@ rise #
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
 "rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [198.18.15.0/24===192.19.12.0/24]
+"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [0.0.0.0/0===0.0.0.0/0]
 "rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"rise-set" #2: command "route" output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
+"rise-set" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
  ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 198.18.12.12 198.18.15.15
-PING 198.18.15.15 (198.18.15.15) from 198.18.12.12 : 56(84) bytes of data.
-From 198.18.12.12 icmp_seq=1 Destination Host Unreachable
---- 198.18.15.15 ping statistics ---
-1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+up
 rise #
  ipsec _kernel state
 src 198.18.1.12 dst 198.18.1.15
@@ -54,6 +50,7 @@ src 198.18.1.12 dst 198.18.1.15
 	output-mark 0x1/0xffffffff
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
@@ -65,6 +62,7 @@ src 198.18.1.15 dst 198.18.1.12
 	output-mark 0x1/0xffffffff
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -73,17 +71,17 @@ src 198.18.1.15 dst 198.18.1.12
 	dir in
 rise #
  ipsec _kernel policy
-src 192.19.12.0/24 dst 198.18.15.0/24
+src 0.0.0.0/0 dst 0.0.0.0/0
 	dir fwd priority PRIORITY ptype main
 	tmpl src 198.18.1.15 dst 198.18.1.12
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-src 192.19.12.0/24 dst 198.18.15.0/24
+src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority PRIORITY ptype main
 	tmpl src 198.18.1.15 dst 198.18.1.12
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-src 198.18.15.0/24 dst 192.19.12.0/24
+src 0.0.0.0/0 dst 0.0.0.0/0
 	dir out priority PRIORITY ptype main
 	tmpl src 198.18.1.12 dst 198.18.1.15
 		proto esp reqid REQID mode tunnel
