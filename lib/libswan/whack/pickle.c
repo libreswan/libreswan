@@ -322,7 +322,9 @@ struct conn_pack {
 static bool pack_conn(struct whackpacker *wp,
 		      struct logger *logger)
 {
-	struct conn_pack conn = {0};
+	/* zero() rather than {0}: autoall-reconcile compares the padding */
+	struct conn_pack conn;
+	zero(&conn);
 	/* XXX: END_ROOF is used for non-end specific options */
 	for (conn.end = 0; conn.end <= END_ROOF; conn.end++) {
 		for (conn.key = 1; conn.key < CONFIG_CONN_KEYWORD_ROOF; conn.key++) {
@@ -554,6 +556,12 @@ diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		return diag("ignoring truncated message from whack: got %zu bytes; expected %tu",
 			    wp->n, wp->msg->string - (uint8_t*)wp->msg);
 	}
+
+	if (wp->str_roof > &wp->msg->string[sizeof(wp->msg->string)]) {
+		return diag("ignoring oversize message from whack: got %zu bytes", wp->n);
+	}
+
+	wp->msg->str_size = wp->str_roof - wp->msg->string;
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
 		return diag("message from whack contains bad string or key");
