@@ -492,6 +492,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	pfree_session(&c->session);
 
+	ro_hunk_delref(&c->autoall_config, logger);
+
 	/*
 	 * Only free config when the root connection.  Non-root
 	 * connections have .root_config==NULL.
@@ -1244,7 +1246,8 @@ const struct ike_info ikev2_info = {
 
 diag_t add_connection(const struct whack_message *wm,
 		      const struct host_addrs *extracted_host_addrs,
-		      const struct logger *logger)
+		      const struct logger *logger,
+		      struct connection **added)
 {
 	/*
 	 * Use lmod_args() since it both knows how to parse a comma
@@ -1289,6 +1292,7 @@ diag_t add_connection(const struct whack_message *wm,
 		return d;
 	}
 
+	*added = c;
 	return NULL;
 }
 

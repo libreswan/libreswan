@@ -145,6 +145,8 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KYN_LISTEN_TCP] = "no",
 	[KYN_CHILD_SA_PFS_INFO_SUPPORTED] = "no",
 
+	[KYN_AUTOALL_RECONCILE] = "no",
+
 	[KSF_SEEDDEV] = "/dev/random",
 
 };
@@ -562,6 +564,8 @@ static const struct keyword_def config_setup_keyword[] = {
 
   K("child-sa-pfs-info-supported", kt_sparse_name, KYN_CHILD_SA_PFS_INFO_SUPPORTED, .sparse_names = &yn_option_names),
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
+
+  K("autoall-reconcile", kt_sparse_name, KYN_AUTOALL_RECONCILE, .sparse_names = &yn_option_names),
 
 #ifdef USE_NFLOG
 # define NOSUP LEMPTY

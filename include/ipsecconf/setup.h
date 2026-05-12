@@ -107,8 +107,9 @@ enum config_setup_keyword {
 	KSF_PLUTODEBUG,
 	KYN_IPSEC_INTERFACE_MANAGED,
 	KYN_CHILD_SA_PFS_INFO_SUPPORTED,	/* draft-ietf-ipsecme-child-pfs-info */
+	KYN_AUTOALL_RECONCILE,
 
-#define CONFIG_SETUP_KEYWORD_ROOF (KYN_CHILD_SA_PFS_INFO_SUPPORTED+1)
+#define CONFIG_SETUP_KEYWORD_ROOF (KYN_AUTOALL_RECONCILE+1)
 };
 
 bool load_config_setup(const char *file,

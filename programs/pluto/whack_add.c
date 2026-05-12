@@ -20,6 +20,7 @@
 #include "whack_add.h"
 #include "show.h"
 #include "connections.h"
+#include "whack_autoall.h"
 #include "whack_delete.h"
 #include "extract.h"
 
@@ -157,6 +158,22 @@ static const struct ip_info *next_subnet(char **subnetstr,
 	return NULL; /* unknown */
 }
 
+static bool add_root(const struct whack_message *wm,
+		     const struct host_addrs *extracted_host_addrs,
+		     struct autoall_roots *roots,
+		     struct verbose verbose)
+{
+	struct connection *c;
+	diag_t d = add_connection(wm, extracted_host_addrs, verbose.logger, &c);
+	if (d != NULL) {
+		llog_add_connection_failed(verbose, "%s", str_diag(d));
+		pfree_diag(&d);
+		return false;
+	}
+	autoall_roots_append(roots, c, verbose.logger);
+	return true;
+}
+
 /*
  * permutate_conns - generate all combinations of subnets={}
  *
@@ -175,6 +192,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 					 const struct host_addrs *extracted_host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
+					 struct autoall_roots *roots,
 					 struct verbose verbose)
 {
 	/*
@@ -247,12 +265,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
-				diag_t d = add_connection(&wam,
-							  extracted_host_addrs,
-							  verbose.logger);
-				if (d != NULL) {
-					llog_add_connection_failed(verbose, "%s", str_diag(d));
-					pfree_diag(&d);
+				if (!add_root(&wam, extracted_host_addrs, roots, verbose)) {
 					pfreeany(name);
 					pfreeany(left_subnet);
 					pfreeany(right_subnet);
@@ -280,6 +293,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 static void add_connections(const struct whack_message *wm,
 			    const struct host_addrs *extracted_host_addrs,
+			    struct autoall_roots *roots,
 			    struct verbose verbose)
 {
 	/*
@@ -315,12 +329,7 @@ static void add_connections(const struct whack_message *wm,
 
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		diag_t d = add_connection(wm, extracted_host_addrs,
-					  verbose.logger);
-		if (d != NULL) {
-			llog_add_connection_failed(verbose, "%s", str_diag(d));
-			pfree_diag(&d);
-		}
+		add_root(wm, extracted_host_addrs, roots, verbose);
 		return;
 	}
 
@@ -339,7 +348,7 @@ static void add_connections(const struct whack_message *wm,
 
 	permutate_connection_subnets(wm,
 				     extracted_host_addrs,
-				     &left, &right, verbose);
+				     &left, &right, roots, verbose);
 	pfreeany(left.subnets);
 	pfreeany(right.subnets);
 }
@@ -362,19 +371,31 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 		 * Any existing connection matching .name is purged
 		 * before this connection is added.  When no
 		 * connection matching name is found, it will delete
-		 * aliases.
+		 * aliases.  Either way, the purge takes out the
+		 * matching root along with everything instantiated
+		 * from it.
 		 *
-		 * This is old-to-new which means that aliases are processed
-		 * before templates.
+		 * Within an "ipsec add --autoall" reconcile run, an
+		 * unchanged connection is kept instead, and a dry run
+		 * changes nothing.  Only the configuration is
+		 * compared, addresses are not re-resolved.
 		 */
-		whack_addconn_delete(wm, s);
-		/*
-		 * Confirm above did its job.
-		 */
-		if (connection_with_name_exists(wm->name)) {
-			llog_pexpect(show_logger(s), HERE,
-				     "attempt to redefine connection \"%s\"", wm->name);
+		switch (whack_autoall_add(wm, s)) {
+		case AUTOALL_KEEP:
 			return;
+		case AUTOALL_ADD:
+			break;
+		case AUTOALL_REPLACE:
+			whack_addconn_delete(wm, s);
+			/*
+			 * Confirm above did its job.
+			 */
+			if (connection_with_name_exists(wm->name)) {
+				llog_pexpect(show_logger(s), HERE,
+					     "attempt to redefine connection \"%s\"", wm->name);
+				return;
+			}
+			break;
 		}
 		break;
 	case WHACK_FROM_WHACK:
@@ -396,6 +417,7 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 	 */
 	struct logger *conn_logger = string_logger(HERE, "\"%s\"", wm->name);
 	whack_attach_where(conn_logger, show_logger(s), HERE);
+	struct autoall_roots roots = {0};
 	{
 		struct verbose verbose = VERBOSE(DEBUG_STREAM, conn_logger, NULL);
 		struct host_addrs extracted_host_addrs = {0};
@@ -407,7 +429,11 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 			return;
 		}
 
-		add_connections(wm, &extracted_host_addrs, verbose);
+		add_connections(wm, &extracted_host_addrs, &roots, verbose);
 	}
+
+	whack_autoall_save(wm, &roots, show_logger(s));
+	autoall_roots_release(&roots, show_logger(s));
+
 	free_logger(&conn_logger, HERE);
 }

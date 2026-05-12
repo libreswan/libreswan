@@ -70,6 +70,7 @@ enum rc_type {
 	RC_WILDCARD = 31,	/* cannot initiate when ID has wildcards */
 	RC_CRLERROR = 32,	/* CRL fetching disabled or obsolete reread cmd */
 	RC_WHACK_PROBLEM = 33,	/* whack-detected problem */
+	RC_AUTOALL_CONFLICT = 34,	/* another --autoall run has priority */
 
 	/* permanent failure */
 	RC_BADWHACKMESSAGE = 50,
