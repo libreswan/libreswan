@@ -1,0 +1,25 @@
+<varlistentry id='setup.autoall-reconcile'>
+  <term>
+    <option>autoall-reconcile=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether <command>ipsec add --autoall</command> (run when &pluto;
+      starts and whenever <filename>ipsec.conf</filename> is reloaded)
+      should reconcile the running connection table against the
+      configuration rather than only adding to it.  When enabled, a
+      connection that <option>--autoall</option> loads and whose
+      definition is unchanged is left in place, preserving its
+      established SAs instead of being torn down and rebuilt.  Any
+      connections that <option>--autoall</option> does not load are
+      swept away, including ones still named in
+      <filename>ipsec.conf</filename> but skipped because of
+      <option>auto=ignore</option>.  When disabled,
+      <option>--autoall</option> is additive only: removed connections
+      linger and unchanged connections are re-added on every reload.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>
