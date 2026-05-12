@@ -1,0 +1,1 @@
+test that ipsec add --autoall re-resolves %<interface> and only rebuilds when it moves

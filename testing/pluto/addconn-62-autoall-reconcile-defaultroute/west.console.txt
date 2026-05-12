@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"viaroute"
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"viaroute": unchanged
+west #
+ ../../guestbin/ip.sh address add 192.1.2.99/24 dev eth1
+west #
+ ../../guestbin/ip-route.sh replace 192.1.2.0/24 dev eth1 src 192.1.2.99
+west #
+ # only the conn using %defaultroute is rebuilt
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"viaroute": added unoriented IKEv2 connection (neither left=%defaultroute nor right=192.1.2.23 match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"viaroute"
+west #

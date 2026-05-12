@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+west #
+ # a private interface, so the test network is left alone
+west #
+ ../../guestbin/ip.sh link add dummy0 type dummy
+west #
+ ../../guestbin/ip.sh address add 10.99.0.1/24 dev dummy0
+west #
+ ../../guestbin/ip.sh link set dummy0 up
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"viaiface"
+west #
+ # the interface still has the same address; both conns are left alone
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"viaiface": unchanged
+west #
+ # move the interface to a different address; delete before adding, a
+west #
+ # second address in the same subnet would only be a secondary
+west #
+ ../../guestbin/ip.sh address del 10.99.0.1/24 dev dummy0
+west #
+ ../../guestbin/ip.sh address add 10.99.0.2/24 dev dummy0
+west #
+ # only the conn using the interface is rebuilt
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"viaiface": added unoriented IKEv2 connection (neither left=%dummy0 nor right=5.6.7.9 match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"viaiface"
+west #
