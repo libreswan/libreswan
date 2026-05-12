@@ -138,6 +138,12 @@
     </para>
 
     <para>
+      With <option>autoall-reconcile=yes</option> (see
+      &ipsec.conf.5;), <option>--autoall</option> keeps unchanged
+      connections, and deletes connections that are not loaded.
+    </para>
+
+    <para>
       When one or more <replaceable>connections</replaceable> are
       specified, those connections are loaded.  Any
       <option>auto=</option> in the configuration is ignored.

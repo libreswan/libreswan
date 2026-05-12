@@ -130,6 +130,11 @@
 	    will be initiated.
 	  </para>
 	  <para>
+	    With <option>autoall-reconcile=yes</option> (see
+	    &ipsec.conf.5;), unchanged connections are kept, and
+	    connections that are not loaded are deleted.
+	  </para>
+	  <para>
 	    By default, once all connections are loaded,
 	    <command>ipsec add --autoall</command> will disconnect
 	    from &pluto;.  Additional actions, such as
@@ -205,7 +210,11 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      Do not pass the connections to &pluto;.
+	      Do not pass the connections to &pluto;.  With
+	      <option>--autoall</option> and
+	      <option>autoall-reconcile=yes</option>, instead ask
+	      &pluto; which connections would be replaced, added, or
+	      deleted, and change nothing.
 	    </para>
 	  </listitem>
 	</varlistentry>
