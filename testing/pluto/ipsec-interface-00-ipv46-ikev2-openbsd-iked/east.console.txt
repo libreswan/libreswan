@@ -1,0 +1,38 @@
+prep.sh
+east.iked.conf -> /etc/iked.conf
+east #
+ ifconfig sec1 create
+east #
+ ifconfig sec1 up
+east #
+ ../../guestbin/tcpdump.sh --start -i sec1
+tcpdump started
+east #
+ ifconfig sec1 inet     198.18.23.23/32     198.18.45.45
+east #
+ ifconfig sec1 inet6 2001:db8:23::23/128 2001:db8:45::45
+east #
+ ifconfig sec1
+sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	index 7 priority 0 llprio 3
+	groups: sec
+	inet 198.18.23.23 --> 198.18.45.45 netmask 0xffffffff
+	inet6 fe80::1000:ff:fedc:bcff%sec1 -->  prefixlen 64 scopeid 0x7
+	inet6 2001:db8:23::23 --> 2001:db8:45::45 prefixlen 128 tentative
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+east #
+ ../../guestbin/iked.sh start
+east #
+ ../../guestbin/ping-once.sh --up    198.18.45.45
+up
+east #
+ ../../guestbin/ping-once.sh --up 2001:db8:45::45
+up
+east #
+ sleep 5
+east #
+ ../../guestbin/tcpdump.sh --stop -i sec1
+east #

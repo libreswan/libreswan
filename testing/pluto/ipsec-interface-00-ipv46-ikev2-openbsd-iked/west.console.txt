@@ -1,0 +1,40 @@
+prep.sh
+west.iked.conf -> /etc/iked.conf
+west #
+ ifconfig sec1 create
+west #
+ ifconfig sec1 up
+west #
+ ../../guestbin/tcpdump.sh --start -i sec1
+tcpdump started
+west #
+ ifconfig sec1 inet     198.18.45.45/32     198.18.23.23
+west #
+ ifconfig sec1 inet6 2001:db8:45::45/128 2001:db8:23::23
+west #
+ ifconfig sec1
+sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	index 7 priority 0 llprio 3
+	groups: sec
+	inet 198.18.45.45 --> 198.18.23.23 netmask 0xffffffff
+	inet6 fe80::1000:ff:feab:cdff%sec1 -->  prefixlen 64 scopeid 0x7
+	inet6 2001:db8:45::45 --> 2001:db8:23::23 prefixlen 128 tentative
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+west #
+ ../../guestbin/iked.sh start
+west #
+ sleep 10 # give IKE a chance :-/
+west #
+ ../../guestbin/ping-once.sh --up    198.18.23.23
+up
+west #
+ ../../guestbin/ping-once.sh --up 2001:db8:23::23
+up
+west #
+ sleep 5
+west #
+ ../../guestbin/tcpdump.sh --stop -i sec1
+west #

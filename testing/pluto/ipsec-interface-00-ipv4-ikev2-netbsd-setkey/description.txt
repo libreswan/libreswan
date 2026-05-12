@@ -4,18 +4,35 @@ On NetBSD with ipsecif(4):
 
 - create ipsec1
 - add tunnel describing ESP
-- add inet describing what is tunneled
+- add inet/inet6 describing what is tunneled
+
+=> BUG?
+
+   it seems IPv6 is limited to single addresses:
+     ifconfig inet6 2001:db8:45::45/64 2001:db8:23::23
+   is rejected, but:
+     ifconfig inet6 2001:db8:45::45/128 2001:db8:23::23
+   is ok
 
 Now the magic!
 
-By default, NetBSD assigns IDs sequentially starting at 16384.  This
-behaviour can be changed by setting:
+By default, NetBSD autogenerates the kernel policy and then assigns
+IDs sequentially starting at 16384.  This behaviour can be changed by
+setting:
 
   net.ipsecif.use_fixed_reqid=1
 
 causing the kernel to predictably assign interface ipsec<UNIT>, the IDs:
 
-  IPv4: net.ipsecif.requid_base + 2 * UNIT
+  IPv4: net.ipsecif.requid_base + 2 * UNIT + 0
   IPv6: net.ipsecif.requid_base + 2 * UNIT + 1
+
+where net.ipsecif.requid_base=8192 by default
+
+=> BUG:
+
+   This means that there needs to be a kernel state for both IPv[46]
+   policies.  Or at least outbound, seems to work.  But packets end up
+   going through random SAs.
 
 (credit to Michael van Elst and #netbsd)
