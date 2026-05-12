@@ -555,6 +555,12 @@ diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 			    wp->n, wp->msg->string - (uint8_t*)wp->msg);
 	}
 
+	if (wp->str_roof > &wp->msg->string[sizeof(wp->msg->string)]) {
+		return diag("ignoring oversize message from whack: got %zu bytes", wp->n);
+	}
+
+	wp->msg->str_size = wp->str_roof - wp->msg->string;
+
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
 		return diag("message from whack contains bad string or key");
 	}

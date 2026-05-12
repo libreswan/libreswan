@@ -20,6 +20,7 @@
 #include "whack_add.h"
 #include "show.h"
 #include "connections.h"
+#include "whack_autoall.h"
 #include "whack_delete.h"
 #include "extract.h"
 
@@ -169,9 +170,12 @@ static const struct ip_info *next_subnet(char **subnetstr,
  * the proper left/right subnet settings, and then calls operation(),
  * (which is usually add/delete/route/etc.)
  *
+ * Returns false when a combination could not be added. The remaining
+ * combinations are then abandoned.
+ *
  */
 
-static void permutate_connection_subnets(const struct whack_message *wm,
+static bool permutate_connection_subnets(const struct whack_message *wm,
 					 const struct host_addrs *extracted_host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
@@ -256,7 +260,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 					pfreeany(name);
 					pfreeany(left_subnet);
 					pfreeany(right_subnet);
-					return;
+					return false;
 				}
 			} else {
 				vexpect(wam.end[LEFT_END].we_subnet != NULL &&
@@ -276,9 +280,10 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 		}
 	}
 
+	return true;
 }
 
-static void add_connections(const struct whack_message *wm,
+static bool add_connections(const struct whack_message *wm,
 			    const struct host_addrs *extracted_host_addrs,
 			    struct verbose verbose)
 {
@@ -309,7 +314,7 @@ static void add_connections(const struct whack_message *wm,
 						   "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\"",
 						   subnet->leftright, subnet->we_subnet,
 						   subnets->leftright, subnets->we_subnets);
-			return;
+			return false;
 		}
 	}
 
@@ -320,28 +325,30 @@ static void add_connections(const struct whack_message *wm,
 		if (d != NULL) {
 			llog_add_connection_failed(verbose, "%s", str_diag(d));
 			pfree_diag(&d);
+			return false;
 		}
-		return;
+		return true;
 	}
 
 	struct subnets left = {0};
 	if (!parse_subnets(&left, wm, &wm->end[LEFT_END], verbose)) {
 		pfreeany(left.subnets);
-		return;
+		return false;
 	}
 
 	struct subnets right = {0};
 	if (!parse_subnets(&right, wm, &wm->end[RIGHT_END], verbose)) {
 		pfreeany(left.subnets);
 		pfreeany(right.subnets);
-		return;
+		return false;
 	}
 
-	permutate_connection_subnets(wm,
-				     extracted_host_addrs,
-				     &left, &right, verbose);
+	bool added = permutate_connection_subnets(wm,
+						  extracted_host_addrs,
+						  &left, &right, verbose);
 	pfreeany(left.subnets);
 	pfreeany(right.subnets);
+	return added;
 }
 
 void whack_add(struct whack_message_refcnt *wmr, struct show *s)
@@ -362,11 +369,21 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 		 * Any existing connection matching .name is purged
 		 * before this connection is added.  When no
 		 * connection matching name is found, it will delete
-		 * aliases.
+		 * aliases.  Either way, the purge takes out the
+		 * matching root along with everything instantiated
+		 * from it.
 		 *
-		 * This is old-to-new which means that aliases are processed
-		 * before templates.
+		 * However, when reconciliation is enabled, an
+		 * existing connection that this message would only
+		 * rebuild identically is then kept instead of being
+		 * purged.  It is unchanged when the config digest
+		 * saved by its add matches this message and when
+		 * every address that had to be resolved by that add
+		 * still resolves to what the connection is using.
 		 */
+		if (wm->whack_reconcile && whack_autoall_unchanged(wm, s)) {
+			return;
+		}
 		whack_addconn_delete(wm, s);
 		/*
 		 * Confirm above did its job.
@@ -396,6 +413,7 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 	 */
 	struct logger *conn_logger = string_logger(HERE, "\"%s\"", wm->name);
 	whack_attach_where(conn_logger, show_logger(s), HERE);
+	bool added = false;
 	{
 		struct verbose verbose = VERBOSE(DEBUG_STREAM, conn_logger, NULL);
 		struct host_addrs extracted_host_addrs = {0};
@@ -407,7 +425,12 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 			return;
 		}
 
-		add_connections(wm, &extracted_host_addrs, verbose);
+		added = add_connections(wm, &extracted_host_addrs, verbose);
 	}
+
+	if (wm->whack_reconcile && added) {
+		whack_autoall_save(wm, s);
+	}
+
 	free_logger(&conn_logger, HERE);
 }

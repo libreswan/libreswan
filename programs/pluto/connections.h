@@ -786,6 +786,12 @@ struct sa_marks {
 
 #define sa_mark_eq(L,R) (((L).val & (L).mask) == ((R).val & (R).mask))
 
+struct config_digest {
+	bool valid;
+	hash_t hash;
+	unsigned nr_roots;
+};
+
 struct connection {
 	struct refcnt refcnt;
 	co_serial_t serialno;
@@ -832,6 +838,11 @@ struct connection {
 	set_policy(C, POLICY, true)
 #define del_policy(C, POLICY)					\
 	set_policy(C, POLICY, false)
+
+	bool autoall_stale;
+	bool autoall_address_changed;
+
+	struct config_digest config_digest;
 
 	struct sa_marks sa_marks;	/* contains a MARK values and
 					 * MASK value for IPsec SA

@@ -36,4 +36,8 @@ void request_resolve_help(struct connection *c,
 			  bool background,
 			  struct logger *logger);
 
+void request_resolve_probe(struct connection *c,
+			   resolve_helper_callback *callback,
+			   struct logger *logger);
+
 #endif
