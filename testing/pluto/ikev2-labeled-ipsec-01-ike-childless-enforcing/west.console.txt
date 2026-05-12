@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 west #
  # install selinux; generated in OUTPUT by east
 west #
@@ -13,7 +14,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add labeled
+ ipsec add labeled
 "labeled": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -21,13 +22,13 @@ initdone
 west #
  # should establish IKE SA and install two labels
 west #
- ipsec auto --up labeled
+ ipsec up labeled # sanitize-retransmits
 "labeled"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "labeled"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"labeled"[1] 192.1.2.23 #1: omitting CHILD SA payloads
 "labeled"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr} reassembled from N fragments
+"labeled"[1] 192.1.2.23 #1: omitting CHILD SA payloads
+"labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west'
+"labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH}
 "labeled"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
  ipsec _kernel state
@@ -79,9 +80,18 @@ west #
 west #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
+ ipsec _kernel state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -94,19 +104,8 @@ src 192.1.2.23 dst 192.1.2.45
 	dir in
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 	security context system_u:system_r:ping_t:s0:c1.c256 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	dir in
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
-XFRM policy:
+west #
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir in priority PRIORITY ptype main
@@ -117,23 +116,6 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  # The IKE SA should be associated with the template connection
 west #

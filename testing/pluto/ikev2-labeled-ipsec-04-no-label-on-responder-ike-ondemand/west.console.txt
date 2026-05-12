@@ -16,7 +16,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add labeled
+ ipsec add labeled
 "labeled": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -26,7 +26,7 @@ west #
 west #
  # IKE will be triggered by acquire; expect two labels
 west #
- ipsec auto --route labeled
+ ipsec route labeled
 west #
  ipsec _kernel state
 west #
@@ -49,8 +49,6 @@ fired and forgotten
 west #
  ../../guestbin/wait-for-pluto.sh 'TS_UNACCEPTABLE'
 "labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(TS_UNACCEPTABLE)}
-"labeled"[1][1] 192.1.2.23 #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
-"labeled"[1] 192.1.2.23 #1: peer rejected Child SA  (TS_UNACCEPTABLE) and IKE SA does not have policy UP
 west #
  # there should be 0 tunnels - child rejected
 west #

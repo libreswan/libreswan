@@ -14,17 +14,15 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec auto --add labeled
+ ipsec add labeled
 "labeled": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair timeout_on_retransmit
-west #
  # expected to fail
 west #
- ipsec auto --up labeled
+ ipsec up labeled # sanitize-retransmits
 "labeled" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "labeled" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

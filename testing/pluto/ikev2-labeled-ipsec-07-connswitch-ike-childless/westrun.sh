@@ -1,1 +1,1 @@
-ipsec auto --start west-to-east
+ipsec start west-to-east

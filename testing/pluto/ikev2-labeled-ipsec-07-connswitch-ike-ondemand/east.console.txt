@@ -20,10 +20,10 @@ east #
 east #
  # note order; it seems to matter (but shouldn't)
 east #
- ipsec auto --add west-to-east
+ ipsec add west-to-east
 "west-to-east": added oriented IKEv2 connection
 east #
- ipsec auto --add distraction
+ ipsec add distraction
 "distraction": added oriented IKEv2 connection
 east #
  ../../guestbin/ipsec-look.sh

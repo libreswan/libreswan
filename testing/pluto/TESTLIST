@@ -1163,9 +1163,9 @@ kvmplutotest	interop-ikev2-eaptls-strongswan-client			good	github/2036-at-least
 
 # IKEv2 Selinux / secure labeling tests
 kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			wip
+kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			good
 kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-permissive			good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-enforcing			wip
+kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-enforcing			good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-permissive		wip
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforcing			wip
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey			wip

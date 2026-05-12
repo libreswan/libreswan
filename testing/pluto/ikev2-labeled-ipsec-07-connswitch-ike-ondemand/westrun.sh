@@ -1,5 +1,5 @@
 # IKE will be triggered by acquire; expect two labels
-ipsec auto --route west-to-east
+ipsec route west-to-east
 ipsec _kernel state
 ipsec _kernel policy
 # trigger acquire using the predefined ping_t context

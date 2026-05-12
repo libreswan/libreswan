@@ -1,6 +1,6 @@
 # for port re-use in tests with protoport selectors
 echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
-ipsec auto --up labeled
+ipsec up labeled # sanitize-retransmits
 # expect policy but no states
 ipsec _kernel state
 ipsec _kernel policy

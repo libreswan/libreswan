@@ -1,7 +1,7 @@
 # for port re-use in tests with protoport selectors
 echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 # route; should be two policies
-ipsec auto --route labeled
+ipsec route labeled
 ipsec _kernel state
 ipsec _kernel policy
 # trigger traffic

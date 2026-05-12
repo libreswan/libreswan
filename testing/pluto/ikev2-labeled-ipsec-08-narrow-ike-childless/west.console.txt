@@ -14,7 +14,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add labeled
+ ipsec add labeled
 "labeled": added oriented IKEv2 connection
 west #
  echo "initdone"

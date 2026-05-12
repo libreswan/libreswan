@@ -6,13 +6,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add distraction
+ ipsec add distraction
 "distraction": added oriented IKEv2 connection
 west #
- ipsec auto --add west-to-east
+ ipsec add west-to-east
 "west-to-east": added oriented IKEv2 connection
 west #
- ipsec auto --start west-to-east
+ ipsec start west-to-east
 "west-to-east": added oriented IKEv2 connection
 "west-to-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-to-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

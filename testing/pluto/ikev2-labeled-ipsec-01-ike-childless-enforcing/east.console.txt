@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 east #
  # build install se module
 east #
@@ -17,7 +18,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add labeled
+ ipsec add labeled
 "labeled": added oriented IKEv2 connection
 east #
  echo "initdone"
@@ -29,9 +30,18 @@ east #
 east #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -44,19 +54,8 @@ src 192.1.2.45 dst 192.1.2.23
 	dir in
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 	security context system_u:system_r:ping_t:s0:c1.c256 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	dir in
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
-XFRM policy:
+east #
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main
@@ -67,23 +66,6 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 east #
  # The IKE SA should be associated with the template connection
 east #

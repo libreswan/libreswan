@@ -14,14 +14,14 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- #ipsec auto --add distraction
+ #ipsec add distraction
 west #
- ipsec auto --add west-to-east
+ ipsec add west-to-east
 "west-to-east": added oriented IKEv2 connection
 west #
  # IKE will be triggered by acquire; expect two labels
 west #
- ipsec auto --route west-to-east
+ ipsec route west-to-east
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

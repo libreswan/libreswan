@@ -1,6 +1,6 @@
 ipsec whack --impair suppress_retransmits
 # IKE will be triggered by acquire; expect two labels
-ipsec auto --route labeled
+ipsec route labeled
 ipsec _kernel state
 ipsec _kernel policy
 # trigger acquire using the predefined ping_t context; won't work

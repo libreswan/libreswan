@@ -2,5 +2,5 @@
 # get pluto going
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add labeled
+ipsec add labeled
 echo "initdone"

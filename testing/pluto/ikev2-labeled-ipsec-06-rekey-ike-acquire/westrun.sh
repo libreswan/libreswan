@@ -1,6 +1,6 @@
 # Establish a childless IKE SA which will install the policy ready for
 # an acquire.
-ipsec auto --up labeled
+ipsec up labeled # sanitize-retransmits
 ipsec _kernel state
 ipsec _kernel policy
 

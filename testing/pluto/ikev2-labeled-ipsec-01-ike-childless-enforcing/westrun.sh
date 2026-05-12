@@ -1,5 +1,5 @@
 # should establish IKE SA and install two labels
-ipsec auto --up labeled
+ipsec up labeled # sanitize-retransmits
 ipsec _kernel state
 ipsec _kernel policy
 # trigger traffic using the predefined ping_t context
