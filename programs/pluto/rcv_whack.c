@@ -59,6 +59,7 @@
 #include "visit_connection.h"
 
 #include "whack_add.h"
+#include "whack_autoall.h"
 #include "whack_briefconnectionstatus.h"
 #include "whack_connectionstatus.h"
 #include "whack_crash.h"
@@ -479,6 +480,15 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 		[WHACK_PUBKEY] = {
 			.name = "pubkey",
 			.op = rcv_whack_pubkey,
+		},
+		/**/
+		[WHACK_AUTOALL_START] = {
+			.name = "autoall-start",
+			.op = whack_autoall_start,
+		},
+		[WHACK_AUTOALL_STOP] = {
+			.name = "autoall-stop",
+			.op = whack_autoall_stop,
 		},
 	};
 

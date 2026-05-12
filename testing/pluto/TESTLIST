@@ -186,6 +186,10 @@ kvmplutotest	addconn-51-config-setup-dns-resolver		good
 kvmplutotest	addconn-52-clones				good
 kvmplutotest	addconn-53-config-setup-ike-socket		good
 kvmplutotest    addconn-54-xauth          good
+kvmplutotest	addconn-55-autoall-sweep			good
+kvmplutotest	addconn-56-autoall-sweep-noop			good
+kvmplutotest	addconn-57-autoall-sweep-modified		good
+kvmplutotest	addconn-58-autoall-sweep-disabled		good
 
 #################################################################
 # IKEv2 tests

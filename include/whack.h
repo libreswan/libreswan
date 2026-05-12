@@ -135,6 +135,9 @@ enum whack_command {
 	WHACK_DEBUG,
 	/**/
 	WHACK_PUBKEY,
+	/**/
+	WHACK_AUTOALL_START,
+	WHACK_AUTOALL_STOP,
 };
 
 /*
@@ -354,6 +357,7 @@ struct whack_message {
 	/* generic options applying to anything */
 	bool whack_async;
 	bool whack_utc;
+	bool whack_check_message;
 
 	/*
 	 * Command specific parameters.  Commands also share some

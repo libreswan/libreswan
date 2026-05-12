@@ -145,6 +145,7 @@
 <!ENTITY conn.xauthserver SYSTEM "d.ipsec.conf/conn/xauthserver.xml">
 
 <!ENTITY setup.audit-log SYSTEM "d.ipsec.conf/setup/audit-log.xml">
+<!ENTITY setup.autoall-sweep SYSTEM "d.ipsec.conf/setup/autoall-sweep.xml">
 <!ENTITY setup.crl-strict SYSTEM "d.ipsec.conf/setup/crl-strict.xml">
 <!ENTITY setup.crl-timeout SYSTEM "d.ipsec.conf/setup/crl-timeout.xml">
 <!ENTITY setup.crlcheckinterval SYSTEM "d.ipsec.conf/setup/crlcheckinterval.xml">

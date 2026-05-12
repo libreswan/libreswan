@@ -26,6 +26,7 @@
     The currently-accepted configuration parameters are:
     <variablelist>
       &setup.audit-log;
+      &setup.autoall-sweep;
       &setup.crl-strict;
       &setup.crl-timeout;
       &setup.crlcheckinterval;

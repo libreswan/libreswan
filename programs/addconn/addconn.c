@@ -202,7 +202,8 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	int status = starter_whack_add_conn(ctlsocket, conn, logger,
 					    /*dry_run*/false,
 					    /*async*/YN_YES,
-					    noise);
+					    noise,
+					    /*check_message*/false);
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -542,6 +543,8 @@ int main(int argc, char *argv[])
 #endif
 
 	if (autoall) {
+		bool autoall_sweep = config_setup_yn(KYN_AUTOALL_SWEEP);
+
 		if (verbose > 0)
 			printf("loading all conns according to their auto= settings\n");
 
@@ -554,6 +557,10 @@ int main(int argc, char *argv[])
 		 */
 		if (verbose > 0)
 			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
+
+		if (autoall_sweep) {
+			starter_whack_autoall_start(ctlsocket, logger, noise);
+		}
 
 		struct starter_conn *conn = NULL;
 		TAILQ_FOREACH(conn, &cfg->conns, link) {
@@ -582,7 +589,12 @@ int main(int argc, char *argv[])
 			starter_whack_add_conn(ctlsocket, conn, logger,
 					       /*dry_run*/false,
 					       /*async*/YN_YES,
-					       noise);
+					       noise,
+					       /*check_message*/autoall_sweep);
+		}
+
+		if (autoall_sweep) {
+			starter_whack_autoall_stop(ctlsocket, logger, noise);
 		}
 
 		if (verbose > 0)
@@ -599,7 +611,8 @@ int main(int argc, char *argv[])
 		exit_status = starter_whack_add_conn(ctlsocket, conn, logger,
 						     /*dry_run*/false,
 						     /*async*/YN_YES,
-						     noise);
+						     noise,
+						     /*check_message*/false);
 
 	} else {
 

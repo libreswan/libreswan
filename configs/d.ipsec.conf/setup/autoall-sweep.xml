@@ -1,0 +1,22 @@
+<varlistentry id='setup.autoall-sweep'>
+  <term>
+    <option>autoall-sweep=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether <command>ipsec add --autoall</command> (run when &pluto;
+      starts and whenever <filename>ipsec.conf</filename> is reloaded)
+      should reconcile the running connection table against the
+      configuration rather than only adding to it.  When enabled,
+      connections whose definition is unchanged are left in place
+      (preserving their established SAs instead of being torn down and
+      rebuilt), and connections that no longer appear in the
+      configuration are swept away.  When disabled,
+      <option>--autoall</option> is additive only: removed connections
+      linger and unchanged connections are re-added on every reload.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

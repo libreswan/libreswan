@@ -141,6 +141,8 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KYN_LISTEN_UDP] = "yes",
 	[KYN_LISTEN_TCP] = "no",
 
+	[KYN_AUTOALL_SWEEP] = "no",
+
 	[KSF_SEEDDEV] = "/dev/random",
 
 };
@@ -548,6 +550,8 @@ static const struct keyword_def config_setup_keyword[] = {
   K("dns-resolver", kt_string, KSF_DNS_RESOLVER),
 
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
+
+  K("autoall-sweep", kt_sparse_name, KYN_AUTOALL_SWEEP, .sparse_names = &yn_option_names),
 
 #ifdef USE_NFLOG
 # define NOSUP LEMPTY

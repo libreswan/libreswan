@@ -102,8 +102,9 @@ enum config_setup_keyword {
 	KBF_IKEv1_POLICY,	/* global ikev1 policy - default drop */
 	KSF_PLUTODEBUG,
 	KYN_IPSEC_INTERFACE_MANAGED,
+	KYN_AUTOALL_SWEEP,
 
-#define CONFIG_SETUP_KEYWORD_ROOF (KYN_IPSEC_INTERFACE_MANAGED+1)
+#define CONFIG_SETUP_KEYWORD_ROOF (KYN_AUTOALL_SWEEP+1)
 };
 
 bool load_config_setup(const char *file,

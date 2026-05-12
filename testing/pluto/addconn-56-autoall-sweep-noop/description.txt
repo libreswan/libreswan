@@ -1,0 +1,1 @@
+test that ipsec add --autoall does not sweep connections still in ipsec.conf

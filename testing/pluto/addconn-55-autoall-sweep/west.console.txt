@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"beta"
+"delta/1x1"
+"delta/1x2"
+"gamma"
+west #
+ ipsec add --autoall --config /testing/pluto/addconn-55-autoall-sweep/west-reduced.conf
+sweeping stale connection "beta"
+sweeping stale connection "gamma"
+sweeping stale connection "delta/1x1"
+sweeping stale connection "delta/1x2"
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+west #

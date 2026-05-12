@@ -481,6 +481,7 @@ err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	if (!pickle_whack_message(wp, &pickle_packer, logger)) {
 		return "too many bytes of strings or key to fit in message to pluto";
 	}
+	wp->msg->str_size = wp->str_next - wp->msg->string;
 	return NULL;
 }
 
