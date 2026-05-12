@@ -1,0 +1,37 @@
+<varlistentry id='setup.autoall-reconcile'>
+  <term>
+    <option>autoall-reconcile=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether <command>ipsec add --autoall</command> (run when &pluto;
+      starts and whenever <filename>ipsec.conf</filename> is reloaded)
+      should reconcile the running connection table against the
+      configuration rather than only adding to it.  When enabled,
+      connections whose definition is unchanged are left in place
+      (preserving their established SAs instead of being torn down and
+      rebuilt), and connections that no longer appear in the
+      configuration are swept away.  When disabled,
+      <option>--autoall</option> is additive only: removed connections
+      linger and unchanged connections are re-added on every reload.
+    </para>
+    <para>
+      An address is only worked out when the connection is added when
+      it is given as a DNS name, as <option>%defaultroute</option>, or
+      as an interface name such as <option>%ppp0</option>, for
+      <option>left=</option>, <option>right=</option>,
+      <option>leftnexthop=</option> or <option>rightnexthop=</option>.
+      &pluto; does not update such an address once it has been
+      resolved, so these are re-resolved at the start of every
+      <option>--autoall</option>.  A connection is then left in place
+      only when the addresses still resolve to what it is using.
+      Otherwise, it is rebuilt to pick up the new address.  A lookup
+      that fails counts as a change, so the connection is rebuilt and
+      the usual retry applies.  Reloading therefore continues to pick
+      up a peer or a default route that has moved.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>
