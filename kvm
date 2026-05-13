@@ -313,7 +313,13 @@ To enable completion, add these lines to .bashrc:
   complete -o filenames -C        ./kvm        ./kvm
   complete -o filenames -C ../../../kvm ../../../kvm
 
-(the first is for top-level, the second for within a directory)
+(the first is for top-level, the second for within a test  directory)
+
+To keep track of the repo status, install pretty-git-prompt and add
+these lines to .bashrc:
+
+  export PS1="[\\u@\\h \\W \\\$(pretty-git-prompt)]\\\\\$ "
+
 EOF
     exit 1
 fi
