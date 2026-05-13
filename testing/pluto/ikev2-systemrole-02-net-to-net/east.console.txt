@@ -13,10 +13,6 @@ east #
 east #
  mount -o bind,rw OUTPUT/east/ipsec.d /etc/ipsec.d
 east #
- # initnss normally happens in the initsystem - but not for namespace testing
-east #
- ../../guestbin/if-namespace.sh ipsec initnss
-east #
  # test config for syntax errors
 east #
  ipsec addconn --checkconfig --config /etc/ipsec.conf

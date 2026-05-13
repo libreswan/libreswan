@@ -5,8 +5,6 @@ rm -rf OUTPUT/west/ipsec.d
 mkdir -p OUTPUT/west/ipsec.d
 chmod 777 OUTPUT/west
 mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
-# initnss normally happens in the initsystem - but not for namespace testing
-../../guestbin/if-namespace.sh ipsec initnss
 # test config for syntax errors
 ipsec addconn --checkconfig --config /etc/ipsec.conf
 # start for test
