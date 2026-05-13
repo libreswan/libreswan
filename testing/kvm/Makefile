@@ -718,27 +718,19 @@ KVM_GATEWAY_DHCP_END ?= 198.19.16.255
 
 KVM_GATEWAY = $(KVM_POOLDIR)/$(KVM_GATEWAY_NAME)
 
-define KVM_GATEWAY_XML
-<network ipv6='yes'>
-  <name>$(KVM_GATEWAY_NAME)</name>
-  <forward mode='nat'/>
-  <bridge name='$(KVM_GATEWAY_NAME)' stp='on' delay='0'/>
-  <domain name='$(KVM_GATEWAY_NAME)'/>
-  <ip address='$(KVM_GATEWAY_ADDRESS)' prefix='$(KVM_GATEWAY_PREFIX)'>
-    <dhcp>
-      <range start='$(KVM_GATEWAY_DHCP_START)' end='$(KVM_GATEWAY_DHCP_END)'/>
-    </dhcp>
-  </ip>
-</network>
-endef
-
-$(KVM_GATEWAY): | $(KVM_POOLDIR)
-	./kvm-uninstall-network.sh $(KVM_GATEWAY)
-	echo "$(strip $(KVM_GATEWAY_XML))" > $(KVM_GATEWAY).xml
-	$(VIRSH) net-define $(KVM_GATEWAY).xml
-	$(VIRSH) net-autostart $(KVM_GATEWAY_NAME)
-	$(VIRSH) net-start $(KVM_GATEWAY_NAME)
+$(KVM_GATEWAY): ./bin/gateway.sh | $(KVM_POOLDIR)
+	./bin/gateway.sh uninstall $(KVM_GATEWAY)
+	./bin/gateway.sh install $(KVM_GATEWAY) $(KVM_GATEWAY_ADDRESS) $(KVM_GATEWAY_PREFIX) $(KVM_GATEWAY_DHCP_START) $(KVM_GATEWAY_DHCP_END)
 	touch $(KVM_GATEWAY)
+
+.PHONY: kvm-gateway
+kvm-gateway:
+	rm -f $(KVM_GATEWAY)
+	$(MAKE) $(KVM_GATEWAY)
+
+.PHONY: kvm-uninstall-gateway
+kvm-uninstall-gateway:
+	./bin/gateway.sh uninstall $(KVM_GATEWAY)
 
 #
 # Test networks.
@@ -760,20 +752,13 @@ $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)/
 	sudo ip link set $* up
 	touch $@
 
-.PHONY: kvm-gateway
-kvm-gateway:
-	$(MAKE) kvm-uninstall-gateway
-	$(MAKE) kvm-install-gateway
-.PHONY: kvm-install-test-networks kvm-install-gateway
-kvm-install-gateway: $(KVM_GATEWAY)
+.PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(KVM_TEST_NETWORKS)
 
 .PHONY: kvm-uninstall-test-networks
 kvm-uninstall-test-networks:
 	$(foreach network, $(KVM_TEST_NETWORKS), sudo ip link set $(notdir $(network)) down ; sudo ip link del name $(notdir $(network)) ; rm -f $(network) ; )
-.PHONY: kvm-uninstall-gateway
-kvm-uninstall-gateway:
-	./kvm-uninstall-network.sh $(KVM_GATEWAY)
+
 
 ##
 ##
