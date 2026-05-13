@@ -39,3 +39,10 @@ pkgin -y install racoon2
 
 pkg_admin fetch-pkg-vulnerabilities
 pkg_admin audit || true
+
+for kernel in /pool/${PREFIX}netbsd-kernel /pool/kernel.netbsd ; do
+    if test -r ${kernel} ; then
+	cp -v ${kernel} /netbsd
+	break
+    fi
+done

@@ -23,11 +23,6 @@ EOF
 mv /tmp/fstab /etc/fstab
 cat /etc/fstab
 
-k=/pool/${PREFIX}netbsd-kernel
-if test -r $k ; then
-    cp -v $k /netbsd
-fi
-
 chsh -s /usr/pkg/bin/bash root
 
 for f in /bench/testing/kvm/root/[a-z]* ; do

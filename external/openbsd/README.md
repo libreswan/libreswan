@@ -17,9 +17,13 @@ something like:
   # cd ../compile/LIBRESWAN
   # make
   ...
-  on fast amd h/w you might need to run make several times
+  VM bugs mean that on fast AMD h/w you might need to run make several
+  times.  On slow intel h/w seems more reliable.
   ...
-  # cp obj/bsd     /pool/${KVM_PREFIX}${KVM_PLATFORM}-kernel
-  # cp obj/bsd.gdb /pool/${KVM_PREFIX}${KVM_PLATFORM}-kernel.gdb
+  # cp obj/bsd     /pool/kernel.openbsd
+  # cp obj/bsd.gdb /pool/kernel.openbsd.gdb
+
+If it is a custom custom kernel then /pool/${KVM_PREFIX}openbsd-kernel
+will only upgrade the one build.  See upgrade/openbsd.sh.
 
 (yea, the VMs don't have user accounts)

@@ -34,9 +34,11 @@ add bash
 add gcc%11
 add llvm%21
 
-k=/pool/${PREFIX}openbsd-kernel
-if test -r $k ; then
-    cp -v $k /bsd
-fi
+for kernel in /pool/${PREFIX}openbsd-kernel /pool/kernel.openbsd ; do
+    if test -r ${kernel} ; then
+	cp -v ${kernel} /bsd
+	break
+    fi
+done
 
 sync ; sync ; sync
