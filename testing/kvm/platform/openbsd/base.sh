@@ -45,6 +45,17 @@ tar xzpCf /mnt/usr/src /cdrom/sys.tar.gz
 
 
 :
+: Fudge up poweroff
+:
+
+cat <<EOF | tee /mnt/usr/local/bin/poweroff
+#!/bin/sh
+halt -p
+EOF
+
+chmod a+x /mnt/usr/local/bin/poweroff
+
+:
 : Finally, tweak the korn shell prompt et.al.
 :
 
