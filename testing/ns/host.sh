@@ -1,6 +1,18 @@
 #!/bin/sh
+
 set -eu
+
+# XXX:
+
+# The original version of this script was invoked conditionally on
+# --usensscript when re-running a test.
 #
+# The options gone but the intent is for this script to be invoked
+# ALWAYS when setting up the HOST's side of the namespace.
+#
+# It can then be followed by guest.sh which sets up things inside the
+# namespaced GUEST.
+
 # host comments execute using ${IP}
 # guest commands execute using ${NSENTER} <full namespace name>
 # this script create mount, net, uts namespce with the same name

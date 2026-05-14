@@ -88,7 +88,6 @@ DEFAULTCONFIG = {
     'retry': 1,
     'rpm': '',
     'sanitizer': "../../utils/sanitize.sh",
-    'ns_script': "../../utils/ns.sh",
     'ns': False,
     'ns-max-q': 30,
     'nsenter': '/usr/bin/nsenter',
@@ -1951,11 +1950,6 @@ def cmdline():
     parser.add_argument('--ns-pexpect', default=True,
                         action="store_true", help="Run with pexpect")
 
-    parser.add_argument(
-        '--usensscript', default=False, help="use %s to add del namespace" % DEFAULTCONFIG["ns_script"], action="store_true")
-    parser.add_argument(
-        '--ns-script', default=DEFAULTCONFIG["ns_script"], help="%s" % DEFAULTCONFIG["ns_script"])
-
     parser.add_argument("--rerun", default=None,
                         help="<directory> continue previous run")
 
@@ -3726,26 +3720,12 @@ class Namespace:
         test.sudo = None
 
     def ns_restart(self, test):
-        if test.args.usensscript:
-            hosttweaks = "--host-tweaks"
-            if test.tlr:
-                hosttweaks = ''
-            for i, host in enumerate(test.hosts):
-                cmd = "%s %s --guest %s --testname %s --restart" % (test.args.ns_script, hosttweaks, host,
-                        test.name)
-                if sudo_shell_run(cmd, test.sudo):
-                    logger.error("ERROR failed run host tweaks")
-                    return True
-                hosttweaks = ''
-                test.shell[host] = self.ns_get_console(test, host)
-                self.ns_add_testing_dir("%s/testing" % test.args.libreswandir, test.shell[host])
-        else:
-            if self.ns_del(test, "previous"):
-                logger.error("abort %s failed to remove previous instance", self.name)
-                return True
-            if self.ns_add(test):
-                logger.error("abort %s failed to initialize test instance", self.name)
-                return True
+        if self.ns_del(test, "previous"):
+            logger.error("abort %s failed to remove previous instance", self.name)
+            return True
+        if self.ns_add(test):
+            logger.error("abort %s failed to initialize test instance", self.name)
+            return True
 
 def vm(testtype):
     if testtype == "nsplutotest":
