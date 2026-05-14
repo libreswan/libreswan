@@ -177,7 +177,7 @@ up
 west #
  # show non-zero IPsec traffic counters
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 west #
  echo done
 done
