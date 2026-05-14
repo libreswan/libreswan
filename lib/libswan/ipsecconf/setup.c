@@ -480,9 +480,9 @@ static const struct keyword_def config_setup_keyword[] = {
   K("dumpdir",  kt_string,  KSF_DUMPDIR),
   K("ipsecdir",  kt_string,  KSF_IPSECDIR),
   K("nssdir", kt_string, KSF_NSSDIR),
-  K("exampledir", kt_string, KSF_EXAMPLEDIR),
 
   /* these are only allowed on the command line */
+  K("exampledir", kt_string, KSF_EXAMPLEDIR, .validity = kv_optarg_only),
   K("rundir", kt_string, KSF_RUNDIR, .validity = kv_optarg_only),
   K("logstderr", kt_string, KYN_LOGSTDERR, .validity = kv_optarg_only),
 
