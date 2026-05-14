@@ -38,6 +38,7 @@
       &setup.dnssec-rootkey-file;
       &setup.dumpdir;
       &setup.exampledir;
+      &setup.rundir;
       &setup.expire-lifetime;
       &setup.expire-shunt-interval;
       &setup.global-redirect-to;

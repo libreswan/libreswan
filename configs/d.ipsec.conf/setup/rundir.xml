@@ -1,0 +1,21 @@
+<varlistentry id='setup.rundir'>
+  <term>
+    <option>rundir=&directory;</option>
+  </term>
+  <listitem>
+    <para>
+      Directory directory where &pluto; will create the process ID
+      file <filename>pluto.pid</filename> and the control socket
+      <filename>pluto.ctl</filename>.  Utilities can use
+      &ipsec-addconn.8; to query the parameter's value.
+    </para>
+    <para>
+      The default is <filename>@@RUNDIR@@</filename>.
+    </para>
+    <para>
+      History: the read-only <option>rundir=</option> parameter was
+      added in &Libreswan; 5.4.
+    </para>
+
+  </listitem>
+</varlistentry>
