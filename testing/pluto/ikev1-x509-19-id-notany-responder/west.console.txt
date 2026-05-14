@@ -14,7 +14,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
+ ipsec add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added oriented IKEv1 connection
 west #
  ipsec status | grep idtype
@@ -25,9 +25,7 @@ west #
  echo "initdone"
 initdone
 west #
- # should fail
-west #
- ipsec auto --up ikev2-westnet-eastnet-x509-cr
+ ipsec up ikev2-westnet-eastnet-x509-cr # should fail
 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv1 Main Mode connection
 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode request
 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I2
@@ -35,7 +33,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: I am sending a certificate request
 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I3
 "ikev2-westnet-eastnet-x509-cr" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
-"ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: 30 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+"ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev2-westnet-eastnet-x509-cr" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #

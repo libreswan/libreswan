@@ -1,4 +1,2 @@
-ipsec whack --impair timeout_on_retransmit
-# this should succeed
-ipsec auto --up san
+ipsec up san # this should succeed # sanitize-retransmits
 echo "done"

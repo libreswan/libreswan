@@ -1,2 +1,2 @@
-ipsec auto --up san
+ipsec up san # sanitize-retransmits
 echo "done"

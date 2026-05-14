@@ -14,7 +14,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
+ ipsec add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added oriented IKEv1 connection
 east #
  ipsec status | grep idtype

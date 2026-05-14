@@ -1,5 +1,4 @@
-ipsec auto --up west-x509
-ipsec whack --impair timeout_on_retransmit
+ipsec up west-x509 # should succeed
 # this one should fail, as east is only expecting selfsigned cert of west, not road
-ipsec auto --up road-x509
+ipsec up road-x509 # should fail
 echo "done"

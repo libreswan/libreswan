@@ -16,7 +16,7 @@ east #
 east #
  ipsec whack --impair suppress_retransmits
 east #
- ipsec auto --add san
+ ipsec add san
 "san": added oriented IKEv1 connection
 east #
  echo "initdone"

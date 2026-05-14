@@ -19,7 +19,7 @@ west #
 west #
  ipsec whack --impair send_pkcs7_thingie
 west #
- ipsec auto --add westnet-eastnet-x509
+ ipsec add westnet-eastnet-x509
 "westnet-eastnet-x509": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
@@ -27,7 +27,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-x509
+ ipsec up westnet-eastnet-x509 # this should succeed # sanitize-retransmits
 "westnet-eastnet-x509" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-x509" #1: sent Main Mode request
 "westnet-eastnet-x509" #1: sent Main Mode I2

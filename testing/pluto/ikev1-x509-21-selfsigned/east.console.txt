@@ -16,7 +16,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-x509
+ ipsec add ikev2-x509
 "ikev2-x509": added oriented IKEv1 connection
 east #
  echo "initdone"

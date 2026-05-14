@@ -21,16 +21,16 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-x509
+ ipsec add west-x509
 "west-x509": added oriented IKEv1 connection
 west #
- ipsec auto --add road-x509
+ ipsec add road-x509
 "road-x509": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-x509
+ ipsec up west-x509 # should succeed
 "west-x509" #1: initiating IKEv1 Main Mode connection
 "west-x509" #1: sent Main Mode request
 "west-x509" #1: sent Main Mode I2
@@ -44,11 +44,9 @@ west #
 "west-x509" #2: sent Quick Mode request
 "west-x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ipsec whack --impair timeout_on_retransmit
-west #
  # this one should fail, as east is only expecting selfsigned cert of west, not road
 west #
- ipsec auto --up road-x509
+ ipsec up road-x509 # should fail
 "road-x509" #3: initiating IKEv1 Main Mode connection
 "road-x509" #3: sent Main Mode request
 "road-x509" #3: sent Main Mode I2
@@ -56,7 +54,7 @@ west #
 "road-x509" #3: I am sending a certificate request
 "road-x509" #3: sent Main Mode I3
 "road-x509" #3: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
-IMPAIR: "road-x509" #3: retransmit so timing out SA (may retry)
+"road-x509" #3: STATE_MAIN_I3: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #

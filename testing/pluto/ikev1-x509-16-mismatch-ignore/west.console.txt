@@ -14,13 +14,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add san
+ ipsec add san
 "san": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up san
+ ipsec up san # sanitize-retransmits
 "san" #1: initiating IKEv1 Main Mode connection
 "san" #1: sent Main Mode request
 "san" #1: sent Main Mode I2
