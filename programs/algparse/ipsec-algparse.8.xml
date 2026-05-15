@@ -29,11 +29,9 @@
       &nss_opts;
       <sbr/>
       <group>
-	<arg choice="plain">--v1</arg>
-	<arg choice="plain">--v2</arg>
-	<arg choice="plain">--v</arg>
-	<arg choice="plain">--p1</arg>
-	<arg choice="plain">--p2</arg>
+	<arg choice="plain">--ikev1</arg>
+	<arg choice="plain">--ikev2</arg>
+	<arg choice="plain">--verbose</arg>
 	<arg choice="plain">
 	  --pfs
 	  <group choice="req">
