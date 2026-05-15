@@ -34,25 +34,25 @@ static void check(const struct ike_alg_protocol *protocol,
 		  struct logger *logger)
 {
 	/* print the test */
-	printf("algparse ");
+	printf("algparse");
 	if (fips) {
-		printf("-fips ");
+		printf(" --fips");
 	}
 	if (addke) {
-		printf("-addke ");
+		printf(" --addke");
 	}
 	switch (ike_version) {
-	case IKEv1: printf("-v1 "); break;
-	case IKEv2: printf("-v2 "); break;
+	case IKEv1: printf(" --ikev1"); break;
+	case IKEv2: printf(" --ikev2"); break;
 	default: break;
 	}
 	if (pfs) {
-		printf("-pfs ");
+		printf(" --pfs");
 	}
 	if (algstr == NULL) {
-		printf("'%s'", protocol->name);
+		printf(" '%s'", protocol->name);
 	} else {
-		printf("'%s=%s'", protocol->name, algstr);
+		printf(" '%s=%s'", protocol->name, algstr);
 	}
 	switch (expected) {
 	case PASS: printf(" (expect SUCCESS)"); break;
@@ -562,11 +562,11 @@ static void test(struct logger *logger)
 enum opt {
 	OPT_VERBOSE = 'v',
 	OPT_HELP = 'h',
+	OPT_IKEv1 = '1',
+	OPT_IKEv2 = '2',
 	OPT_DEBUG = 256,
 	OPT_TP,
 	OPT_TA,
-	OPT_IKEv1,
-	OPT_IKEv2,
 	OPT_PFS,
 	OPT_ADDKE,
 	OPT_FIPS,
@@ -583,9 +583,7 @@ const struct option optarg_options[] = {
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("version"), no_argument, NULL, OPT_VERSION, },
 	{ OPT("ikev1"), no_argument, NULL, OPT_IKEv1, },
-	{ OPT("v1"), no_argument, NULL, OPT_IKEv1, },
 	{ OPT("ikev2"), no_argument, NULL, OPT_IKEv2, },
-	{ OPT("v2"), no_argument, NULL, OPT_IKEv2, },
 	{ OPT("ta"), no_argument, NULL, OPT_TA, },
 	{ OPT("tp"), no_argument, NULL, OPT_TP, },
 	{ OPT("pfs", "{yes,no}"), optional_argument, NULL, OPT_PFS, },
