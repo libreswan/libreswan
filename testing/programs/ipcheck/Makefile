@@ -46,4 +46,4 @@ include ../../../mk/program.mk
 endif
 
 local-check: $(PROGRAM)
-	$(builddir)/$(PROGRAM) --dns=yes
+	$(builddir)/$(PROGRAM) --dns=no

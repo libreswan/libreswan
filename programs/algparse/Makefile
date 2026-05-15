@@ -28,4 +28,4 @@ include ../../mk/program.mk
 endif
 
 local-check: $(PROGRAM)
-	$(top_srcdir)/testing/guestbin/algparse.sh $(builddir)/$(PROGRAM)
+	$(builddir)/$(PROGRAM) --tp
