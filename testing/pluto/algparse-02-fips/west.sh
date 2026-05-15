@@ -2,12 +2,12 @@
 
 # Run the parser tests.
 
-ipsec algparse --tp --fips --v1
-ipsec algparse --tp --fips --v1 --pfs
-ipsec algparse --tp --fips --v2
-ipsec algparse --tp --fips --v2 --pfs
+ipsec algparse --tp --fips --ikev1
+ipsec algparse --tp --fips --ikev1 --pfs
+ipsec algparse --tp --fips --ikev2
+ipsec algparse --tp --fips --ikev2 --pfs
 
-ipsec algparse --tp --fips --v2 --pfs --addke
+ipsec algparse --tp --fips --ikev2 --pfs --addke
 
 # Run the algorithm tests; there should be no fails.
 
