@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
+ ipsec add west
 "west": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
@@ -25,7 +25,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done

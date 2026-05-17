@@ -274,6 +274,7 @@ kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
 kvmplutotest	ikev2-ikeport-06-host-to-host		good
 kvmplutotest	ikev2-ikeport-4500-initiator-ipv4	good
 kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
+kvmplutotest	cloudflare-ikev2-ipv4-4500		good
 
 kvmplutotest	ikev2-ondemand-01-instance-auto			good	github/1110
 kvmplutotest	ikev2-ondemand-01-instance-route		good	github/1110
