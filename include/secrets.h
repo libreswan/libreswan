@@ -100,7 +100,7 @@ enum secret_kind {
 
 struct secret_preshared_stuff {
 	size_t len;
-	uint8_t ptr[];
+	uint8_t ptr[] COUNTED_BY(len);
 };
 
 const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret *);

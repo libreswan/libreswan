@@ -29,7 +29,7 @@
 struct rw_hunk {
 	struct refcnt refcnt;
 	size_t len;
-	uint8_t ptr[];
+	uint8_t ptr[] COUNTED_BY(len);
 };
 
 struct rw_hunk *clone_bytes_as_rw_hunk(const void *ptr, size_t len,
@@ -60,7 +60,7 @@ void replace_rw_hunk(struct rw_hunk **hunk, struct rw_hunk *with,
 struct ro_hunk {
 	struct refcnt refcnt;
 	size_t len;
-	const uint8_t ptr[];
+	const uint8_t ptr[] COUNTED_BY(len);
 };
 
 struct ro_hunk *clone_bytes_as_ro_hunk(const void *ptr, size_t len,
