@@ -117,6 +117,10 @@ USERLAND_CFLAGS += -pthread
 # should this go in CFLAGS?
 USERLAND_CFLAGS += -std=gnu99
 
+# should __counted_by__() be used; experimental
+ENABLE_COUNTED_BY ?= false
+USERLAND_CFLAGS += -DENABLE_COUNTED_BY=$(ENABLE_COUNTED_BY)
+
 #
 # Error out dead make variables
 #
