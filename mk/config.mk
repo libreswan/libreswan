@@ -211,7 +211,7 @@ USERLAND_CFLAGS += $(WARNING_CFLAGS)
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
 # _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
 # value.
-OPTIMIZE_CFLAGS ?= -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+OPTIMIZE_CFLAGS ?= -O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
 USERLAND_CFLAGS += $(OPTIMIZE_CFLAGS)
 
 # Dumping ground for an arbitrary set of flags.  Should probably be
