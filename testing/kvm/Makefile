@@ -317,8 +317,6 @@ KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
 KVM_$($(strip $1))_TEST_XML          = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
 
-KVM_TEST_XML += $$(KVM_$($(strip $1))_TEST_XML)
-
 endef
 
 $(foreach platform, $(KVM_PLATFORMS), \
@@ -1423,13 +1421,13 @@ kvm-make-install-all-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORMS)): \
-kvm-install-%: kvm-destroy-test-domains | $(KVM_TEST_XML)
+kvm-install-%: kvm-destroy-test-domains
 	: $@
 	$(MAKE) kvm-make-install-base-$*
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
 
 $(patsubst %, kvm-install-all-%, $(KVM_PLATFORMS)): \
-kvm-install-all-%: | $(KVM_TEST_XML)
+kvm-install-all-%:
 	: $@
 	$(MAKE) kvm-make-install-all-$*
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
@@ -1455,22 +1453,21 @@ kvm-install-all: $(foreach os, $(KVM_OS), kvm-install-all-$(os))
 KVM_TEST_MEMORY ?= 512
 
 define define-test-domain
+  $(KVM_BUILDDIR)/$(KVM_PREFIX)$(strip $(2)): \
+		$(addprefix $(1), $(addprefix $(2), $(3)))
   .PRECIOUS: $(addprefix $(1), $(addprefix $(2), $(3)))
-  $(addprefix $(1), $(addprefix $(2), $(3))): \
-		$(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(2)) \
-		| \
+  $(addprefix $(1), $(addprefix $(2), $(3))): | \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		vm/$(strip $(3)).xml
 	: define-test-domain
 	:  *=$$*
 	:  @=$$@
 	:  domain=notdir $$@
-	:  domain_prefix=$(1)   /pool/b. /pool/b2 ...
-	:  domain_platform=$(2) linux netbsd ...
-	:  domain_hostname=$(3)     east west ...
-	:  enable=$(4)   linux OR bsd
+	:  domain_prefix=$(strip $(1))       # /pool/b. /pool/b2 ...
+	:  domain_platform=$(strip $(2))     # linux netbsd ...
+	:  domain_hostname=$(strip $(3))     # east west ...
+	:  enable=$(strip $(4))              # linux OR bsd
 	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
-	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
 	rm -f $(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
