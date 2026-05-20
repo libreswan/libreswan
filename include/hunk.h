@@ -506,10 +506,10 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 	({								\
 		TYPE *h_ = overalloc_thing(TYPE, LEN);			\
 		/* gcc14+LTO w/ LEN=0 thinks there is a -ve move */	\
+		h_->len = LEN;						\
 		if ((LEN) > 0) {					\
 			memcpy(h_->ptr, (PTR), (LEN));			\
 		}							\
-		h_->len = LEN;						\
 		h_;							\
 	})
 
