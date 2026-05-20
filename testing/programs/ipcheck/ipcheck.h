@@ -67,6 +67,15 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 		fprintf(stdout,	"\n");					\
 	}
 
+#define DPRINT(DIAG, ...)						\
+	{								\
+		PREFIX(stdout);						\
+		fprintf(stdout, __VA_ARGS__);				\
+		fprintf(stdout, ", %s (%p)", str_diag(DIAG), (DIAG));	\
+		fprintf(stdout,	"\n");					\
+		pfree_diag(&(DIAG));					\
+	}
+
 #define LN __LINE__
 
 #define FAIL_(...)							\
@@ -85,12 +94,12 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 		continue;			\
 	}
 
-#define DIAG_FAIL(DIAG, ...)						\
+#define DFAIL(DIAG, ...)						\
 	{								\
-		FAIL(__VA_ARGS__);					\
-		fprintf(stderr, "%s", str_diag(*(DIAG)));		\
-		pfree_diag(DIAG);					\
+		FAIL_(__VA_ARGS__);					\
+		fprintf(stderr, ", %s (%p)", str_diag(DIAG), (DIAG));	\
 		fprintf(stderr,	"\n");					\
+		pfree_diag(&(DIAG));					\
 		continue;						\
 	}
 

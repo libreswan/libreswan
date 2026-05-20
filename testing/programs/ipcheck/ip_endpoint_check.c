@@ -73,8 +73,7 @@ void ip_endpoint_check(void)
 		ip_address a;
 		d = ttoaddress_num(shunk1(t->in), type, &a);
 		if (d != NULL) {
-			/* Error occurred, but we didn't expect one */
-			FAIL("ttosubnet failed: %s", str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->in);
 		}
 
 		ip_endpoint e, *endpoint = &e;

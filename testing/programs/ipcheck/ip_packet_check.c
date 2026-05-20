@@ -59,15 +59,14 @@ void ip_packet_check(void)
 		ip_address src_address;
 		d = ttoaddress_num(shunk1(t->sa), afi, &src_address);
 		if (d != NULL) {
-			/* Error occurred, but we didn't expect one */
-			FAIL("ttoaddress failed: %s", str_diag(d));
+			DFAIL(d, "ttoaddress(%s) unexpectedly failed", t->sa);
 		}
 
 		ip_address dst_address;
 		d = ttoaddress_num(shunk1(t->da), afi, &dst_address);
 		if (d != NULL) {
-			/* Error occurred, but we didn't expect one */
-			FAIL("ttoendpoint failed: %s", str_diag(d));
+
+			DFAIL(d, "ttoendpoint(%s) unexpectedly failed", t->da);
 		}
 
 		ip_packet packet = packet_from_raw(HERE,

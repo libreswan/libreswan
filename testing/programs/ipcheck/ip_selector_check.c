@@ -61,24 +61,26 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 
 		ip_selector tmp, *selector = &tmp;
 		diag_t d = tto(&t->from, selector);
-		if (t->selector != NULL) {
-			if (d != NULL) {
-				FAIL("%s(%s %s %s) failed: %s",
+		if (d != NULL) {
+			if (t->selector != NULL) {
+				DFAIL(d, "%s(%s %s %s) unexpectedly failed",
 				     what,
 				     pri_afi(t->from.afi),
 				     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
-				     (t->from.protoport != NULL ? t->from.protoport : "N/A"),
-				     str_diag(d));
+				      (t->from.protoport != NULL ? t->from.protoport : "N/A"));
 			}
-		} else if (d == NULL) {
-			FAIL("%s(%s %s %s) should have failed",
+			DPRINT(d, "%s(%s %s %s) failed as expected",
+				     what,
+				     pri_afi(t->from.afi),
+				     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
+				      (t->from.protoport != NULL ? t->from.protoport : "N/A"));
+			continue;
+		} else if (t->selector == NULL) {
+			FAIL("%s(%s %s %s) unexpectedly succeeded",
 			     what,
 			     pri_afi(t->from.afi),
 			     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 			     (t->from.protoport != NULL ? t->from.protoport : "N/A"));
-		} else {
-			pfree_diag(&d);
-			continue;
 		}
 
 		CHECK_AFI(t->from.afi, selector, selector);
@@ -364,7 +366,7 @@ static void check_selector_is(void)
 		ip_address nonzero_host;
 		d = ttoselector_num(shunk1(t->selector), NULL, selector, &nonzero_host);
 		if (d != NULL) {
-			FAIL("to_selector() failed: %s", str_diag(d));
+			DFAIL(d, "ttoselector_num(%s) unexpectedly failed", t->selector);
 		}
 
 		CHECK_COND(selector, is_unset);
@@ -515,12 +517,12 @@ static void check_selector_op_selector(void)
 					    &inner_selector, &nonzero_host);
 		}
 		if (d != NULL) {
-			FAIL("ttoselector_num(%s) failed: %s", t->inner, str_diag(d));
+			DFAIL(d, "ttoselector_num(%s) unexpectedly failed", t->inner);
 		}
+
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->inner);
 		}
-		pfree_diag(&d);
 
 		ip_selector outer_selector;
 		if (strchr(t->outer, '-') != NULL) {
@@ -532,8 +534,9 @@ static void check_selector_op_selector(void)
 					    &outer_selector, &nonzero_host);
 		}
 		if (d != NULL) {
-			FAIL("ttoselector_num(%s) failed: %s", t->outer, str_diag(d));
+			DFAIL(d, "ttoselector_num(%s) unexpectedly failed", t->outer);
 		}
+
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->outer);
 		}

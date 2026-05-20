@@ -69,15 +69,13 @@ static void check_iprange_bits(void)
 		ip_address lo;
 		d = ttoaddress_num(shunk1(t->lo), afi, &lo);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s', %s",
-			     t->lo, str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->lo);
 		}
 
 		ip_address hi;
 		d = ttoaddress_num(shunk1(t->hi), afi, &hi);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s', %s",
-			     t->hi, str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->hi);
 		}
 
 		ip_range range = range_from_raw(HERE, afi,
@@ -198,18 +196,18 @@ static void check_ttorange__to__str_range(void)
 		} else {
 			PRINT("%s '%s' -> <error>", pri_afi(t->afi), t->in);
 		}
-		const char *oops = NULL;
 
 		ip_range tmp, *range = &tmp;
 		diag_t d = ttorange_num(shunk1(t->in), t->afi, range);
-		if (d != NULL && t->str == NULL) {
-			/* Error was expected, do nothing */
-			pfree_diag(&d);
+		if (d != NULL) {
+			if (t->str != NULL) {
+				DFAIL(d, "ttorange_num(%s) unexpectedly failed", t->in);
+			}
+			DPRINT(d, "ttorange_num(%s) failed as expected", t->in);
 			continue;
-		}
-		if (oops != NULL && t->str != NULL) {
+		} else if (t->str == NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttorange() failed: %s", oops);
+			FAIL("ttorange(%s) unexpectedly succeeded", t->in);
 		}
 
 		CHECK_INFO(range);
@@ -264,8 +262,9 @@ static void check_range_from_subnet(void)
 		d = ttosubnet_num(shunk1(t->in), t->afi,
 				  subnet, &nonzero_host);
 		if (d != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
+			DFAIL(d, "ttosubnet(%s) unexpectedly failed", t->in);
 		}
+
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 		}
@@ -329,8 +328,7 @@ static void check_range_is(void)
 		if (strlen(t->lo) > 0) {
 			d = ttoaddress_num(shunk1(t->lo), afi, &lo);
 			if (d != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s', %s",
-				     t->lo, str_diag(d));
+				DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->lo);
 			}
 		} else {
 			lo = unset_address;
@@ -340,8 +338,7 @@ static void check_range_is(void)
 		if (strlen(t->hi) > 0) {
 			d = ttoaddress_num(shunk1(t->hi), afi, &hi);
 			if (d != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s', %s",
-				     t->hi, str_diag(d));
+				DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->hi);
 			}
 		} else {
 			hi = unset_address;
@@ -409,8 +406,7 @@ static void check_range_op_range(void)
 		if (t->R != NULL) {					\
 			diag_t d = ttorange_num(shunk1(t->R), 0, &R);	\
 			if (d != NULL) {				\
-				FAIL("ttorange(%s) failed: %s", t->R,	\
-				     str_diag(d));			\
+				DFAIL(d, "ttorange_num(%s) unexpectedly failed", t->R); \
 			}						\
 		} else {						\
 			R = unset_range;				\

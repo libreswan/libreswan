@@ -68,13 +68,12 @@ static void check__ttocidr_num(void)
 		diag_t d = ttocidr_num(shunk1(t->in), t->afi, cidr);
 		if (d != NULL) {
 			if (t->str != NULL) {
-				FAIL("numeric_to_cidr() unexpectedly failed: %s",
-				     str_diag(d));
+				DFAIL(d, "ttocidr_num(%s) unexpectedly failed", t->in);
 			}
-			pfree_diag(&d);
+			DPRINT(d, "ttocidr_num(%s) failed as expected", t->in);
 			continue;
 		} else if (t->str == NULL) {
-			FAIL("numeric_to_cidr() unexpectedly succeeded");
+			FAIL("ttocidr_num(%s) unexpectedly succeeded", t->in);
 		}
 
 		CHECK_INFO(cidr);
@@ -113,8 +112,7 @@ static void check_cidr_is()
 		ip_cidr cidr;
 		diag_t d = ttocidr_num(shunk1(t->in), t->afi, &cidr);
 		if (d != NULL) {
-			FAIL("numeric_to_cidr() unexpectedly failed: %s",
-			     str_diag(d));
+			DFAIL(d, "ttocidr_num(%s) unexpectedly failed", t->in);
 		}
 
 		bool specified = cidr_is_specified(cidr);

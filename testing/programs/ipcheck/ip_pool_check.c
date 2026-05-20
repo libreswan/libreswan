@@ -69,15 +69,13 @@ static void check_ippool_bits(void)
 		ip_address lo;
 		d = ttoaddress_num(shunk1(t->lo), afi, &lo);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s', %s",
-			     t->lo, str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpected failed", t->lo);
 		}
 
 		ip_address hi;
 		d = ttoaddress_num(shunk1(t->hi), afi, &hi);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s', %s",
-			     t->hi, str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->hi);
 		}
 
 		ip_pool pool = pool_from_raw(HERE, afi,
@@ -208,18 +206,18 @@ static void check_ttopool__to__str_pool(void)
 		} else {
 			PRINT("%s '%s' -> <error>", pri_afi(t->afi), t->in);
 		}
-		const char *oops = NULL;
 
 		ip_pool tmp, *pool = &tmp;
 		d = ttopool_num(shunk1(t->in), t->afi, pool);
-		if (d != NULL && t->str == NULL) {
-			/* Error was expected, do nothing */
-			pfree_diag(&d);
+		if (d != NULL) {
+			if (t->str != NULL) {
+				DFAIL(d, "ttopool_num(%s) unexpectedly failed", t->in);
+			}
+			DPRINT(d, "ttopool_num(%s) failed as expected", t->in);
 			continue;
-		}
-		if (oops != NULL && t->str != NULL) {
+		} else if (t->str == NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttopool() failed: %s", oops);
+			FAIL("ttopool(%s) unexpectedly succeeded", t->in);
 		}
 
 		CHECK_INFO(pool);
@@ -274,8 +272,9 @@ static void check_pool_from_subnet(void)
 		d = ttosubnet_num(shunk1(t->in), t->afi,
 				  subnet, &nonzero_host);
 		if (d != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
+			DFAIL(d, "ttosubnet(%s) unexpectedly failed", t->in);
 		}
+
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 		}
@@ -339,8 +338,7 @@ static void check_pool_is(void)
 		if (strlen(t->lo) > 0) {
 			d = ttoaddress_num(shunk1(t->lo), afi, &lo);
 			if (d != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s', %s",
-				     t->lo, str_diag(d));
+				DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->lo);
 			}
 		} else {
 			lo = unset_address;
@@ -350,8 +348,7 @@ static void check_pool_is(void)
 		if (strlen(t->hi) > 0) {
 			d = ttoaddress_num(shunk1(t->hi), afi, &hi);
 			if (d != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s', %s",
-				     t->hi, str_diag(d));
+				DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->hi);
 			}
 		} else {
 			hi = unset_address;
@@ -420,8 +417,7 @@ static void check_pool_op_pool(void)
 		if (t->R != NULL) {					\
 			diag_t d = ttopool_num(shunk1(t->R), 0, &R);	\
 			if (d != NULL) {				\
-				FAIL("ttopool(%s) failed: %s", t->R,	\
-				     str_diag(d));			\
+				DFAIL(d, "ttopool_num(%s) unexpectedly failed", t->R); \
 			}						\
 		} else {						\
 			R = unset_pool;					\
@@ -491,8 +487,7 @@ static void check_pool_offset_to_cidr(void)
 		ip_pool pool;
 		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
 		if (d != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool,
-			     str_diag(d));
+			DFAIL(d, "ttopool_num(%s) unexpectedly failed", t->pool);
 		}
 
 		ip_cidr cidr;
@@ -552,15 +547,13 @@ static void check_cidr_to_pool_offset(void)
 		ip_pool pool;
 		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
 		if (d != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool,
-			     str_diag(d));
+			DFAIL(d, "ttopool_num(%s) unexpectedly failed", t->pool);
 		}
 
 		ip_cidr cidr;
 		d = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
 		if (d != NULL) {
-			FAIL("ttocidr_num(%s) failed: %s", t->cidr,
-			     str_diag(d));
+			DFAIL(d, "ttocidr_num(%s) unexpectedly failed", t->cidr);
 		}
 
 		uintmax_t offset;

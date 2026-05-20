@@ -80,12 +80,10 @@ static void check__ttosaid__str_said(void)
 		diag_t d = ttosaid(shunk1(t->in), &sa);
 		if (d != NULL) {
 			if (t->out != NULL) {
-				DIAG_FAIL(&d, "ttosaid(%s) unexpectedly failed: ", t->in);
-			} else {
-				/* all is good */
-				pfree_diag(&d);
-				continue;
+				DFAIL(d, "ttosaid(%s) unexpectedly failed", t->in);
 			}
+			DPRINT(d, "ttosaid(%s) failed as expected", t->in);
+			continue;
 		} else if (t->out == NULL) {
 			FAIL("ttosa(%s) unexpectedly succeeded", t->in);
 		}

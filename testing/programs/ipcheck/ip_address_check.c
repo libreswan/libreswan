@@ -190,22 +190,19 @@ static void check_ttoaddress_num(void)
 
 				ip_address tmp, *address = &tmp;
 				d = lookup->ttoaddress(shunk1(t->in), afi, address);
-				if (err_expected) {
-					if (d == NULL) {
-						FAIL("%s(%s, %s) unexpectedly succeeded",
-						     lookup->name, t->in, pri_afi(afi));
+				if (d != NULL) {
+					if (!err_expected) {
+						DFAIL(d, "%s(%s, %s) unexpectedly failed",
+						      lookup->name, t->in, pri_afi(afi));
 					}
-					PRINT("%s(%s, %s) returned: %s",
-					      lookup->name, t->in, pri_afi(afi),
-					      str_diag(d));
-					pfree_diag(&d);
-				} else if (d != NULL) {
-					FAIL("%s(%s, %s) unexpectedly failed: %s",
-					     lookup->name, t->in, pri_afi(afi),
-					     str_diag(d));
-				} else {
-					CHECK_STR2(address);
+					DPRINT(d, "%s(%s, %s) failed as expected",
+					       lookup->name, t->in, pri_afi(afi));
+					continue;
+				} else if (err_expected) {
+					FAIL("%s(%s, %s) unexpectedly succeeded",
+					     lookup->name, t->in, pri_afi(afi));
 				}
+				CHECK_STR2(address);
 			}
 		}
 	}
@@ -260,13 +257,12 @@ static void check_ttoaddress_dns(void)
 		d = ttoaddress_dns(shunk1(t->in), afi, address);
 		if (d != NULL) {
 			if (t->str != NULL) {
-				FAIL("ttoaddress_dns(%s, %s) unexpectedly failed: %s",
-				     t->in, pri_afi(t->afi),
-				     str_diag(d));
+				DFAIL(d, "ttoaddress_dns(%s, %s) unexpectedly failed",
+				      t->in, pri_afi(t->afi));
 			}
-			PRINT("ttoaddress_dns(%s, %s) failed as expected: %s",
-			      t->in, pri_afi(t->afi), str_diag(d));
-			pfree_diag(&d);
+			DPRINT(d, "ttoaddress_dns(%s, %s) failed as expected",
+			       t->in, pri_afi(t->afi));
+			continue;
 		} else if (t->str == NULL) {
 			address_buf b;
 			FAIL("ttoaddress_dns(%s, %s) unexpectedly succeeded with %s",
@@ -309,8 +305,9 @@ static void check_str_address_sensitive(void)
 		ip_address tmp, *address = &tmp;
 		d = ttoaddress_num(shunk1(t->in), type, address);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() failed: %s", str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->in);
 		}
+
 		CHECK_INFO(address);
 		CHECK_STR(address_buf, address_sensitive, t->out, address);
 	}
@@ -341,8 +338,9 @@ static void check_str_address_reversed(void)
 		ip_address tmp, *address = &tmp;
 		d = ttoaddress_num(shunk1(t->in), type, address);
 		if (d != NULL) {
-			FAIL("ttoaddress_num() returned: %s", str_diag(d));
+			DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->in);
 		}
+
 		CHECK_INFO(address);
 		CHECK_STR(address_reversed_buf, address_reversed, t->out, address);
 	}
@@ -432,7 +430,7 @@ static void check_address_is(void)
 			const struct ip_info *type = NULL;
 			d = ttoaddress_num(shunk1(t->in), type, &tmp);
 			if (d != NULL) {
-				FAIL("ttoaddress_num() failed: %s", str_diag(d));
+				DFAIL(d, "ttoaddress_num(%s) unexpectedly failed", t->in);
 			}
 		}
 
@@ -507,15 +505,13 @@ static void check_addresses_to(void)
 		ip_address lo;
 		d = ttoaddress_num(shunk1(t->lo), type, &lo);
 		if (d != NULL) {
-			FAIL("ttoaddress_num(lo=%s) failed: %s",
-			     t->lo, str_diag(d));
+			DFAIL(d, "ttoaddress_num(lo=%s) unexpectedly failed", t->lo);
 		}
 
 		ip_address hi;
 		d = ttoaddress_num(shunk1(t->hi), type, &hi);
 		if (d != NULL) {
-			FAIL("ttoaddress_num(hi=%s) failed: %s",
-			     t->hi, str_diag(d));
+			DFAIL(d, "ttoaddress_num(hi=%s) unexpectedly failed", t->hi);
 		}
 
 		ip_subnet s;
