@@ -44,7 +44,8 @@ For Debian / Ubuntu / Mint
     apt-get install build-essential pkg-config \
       bison flex libnss3-dev libnss3-tools libevent-dev \
       libunbound-dev libpam0g-dev libcap-ng-dev \
-      libldns-dev xmlto libcurl4-openssl-dev
+      libldns-dev xmlto libcurl4-openssl-dev \
+      systemd-dev
 
 For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
