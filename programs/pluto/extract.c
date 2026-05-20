@@ -576,7 +576,7 @@ static char **argv_from_shunks(struct shunks *args)
 {
 	/* get space needed for strings */
 	size_t chars = 0;
-	ITEMS_FOR_EACH(s, args) {
+	TABLE_FOR_EACH(s, args) {
 		chars += s->len+1/*NUL*/;
 	}
 	/* argv[] array + NULL; NULL terminated strings */
@@ -585,7 +585,7 @@ static char **argv_from_shunks(struct shunks *args)
 	char *p = (char*) argv_roof;
 	/* copy over */
 	unsigned i = 0;
-	ITEMS_FOR_EACH(s, args) {
+	TABLE_FOR_EACH(s, args) {
 		argv[i++] = p;
 		memcpy(p, s->ptr, s->len);
 		p += s->len + 1/*NUL*/;
@@ -608,15 +608,13 @@ static char **argv_from_exec_command(const char *command, struct verbose verbose
 
 static char **argv_from_sh_command(const char *command, struct verbose verbose)
 {
-	struct shunks *args = alloc_items(struct shunks, 3);
-	unsigned i = 0;
-	args->item[i++] = shunk1("/bin/sh");
-	args->item[i++] = shunk1("-c");
-	/* jam_updown_status() will print item[UPDOWN_SHELL_ARG] */
-	vassert(i == UPDOWN_SHELL_ARG);
-	args->item[i++] = shunk1(command);
-	vassert(i == args->len);
+	struct shunks *args = table_valloc(struct shunks,
+					   shunk1("/bin/sh"),
+					   shunk1("-c"),
+					   shunk1(command));
+	vassert(UPDOWN_SHELL_ARG == args->len - 1);
 	char **argv = argv_from_shunks(args);
+	vassert(argv[args->len] == NULL);
 	pfree(args);
 	return argv;
 }

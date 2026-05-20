@@ -57,7 +57,7 @@ diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 	 * Now parse the fields and build the table.
 	 */
 
-	ITEMS_FOR_EACH(token, tokens) {
+	TABLE_FOR_EACH(token, tokens) {
 		passert(token->len > 0);
 		ldbg(&global_logger, "parsing "PRI_SHUNK" %p %u",
 		     pri_shunk(*token), *ptr, (*len));

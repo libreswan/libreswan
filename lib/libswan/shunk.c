@@ -19,8 +19,8 @@
 #include <limits.h>
 
 #include "shunk.h"
+#include "table.h"
 #include "lswlog.h"	/* for pexpect() */
-#include "lswalloc.h"	/* for over_alloc_things() */
 
 /*
  * Don't mistake a NULL_SHUNK for an EMPTY_SHUNK - just like when
@@ -303,7 +303,7 @@ struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 	 *
 	 * This means that NULL is never returned!
 	 */
-	struct shunks *tokens = alloc_items(struct shunks, 0);
+	struct shunks *tokens = table_alloc(struct shunks, 0);
 
 	shunk_t cursor = input;
 	while (true) {
@@ -325,8 +325,7 @@ struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 		      "%s() [%u] \""PRI_SHUNK"\"",
 		      __func__, tokens->len, pri_shunk(token));
 		/* grow by one shunk_t; and save the token */
-		shunk_t *end = grow_items(tokens);
-		(*end) = token;
+		table_grow(tokens, token);
 	}
 
 	return tokens;

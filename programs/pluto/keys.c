@@ -615,7 +615,7 @@ const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection 
 		 * at least one secrets entry that matches a PPK_ID from the
 		 * list.
 		 */
-		ITEMS_FOR_EACH(ppk_id_shunk, ppk_ids_shunks) {
+		TABLE_FOR_EACH(ppk_id_shunk, ppk_ids_shunks) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(c->logger, "try to find PPK with PPK_ID:");
 				LDBG_hunk(c->logger, ppk_id_shunk);

@@ -573,7 +573,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 				}
 			}
 		} else {
-			ITEMS_FOR_EACH(ppk_id, ppk_ids_shunks) {
+			TABLE_FOR_EACH(ppk_id, ppk_ids_shunks) {
 				const struct secret_ppk_stuff *ppk =
 					get_ppk_stuff_by_id(*ppk_id, ike->sa.logger);
 				if (ppk != NULL) {
