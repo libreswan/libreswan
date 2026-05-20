@@ -17,6 +17,8 @@
 #ifndef TIMECHECK_H
 #define TIMECHECK_H
 
+#include <stdint.h>
+
 extern int fails;
 
 void check_deltatime(void);

@@ -23,9 +23,11 @@
 #include <stdbool.h>
 
 #include "chunk.h"
+#include "shunk.h"
 
 struct verbose;
 struct logger;
+enum stream;
 
 bool server_runve(const char *story,
 		  const char *argv[],

@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <string.h>		/* for memcpy() */
 
 #include "lswalloc.h"
 #include "kernel_netlink_reply.h"
@@ -78,4 +79,3 @@ ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 
 	return msglen;
 }
-

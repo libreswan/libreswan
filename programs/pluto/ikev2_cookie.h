@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "pluto_constants.h"	/* for stf_status; */
+
 struct msg_digest;
 struct ike_sa;
 struct child_sa;

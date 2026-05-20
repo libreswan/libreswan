@@ -15,6 +15,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>	/* for ssize_t? */
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
 

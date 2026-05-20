@@ -18,14 +18,15 @@
  * for more details.
  */
 
-#ifndef _LSW_ALLOC_H_
-#define _LSW_ALLOC_H_
+#ifndef LSWALLOC_H
+#define LSWALLOC_H
 
-#include <sys/types.h>
+#include <stddef.h>	/* for size_t */
 #include <stdarg.h>
+#include <stdbool.h>
 
-#include "constants.h"
 #include "lswcdefs.h"
+#include "where.h"
 
 struct logger;
 

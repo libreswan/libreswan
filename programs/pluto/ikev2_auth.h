@@ -20,6 +20,8 @@
 
 #include "chunk.h"
 
+#include "pluto_constants.h"	/* for stf_status; */
+
 struct state;
 struct connection;
 struct ike_sa;

@@ -18,7 +18,7 @@
 #ifndef KERNEL_NETLINK_REPLY_H
 #define KERNEL_NETLINK_REPLY_H
 
-#include <stddef.h>	/* for size_t */
+#include <stddef.h>	/* for size_t; ssize_t; */
 
 ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 				unsigned int seqnum, __u32 pid);
