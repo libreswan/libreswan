@@ -80,7 +80,7 @@ struct v2_incoming_fragments {
 struct v2_outgoing_fragments {
 	const char *story;
 	unsigned len;
-	chunk_t item[];
+	chunk_t table[] COUNTED_BY(len);
 };
 
 /*

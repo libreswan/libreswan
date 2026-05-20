@@ -66,7 +66,7 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 #endif
 
 	unsigned nr_frags = 0;
-	ITEMS_FOR_EACH(frag, frags) {
+	TABLE_FOR_EACH(frag, frags) {
 		nr_frags++;
 		if (!send_hunk_using_state(&ike->sa, frags->story, frag)) {
 			ldbg(ike->sa.logger, "send of %s fragment %u failed",
@@ -83,8 +83,8 @@ void record_v2_outgoing_message(shunk_t message,
 				struct logger *logger,
 				const char *story)
 {
-	realloc_v2_outgoing_fragments(fragments, logger, 1, story);
-	(*fragments)->item[0] = clone_hunk_as_chunk(&message, "fragment");
+	realloc_v2_outgoing_fragments(fragments, logger, /*nrfrags*/1, story);
+	(*fragments)->table[0] = clone_hunk_as_chunk(&message, "fragment");
 }
 
 /*
@@ -188,7 +188,7 @@ void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **fragments,
 {
 	free_v2_outgoing_fragments(fragments, logger);
 	PASSERT(logger, nfrags > 0);
-	(*fragments) = alloc_items(struct v2_outgoing_fragments, nfrags);
+	(*fragments) = table_alloc(struct v2_outgoing_fragments, nfrags);
 	(*fragments)->story = story;
 	ldbg_newref(logger, (*fragments));
 }
@@ -200,7 +200,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragments **fragments,
 		return;
 	}
 
-	ITEMS_FOR_EACH(fragment, (*fragments)) {
+	TABLE_FOR_EACH(fragment, (*fragments)) {
 		free_chunk_content(fragment);
 	}
 	ldbg_delref(logger, *fragments);
