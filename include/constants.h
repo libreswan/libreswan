@@ -64,42 +64,6 @@ enum binary {
  * Any changes here should be reflected there.
  */
 
-/*
- * min()/max() macros that also do
- * strict type-checking.. See the
- * "unnecessary" pointer comparison.
- * Note: re-evaluation is avoided.
- * Copied from include/linux/kernel.h
- * Copyright Torvalds et al.
- */
-#define min(x, y) ({				\
-	typeof(x) _min1 = (x);			\
-	typeof(y) _min2 = (y);			\
-	(void) (&_min1 == &_min2);		\
-	_min1 < _min2 ? _min1 : _min2; })
-
-#define max(x, y) ({				\
-	typeof(x) _max1 = (x);			\
-	typeof(y) _max2 = (y);			\
-	(void) (&_max1 == &_max2);		\
-	_max1 > _max2 ? _max1 : _max2; })
-
-/*
- * Alternate MIN/MAX implementation.
- *
- * These have more macro-like behaviour (hence NAMING):
- * - if the arguments are compile-time constants, then so is the result
- *   so this can be used (for example) in array bound calculation.
- * - one of the arguments will be evaluated twice.
- * - type errors are probably not detected.
- * - does not depend on GCC extensions to C language
- *
- * The P prefix is required because <sys/param.h> defines MIN and MAX
- */
-
-#define PMIN(x,y) ((x) <= (y) ? (x) : (y))
-#define PMAX(x,y) ((x) >= (y) ? (x) : (y))
-
 #define NULL_FD (-1)	/* NULL file descriptor */
 
 /* octet_t / BITS_IN_OCTET anyone? */
