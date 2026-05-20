@@ -1021,7 +1021,7 @@ const char *str_connection_suffix(const struct connection *c,
 
 struct connections {
 	unsigned len;
-	struct connection *item[];
+	struct connection *table[] COUNTED_BY(len);
 };
 
 struct connections *sort_connections(void);

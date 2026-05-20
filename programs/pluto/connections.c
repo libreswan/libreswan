@@ -1938,7 +1938,7 @@ struct connections *sort_connections(void)
 		}
 	}
 
-	struct connections *connections = alloc_items(struct connections,
+	struct connections *connections = table_alloc(struct connections,
 						      nr_connections);
 
 	{
@@ -1951,14 +1951,13 @@ struct connections *sort_connections(void)
 			},
 		};
 		while (next_connection(&cq)) {
-			connections->item[i++] = cq.c;
+			connections->table[i++] = cq.c;
 		}
 		passert(i == nr_connections);
 	}
 
 	/* sort it! */
-	qsort(connections->item, nr_connections, sizeof(struct connection *),
-	      connection_compare_qsort);
+	table_sort(connections, connection_compare_qsort);
 
 	return connections;
 }

@@ -177,7 +177,7 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
 		struct connections *connections = sort_connections();
-		ITEMS_FOR_EACH(cp, connections) {
+		TABLE_FOR_EACH(cp, connections) {
 			whack_trafficstatus_connection(m, s, (*cp), NULL);
 		}
 		pfree(connections);
