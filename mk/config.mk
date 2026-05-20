@@ -55,13 +55,14 @@ config.mk = true
 #       variable may also be defined.
 #
 #       Unlike USE_<package>, the MAKE variable, and corresponding C
-#       MACRO are both ALWAYS defined.  Either as "true" or "false".
+#       MACRO are both ALWAYS defined.
 #
 #       For instance, since IPSECKEY support requires both USE_UNBOUND
 #       and USE_LDNS.  When packages are available, the MAKE variable
 #       ENABLE_IPSECKEY=true, and the C macro is defined as
 #       -DENABLE_IPSECKEY=true; otherwise ENABLE_IPSECKEY=false, and
-#       -DENABLE_IPSECKEY=false.
+#       -DENABLE_IPSECKEY=false (note, this may require including
+#       <stdbool.h>).
 #
 #       IPSECKEY code is then enabled using either:
 #
@@ -71,8 +72,8 @@ config.mk = true
 #
 #           if (ENABLE_IPSECKEY)
 #
-#       (unlike #ifdef USE_<package>, #ifdef ENABLE_<feature> always
-#       succeeds)
+#       WARNING: do not use #ifdef ENABLE_<feature> as it always
+#       succeeds.
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
@@ -115,6 +116,10 @@ USERLAND_CFLAGS += -pthread
 
 # should this go in CFLAGS?
 USERLAND_CFLAGS += -std=gnu99
+
+# should __counted_by__() be used; experimental
+ENABLE_COUNTED_BY ?= false
+USERLAND_CFLAGS += -DENABLE_COUNTED_BY=$(ENABLE_COUNTED_BY)
 
 #
 # Error out dead make variables
@@ -681,8 +686,6 @@ endif
 # Enable the IPsec KEY code - fetching keys via DNS?
 #
 # IPSECKEY's current implementation requires both UNBOUND and LDNS.
-# ENABLE_ variables, unlike USE_ variables are set to true/false so
-# that they can be used in code.
 
 ENABLE_IPSECKEY ?= $(if $(filter truetrue, $(USE_UNBOUND)$(USE_LDNS)),true,false)
 USERLAND_CFLAGS += -DENABLE_IPSECKEY=$(ENABLE_IPSECKEY)

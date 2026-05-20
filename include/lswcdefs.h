@@ -18,6 +18,8 @@
 #ifndef LSWCDEFS_H
 #define LSWCDEFS_H
 
+#include <stdbool.h>
+
 #define swap(L,R)				\
 	{					\
 		typeof(L) tmp_ = L;		\
@@ -97,6 +99,12 @@
 # define PRINTF_LIKE(n)		__attribute__ ((format(printf, n, n + 1)))
 # define VPRINTF_LIKE(n)	__attribute__ ((format(printf, n, 0)))
 # define STRFTIME_LIKE(n)	__attribute__ ((format(strftime, n, 0)))
+#endif
+
+#if __has_attribute(__counted_by__) && ENABLE_COUNTED_BY
+# define COUNTED_BY(FIELD)	__attribute__ ((__counted_by__(FIELD)))
+#else
+# define COUNTED_BY(FIELD)
 #endif
 
 /*
