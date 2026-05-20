@@ -17,8 +17,8 @@ west #
     "runpath": "no",
     "symbols": "yes",
     "fortify_source": "partial",
-    "fortified": "8",
-    "fortify-able": "21"
+    "fortified": "9",
+    "fortify-able": "22"
   }
 }
 west #

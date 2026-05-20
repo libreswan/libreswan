@@ -58,6 +58,7 @@ v5.4 (unreleased)
   - on Linux, except OpenWRT and Alpine, default to INITSYSTEM=systemd [Andrew]
   - GCC 16 fixes [Daiki Ueno #2598]
   - fix `make git-rpm` [Ondrej Moris #2512]
+  - build with FORTIFY_SOURCE=3 [Andrew #2782]
 * testing:
   - increase expiration on PKI keys to 1 month [islem52 #2726 #2720]
   - Alpine test domain upgraded to 3.22.2 [Andrew]
