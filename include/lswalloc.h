@@ -155,29 +155,6 @@ char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESUL
  * XXX: should this be made HUNK like, as in call the items[] ptr[]?
  */
 
-#define alloc_items(ITEMS, COUNT)					\
-	({								\
-		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
-		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
-		_items->len = (COUNT);					\
-		_items;							\
-	})
-
-#define grow_items(ITEMS)						\
-	({								\
-		unsigned _old_nr = ((ITEMS) == NULL ? 0 : (ITEMS)->len); \
-		unsigned _new_nr = _old_nr + 1;				\
-		size_t _old_size = ((ITEMS) == NULL ? 0 :		\
-				    sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _old_nr); \
-		size_t _new_size = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _new_nr); \
-		void *_items = (ITEMS);					\
-		realloc_bytes(&_items, _old_size, _new_size, "grow-"#ITEMS"-items"); \
-		(ITEMS) = _items;					\
-		(ITEMS)->len = _new_nr;					\
-		/* return pointer to new element */			\
-		&(ITEMS)->item[_new_nr-1];				\
-	})
-
 #define ITEMS_FOR_EACH(ITEM, ITEMS)					\
 	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
 	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
