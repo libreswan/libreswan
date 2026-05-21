@@ -1,0 +1,3 @@
+Both sides auth=digsig with mixed cert types: ECDSA initiator, RSA responder.
+Initiator should sign with ECDSA, responder with RSASSA-PSS.
+Connection should establish.
