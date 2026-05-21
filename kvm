@@ -13,7 +13,7 @@ print-kvm-variable() {
     ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1 "${makeflags[@]}"
 }
 
-kvm_platforms=$(echo $(basename -a testing/kvm/platform/[a-z]*))
+kvm_platforms=$(echo $(basename -s .sh -a testing/kvm/upgrade/*.sh))
 
 # Confusion because of HOST:
 #
@@ -79,7 +79,7 @@ pass2help()
     cat <<EOF
   Set up the test environment, run the testsuite:
 
-    install [PLATFORM]
+    install [PLATFORM...]
 	if needed, create the build domains
 	install libreswan, without documentation, on the build domains
 	clone the build domains to create the test domains
@@ -150,22 +150,22 @@ pass2help()
     gateway
 	create the gateway (swandefault) used by the VMs
 
-    base [PLATFORM]
+    base [PLATFORM...]
 	create a domain containing the base OS
 	creates: ${kvm_base_guest_names}
-    upgrade [PLATFORM]
+    upgrade [PLATFORM...]
 	create the upgrade domain from the base domain
 	installs missing packages
         updates existing packages
 	creates: ${kvm_upgrade_guest_names}
-    transmogrify [PLATFORM]
+    transmogrify [PLATFORM...]
 	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
 	creates: ${kvm_build_guest_names}
-    build [PLATFORM]
+    build [PLATFORM...]
 	build/install libreswan on the build domains
 	uses: ${kvm_build_guest_names}
-    install [PLATFORM]
+    install [PLATFORM...]
 	build/install libreswan, but with out documentation aka install-base
 	clones build domains to create the test domains
     all [platform]
@@ -173,18 +173,18 @@ pass2help()
 
   Stepwize delete the domains (just use ./kvm purge):
 
-    shutdown [PLATFORM]
+    shutdown [PLATFORM...]
 	shutdown all domains
-    uninstall [PLATFORM]
+    uninstall [PLATFORM...]
 	delete test-domains, build domain
 	leaves base domains and upgrade domains alone
-    downgrade [PLATFORM]
+    downgrade [PLATFORM...]
 	also deletes upgrade domains
 	also deletes test keys
 	also deletes test results
-    purge [PLATFORM]
+    purge [PLATFORM...]
 	also deletes base domains
-    demolish [PLATFORM]
+    demolish [PLATFORM...]
 	also deletes shared gateway
 
   Libvirt breakage:
@@ -333,7 +333,7 @@ echo=
 modified=
 declare -a directories
 declare -a ops
-declare -a platforms
+declare -A platforms
 
 while test $# -gt 0 ; do
 
@@ -435,7 +435,7 @@ while test $# -gt 0 ; do
 		ops[${#ops[@]}]=$1
 	    elif [[ " ${kvm_platforms} " =~ " $1 " ]] ; then
 		# platform, accumulate
-		platforms[${#platforms[@]}]=$1
+		platforms[$1]=true
 	    elif test -n "${relative}" -a -d ${relative}/$1 ; then
 		directories[${#directories[@]}]=$(realpath --relative-to=$PWD ${relative}/$1)
 	    elif test -z "${relative}" -a -d "$1" ; then
@@ -487,6 +487,14 @@ kvm_test_status=$(print-kvm-variable KVM_TEST_STATUS)
 kvm_test_platform=$(print-kvm-variable KVM_TEST_PLATFORM)
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
 kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
+
+if test "${#platforms[@]}" -gt 0 ; then
+    for platform in ${kvm_platforms[@]} ; do
+	PLATFORM=KVM_$(echo ${platform} | tr [a-z] [A-Z])
+	tf=${platforms[${platform}]:-false}
+	makeflags[${#makeflags[@]}]=${PLATFORM}=${tf}
+    done
+fi
 
 run()
 {
@@ -596,14 +604,7 @@ while test $i -lt ${#ops[@]} ; do
 
 	base | upgrade | transmogrify | build | install | install-all | \
         shutdown | uninstall | downgrade | demolish | purge )
-	    if test "${#platforms[@]}" -gt 0 ; then
-		targets=$(for platform in ${platforms[@]} ; do
-			      echo kvm-${op}-${platform}
-			  done)
-		run_pid ${gnumake} ${targets} "${makeflags[@]}"
-	    else
-		run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
-	    fi
+	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
 	base* | upgrade* | transmogrify* | build* | install* | install-all* | \
         shutdown* | uninstall* | downgrade* | demolish* | purge* )
