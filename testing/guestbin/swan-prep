@@ -428,7 +428,7 @@ match args.userland:
 
         # check version and spew all over test output
         output = subprocess.getoutput("strongswan version")
-        strongswan_version = "U6.0.2"
+        strongswan_version = "U6.0.6"
         if args.strongswan_version:
             strongswan_version = args.strongswan_version
         if not strongswan_version in output:
