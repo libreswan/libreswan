@@ -1025,16 +1025,16 @@ KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FREEBSD_BASE_DOMAIN): $(KVM_FREEBSD_BASE_DOMAIN).iso
 
-KVM_FREEBSD_BASE_CONF ?= platform/freebsd/base.conf
-KVM_FREEBSD_LOADER_CONF ?= platform/freebsd/loader.conf
+KVM_FREEBSD_INSTALLER_CONF ?= base/freebsd.installer.conf
+KVM_FREEBSD_LOADER_CONF ?= base/freebsd.loader.conf
 
 $(KVM_FREEBSD_BASE_DOMAIN).iso: $(KVM_FREEBSD_ISO)
 $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_INSTALLER_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;freebsd;' \
-		$(KVM_FREEBSD_BASE_CONF) \
+		$(KVM_FREEBSD_INSTALLER_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
