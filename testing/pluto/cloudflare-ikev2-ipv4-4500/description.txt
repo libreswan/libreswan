@@ -1,0 +1,23 @@
+Cloudflare WAN-style IKEv2 compatibility over IPv4:4500
+
+West initiates IKEv2 connection on IPv4:4500 (leftikeport=4500).
+
+East is configured to accept connections on all addresses and ports.
+
+West is configured to initiate to east's IPv4:4500 port only,
+matching Cloudflare Magic WAN IPsec peer requirements.
+
+Cloudflare supported configuration parameters:
+https://developers.cloudflare.com/cloudflare-wan/reference/gre-ipsec-tunnels/#supported-configuration-parameters
+
+Gap analysis:
+
+- Cloudflare requires IKE to start directly on UDP/4500 without NAT
+  detection.  Libreswan currently requires explicit leftikeport=4500
+  to achieve this; automatic detection is not yet implemented.
+
+- Cloudflare's hybrid / ML-KEM post-quantum proposal support is not
+  yet implemented in Libreswan and is out of scope for this test.
+
+- This testcase validates the currently supported interoperability
+  path: IKEv2 with PSK, AES-GCM-256, DH19, and leftikeport=4500.
