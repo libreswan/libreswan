@@ -1,27 +1,59 @@
 #!/bin/sh
 
-set -e
-exec 3>&1  # save 3
+set -eu
 
-if test $# -ne 1 ; then
-    cat <<EOF 1>&2
-Usage: $0 <outdir>
+exec 3>&1  # save 3 for console
+
+case $# in
+    1 )
+	DIR=$1
+	NR_INT_CERTS=0
+	NR_END_CERTS=0
+	;;
+    2 )
+	DIR=$1
+	NR_INT_CERTS=1
+	NR_END_CERTS=$2
+	;;
+    3 )
+	DIR=$1
+	NR_INT_CERTS=$2
+	NR_END_CERTS=$3
+	;;
+    * )
+	cat <<EOF 1>&2
+Usage: $0 <outdir> [ [ <nr-int-certs=1> ] <nr-end-certs=0> ]
 EOF
-    exit 1
-fi
+	exit 1
+	;;
+esac
 
 NOISE_FILE=$0
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-#the certificate is valide for 13 months fom now ? 
+# the certificate is valid for 13 months fom now ? 
+
+
 :
 : clean up
 :
 
-OUTDIR=$1 ; shift
-rm -rf ${OUTDIR}/real ${OUTDIR}/fake
+OUTDIR=${DIR}/pki
+mkdir -p ${OUTDIR}
+rm -rf ${OUTDIR}/*
 
-PW=${OUTDIR}/nss-pw
+for d in real fake bc-n-ca otherca ; do
+    rm -rf ${DIR}/${d}
+    mkdir -p ${OUTDIR}/${d}
+    ln -s ${OUTDIR}/${d} ${DIR}
+done
+
+
+:
+: load the password
+:
+
+PW=${DIR}/nss-pw
 if test ! -r ${PW} ; then
     cat <<EOF 1>&2
 Missing password file ${PW}
@@ -30,11 +62,13 @@ EOF
 fi
 PASSPHRASE=$(cat ${PW})
 
+
 :
 : Subject DN - NSS wants things local..global
 :
 
 SUBJECT="OU=\"Test Department\", O=\"Libreswan\", L=\"Toronto\", ST=\"Ontario\", C=\"CA\""
+
 
 :
 : Generate the basic certificates using NSS
@@ -384,18 +418,79 @@ otherca       otherca  other.libreswan.org    Y  certSigning,crlSigning,critical
 bc-n-ca       bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
-#
-# Generate end certs that are needed.
-#
 
-while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
+:
+: Generate many man certs, when requested
+:
+
+int=0
+while int=$((int + 1)) ; test ${int} -le ${NR_INT_CERTS} ; do
+
+    subdir=real/mainca
+    ca=mainca
+    cert=$(printf "int-%03d" ${int})
+    add_san=1
+    add_ocsp=1
+    add_crl=1
+    bc=Y
+    ku=certSigning,critical
+    eku=/
+    param=
+
+    certdir=${OUTDIR}/${subdir}
+
+    log=${certdir}/${cert}.log
+    user=${cert}
+
+    if generate_cert \
+	   ${certdir} ${ca} ${cert} ${user} \
+	   ${add_san} ${add_ocsp} ${add_crl} \
+	   ${bc} ${ku} ${eku} ${param} \
+	   > ${log} 2>&1 ; then
+	:
+    else
+	cat ${log}
+	exit 1
+    fi
+
+    ca=${cert}
+
+    end=0
+    while end=$((end + 1)) ; test ${end} -le ${NR_END_CERTS} ; do
+
+	cert=$(printf "end-%03d-%03d" ${int} ${end})
+	bc=/
+	ku=digitalSignature
+
+	log=${certdir}/${cert}.log
+	user=${cert}
+
+	if generate_cert \
+	       ${certdir} ${ca} ${cert} ${user} \
+	       ${add_san} ${add_ocsp} ${add_crl} \
+	       ${bc} ${ku} ${eku} ${param} \
+	       > ${log} 2>&1 ; then
+	    :
+	else
+	    cat ${log}
+	    exit 1
+	fi
+    done
+
+done
+
+:
+: Generate end certs that are needed.
+:
+
+while read subdirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
 
     case "${subdirs}" in
 	'#'* ) continue ;;
     esac
 
     for subdir in $(eval echo ${subdirs}) ; do
-	for ca in $(eval echo ${roots}) ; do
+	for ca in $(eval echo ${cas}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${subdir}/${ca}
 		log=${certdir}/${cert}.log
@@ -431,9 +526,10 @@ real        mainca           comma,                               1 0 0 / digita
 .           bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
 
-#
-# Generate a multi-level certificate chain
-#
+
+:
+: Generate a multi-level certificate chain
+:
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 
