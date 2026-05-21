@@ -81,16 +81,21 @@ selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
 
+#
 # Keep the root password secret
+#
 
 cat << EOD >> /etc/issue
 The root password is "swan"
 EOD
 
 
+#
 # load 9p modules in time for auto mounts
+#
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
+# force 9p module load so it is ready for automounts
 9pnet_virtio
 EOD
 
