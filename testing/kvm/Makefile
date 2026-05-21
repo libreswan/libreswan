@@ -1206,26 +1206,32 @@ KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_BASE_DOMAIN).iso
 
+KVM_OPENBSD_BASE_SH ?= base/openbsd.sh
+KVM_OPENBSD_BOOT_CONF ?= base/openbsd.boot.conf
+KVM_OPENBSD_INSTALL_CONF ?= base/openbsd.install.conf
+KVM_OPENBSD_DISK_CONF ?= base/openbsd.disk.conf
+
 $(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/boot.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_INSTALL_CONF)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_BOOT_CONF)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_BASE_SH)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_DISK_CONF)
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;openbsd;' \
-		platform/openbsd/base.sh \
+		$(KVM_OPENBSD_BASE_SH) \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
-	: base.conf configures the installer
+	: install.conf configures the installer
+	: disk.conf configures the disk
 	: base.sh gets run by base.py after boot
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.conf=platform/openbsd/base.conf \
-		/etc/boot.conf=platform/openbsd/boot.conf \
+		/install.conf=$(KVM_OPENBSD_INSTALL_CONF) \
+		/etc/boot.conf=$(KVM_OPENBSD_BOOT_CONF) \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).sh \
-		/base.disk=platform/openbsd/base.disk \
+		/disk.conf=$(KVM_OPENBSD_DISK_CONF) \
 		/sys.tar.gz=$(KVM_OPENBSD_SYS_TAR_GZ)
 	mv $@.tmp $@
 
