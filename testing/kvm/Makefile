@@ -930,27 +930,37 @@ KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/$(notdir $(KVM_DEBIAN_ISO))
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_DEBIAN_ISO_URL) $(KVM_DEBIAN_ISO_HASH) $(KVM_DEBIAN_ISO_CKSUM)
 
+KVM_DEBIAN_BASE_SH ?= base/debian.sh
+KVM_DEBIAN_PRESEED_CFG ?= base/debian.preseed.cfg
+
 $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
+$(KVM_DEBIAN_BASE_DOMAIN).iso: | $(KVM_DEBIAN_BASE_SH)
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;debian;' \
-		platform/debian/base.sh \
+		$(KVM_DEBIAN_BASE_SH) \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.sh=$(KVM_DEBIAN_BASE_DOMAIN).sh
+		/base.sh=$(KVM_DEBIAN_BASE_DOMAIN).sh \
+		/preseed.cfg=$(KVM_DEBIAN_PRESEED_CFG)
 	mv $@.tmp $@
 
 $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 # Give libvirt a hint as to where the kernel can be found
 
+KVM_DEBIAN_EXTRA_ARGS += console=ttyS0,115200
+KVM_DEBIAN_EXTRA_ARGS += net.ifnames=0
+KVM_DEBIAN_EXTRA_ARGS += biosdevname=0
+KVM_DEBIAN_EXTRA_ARGS += auto-install/enable=true
+KVM_DEBIAN_EXTRA_ARGS += preseed/file=/cdrom/preseed.cfg
+
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso,kernel=$(KVM_DEBIAN_KERNELDIR)/vmlinuz,initrd=$(KVM_DEBIAN_KERNELDIR)/initrd.gz \
-	--initrd-inject=$(srcdir)/platform/debian/preseed.cfg \
-	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--initrd-inject=$(KVM_DEBIAN_PRESEED_CFG) \
+	--extra-args="$(KVM_DEBIAN_EXTRA_ARGS)"
 
 
 #
