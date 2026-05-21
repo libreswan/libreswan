@@ -972,9 +972,9 @@ KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 #
 #   For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_FEDORA_RELEASE ?= 43
-KVM_FEDORA_BUILD ?= 1.6
-KVM_FEDORA_ISO_CKSUM ?= aca06983bef83da9b43144c1a2ff4c8483e4745167c17f53725c16a16742e643
+KVM_FEDORA_RELEASE ?= 44
+KVM_FEDORA_BUILD ?= 1.7
+KVM_FEDORA_ISO_CKSUM ?= 85837793bfa36db6bc709b4cecd2ec116951b87d9c53c3d95eb2fac8dcf7cf1f
 
 KVM_FEDORA_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedora' | sort -V | tail -1))
 
