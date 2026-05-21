@@ -1064,9 +1064,9 @@ $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_INSTALLER_CONF)
 #   For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 #
 
-KVM_LINUX_RELEASE ?= 43
-KVM_LINUX_BUILD ?= 1.6
-KVM_LINUX_ISO_CKSUM ?= aca06983bef83da9b43144c1a2ff4c8483e4745167c17f53725c16a16742e643
+KVM_LINUX_RELEASE ?= 44
+KVM_LINUX_BUILD ?= 1.7
+KVM_LINUX_ISO_CKSUM ?= 85837793bfa36db6bc709b4cecd2ec116951b87d9c53c3d95eb2fac8dcf7cf1f
 
 KVM_LINUX_OSINFO   ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedora' | sort -V | tail -1))
 
