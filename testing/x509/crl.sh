@@ -10,7 +10,8 @@ EOF
     exit 1
 fi
 
-OUTDIR=$1 ; shift
+DIR=$1
+OUTDIR=$1/pki ; shift
 
 certdir=${OUTDIR}/real/mainca
 
