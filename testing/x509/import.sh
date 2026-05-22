@@ -17,7 +17,7 @@ fi
 
 # this assumes generate.sh
 
-cd $(dirname $0)
+cd $(dirname $0)/pki
 
 if ! test -r nss-pw ; then
     echo "missing password file: nss-pw" 1>&2

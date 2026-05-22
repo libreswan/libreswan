@@ -62,6 +62,9 @@ EOF
 fi
 PASSPHRASE=$(cat ${PW})
 
+# bundle it
+cp ${PW} ${OUTDIR}
+
 
 :
 : Subject DN - NSS wants things local..global
