@@ -547,7 +547,7 @@ if args.userland in ("libreswan"):
     # this section is getting rough. could use a nice refactoring
     if args.keys == Keys.X509:
 
-        if not os.path.isfile("/testing/x509/real/mainca/root.p12"):
+        if not os.path.isfile("/testing/x509/pki/real/mainca/root.p12"):
             print("\n\n---------------------------------------------------------------------\n"
                   "WARNING: no root.p12 file, did you run './kvm keys'?\n"
                   "---------------------------------------------------------------------\n")
