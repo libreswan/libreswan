@@ -423,8 +423,8 @@ EOF
 : Generate many man certs, when requested
 :
 
-int=0
-while int=$((int + 1)) ; test ${int} -le ${NR_INT_CERTS} ; do
+int=-1
+while int=$((int + 1)) ; test ${int} -lt ${NR_INT_CERTS} ; do
 
     subdir=real/mainca
     ca=mainca
@@ -455,8 +455,8 @@ while int=$((int + 1)) ; test ${int} -le ${NR_INT_CERTS} ; do
 
     ca=${cert}
 
-    end=0
-    while end=$((end + 1)) ; test ${end} -le ${NR_END_CERTS} ; do
+    end=-1
+    while end=$((end + 1)) ; test ${end} -lt ${NR_END_CERTS} ; do
 
 	cert=$(printf "end-%03d-%03d" ${int} ${end})
 	bc=/
