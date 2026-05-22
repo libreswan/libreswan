@@ -930,27 +930,37 @@ KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/$(notdir $(KVM_DEBIAN_ISO))
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_DEBIAN_ISO_URL) $(KVM_DEBIAN_ISO_HASH) $(KVM_DEBIAN_ISO_CKSUM)
 
+KVM_DEBIAN_BASE_SH ?= base/debian.sh
+KVM_DEBIAN_PRESEED_CFG ?= base/debian.preseed.cfg
+
 $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
+$(KVM_DEBIAN_BASE_DOMAIN).iso: | $(KVM_DEBIAN_BASE_SH)
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;debian;' \
-		platform/debian/base.sh \
+		$(KVM_DEBIAN_BASE_SH) \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.sh=$(KVM_DEBIAN_BASE_DOMAIN).sh
+		/base.sh=$(KVM_DEBIAN_BASE_DOMAIN).sh \
+		/preseed.cfg=$(KVM_DEBIAN_PRESEED_CFG)
 	mv $@.tmp $@
 
 $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 # Give libvirt a hint as to where the kernel can be found
 
+KVM_DEBIAN_EXTRA_ARGS += console=ttyS0,115200
+KVM_DEBIAN_EXTRA_ARGS += net.ifnames=0
+KVM_DEBIAN_EXTRA_ARGS += biosdevname=0
+KVM_DEBIAN_EXTRA_ARGS += auto-install/enable=true
+KVM_DEBIAN_EXTRA_ARGS += preseed/file=/cdrom/preseed.cfg
+
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso,kernel=$(KVM_DEBIAN_KERNELDIR)/vmlinuz,initrd=$(KVM_DEBIAN_KERNELDIR)/initrd.gz \
-	--initrd-inject=$(srcdir)/platform/debian/preseed.cfg \
-	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--initrd-inject=$(KVM_DEBIAN_PRESEED_CFG) \
+	--extra-args="$(KVM_DEBIAN_EXTRA_ARGS)"
 
 
 #
@@ -974,7 +984,7 @@ KVM_FEDORA_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_FEDORA_RELEASE)-
 KVM_FEDORA_ISO_HASH = SHA256
 KVM_FEDORA_ISO_URL ?= $(KVM_FEDORA_URL)/$(notdir $(KVM_FEDORA_ISO))
 
-KVM_FEDORA_KICKSTART_FILE ?= platform/fedora/base.ks
+KVM_FEDORA_KICKSTART_FILE ?= base/fedora.ks
 
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_FEDORA_ISO_URL) $(KVM_FEDORA_ISO_HASH) $(KVM_FEDORA_ISO_CKSUM)
@@ -1025,16 +1035,16 @@ KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FREEBSD_BASE_DOMAIN): $(KVM_FREEBSD_BASE_DOMAIN).iso
 
-KVM_FREEBSD_BASE_CONF ?= platform/freebsd/base.conf
-KVM_FREEBSD_LOADER_CONF ?= platform/freebsd/loader.conf
+KVM_FREEBSD_INSTALLER_CONF ?= base/freebsd.installer.conf
+KVM_FREEBSD_LOADER_CONF ?= base/freebsd.loader.conf
 
 $(KVM_FREEBSD_BASE_DOMAIN).iso: $(KVM_FREEBSD_ISO)
 $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_INSTALLER_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;freebsd;' \
-		$(KVM_FREEBSD_BASE_CONF) \
+		$(KVM_FREEBSD_INSTALLER_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
@@ -1065,7 +1075,7 @@ KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(
 KVM_LINUX_ISO_HASH ?= SHA256
 KVM_LINUX_ISO_URL ?= $(KVM_LINUX_URL)/$(notdir $(KVM_LINUX_ISO))
 
-KVM_LINUX_KICKSTART_FILE ?= platform/linux/base.ks
+KVM_LINUX_KICKSTART_FILE ?= base/linux.ks
 
 ifneq ($(KVM_LINUX_ISO),$(KVM_FEDORA_ISO))
 $(KVM_LINUX_ISO): | $(KVM_POOLDIR)
@@ -1128,7 +1138,7 @@ KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BOOT_ISO)
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BASE_DOMAIN).iso
 
-KVM_NETBSD_BASE_SH ?= platform/netbsd/base.sh
+KVM_NETBSD_BASE_SH ?= base/netbsd.sh
 
 $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
@@ -1196,26 +1206,32 @@ KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_BASE_DOMAIN).iso
 
+KVM_OPENBSD_BASE_SH ?= base/openbsd.sh
+KVM_OPENBSD_BOOT_CONF ?= base/openbsd.boot.conf
+KVM_OPENBSD_INSTALL_CONF ?= base/openbsd.install.conf
+KVM_OPENBSD_DISK_CONF ?= base/openbsd.disk.conf
+
 $(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/boot.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_INSTALL_CONF)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_BOOT_CONF)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_BASE_SH)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | $(KVM_OPENBSD_DISK_CONF)
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN_PLATFORM@@;openbsd;' \
-		platform/openbsd/base.sh \
+		$(KVM_OPENBSD_BASE_SH) \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
-	: base.conf configures the installer
+	: install.conf configures the installer
+	: disk.conf configures the disk
 	: base.sh gets run by base.py after boot
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.conf=platform/openbsd/base.conf \
-		/etc/boot.conf=platform/openbsd/boot.conf \
+		/install.conf=$(KVM_OPENBSD_INSTALL_CONF) \
+		/etc/boot.conf=$(KVM_OPENBSD_BOOT_CONF) \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).sh \
-		/base.disk=platform/openbsd/base.disk \
+		/disk.conf=$(KVM_OPENBSD_DISK_CONF) \
 		/sys.tar.gz=$(KVM_OPENBSD_SYS_TAR_GZ)
 	mv $@.tmp $@
 

@@ -48,14 +48,14 @@ def install_base(child, param):
     es(child,'# ','mkdir -p /cdrom')
     es(child,'# ','mount /dev/cd0c /cdrom')
     # Copying of install.conf file
-    es(child,'# ','cp /cdrom/base.conf /')
+    es(child,'# ','cp /cdrom/install.conf /')
     es(child,'# ','cp /cdrom/base.sh /')
-    es(child,'# ','cp /cdrom/base.disk /')
+    es(child,'# ','cp /cdrom/disk.conf /')
     # Unmounting the drive
     es(child,'# ','umount /cdrom')
 
     #Installing by taking answers from install.conf file
-    es(child,'# ','install -af /base.conf')
+    es(child,'# ','install -af /install.conf')
     # This is to check if all the installation files got copied (it's
     # slow on some systems)
     while child.expect([".*install has been successfully completed!",
