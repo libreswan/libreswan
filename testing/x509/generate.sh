@@ -31,7 +31,7 @@ esac
 NOISE_FILE=$0
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-# the certificate is valid for 13 months fom now ? 
+# the certificate is valid for 13 months fom now ?
 
 
 :
@@ -45,7 +45,6 @@ rm -rf ${OUTDIR}/*
 for d in real fake bc-n-ca otherca ; do
     rm -rf ${DIR}/${d}
     mkdir -p ${OUTDIR}/${d}
-    ln -s ${OUTDIR}/${d} ${DIR}
 done
 
 
@@ -61,6 +60,7 @@ EOF
     exit 1
 fi
 PASSPHRASE=$(cat ${PW})
+cp ${DIR}/nss-pw ${OUTDIR}
 
 # bundle it
 cp ${PW} ${OUTDIR}

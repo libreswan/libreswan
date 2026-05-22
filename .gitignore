@@ -20,10 +20,6 @@ testing/*/*/OUTPUT*
 testing/*/*/NS*
 testing/x509/*/*
 testing/x509/up-to-date
-testing/x509/real
-testing/x509/fake
-testing/x509/otherca
-testing/x509/bc-n-ca
 osxApp/build
 Makefile.inc.local
 .ycm_extra_conf.py
