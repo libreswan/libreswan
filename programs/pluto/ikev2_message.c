@@ -1419,9 +1419,10 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 		return false;
 	}
 
-	ldbg(ike->sa.logger, "recording fragment %u", number);
+	ldbg(ike->sa.logger, "recording fragment %u in table[%u]", number, number-1);
 	PASSERT(ike->sa.logger, number > 0);
-	fragments->item[number - 1] = clone_pbs_out_all(&message_fragment.pbs, "fragment");
+	PASSERT(ike->sa.logger, number <= fragments->len);
+	fragments->table[number - 1] = clone_pbs_out_all(&message_fragment.pbs, "fragment");
 	return true;
 }
 

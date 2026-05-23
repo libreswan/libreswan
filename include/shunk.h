@@ -23,6 +23,7 @@
 #include "hunk.h"
 #include "err.h"
 #include "where.h"
+#include "table.h"
 
 /*
  * Think of shunk_t and chunk_t as opposite solutions to the same
@@ -82,7 +83,7 @@ shunk_t shunk2(const void *ptr, size_t len);
 struct shunks {
 	bool kept_empty_shunks;
 	unsigned len;
-	shunk_t item[];
+	shunk_t table[] COUNTED_BY(len);
 };
 
 enum shunks_opt {

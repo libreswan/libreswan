@@ -51,7 +51,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 	output->list = alloc_things(ip_token, tokens->len, "selectors");
 	output->len = 0;
 
-	ITEMS_FOR_EACH(token, tokens) {
+	TABLE_FOR_EACH(token, tokens) {
 		passert(token->len > 0);
 		ip_token tmp_token;
 		diag_t d = ttorange_num(*token, input_afi, &tmp_token);

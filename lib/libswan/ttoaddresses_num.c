@@ -45,7 +45,7 @@ diag_t ttoaddresses_num(shunk_t input, const char *delims,
 	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
 	output->list = alloc_things(ip_address, tokens->len, "addresses");
 
-	ITEMS_FOR_EACH(token, tokens) {
+	TABLE_FOR_EACH(token, tokens) {
 		diag_t d = ttoaddress_num(*token, input_afi,
 					  &output->list[output->len]);
 		if (d != NULL) {

@@ -1068,7 +1068,7 @@ static void check_hunks(void)
 
 		struct shunks *output = ttoshunks(input, t->delims, t->opt);
 		unsigned len = 0;
-		ITEMS_FOR_EACH(shunk, output) {
+		TABLE_FOR_EACH(shunk, output) {
 			if (t->output[len] == NULL) {
 				FAIL("shunks(\"%s\",\"%s\") returned %u shunks, expecting %u",
 				     t->input, t->delims, output->len, len);
@@ -1077,7 +1077,7 @@ static void check_hunks(void)
 			if (!hunk_eq(s, *shunk)) {
 				FAIL("shunks(\"%s\",\"%s\")[%u]==\""PRI_SHUNK"\" does not match expected \""PRI_SHUNK"\"",
 				     t->input, t->delims, len,
-				     pri_shunk(output->item[len]),
+				     pri_shunk(output->table[len]),
 				     pri_shunk(s));
 			}
 			len++;

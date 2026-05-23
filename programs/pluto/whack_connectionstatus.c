@@ -1091,7 +1091,7 @@ void show_connection_statuses(struct show *s)
 	unsigned routed = 0;
 
 	struct connections *connections = sort_connections();
-	ITEMS_FOR_EACH(cp, connections) {
+	TABLE_FOR_EACH(cp, connections) {
 		const struct connection *c = (*cp);
 		if (kernel_route_installed(c)) {
 			routed++;

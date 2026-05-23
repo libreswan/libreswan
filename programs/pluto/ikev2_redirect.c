@@ -112,7 +112,7 @@ shunk_t next_redirect_dest(struct redirect_dests *rl)
 	if (rl->next >= rl->splits->len) {
 		rl->next = 0;
 	}
-	return rl->splits->item[rl->next++];
+	return rl->splits->table[rl->next++];
 }
 
 /*
