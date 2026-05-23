@@ -157,6 +157,15 @@ dnf upgrade -y $(packages_for_build)
 
 
 :
+: Force an upgrade of strongSwan and its dependencies
+:
+: something broken means that latest strongswan does not pull in
+: latest libgcrypt
+
+dnf upgrade -y libgcrypt strongswan
+
+
+:
 : INSTALL and DISABLE systemd-networkd and systemd-resolved
 :
 : - put back /etc/resolv.conf trashed by systemd-resolved
