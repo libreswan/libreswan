@@ -131,11 +131,6 @@ static struct tokens first_token(shunk_t input, const char *delims,
  * The proposal parser.
  */
 
-struct transform_algorithms {
-	unsigned len;
-	struct transform item[];
-};
-
 struct proposal {
 	bool impaired;
 	/*
