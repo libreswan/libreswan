@@ -36,11 +36,11 @@ START() {
 	RUN mkdir -p /etc/ocspd/private /etc/ocspd/certs /etc/ocspd/crls
 	TUC
     }
-    RUN cp /testing/x509/real/mainca/${key}.key /etc/ocspd/private/nic_key.pem
-    RUN cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
-    RUN cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+    RUN cp /testing/x509/pki/real/mainca/${key}.key /etc/ocspd/private/nic_key.pem
+    RUN cp /testing/x509/pki/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
+    RUN cp /testing/x509/pki/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+    RUN cp /testing/x509/pki/real/mainca/crl-is-up-to-date.pem /etc/ocspd/crls/revoked_crl.pem
     RUN cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
-    RUN cp /testing/x509/real/mainca/crl-is-up-to-date.pem /etc/ocspd/crls/revoked_crl.pem
     RUN restorecon -R /etc/ocspd
     {
 	CUT
@@ -51,12 +51,12 @@ START() {
 }
 
 LOG() {
-    east=$(cat /testing/x509/real/mainca/east.serial)
-    west=$(cat /testing/x509/real/mainca/west.serial)
-    nic=$(cat /testing/x509/real/mainca/nic.serial)
-    revoked=$(cat /testing/x509/real/mainca/revoked.serial)
-    east_chain_endcert=$(cat /testing/x509/real/mainca/east_chain_endcert.serial)
-    west_chain_endcert=$(cat /testing/x509/real/mainca/west_chain_endcert.serial)
+    east=$(cat /testing/x509/pki/real/mainca/east.serial)
+    west=$(cat /testing/x509/pki/real/mainca/west.serial)
+    nic=$(cat /testing/x509/pki/real/mainca/nic.serial)
+    revoked=$(cat /testing/x509/pki/real/mainca/revoked.serial)
+    east_chain_endcert=$(cat /testing/x509/pki/real/mainca/east_chain_endcert.serial)
+    west_chain_endcert=$(cat /testing/x509/pki/real/mainca/west_chain_endcert.serial)
     {
 	journalctl /sbin/ocspd --no-pager
     } | {
