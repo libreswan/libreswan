@@ -12,8 +12,8 @@ ip addr add 2001:db8:0:1::251/64 dev ipsec1
 ipsec add westnet4-eastnet4
 ipsec add westnet6-eastnet6
 
-ipsec up westnet4-eastnet4
-ipsec up westnet6-eastnet6
+ipsec up westnet4-eastnet4 # sanitize-retransmits
+ipsec up westnet6-eastnet6 # sanitize-retransmits
 
 ipsec delete westnet4-eastnet4
 ipsec delete westnet6-eastnet6
@@ -37,8 +37,8 @@ ip addr add 2001:db8:0:1::251/64 dev ipsec1
 ipsec add westnet4-eastnet4
 ipsec add westnet6-eastnet6
 
-ipsec up westnet4-eastnet4
-ipsec up westnet6-eastnet6
+ipsec up westnet4-eastnet4 # sanitize-retransmits
+ipsec up westnet6-eastnet6 # sanitize-retransmits
 
 ipsec delete westnet4-eastnet4
 ipsec delete westnet6-eastnet6

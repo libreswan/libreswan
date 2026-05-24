@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": created ipsec-interface ipsec1@NONE
 "road-east": added oriented IKEv1 connection
 road #
@@ -38,13 +38,13 @@ road #
 "road-east" #2: sent Quick Mode request
 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-east", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
  echo done

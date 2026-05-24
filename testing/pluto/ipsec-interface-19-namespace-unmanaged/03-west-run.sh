@@ -6,7 +6,7 @@
 
 ipsec add westnet4-eastnet4
 
-ipsec up westnet4-eastnet4
+ipsec up westnet4-eastnet4 # sanitize-retransmits
 
 ../../guestbin/ip.sh netns exec ns ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 ipsec trafficstatus

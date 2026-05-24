@@ -1,2 +1,2 @@
-ipsec auto --down westnet-eastnet
-ipsec auto --delete westnet-eastnet
+ipsec down westnet-eastnet # sanitize-retransmits
+ipsec delete westnet-eastnet

@@ -17,8 +17,8 @@ ipsec add westnet6-eastnet6
 ip --color=never link show ipsec1 # interface
 ip --color=never addr show ipsec1 # addresses
 
-ipsec up westnet4-eastnet4
-ipsec up westnet6-eastnet6
+ipsec up westnet4-eastnet4 # sanitize-retransmits
+ipsec up westnet6-eastnet6 # sanitize-retransmits
 
 ip --color=never link show ipsec1 # interface
 ip --color=never addr show ipsec1 # addresses
@@ -48,8 +48,8 @@ ipsec add westnet6-eastnet6
 ip --color=never link show ipsec1 # interface
 ip --color=never addr show ipsec1 # missing addresses
 
-ipsec up westnet4-eastnet4
-ipsec up westnet6-eastnet6
+ipsec up westnet4-eastnet4 # sanitize-retransmits
+ipsec up westnet6-eastnet6 # sanitize-retransmits
 
 ip --color=never link show ipsec1 # interface
 ip --color=never addr show ipsec1 # addresses
@@ -80,8 +80,8 @@ ip --color=never addr show ipsec1 # missing addresses
 ip addr add 192.0.1.251/24 dev ipsec1
 ip addr add 2001:db8:0:1::251/64 dev ipsec1
 
-ipsec up westnet4-eastnet4
-ipsec up westnet6-eastnet6
+ipsec up westnet4-eastnet4 # sanitize-retransmits
+ipsec up westnet6-eastnet6 # sanitize-retransmits
 
 ip --color=never link show ipsec1 # interface
 ip --color=never addr show ipsec1 # addresses
