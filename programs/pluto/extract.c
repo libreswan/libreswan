@@ -678,21 +678,20 @@ static diag_t extract_updown(const struct whack_message *wm,
 	return NULL;
 }
 
-static ip_addresses extract_addresses(struct kv kv,
-				      const struct ip_info *afi,
-				      diag_t *d,
-				      struct verbose verbose)
+static ip_addresses *extract_addresses(struct kv kv,
+				       const struct ip_info *afi,
+				       diag_t *d,
+				       struct verbose verbose)
 {
-	ip_addresses addresses = {0};
+	ip_addresses *addresses = NULL;
 	if (!can_extract_string(kv, verbose)) {
-		return addresses;
+		return NULL;
 	}
 
-	diag_t td = ttoaddresses_num(shunk1(kv.value), ", ", afi,
-				     &addresses);
+	diag_t td = ttoaddresses_num(shunk1(kv.value), afi, &addresses);
 	if (td != NULL) {
 		*d = diag_diag(&td, PRI_KV" invalid, ", pri_kv(kv));
-		return addresses;
+		return NULL;
 	}
 
 	return addresses;
@@ -2289,15 +2288,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, src->we_sourceip);
 		}
 
-		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip), ", ",
-					    NULL/*UNSPEC*/, &child_config->sourceip);
+		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip),
+					    NULL/*UNSPEC*/,
+					    &child_config->sourceip);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssourceip=%s invalid, ",
 					 src->leftright, src->we_sourceip);
 		}
 		/* valid? */
 		ip_address seen[IP_VERSION_ROOF] = {0};
-		FOR_EACH_ITEM(sourceip, &child_config->sourceip) {
+		TABLE_FOR_EACH(sourceip, child_config->sourceip) {
 
 			/* i.e., not :: and not 0.0.0.0 */
 			if (!address_is_specified(*sourceip)) {

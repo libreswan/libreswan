@@ -72,7 +72,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 		if (cc->config->modecfg.domains != NULL) {
 			jam_string(buf, " domains");
 		}
-		if (cc->config->modecfg.dns.len > 0) {
+		if (table_len(cc->config->modecfg.dns) > 0) {
 			jam_string(buf, " dns");
 		}
 		if (is_opportunistic(cc)) {
@@ -107,7 +107,7 @@ bool send_v2CP_request(const struct connection *const cc,
 {
 	bool send = (need_v2CP_payload(cc, this_end_behind_nat) ||
 		     cc->config->modecfg.domains != NULL ||
-		     cc->config->modecfg.dns.len > 0);
+		     table_len(cc->config->modecfg.dns) > 0);
 	ldbg_cp(cc->logger, cc, "send-v2CP=%s", bool_str(send));
 	return send;
 }
@@ -254,7 +254,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
+	TABLE_FOR_EACH(dns, c->config->modecfg.dns) {
 		const struct ip_info *afi = address_type(dns);
 		if (!emit_v2CP_attribute_address(afi->ikev2_internal_dns, dns,
 						 "DNS", &cp_pbs)) {

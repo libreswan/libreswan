@@ -151,7 +151,7 @@ struct child_end_config {
 	bool has_client_address_translation;		/* aka CAT */
 
 	ip_selectors selectors;
-	ip_addresses sourceip;
+	ip_addresses *sourceip;
 
 	/*
 	 * During orient, this is turned into c->pool
@@ -341,7 +341,7 @@ struct config {
 
 	struct {
 		bool pull;		/* is modecfg pulled by client? */
-		ip_addresses dns;	/* !.is_set terminated list */
+		ip_addresses *dns;	/* !.is_set terminated list */
 		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
 	} modecfg;

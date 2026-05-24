@@ -639,11 +639,11 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " modecfg policy:%s,", (c->config->modecfg.pull ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
-		if (c->config->modecfg.dns.len == 0) {
+		if (table_len(c->config->modecfg.dns) == 0) {
 			jam_string(buf, "unset,");
 		} else {
 			const char *sep = "";
-			FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
+			TABLE_FOR_EACH(dns, c->config->modecfg.dns) {
 				jam_string(buf, sep);
 				sep = ", ";
 				jam_address(buf, dns);

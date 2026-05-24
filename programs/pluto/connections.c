@@ -501,7 +501,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->child.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
-		pfree_list(&config->modecfg.dns);
+		pfreeany(config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->ppk_ids);
@@ -524,7 +524,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			/* child */
 			pfreeany(end->child.updown.argv);
 			pfree_list(&end->child.selectors);
-			pfree_list(&end->child.sourceip);
+			pfreeany(end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
 			pfree_list(&end->child.addresspools);
 			FOR_EACH_ELEMENT(pool, end->child.addresspool) {
@@ -1968,7 +1968,7 @@ struct connections *sort_connections(void)
 ip_address config_end_sourceip(const ip_selector client, const struct child_end_config *end)
 {
 	const struct ip_info *afi = selector_info(client);
-	FOR_EACH_ITEM(sourceip, &end->sourceip) {
+	TABLE_FOR_EACH(sourceip, end->sourceip) {
 		if (afi == address_type(sourceip)) {
 			return *sourceip;
 		}
@@ -2172,7 +2172,7 @@ err_t connection_requires_tss(const struct connection *c)
 		if (end->config->child.selectors.len > 1) {
 			return "subnets";
 		}
-		if (end->config->child.sourceip.len > 1) {
+		if (table_len(end->config->child.sourceip) > 1) {
 			return "sourceips";
 		}
 	}

@@ -94,14 +94,13 @@ diag_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst)
 
 typedef struct {
 	unsigned len;
-	ip_address *list;
+	ip_address table[] COUNTED_BY(len);
 } ip_addresses;
 
 extern const ip_addresses empty_ip_addresses;
 
-diag_t ttoaddresses_num(shunk_t input, const char *delims,
-			const struct ip_info *afi,
-			ip_addresses *output);
+diag_t ttoaddresses_num(shunk_t input, const struct ip_info *afi,
+			ip_addresses **output) MUST_USE_RESULT;
 
 size_t jam_addresses(struct jambuf *buf, ip_addresses addresses);
 
