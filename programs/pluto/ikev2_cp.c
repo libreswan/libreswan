@@ -64,7 +64,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 			if (end->host.modecfg.server) {
 				jam_string(buf, " server");
 			}
-			if (end->child.addresspools.len > 0) {
+			if (table_len(end->child.addresspools) > 0) {
 				jam_string(buf, " addresspool");
 			}
 		}

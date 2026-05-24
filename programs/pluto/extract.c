@@ -2162,14 +2162,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		diag_t d = ttopools_num(shunk1(src->we_addresspool), ", ", NULL,
+		diag_t d = ttopools_num(shunk1(src->we_addresspool),
+					/*unspec*/NULL,
 					&child_config->addresspools);
 		if (d != NULL) {
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright,
 					 src->we_addresspool);
 		}
 
-		FOR_EACH_ITEM(pool, &child_config->addresspools) {
+		TABLE_FOR_EACH(pool, child_config->addresspools) {
 
 			const struct ip_info *afi = pool_type(pool);
 
@@ -4799,7 +4800,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} end_family[END_ROOF][IP_VERSION_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
-		const ip_pools *const pools = &c->end[end].config->child.addresspools;
+		const ip_pools *const pools = c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
 			FOR_EACH_ITEM(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
@@ -4810,8 +4811,8 @@ diag_t extract_connection(const struct whack_message *wm,
 					family->value = whack_ends[end]->we_subnet;
 				}
 			}
-		} else if (pools->len > 0) {
-			FOR_EACH_ITEM(pool, pools) {
+		} else if (table_len(pools) > 0) {
+			TABLE_FOR_EACH(pool, pools) {
 				const struct ip_info *afi = pool_type(pool);
 				/* only one for now */
 				struct end_family *family = &end_family[end][afi->ip.version];

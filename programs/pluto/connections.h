@@ -162,7 +162,7 @@ struct child_end_config {
 	 * Should more than one pool for each address be allowed?
 	 * Should an addresspool combined with selectors be allowed?
 	 */
-	ip_pools addresspools;
+	ip_pools *addresspools;
 	struct addresspool *addresspool[IP_VERSION_ROOF]; /* list? */
 
 	/*

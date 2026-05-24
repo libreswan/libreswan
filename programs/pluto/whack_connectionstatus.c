@@ -153,7 +153,7 @@ static struct connection_client connection_spd_client(const struct spd_end *spd)
 		.host = spd->host,
 		.child = spd->child,
 		.sourceip = spd_end_sourceip(spd),
-		.is_addresspool = (spd->child->config->addresspools.len > 0),
+		.is_addresspool = (table_len(spd->child->config->addresspools) > 0),
 	};
 	return client;
 }
@@ -167,7 +167,7 @@ static struct connection_client connection_config_client(const struct connection
 		.host = &this->host,
 		.child = &this->child,
 		.sourceip = config_end_sourceip(*this_selector, this->child.config),
-		.is_addresspool = (this->child.config->addresspools.len > 0),
+		.is_addresspool = (table_len(this->child.config->addresspools) > 0),
 	};
 	return client;
 }
@@ -193,7 +193,7 @@ void jam_end_client(struct jambuf *buf,
 			/* booring */
 			return;
 		}
-		if (this->child->config->addresspools.len > 0) {
+		if (table_len(this->child->config->addresspools) > 0) {
 			/*
 			 * Suppress zero selectors that were probably derived
 			 * from the address pool.

@@ -21,50 +21,38 @@
 #include "ip_pool.h"
 #include "ip_info.h"
 
-#define ip_token ip_pool
-#define ip_tokens ip_pools
-
-diag_t ttopools_num(shunk_t input, const char *delims,
+diag_t ttopools_num(shunk_t input,
 		     const struct ip_info *input_afi,
-		     ip_pools *output)
+		     ip_pools **output)
 {
-	zero(output);
-
-	if (input.ptr == NULL) {
-		return NULL;
-	}
+	(*output) = NULL;
 
 	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
-	struct shunks *tokens = ttoshunks(input, delims, KEEP_EMPTY_SHUNKS); /* must free */
+	struct shunks *tokens = ttoshunks(input, ", ", KEEP_EMPTY_SHUNKS); /* must free */
 	if (tokens->kept_empty_shunks) {
 		pfree(tokens);
 		return diag("empty field");
 	}
 
-	if (tokens->len == 0) {
-		pfree(tokens);
-		return NULL;
-	}
-
 	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
-	output->list = alloc_things(ip_token, tokens->len, "selectors");
-	output->len = 0;
+	(*output) = table_alloc(ip_pools, tokens->len);
 
+	unsigned nr = 0;
 	TABLE_FOR_EACH(token, tokens) {
-		passert(token->len > 0);
-		ip_token tmp_token;
-		diag_t d = ttopool_num(*token, input_afi, &tmp_token);
-		/* validate during first pass */
+		ip_pool tmp;
+		diag_t d = ttopool_num(*token, input_afi, &tmp);
 		if (d != NULL) {
 			d = diag_diag(&d, PRI_SHUNK" invalid, ", pri_shunk(*token));
 			pfree(tokens);
-			pfree(output->list);
-			zero(output);
+			pfreeany(*output);
 			return d;
 		}
-		output->list[output->len++] = tmp_token;
+
+		passert(nr < (*output)->len);
+		(*output)->table[nr++] = tmp;
 	}
+	passert(nr == (*output)->len);
 
 	pfree(tokens);
 	return NULL;
