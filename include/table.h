@@ -86,4 +86,11 @@
 	     ITEM++)
 
 
+#define table_len(TABLE) ((TABLE) == NULL ? 0 :	\
+			  (TABLE)->len)
+
+#define table_end(TABLE) ((TABLE) == NULL ? NULL :		\
+			  ((TABLE)->table + (TABLE)->len));
+
+
 #endif
