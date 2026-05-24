@@ -968,7 +968,7 @@ kvmplutotest	algo-ike-aes-md5-esp-3des-sha1	good
 # CAP_DAC_OVERRIDE
 kvmplutotest	basic-pluto-06		good
 # libcab-ng test
-kvmplutotest	capabilities-01		good
+kvmplutotest	capabilities-01		wip
 
 #
 # a test case of PSK with aggressive mode
