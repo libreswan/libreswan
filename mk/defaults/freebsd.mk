@@ -5,7 +5,7 @@ PKG_BASE ?= /usr/local
 # See: https://github.com/llvm/llvm-project/issues/55963
 # See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=264288
 # See: https://github.com/libreswan/libreswan/issues/735
-CC=gcc
+# CC=gcc
 
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
 
