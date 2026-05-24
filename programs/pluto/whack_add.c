@@ -46,7 +46,7 @@ struct subnets {
 	const char *name;
 	unsigned start;
 	/* results */
-	ip_subnets subnets;
+	ip_subnets *subnets;
 };
 
 /*
@@ -96,7 +96,7 @@ static bool parse_subnets(struct subnets *sn,
 		len += 1;
 	}
 
-	ip_subnets subnets = {0};
+	ip_subnets *subnets = NULL;
 	if (end->we_subnets != NULL) {
 		diag_t d = ttosubnets_num(shunk1(end->we_subnets), /*afi*/NULL, &subnets);
 		if (d != NULL) {
@@ -108,25 +108,24 @@ static bool parse_subnets(struct subnets *sn,
 			return false;
 		}
 		/* make space */
-		len += subnets.len;
+		len += table_len(subnets);
 	}
 
 	/*
 	 * Merge lists.
 	 */
 	sn->start = (subnet.ip.is_set ? 0 :
-		     subnets.len == 0 ? 0 :
+		     table_len(subnets) == 0 ? 0 :
 		     1);
-	sn->subnets.len = len;
-	sn->subnets.list = alloc_things(ip_subnet, len, "subnets");
+	sn->subnets = table_alloc(ip_subnets, len);
 	unsigned pos = 0;
 	if (subnet.ip.is_set) {
-		sn->subnets.list[pos++] = subnet;
+		sn->subnets->table[pos++] = subnet;
 	}
-	FOR_EACH_ITEM(s, &subnets) {
-		sn->subnets.list[pos++] = *s;
+	TABLE_FOR_EACH(s, subnets) {
+		sn->subnets->table[pos++] = *s;
 	}
-	pfreeany(subnets.list);
+	pfreeany(subnets);
 	return true;
 }
 
@@ -141,8 +140,8 @@ static const struct ip_info *next_subnet(char **subnetstr,
 					 const ip_subnets *subnets,
 					 unsigned i)
 {
-	if (subnets->len > 0) {
-		ip_subnet subnet = subnets->list[i];
+	if (table_len(subnets) > 0) {
+		ip_subnet subnet = subnets->table[i];
 		subnet_buf b;
 		str_subnet(&subnet, &b);
 		/* freed by free_wam() */
@@ -190,11 +189,11 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 	 */
 
 	for (unsigned left_i = 0;
-	     left_i == 0 || left_i < left->subnets.len;
+	     left_i == 0 || left_i < table_len(left->subnets);
 	     left_i++) {
 
 		for (unsigned right_i = 0;
-		     right_i == 0 || right_i < right->subnets.len;
+		     right_i == 0 || right_i < table_len(right->subnets);
 		     right_i++) {
 
 			/*
@@ -240,8 +239,8 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 */
 			char *left_subnet = NULL; /* must free */
 			char *right_subnet = NULL; /* must free */
-			const struct ip_info *left_afi = next_subnet(&left_subnet, &left->subnets, left_i);
-			const struct ip_info *right_afi = next_subnet(&right_subnet, &right->subnets, right_i);
+			const struct ip_info *left_afi = next_subnet(&left_subnet, left->subnets, left_i);
+			const struct ip_info *right_afi = next_subnet(&right_subnet, right->subnets, right_i);
 			wam.end[LEFT_END].we_subnet = left_subnet;
 			wam.end[RIGHT_END].we_subnet = right_subnet;
 
@@ -327,22 +326,22 @@ static void add_connections(const struct whack_message *wm,
 
 	struct subnets left = {0};
 	if (!parse_subnets(&left, wm, &wm->end[LEFT_END], verbose)) {
-		pfreeany(left.subnets.list);
+		pfreeany(left.subnets);
 		return;
 	}
 
 	struct subnets right = {0};
 	if (!parse_subnets(&right, wm, &wm->end[RIGHT_END], verbose)) {
-		pfreeany(left.subnets.list);
-		pfreeany(right.subnets.list);
+		pfreeany(left.subnets);
+		pfreeany(right.subnets);
 		return;
 	}
 
 	permutate_connection_subnets(wm,
 				     extracted_host_addrs,
 				     &left, &right, verbose);
-	pfreeany(left.subnets.list);
-	pfreeany(right.subnets.list);
+	pfreeany(left.subnets);
+	pfreeany(right.subnets);
 }
 
 void whack_add(struct whack_message_refcnt *wmr, struct show *s)

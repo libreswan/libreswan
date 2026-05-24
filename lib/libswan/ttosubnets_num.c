@@ -19,40 +19,43 @@
 #include "passert.h"
 #include "ip_subnet.h"
 #include "ip_info.h"
+#include "lswlog.h"
 
-static diag_t parse_subnets(shunk_t token, const struct ip_info *afi,
-			    void **ptr, unsigned len)
+diag_t ttosubnets_num(shunk_t input,
+		      const struct ip_info *afi,
+		      ip_subnets **output)
 {
-	ip_subnet tmp_token;
-	ip_address nonzero_host;
-	diag_t d = ttosubnet_num(token, afi, &tmp_token, &nonzero_host);
-	if (d != NULL) {
-		return d;
+	(*output) = NULL;
+
+	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
+
+	struct shunks *tokens = ttoshunks(input, ", ", EAT_EMPTY_SHUNKS); /* must free */
+	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
+	(*output) = table_alloc(ip_subnets, tokens->len);
+
+	unsigned nr = 0;
+	TABLE_FOR_EACH(token, tokens) {
+		ip_subnet tmp;
+		ip_address nonzero_host;
+		diag_t d = ttosubnet_num(*token, afi, &tmp, &nonzero_host);
+		if (d != NULL) {
+			d = diag_diag(&d, PRI_SHUNK" invalid, ", pri_shunk(*token));
+			pfree(tokens);
+			pfreeany(*output);
+			return d;
+		}
+
+		if (nonzero_host.ip.is_set) {
+			pfree(tokens);
+			pfreeany(*output);
+			return diag("subnet has non-zero address identifier");
+		}
+
+		passert(nr < (*output)->len);
+		(*output)->table[nr++] = tmp;
 	}
+	passert(nr == (*output)->len);
 
-	if (nonzero_host.ip.is_set) {
-		return diag("subnet has non-zero address identifier");
-	}
-
-	/* save it */
-	ip_subnet *subnets = (*ptr);
-	realloc_things(subnets, len, len+1, "subnets");
-	subnets[len] = tmp_token;
-	(*ptr) = subnets;
-	return NULL;
-}
-
-diag_t ttosubnets_num(shunk_t input, const struct ip_info *afi, ip_subnets *output)
-{
-	zero(output);
-	void *ptr = NULL;
-	unsigned len = 0;
-	diag_t d = ttoips_num(input, afi, &ptr, &len, parse_subnets);
-	if (d != NULL) {
-		return d;
-	}
-
-	output->list = ptr;
-	output->len = len;
+	pfree(tokens);
 	return NULL;
 }

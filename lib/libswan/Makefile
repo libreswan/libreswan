@@ -83,7 +83,6 @@ OBJS += ttoaddress_num.o
 OBJS += ttoaddresses_num.o
 OBJS += ttobool.o
 OBJS += ttocidr_num.o
-OBJS += ttoips_num.o
 OBJS += ttopool_num.o
 OBJS += ttopools_num.o
 OBJS += ttoport.o
