@@ -299,7 +299,7 @@ struct whack_impairment {
 
 struct whack_impair {
 	unsigned len;
-	struct whack_impairment *list;
+	struct whack_impairment *list COUNTED_BY_PTR(len);
 };
 
 struct whack_debug {
