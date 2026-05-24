@@ -21,50 +21,38 @@
 #include "ip_range.h"
 #include "ip_info.h"
 
-#define ip_token ip_range
-#define ip_tokens ip_ranges
-
-diag_t ttoranges_num(shunk_t input, const char *delims,
+diag_t ttoranges_num(shunk_t input,
 		     const struct ip_info *input_afi,
-		     ip_ranges *output)
+		     ip_ranges **output)
 {
-	zero(output);
-
-	if (input.ptr == NULL) {
-		return NULL;
-	}
+	(*output) = NULL;
 
 	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
-	struct shunks *tokens = ttoshunks(input, delims, KEEP_EMPTY_SHUNKS); /* must free */
+	struct shunks *tokens = ttoshunks(input, ", ", KEEP_EMPTY_SHUNKS); /* must free */
 	if (tokens->kept_empty_shunks) {
 		pfree(tokens);
 		return diag("empty field");
 	}
 
-	if (tokens->len == 0) {
-		pfree(tokens);
-		return NULL;
-	}
-
 	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
-	output->list = alloc_things(ip_token, tokens->len, "selectors");
-	output->len = 0;
+	(*output) = table_alloc(ip_ranges, tokens->len);
 
+	unsigned nr = 0;
 	TABLE_FOR_EACH(token, tokens) {
-		passert(token->len > 0);
-		ip_token tmp_token;
-		diag_t d = ttorange_num(*token, input_afi, &tmp_token);
-		/* validate during first pass */
+		ip_range tmp;
+		diag_t d = ttorange_num(*token, input_afi, &tmp);
 		if (d != NULL) {
 			d = diag_diag(&d, PRI_SHUNK" invalid, ", pri_shunk(*token));
 			pfree(tokens);
-			pfree(output->list);
-			zero(output);
+			pfreeany(*output);
 			return d;
 		}
-		output->list[output->len++] = tmp_token;
+
+		passert(nr < (*output)->len);
+		(*output)->table[nr++] = tmp;
 	}
+	passert(nr == (*output)->len);
 
 	pfree(tokens);
 	return NULL;

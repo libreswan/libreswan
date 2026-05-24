@@ -61,14 +61,13 @@ diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst) MUS
 
 typedef struct {
 	unsigned len;
-	ip_range *list;
+	ip_range table[] COUNTED_BY(len);
 } ip_ranges;
 
 extern const ip_ranges empty_ip_ranges;
 
-diag_t ttoranges_num(shunk_t input, const char *delims,
-		     const struct ip_info *afi,
-		     ip_ranges *output) MUST_USE_RESULT;
+diag_t ttoranges_num(shunk_t input, const struct ip_info *afi,
+		     ip_ranges **output) MUST_USE_RESULT;
 
 size_t jam_ranges(struct jambuf *buf, ip_ranges ranges);
 
