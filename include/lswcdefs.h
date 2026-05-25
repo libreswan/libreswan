@@ -77,6 +77,7 @@
  * bitnamesof), just use ARRAY_REF()-1!
  */
 #define ARRAY_REF(p) (p), elemsof(p)
+#define ARRAY_PTR(p) elemsof(p), (p)
 
 #if (ENABLE_COUNTED_BY && __has_attribute(__counted_by__) &&	\
      ((defined __clang_major__ && __clang_major__ >= 19) ||	\
