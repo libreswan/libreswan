@@ -210,7 +210,7 @@ struct v2_exchange {
 		.category = CATEGORY,					\
 		.ike_version = IKEv2,					\
 		.v2.ike_responder_exchanges = {				\
-			ARRAY_REF(v2_##KIND##_responder_exchange),	\
+			ARRAY_PTR(v2_##KIND##_responder_exchange),	\
 		},							\
 		.v2.secured = SECURED,					\
 	}
