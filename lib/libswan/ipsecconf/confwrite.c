@@ -55,8 +55,8 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_value(FILE *out,
 			    const char *side, /* never NULL! */
 			    const struct keywords_def *keywords,
-			    const struct keyword_value *values,
-			    unsigned elemsof_values)
+			    unsigned elemsof_values,
+			    const struct keyword_value *values)
 {
 	ITEMS_FOR_EACH(k, keywords) {
 
@@ -162,7 +162,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			end->values[KWS_PROTOPORT].string);
 	}
 
-	confwrite_value(out, side, &config_conn_keywords, ARRAY_REF(end->values));
+	confwrite_value(out, side, &config_conn_keywords, ARRAY_PTR(end->values));
 }
 
 static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
@@ -187,7 +187,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	fprintf(out, "conn %s\n", conn->name);
 	confwrite_side(out, &conn->end[LEFT_END]);
 	confwrite_side(out, &conn->end[RIGHT_END]);
-	confwrite_value(out, "", &config_conn_keywords, ARRAY_REF(conn->values));
+	confwrite_value(out, "", &config_conn_keywords, ARRAY_PTR(conn->values));
 
 	enum autostart autostart = conn_auto(conn);
 	if (autostart != 0) {
@@ -209,7 +209,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	if (setup) {
 		const struct config_setup *updates = config_setup_updates();
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", &config_setup_keywords, ARRAY_REF(updates->values));
+		confwrite_value(out, "", &config_setup_keywords, ARRAY_PTR(updates->values));
 		fprintf(out, "\n");
 	}
 
