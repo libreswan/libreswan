@@ -72,11 +72,10 @@
  * NOTE: this is by nature a scary macro because it is used to
  * initialized two fields.
  *
- * This has a hacky advantage: if you don't wish to count the last
- * element of the array (say, because it is a NULL there for
- * bitnamesof), just use ARRAY_REF()-1!
+ * NOTE: so that __counted_by__() can be used the LEN field MUST be
+ * first.
  */
-#define ARRAY_REF(p) (p), elemsof(p)
+
 #define ARRAY_PTR(p) elemsof(p), (p)
 
 #if (ENABLE_COUNTED_BY && __has_attribute(__counted_by__) &&	\
