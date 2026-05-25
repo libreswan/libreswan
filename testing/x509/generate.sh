@@ -558,10 +558,10 @@ while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 done <<EOF
 # correct certificate chain
 real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
-real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
 real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
-real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
 real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
+real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
+real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
 real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
 # Cert chain with intermediate BC CA=Y missing
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
