@@ -155,7 +155,7 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 	};
 
 	const struct hash_hunks hunks = {
-		ARRAY_REF(octets),
+		ARRAY_PTR(octets),
 	};
 
 	if (task->signer->sign_message != NULL) {

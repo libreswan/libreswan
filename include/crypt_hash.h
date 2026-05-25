@@ -75,8 +75,8 @@ struct hash_hunk {
 };
 
 struct hash_hunks {
-	const struct hash_hunk *hunk;
 	unsigned len;
+	const struct hash_hunk *hunk COUNTED_BY_PTR(len);
 };
 
 struct crypt_mac crypt_hash_hunks(const char *what,
