@@ -251,6 +251,6 @@ const struct v2_exchange v2_INFORMATIONAL_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.secured = true,
 	.transitions.responder = {
-		ARRAY_REF(v2_INFORMATIONAL_responder_transition),
+		ARRAY_PTR(v2_INFORMATIONAL_responder_transition),
 	},
 };

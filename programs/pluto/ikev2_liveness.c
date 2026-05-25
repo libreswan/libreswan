@@ -405,9 +405,9 @@ const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_liveness_initiate_transition,
 	.transitions.responder = {
-		ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
+		ARRAY_PTR(v2_INFORMATIONAL_liveness_responder_transition),
 	},
 	.transitions.response = {
-		ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
+		ARRAY_PTR(v2_INFORMATIONAL_liveness_response_transition),
 	},
 };

@@ -648,10 +648,10 @@ const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_CREATE_CHILD_SA_rekey_child_initiate_transition,
 	.transitions.responder = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_rekey_child_responder_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_rekey_child_responder_transition),
 	},
 	.transitions.response = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_rekey_child_response_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_rekey_child_response_transition),
 	},
 };
 
@@ -993,10 +993,10 @@ const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_CREATE_CHILD_SA_new_child_initiate_transition,
 	.transitions.responder = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_new_child_responder_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_new_child_responder_transition),
 	},
 	.transitions.response = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_new_child_response_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_new_child_response_transition),
 	},
 };
 
@@ -1760,10 +1760,10 @@ const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_CREATE_CHILD_SA_rekey_ike_initiate_transition,
 	.transitions.responder = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_rekey_ike_responder_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_rekey_ike_responder_transition),
 	},
 	.transitions.response = {
-		ARRAY_REF(v2_CREATE_CHILD_SA_rekey_ike_response_transition),
+		ARRAY_PTR(v2_CREATE_CHILD_SA_rekey_ike_response_transition),
 	},
 };
 

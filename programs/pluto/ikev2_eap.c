@@ -926,6 +926,6 @@ const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.name = "IKE_AUTH (EAP)",
 	.secured = true,
 	.transitions.responder = {
-		ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
+		ARRAY_PTR(v2_IKE_AUTH_EAP_responder_transition),
 	},
 };
