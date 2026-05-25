@@ -16,7 +16,7 @@
 #include "auth.h"
 
 #include "enum_names.h"
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 
 static const char *const auth_name[] = {
 #define S(E) [E - AUTH_FLOOR] = #E
@@ -31,7 +31,7 @@ static const char *const auth_name[] = {
 
 static const struct enum_names auth_real_names = {
 	AUTH_FLOOR, AUTH_ROOF-1,
-	ARRAY_REF(auth_name),
+	ARRAY_PTR(auth_name),
 	"AUTH_", /* prefix */
 	NULL,
 };
@@ -46,7 +46,7 @@ static const char *auth_alias_name[] = {
 
 const struct enum_names auth_names = {
 	AUTH_PSK, AUTH_PSK,
-	ARRAY_REF(auth_alias_name),
+	ARRAY_PTR(auth_alias_name),
 	NULL,
 	&auth_real_names,
 };

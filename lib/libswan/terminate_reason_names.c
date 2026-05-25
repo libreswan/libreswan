@@ -33,7 +33,7 @@
 
 #include "terminate_reason.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
 static const char *terminate_reason_name[] = {
@@ -51,6 +51,6 @@ static const char *terminate_reason_name[] = {
 
 const struct enum_names terminate_reason_names = {
 	TERMINATE_REASON_FLOOR, TERMINATE_REASON_ROOF-1,
-	ARRAY_REF(terminate_reason_name),
+	ARRAY_PTR(terminate_reason_name),
 	.en_prefix = NULL,
 };

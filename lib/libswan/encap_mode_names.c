@@ -15,7 +15,7 @@
 
 #include "encap_mode.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
 static const char *encap_mode_name[] = {
@@ -28,7 +28,7 @@ static const char *encap_mode_name[] = {
 const struct enum_names encap_mode_names = {
 	ENCAP_MODE_TRANSPORT,
 	ENCAP_MODE_TUNNEL,
-	ARRAY_REF(encap_mode_name),
+	ARRAY_PTR(encap_mode_name),
 	.en_prefix = "ENCAP_MODE_",
 };
 
@@ -42,6 +42,6 @@ static const char *encap_mode_story_name[] = {
 const struct enum_names encap_mode_story = {
 	ENCAP_MODE_TRANSPORT,
 	ENCAP_MODE_TUNNEL,
-	ARRAY_REF(encap_mode_story_name),
+	ARRAY_PTR(encap_mode_story_name),
 	.en_prefix = NULL,
 };

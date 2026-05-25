@@ -32,7 +32,7 @@ static const char *const cat_name[CAT_ROOF] = {
 
 const struct enum_names state_category_names = {
 	0, CAT_ROOF - 1,
-	ARRAY_REF(cat_name),
+	ARRAY_PTR(cat_name),
 	"",
 	NULL
 };

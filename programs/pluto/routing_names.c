@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 #include "defs.h"
 #include "routing.h"		/* for enum routing */
@@ -40,6 +40,6 @@ static const char *routing_name[] = {
 
 const struct enum_names routing_names = {
 	0, CONNECTION_ROUTING_ROOF-1,
-	ARRAY_REF(routing_name),
+	ARRAY_PTR(routing_name),
 	"RT_", NULL,
 };

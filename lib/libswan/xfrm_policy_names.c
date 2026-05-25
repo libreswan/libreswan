@@ -36,7 +36,7 @@
 #include <netinet/in.h>
 #include "linux/xfrm.h"		/* local (if configured) or system copy */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
 /* XFRM POLICY direction names */
@@ -51,7 +51,7 @@ static const char *const xfrm_policy_name[] = {
 
 const struct enum_names xfrm_policy_names = {
 	XFRM_POLICY_IN, XFRM_POLICY_FWD,
-	ARRAY_REF(xfrm_policy_name),
+	ARRAY_PTR(xfrm_policy_name),
 	"XFRM_POLICY_", /* prefix */
 	NULL
 };

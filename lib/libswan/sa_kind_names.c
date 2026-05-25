@@ -15,7 +15,7 @@
 
 #include "sa_kind.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 #include "enum_names.h"
 
 static const char *sa_kind_name[] = {
@@ -28,6 +28,6 @@ static const char *sa_kind_name[] = {
 const struct enum_names sa_kind_names = {
 	SA_KIND_FLOOR,
 	SA_KIND_ROOF-1,
-	ARRAY_REF(sa_kind_name),
+	ARRAY_PTR(sa_kind_name),
 	.en_prefix = NULL,
 };

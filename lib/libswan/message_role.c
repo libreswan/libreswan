@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 #include "message_role.h"
 
@@ -27,7 +27,7 @@ const char *message_role_name[] = {
 
 const struct enum_names message_role_names = {
 	MESSAGE_ROLE_FLOOR, MESSAGE_ROLE_ROOF-1,
-	ARRAY_REF(message_role_name),
+	ARRAY_PTR(message_role_name),
 	"MESSAGE_",
 	NULL,
 };

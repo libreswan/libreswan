@@ -41,7 +41,7 @@ static const char *kernel_policy_op_name[] = {
 
 enum_names kernel_policy_op_names = {
 	0, elemsof(kernel_policy_op_name)-1,
-	ARRAY_REF(kernel_policy_op_name),
+	ARRAY_PTR(kernel_policy_op_name),
 	.en_prefix = "KERNEL_POLICY_OP_",
 };
 
@@ -57,7 +57,7 @@ static const char *direction_name[] = {
 enum_names direction_names = {
 	DIRECTION_INBOUND,
 	DIRECTION_OUTBOUND,
-	ARRAY_REF(direction_name),
+	ARRAY_PTR(direction_name),
 	.en_prefix = "DIRECTION_",
 };
 

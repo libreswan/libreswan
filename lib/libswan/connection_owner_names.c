@@ -16,7 +16,7 @@
 #include "connection_owner.h"
 
 #include "enum_names.h"
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 
 const char *connection_owner_name[] = {
 	[ROUTING_SA] = "routing_sa",
@@ -28,7 +28,7 @@ const char *connection_owner_name[] = {
 
 const struct enum_names connection_owner_names = {
 	ROUTING_SA, ESTABLISHED_CHILD_SA,
-	ARRAY_REF(connection_owner_name),
+	ARRAY_PTR(connection_owner_name),
 	.en_prefix = NULL,
 };
 
@@ -43,6 +43,6 @@ const char *connection_owner_story[] = {
 
 const struct enum_names connection_owner_stories = {
 	ROUTING_SA, ESTABLISHED_CHILD_SA,
-	ARRAY_REF(connection_owner_story),
+	ARRAY_PTR(connection_owner_story),
 	.en_prefix = NULL,
 };

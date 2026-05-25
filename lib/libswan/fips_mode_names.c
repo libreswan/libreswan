@@ -25,7 +25,7 @@ const char *fips_mode_name[] = {
 
 const struct enum_names fips_mode_names = {
 	FIPS_MODE_FLOOR, FIPS_MODE_ROOF-1,
-	ARRAY_REF(fips_mode_name),
+	ARRAY_PTR(fips_mode_name),
 	"FIPS_MODE_",
 	NULL,
 };

@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "initiated_by.h"
 #include "enum_names.h"
 
@@ -32,6 +32,6 @@ static const char *initiated_by_name[] = {
 
 const struct enum_names initiated_by_names = {
 	0, INITIATED_BY_ROOF-1,
-	ARRAY_REF(initiated_by_name),
+	ARRAY_PTR(initiated_by_name),
 	"INITIATED_BY_", NULL,
 };
