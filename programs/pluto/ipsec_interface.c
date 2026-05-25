@@ -243,7 +243,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 		return child_config->ipsec_interface_ip;
 	}
 
-	FOR_EACH_ITEM(sip, &child_config->sourceip) {
+	TABLE_FOR_EACH(sip, child_config->sourceip) {
 		/* Use the first sourceip in the list that is set */
 		if (sip->ip.is_set) {
 			address_buf ab;

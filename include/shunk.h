@@ -194,7 +194,7 @@ err_t shunk_to_intmax(shunk_t input, shunk_t *cursor, unsigned base, intmax_t *v
  */
 
 #define PRI_SHUNK "%.*s"
-#define pri_shunk(SHUNK) ((int) (SHUNK).len), (const char *) ((SHUNK).ptr)
+#define pri_shunk(SHUNK) ((int) (SHUNK).len), ((SHUNK).ptr == NULL ? "" : (const char *) ((SHUNK).ptr))
 
 #define jam_shunk(BUF, SHUNK) jam(BUF, PRI_SHUNK, pri_shunk(SHUNK))
 

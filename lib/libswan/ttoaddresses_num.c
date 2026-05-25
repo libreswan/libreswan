@@ -21,45 +21,35 @@
 #include "ip_address.h"
 #include "ip_info.h"
 
-diag_t ttoaddresses_num(shunk_t input, const char *delims,
+diag_t ttoaddresses_num(shunk_t input,
 			const struct ip_info *input_afi,
-			ip_addresses *output)
+			ip_addresses **output)
 {
-	zero(output);
-
-	if (input.ptr == NULL) {
-		return NULL;
-	}
+	(*output) = NULL;
 
 	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
-	struct shunks *tokens = ttoshunks(input, delims, EAT_EMPTY_SHUNKS); /* must free */
-
-	/* ignore empty!?! */
-
-	if (tokens->len == 0) {
-		pfree(tokens);
-		return NULL;
-	}
-
+	struct shunks *tokens = ttoshunks(input, ", ", EAT_EMPTY_SHUNKS); /* must free */
 	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
-	output->list = alloc_things(ip_address, tokens->len, "addresses");
+	(*output) = table_alloc(ip_addresses, tokens->len);
 
+	unsigned nr =0;
 	TABLE_FOR_EACH(token, tokens) {
-		diag_t d = ttoaddress_num(*token, input_afi,
-					  &output->list[output->len]);
+		ip_address tmp;
+		diag_t d = ttoaddress_num(*token, input_afi, &tmp);
 		if (d != NULL) {
 			diag_t d = diag_diag(&d, PRI_SHUNK" invalid, ",
 					     pri_shunk(*token));
 			pfree(tokens);
-			pfree(output->list);
-			zero(output);
+			pfreeany(*output);
 			return d;
 		}
-		output->len++;
-	}
 
-	passert(output->len == tokens->len);
+		passert(nr < (*output)->len);
+		(*output)->table[nr++] = tmp;
+	}
+	passert(nr == (*output)->len);
+
 	pfree(tokens);
 	return NULL;
 }

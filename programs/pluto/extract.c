@@ -678,21 +678,20 @@ static diag_t extract_updown(const struct whack_message *wm,
 	return NULL;
 }
 
-static ip_addresses extract_addresses(struct kv kv,
-				      const struct ip_info *afi,
-				      diag_t *d,
-				      struct verbose verbose)
+static ip_addresses *extract_addresses(struct kv kv,
+				       const struct ip_info *afi,
+				       diag_t *d,
+				       struct verbose verbose)
 {
-	ip_addresses addresses = {0};
+	ip_addresses *addresses = NULL;
 	if (!can_extract_string(kv, verbose)) {
-		return addresses;
+		return NULL;
 	}
 
-	diag_t td = ttoaddresses_num(shunk1(kv.value), ", ", afi,
-				     &addresses);
+	diag_t td = ttoaddresses_num(shunk1(kv.value), afi, &addresses);
 	if (td != NULL) {
 		*d = diag_diag(&td, PRI_KV" invalid, ", pri_kv(kv));
-		return addresses;
+		return NULL;
 	}
 
 	return addresses;
@@ -2163,14 +2162,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		diag_t d = ttopools_num(shunk1(src->we_addresspool), ", ", NULL,
+		diag_t d = ttopools_num(shunk1(src->we_addresspool),
+					/*unspec*/NULL,
 					&child_config->addresspools);
 		if (d != NULL) {
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright,
 					 src->we_addresspool);
 		}
 
-		FOR_EACH_ITEM(pool, &child_config->addresspools) {
+		TABLE_FOR_EACH(pool, child_config->addresspools) {
 
 			const struct ip_info *afi = pool_type(pool);
 
@@ -2289,15 +2289,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, src->we_sourceip);
 		}
 
-		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip), ", ",
-					    NULL/*UNSPEC*/, &child_config->sourceip);
+		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip),
+					    NULL/*UNSPEC*/,
+					    &child_config->sourceip);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssourceip=%s invalid, ",
 					 src->leftright, src->we_sourceip);
 		}
 		/* valid? */
 		ip_address seen[IP_VERSION_ROOF] = {0};
-		FOR_EACH_ITEM(sourceip, &child_config->sourceip) {
+		TABLE_FOR_EACH(sourceip, child_config->sourceip) {
 
 			/* i.e., not :: and not 0.0.0.0 */
 			if (!address_is_specified(*sourceip)) {
@@ -4799,7 +4800,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} end_family[END_ROOF][IP_VERSION_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
-		const ip_pools *const pools = &c->end[end].config->child.addresspools;
+		const ip_pools *const pools = c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
 			FOR_EACH_ITEM(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
@@ -4810,8 +4811,8 @@ diag_t extract_connection(const struct whack_message *wm,
 					family->value = whack_ends[end]->we_subnet;
 				}
 			}
-		} else if (pools->len > 0) {
-			FOR_EACH_ITEM(pool, pools) {
+		} else if (table_len(pools) > 0) {
+			TABLE_FOR_EACH(pool, pools) {
 				const struct ip_info *afi = pool_type(pool);
 				/* only one for now */
 				struct end_family *family = &end_family[end][afi->ip.version];

@@ -388,8 +388,8 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 		 * last's is finished at the end so our loop structure
 		 * is odd.
 		 */
-		ip_address *end = c->config->modecfg.dns.list + c->config->modecfg.dns.len;
-		FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
+		ip_address *end = table_end(c->config->modecfg.dns);
+		TABLE_FOR_EACH(dns, c->config->modecfg.dns) {
 
 			/* emit attribute's value */
 			if (!pbs_out_address(&attrval, *dns, "IP4_dns")) {
@@ -510,7 +510,7 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 		 * XXX: could this, with misconfiguration, cause the
 		 * client to send the DNS name to the server?
 		 */
-		if (c->config->modecfg.dns.len == 0) {
+		if (table_len(c->config->modecfg.dns) == 0) {
 			ldbg(ike->sa.logger, "skip sending internal DNS in %s payload, nothing to send",
 			     modecfg_payload);
 			return true;
@@ -1974,7 +1974,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				 * config file, the lease will be
 				 * used.
 				 */
-				if (c->local->config->child.sourceip.len == 0) {
+				if (table_len(c->local->config->child.sourceip) == 0) {
 					ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
 					pexpect(address_eq_address(a, sourceip));
 					jam_string(buf, ", updating source IP address");

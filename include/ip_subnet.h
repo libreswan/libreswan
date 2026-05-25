@@ -131,11 +131,11 @@ diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
 
 typedef struct {
 	unsigned len;
-	ip_subnet *list;
+	ip_subnet table[] COUNTED_BY(len);
 } ip_subnets;
 
-diag_t ttosubnets_num(shunk_t input, const struct ip_info *afi, ip_subnets *output);
+diag_t ttosubnets_num(shunk_t input, const struct ip_info *afi, ip_subnets **output);
 
-size_t jam_subnets(struct jambuf *buf, const ip_subnets subnets);
+size_t jam_subnets(struct jambuf *buf, const ip_subnets *subnets);
 
 #endif

@@ -67,14 +67,13 @@ diag_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst) MUST_
 
 typedef struct {
 	unsigned len;
-	ip_pool *list;
+	ip_pool table[] COUNTED_BY(len);
 } ip_pools;
 
 extern const ip_pools empty_ip_pools;
 
-diag_t ttopools_num(shunk_t input, const char *delims,
-		     const struct ip_info *afi,
-		     ip_pools *output) MUST_USE_RESULT;
+diag_t ttopools_num(shunk_t input, const struct ip_info *afi,
+		     ip_pools **output) MUST_USE_RESULT;
 
 size_t jam_pools(struct jambuf *buf, ip_pools pools);
 

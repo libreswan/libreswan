@@ -166,14 +166,4 @@ const struct ip_info *ip_version_info(enum ip_version version);
 #define ip_info(IP) ((IP).ip.is_set == false ? NULL :	\
 		     ip_version_info((IP).ip.version))
 
-/*
- * Internal.
- */
-
-diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
-		  void **ptr, unsigned *len,
-		  diag_t (*parse_token)(shunk_t, const struct ip_info *,
-					void **ptr, unsigned len))
-	MUST_USE_RESULT;
-
 #endif

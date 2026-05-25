@@ -199,14 +199,14 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	return out->buf;
 }
 
-size_t jam_subnets(struct jambuf *buf, ip_subnets subnets)
+size_t jam_subnets(struct jambuf *buf, const ip_subnets *subnets)
 {
 	size_t s = 0;
 	const char *sep = "";
-	for (unsigned i = 0; i < subnets.len; i++) {
+	TABLE_FOR_EACH(subnet, subnets) {
 		s += jam_string(buf, sep);
 		sep = ",";
-		s += jam_subnet(buf, &subnets.list[i]);
+		s += jam_subnet(buf, subnet);
 	}
 	return s;
 }

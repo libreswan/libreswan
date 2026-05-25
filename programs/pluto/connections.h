@@ -151,7 +151,7 @@ struct child_end_config {
 	bool has_client_address_translation;		/* aka CAT */
 
 	ip_selectors selectors;
-	ip_addresses sourceip;
+	ip_addresses *sourceip;
 
 	/*
 	 * During orient, this is turned into c->pool
@@ -162,7 +162,7 @@ struct child_end_config {
 	 * Should more than one pool for each address be allowed?
 	 * Should an addresspool combined with selectors be allowed?
 	 */
-	ip_pools addresspools;
+	ip_pools *addresspools;
 	struct addresspool *addresspool[IP_VERSION_ROOF]; /* list? */
 
 	/*
@@ -341,7 +341,7 @@ struct config {
 
 	struct {
 		bool pull;		/* is modecfg pulled by client? */
-		ip_addresses dns;	/* !.is_set terminated list */
+		ip_addresses *dns;	/* !.is_set terminated list */
 		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
 	} modecfg;

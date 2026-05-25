@@ -560,7 +560,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (end->child.config->addresspools.len > 0) {
+		if (table_len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
@@ -573,7 +573,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			 * MODE_CFG, or hard-wired in the config
 			 * file).
 			 */
-			FOR_EACH_ITEM(pool, &end->child.config->addresspools) {
+			TABLE_FOR_EACH(pool, end->child.config->addresspools) {
 				ip_selector selector = selector_from_pool((*pool));
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",

@@ -501,7 +501,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->child.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
-		pfree_list(&config->modecfg.dns);
+		pfreeany(config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->ppk_ids);
@@ -524,9 +524,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			/* child */
 			pfreeany(end->child.updown.argv);
 			pfree_list(&end->child.selectors);
-			pfree_list(&end->child.sourceip);
+			pfreeany(end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
-			pfree_list(&end->child.addresspools);
+			pfreeany(end->child.addresspools);
 			FOR_EACH_ELEMENT(pool, end->child.addresspool) {
 				addresspool_delref(pool, logger);
 			}
@@ -868,7 +868,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (end->child.config->addresspools.len > 0) {
+		if (table_len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
@@ -881,7 +881,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 			 * MODE_CFG, or hard-wired in the config
 			 * file).
 			 */
-			FOR_EACH_ITEM(pool, &end->child.config->addresspools) {
+			TABLE_FOR_EACH(pool, end->child.config->addresspools) {
 				ip_selector selector = selector_from_pool((*pool));
 				selector_buf sb;
 				vdbg("%s proposals formed from address pool %s",
@@ -1355,7 +1355,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (child->config->addresspools.len > 0) {
+		if (table_len(child->config->addresspools) > 0) {
 			s += jam_string(b, "{");
 		}
 		const char *sep = "";
@@ -1370,7 +1370,7 @@ static size_t jam_connection_child(struct jambuf *b,
 			}
 			jam_string(b, sep); sep = ",";
 		}
-		if (child->config->addresspools.len > 0) {
+		if (table_len(child->config->addresspools) > 0) {
 			s += jam_string(b, "}");
 		}
 		s += jam_string(b, suffix);
@@ -1968,7 +1968,7 @@ struct connections *sort_connections(void)
 ip_address config_end_sourceip(const ip_selector client, const struct child_end_config *end)
 {
 	const struct ip_info *afi = selector_info(client);
-	FOR_EACH_ITEM(sourceip, &end->sourceip) {
+	TABLE_FOR_EACH(sourceip, end->sourceip) {
 		if (afi == address_type(sourceip)) {
 			return *sourceip;
 		}
@@ -2166,13 +2166,13 @@ err_t connection_requires_tss(const struct connection *c)
 		return NULL;
 	}
 	FOR_EACH_ELEMENT(end, c->end) {
-		if (end->config->child.addresspools.len > 1) {
+		if (table_len(end->config->child.addresspools) > 1) {
 			return "addresspools";
 		}
 		if (end->config->child.selectors.len > 1) {
 			return "subnets";
 		}
-		if (end->config->child.sourceip.len > 1) {
+		if (table_len(end->config->child.sourceip) > 1) {
 			return "sourceips";
 		}
 	}
