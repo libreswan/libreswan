@@ -159,9 +159,9 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 	.hash_ops = &ike_alg_hash_nss_ops,
 
 	.digital_signature_blob = {
-		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_384_blob),
-		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha2_384_blob),
-		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = THING_AS_HUNK(asn1_rsassa_pss_sha2_384_blob),
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = ARRAY_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_384_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = ARRAY_AS_HUNK(asn1_ecdsa_sha2_384_blob),
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = ARRAY_AS_HUNK(asn1_rsassa_pss_sha2_384_blob),
 	},
 };
 
@@ -266,9 +266,9 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 	.hash_ops = &ike_alg_hash_nss_ops,
 
 	.digital_signature_blob = {
-		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_512_blob),
-		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha2_512_blob),
-		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = THING_AS_HUNK(asn1_rsassa_pss_sha2_512_blob),
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = ARRAY_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_512_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = ARRAY_AS_HUNK(asn1_ecdsa_sha2_512_blob),
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = ARRAY_AS_HUNK(asn1_rsassa_pss_sha2_512_blob),
 	},
 };
 
