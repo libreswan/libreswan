@@ -58,7 +58,7 @@ const struct hash_desc ike_alg_hash_sha1 = {
 	.hash_ops = &ike_alg_hash_nss_ops,
 
 	.digital_signature_blob = {
-		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_blob),
-		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha1_blob),
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = ARRAY_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = ARRAY_AS_HUNK(asn1_ecdsa_sha1_blob),
 	},
 };

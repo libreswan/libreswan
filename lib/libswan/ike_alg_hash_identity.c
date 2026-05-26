@@ -49,7 +49,7 @@ const struct hash_desc ike_alg_hash_identity = {
 	},
 
 	.digital_signature_blob = {
-		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB] = THING_AS_HUNK(asn1_eddsa_identity_ed25519_blob),
-		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB] = THING_AS_HUNK(asn1_eddsa_identity_ed448_blob),
+		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB] = ARRAY_AS_HUNK(asn1_eddsa_identity_ed25519_blob),
+		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB] = ARRAY_AS_HUNK(asn1_eddsa_identity_ed448_blob),
 	},
 };
