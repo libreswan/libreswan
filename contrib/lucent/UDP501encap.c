@@ -106,6 +106,9 @@ int main(int argc, char **argv)
 			if (m->outdev_name[0] == 0x0) {
 				// INPUT
 				ip_header_len = (m->payload[0] & 0xF) * 4;
+				if (ip_header_len < 20 ||
+				    (size_t)(ip_header_len + 8) >= m->data_len)
+					break;
 				u16 new_ip_len = m->data_len - ip_header_len -
 						 8;
 				newPayload = malloc(new_ip_len);
@@ -121,6 +124,10 @@ int main(int argc, char **argv)
 					(m->payload[2] << 8 & 0xff00) +
 					(m->payload[3] & 0xff);
 				ip_header_len = (m->payload[0] & 0xF) * 4;
+				if (ip_header_len < 20 ||
+				    ip_len < (u16)ip_header_len ||
+				    m->data_len < ip_len)
+					break;
 				u16 new_ip_len = ip_len + ip_header_len + 8;
 				newPayload = malloc(new_ip_len);
 				// Copy prev packet
