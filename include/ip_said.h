@@ -22,7 +22,7 @@
 #include "ip_base.h"
 #include "ip_endpoint.h"
 #include "ipsec_spi.h"		/* for ipsec_spi_t */
-#include "ttodata.h"
+#include "ttodata.h"		/* ULTOT_BUF */
 #include "ip_protocol.h"
 #include "ip_version.h"
 

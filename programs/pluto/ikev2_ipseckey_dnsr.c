@@ -228,7 +228,8 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 		dns_pubkey->ttl = ttl;
 		/* store the pubkey after the struct */
 		char *pubkey_ptr = (void*)(dns_pubkey+1);
-		ugh = ttodata(pubkey, pubkey_len, 64, pubkey_ptr, pubkey_len, &pubkey_len);
+		ugh = ttodata(shunk2(pubkey, pubkey_len), 64,
+			      pubkey_ptr, pubkey_len, &pubkey_len);
 		if (ugh != NULL) {
 			pfree(dns_pubkey);
 			break;
