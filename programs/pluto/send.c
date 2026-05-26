@@ -140,7 +140,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 	 * iovec?
 	 */
 	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
-	shunk_t packet = THING_AS_HUNK(buf);
+	shunk_t packet = ARRAY_AS_HUNK(buf);
 	if (len != a.len) {
 		/* copying required */
 
