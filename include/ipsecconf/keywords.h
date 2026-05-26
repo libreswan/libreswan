@@ -30,6 +30,7 @@
 #ifndef IPSECCONF_KEYWORDS_H
 #define IPSECCONF_KEYWORDS_H
 
+#include "lswcdefs.h"	/* for COUNTED_BY_PTR() */
 #include "lset.h"	/* for LELEM() */
 
 struct logger;
@@ -88,7 +89,7 @@ struct keyword_def {
 
 struct keywords_def {
 	unsigned len;
-	const struct keyword_def *item;
+	const struct keyword_def *item COUNTED_BY_PTR(len);
 };
 
 extern const struct keywords_def config_setup_keywords;

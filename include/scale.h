@@ -99,8 +99,8 @@ struct scale {
 struct scales {
 	const char *name;
 	unsigned default_scale;
-	const struct scale *list;
 	unsigned len;
+	const struct scale *list COUNTED_BY_PTR(len);
 };
 
 const struct scale *ttoscale(shunk_t cursor,
