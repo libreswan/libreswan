@@ -38,8 +38,8 @@
  */
 
 typedef struct /*chunk*/ {
-	uint8_t *ptr;
 	size_t len;
+	uint8_t *ptr;
 } chunk_t;
 
 chunk_t chunk2(void *ptr, size_t len);
@@ -113,7 +113,7 @@ chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 		passert(_floor <= _roof);		\
 		passert(_roof <= _hunk->len);		\
 		chunk_t _slice = {			\
-			_hunk->ptr + _floor,		\
+			.ptr = _hunk->ptr + _floor,	\
 			.len = _roof - _floor,		\
 		};					\
 		_slice;					\

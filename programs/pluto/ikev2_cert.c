@@ -74,7 +74,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	}
 
 	/* must free_auth_chain(auth_chain, chain_len); */
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
 	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca,
 				       outpbs->logger);
 

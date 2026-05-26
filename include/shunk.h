@@ -34,8 +34,8 @@
  */
 
 struct shunk {
-	const void *ptr;
 	size_t len;
+	const void *ptr;
 };
 
 typedef struct shunk shunk_t;
@@ -160,7 +160,7 @@ shunk_t shunk_span(shunk_t *input, const char *accept);
 		passert(_floor <= _roof);		\
 		passert(_roof <= _hunk->len);		\
 		shunk_t _slice = {			\
-			_hunk->ptr + _floor,		\
+			.ptr = _hunk->ptr + _floor,	\
 			.len = _roof - _floor,		\
 		};					\
 		_slice;					\

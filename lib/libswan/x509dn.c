@@ -666,7 +666,7 @@ err_t atodn(const char *src, chunk_t *dn)
 	{								\
 		size_t len = dn_ptr - *--patchpointer;			\
 		unsigned char len_buf[1 + sizeof(len)] = { ty };	\
-		chunk_t obj_len = { len_buf + 1, 0 };			\
+		chunk_t obj_len = chunk2(len_buf + 1, 0);		\
 		/* only handles up to 4 bytes */			\
 		code_asn1_length(len, &obj_len);			\
 		passert(obj_len.len <= sizeof(len_buf));		\

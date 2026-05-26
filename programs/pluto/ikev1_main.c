@@ -957,7 +957,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 			       c->config->send_ca != CA_SEND_NONE);
 
 	/* must free_auth_chain(auth_chain, chain_len); */
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
 	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
 				       c->config->send_ca,
 				       ike->sa.logger);
@@ -1187,7 +1187,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 
 	/* Must free_auth_chain(auth_chain, chain_len); */
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
 	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
 				       c->config->send_ca,
 				       ike->sa.logger);
