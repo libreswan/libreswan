@@ -28,7 +28,8 @@
  */
 
 const shunk_t null_shunk = NULL_HUNK;
-const shunk_t empty_shunk = { .ptr = "", .len = 0, };
+static const uint8_t empty_shunk_byte;
+const shunk_t empty_shunk = { .ptr = &empty_shunk_byte, .len = 0, };
 
 shunk_t shunk1(const char *ptr)
 {
