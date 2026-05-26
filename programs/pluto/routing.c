@@ -74,7 +74,7 @@ static const char *routing_event_name[] = {
 
 static enum_names routing_event_names = {
 	0, ROUTING_EVENT_ROOF-1,
-	ARRAY_REF(routing_event_name),
+	ARRAY_PTR(routing_event_name),
 	"CONNECTION_",
 	NULL,
 };

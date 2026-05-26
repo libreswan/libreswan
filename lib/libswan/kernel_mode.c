@@ -15,7 +15,7 @@
 
 #include "kernel_mode.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 #include "enum_names.h"
 
 static const char *kernel_mode_name[] = {
@@ -28,7 +28,7 @@ static const char *kernel_mode_name[] = {
 
 const struct enum_names kernel_mode_names = {
 	KERNEL_MODE_FLOOR, KERNEL_MODE_ROOF-1,
-	ARRAY_REF(kernel_mode_name),
+	ARRAY_PTR(kernel_mode_name),
 	.en_prefix = "KERNEL_MODE_",
 };
 
@@ -42,6 +42,6 @@ static const char *kernel_mode_story[] = {
 
 const struct enum_names kernel_mode_stories = {
 	KERNEL_MODE_FLOOR, KERNEL_MODE_ROOF-1,
-	ARRAY_REF(kernel_mode_story),
+	ARRAY_PTR(kernel_mode_story),
 	.en_prefix = NULL,
 };

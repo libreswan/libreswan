@@ -16,7 +16,7 @@
 #include "end.h"
 
 #include "enum_names.h"
-#include "lswcdefs.h"	/* for ARRAY_REF() */
+#include "lswcdefs.h"	/* for ARRAY_PTR() */
 
 static const char *end_name[] = {
 #define S(E) [E-LEFT_END] = #E
@@ -28,7 +28,7 @@ static const char *end_name[] = {
 const struct enum_names end_names = {
 	LEFT_END,
 	RIGHT_END,
-	ARRAY_REF(end_name),
+	ARRAY_PTR(end_name),
 	.en_prefix = NULL,
 };
 
@@ -40,6 +40,6 @@ static const char *end_story[] = {
 const struct enum_names end_stories = {
 	LEFT_END,
 	RIGHT_END,
-	ARRAY_REF(end_story),
+	ARRAY_PTR(end_story),
 	.en_prefix = NULL,
 };

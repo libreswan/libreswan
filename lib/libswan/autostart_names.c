@@ -13,7 +13,6 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "sparse_names.h"
 #include "constants.h"		/* for enum autostart */
 

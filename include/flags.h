@@ -25,25 +25,39 @@
 struct enum_names;
 struct jambuf;
 
+struct ro_flags {
+	unsigned len;
+	const bool *flag COUNTED_BY_PTR(len);
+};
+
+#define RO_FLAGS(FLAGS) (struct ro_flags) { ARRAY_PTR(FLAGS), }
+
+struct rw_flags {
+	unsigned len;
+	bool *flag COUNTED_BY_PTR(len);
+};
+
+#define RW_FLAGS(FLAGS) (struct rw_flags) { ARRAY_PTR(FLAGS), }
+
 #define ttoflags(VALUE, FLAGS, NAMES)			\
-	ttoflags_raw(VALUE, ARRAY_REF(FLAGS), NAMES)
+	ttoflags_raw(VALUE, RW_FLAGS(FLAGS), NAMES)
 
 diag_t ttoflags_raw(const char *value,
-		    bool *flag, size_t len,
+		    struct rw_flags flags,
 		    const struct enum_names *names);
 
-#define jam_flags(BUF, FLAGS, NAMES)			\
-	jam_raw_flags(BUF, ARRAY_REF(FLAGS), NAMES)
+#define jam_flags(BUF, FLAGS, NAMES)				\
+	jam_raw_flags(BUF, RO_FLAGS(FLAGS), NAMES)
 
 void jam_raw_flags(struct jambuf *buf,
-		   const bool *flag, size_t len,
+		   struct ro_flags flags,
 		   const struct enum_names *names);
 
-#define jam_flags_human(BUF, FLAGS, NAMES)			\
-	jam_raw_flags_human(BUF, ARRAY_REF(FLAGS), NAMES)
+#define jam_flags_human(BUF, FLAGS, NAMES)				\
+	jam_raw_flags_human(BUF, RO_FLAGS(FLAGS), NAMES)
 
 void jam_raw_flags_human(struct jambuf *buf,
-			 const bool *flag, size_t len,
+			 struct ro_flags flags,
 			 const struct enum_names *names);
 
 #endif

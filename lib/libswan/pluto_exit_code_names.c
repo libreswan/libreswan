@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 #include "constants.h"	/* for enum pluto_exit_code in pluto_constants.h */
 
@@ -28,7 +28,7 @@ static const char *pluto_exit_code_name_hi[] = {
 static enum_names pluto_exit_code_names_hi = {
 	PLUTO_EXIT_GIT_BISECT_CAN_NOT_TEST,
 	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE,
-	ARRAY_REF(pluto_exit_code_name_hi),
+	ARRAY_PTR(pluto_exit_code_name_hi),
 	NULL, NULL,
 };
 
@@ -51,7 +51,7 @@ static const char *pluto_exit_code_name[] = {
 
 enum_names pluto_exit_code_names = {
 	PLUTO_EXIT_OK, PLUTO_EXIT_SELINUX_FAIL,
-	ARRAY_REF(pluto_exit_code_name),
+	ARRAY_PTR(pluto_exit_code_name),
 	"PLUTO_EXIT_", /* prefix */
 	&pluto_exit_code_names_hi,
 };

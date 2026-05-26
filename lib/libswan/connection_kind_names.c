@@ -21,7 +21,7 @@
 
 #include "connection_kind.h"
 #include "enum_names.h"
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 
 /* kind of struct connection */
 static const char *const connection_kind_name[] = {
@@ -40,7 +40,7 @@ static const char *const connection_kind_name[] = {
 const struct enum_names connection_kind_names = {
 	CK_INVALID,
 	CONNECTION_KIND_ROOF - 1,
-	ARRAY_REF(connection_kind_name),
+	ARRAY_PTR(connection_kind_name),
 	"CK_", /* prefix */
 	NULL
 };

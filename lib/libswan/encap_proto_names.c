@@ -15,7 +15,7 @@
 
 #include "encap_proto.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 #include "enum_names.h"
 
 static const char *encap_proto_name[] = {
@@ -28,7 +28,7 @@ static const char *encap_proto_name[] = {
 const struct enum_names encap_proto_names = {
 	ENCAP_PROTO_ESP,
 	ENCAP_PROTO_AH,
-	ARRAY_REF(encap_proto_name),
+	ARRAY_PTR(encap_proto_name),
 	.en_prefix = "ENCAP_PROTO_",
 };
 
@@ -42,6 +42,6 @@ static const char *encap_proto_story_name[] = {
 const struct enum_names encap_proto_story = {
 	ENCAP_PROTO_ESP,
 	ENCAP_PROTO_AH,
-	ARRAY_REF(encap_proto_story_name),
+	ARRAY_PTR(encap_proto_story_name),
 	.en_prefix = NULL,
 };

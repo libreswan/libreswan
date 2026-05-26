@@ -38,7 +38,7 @@ static const char *const test_flag_name[TEST_FLAG_ROOF] = {
 
 static const struct enum_names test_flag_names = {
 	0, TEST_FLAG_ROOF-1,
-	ARRAY_REF(test_flag_name),
+	ARRAY_PTR(test_flag_name),
 	"TEST_FLAG_",
 	NULL,
 };

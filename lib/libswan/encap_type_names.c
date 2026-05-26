@@ -15,7 +15,7 @@
 
 #include "encap_type.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
 static const char *encap_type_name[] = {
@@ -30,6 +30,6 @@ static const char *encap_type_name[] = {
 const struct enum_names encap_type_names = {
 	ENCAP_TYPE_TRAP,
 	ENCAP_TYPE_DROP,
-	ARRAY_REF(encap_type_name),
+	ARRAY_PTR(encap_type_name),
 	.en_prefix = "ENCAP_TYPE_",
 };

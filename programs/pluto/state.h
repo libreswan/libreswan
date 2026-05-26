@@ -211,8 +211,8 @@ struct finite_state {
 			 */
 			const struct v2_transition *larval_sa_transition;
 			const struct v2_exchanges {
-				const struct v2_exchange *const *list;
 				size_t len;
+				const struct v2_exchange *const *list COUNTED_BY_PTR(len);
 			} ike_responder_exchanges;
 			bool secured; /* hence, exchanges must be
 				       * integrity protected */

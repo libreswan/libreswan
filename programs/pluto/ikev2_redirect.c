@@ -704,10 +704,10 @@ const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
 	.transitions.responder = {
-		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
+		ARRAY_PTR(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
 	},
 	.transitions.response = {
-		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
+		ARRAY_PTR(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
 	},
 };
 

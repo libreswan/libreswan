@@ -20,7 +20,7 @@
  */
 
 #include "shunt.h"
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 #include "sparse_names.h"
 
@@ -37,7 +37,7 @@ static const char *const shunt_policy_name[] = {
 
 const struct enum_names shunt_policy_names = {
 	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_name),
+	ARRAY_PTR(shunt_policy_name),
 	"SHUNT_", /* prefix */
 	NULL,
 };
@@ -56,7 +56,7 @@ static const char *const shunt_kind_name[] = {
 
 const struct enum_names shunt_kind_names = {
 	0, SHUNT_KIND_ROOF-1,
-	ARRAY_REF(shunt_kind_name),
+	ARRAY_PTR(shunt_kind_name),
 	"SHUNT_KIND_", /*PREFIX*/
 	NULL,
 };

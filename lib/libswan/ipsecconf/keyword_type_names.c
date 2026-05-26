@@ -16,7 +16,7 @@
 #include "ipsecconf/keywords.h"
 
 #include "enum_names.h"
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 
 static const char *const keyword_type_name[] = {
 #define S(E) [E - kt_string] = #E
@@ -32,7 +32,7 @@ static const char *const keyword_type_name[] = {
 
 const struct enum_names keyword_type_names = {
 	kt_string, kt_obsolete,
-	ARRAY_REF(keyword_type_name),
+	ARRAY_PTR(keyword_type_name),
 	"kt_",
 	NULL,
 };

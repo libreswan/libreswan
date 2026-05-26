@@ -121,8 +121,8 @@ struct v2_transition {
 };
 
 struct v2_transitions {
-	const struct v2_transition *list;
 	size_t len;
+	const struct v2_transition *list COUNTED_BY_PTR(len);
 };
 
 struct v2_exchange {
@@ -187,10 +187,10 @@ struct v2_exchange {
 		.initiate.transition = &v2_##KIND##_initiate_transition, \
 		.initiate.from = { __VA_ARGS__ },			\
 		.transitions.responder = {				\
-			ARRAY_REF(v2_##KIND##_responder_transition),	\
+			ARRAY_PTR(v2_##KIND##_responder_transition),	\
 		},							\
 		.transitions.response = {				\
-			ARRAY_REF(v2_##KIND##_response_transition),	\
+			ARRAY_PTR(v2_##KIND##_response_transition),	\
 		},							\
 	}
 
@@ -210,7 +210,7 @@ struct v2_exchange {
 		.category = CATEGORY,					\
 		.ike_version = IKEv2,					\
 		.v2.ike_responder_exchanges = {				\
-			ARRAY_REF(v2_##KIND##_responder_exchange),	\
+			ARRAY_PTR(v2_##KIND##_responder_exchange),	\
 		},							\
 		.v2.secured = SECURED,					\
 	}

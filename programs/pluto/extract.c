@@ -555,8 +555,7 @@ static char *extract_string(struct kv kv,
 }
 
 static diag_t extract_flags(struct kv kv,
-			    bool *flags,
-			    size_t nr_flags,
+			    struct rw_flags flags,
 			    const struct enum_names *names,
 			    struct verbose verbose)
 {
@@ -564,7 +563,7 @@ static diag_t extract_flags(struct kv kv,
 		return NULL;
 	}
 
-	diag_t d = ttoflags_raw(kv.value, flags, nr_flags, names);
+	diag_t d = ttoflags_raw(kv.value, flags, names);
 	if (d != NULL) {
 		return diag_diag(&d, PRI_KV" invalid, ", pri_kv(kv));
 	}
@@ -632,7 +631,7 @@ static diag_t extract_updown(const struct whack_message *wm,
 	 */
 
 	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
-			  ARRAY_REF(child_config->updown.updown_config),
+			  RW_FLAGS(child_config->updown.updown_config),
 			  &updown_config_names,
 			  verbose);
 	if (d != NULL) {

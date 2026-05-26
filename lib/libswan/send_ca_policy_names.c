@@ -27,6 +27,6 @@ static const char *send_ca_policy_name[] = {
 
 const struct enum_names send_ca_policy_names  = {
 	CA_SEND_NONE, CA_SEND_ALL,
-	ARRAY_REF(send_ca_policy_name),
+	ARRAY_PTR(send_ca_policy_name),
 	.en_prefix = "CA_SEND_",
 };

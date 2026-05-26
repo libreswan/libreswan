@@ -15,7 +15,7 @@
 
 #include "proposals.h"
 
-#include "lswcdefs.h"		/* for ARRAY_REF */
+#include "lswcdefs.h"		/* for ARRAY_PTR */
 #include "enum_names.h"
 
 static const char *proposal_transform_name[] = {
@@ -37,6 +37,6 @@ static const char *proposal_transform_name[] = {
 
 const struct enum_names proposal_transform_names = {
 	PROPOSAL_TRANSFORM_FLOOR, PROPOSAL_TRANSFORM_ROOF-1,
-	ARRAY_REF(proposal_transform_name),
+	ARRAY_PTR(proposal_transform_name),
 	.en_prefix = "PROPOSAL_TRANSFORM_",
 };

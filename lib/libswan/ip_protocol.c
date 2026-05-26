@@ -1148,7 +1148,7 @@ static const char *const ip_protocol_id_name[] = {
 
 enum_names ip_protocol_id_names = {
 	0, elemsof(ip_protocol_id_name) - 1,
-	ARRAY_REF(ip_protocol_id_name),
+	ARRAY_PTR(ip_protocol_id_name),
 	NULL, /* prefix */
 	NULL, /* next */
 };

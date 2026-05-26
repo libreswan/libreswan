@@ -20,7 +20,7 @@
 #include "names.h"
 
 diag_t ttoflags_raw(const char *value,
-		    bool *flag, size_t len,
+		    struct rw_flags flags,
 		    const struct enum_names *names)
 {
 	shunk_t cursor = shunk1(value);
@@ -41,21 +41,21 @@ diag_t ttoflags_raw(const char *value,
 		if (ix < 0) {
 			return diag("\""PRI_SHUNK"\" unrecognized", pri_shunk(arg));
 		}
-		if (ix >= (int)len) {
+		if (ix >= (int)flags.len) {
 			return diag("\""PRI_SHUNK"\" to big", pri_shunk(arg));
 		}
-		flag[ix] = !no;
+		flags.flag[ix] = !no;
 	}
 	return NULL;
 }
 
 void jam_raw_flags(struct jambuf *buf,
-		   const bool *flag, size_t len,
+		   struct ro_flags flags,
 		   const struct enum_names *names)
 {
 	const char *sep = "";
-	for (unsigned u = 0; u < len; u++) {
-		if (flag[u]) {
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (flags.flag[u]) {
 			jam_string(buf, sep); sep = ",";
 			jam_enum_short(buf, names, u);
 		}
@@ -63,13 +63,13 @@ void jam_raw_flags(struct jambuf *buf,
 }
 
 void jam_raw_flags_human(struct jambuf *buf,
-			 const bool *flag, size_t len,
+			 struct ro_flags flags,
 			 const struct enum_names *names)
 {
 	const char *sep = "";
-	for (unsigned u = 0; u < len; u++) {
+	for (unsigned u = 0; u < flags.len; u++) {
 		jam_string(buf, sep); sep = ",";
-		if (!flag[u]) {
+		if (!flags.flag[u]) {
 			jam_string(buf, "no");
 		}
 		jam_enum_human(buf, names, u);

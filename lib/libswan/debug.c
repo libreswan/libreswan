@@ -18,7 +18,7 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "lmod.h"
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 
 /*
  * Initialize both the .name and .help arrays.
@@ -71,7 +71,7 @@ static struct double_double debug = {
 
 const enum_names debug_names = {
 	0, DBG_roof_IX - 1,
-	ARRAY_REF(debug.name),
+	ARRAY_PTR(debug.name),
 	"debug-",
 	NULL,
 };
@@ -91,6 +91,6 @@ const struct lmod_info debug_lmod_info = {
 
 const struct enum_names debug_help = {
 	0, DBG_roof_IX - 1,
-	ARRAY_REF(debug.help),
+	ARRAY_PTR(debug.help),
 	NULL, NULL,
 };

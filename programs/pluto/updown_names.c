@@ -14,7 +14,7 @@
  */
 
 #include "updown.h"
-#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
 static const char *updown_story[] = {
@@ -29,7 +29,7 @@ static const char *updown_story[] = {
 
 const struct enum_names updown_stories = {
 	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_REF(updown_story),
+	ARRAY_PTR(updown_story),
 	NULL, NULL,
 };
 
@@ -45,7 +45,7 @@ static const char *updown_name[] = {
 
 const struct enum_names updown_names = {
 	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_REF(updown_name),
+	ARRAY_PTR(updown_name),
 	"UPDOWN_", NULL,
 };
 
@@ -58,7 +58,7 @@ static const char *updown_config_name[] = {
 
 const struct enum_names updown_config_names = {
 	0, UPDOWN_CONFIG_ROOF-1,
-	ARRAY_REF(updown_config_name),
+	ARRAY_PTR(updown_config_name),
 	"UPDOWN_CONFIG_",
 	NULL,
 };
