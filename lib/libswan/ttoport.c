@@ -16,7 +16,6 @@
 
 #include <netdb.h>		/* for getservbyname() */
 #include <arpa/inet.h>		/* for ntohs() */
-#include <stdlib.h>		/* for strtol() */
 
 #include "jambuf.h"
 #include "constants.h"		/* for thingeq() */
