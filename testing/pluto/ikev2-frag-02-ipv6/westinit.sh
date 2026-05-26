@@ -6,5 +6,4 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add v6-tunnel
-ipsec whack --impair suppress_retransmits
 echo "initdone"

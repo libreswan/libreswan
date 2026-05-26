@@ -38,7 +38,7 @@ initdone
 west #
  # expect ignored fragmentation message
 west #
- ipsec up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: ignoring unsolicited IKEV2_FRAGMENTATION_SUPPORTED notification in response
