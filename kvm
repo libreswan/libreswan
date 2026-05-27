@@ -7,13 +7,14 @@ set -e
 declare -a makeflags
 
 # gmake isn't on debian?
-gnumake="make -C $(realpath $(dirname $0))/testing/kvm"
+kvmdir=$(realpath $(dirname $0))/testing/kvm
+gnumake="make -C ${kvmdir}"
 
 print-kvm-variable() {
     ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1 "${makeflags[@]}"
 }
 
-kvm_platforms=$(echo $(basename -s .sh -a testing/kvm/upgrade/*.sh))
+kvm_platforms=$(echo $(basename -s .sh -a ${kvmdir}/upgrade/*.sh))
 
 # Confusion because of HOST:
 #
@@ -24,7 +25,7 @@ kvm_platforms=$(echo $(basename -s .sh -a testing/kvm/upgrade/*.sh))
 kvm_build_guest_names="${kvm_platforms}"
 kvm_base_guest_names=$(echo ${kvm_platforms}    | sed -e 's;\([a-z]*\);\1-base;g')
 kvm_upgrade_guest_names=$(echo ${kvm_platforms} | sed -e 's;\([a-z]*\);\1-upgrade;g')
-kvm_test_guest_names=$(echo $(basename -a -s .xml testing/kvm/vm/*.xml))
+kvm_test_guest_names=$(echo $(basename -a -s .xml ${kvmdir}/vm/*.xml))
 
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_prefix=$(print-kvm-variable KVM_PREFIX)
