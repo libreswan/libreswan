@@ -17,11 +17,15 @@ EOF
 apt-config dump | grep Dir::Cache
 apt-get update
 
+kv=$(ls /boot/vmlinuz-* | cut -d- -f2-3 | sort -V | tail -1)
+
 while read p eol ; do
     apt-get install -y $p
 done <<EOF
 bison
+bpfcc-tools		# for offcputime-bpfcc
 build-essential
+dnsutils		# dig nslookup
 flex
 gawk
 iptables
@@ -35,6 +39,7 @@ libnss3-tools
 libpam0g-dev
 libsystemd-dev
 libunbound-dev
+linux-headers-${kv}
 make
 net-tools
 nftables
