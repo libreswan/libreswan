@@ -96,32 +96,37 @@ shunk_t shunk_token(shunk_t *cursor, char *delim, const char *delims)
 	}
 }
 
-shunk_t shunk_span(shunk_t *input, const char *accept)
+shunk_t shunk_span(shunk_t *cursor, const char *accept)
 {
-	/*
-	 * If INPUT is either empty, or the NULL_SHUNK, the loop is
-	 * skipped.
-	 */
-	const char *const start = input->ptr;
-	const char *pos = start;
-	while (pos < start + input->len) {
-		if (strchr(accept, *pos) == NULL) {
-			/* save the token and stop character */
-			shunk_t token = shunk2(start, pos - start);
-			/* skip over TOKEN+DELIM */
-			*input = shunk_slice(*input, pos - start, input->len);
+	unsigned pos = 0;
+	while (true) {
+		int d = hunk_byte(*cursor, pos);
+
+		if (d < 0) {
+			/*
+			 * EOF
+			 *
+			 * The last token is just the CURSOR (i.e.,
+			 * any remaining input).  Flag that input has
+			 * been exhausted by setting CURSOR to the
+			 * NULL_SHUNK; the next call will find there's
+			 * no input and return that NULL_SHUNK.
+			 */
+			shunk_t token = *cursor;
+			*cursor = null_shunk;
 			return token;
 		}
+
+		if (strchr(accept, d) == NULL) {
+			/* save the token */
+			shunk_t token = shunk_slice(*cursor, 0, pos);
+			/* skip over TOKEN+DELIM */
+			*cursor = shunk_slice(*cursor, pos, cursor->len);
+			return token;
+		}
+
 		pos++;
 	}
-	/*
-	 * The last token is all of INPUT.  Flag that INPUT has been
-	 * exhausted by setting INPUT to the NULL_SHUNK; the next call
-	 * will return that NULL_SHUNK.
-	 */
-	shunk_t token = *input;
-	*input = null_shunk;
-	return token;
 }
 
 /*
