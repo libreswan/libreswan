@@ -117,52 +117,66 @@ void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK
 #endif
 }
 
+#define DBG_DERIVE(STREAM) DBG_derive(base_key, derive, params,		\
+				      target_name, target_mechanism,	\
+				      operation, key_size, flags,	\
+				      where, logger, STREAM)
+
+static void DBG_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *params,
+			const char *target_name, CK_MECHANISM_TYPE target_mechanism,
+			CK_ATTRIBUTE_TYPE operation,
+			int key_size, CK_FLAGS flags,
+			where_t where, struct logger *logger, enum stream stream)
+{
+	LLOG_JAMBUF(stream, logger, buf) {
+		jam_nss_ckm(buf, derive);
+		jam_string(buf, ": ");
+		jam_string(buf, target_name);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
+	LLOG_JAMBUF(stream, logger, buf) {
+		jam_string(buf, SPACES"target: ");
+		jam_nss_ckm(buf, target_mechanism);
+	}
+	if (flags != 0) {
+		LLOG_JAMBUF(stream, logger, buf) {
+			jam_string(buf, SPACES"flags: ");
+			jam_nss_ckf(buf, flags);
+		}
+	}
+	if (key_size != 0) {
+		LLOG_JAMBUF(stream, logger, buf) {
+			jam(buf, SPACES "key_size: %d-bytes",
+			    key_size);
+		}
+	}
+	LLOG_JAMBUF(stream, logger, buf) {
+		jam_string(buf, SPACES"base: ");
+		jam_symkey(buf, "base", base_key);
+	}
+	if (operation != CKA_DERIVE) {
+		LLOG_JAMBUF(stream, logger, buf) {
+			jam_string(buf, SPACES"operation: ");
+			jam_nss_cka(buf, operation);
+		}
+	}
+	if (params != NULL) {
+		LLOG_JAMBUF(stream, logger, buf) {
+			jam(buf, SPACES "params: %d-bytes@%p",
+			    params->len, params->data);
+		}
+	}
+}
+
 PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *params,
 			 const char *target_name, CK_MECHANISM_TYPE target_mechanism,
 			 CK_ATTRIBUTE_TYPE operation,
 			 int key_size, CK_FLAGS flags,
 			 where_t where, struct logger *logger)
 {
-#define DBG_DERIVE()							\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
-		jam_nss_ckm(buf, derive);				\
-		jam_string(buf, ":");					\
-	}								\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
-		jam_string(buf, SPACES"target: ");			\
-		jam_nss_ckm(buf, target_mechanism);			\
-	}								\
-	if (flags != 0) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
-			jam_string(buf, SPACES"flags: ");		\
-			jam_nss_ckf(buf, flags);			\
-		}							\
-	}								\
-	if (key_size != 0) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
-			jam(buf, SPACES "key_size: %d-bytes",		\
-			    key_size);					\
-		}							\
-	}								\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
-		jam_string(buf, SPACES"base: ");			\
-		jam_symkey(buf, "base", base_key);			\
-	}								\
-	if (operation != CKA_DERIVE) {					\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
-			jam_string(buf, SPACES"operation: ");		\
-			jam_nss_cka(buf, operation);			\
-		}							\
-	}								\
-	if (params != NULL) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
-			jam(buf, SPACES "params: %d-bytes@%p",		\
-			    params->len, params->data);			\
-		}							\
-	}
-
 	if (LDBGP(DBG_CRYPT, logger)) {
-		DBG_DERIVE();
+		DBG_DERIVE(DEBUG_STREAM);
 	}
 
 	PK11SymKey *target_key = PK11_DeriveWithFlags(base_key, derive,
@@ -176,7 +190,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			jam_string(buf, " failed: ");
 			jam_nss_error_code(buf, PR_GetError());
 		}
-		DBG_DERIVE();
+		DBG_DERIVE(ALL_STREAMS);
 		return NULL;
 	}
 
