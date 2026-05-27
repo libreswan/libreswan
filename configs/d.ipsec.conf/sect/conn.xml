@@ -218,6 +218,7 @@
       &conn.negotiationshunt;
       &conn.debug;
       &conn.reject-simultaneous-ike-auth;
+      &conn.send-supported-auth-methods;
     </variablelist>
   </refsect3>
 
