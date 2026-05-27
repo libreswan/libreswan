@@ -245,37 +245,32 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
 
 int enum_byname(enum_names *ed, shunk_t string)
 {
-	const char *prefix = NULL;
+	shunk_t prefix = {0};
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
-		size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
+		prefix = (p->en_prefix == NULL ? prefix : shunk1(p->en_prefix));
 
 		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
-			const char *name = p->en_names[en - p->en_first];
 
-			if (name == NULL) {
+			shunk_t name = shunk1(p->en_names[en - p->en_first]);
+			if (name.ptr == NULL) {
 				continue;
 			}
 
 			passert(en <= INT_MAX);
 
-			/*
-			 * Try matching with and without prefix.
-			 */
-			size_t name_len = strlen(name);
-
-#			define try(guard, f, b) ( \
-				(guard) && \
-				name_len - ((f) + (b)) == string.len && \
-				strncaseeq(name + (f), string.ptr, string.len))
-
-			if (try(true, 0, 0) ||
-			    try(prefix_len > 0, prefix_len, 0)) {
+			/* Matching with prefix. */
+			if (hunk_caseeq(name, string)) {
 				return en;
 			}
 
-#			undef try
+			/* Discard PREFIX then match STRING. */
+			if (prefix.len > 0 &&
+			    hunk_caseeat(&name, prefix) &&
+			    hunk_caseeq(name, string)) {
+				return en;
+			}
+
 		}
 	}
 	return -1;

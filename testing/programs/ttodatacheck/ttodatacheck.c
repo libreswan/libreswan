@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	err_t oops = ttodata(argv[1], strlen(argv[1]), 0,
+	err_t oops = ttodata(shunk1(argv[1]), 0,
 			     buf, sizeof(buf), &n);
 	if (oops != NULL) {
 		fprintf(stderr, "%s: ttodata error `%s' in `%s'\n", pgm,
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 				pgm, n);
 			exit(1);
 		}
-		oops = ttodata(argv[1], strlen(argv[1]), 0, p, n, &n);
+		oops = ttodata(shunk1(argv[1]), 0, p, n, &n);
 		if (oops != NULL) {
 			fprintf(stderr, "%s: error `%s' in ttodata retry?!?\n",
 				pgm, oops);
@@ -284,20 +284,24 @@ static void regress(void)
 		}
 
 		check(r, buf, n,
-		      ttodata(r->ascii, 0, base, buf, sizeof(buf), &n),
+		      ttodata(shunk1(r->ascii), base,
+			      buf, sizeof(buf), &n),
 		      &status);
 		if (base == 64 || xbase == 64)
 			check(r, buf, n,
-			      ttodata(r->ascii, strlen(r->ascii), base, buf, sizeof(buf), &n),
+			      ttodata(shunk1(r->ascii), base,
+				      buf, sizeof(buf), &n),
 			      &status);
 
 		if (xbase != 0) {
 			check(r, buf, n,
-			      ttodata(r->ascii + 2, 0, xbase, buf, sizeof(buf), &n),
+			      ttodata(shunk1(r->ascii + 2), xbase,
+				      buf, sizeof(buf), &n),
 			      &status);
 			if (base == 64 || xbase == 64)
 				check(r, buf, n,
-				      ttodata(r->ascii + 2, 0, xbase, buf, sizeof(buf), &n),
+				      ttodata(shunk1(r->ascii + 2), xbase,
+					      buf, sizeof(buf), &n),
 				      &status);
 		}
 	}

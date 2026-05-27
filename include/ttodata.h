@@ -30,8 +30,9 @@
 
 #define ULTOT_BUF	((64+2)/3 + 1)  /* holds 64 bits in octal + NUL */
 
-extern err_t ttodata(const char *src, size_t srclen, int base,
-		     void *buf, size_t buflen, size_t *needed);
+extern err_t ttodata(shunk_t src, int base,
+		     void *buf, size_t buflen,
+		     size_t *needed);
 
 extern err_t ttochunk(shunk_t src, int base, chunk_t *chunk);
 

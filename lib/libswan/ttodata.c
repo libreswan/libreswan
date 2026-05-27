@@ -23,9 +23,9 @@
 #include "passert.h"
 
 /* converters and misc */
-static int unhex(const char *, char *, size_t);
-static int unb64(const char *, char *, size_t);
-static int untext(const char *, char *, size_t);
+static int unhex(const uint8_t *, uint8_t *, size_t);
+static int unb64(const uint8_t *, uint8_t *, size_t);
+static int untext(const uint8_t *, uint8_t *, size_t);
 static err_t badch(void);
 
 /* internal error codes for converters */
@@ -38,7 +38,7 @@ static err_t badch(void);
 #define BADOFF(code) (BADCH0 - (code))
 
 /*
- * ttodatav - convert text to data, with verbose error reports
+ * ttodata - convert text to data, with verbose error reports
  *
  * If some of this looks slightly odd, it's because it has changed
  * repeatedly (from the original atodata()) without a major rewrite.
@@ -46,17 +46,20 @@ static err_t badch(void);
  * Return NULL on success, else literal or errp
  */
 
-static const char *ttodatav(const char *src, size_t srclen,
-			    int base,		/* 0 means figure it out */
-			    char *dst,		/* need not be valid if dstlen is 0 */
-			    size_t dstlen,
-			    size_t *lenp)	/* where to record length (NULL is nowhere) */
+err_t ttodata(shunk_t input,
+	      int base,		/* 0 means figure it out */
+	      void *dstptr,	/* need not be valid if dstlen is 0 */
+	      size_t dstlen,
+	      size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
+	const uint8_t *src = input.ptr;
+	uint8_t *dst = dstptr;
+	unsigned srclen = input.len;
 	size_t ingroup;	/* number of input bytes converted at once */
-	char buf[4];	/* output from conversion */
+	uint8_t buf[4];	/* output from conversion */
 	int nbytes;	/* size of output */
-	int (*decode)(const char *, char *, size_t);
-	char *stop;
+	int (*decode)(const uint8_t *, uint8_t *, size_t);
+	uint8_t *stop;
 	int ndone;
 	int i;
 	int underscoreok;
@@ -114,7 +117,7 @@ static const char *ttodatav(const char *src, size_t srclen,
 	/* proceed */
 	ndone = 0;
 	while (srclen > 0) {
-		char stage[4];	/* staging area for group */
+		uint8_t stage[4];	/* staging area for group */
 		size_t sl = 0;
 
 		/*
@@ -165,36 +168,18 @@ static const char *ttodatav(const char *src, size_t srclen,
 	return NULL;
 }
 
-/*
- * ttodata - convert text to data
- *
- * Return NULL on success, else literal
- */
-const char *ttodata(const char *src,
-		    size_t srclen,	/* 0 means apply strlen() */
-		    int base,		/* 0 means figure it out */
-		    void *dst,		/* need not be valid if dstlen is 0 */
-		    size_t dstlen,
-		    size_t *lenp)	/* where to record length (NULL is nowhere) */
-{
-	/* zero means apply strlen() */
-	if (srclen == 0)
-		srclen = strlen(src);
-	return ttodatav(src, srclen, base, dst, dstlen, lenp);
-}
-
 const char *ttochunk(shunk_t src,
 		     int base,		/* 0 means figure it out */
 		     chunk_t *dst)
 {
 	size_t size = 0;
-	err_t err = ttodatav(src.ptr, src.len, base, NULL/*dst*/, 0/*dstlen*/, &size);
+	err_t err = ttodata(src, base, NULL/*dst*/, 0/*dstlen*/, &size);
 	if (err != NULL) {
 		return err;
 	}
 	passert(size > 0); /* see pdone variable above */
 	*dst = alloc_chunk(size, "ttochunk");
-	err = ttodatav(src.ptr, src.len, base, (char*)dst->ptr, dst->len, &size);
+	err = ttodata(src, base, (char*)dst->ptr, dst->len, &size);
 	passert(err == NULL);
 	passert(dst->len == size);
 	return NULL;
@@ -205,8 +190,8 @@ const char *ttochunk(shunk_t src,
  *
  * Return number of result bytes, or error code
  */
-static int unhex(const char *src,	/* known to be full length */
-		 char *dst,
+static int unhex(const uint8_t *src,	/* known to be full length */
+		 uint8_t *dst,
 		 size_t dstlen)		/* not large enough is a failure */
 {
 	const char *p;
@@ -245,8 +230,8 @@ static int unhex(const char *src,	/* known to be full length */
  *
  * Return number of result bytes, or error code
  */
-static int unb64(const char *src,	/* known to be full length */
-		 char *dst,
+static int unb64(const uint8_t *src,	/* known to be full length */
+		 uint8_t *dst,
 		 size_t dstlen)
 {
 	const char *p;
@@ -309,8 +294,8 @@ static int unb64(const char *src,	/* known to be full length */
  *
  * Return number of result bytes, or error code
  */
-static int untext(const char *src,	/* known to be full length */
-		  char *dst,
+static int untext(const uint8_t *src,	/* known to be full length */
+		  uint8_t *dst,
 		  size_t dstlen)	/* not large enough is a failure */
 {
 	if (dstlen < 1)

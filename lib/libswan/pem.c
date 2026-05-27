@@ -255,9 +255,9 @@ err_t pemtobin(chunk_t *blob)
 				if (!extract_token(&data, ' ', &line))
 					data = line;
 
-				ugh = ttodata((char *)data.ptr, data.len, 64,
-					(char *)dst.ptr,
-					blob->len - dst.len, &len);
+				ugh = ttodata(HUNK_AS_SHUNK(&data), 64,
+					      (char *)dst.ptr,
+					      blob->len - dst.len, &len);
 				if (ugh != NULL) {
 					ldbg(&global_logger, "  %s", ugh);
 					state = PEM_ABORT;

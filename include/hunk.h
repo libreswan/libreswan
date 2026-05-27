@@ -318,7 +318,6 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 /* returns '\0' (NUL) when out of range */
 
 char raw_char(const void *ptr, size_t len, long index);
-int raw_byte(const void *ptr, size_t len, long index);
 
 #define hunk_char(HUNK, INDEX)						\
 	({								\
@@ -327,6 +326,8 @@ int raw_byte(const void *ptr, size_t len, long index);
 	})
 
 /* returns -1 when out of range */
+
+int raw_byte(const void *ptr, size_t len, long index);
 
 #define hunk_byte(HUNK, INDEX)						\
 	({								\
