@@ -74,6 +74,14 @@
       </arg>
 
       <arg choice="opt">--certtype <replaceable>number</replaceable></arg>
+
+	  <arg choice="opt">--send-supported-auth-methods
+	  <group choice="plain">
+		<arg choice="plain">yes</arg>
+		<arg choice="plain">no</arg>
+	  </group>
+	  </arg>
+	  	  
       <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
       <arg choice="opt">--nexthop <replaceable>ip-address</replaceable></arg>
 
@@ -1719,6 +1727,22 @@
           <listitem>
             <para>
 	      The X.509 certificate type number.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--send-supported-auth-methods</option>
+	  </term>
+          <listitem>
+	    <para>
+	      Whether to send the SUPPORTED_AUTH_METHODS notification to
+	      the remote peer. When enabled, the locally supported
+	      authentication methods are announced in IKE_SA_INIT
+	      response and IKE_AUTH request, allowing the peer to pick a
+	      compatible method before sending its AUTH payload.
+	      The default is <emphasis>no</emphasis>.
 	    </para>
           </listitem>
 	</varlistentry>
