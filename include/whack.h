@@ -395,6 +395,8 @@ struct whack_message {
 
 #define wm_authby conn[END_ROOF].value[KWS_AUTHBY]
 
+#define wm_send_supported_auth_methods conn[END_ROOF].value[KWS_SEND_SUPPORTED_AUTH_METHODS]	/* RFC 9593 Announcing Supported Authentication Methods */
+
 #define wm_debug conn[END_ROOF].value[KWS_DEBUG]
 
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]

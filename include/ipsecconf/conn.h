@@ -225,8 +225,9 @@ enum config_conn_keyword {
 	KWS_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KWS_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 	KWS_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
+	KWS_SEND_SUPPORTED_AUTH_METHODS,	/* RFC 9593 Announcing Supported Authentication Methods */
 
-#define CONFIG_CONN_KEYWORD_ROOF (KWS_SESSION_RESUMPTION + 1)
+#define CONFIG_CONN_KEYWORD_ROOF (KWS_SEND_SUPPORTED_AUTH_METHODS + 1)
 };
 
 #endif
