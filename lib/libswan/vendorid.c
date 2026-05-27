@@ -131,7 +131,7 @@ struct vid_struct {
 		.kind = KIND,						\
 		.descr = DESCR,						\
 		.vid = {						\
-			.ptr = RAW_VID,					\
+			.ptr = (const uint8_t *) RAW_VID,		\
 			.len = sizeof(RAW_VID) - 1 /*don't count NUL*/, \
 		},							\
 	}
