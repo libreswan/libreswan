@@ -606,6 +606,7 @@ enum opt {
 	CD_TRANSPORT,
 	CD_ENCRYPT,
 	CD_AUTHENTICATE,
+	CD_SEND_SUPPORTED_AUTH_METHODS,
 
 	/*
 	 * Connection proof-of-identity options that set .auth and
@@ -829,6 +830,7 @@ const struct option optarg_options[] = {
 	{ "dont-share-lease\0", no_argument, NULL, CD_DONT_SHARE_LEASE },
 	{ "aggressive\0", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode\0", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
+	{ "send-supported-auth-methods\0", optional_argument, NULL, CD_SEND_SUPPORTED_AUTH_METHODS },
 
 	{ FATAL_OPT("initiateontraffic", ""), no_argument, NULL, 0, }, /* obsolete */
 
@@ -1737,6 +1739,10 @@ int main(int argc, char **argv)
 
 		case CD_INTERMEDIATE:		/* --intermediate[={yes,no}] */
 			msg.wm_intermediate = (optarg == NULL ? "yes" : optarg);
+			continue;
+
+		case CD_SEND_SUPPORTED_AUTH_METHODS:	/* --send-supported-auth-methods[={yes,no}] */
+			msg.wm_send_supported_auth_methods = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_MOBIKE:		/* --mobike[={yes,no}] */

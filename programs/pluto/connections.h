@@ -419,6 +419,9 @@ struct config {
 	bool session_resumption;	/* RFC 5723 - IKEv2 Session
 					 * Resumption */
 
+	bool send_supported_auth_methods;	/* RFC 9593 
+					 * Announcing Supported Authentication Methods */
+
 	struct {
 		char *interface;
 		bool routing;		/* should updown perform
