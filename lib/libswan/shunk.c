@@ -49,38 +49,51 @@ shunk_t shunk2(const void *ptr, size_t len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
-shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
+shunk_t shunk_token(shunk_t *cursor, char *delim, const char *delims)
 {
-	/*
-	 * If INPUT is either empty, or the NULL_SHUNK, the loop is
-	 * skipped.
-	 */
-	const char *const start = input->ptr;
-	const char *pos = start;
-	while (pos < start + input->len) {
-		if (strchr(delims, *pos) != NULL) {
-			/* save the token and stop character */
-			shunk_t token = shunk2(start, pos-start);
+	unsigned pos = 0;
+	while (true) {
+		int d = hunk_byte(*cursor, pos);
+
+		if (d < 0) {
+			/*
+			 * EOF
+			 *
+			 * The last token is any remaining input (per
+			 * below, when CURSOR is the NULL_SHUNK token
+			 * is set to NULL_SHUNK).
+			 *
+			 * Flag that the input has been exhausted by
+			 * setting CURSOR to the NULL_SHUNK.  The next
+			 * call will return the NULL_SHUNK CURSOR as
+			 * the TOKEN terminating the LOOP.
+			 */
+			shunk_t token = *cursor;
+			*cursor = null_shunk;
 			if (delim != NULL) {
-				*delim = *pos;
+				*delim = '\0';
 			}
-			/* skip over TOKEN+DELIM */
-			*input = shunk_slice(*input, pos-start+1, input->len);
 			return token;
 		}
+
+		if (strchr(delims, d) != NULL) {
+			/*
+			 * TOKEN END
+			 *
+			 * Save the token and, optionally, delim
+			 * character.  Advance CURSOR to next token.
+			 */
+			shunk_t token = shunk_slice(*cursor, 0, pos);
+			if (delim != NULL) {
+				*delim = d;
+			}
+			/* skip over TOKEN+DELIM */
+			*cursor = shunk_slice(*cursor, pos+1, cursor->len);
+			return token;
+		}
+
 		pos++;
 	}
-	/*
-	 * The last token is all of INPUT.  Flag that INPUT has been
-	 * exhausted by setting INPUT to the NULL_SHUNK; the next call
-	 * will return that NULL_SHUNK.
-	 */
-	shunk_t token = *input;
-	*input = null_shunk;
-	if (delim != NULL) {
-		*delim = '\0';
-	}
-	return token;
 }
 
 shunk_t shunk_span(shunk_t *input, const char *accept)
