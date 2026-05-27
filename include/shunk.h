@@ -65,6 +65,7 @@ shunk_t shunk2(const void *ptr, size_t len);
 		};							\
 		s_;							\
 	})
+
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /*
