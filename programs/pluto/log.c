@@ -414,6 +414,10 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 	case PEXPECT_STREAM:
 	case PASSERT_STREAM:
 		log_raw(LOG_ERR, "", buf);
+		/*
+		 * Include RC in error code so message is forced onto
+		 * console.
+		 */
 		log_whacks(RC_INTERNAL_ERROR, logger, buf);
 		return; /*abort();*/
 	case NO_STREAM:

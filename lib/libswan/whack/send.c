@@ -133,14 +133,15 @@ static int whack_read_reply(int sock,
 		*be = '\0';
 
 		for (;; ) {
-			char *le = strchr(ls, '\n');
 
+			char *le = strchr(ls, '\n');
 			if (le == NULL) {
 				/* move last, partial line to start of buffer */
 				memmove(buf, ls, be - ls);
 				be -= ls - buf;
 				break;
 			}
+
 			le++;	/* include NL in line */
 
 			/*
@@ -158,7 +159,22 @@ static int whack_read_reply(int sock,
 
 			ls = lpe + 1; /* skip NNN_ */
 
-			if (s > 0 || noise >= NOISY_WHACK) {
+			/*
+			 * Normally the message is either:
+			 *
+			 *   000 optional-text\n
+			 *   NNN \n
+			 *
+			 * where, with the latter, the newline should
+			 * be suppressed.
+			 *
+			 * However, when there's an internal error,
+			 * the message:
+			 *
+			 *   NNN error-message\n
+			 */
+			if ((s == 0 && noise >= NOISY_WHACK) ||
+			    (s != 0 && (le - ls) > 1/*more-than-just-nl*/)) {
 				if (write(STDOUT_FILENO, ls, le - ls) == -1) {
 					int e = errno;
 					llog_errno(RC_LOG, logger, e, "write() failed, and ignored");
