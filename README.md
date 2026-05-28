@@ -10,7 +10,7 @@ many others.
 
 Download: https://download.libreswan.org/
 
-Git repository: https://github.com/libreswan/libreswan/
+Git: `git clone https://github.com/libreswan/libreswan.git`
 
 _Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04.  See the CREDITS files for contributor
