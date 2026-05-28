@@ -64,6 +64,7 @@ static bool nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
 			       ml_kem_mechanism);
 		return false;
 	}
+
 	bool ok = nss_ml_kem_calc_local_secret_1(kem, private_key, public_key, logger,
 						 ml_kem_mechanism, slot);
 	PK11_FreeSlot(slot);

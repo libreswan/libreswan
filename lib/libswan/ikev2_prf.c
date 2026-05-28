@@ -23,6 +23,7 @@
  *
  */
 
+#include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_prf_ikev2_ops.h"
 
@@ -56,8 +57,21 @@ PK11SymKey *ikev2_IKE_SA_INIT_skeyseed(const struct prf_desc *prf_desc,
 				       PK11SymKey *ke_secret,
 				       struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr,
-							ke_secret, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " Ni Nr");
+		jam(buf, " ke_secret=");
+		jam_symkey(buf, ke_secret);
+		jam(buf, ") ...");
+	}
+	PK11SymKey *skeyseed =
+		prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr,
+							 ke_secret, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
+	return skeyseed;
 }
 
 /*
@@ -69,9 +83,23 @@ PK11SymKey *ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(const struct prf_desc *prf_
 						     const chunk_t Ni, const chunk_t Nr,
 						     struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
-							      new_ke_secret,
-							      Ni, Nr, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " SK_d_old");
+		jam_symkey(buf, SK_d_old);
+		jam(buf, " new_ke_secret=");
+		jam_symkey(buf, new_ke_secret);
+		jam(buf, " Ni Nr) ...");
+	}
+	PK11SymKey *skeyseed =
+		prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
+							       new_ke_secret,
+							       Ni, Nr, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
+	return skeyseed;
 }
 
 /*
@@ -84,11 +112,24 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes,
 				struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_keymat(prf_desc, skeyseed, Ni, Nr,
-						      THING_AS_SHUNK(SPIir->initiator),
-						      THING_AS_SHUNK(SPIir->responder),
-						      required_bytes,
-						      logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s=", __func__, prf_desc->common.fqn);
+		jam_string(buf, "skeyseed");
+		jam_symkey(buf, skeyseed);
+		jam(buf, " Ni Nr required_bytes=%zu SPIir", required_bytes);
+		jam(buf, ") ...");
+	}
+	PK11SymKey *keymat =
+		prf_desc->prf_ikev2_ops->ike_sa_keymat(prf_desc, skeyseed, Ni, Nr,
+						       THING_AS_SHUNK(SPIir->initiator),
+						       THING_AS_SHUNK(SPIir->responder),
+						       required_bytes,
+						       logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, keymat);
+	}
+	return keymat;
 }
 
 /*
@@ -99,12 +140,22 @@ PK11SymKey *ikev2_IKE_INTERMEDIATE_ppk_skeyseed(const struct prf_desc *prf_desc,
 						PK11SymKey *old_SK_d,
 						struct logger *logger)
 {
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " ppk old_SK_d=");
+		jam_symkey(buf, old_SK_d);
+		jam(buf, ") ...");
+	}
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk, logger);
 	PK11SymKey *skeyseed = prf_desc->prf_ikev2_ops->prfplus(prf_desc, ppk_key,
 								old_SK_d,
 								prf_desc->prf_key_size,
 								logger);
 	symkey_delref(logger, "PPK key", &ppk_key);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
 	return skeyseed;
 }
 
@@ -117,9 +168,23 @@ PK11SymKey *ikev2_IKE_INTERMEDIATE_kem_skeyseed(const struct prf_desc *prf_desc,
 						const chunk_t Ni, const chunk_t Nr,
 						struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, old_SK_d,
-							      new_ke_secret,
-							      Ni, Nr, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " old_SK_d=");
+		jam_symkey(buf, old_SK_d);
+		jam(buf, " new_ke_secret=");
+		jam_symkey(buf, new_ke_secret);
+		jam(buf, " Ni Nr) ...");
+	}
+	PK11SymKey *skeyseed =
+		prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, old_SK_d,
+							       new_ke_secret,
+							       Ni, Nr, logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
+	return skeyseed;
 }
 
 /*
@@ -132,9 +197,24 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  size_t required_bytes,
 				  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_ke_secret,
-							Ni, Nr, required_bytes,
-							logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " SK_d=");
+		jam_symkey(buf, SK_d);
+		jam(buf, " new_ke_secret=");
+		jam_symkey(buf, new_ke_secret);
+		jam(buf, " Ni Nr required_bytes=%zu", required_bytes);
+		jam_string(buf, ") ...");
+	}
+	PK11SymKey *keymat =
+		prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_ke_secret,
+							 Ni, Nr, required_bytes,
+							 logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, keymat);
+	}
+	return keymat;
 }
 
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,
@@ -161,10 +241,23 @@ PK11SymKey *ikev2_IKE_SESSION_RESUME_skeyseed(const struct prf_desc *prf_desc,
 					      const chunk_t Ni, const chunk_t Nr,
 					      struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->ike_sa_resume_skeyseed(prf_desc,
-							       SK_d_old,
-							       Ni, Nr,
-							       logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " SK_d_old=");
+		jam_symkey(buf, SK_d_old);
+		jam(buf, " Ni Nr");
+		jam_string(buf, ") ...");
+	}
+	PK11SymKey *skeyseed =
+		prf_desc->prf_ikev2_ops->ike_sa_resume_skeyseed(prf_desc,
+								SK_d_old,
+								Ni, Nr,
+								logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
+	return skeyseed;
 }
 
 /*
@@ -181,4 +274,3 @@ struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc,
 						   first_packet,
 						   logger);
 }
-

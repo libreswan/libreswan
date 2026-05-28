@@ -41,8 +41,9 @@ void init_crypt_symkey(struct logger *logger)
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);
 	PK11_FreeSlot(slot); /* reference counted */
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_symkey(logger, SPACES, "ephemeral", ephemeral_symkey);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, SPACES"ephemeral ");
+		jam_symkey(buf, ephemeral_symkey);
 	}
 }
 
@@ -81,40 +82,20 @@ size_t sizeof_symkey(PK11SymKey *key)
 	}
 }
 
-void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key)
+void jam_symkey(struct jambuf *buf, PK11SymKey *key)
 {
 	if (key == NULL) {
 		/*
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		jam(buf, "%s-key@NULL", name);
+		jam(buf, "key@NULL");
 	} else {
-		jam(buf, "%s-key@%p (%zd-bytes, ",
-		    name, key, sizeof_symkey(key));
+		jam(buf, "key@%p (%zd-bytes, ",
+		    key, sizeof_symkey(key));
 		jam_nss_ckm(buf, PK11_GetMechanism(key));
-		jam(buf, ")");
+		jam(buf, ", slot %p)", PK11_GetSlotFromKey(key));
 	}
-}
-
-void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key)
-{
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-		jam(buf, "%s: ", prefix);
-		jam_symkey(buf, name, key);
-	}
-#if 0
-	if (LDBGP(DBG_CRYPT, logger)) {
-		if (is_fips_mode()) {
-			LDBG_log(logger, "%s secured by FIPS", prefix);
-		} else {
-			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
-			/* NULL suppresses the dump header */
-			LDBG_hunk(logger, &bytes);
-			free_chunk_content(&bytes);
-		}
-	}
-#endif
 }
 
 #define DBG_DERIVE(STREAM) DBG_derive(base_key, derive, params,		\
@@ -153,7 +134,7 @@ static void DBG_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *
 	}
 	LLOG_JAMBUF(stream, logger, buf) {
 		jam_string(buf, SPACES"base: ");
-		jam_symkey(buf, "base", base_key);
+		jam_symkey(buf, base_key);
 	}
 	if (operation != CKA_DERIVE) {
 		LLOG_JAMBUF(stream, logger, buf) {
@@ -198,8 +179,8 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, SPACES"result: ");
-			jam_symkey(buf, target_name, target_key);
+			jam(buf, SPACES"result: %s=", target_name);
+			jam_symkey(buf, target_key);
 			jam_where(buf, where);
 		}
 	}
@@ -312,10 +293,10 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	}
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "%s extracting all %zd bytes of key@%p",
-			 name, sizeof_bytes, symkey);
-		LDBG_symkey(logger, name, "symkey", symkey);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s extracting all %zd bytes of ",
+		    name, sizeof_bytes);
+		jam_symkey(buf, symkey);
 	}
 
 	/* get a secret key */

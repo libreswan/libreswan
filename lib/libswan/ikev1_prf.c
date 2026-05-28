@@ -141,8 +141,14 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "calling %s.%s():",
 			 prf_desc->prf_ikev1_ops->backend, __func__);
-		LDBG_symkey(logger, __func__, "SKEYID_d:", SKEYID_d);
-		LDBG_symkey(logger, __func__, "g_xy:", g_xy);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s SKEYID_d: ", __func__);
+			jam_symkey(buf, SKEYID_d);
+		}
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s g_xy: ", __func__);
+			jam_symkey(buf, g_xy);
+		}
 		LDBG_log(logger, "protocol: 0x%02"PRIx8, protocol);
 		LDBG_log(logger, "SPI");
 		LDBG_hunk(logger, &SPI);

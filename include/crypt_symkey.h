@@ -33,12 +33,12 @@ struct logger;
 void init_crypt_symkey(struct logger *logger);
 
 /*
- * Log some information on a SYMKEY.
+ * Log some information on a SYMKEY using the format:
  *
- * The format is <PREFIX>: <NAME>-key@...
+ *   key@<addr> (%d-bytes, mechanism, slot)
  */
-void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key);
-void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
+
+void jam_symkey(struct jambuf *buf, PK11SymKey *key);
 
 /*
  * Add/delete references to a reference-countered PK11SymKey.
