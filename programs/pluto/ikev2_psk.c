@@ -262,7 +262,10 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		LDBG_log_hunk(logger, "%s:", nonce, nonce_name);
 		LDBG_log_hunk(logger, "idhash:", idhash);
 		LDBG_log_hunk(logger, "IntAuth:", &intermediate_auth);
-		LDBG_symkey(logger, "", "PSS:", pss);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "PSS: ");
+			jam_symkey(buf, pss);
+		}
 	}
 
 	/*

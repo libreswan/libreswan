@@ -668,27 +668,36 @@ static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key,
 					  const struct logger *logger)
 {
 	SECKEYPrivateKey *unpacked_key = NULL;
+
 	if (private_key->pkcs11Slot != NULL) {
 		PK11SlotInfo *slot = PK11_ReferenceSlot(private_key->pkcs11Slot);
 		if (slot != NULL) {
-			ldbg(logger, "copying key using reference slot");
 			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
+			ldbg(logger, "copied privat key %p to %p in reference slot %p",
+			     private_key, unpacked_key, slot);
 			PK11_FreeSlot(slot);
 		}
 	}
+
 	if (unpacked_key == NULL) {
 		CK_MECHANISM_TYPE mech = PK11_MapSignKeyType(private_key->keyType);
 		PK11SlotInfo *slot = PK11_GetBestSlot(mech, NULL);
 		if (slot != NULL) {
-			ldbg(logger, "copying key using mech/slot");
 			unpacked_key = PK11_CopyTokenPrivKeyToSessionPrivKey(slot, private_key);
+			name_buf mb;
+			ldbg(logger, "copied private key %p to %p in slot %p with mechanism %s",
+			     private_key, unpacked_key,
+			     slot, str_nss_ckm(mech, &mb));
 			PK11_FreeSlot(slot);
 		}
 	}
+
 	if (unpacked_key == NULL) {
-		ldbg(logger, "copying key using SECKEY_CopyPrivateKey()");
 		unpacked_key = SECKEY_CopyPrivateKey(private_key);
+		ldbg(logger, "copied private key %p to %p using SECKEY_CopyPrivateKey()",
+		     private_key, unpacked_key);
 	}
+
 	return unpacked_key;
 }
 

@@ -76,7 +76,10 @@ void crypt_hash_digest_symkey(struct crypt_hash *hash,
 {
 	if (ldbg_hash(hash, "digest symkey %s@%p (size %zu)",
 		      name, symkey, sizeof_symkey(symkey))) {
-		LDBG_symkey(hash->logger, hash->name, name, symkey);
+		LLOG_JAMBUF(DEBUG_STREAM, hash->logger, buf) {
+			jam(buf, "%s %s ", hash->name, name);
+			jam_symkey(buf, symkey);
+		}
 	}
 	hash->desc->hash_ops->digest_symkey(hash->context, name, symkey);
 }

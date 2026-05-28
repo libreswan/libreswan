@@ -144,7 +144,10 @@ struct crypt_prf *crypt_prf_init_symkey(const char *prf_name,
 									key_name, key,
 									logger));
 	if (ldbg_prf(prf, "init symkey %p (length %zd)", key, sizeof_symkey(key))) {
-		LDBG_symkey(logger, prf_name, key_name, key);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s %s ", prf_name, key_name);
+			jam_symkey(buf, key);
+		}
 	}
 	return prf;
 }
@@ -158,7 +161,10 @@ void crypt_prf_update_symkey(struct crypt_prf *prf,
 {
 	if (ldbg_prf(prf, "update symkey %s@%p (size %zd)",
 		     update_name, update, sizeof_symkey(update))) {
-		LDBG_symkey(prf->logger, prf->prf_name, update_name, update);
+		LLOG_JAMBUF(DEBUG_STREAM, prf->logger, buf) {
+			jam(buf, "%s %s", prf->prf_name, update_name);
+			jam_symkey(buf, update);
+		}
 	}
 	prf->desc->prf_mac_ops->digest_symkey(prf->context, update_name, update);
 }
@@ -194,7 +200,10 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 	PK11SymKey *tmp = prf->desc->prf_mac_ops->final_symkey(&prf->context);
 	if (ldbg_prf(prf, "final key@%p (size %zu)",
 		     tmp, sizeof_symkey(tmp))) {
-		LDBG_symkey(logger, prf->prf_name, "key", tmp);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s final ", prf->prf_name);
+			jam_symkey(buf, tmp);
+		}
 	}
 	pfree(*prfp);
 	*prfp = prf = NULL;
