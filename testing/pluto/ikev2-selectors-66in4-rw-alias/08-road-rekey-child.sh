@@ -1,1 +1,1 @@
-ipsec whack --rekey-child --name road
+ipsec whack --rekey-child --name road # sanitize-retransmits
