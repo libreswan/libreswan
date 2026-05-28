@@ -27,4 +27,4 @@ east #
  grep '^[^|].*USER_FQDN' /tmp/pluto.log
 "san" #1: Peer ID is USER_FQDN: 'user-west@testing.libreswan.org'
 "san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match USER_FQDN 'user-west@testing.libreswan.org'
-east # 
+east #
