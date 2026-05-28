@@ -1030,26 +1030,31 @@ bool default_proposals(const struct proposals *proposals)
 static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
 {
 	passert(parser->diag == NULL);
-	/* convert -<eklen> if present */
-	char *end = NULL;
-	long eklen = strtol(buf.ptr, &end, 10);
-	if (buf.ptr + buf.len != end) {
-		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length contains a non-numeric character",
+	/* convert <eklen> in <alg>-<eklen> */
+	uintmax_t eklen;
+	err_t e = shunk_to_uintmax(buf, /*no-cursor,use-all*/NULL, 10, &eklen);
+
+	if (e != NULL) {
+		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length invalid, %s",
 			       parser->protocol->name,
-			       pri_shunk(print));
+			       pri_shunk(print),
+			       e);
 		return 0;
 	}
+
 	if (eklen >= INT_MAX) {
 		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length WAY too big",
 			       parser->protocol->name,
 			       pri_shunk(print));
 		return 0;
 	}
+
 	if (eklen == 0) {
 		proposal_error(parser, "%s encryption key length is zero",
 			       parser->protocol->name);
 		return 0;
 	}
+
 	return eklen;
 }
 

@@ -65,6 +65,7 @@ chunk_t chunk2(void *ptr, size_t len);
 		};							\
 		c_;							\
 	})
+
 #define THING_AS_CHUNK(THING) chunk2(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);

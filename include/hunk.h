@@ -110,7 +110,7 @@ void replace_ro_hunk(struct ro_hunk **hunk, struct ro_hunk *with,
  */
 
 #define ARRAY_AS_HUNK(ARRAY) { .ptr = (ARRAY), .len = sizeof(ARRAY), }
-#define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
+
 #define NULL_HUNK { .ptr = NULL, .len = 0, }
 /* #define EMPTY_HUNK { .ptr = &buffer, .len = 0, } */
 #define HUNK_REF(HUNK) .ptr = ((HUNK) == 0 ? NULL : (HUNK)->ptr), .len = ((HUNK) == NULL ? 0 : (HUNK)->len)
@@ -475,7 +475,7 @@ uintmax_t raw_ntoh(const void *bytes, size_t size);
 
 #define ntoh_thing(THING)						\
 	({								\
-		const shunk_t hunk_ = THING_AS_HUNK(THING);		\
+		const shunk_t hunk_ = THING_AS_SHUNK(THING);		\
 		raw_ntoh(hunk_.ptr, hunk_.len);				\
 	})
 
@@ -500,7 +500,7 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 
 #define clone_thing_as_string(THING, NAME)				\
 	({								\
-		shunk_t hunk_ = THING_AS_HUNK(THING);			\
+		shunk_t hunk_ = THING_AS_SHUNK(THING);			\
 		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
 	})
 

@@ -102,8 +102,8 @@ bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
 	 */
 	passert(hunk_strnlen(label) < label.len);
 	passert(hunk_strnlen(range) < range.len);
-	const char *scontext = label.ptr;
-	const char *tcontext = (const char*)range.ptr;
+	const char *scontext = (const char *)label.ptr;
+	const char *tcontext = (const char *)range.ptr;
 
 	/*
 	 * Check access permission for sl (connection policy label from SAD)

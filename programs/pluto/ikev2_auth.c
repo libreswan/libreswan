@@ -103,7 +103,7 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ia2), };
 		/* IKE AUTH's first Message ID */
 		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
-		shunk_t mid = THING_AS_HUNK(blobs->mid);
+		shunk_t mid = THING_AS_SHUNK(blobs->mid);
 		*blob++ = (struct hash_hunk) { "IKE_AUTH_MID", HUNK_REF(&mid), };
 	}
 
