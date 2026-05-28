@@ -1106,6 +1106,7 @@ kvmplutotest	ikev2-selectors-64in4-rw-ike		good
 kvmplutotest	ikev2-selectors-64in6-rw-alias		good
 kvmplutotest	ikev2-selectors-64in6-rw-ike		good
 kvmplutotest	ikev2-selectors-66in4-rw-alias		good
+kvmplutotest	ikev2-selectors-66in4-rw-alias-nonat	good
 kvmplutotest	ikev2-selectors-66in4-rw-ike		good
 kvmplutotest	ikev2-selectors-66in6-rw-alias		good
 kvmplutotest	ikev2-selectors-66in6-rw-ike		good
