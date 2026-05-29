@@ -118,7 +118,23 @@ xfrm_policy()
 
 setkey_state()
 {
-    setkey -D
+    # Join AES-GCM key continuation lines back onto the E:/A: line.
+    # setkey's ipsec_hexdump wraps the hex at 32 chars.
+    setkey -D | sed -n -e '
+/^[ 	][ 	]*[0-9a-f][0-9a-f]*\([ 	][ 	]*[0-9a-f][0-9a-f]*\)*[ 	]*$/ {
+    H
+    x
+    s/\n[ 	]*/ /g
+    h
+    b end
+}
+x
+/./ p
+:end
+$ {
+    x
+    /./ p
+}'
 }
 
 setkey_policy()
