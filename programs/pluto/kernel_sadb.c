@@ -26,7 +26,8 @@ bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_port *port,
 				    struct verbose verbose)
 {
-	err_t err = shunk_to_address_port(cursor, address, port);
+	err_t err = sockaddr_to_address_port(cursor->ptr, cursor->len,
+					     address, port);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "invalid sockaddr: %s", err);
 		return false;

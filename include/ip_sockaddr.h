@@ -58,7 +58,6 @@ ip_sockaddr sockaddr_from_address(const ip_address address);
 ip_sockaddr sockaddr_from_address_port(const ip_address address, const ip_port port);
 ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint);
 
-err_t shunk_to_address_port(shunk_t shunk, ip_address *address, ip_port *port);
 err_t sockaddr_to_address_port(const struct sockaddr *sa, size_t len,
 			       ip_address *address, ip_port *port);
 
