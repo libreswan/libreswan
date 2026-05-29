@@ -21,8 +21,13 @@
 
 const ip_sockaddr unset_sockaddr;
 
-err_t sockaddr_to_address_port(const struct sockaddr *unaligned_sa, size_t len,
+err_t sockaddr_to_address_port(const struct sockaddr *sa, size_t len,
 			       ip_address *address, ip_port *port)
+{
+	return shunk_to_address_port(shunk2(sa, len), address, port);
+}
+
+err_t shunk_to_address_port(shunk_t shunk, ip_address *address, ip_port *port)
 {
 	/* always clear; both are optional */
 	if (address != NULL) {
@@ -33,15 +38,16 @@ err_t sockaddr_to_address_port(const struct sockaddr *unaligned_sa, size_t len,
 	}
 
 	/*
-	 * Move to an aligned structure.
+	 * Move to an aligned structure as SHUNK can point into a
+	 * misaligned buffer.
 	 *
-	 * UNALIGNED_SA can point into a raw buffer.  LEN indicates
-	 * the max number of bytes that can be safely read.
+	 * Copy at most sizeof(sa.sa) bytes - more is ok, it's just
+	 * ignored.
 	 *
 	 * XXX: use PMIN(), and not min(), to avoid gcc/102288.
 	 */
-	ip_sockaddr sa = { .len = PMIN(len, sizeof(sa.sa)), };
-	memcpy(&sa.sa, unaligned_sa, sa.len);
+	ip_sockaddr sa = { .len = PMIN(shunk.len, sizeof(sa.sa)), };
+	memcpy(&sa.sa, shunk.ptr, sa.len);
 
 	socklen_t min_len = offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t);
 	if (sa.len < min_len) {
