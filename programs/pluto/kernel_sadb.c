@@ -85,8 +85,9 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 				     cursor->len, sizeof(struct TYPE));	\
 			return NULL;					\
 		}							\
+									\
 		/* SADB stream is aligned */				\
-		const struct TYPE *type = cursor->ptr;			\
+		const struct TYPE *type = (const struct TYPE *)cursor->ptr; \
 		size_t type_len = type->TYPE##_len * LEN_MULTIPLIER;	\
 		if (type_len < sizeof(struct TYPE)) {			\
 			llog_pexpect(verbose.logger, HERE,		\
@@ -94,18 +95,21 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 				     sizeof(struct TYPE), type->TYPE##_len, type_len); \
 			return NULL;					\
 		}							\
+									\
 		if (type_len > (cursor)->len) {				\
 			llog_pexpect(verbose.logger, HERE,		\
 				     "%zu-byte buffer too small for "#TYPE"_len=%u(%zu-bytes)", \
 				     cursor->len, type->TYPE##_len, type_len); \
 			return NULL;					\
 		}							\
+									\
 		/* type_cursor */					\
-		(type_cursor)->ptr = (cursor)->ptr + sizeof(struct TYPE); \
-		(type_cursor)->len = type_len - sizeof(struct TYPE);	\
+		(*type_cursor) = shunk_slice(*cursor,			\
+					     sizeof(struct TYPE),	\
+					     type_len);			\
 		/* now skip to next field */				\
-		(cursor)->ptr += type_len;				\
-		(cursor)->len -= type_len;				\
+		(*cursor) = shunk_slice(*cursor, type_len,		\
+					cursor->len);			\
 		return type;						\
 	}
 
