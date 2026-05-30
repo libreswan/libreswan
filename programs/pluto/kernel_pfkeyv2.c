@@ -69,14 +69,14 @@ struct outbuf {
 	struct logger *logger;
 	struct sadb_msg *base;
 	/* cursor */
-	void *ptr;
 	size_t len;
+	uint8_t *ptr COUNTED_BY_PTR(len);
 };
 
 static void ldbg_outbuf(struct verbose verbose, struct outbuf *msg)
 {
 	vdbg("msg: %p + %zu = %p + %zu = %p",
-	     msg->buf.ptr, (msg->ptr - (void*)msg->buf.ptr),
+	     msg->buf.ptr, (msg->ptr - msg->buf.ptr),
 	     msg->ptr, msg->len,
 	     (msg->ptr + msg->len));
 	vassert((msg->ptr + msg->len) == (msg->buf.ptr + msg->buf.len));
@@ -84,7 +84,7 @@ static void ldbg_outbuf(struct verbose verbose, struct outbuf *msg)
 
 static size_t msg_len(const void *start, struct outbuf *msg)
 {
-	return (msg->ptr - start) / sizeof (uint64_t);
+	return (msg->ptr - (const uint8_t*)start) / sizeof (uint64_t);
 }
 
 /*
@@ -274,7 +274,7 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 	padup_sadb(req, msg);
 	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
 
-	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
+	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - req->buf.ptr, 0);
 	if (s < 0) {
 		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
 		return false;
