@@ -35,7 +35,7 @@
 
 struct shunk {
 	size_t len;
-	const void *ptr;
+	const uint8_t *ptr;
 };
 
 typedef struct shunk shunk_t;
