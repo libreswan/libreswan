@@ -69,8 +69,8 @@ struct outbuf {
 	struct logger *logger;
 	struct sadb_msg *base;
 	/* cursor */
-	void *ptr;
 	size_t len;
+	void *ptr;
 };
 
 static void ldbg_outbuf(struct verbose verbose, struct outbuf *msg)
