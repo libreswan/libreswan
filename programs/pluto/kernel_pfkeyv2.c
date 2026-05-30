@@ -70,7 +70,7 @@ struct outbuf {
 	struct sadb_msg *base;
 	/* cursor */
 	size_t len;
-	uint8_t *ptr;
+	uint8_t *ptr COUNTED_BY_PTR(len);
 };
 
 static void ldbg_outbuf(struct verbose verbose, struct outbuf *msg)
