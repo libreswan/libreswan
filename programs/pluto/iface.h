@@ -43,7 +43,7 @@ extern bool pluto_listen_tcp;
 struct iface_packet {
 	ssize_t len;
 	ip_endpoint sender;
-	uint8_t *ptr;
+	uint8_t *ptr COUNTED_BY_PTR(len);
 	struct logger *logger; /*global*/
 };
 
