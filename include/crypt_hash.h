@@ -71,7 +71,7 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
 struct hash_hunk {
 	const char *name;
 	size_t len;
-	const void *ptr;
+	const uint8_t *ptr;
 };
 
 struct hash_hunks {
