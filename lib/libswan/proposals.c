@@ -344,33 +344,46 @@ bool proposals_have_intermediate(const struct proposals *proposals)
 	return proposals->intermediate;
 }
 
-static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
-					    struct transforms *transforms,
-					    struct verbose verbose)
+static void remove_duplicate_transforms(struct proposal_parser *parser,
+					struct transforms **transforms,
+					struct verbose verbose)
 {
-	unsigned new_len = 0;
-	TABLE_FOR_EACH(new, transforms) {
-		if (new == transforms->table) {
-			/* skip first */
-			new_len++;
+	vdbg("removing duplicates in raw transforms");
+	unsigned keep_len = 0;
+	TABLE_FOR_EACH(next, *transforms) {
+
+		/* always include first transform */
+		if (keep_len == 0) {
+			keep_len++;
 			continue;
 		}
 
-		TABLE_FOR_EACH(old, transforms) {
-			if (old == new) {
-				struct transform *next =
-					&transforms->table[new_len++];
-				if (next != new) {
-					*next = *new;
+		/*
+		 * Does NEXT match any of the previously checked
+		 * transforms?
+		 */
+		TABLE_FOR_EACH(prev, *transforms) {
+			if (prev == next) {
+				/*
+				 * NEXT matches none of PREV, keep it
+				 * (moving it to the next entry).
+				 */
+				struct transform *keep =
+					&(*transforms)->table[keep_len++];
+				if (keep != next) {
+					*keep = *next;
 				}
 				break;
 			}
-			if (old->type != new->type) {
+
+			if (prev->type != next->type) {
 				continue;
 			}
-			if (old->desc != new->desc) {
+
+			if (prev->desc != next->desc) {
 				continue;
 			}
+
 			/*
 			 * Since enckeylen=0 is a wildcard there's no
 			 * point following it with a non-zero keylen,
@@ -380,21 +393,23 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			 * giving preference to aes128 over other aes
 			 * combinations.
 			 */
-			if (old->enckeylen == 0 ||
-			    old->enckeylen == new->enckeylen) {
+			if (prev->enckeylen == 0 ||
+			    prev->enckeylen == next->enckeylen) {
 				LLOG_JAMBUF(parser->policy->stream, verbose.logger, buf) {
 					jam_string(buf, "discarding duplicate ");
 					jam_string(buf, parser->protocol->name);
 					jam_string(buf, " ");
-					jam_string(buf, new->desc->type->story);
+					jam_string(buf, next->desc->type->story);
 					jam_string(buf, " ");
-					jam_transform(buf, new);
+					jam_transform(buf, next);
 				}
 				break;
 			}
 		}
 	}
-	return new_len;
+	vdbg("updated transform length after duplicate removal %u (from %u)",
+	     keep_len, table_len(*transforms));
+	table_realloc(*transforms, keep_len);
 }
 
 static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
@@ -459,11 +474,7 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 		return;
 	}
 
-	vdbg("removing duplicates in raw transforms");
-	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms, verbose);
-	vdbg("updated transform length after duplicate removal %u (from %u)",
-	     new_len, table_len(proposal->transforms));
-	table_realloc(proposal->transforms, new_len);
+	remove_duplicate_transforms(parser, &proposal->transforms, verbose);
 
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
