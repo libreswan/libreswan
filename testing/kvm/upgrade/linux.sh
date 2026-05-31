@@ -61,6 +61,7 @@ packages_for_build() {
     cat <<EOF | awk '{print $1}'
 ElectricFence
 audit-libs-devel
+clang
 ldns-devel
 libcurl-devel
 libseccomp-devel
