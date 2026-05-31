@@ -190,7 +190,7 @@ struct transform {
 
 struct transforms {
 	unsigned len;
-	struct transform table[];
+	struct transform table[] COUNTED_BY(len);
 };
 
 /* return counts of encrypt=aead and integ=none */
