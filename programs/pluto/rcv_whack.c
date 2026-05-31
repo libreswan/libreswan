@@ -438,7 +438,7 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.op = whack_list,
 		},
 #ifdef USE_SECCOMP
-		[WHACK_SECCOMP_CRASHTEST] {
+		[WHACK_SECCOMP_CRASHTEST] = {
 			.name = "seccomp-crashtest",
 			.op = whack_seccomp_crashtest,
 		},
