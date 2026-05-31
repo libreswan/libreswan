@@ -136,7 +136,7 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct transforms transforms;
+	struct transforms *transforms;
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -344,33 +344,46 @@ bool proposals_have_intermediate(const struct proposals *proposals)
 	return proposals->intermediate;
 }
 
-static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
-					    struct transforms transforms,
-					    struct verbose verbose)
+static void remove_duplicate_transforms(struct proposal_parser *parser,
+					struct transforms **transforms,
+					struct verbose verbose)
 {
-	unsigned new_len = 0;
-	DATA_FOR_EACH(new, &transforms) {
-		if (new == transforms.data) {
-			/* skip first */
-			new_len++;
+	vdbg("removing duplicates in raw transforms");
+	unsigned keep_len = 0;
+	TABLE_FOR_EACH(next, *transforms) {
+
+		/* always include first transform */
+		if (keep_len == 0) {
+			keep_len++;
 			continue;
 		}
 
-		DATA_FOR_EACH(old, &transforms) {
-			if (old == new) {
-				struct transform *next =
-					&transforms.data[new_len++];
-				if (next != new) {
-					*next = *new;
+		/*
+		 * Does NEXT match any of the previously checked
+		 * transforms?
+		 */
+		TABLE_FOR_EACH(prev, *transforms) {
+			if (prev == next) {
+				/*
+				 * NEXT matches none of PREV, keep it
+				 * (moving it to the next entry).
+				 */
+				struct transform *keep =
+					&(*transforms)->table[keep_len++];
+				if (keep != next) {
+					*keep = *next;
 				}
 				break;
 			}
-			if (old->type != new->type) {
+
+			if (prev->type != next->type) {
 				continue;
 			}
-			if (old->desc != new->desc) {
+
+			if (prev->desc != next->desc) {
 				continue;
 			}
+
 			/*
 			 * Since enckeylen=0 is a wildcard there's no
 			 * point following it with a non-zero keylen,
@@ -380,21 +393,23 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			 * giving preference to aes128 over other aes
 			 * combinations.
 			 */
-			if (old->enckeylen == 0 ||
-			    old->enckeylen == new->enckeylen) {
+			if (prev->enckeylen == 0 ||
+			    prev->enckeylen == next->enckeylen) {
 				LLOG_JAMBUF(parser->policy->stream, verbose.logger, buf) {
 					jam_string(buf, "discarding duplicate ");
 					jam_string(buf, parser->protocol->name);
 					jam_string(buf, " ");
-					jam_string(buf, new->desc->type->story);
+					jam_string(buf, next->desc->type->story);
 					jam_string(buf, " ");
-					jam_transform(buf, new);
+					jam_transform(buf, next);
 				}
 				break;
 			}
 		}
 	}
-	return new_len;
+	vdbg("updated transform length after duplicate removal %u (from %u)",
+	     keep_len, table_len(*transforms));
+	table_realloc(*transforms, keep_len);
 }
 
 static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
@@ -413,7 +428,7 @@ static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
 
 	unsigned len = 0;
 	bool already_logged = false;
-	DATA_FOR_EACH(new, &proposal->transforms) {
+	TABLE_FOR_EACH(new, proposal->transforms) {
 		if (new->type == transform_type_kem) {
 			if (already_logged) {
 				vdbg("ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
@@ -430,14 +445,14 @@ static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
 			already_logged = true;
 			continue;
 		}
-		struct transform *old = &proposal->transforms.data[len++];
+		struct transform *old = &proposal->transforms->table[len++];
 		if (old != new) {
 			*old = *new;
 		}
 	}
 	vdbg("after PFS removal there are %u (from %u) transforms",
-	     len, proposal->transforms.len);
-	realloc_data(&proposal->transforms, len);
+	     len, table_len(proposal->transforms));
+	table_realloc(proposal->transforms, len);
 }
 
 static int transform_cmp(const void  *l, const void *r)
@@ -459,11 +474,7 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 		return;
 	}
 
-	vdbg("removing duplicates in raw transforms");
-	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms, verbose);
-	vdbg("updated transform length after duplicate removal %u (from %u)",
-	     new_len, proposal->transforms.len);
-	realloc_data(&proposal->transforms, new_len);
+	remove_duplicate_transforms(parser, &proposal->transforms, verbose);
 
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
@@ -472,16 +483,13 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 
 	vdbg("ordering raw transforms");
 	int order = 0;
-	DATA_FOR_EACH(transform, &proposal->transforms) {
+	TABLE_FOR_EACH(transform, proposal->transforms) {
 		transform->order = order++;
 	}
 
 	vdbg("sorting raw transforms");
 	/* clean up the raw transforms */
-	qsort(proposal->transforms.data,
-	      proposal->transforms.len,
-	      sizeof(proposal->transforms.data[0]),
-	      transform_cmp);
+	table_sort(proposal->transforms, transform_cmp);
 }
 
 void append_proposal(struct proposal_parser *parser,
@@ -499,13 +507,14 @@ void append_proposal(struct proposal_parser *parser,
 	for (end = &proposals->proposals; (*end) != NULL; end = &(*end)->next) {
 		const struct proposal *old_proposal = (*end);
 		const struct proposal *new_proposal = (*proposal);
-		if (old_proposal->transforms.len != new_proposal->transforms.len) {
+		if (table_len(old_proposal->transforms) !=
+		    table_len(new_proposal->transforms)) {
 			continue;
 		}
 		bool same = true;
-		for (unsigned t = 0; t < new_proposal->transforms.len; t++) {
-			const struct transform *old = &old_proposal->transforms.data[t];
-			const struct transform *new = &new_proposal->transforms.data[t];
+		for (unsigned t = 0; t < table_len(new_proposal->transforms); t++) {
+			const struct transform *old = &old_proposal->transforms->table[t];
+			const struct transform *new = &new_proposal->transforms->table[t];
 			if (old->desc != new->desc) {
 				same = false;
 				break;
@@ -563,14 +572,13 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 
 const struct transforms *proposal_transforms(const struct proposal *proposal)
 {
-	return &proposal->transforms;
+	return proposal->transforms;
 }
 
 const struct transform *first_proposal_transform(const struct proposal *proposal,
 						 const struct transform_type *type)
 {
-	for (unsigned t = 0; t < proposal->transforms.len; t++) {
-		const struct transform *transform = &proposal->transforms.data[t];
+	TABLE_FOR_EACH(transform, proposal->transforms) {
 		if (transform->type == type) {
 			return transform;
 		}
@@ -582,12 +590,13 @@ const struct transform *next_proposal_transform(const struct proposal *proposal,
 						const struct transform *previous)
 {
 	/* try to check for a realloc of data */
-	passert(proposal->transforms.len > 0);
-	passert(previous >= &proposal->transforms.data[0]);
-	passert(previous < &proposal->transforms.data[proposal->transforms.len]);
+	passert(proposal->transforms != NULL);
+	passert(proposal->transforms->len > 0);
+	passert(previous >= &proposal->transforms->table[0]);
+	passert(previous < &proposal->transforms->table[proposal->transforms->len]);
 	/* continue; from next */
 	for (const struct transform *next = previous + 1;
-	     next < &proposal->transforms.data[proposal->transforms.len];
+	     next < &proposal->transforms->table[proposal->transforms->len];
 	     next++) {
 		if (next->type == previous->type) {
 			return next;
@@ -609,7 +618,7 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		pfree_data(&del->transforms);
+		pfreeany(del->transforms);
 		pfree(del);
 	}
 	*proposals = NULL;
@@ -676,8 +685,7 @@ void append_proposal_transform(struct proposal_parser *parser,
 	};
 
 	/* grow */
-	struct transform *transforms_end = grow_data(&proposal->transforms);
-	*transforms_end = new_transform;
+	table_grow(proposal->transforms, new_transform);
 
 	vdbg("append %s %s %s %s[_%d]; %s; raw length %d",
 	     parser->protocol->name,
@@ -686,7 +694,7 @@ void append_proposal_transform(struct proposal_parser *parser,
 	     transform->fqn,
 	     enckeylen,
 	     transform_type->name,
-	     proposal->transforms.len);
+	     proposal->transforms->len);
 }
 
 size_t jam_transform(struct jambuf *buf,
@@ -719,7 +727,7 @@ size_t jam_proposal(struct jambuf *buf,
 	bool encrypt_is_only_aead = false;
 	bool transforms_in_order = true;
 	previous_type = transform_types; /*first is 1*/
-	DATA_FOR_EACH(transform, &proposal->transforms) {
+	TABLE_FOR_EACH(transform, proposal->transforms) {
 		if (transform->type == transform_type_prf) {
 			if (first_prf == NULL) {
 				first_prf = transform;
@@ -797,7 +805,7 @@ size_t jam_proposal(struct jambuf *buf,
 	bool first = true;
 	previous_type = transform_types; /*first is 1*/
 	bool jammed_prf_and_integ = false;
-	DATA_FOR_EACH(transform, &proposal->transforms) {
+	TABLE_FOR_EACH(transform, proposal->transforms) {
 		/* skip integ? */
 		if (transform->type == transform_type_integ && skip_integ) {
 			continue;
@@ -1002,7 +1010,7 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	}
 
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		DATA_FOR_EACH(transform, &proposal->transforms) {
+		TABLE_FOR_EACH(transform, proposal->transforms) {
 			if (transform->type->index >= PROPOSAL_TRANSFORM_addke1 &&
 			    transform->type->index <= PROPOSAL_TRANSFORM_addke7){
 				proposals->intermediate = true;
@@ -1377,7 +1385,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("trying <encrypt>-<PRF>");
 	tokens_at_start = (*tokens);
-	const unsigned nr_transforms_at_start = proposal->transforms.len; /* for unwinding */
+	const unsigned nr_transforms_at_start = table_len(proposal->transforms); /* for unwinding */
 	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
 		vdbg("<encrypt>-<PRF> succeeded");
@@ -1392,7 +1400,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 		    tokens->prev.delim != ';' &&
 		    parser->protocol->integ) {
 			struct tokens saved_tokens = (*tokens);
-			const unsigned saved_len = proposal->transforms.len;
+			const unsigned saved_len = table_len(proposal->transforms);
 
 			if (parse_transform_algorithms(parser, proposal,
 						       transform_type_integ,
@@ -1407,13 +1415,13 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 				 * rejected.
 				 */
 				struct tokens check_tokens = saved_tokens;
-				unsigned check_len = proposal->transforms.len;
+				unsigned check_len = table_len(proposal->transforms);
 				bool also_prf = parse_transform_algorithms(
 					parser, proposal,
 					transform_type_prf,
 					&check_tokens, verbose);
 				pfree_diag(&parser->diag);
-				realloc_data(&proposal->transforms, check_len);
+				table_realloc(proposal->transforms, check_len);
 
 				if (!also_prf) {
 					vdbg("<encrypt>-<PRF>-<INTEG> succeeded");
@@ -1426,7 +1434,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 			vdbg("<encrypt>-<PRF>-<INTEG>, backtracking");
 			pfree_diag(&parser->diag);
 			(*tokens) = saved_tokens;
-			realloc_data(&proposal->transforms, saved_len);
+			table_realloc(proposal->transforms, saved_len);
 		}
 		return true;
 	}
@@ -1452,7 +1460,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	parser->diag = NULL;
 	(*tokens) = tokens_at_start;
 	/* truncate the transforms array */
-	realloc_data(&proposal->transforms, nr_transforms_at_start);
+	table_realloc(proposal->transforms, nr_transforms_at_start);
 
 	/*
 	 * Now try <INTEG>.

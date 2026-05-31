@@ -89,18 +89,25 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Since non-AEAD, use integrity algorithms
 			 * that are implemented using the PRFs.
-			 *
-			 * Danger: transforms->data changes as the
-			 * table grows; hence this strange construct
-			 * and the need to re-index the table.
 			 */
-			volatile const struct transforms *transforms =
-				proposal_transforms(proposal);
-			for (unsigned t = 0; t < transforms->len; t++) {
-				const struct transform *transform = &transforms->data[t];
+			for (unsigned t = 0; true; t++) {
+				/*
+				 * DANGER:
+				 *
+				 * proposal->transforms changes as the
+				 * table grows; hence this strange
+				 * loop construct.
+				 */
+				const struct transforms *transforms = proposal_transforms(proposal);
+				if (t >= table_len(transforms)) {
+					break;
+				}
+
+				const struct transform *transform = &transforms->table[t];
 				if (transform->type != transform_type_prf) {
 					continue;
 				}
+
 				const struct ike_alg *prf = transform->desc;
 				const struct integ_desc *integ = NULL;
 				for (const struct integ_desc **integp = next_integ_desc(NULL);
@@ -123,7 +130,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 				 * duplicate transforms here.
 				 */
 				bool duplicate = false;
-				DATA_FOR_EACH(old, proposal_transforms(proposal)) {
+				TABLE_FOR_EACH(old, proposal_transforms(proposal)) {
 					if (old->desc == &integ->common) {
 						duplicate = true;
 						break;

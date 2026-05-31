@@ -55,22 +55,38 @@
 		table_;							\
 	})
 
-#define table_grow(TABLE, ...)						\
-	({								\
-		passert(TABLE != NULL);					\
-		typeof((TABLE)->table[0]) values_[] = { __VA_ARGS__ };	\
-		unsigned old_len_ = (TABLE)->len;			\
-		size_t old_size_ = 0;					\
-		old_size_ += sizeof(*(TABLE));				\
-		old_size_ += old_len_ * sizeof(values_[0]);		\
-		size_t new_size_ = old_size_ + sizeof(values_);		\
+#define table_len(TABLE) ((TABLE) == NULL ? 0 :	\
+			  (TABLE)->len)
+
+#define table_end(TABLE) ((TABLE) == NULL ? NULL :		\
+			  ((TABLE)->table + (TABLE)->len));
+
+/* only correct when there's a table */
+#define table_size(TABLE, COUNT)					\
+	(sizeof(*(TABLE)) + sizeof((TABLE)->table[0]) * (COUNT))
+
+#define table_realloc(TABLE, COUNT)					\
+	{								\
+		unsigned old_len_ = table_len(TABLE);			\
+		unsigned new_len_ = (COUNT);				\
+		size_t old_size_ = ((TABLE) == NULL ? 0 :		\
+				    table_size(TABLE, old_len_));	\
+		size_t new_size_ = table_size(TABLE, new_len_);		\
 		void *table_ = (TABLE);					\
-		realloc_bytes(&table_, old_size_, new_size_, "grow-"#TABLE"-table"); \
+		realloc_bytes(&table_, old_size_, new_size_,		\
+			      "realloc-"#TABLE"-table");		\
 		(TABLE) = table_;					\
-		(TABLE)->len = old_len_ + elemsof(values_);		\
-		memmove(&(TABLE)->table[old_len_], values_, sizeof(values_)); \
-		(TABLE);						\
-	})
+		(TABLE)->len = new_len_;				\
+	}
+
+#define table_grow(TABLE, ...)						\
+	{								\
+		const typeof((TABLE)->table[0]) values_[] = { __VA_ARGS__ }; \
+		unsigned old_end_ = table_len(TABLE);			\
+		table_realloc(TABLE, old_end_ + elemsof(values_));	\
+		memcpy(&(TABLE)->table[old_end_],			\
+		       values_, sizeof(values_));			\
+	}
 
 /* unfortunately SORTER takes VOID parameters */
 #define table_sort(TABLE, SORTER)			\
@@ -81,16 +97,9 @@
 	})
 
 #define TABLE_FOR_EACH(ITEM, TABLE)					\
-	for (typeof((TABLE)->table[0]) *ITEM = ((TABLE) != NULL ? &(TABLE)->table[0] : NULL); \
+	for (typeof((TABLE)->table[0]) *ITEM = ((TABLE) == NULL ? NULL : \
+						&(TABLE)->table[0]);	\
 	     ITEM != NULL && ITEM < &(TABLE)->table[(TABLE)->len];	\
 	     ITEM++)
-
-
-#define table_len(TABLE) ((TABLE) == NULL ? 0 :	\
-			  (TABLE)->len)
-
-#define table_end(TABLE) ((TABLE) == NULL ? NULL :		\
-			  ((TABLE)->table + (TABLE)->len));
-
 
 #endif
