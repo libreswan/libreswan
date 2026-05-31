@@ -74,13 +74,17 @@
  *
  * NOTE: so that __counted_by__() can be used the LEN field MUST be
  * first.
+ *
+ * GCC breaks code when enabled on a pointer, see:
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125524
+ * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=123569
  */
 
 #define ARRAY_PTR(p) elemsof(p), (p)
 
 #if (ENABLE_COUNTED_BY && __has_attribute(__counted_by__) &&	\
      ((defined __clang_major__ && __clang_major__ >= 19) ||	\
-      (defined __GNUC__ && __GNUC__ >= 16)))
+      (0 && defined __GNUC__ && __GNUC__ >= 16)))
 # define COUNTED_BY_PTR(FIELD)	__attribute__ ((__counted_by__(FIELD)))
 #else
 # define COUNTED_BY_PTR(FIELD)
