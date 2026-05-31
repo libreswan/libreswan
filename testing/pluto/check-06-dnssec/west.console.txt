@@ -7,7 +7,7 @@ west #
 destination 192.1.2.254 is alive
 west #
  dig east.testing.libreswan.org
-; <<>> DiG 9.18.48 <<>> east.testing.libreswan.org
+; <<>> DiG 9.18.49 <<>> east.testing.libreswan.org
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: DNSID
@@ -30,7 +30,7 @@ west #
 192.1.2.23
 west #
  dig +short @192.1.2.254 chaos version.server txt
-"unbound 1.24.2"
+"unbound 1.25.1"
 west #
  dig +short @192.1.2.254 -p 5353 east.testing.libreswan.org
 192.1.2.23

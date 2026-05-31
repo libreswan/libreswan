@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  dig west.testing.libreswan.org
-; <<>> DiG 9.18.48 <<>> west.testing.libreswan.org
+; <<>> DiG 9.18.49 <<>> west.testing.libreswan.org
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: DNSID
