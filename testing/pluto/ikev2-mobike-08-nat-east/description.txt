@@ -1,0 +1,33 @@
+IKEv2 connection through NAT with NAT mapping change;
+
+This test demonstrates how a change in NAT mapping, along the path,
+can trigger a kernel mapping change and trigger MOBIKE, if enabled
+on the connection.
+
+Any inbound ESP from ROAD (behind the NAT) after the NAT gateway
+remaps the port triggers a mapping change on EAST: EAST receives ESP
+from the new port while outgoing packets still use the old port.
+
+- ROAD establishes with EAST, a ping is exchanged.
+
+- to simulate the mapping change, NIC remaps its NAT port.
+
+- ROAD tries to send a further ping but, as expected, gets no response:
+
+  With Linux, the failure is on the return path!
+
+  Even though the kernel's states are configured for the OLD port it
+  accepts the packet from the NEW PORT.  The ping reply goes back to
+  the old PORT which the NAT drops.
+
+- the broken traffic flow is verified on EAST and NIC
+
+- EAST notices the kernel mapping change and initiates MOBIKE
+
+- EAST sends an INFORMATIONAL with NAT-D payloads to ROAD on the new port
+
+- ROAD responds with an INFORMATIONAL and updates its end
+
+- EAST receives the response and updates its end
+
+- time passes, liveness succeeds
