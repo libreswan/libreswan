@@ -1013,7 +1013,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	if (local->modecfg.server) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			llog_sa(RC_LOG, ike,
-				"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored",
+				"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored; responding with FAILED_CP_REQUIRED",
 				local->leftright);
 			/* just logged; caller, below, cleans up */
 			return v2N_FAILED_CP_REQUIRED;
