@@ -12,6 +12,7 @@ OBJ.*
 *.pyc
 *.o
 *.core
+vcore.*
 kvmrunner.pid
 TAGS
 tags
