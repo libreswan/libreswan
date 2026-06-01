@@ -64,6 +64,8 @@ err_t ttodata(shunk_t input,
 	int i;
 	int underscoreok;
 
+	zero(lenp);
+
 	if (dstlen == 0)
 		dst = buf;	/* point it somewhere valid */
 	stop = dst + dstlen;
