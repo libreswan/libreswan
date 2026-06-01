@@ -35,7 +35,7 @@
 
 struct shunk {
 	size_t len;
-	const uint8_t *ptr;
+	const uint8_t *ptr COUNTED_BY_PTR(len);
 };
 
 typedef struct shunk shunk_t;

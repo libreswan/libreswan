@@ -39,7 +39,7 @@
 
 typedef struct /*chunk*/ {
 	size_t len;
-	uint8_t *ptr;
+	uint8_t *ptr COUNTED_BY_PTR(len);
 } chunk_t;
 
 chunk_t chunk2(void *ptr, size_t len);
