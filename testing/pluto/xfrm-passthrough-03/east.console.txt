@@ -6,17 +6,17 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-east-passthrough-a
+ ipsec add west-east-passthrough-a
 "west-east-passthrough-a": added oriented passthrough connection
 east #
- ipsec auto --add west-east-passthrough-b
+ ipsec add west-east-passthrough-b
 "west-east-passthrough-b": added oriented passthrough connection
 east #
- ipsec auto --route west-east-passthrough-a
+ ipsec route west-east-passthrough-a
 east #
- ipsec auto --route west-east-passthrough-b
+ ipsec route west-east-passthrough-b
 east #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv2 connection
 east #
  ../../guestbin/echo-server.sh -tcp -4 7 -daemon

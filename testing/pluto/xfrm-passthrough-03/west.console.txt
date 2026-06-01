@@ -22,27 +22,23 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv2 connection
 west #
- ipsec auto --add west-east-passthrough-a
+ ipsec add west-east-passthrough-a
 "west-east-passthrough-a": added oriented passthrough connection
 west #
- ipsec auto --add west-east-passthrough-b
+ ipsec add west-east-passthrough-b
 "west-east-passthrough-b": added oriented passthrough connection
 west #
- ipsec auto --route west-east-passthrough-a
+ ipsec route west-east-passthrough-a
 west #
- ipsec auto --route west-east-passthrough-b
-west #
- ipsec whack --impair suppress_retransmits
-west #
- ipsec whack --impair suppress_retransmits
+ ipsec route west-east-passthrough-b
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-east
+ ipsec up west-east # sanitize-retransmits
 "west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

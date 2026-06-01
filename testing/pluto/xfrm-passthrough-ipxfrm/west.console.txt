@@ -22,7 +22,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 west #
  ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir in
@@ -34,7 +34,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-east
+ ipsec up west-east # sanitize-retransmits
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
 "west-east" #1: sent Main Mode I2

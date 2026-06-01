@@ -1,4 +1,4 @@
-ipsec auto --up west-east
+ipsec up west-east # sanitize-retransmits
 # encrypted
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 # plaintext

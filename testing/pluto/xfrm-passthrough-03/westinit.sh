@@ -8,7 +8,9 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add west-east
-ipsec auto --add west-east-passthrough
-ipsec auto --route west-east-passthrough
+ipsec add west-east
+ipsec add west-east-passthrough-a
+ipsec add west-east-passthrough-b
+ipsec route west-east-passthrough-a
+ipsec route west-east-passthrough-b
 echo "initdone"
