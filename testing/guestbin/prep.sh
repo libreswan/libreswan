@@ -2,6 +2,12 @@
 
 hostname=$(hostname)
 
+# cleanup
+
+nssdir=$(ipsec addconn --configsetup=nssdir --config /dev/null)
+rm -f ${nssdir}/*.db
+rm -f ${nssdir}/pkcs11.txt
+
 # fake cp -v as BSD and Linux print different output
 
 cp_v()
@@ -117,9 +123,13 @@ copy_to unbound.conf /etc/unbound
 while test $# -gt 0 ; do
     case $1 in
 	--hostkeys )
-	    nssdir=$(ipsec addconn --configsetup=nssdir --config /dev/null)
-	    for f in /testing/baseconfigs/$(hostname)/etc/ipsec.d/*.db ; do
-		cp_v "${f}" "${nssdir}/$(basename ${f})"
+	    for f in /testing/baseconfigs/$(hostname)/etc/ipsec.d/* ; do
+		b=$(basename $f)
+		case $b in
+		    *.db | pkcs11.txt )
+			cp_v "${f}" "${nssdir}/${b}"
+			;;
+		esac
 	    done
 	    shift
 	    ;;
