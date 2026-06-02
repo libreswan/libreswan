@@ -162,8 +162,9 @@ class Console(pexpect.spawn):
         # save directory so run() can verify it
         self._basename = os.path.basename(directory)
         if self.run("cd " + directory):
-            # i.e., non-zero exit code
-            raise Exception("'%s' failed", directory)
+            # i.e., non-zero exit code; Will _check_prompt() throw an
+            # exception because the path is wrong?
+            raise Exception("cd '%s' failed", directory)
 
     def redirect_output(self, unicode_file):
         if unicode_file:

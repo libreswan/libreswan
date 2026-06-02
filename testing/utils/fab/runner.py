@@ -117,7 +117,13 @@ class TestDomain:
         if not console:
             return False
         test_directory = os.path.join("/testing/pluto", self.test.name)
-        console.chdir(test_directory)
+        try:
+            # will explode when the domain is broken; for instance,
+            # hostname wasn't set.
+            console.chdir(test_directory)
+        except Exception as e:
+            self.logger.error(f"cd '{test_directory}' failed: {e}")
+            return False
         self.console = console
         return True
 
