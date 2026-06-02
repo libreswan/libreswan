@@ -912,6 +912,7 @@ ipsec_checknss() {
 	    if [ "${cmd}" = "initnss" ]; then
 		echo "NSS database already initialised - aborted"
 		echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
+		echo "To wipe the old modules, issue: rm ${IPSEC_NSSDIR}/pkcs11.txt"
 		exit 42
 	    else
 		if [ "${set_trusts}" = "yes" ]; then
@@ -922,6 +923,10 @@ ipsec_checknss() {
 	fi
 	echo "Initializing NSS database"
 	echo
+	if [ -r "${IPSEC_NSSDIR}/pkcs11.txt" ]; then
+	    echo "WARNING: using existing modules from ${IPSEC_NSSDIR}/pkcs11.txt" 1>&2
+	fi
+
 	@@CERTUTIL@@ -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ $? -gt 0 ]; then
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
