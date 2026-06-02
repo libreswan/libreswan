@@ -60,7 +60,8 @@ v5.4 (unreleased)
   - fix `make git-rpm` [Ondrej Moris #2512]
   - build with FORTIFY_SOURCE=3 [Andrew #2782]
   - On FreeBSD, build using CLANG [Andrew]
-  - add/use COUNTED_BY() on open array structures [Andrew]
+  - add/use COUNTED_BY(len) on open array structures [Andrew]
+  - add/use COUNTED_BY_PTR(len) on dynamic arrays when CLANG [Andrew]
   - support packaging on Amazon Linux [Patric Kerpan]
 * testing:
   - increase expiration on PKI keys to 1 month [islem52 #2726 #2720]
