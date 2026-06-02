@@ -114,7 +114,7 @@ diag_t ttoselector_num(shunk_t src, const struct ip_info *afi,
 
 typedef struct {
 	unsigned len;
-	ip_selector *list;
+	ip_selector *list COUNTED_BY_PTR(len);
 } ip_selectors;
 
 extern const ip_selectors empty_ip_selectors;
