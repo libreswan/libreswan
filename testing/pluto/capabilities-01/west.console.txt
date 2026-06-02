@@ -6,17 +6,53 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- echo "initdone"
-initdone
-west #
- netcap | sed -n -e 's/[ \t][ \t]*/ /g' -e 's/^.*pluto/pluto/p' | sort
-pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto udp 4500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-pluto udp 500 dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write +
-west #
- echo done
-done
+ netcap --json --advanced | jq --monochrome-output '.planes[]?.ifaces[]?.addrs[]?.endpoints[]? | if .processes[]?.comm == "pluto" then pick(.label, .processes[]?.caps) else empty end'
+{
+  "label": "udp:192.0.1.254:500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
+{
+  "label": "udp:192.0.1.254:4500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
+{
+  "label": "udp:192.1.2.45:500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
+{
+  "label": "udp:192.1.2.45:4500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
+{
+  "label": "udp:127.0.0.1:500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
+{
+  "label": "udp:127.0.0.1:4500",
+  "processes": [
+    {
+      "caps": "dac_read_search, setgid, setuid, net_bind_service, net_admin, net_raw, ipc_lock, audit_write"
+    }
+  ]
+}
 west #
