@@ -128,10 +128,11 @@ static diag_t nss_ml_kem_encapsulate_1(const struct kem_desc *kem,
 	}
 
 	SECItem *nss_ke = NULL; /* must SECITEM_FreeItem(PR_TRUE); */
+	PK11SymKey *shared_tmp;
 	status = PK11_Encapsulate(initiator_pubkey,
 				  CKM_HKDF_DERIVE, PK11_ATTR_SESSION | PK11_ATTR_INSENSITIVE | PK11_ATTR_PUBLIC,
 				  CKF_DERIVE,
-				  shared_key,
+				  &shared_tmp,
 				  &nss_ke);
 
 	/* Destroy the imported public key */
@@ -140,18 +141,29 @@ static diag_t nss_ml_kem_encapsulate_1(const struct kem_desc *kem,
 	PK11_FreeSlot(initiator_pubkey->pkcs11Slot);
 
 	if (status != SECSuccess) {
-		PEXPECT(logger, (*shared_key) == NULL);
+		PEXPECT(logger, shared_tmp == NULL);
 		PEXPECT(logger, nss_ke == NULL);
 		return diag_nss_error("encapsulate %s() initiator pubkey", __func__);
 	}
 
 	if (PBAD(logger, nss_ke == NULL) ||
-	    PBAD(logger, (*shared_key) == NULL)) {
+	    PBAD(logger, shared_key == NULL)) {
 		return diag_nss_error("encapsulate %s() initiator pubkey", __func__);
 	}
 
-	/* let accounting know there's a new key in town */
-	symkey_newref(logger, "responder-shared-key", (*shared_key));
+	/*
+	 * The key returned above doesn't play well with PK11_Derive()
+	 * - "softokn" fails to extract its value when trying to
+	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
+	 * returning a copy of the key.
+	 */
+	ldbg_newref(logger, shared_tmp);
+	(*shared_key) = key_from_symkey_bytes("ml-kem-shared-responder-key",
+					      shared_tmp,
+					      0, sizeof_symkey(shared_tmp),
+					      HERE, logger);
+	symkey_delref(logger, "shared-tmp", &shared_tmp);
+
 
 	(*responder_ke) = clone_secitem_as_chunk((*nss_ke), "responder-ke");
 	SECITEM_FreeItem(nss_ke, /*also-free-SECItem?*/PR_TRUE);
@@ -189,20 +201,33 @@ static diag_t nss_ml_kem_decapsulate(const struct kem_desc *kem UNUSED,
 				     SECKEYPrivateKey *initiator_private_key,
 				     shunk_t responder_ke,
 				     PK11SymKey**shared_key,
-				     struct logger *logger UNUSED)
+				     struct logger *logger)
 {
 	SECItem nss_ke = same_shunk_as_secitem(responder_ke, siBuffer);
+	PK11SymKey *shared_tmp;
 	SECStatus status = PK11_Decapsulate(initiator_private_key, &nss_ke,
 					    CKM_HKDF_DERIVE,
 					    PK11_ATTR_SESSION | PK11_ATTR_INSENSITIVE,
 					    CKF_DERIVE,
-					    shared_key);
+					    &shared_tmp);
 	if (status != SECSuccess) {
+		PEXPECT(logger, shared_tmp == NULL);
 		return diag_nss_error("decapsulating %s() responder KE", __func__);
 	}
 
-	/* tell accounting that there's a new key on the scene */
-	symkey_newref(logger, "initiator-shared-key", (*shared_key));
+	/*
+	 * The key returned above doesn't play well with PK11_Derive()
+	 * - "softokn" fails to extract its value when trying to
+	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
+	 * returning a copy of the key.
+	 */
+	ldbg_newref(logger, shared_tmp);
+	(*shared_key) = key_from_symkey_bytes("ecp-shared-secret",
+					      shared_tmp,
+					      0, sizeof_symkey(shared_tmp),
+					      HERE, logger);
+	symkey_delref(logger, "shared_tmp", &shared_tmp);
+
 	return NULL;
 }
 

@@ -202,7 +202,6 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *kem,
 		return diag_nss_error("shared key calculation using ECP failed");
 	}
 
-	ldbg_newref(logger, temp);
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()
@@ -210,6 +209,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *kem,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
+	ldbg_newref(logger, temp);
 	*shared_secret = key_from_symkey_bytes("ecp-shared-secret", temp,
 					       0, sizeof_symkey(temp),
 					       HERE, logger);
