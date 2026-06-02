@@ -1,0 +1,83 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec modutil -undefault 'NSS Internal PKCS #11 Module' -mechanisms ECC </dev/null
+WARNING: Performing this operation while the browser is running could cause
+corruption of your security databases. If the browser is currently running,
+you should exit browser before continuing this operation. Type 
+'q <enter>' to abort, or <enter> to continue: 
+Successfully changed defaults.
+west #
+ /testing/x509/import.sh real/mainca/west.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-mlkem
+"west-mlkem": added oriented IKEv2 connection
+west #
+ ipsec add west-ecp
+"west-ecp": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-mlkem
+"west-mlkem" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-mlkem" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-mlkem" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}, initiating IKE_INTERMEDIATE
+"west-mlkem" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"west-mlkem" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE} reassembled from N fragments
+"west-mlkem" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"west-mlkem" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-mlkem" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr} reassembled from N fragments
+"west-mlkem" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-mlkem" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#2: "west-mlkem", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ ipsec down west-mlkem
+"west-mlkem": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"west-mlkem" #1: sent INFORMATIONAL request to delete IKE SA
+"west-mlkem" #2: ESP traffic information: in=84B out=84B
+"west-mlkem" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec up west-ecp
+"west-ecp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ecp" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ecp" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}, initiating IKE_INTERMEDIATE
+"west-ecp" #3: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH21}
+"west-ecp" #3: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
+"west-ecp" #3: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"west-ecp" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-ecp" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr} reassembled from N fragments
+"west-ecp" #3: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ecp" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#4: "west-ecp", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ ipsec down west-ecp
+"west-ecp": initiating delete of connection's IKE SA #3 (and Child SA #4)
+"west-ecp" #3: sent INFORMATIONAL request to delete IKE SA
+"west-ecp" #4: ESP traffic information: in=84B out=84B
+"west-ecp" #3: deleting IKE SA (established IKE SA)
+west #
+ echo done
+done
+west #

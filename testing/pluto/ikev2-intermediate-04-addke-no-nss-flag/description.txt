@@ -1,0 +1,7 @@
+IKEv2 with MODP4096 then ML-KEM (in IKE_INTERMEDIATE) but with and broken NSSDB
+
+MODP4096 uses the RSA slot
+ML-KEM uses the ECC slot
+
+Sinc the NSSDB lacks an ECC, NSS stores the ML-KEM SKEYSEED in an
+alternative.  That then needs to be moved to the RSA slot.
