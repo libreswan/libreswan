@@ -1,0 +1,16 @@
+rm -f /var/lib/ipsec/nss/*
+west #
+ ipsec initnss # succeed
+Initializing NSS database
+west #
+ ipsec initnss # fail
+NSS database already initialised - aborted
+To wipe the old NSS database, issue: rm /var/lib/ipsec/nss/*.db
+To wipe the old modules, issue: rm /var/lib/ipsec/nss/pkcs11.txt
+west #
+ rm /var/lib/ipsec/nss/*.db
+west #
+ ipsec initnss # succeed with warning
+Initializing NSS database
+WARNING: using existing modules from /var/lib/ipsec/nss/pkcs11.txt
+west #

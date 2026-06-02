@@ -1584,6 +1584,13 @@ kvmplutotest	whack-pluto-02-logfile			good
 kvmplutotest	whack-pluto-03-seedbits			good
 
 #
+# nssinit
+#
+
+kvmplutotest	whack-initnss-01			good
+
+
+#
 # PPK
 #
 
