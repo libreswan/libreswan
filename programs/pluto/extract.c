@@ -1283,11 +1283,11 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 
 			/* Supported for IKEv1 and IKEv2 */
 			if (hunk_streq(val, "secret")) {
-				authby->psk = true;;
+				authby->psk = true;
 			} else if (hunk_streq(val, "rsasig") ||
 				   hunk_streq(val, "rsa")) {
-				authby->rsasig = true;
 				authby->rsasig_v1_5 = true;
+				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
@@ -1302,36 +1302,42 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 			} else if (hunk_streq(val, "rsa-sha1")) {
 				authby->rsasig_v1_5 = true;
 			} else if (hunk_streq(val, "rsa-sha2")) {
-				authby->rsasig = true;
+				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "rsa-sha2_256")) {
 				authby->rsasig = true;
+				authby->rsasig_sha2_256 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 			} else if (hunk_streq(val, "rsa-sha2_384")) {
 				authby->rsasig = true;
+				authby->rsasig_sha2_384 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 			} else if (hunk_streq(val, "rsa-sha2_512")) {
 				authby->rsasig = true;
+				authby->rsasig_sha2_512 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "eddsa")) {
 				authby->eddsa = true;
 				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
 			} else if (hunk_streq(val, "ecdsa") ||
 				   hunk_streq(val, "ecdsa-sha2")) {
-				authby->ecdsa = true;
+				*authby = authby_or(*authby, AUTHBY_ALL_ECDSA_SHA2);
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
 				authby->ecdsa = true;
+				authby->ecdsa_sha2_256 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
 				authby->ecdsa = true;
+				authby->ecdsa_sha2_384 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
 				authby->ecdsa = true;
+				authby->ecdsa_sha2_512 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
 				return diag("authby=ecdsa cannot use sha1, only sha2");
@@ -1843,6 +1849,9 @@ static diag_t extract_host_end(enum end end,
 		 */
 		authby = authby_from_auth(auth);
 		authby.rsasig_v1_5 = false; /* not supported */
+		authby.rsasig_sha2_256 = false; /* not supported */
+		authby.rsasig_sha2_384 = false; /* not supported */
+		authby.rsasig_sha2_512 = false; /* not supported */
 		/*
 		 * Now compare the rebuilt AUTH with the original
 		 * WHACK_AUTH, looking for auth bits that disappeared.
@@ -1850,7 +1859,14 @@ static diag_t extract_host_end(enum end end,
 		struct authby exclude = authby_not(authby);
 		struct authby supplied = whack_authby;
 		supplied.rsasig_v1_5 = false;
+		supplied.rsasig_sha2_256 = false;
+		supplied.rsasig_sha2_384 = false;
+		supplied.rsasig_sha2_512 = false;
 		supplied.ecdsa = false;
+		supplied.ecdsa_sha2_256 = false;
+		supplied.ecdsa_sha2_384 = false;
+		supplied.ecdsa_sha2_512 = false;
+		supplied.eddsa = false;
 		struct authby unexpected = authby_and(supplied, exclude);
 		if (authby_is_set(unexpected)) {
 			authby_buf wb, ub;
