@@ -242,7 +242,8 @@ export LC_ALL
 #		is the nflog group to use
 #
 
-test ${IPSEC_INIT_SCRIPT_DEBUG} && set -x
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
+test ${UPDOWN_DEBUG} && set -x
 
 # rpm based systems
 if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then

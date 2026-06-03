@@ -25,19 +25,6 @@
 
 	<varlistentry>
 	  <term>
-	    <option>updown</option>
-	  </term>
-	  <listitem>
-	    <para>
-	      Run the &ipsec-updown.8; scripts with <command>set -v
-	      -x</command>.  Helpful when &ipsec-updown.8; isn't
-	      behaving as expected.
-	    </para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term>
 	    <option>routing</option>
 	  </term>
 	  <listitem>
@@ -103,12 +90,25 @@
 
 	<varlistentry>
 	  <term>
+	    <option>updown</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Run the &ipsec-updown.8; script with <command>set
+	      -x</command>.  Only recommended when debugging the
+	      &ipsec-updown.8; script.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
 	    <option>crypt</option>
 	  </term>
 	  <listitem>
 	    <para>
-	      Dump changes to reference counters.  Only recommended
-	      when debugging code making calls into the &NSS; library.
+	      Dump calls into the &NSS; library.  Only recommended
+	      when debugging &NSS; dependent code.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -133,7 +133,8 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      It stands for Too Much Information.  Need we say more?
+	      It stands for Too Much Information.  It is not
+	      recommended.  Need we say more?
 	    </para>
 	  </listitem>
 	</varlistentry>

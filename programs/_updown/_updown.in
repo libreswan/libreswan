@@ -116,7 +116,8 @@ export LC_ALL
 #	PLUTO_SA_REQID
 #		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -x
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
+test ${UPDOWN_DEBUG} && set -x
 
 if [ -x @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} ]; then
     exec @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@
