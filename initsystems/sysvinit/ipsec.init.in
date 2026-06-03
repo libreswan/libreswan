@@ -141,8 +141,8 @@ start() {
 	rm -f ${lockfile}
     fi
     echo
-    if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
-	@@LIBEXECDIR@@/portexcludes
+    if [ -f @@IPSEC_EXECDIR@@/portexcludes ] ; then
+	@@IPSEC_EXECDIR@@/portexcludes
     fi
     return ${RETVAL}
 }

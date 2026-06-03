@@ -381,7 +381,7 @@
 <refsect1 id='files'>
   <title>FILES</title>
   <para>
-    <filename>@@LIBEXECDIR@@</filename>	usual utilities directory
+    <filename>@@IPSEC_EXECDIR@@</filename>	usual utilities directory
   </para>
 </refsect1>
 

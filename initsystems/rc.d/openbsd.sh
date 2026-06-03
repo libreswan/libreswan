@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-daemon="@@LIBEXECDIR@@/pluto"
+daemon="@@IPSEC_EXECDIR@@/pluto"
 daemon_flags="--config @@IPSEC_CONF@@"
 
 . /etc/rc.d/rc.subr
