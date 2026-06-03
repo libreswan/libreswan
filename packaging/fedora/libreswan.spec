@@ -8,7 +8,7 @@
 # Libreswan config options
 %global libreswan_config \\\
     INITSYSTEM=systemd \\\
-    LIBEXECDIR=%{_libexecdir}/ipsec \\\
+    IPSEC_LIBEXECDIR=%{_libexecdir}/ipsec \\\
     MANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
     SBINDIR=%{_sbindir} \\\
