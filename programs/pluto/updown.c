@@ -314,7 +314,7 @@ static bool build_updown_environ(struct updown_environ *environ,
 	JD("SPI_OUT", "0x%x", (first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->inbound.spi)));
 
 	if (LDBGP(DBG_UPDOWN, verbose.logger)) {
-		JDstr("IPSEC_INIT_SCRIPT_DEBUG", "yes");
+		JDstr("UPDOWN_DEBUG", "yes");
 	}
 
 	/*
