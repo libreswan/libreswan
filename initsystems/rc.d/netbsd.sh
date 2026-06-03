@@ -20,7 +20,7 @@ export PATH
 name="pluto"
 rcvar=$name
 pidfile="@@RUNDIR@@/${name}.pid"
-command="@@LIBEXECDIR@@/pluto"
+command="@@IPSEC_LIBEXECDIR@@/pluto"
 command_args="--config @@IPSEC_CONF@@"
 required_files="@@IPSEC_CONF@@"
 start_precmd="@@SBINDIR@@/ipsec checknss"

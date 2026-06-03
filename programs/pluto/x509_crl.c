@@ -330,7 +330,7 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 	deltatime_buf td;
 
 	char *argv[] = {
-		IPSEC_EXECDIR "/_import_crl",
+		IPSEC_LIBEXECDIR "/_import_crl",
 		(*current)->url,
 		(x509_crl.timeout.is_set ? (char*)str_deltatime(x509_crl.timeout, &td) : "0"),
 		(x509_crl.curl_iface != NULL ? (char*)x509_crl.curl_iface : ""),
