@@ -37,7 +37,6 @@
  */
 #define STATE_TABLE_SIZE 499
 
-#define DEFAULT_UPDOWN "ipsec _updown"
 #define UPDOWN_DISABLED "%disabled"
 
 enum ike_version {
