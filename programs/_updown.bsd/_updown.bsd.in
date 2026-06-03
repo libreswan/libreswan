@@ -115,7 +115,8 @@ export LC_ALL
 # 	PLUTO_VIRT_INTERFACE
 #               is the name of ipsec interface used by clear traffic in/out
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -x
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
+test ${UPDOWN_DEBUG} && set -x
 
 # standardize PATH, and export it for everything else's benefit;
 # should config.mk generate this?
