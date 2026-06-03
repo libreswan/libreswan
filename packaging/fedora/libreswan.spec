@@ -18,7 +18,6 @@
     USE_AUTHPAM=true \\\
     USE_DNSSEC=true \\\
     USE_LABELED_IPSEC=true \\\
-    USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
