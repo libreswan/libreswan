@@ -42,7 +42,9 @@
       option <option>updown-config=</option>.
     </para>
     <para>
-      The default is <command>ipsec _updown</command>.
+      On &Linux; the default is
+      <command>@@LIBEXECDIR@@/_updown.xfrm</command>, and on BSD
+      variants it is <command>@@LIBEXECDIR@@/_updown.bsd</command>.
     </para>
     <para>
       Relevant only locally, other end need not agree on it.
