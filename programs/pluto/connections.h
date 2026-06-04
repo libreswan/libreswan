@@ -751,7 +751,7 @@ struct spd {
 
 struct spds {
 	unsigned len;
-	struct spd *table COUNTED_BY_PTR(len);
+	struct spd table[] COUNTED_BY_PTR(len);
 };
 
 struct sa_mark {
@@ -839,7 +839,7 @@ struct connection {
 		 */
 		reqid_t reqid;
 		chunk_t sec_label;		/* negotiated sec label */
-		struct spds spds[1];		/* fake pointer */
+		struct spds *spds;		/* fake pointer */
 	} child;
 
 	/* internal fields: */

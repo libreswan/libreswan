@@ -259,8 +259,7 @@ void discard_connection_spds(struct connection *c)
 	TABLE_FOR_EACH(spd, c->child.spds) {
 		discard_spd_content(spd);
 	}
-	pfreeany(c->child.spds->table);
-	zero(c->child.spds);
+	pfreeany(c->child.spds);
 }
 
 
@@ -998,12 +997,9 @@ void init_connection_spd(struct connection *c, struct spd *spd)
 void alloc_connection_spds(struct connection *c, unsigned nr_spds,
 			   struct verbose verbose)
 {
-	vassert(c->child.spds->len == 0);
+	vassert(c->child.spds == NULL);
 	vdbg("allocating %u SPDs", nr_spds);
-	c->child.spds[0] = (struct spds) {
-		.len = nr_spds,
-		.table = alloc_things(struct spd, nr_spds, "spds"),
-	};
+	c->child.spds = table_alloc(struct spds, nr_spds);
 	TABLE_FOR_EACH(spd, c->child.spds) {
 		init_connection_spd(c, spd);
 	}
