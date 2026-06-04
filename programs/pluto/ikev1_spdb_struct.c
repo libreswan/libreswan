@@ -1545,7 +1545,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	/* calculate the per-end policy that might apply */
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		if (selection) {
 			/*
 			 * this is the initiator, we have proposed, they have answered,
@@ -3318,7 +3318,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_ah,
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
-					      c->child.spds.table,
+					      c->child.spds->table,
 					      child->sa.logger);
 			}
 
@@ -3331,7 +3331,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_esp,
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
-					      c->child.spds.table,
+					      c->child.spds->table,
 					      child->sa.logger);
 			}
 
@@ -3344,7 +3344,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_ipcomp,
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
-					      c->child.spds.table,
+					      c->child.spds->table,
 					      child->sa.logger);
 			}
 

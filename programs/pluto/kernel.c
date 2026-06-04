@@ -478,9 +478,9 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 		 * - CK_PERMENANT that doesn't update TS
 		 */
 		local_route = (local->len > 0 ? local->list[0] :
-			       c->child.spds.table->local->client);
+			       c->child.spds->table->local->client);
 		ip_selector remote_client = (remote->len > 0 ? remote->list[0] :
-					     c->child.spds.table->remote->client);
+					     c->child.spds->table->remote->client);
 		/* reroute remote to pair up with dest */
 		remote_route = selector_from_address_protocol_port(c->remote->host.addr,
 								   selector_protocol(remote_client),
@@ -780,7 +780,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 
 void clear_connection_spd_conflicts(struct connection *c)
 {
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		zero(&spd->wip);
 	}
 }
@@ -846,7 +846,7 @@ static bool get_connection_spd_conflict(struct spd *spd,
 bool get_connection_spd_conflicts(struct connection *c,
 				  enum routing new_routing)
 {
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		if (!get_connection_spd_conflict(spd, new_routing, c->logger)) {
 			return false;
 		}
@@ -945,7 +945,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	 */
 
 	bool ok = true;
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		/*
 		 * Install/replace the policy.
 		 */
@@ -961,7 +961,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	}
 
 	if (ok) {
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 			/* computed above */
 			const struct spd_owner *owner = &spd->wip.conflicting.owner;
@@ -978,7 +978,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		/*
 		 * Add the route.
 		 */
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
 			/* computed above */
 			const struct spd_owner *owner = &spd->wip.conflicting.owner;
@@ -997,7 +997,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	 */
 
 	if (!ok) {
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			revert_kernel_policy(spd, NULL/*st*/, c->logger);
 		}
 		clear_connection_spd_conflicts(c);
@@ -1008,7 +1008,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	 * Now clean up any shunts that were replaced.
 	 */
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		PEXPECT(c->logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
@@ -1764,7 +1764,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 	if (c->config->sec_label.len > 0) {
 		return false;
 	}
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		struct spd_owner owner = spd_owner(spd,  /*ignored-for-policy*/new_routing, logger, where);
 		/* is there a conflict */
 		if (owner.policy != NULL) {
@@ -2239,7 +2239,7 @@ static void expire_bare_shunts(struct verbose verbose)
 		 * It passed all checks; need to replace.
 		 */
 		vdbg_bare_shunt(verbose, "expiring old (restoring template connection)", bsp);
-		install_prospective_kernel_policy(c->child.spds.table,
+		install_prospective_kernel_policy(c->child.spds->table,
 						  SHUNT_KIND_ONDEMAND,
 						  verbose.logger, HERE);
 		free_bare_shunt(bspp, verbose);

@@ -1017,7 +1017,7 @@ void process_v1_packet(struct msg_digest *md)
 		 * should be checked and acted on accordingly.
 		 */
 
-		const struct spd_end *this = ike->sa.st_connection->child.spds.table->local;
+		const struct spd_end *this = ike->sa.st_connection->child.spds->table->local;
 		name_buf b;
 		ldbg(ike->sa.logger,
 		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",

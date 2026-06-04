@@ -839,7 +839,7 @@ struct connection {
 		 */
 		reqid_t reqid;
 		chunk_t sec_label;		/* negotiated sec label */
-		struct spds spds;
+		struct spds spds[1];		/* fake pointer */
 	} child;
 
 	/* internal fields: */

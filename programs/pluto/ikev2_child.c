@@ -731,7 +731,7 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 /* log TS proposal */
 void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *larval)
 {
-	TABLE_FOR_EACH(spd, &larval->sa.st_connection->child.spds) {
+	TABLE_FOR_EACH(spd, larval->sa.st_connection->child.spds) {
 		jam_string(buf, " ");
 		jam_string(buf, "[");
 		jam_selector_pair(buf, &spd->local->client,
@@ -759,7 +759,7 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		jam_string(buf, "; IPsec ");
 		/* log Child SA Traffic Selector details for admin's pleasure */
 		jam_enum_human(buf, &kernel_mode_names, child->sa.st_kernel_mode);
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			jam_string(buf, " ");
 			jam_string(buf, "[");
 			jam_selector_pair(buf, &spd->local->client,

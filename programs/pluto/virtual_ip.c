@@ -359,7 +359,7 @@ bool is_virtual_remote(const struct connection *c,
 		       struct verbose verbose)
 {
 	bool virt = false;
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		if (spd->remote->virt != NULL) {
 			virt = true;
 			break;
@@ -367,8 +367,8 @@ bool is_virtual_remote(const struct connection *c,
 	}
 	vdbg("virt: %s() %s local/remote spd %s/%s; config %s/%s",
 	     __func__, bool_str(virt),
-	     bool_str(c->child.spds.table->local->virt != NULL),
-	     bool_str(c->child.spds.table->remote->virt != NULL),
+	     bool_str(c->child.spds->table->local->virt != NULL),
+	     bool_str(c->child.spds->table->remote->virt != NULL),
 	     bool_str(c->local->config->child.virt != NULL),
 	     bool_str(c->remote->config->child.virt != NULL));
 	pexpect((c->remote->config->child.virt != NULL) >= (virt));
@@ -427,11 +427,11 @@ static err_t check_virtual_net_allowed(const struct connection *c,
 {
 	vdbg("virt: %s() spd %s/%s; config %s/%s",
 	     __func__,
-	     bool_str(c->child.spds.table->local->virt != NULL),
-	     bool_str(c->child.spds.table->remote->virt != NULL),
+	     bool_str(c->child.spds->table->local->virt != NULL),
+	     bool_str(c->child.spds->table->remote->virt != NULL),
 	     bool_str(c->local->config->child.virt != NULL),
 	     bool_str(c->remote->config->child.virt != NULL));
-	const struct virtual_ip *virt = c->child.spds.table->remote->virt;
+	const struct virtual_ip *virt = c->child.spds->table->remote->virt;
 	if (virt == NULL)
 		return NULL;
 
@@ -533,7 +533,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				continue;
 			}
 
-			if (!selector_overlaps_selector(remote_client, d->child.spds.table->remote->client)) {
+			if (!selector_overlaps_selector(remote_client, d->child.spds->table->remote->client)) {
 				/*
 				 * For instance when REMOTE_CLIENT is IPv6
 				 * and remote .client is IPv4 (but can
@@ -565,7 +565,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 			llog(RC_LOG, verbose.logger,
 			     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
 			     str_selector_range(&remote_client, &pcb),
-			     str_selector_range(&d->child.spds.table->remote->client, &dcb),
+			     str_selector_range(&d->child.spds->table->remote->client, &dcb),
 			     pri_connection(d, &cbuf),
 			     kernel_ops->interface_name);
 

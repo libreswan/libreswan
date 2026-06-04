@@ -295,13 +295,13 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 * (but this isn't documented).
 		 */
 
-		if (!address_in_selector_range(remote_address, d->child.spds.table->remote->client)) {
+		if (!address_in_selector_range(remote_address, d->child.spds->table->remote->client)) {
 			address_buf ab;
 			selector_buf sb;
 			vdbg("skipping %s, as %s is-not in range %s",
 			     d->name,
 			     str_address(&remote_address, &ab),
-			     str_selector(&d->child.spds.table->remote->client, &sb));
+			     str_selector(&d->child.spds->table->remote->client, &sb));
 			continue;
 		}
 
@@ -314,21 +314,21 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 */
 
 		if (c != NULL &&
-		    range_in_range(selector_range(c->child.spds.table->remote->client),
-				   selector_range(d->child.spds.table->remote->client))) {
+		    range_in_range(selector_range(c->child.spds->table->remote->client),
+				   selector_range(d->child.spds->table->remote->client))) {
 			selector_buf s1, s2;
 			vdbg("skipping %s, as best range of %s is narrower than %s",
 			     d->name,
-			     str_selector(&c->child.spds.table->remote->client, &s1),
-			     str_selector(&d->child.spds.table->remote->client, &s2));
+			     str_selector(&c->child.spds->table->remote->client, &s1),
+			     str_selector(&d->child.spds->table->remote->client, &s2));
 			continue;
 		}
 
 		selector_buf s1, s2;
 		vdbg("saving %s, opportunistic %s range better than %s",
 		     d->name,
-		     str_selector(&d->child.spds.table->remote->client, &s1),
-		     c == NULL ? "n/a" : str_selector(&c->child.spds.table->remote->client, &s2));
+		     str_selector(&d->child.spds->table->remote->client, &s1),
+		     c == NULL ? "n/a" : str_selector(&c->child.spds->table->remote->client, &s2));
 		c = d;
 		/* keep looking */
 	}

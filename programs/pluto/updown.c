@@ -364,7 +364,7 @@ static bool do_updown_verb(const char *verb,
 		return true;
 	}
 
-	if (c->child.spds.len > 1) {
+	if (c->child.spds->len > 1) {
 		/* i.e., more selectors than just this */
 		selector_pair_buf sb;
 		vlog("running updown %s %s", verb,
@@ -455,7 +455,7 @@ bool updown_connection_spd(enum updown updown_verb,
 	vexpect(c != NULL);
 	if (verbose.debug) {
 		bool found = false;
-		TABLE_FOR_EACH(sspd, &c->child.spds) {
+		TABLE_FOR_EACH(sspd, c->child.spds) {
 			if (sspd == spd) {
 				found = true;
 				break;
@@ -513,7 +513,7 @@ bool updown_child_spds(enum updown updown_verb,
 	vtime_t start = vdbg_start("spds");
 
 	verbose.level++;
-	TABLE_FOR_EACH(spd, &child->sa.st_connection->child.spds) {
+	TABLE_FOR_EACH(spd, child->sa.st_connection->child.spds) {
 		const struct spd *bare_route = spd->wip.conflicting.owner.bare_route;
 		if (bare_route != NULL &&
 		    config.skip_wip_conflicting_owner_bare_route) {
@@ -581,7 +581,7 @@ bool updown_async_child(bool prepare, bool route, bool up,
 	struct updown_environ environ;
 	if (!build_updown_environ(&environ, verb, /*verb_suffix*/"",
 				  child->sa.st_connection,
-				  /*spd*/child->sa.st_connection->child.spds.table,
+				  /*spd*/child->sa.st_connection->child.spds->table,
 				  child,
 				  (struct updown_env) {0},
 				  verbose)) {

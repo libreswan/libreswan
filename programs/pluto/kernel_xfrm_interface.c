@@ -890,7 +890,7 @@ void set_ike_mark_out(const struct connection *c,
 		      struct logger *logger)
 {
 	bool set_mark = false;
-	const struct spds *spds = &c->child.spds;
+	const struct spds *spds = c->child.spds;
 
 	if (c->ipsec_interface == NULL) {
 		return;

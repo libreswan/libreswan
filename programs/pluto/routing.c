@@ -626,7 +626,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-		if (!add_sec_label_kernel_policy(c->child.spds.table, direction,
+		if (!add_sec_label_kernel_policy(c->child.spds->table, direction,
 						 /*logger*/logger, where,
 						 "ondemand security label")) {
 			if (direction == DIRECTION_INBOUND) {
@@ -637,10 +637,10 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
 				/* go back to old routing */
-				struct spd_owner owner = spd_owner(c->child.spds.table,
+				struct spd_owner owner = spd_owner(c->child.spds->table,
 								   c->routing.state,
 								   logger, where);
-				delete_spd_kernel_policy(c->child.spds.table,
+				delete_spd_kernel_policy(c->child.spds->table,
 							 &owner, DIRECTION_OUTBOUND,
 							 KERNEL_POLICY_PRESENT,
 							 /*logger*/logger,
@@ -651,24 +651,24 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	}
 
 	/* a new route: no deletion required, but preparation is */
-	if (!updown_connection_spd(UPDOWN_PREPARE, c, c->child.spds.table, logger)) {
+	if (!updown_connection_spd(UPDOWN_PREPARE, c, c->child.spds->table, logger)) {
 		ldbg(logger, "kernel: %s() prepare command returned an error", __func__);
 	}
 
-	if (!updown_connection_spd(UPDOWN_ROUTE, c, c->child.spds.table, logger)) {
+	if (!updown_connection_spd(UPDOWN_ROUTE, c, c->child.spds->table, logger)) {
 		/* Failure!  Unwind our work. */
 		ldbg(logger, "kernel: %s() route command returned an error", __func__);
-		if (!updown_connection_spd(UPDOWN_DOWN, c, c->child.spds.table, logger)) {
+		if (!updown_connection_spd(UPDOWN_DOWN, c, c->child.spds->table, logger)) {
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(c->child.spds.table, c->routing.state,
+		struct spd_owner owner = spd_owner(c->child.spds->table, c->routing.state,
 						   logger, where);
-		delete_spd_kernel_policy(c->child.spds.table, &owner,
+		delete_spd_kernel_policy(c->child.spds->table, &owner,
 					 DIRECTION_OUTBOUND,
 					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
-		delete_spd_kernel_policy(c->child.spds.table, &owner,
+		delete_spd_kernel_policy(c->child.spds->table, &owner,
 					 DIRECTION_INBOUND,
 					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
@@ -705,7 +705,7 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 
 	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
@@ -729,7 +729,7 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 
 	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -750,7 +750,7 @@ static void routed_kernel_policy_to_unrouted(struct connection *c,
 					     where_t where,
 					     const char *story)
 {
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -769,7 +769,7 @@ static void unrouted_kernel_policy_to_unrouted(struct connection *c,
 					       struct logger *logger, where_t where,
 					       const char *story)
 {
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -791,7 +791,7 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 
 	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -853,7 +853,7 @@ static void routed_ondemand_to_routed_negotiation(enum routing_event event,
         PEXPECT(logger, !is_opportunistic(c));
 	PASSERT(logger, event == CONNECTION_INITIATED);
 	enum routing rt_negotiation = RT_ROUTED_NEGOTIATION;
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		struct spd_owner owner = spd_owner(spd, rt_negotiation,
 						   logger, HERE);
 		if (!replace_spd_kernel_policy(spd, &owner,
@@ -880,7 +880,7 @@ static void routed_negotiation_to_routed_ondemand(struct connection *c,
 						  where_t where,
 						  const char *reason)
 {
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, HERE);
 		if (!replace_spd_kernel_policy(spd, &owner,
@@ -936,7 +936,7 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 
 	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
@@ -962,7 +962,7 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 
 	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -985,7 +985,7 @@ static void unrouted_tunnel_to_unrouted(struct connection *c,
 {
 	/* currently down and unrouted */
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -1041,7 +1041,7 @@ static void routed_inbound_negotiation_to_unrouted(struct connection *c,
 {
 	ldbg_routing(logger, "OOPS: ROUTED_INBOUND has no outbound policy");
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 						   logger, where);
@@ -1063,7 +1063,7 @@ static void unrouted_inbound_to_unrouted(struct connection *c,
 {
 	ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
 
-	TABLE_FOR_EACH(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -1716,7 +1716,7 @@ static bool dispatch_1(enum routing_event event,
 		 * This is v4.x behaviour that was lost in v5.0 and
 		 * restored !?! in v5.1.
 		 */
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 							   logger, HERE);
 			do_updown_unroute_spd(spd, &owner,
@@ -1798,7 +1798,7 @@ static bool dispatch_1(enum routing_event event,
 			 * or replaced with the OE template's ondemand
 			 * policy.
 			 */
-			orphan_holdpass(c, c->child.spds.table, logger);
+			orphan_holdpass(c, c->child.spds->table, logger);
 			/*
 			 * The OE template, and not this connection
 			 * owns the routing.
@@ -1848,7 +1848,7 @@ static bool dispatch_1(enum routing_event event,
 			 * or replaced with the OE template's ondemand
 			 * policy.
 			 */
-			orphan_holdpass(c, c->child.spds.table, logger);
+			orphan_holdpass(c, c->child.spds->table, logger);
 			/*
 			 * The OE template, and not this connection
 			 * owns the routing.
@@ -2144,7 +2144,7 @@ static bool dispatch_1(enum routing_event event,
 		 * SPD).  Think of .bare_route as .other_route_owner).
 		 */
 		updown_child_spds(UPDOWN_DOWN, (*e->child), (struct updown_config){0});
-		TABLE_FOR_EACH(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			/* only unroute if no other connection shares it */
 			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 							   logger, HERE);
