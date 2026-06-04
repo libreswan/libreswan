@@ -12,6 +12,8 @@ Download: https://download.libreswan.org/
 
 Git: `git clone https://github.com/libreswan/libreswan.git`
 
+Documentation: https://testing.libreswan.org/current/documentation
+
 _Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04.  See the CREDITS files for contributor
 acknowledgments._
@@ -100,6 +102,9 @@ pkg_add gmake nss libevent libunbound bison libldns xmlto \
 
 #### Build And Install to  `/usr/local`
 
+First ensure you do not install libreswan twice, one from a
+distribution package in /usr and once manually in `/usr/local`.
+
 GNU Make is used:
 
 ```
@@ -130,75 +135,88 @@ issue the command:
 
     make deb
 
-## Starting Libreswan
+## Using Libreswan
+
+### Starting Libreswan
 
 The install will detect the init system used (systemd, upstart,
-sysvinit, openrc) and should integrate with the linux distribution.
-The service name is called "ipsec".  For example, on CentOS Stream 9,
-one would use:
+sysvinit, openrc) and should integrate with the Operating System's
+distribution.
 
-    systemctl enable ipsec.service
-    systemctl start ipsec.service
+For instance, on Linux distributions using `systemd`, the service name
+is called "ipsec" and can be enabled and started using:
 
-If unsure of the specific init system used on the system, the "ipsec"
-command can also be used to start or stop the ipsec service.  This
-command will auto-detect the init system and invoke it:
+```
+systemctl enable ipsec.service
+systemctl start ipsec.service
+```
 
-    ipsec start
-    ipsec stop
+If unsure of the specific init system being used, the `ipsec` command
+can also be used to start or stop the _ipsec_ service.  This command
+will auto-detect the init system and invoke it.  For instance:
 
-## Status
+```
+ipsec start
+ipsec stop
+```
+
+### Status
 
 For a connection status overview, use:
 
-    ipsec trafficstatus
+```
+ipsec trafficstatus
+```
 
 For a brief status overview, use:
 
-    ipsec briefstatus
+```
+ipsec briefstatus
+```
 
 For a machine readable global status, use:
 
-    ipsec globalstatus
+```
+ipsec globalstatus
+```
 
-## Configuration
+### Configuration
 
-Most of the libreswan configuration is stored in /etc/ipsec.conf and
-/etc/ipsec.secrets .  Include files may be present in /etc/ipsec.d/
+Most of the libreswan configuration is stored in `/etc/ipsec.conf` and
+`/etc/ipsec.secrets`.  Include files may be present in `/etc/ipsec.d/`
 See the respective man pages for more information.
 
-## NSS initialisation
+### NSS initialisation
 
 Libreswan uses NSS to store private keys and X.509 certificates.  The
 NSS database should have been initialised by the package installer.
 If not, the NSS database can be initialised using:
 
-    ipsec initnss
+```
+ipsec initnss
+```
 
 PKCS#12 certificates (.p12 files) can be imported using:
 
-    ipsec import /path/to/your.p12
+```
+ipsec import /path/to/your.p12
+```
 
 See README.NSS and `certutil --help` for more details on using NSS and
 migrating from the old Openswan `/etc/ipsec.d/` directories to using
 NSS.
 
-## Upgrading
+### Upgrading
 
-If you are upgrading from older Libreswan versions, Libreswan 5.x you
-might need to adjust your config files, although great care has been
-put into making the configuration files full backwards compatible.
+Upgrading will not overwrite your old configuration files in
+`/etc/ipsec.*`.  Although great care has been put into making the
+configuration files full backwards compatible, you may still need to
+make changes.
 
-See 'man ipsec.conf' for the list of options to find any new features.
+See 'ipsec.conf(5)' for further information.
 
-You can run `make install` on top of your old version - it will not
-overwrite your your `/etc/ipsec.*` configuration files.  The default
-install target installs in `/usr/local`.  Ensure you do not install
-libreswan twice, one from a distribution package in /usr and once
-manually in /usr/local.
-
-Note that for rpm based systems, the NSS directory changed from
-/etc/ipsec.d to /var/lib/ipsec/nss/
+Note that for RPM based systems, the NSS directory changed from
+`/etc/ipsec.d` to `/var/lib/ipsec/nss/`
 
 ## Help
 
