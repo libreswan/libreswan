@@ -22,75 +22,90 @@ The bulk of libreswan is licensed under the GNU General Public License
 version 2; see the LICENSE and CREDIT.* files.  Some smaller parts
 have a different license.
 
-## Installing
+## Installing Prebuilt Binaries
 
-A pre-built Libreswan package is available on the following OS
-distributions: RHEL, Fedora, CentOS, Ubuntu, Debian, Arch, Apline,
-OpenWrt and FreeBSD.  On NetBSD the package sources are in
-wip/libreswan.
+Pre-built Libreswan packages have been made available by the following
+Operating System distributions:
 
-Unless a source-based build is truly needed,  it is often best to use
-the pre-built version of the distribution you are using.
+Alpine, Arch, CentOS, Debian, Fedora, FreeBSD, Mint, OpenWrt, Oracle
+Linux, Red Hat Enterprise Linux, Ubuntu
+
+On NetBSD the package sources are in pkgsrc/wip/libreswan.  OpenBSD
+needs to be built from source.
+
+Unless you're needing to run mainline, it is typically best to use the
+pre-built version of the distribution you are using.
 
 ## Installing from Source
 
-### Dependencies
+### Building from scratch into `/usr/local`
+
+#### Install the Dependencies
 
 There are a few packages required for Libreswan to compile from
 source:
 
 For Debian / Ubuntu / Mint
 
-    apt-get install build-essential pkg-config \
-      bison flex libnss3-dev libnss3-tools libevent-dev \
-      libunbound-dev libpam0g-dev libcap-ng-dev \
-      libldns-dev xmlto libcurl4-openssl-dev \
-      systemd-dev
+```
+apt-get install build-essential pkg-config \
+  bison flex libnss3-dev libnss3-tools libevent-dev \
+  libunbound-dev libpam0g-dev libcap-ng-dev \
+  libldns-dev xmlto libcurl4-openssl-dev \
+  systemd-dev
+```
 
 For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
-    dnf install audit-libs-devel bison curl-devel flex \
-      gcc ldns-devel libcap-ng-devel libevent-devel \
-      libseccomp-devel libselinux-devel make nspr-devel \
-      nss-devel pam-devel pkgconfig systemd-devel \
-      unbound-devel xmlto
+```
+dnf install audit-libs-devel bison curl-devel flex \
+  gcc ldns-devel libcap-ng-devel libevent-devel \
+  libseccomp-devel libselinux-devel make nspr-devel \
+  nss-devel pam-devel pkgconfig systemd-devel \
+  unbound-devel xmlto
+```
 
 Alpine Linux:
 
-    aph add mandoc mandoc-doc apk-tools-doc bison \
-      bison-doc bsd-compat-headers coreutils coreutils-doc \
-      curl-dev curl-doc flex flex-doc gcc gcc-doc git git-doc \
-      gmp-dev gmp-doc ldns-dev ldns-doc libcap-ng-dev \
-      libcap-ng-doc libevent-dev linux-pam-dev linux-pam-doc \
-      make make-doc musl-dev nspr-dev nss-dev nss-tools \
-      pkgconfig sed sed-doc unbound-doc unbound-dev \
-      xmlto xmlto-doc
+```
+aph add mandoc mandoc-doc apk-tools-doc bison \
+  bison-doc bsd-compat-headers coreutils coreutils-doc \
+  curl-dev curl-doc flex flex-doc gcc gcc-doc git git-doc \
+  gmp-dev gmp-doc ldns-dev ldns-doc libcap-ng-dev \
+  libcap-ng-doc libevent-dev linux-pam-dev linux-pam-doc \
+  make make-doc musl-dev nspr-dev nss-dev nss-tools \
+  pkgconfig sed sed-doc unbound-doc unbound-dev \
+  xmlto xmlto-doc
+```
 
 FreeBSD:
 
-    pkg install gmake git pkgconf nss libevent unbound bison \
-      flex ldns xmlto gcc
+```
+pkg install gmake git pkgconf nss libevent unbound bison \
+  flex ldns xmlto gcc
+```
 
 NetBSD:
 
-    pkgin install git gmake nss unbound bison flex ldns xmlto pkgconf
+```
+pkgin install git gmake nss unbound bison flex ldns xmlto pkgconf
+```
 
 OpenBSD:
 
-    pkg_add gmake nss libevent libunbound bison libldns xmlto \
-      curl git llvm%16
+```
+pkg_add gmake nss libevent libunbound bison libldns xmlto \
+  curl git llvm%16
+```
 
-### Building from scratch into /usr/local
+#### Build And Install to  `/usr/local`
 
 GNU Make is used:
 
-    gmake
-    sudo gmake install
-
-If you want to build without creating and installing manual pages, run:
-
-    gmake base
-    sudo gmake install-base
+```
+gmake
+sudo gmake install
+```
 
 ### Building for RPM based systems
 
