@@ -64,11 +64,11 @@ west #
  ipsec delete westnet-eastnet-ipv4-psk
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
-|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
+|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (17, 0x0011)
 | processing informational INVALID_KEY_INFORMATION (17)
 "westnet-eastnet-ipv4-psk" #1: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
+|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (17, 0x0011)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #

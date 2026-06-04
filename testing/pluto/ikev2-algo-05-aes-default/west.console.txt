@@ -115,69 +115,69 @@ west #
  : dump key-length attributes to the connsole - none can be zero
 west #
  grep -v '^| helper' /tmp/pluto.log | grep -A 1 'af+type: AF+IKEv2_KEY_LENGTH'
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 256 (01 00)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 --
-|    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
+|    af+type: AF+IKEv2_KEY_LENGTH (32782, 0x800e)
 |    length/value: 128 (00 80)
 west #
