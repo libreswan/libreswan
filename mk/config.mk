@@ -874,6 +874,9 @@ USERLAND_CFLAGS += -DUSE_DH31
 endif
 
 # ML-KEM
+#
+# NSS has had ML_KEM_768 and ML_KEM_1024 support since at least 3.118
+# (just not ML_KEM_512).
 
 USE_ML_KEM_512 ?= false
 ifeq ($(USE_ML_KEM_512),true)
@@ -885,7 +888,7 @@ ifeq ($(USE_ML_KEM_768),true)
 USERLAND_CFLAGS += -DUSE_ML_KEM_768
 endif
 
-USE_ML_KEM_1024 ?= false
+USE_ML_KEM_1024 ?= true
 ifeq ($(USE_ML_KEM_1024),true)
 USERLAND_CFLAGS += -DUSE_ML_KEM_1024
 endif
