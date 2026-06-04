@@ -339,7 +339,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 			     remote_ns < remote_nsp->ns + remote_nsp->nr; remote_ns++) {
 				if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
 					if (pass == 2) {
-						struct spd *spd = &c->child.spds.list[nr_spds];
+						struct spd *spd = &c->child.spds.table[nr_spds];
 						spd->local->client = local_ns->selector;
 						spd->remote->client = remote_ns->selector;
 						spd->block = local_ns->block || remote_ns->block;
@@ -384,9 +384,9 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	 *
 	 * Meaningless (with multiple TS)?
 	 */
-	set_child_has_client(c, local, !selector_eq_address(c->child.spds.list->local->client,
+	set_child_has_client(c, local, !selector_eq_address(c->child.spds.table->local->client,
 							    c->local->host.addr));
-	set_child_has_client(c, remote, !selector_eq_address(c->child.spds.list->remote->client,
+	set_child_has_client(c, remote, !selector_eq_address(c->child.spds.table->remote->client,
 							     c->remote->host.addr));
 }
 
@@ -1764,8 +1764,8 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 * instead just check that the host addr is
 			 * within the client?
 			 */
-			if (!selector_in_selector(cc->child.spds.list->remote->client,
-						  t->child.spds.list->remote->client)) {
+			if (!selector_in_selector(cc->child.spds.table->remote->client,
+						  t->child.spds.table->remote->client)) {
 				vdbg("skipping; current connection's initiator (remote) subnet is not <= template");
 				continue;
 			}
@@ -1776,9 +1776,9 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 * XXX: why?
 			 */
 			ip_address cc_this_client_address =
-				selector_prefix(cc->child.spds.list->local->client);
+				selector_prefix(cc->child.spds.table->local->client);
 			ip_address t_this_client_address =
-				selector_prefix(t->child.spds.list->local->client);
+				selector_prefix(t->child.spds.table->local->client);
 			if (!address_eq_address(cc_this_client_address,
 						t_this_client_address)) {
 				vdbg("skipping; responder (local) subnet addresses don't match");
@@ -1799,9 +1799,9 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 				t->remote->child.selectors.proposed.list == t->remote->config->child.selectors.list);
 			vexpect(t->local->child.selectors.proposed.list == t->local->child.selectors.assigned ||
 				t->local->child.selectors.proposed.list == t->local->config->child.selectors.list);
-			vexpect(selector_eq_selector(t->child.spds.list->remote->client,
+			vexpect(selector_eq_selector(t->child.spds.table->remote->client,
 						     t->remote->child.selectors.proposed.list[0]));
-			vexpect(selector_eq_selector(t->child.spds.list->local->client,
+			vexpect(selector_eq_selector(t->child.spds.table->local->client,
 						     t->local->child.selectors.proposed.list[0]));
 			vexpect(!is_labeled(t));
 			struct child_selector_ends ends = {
@@ -1863,9 +1863,9 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
 	vexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	vexpect(selector_eq_selector(c->child.spds.list->remote->client,
+	vexpect(selector_eq_selector(c->child.spds.table->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	vexpect(selector_eq_selector(c->child.spds.list->local->client,
+	vexpect(selector_eq_selector(c->child.spds.table->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 
 	/* the return needs to match what was proposed */
@@ -1902,7 +1902,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	scribble_ts_response_on_initiator(child, &best, verbose);
-	spd_db_rehash_remote_client(c->child.spds.list);
+	spd_db_rehash_remote_client(c->child.spds.table);
 
 	return true;
 }
@@ -1950,9 +1950,9 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
 	vexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	vexpect(selector_eq_selector(c->child.spds.list->remote->client,
+	vexpect(selector_eq_selector(c->child.spds.table->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	vexpect(selector_eq_selector(c->child.spds.list->local->client,
+	vexpect(selector_eq_selector(c->child.spds.table->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 	const struct child_selector_ends ends = {
 		.i.selectors = &c->remote->child.selectors.proposed,

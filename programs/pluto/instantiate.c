@@ -135,7 +135,7 @@ struct connection *group_instantiate(struct connection *group,
 	vassert(oriented(group));
 	vassert(protocol != NULL);
 	vassert(group->child.spds.len <= 1);
-	vassert(group->child.spds.len == 0 || group->child.spds.list->local->virt == NULL);
+	vassert(group->child.spds.len == 0 || group->child.spds.table->local->virt == NULL);
 
 	/*
 	 * Manufacture a unique name for this template.
@@ -554,7 +554,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			if (selector_eq_address(remote_subnet, d->remote->host.addr)) {
 				ldbg(d->logger,
 				     "forcing remote %s.spd.has_client=false",
-				     d->child.spds.list->remote->config->leftright);
+				     d->child.spds.table->remote->config->leftright);
 			}
 			continue;
 		}

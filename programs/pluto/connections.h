@@ -751,7 +751,7 @@ struct spd {
 
 struct spds {
 	unsigned len;
-	struct spd *list COUNTED_BY_PTR(len);
+	struct spd *table COUNTED_BY_PTR(len);
 };
 
 struct sa_mark {

@@ -559,10 +559,10 @@ static bool child_has_client(struct ike_sa *ike, struct child_sa *child)
 	}
 	HAS_CLIENT(c->local->child.has_client);
 	HAS_CLIENT(c->remote->child.has_client);
-	HAS_CLIENT(c->child.spds.list->local->client.ipproto != 0);
-	HAS_CLIENT(c->child.spds.list->remote->client.ipproto != 0);
-	HAS_CLIENT(c->child.spds.list->local->client.hport != 0);
-	HAS_CLIENT(c->child.spds.list->remote->client.hport != 0);
+	HAS_CLIENT(c->child.spds.table->local->client.ipproto != 0);
+	HAS_CLIENT(c->child.spds.table->remote->client.ipproto != 0);
+	HAS_CLIENT(c->child.spds.table->local->client.hport != 0);
+	HAS_CLIENT(c->child.spds.table->remote->client.hport != 0);
 	HAS_CLIENT(nat_traversal_detected(&ike->sa) && ike->sa.hidden_variables.st_nated_host);
 #undef HAS_CLIENT
 
@@ -624,7 +624,7 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		}
 		if (child_has_client(ike, child)) {
 			jam_string(buf, " ");
-			jam_selector_pair(buf, &c->child.spds.list->local->client, &c->child.spds.list->remote->client);
+			jam_selector_pair(buf, &c->child.spds.table->local->client, &c->child.spds.table->remote->client);
 		}
 		jam(buf, "}");
 	}
@@ -785,9 +785,9 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 			llog(IMPAIR_STREAM, child->sa.logger, "skipping Quick Mode client initiator ID (IDci)");
 		} else {
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
-					    selector_subnet(c->child.spds.list->local->client),
-					    c->child.spds.list->local->client.ipproto,
-					    c->child.spds.list->local->client.hport, &rbody)) {
+					    selector_subnet(c->child.spds.table->local->client),
+					    c->child.spds.table->local->client.ipproto,
+					    c->child.spds.table->local->client.hport, &rbody)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -805,7 +805,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 			if (c->remote->config->child.selectors.len > 0) {
 				remote_client = c->remote->config->child.selectors.list[0];
 			} else {
-				const struct ip_info *client_afi = selector_info(c->child.spds.list->remote->client);
+				const struct ip_info *client_afi = selector_info(c->child.spds.table->remote->client);
 				remote_client = client_afi->selector.all;
 			}
 			selector_buf sb;
@@ -819,9 +819,9 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 			}
 		} else {
 			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
-					    selector_subnet(c->child.spds.list->remote->client),
-					    c->child.spds.list->remote->client.ipproto,
-					    c->child.spds.list->remote->client.hport, &rbody)) {
+					    selector_subnet(c->child.spds.table->remote->client),
+					    c->child.spds.table->remote->client.ipproto,
+					    c->child.spds.table->remote->client.hport, &rbody)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -830,9 +830,9 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		    impair.v1_emit_quick_id.value > 2) {
 			llog(IMPAIR_STREAM, child->sa.logger, "adding bonus Quick Mode client ID");
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
-					    selector_subnet(c->child.spds.list->local->client),
-					    c->child.spds.list->local->client.ipproto,
-					    c->child.spds.list->local->client.hport, &rbody)) {
+					    selector_subnet(c->child.spds.table->local->client),
+					    c->child.spds.table->local->client.ipproto,
+					    c->child.spds.table->local->client.hport, &rbody)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -996,7 +996,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 		/*
 		 * if there is a NATOA payload, then use it as
-		 *    &st->st_connection->child.spds.list->remote->client, if the type
+		 *    &st->st_connection->child.spds.table->remote->client, if the type
 		 * of the ID was FQDN
 		 *
 		 * We actually do NATOA calculation again later on,
@@ -1089,8 +1089,8 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			 * information and beauty as we can.
 			 */
 
-			struct spd_end local = *c->child.spds.list->local;
-			struct spd_end remote = *c->child.spds.list->remote;
+			struct spd_end local = *c->child.spds.table->local;
+			struct spd_end remote = *c->child.spds.table->remote;
 			local.client = local_client;
 			remote.client = remote_client;
 
@@ -1209,7 +1209,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	vdbg("%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
-	     str_selector(&c->child.spds.list->remote->client, &rcb),
+	     str_selector(&c->child.spds.table->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
 	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
@@ -1229,15 +1229,15 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	if (is_virtual_remote(c, verbose)) {
 
 		vdbg("virtual-private: spd %s/%s; config %s/%s",
-		     bool_str(c->child.spds.list->local->virt != NULL),
-		     bool_str(c->child.spds.list->remote->virt != NULL),
+		     bool_str(c->child.spds.table->local->virt != NULL),
+		     bool_str(c->child.spds.table->remote->virt != NULL),
 		     bool_str(c->local->config->child.virt != NULL),
 		     bool_str(c->remote->config->child.virt != NULL));
 
 		update_first_selector(c, remote, remote_client);
-		spd_db_rehash_remote_client(c->child.spds.list);
+		spd_db_rehash_remote_client(c->child.spds.table);
 		set_child_has_client(c, remote, true);
-		virtual_ip_delref(&c->child.spds.list->remote->virt);
+		virtual_ip_delref(&c->child.spds.table->remote->virt);
 
 		if (selector_eq_address(remote_client, c->remote->host.addr)) {
 			set_child_has_client(c, remote, false);
@@ -1245,7 +1245,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 		VDBG_JAMBUF(buf) {
 			jam(buf, "setting phase 2 virtual values to ");
-			jam_spd_ends(buf, c, c->child.spds.list->remote, "...", c->child.spds.list->local);
+			jam_spd_ends(buf, c, c->child.spds.table->remote, "...", c->child.spds.table->local);
 		}
 	}
 
@@ -1255,12 +1255,12 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * XXX: IKEv1 only does IPv4 address pool.
 	 */
 
-	if (!c->child.spds.list->remote->client.ip.is_set) {
+	if (!c->child.spds.table->remote->client.ip.is_set) {
 		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
-	if (!c->child.spds.list->local->client.ip.is_set) {
+	if (!c->child.spds.table->local->client.ip.is_set) {
 		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
@@ -1514,7 +1514,7 @@ static void terminate_conflicts(struct child_sa *child)
 	passert(is_permanent(c) || is_instance(c));
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			struct spd_owner owner = spd_owner(c->child.spds.list, RT_UNROUTED/*ignored*/,
+			struct spd_owner owner = spd_owner(c->child.spds.table, RT_UNROUTED/*ignored*/,
 							   child->sa.logger, HERE);
 
 			if (owner.bare_route == NULL)
@@ -1621,7 +1621,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 		jam(buf, "    us: ");
 		const struct connection *c = child->sa.st_connection;
-		const struct spd *sr = c->child.spds.list;
+		const struct spd *sr = c->child.spds.table;
 		jam_spd_ends(buf, c, sr->local, "  them: ", sr->remote);
 	}
 
@@ -1784,9 +1784,9 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  c->child.spds.list->local->client.ipproto,
-					  c->child.spds.list->local->client.hport,
-					  selector_subnet(child->sa.st_connection->child.spds.list->local->client),
+					  c->child.spds.table->local->client.ipproto,
+					  c->child.spds.table->local->client.hport,
+					  selector_subnet(child->sa.st_connection->child.spds.table->local->client),
 					  "our client", child->sa.logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
@@ -1797,15 +1797,15 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  c->child.spds.list->remote->client.ipproto,
-					  c->child.spds.list->remote->client.hport,
-					  selector_subnet(child->sa.st_connection->child.spds.list->remote->client),
+					  c->child.spds.table->remote->client.ipproto,
+					  c->child.spds.table->remote->client.hport,
+					  selector_subnet(child->sa.st_connection->child.spds.table->remote->client),
 					  "peer client", child->sa.logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/*
 			 * if there is a NATOA payload, then use it as
-			 *    &child->sa.st_connection->child.spds.list->remote->client, if the type
+			 *    &child->sa.st_connection->child.spds.table->remote->client, if the type
 			 * of the ID was FQDN
 			 */
 			if (nat_traversal_detected(&child->sa) &&
@@ -1819,7 +1819,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_range(buf, &child->sa.st_connection->child.spds.list->remote->client);
+					jam_selector_range(buf, &child->sa.st_connection->child.spds.table->remote->client);
 					jam(buf, " as IDcr");
 				}
 			}
@@ -1828,8 +1828,8 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 			 * No IDci, IDcr: we must check that the
 			 * defaults match our proposal.
 			 */
-			if (!selector_eq_address(c->child.spds.list->local->client, c->local->host.addr) ||
-			    !selector_eq_address(c->child.spds.list->remote->client, c->remote->host.addr)) {
+			if (!selector_eq_address(c->child.spds.table->local->client, c->local->host.addr) ||
+			    !selector_eq_address(c->child.spds.table->remote->client, c->remote->host.addr)) {
 				llog(RC_LOG, child->sa.logger,
 				     "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
@@ -2112,7 +2112,7 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		unsigned level = verbose.level;
-		FOR_EACH_ITEM(d_spd, &d->child.spds) {
+		TABLE_FOR_EACH(d_spd, &d->child.spds) {
 			verbose.level = level;
 
 			selector_pair_buf sb;

@@ -955,7 +955,7 @@ diag_t assign_remote_ikev1_lease(struct connection *c,
 	}
 
 	vdbg("another hack to get the SPD in sync");
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 		spd->remote->client = selector_from_cidr(assigned_cidr);
 		spd_db_rehash_remote_client(spd);
 	}

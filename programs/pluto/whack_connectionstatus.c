@@ -419,7 +419,7 @@ void show_connection_clients(struct show *s, const struct connection *c,
 {
 	/* Show topology. */
 	if (oriented(c)) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, &c->child.spds) {
 			struct connection_client this =
 				connection_spd_client(spd->local);
 			struct connection_client that =

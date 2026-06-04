@@ -257,7 +257,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 
 	/* This is how the updown script previously got the source IP,
 	 * especially for the road warrior configuration */
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 		/* Use the first sourceip in the list that is set */
 		ip_address spd_sourceip = spd_end_sourceip(spd->local);
 		if (spd_sourceip.ip.is_set) {

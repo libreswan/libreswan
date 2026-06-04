@@ -896,7 +896,7 @@ void set_ike_mark_out(const struct connection *c,
 		return;
 	}
 
-	FOR_EACH_ITEM(spd, spds) {
+	TABLE_FOR_EACH(spd, spds) {
 		if (address_in_selector_range(spd->remote->host->addr, spd->remote->client))
 			set_mark = true;
 	}

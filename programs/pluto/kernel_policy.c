@@ -377,7 +377,7 @@ void add_spd_kernel_policies(struct connection *c,
 			     enum shunt_kind shunt_kind,
 			     struct logger *logger, where_t where, const char *story)
 {
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 		if (!add_spd_kernel_policy(spd, op, direction, shunt_kind,
 					   logger, where, story)) {
 			llog(RC_LOG, logger, "%s failed", story);
@@ -875,7 +875,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		return true;
 	}
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 		selector_buf sb, db;
 		name_buf eb;
 		ldbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
@@ -927,7 +927,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * Install the IPsec kernel policies.
 	 */
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 
 		/* computed above */
 		selector_buf sb, db;
@@ -1024,7 +1024,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 */
 
 	if (!ok) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, &c->child.spds) {
 			/* go back to old routing */
 			struct spd_owner owner = spd_owner(spd, c->routing.state,
 							   logger, HERE);
@@ -1036,14 +1036,14 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 					  .down_wip_installed_up = true,
 				  });
 
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, &c->child.spds) {
 			/* go back to old routing */
 			revert_kernel_policy(spd, child, logger);
 		}
 		return false;
 	}
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, &c->child.spds) {
 
 		PEXPECT(logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;

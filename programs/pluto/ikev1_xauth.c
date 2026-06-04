@@ -335,11 +335,11 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
 		/* YES, REMOTE, as leased */
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.ip.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.table->remote->client.ip.is_set)) {
 			return false;
 		}
 		if (!pbs_out_address(&attrval,
-				     selector_prefix(c->child.spds.list->remote->client),
+				     selector_prefix(c->child.spds.table->remote->client),
 				     "IP_addr")) {
 			/* already logged */
 			return false;
@@ -349,15 +349,15 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.ip.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.table->local->client.ip.is_set)) {
 			return false;
 		}
-		ip_address addr = selector_prefix(c->child.spds.list->local->client);
+		ip_address addr = selector_prefix(c->child.spds.table->local->client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
 			/* already logged */
 			return false;
 		}
-		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
+		ip_address mask = selector_prefix_mask(c->child.spds.table->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_subnet(mask)")) {
 			/* already logged */
 			return false;
@@ -367,10 +367,10 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.ip.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.table->local->client.ip.is_set)) {
 			return false;
 		}
-		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
+		ip_address mask = selector_prefix_mask(c->child.spds.table->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
 			/* already logged */
 			return false;
@@ -534,8 +534,8 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 		return isakmp_add_attr(modecfg_pbs, MODECFG_BANNER, ike);
 
 	case CISCO_SPLIT_INC:
-		if (selector_is_unset(&c->child.spds.list->local->client) ||
-		    selector_is_all(c->child.spds.list->local->client)) {
+		if (selector_is_unset(&c->child.spds.table->local->client) ||
+		    selector_is_all(c->child.spds.table->local->client)) {
 			ldbg(ike->sa.logger, "skip sending CISCO_SPLIT in %s payload, we are 0.0.0.0/0",
 			     modecfg_payload);
 			return true;
@@ -594,7 +594,7 @@ static bool get_internal_address(struct ike_sa *ike)
 
 		from = "lease";
 
-	} else if (PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.ip.is_set)) {
+	} else if (PEXPECT(ike->sa.logger, c->child.spds.table->remote->client.ip.is_set)) {
 
 		from = "remote SPD";
 
@@ -603,7 +603,7 @@ static bool get_internal_address(struct ike_sa *ike)
 	}
 	selector_buf iab;
 	ldbg(ike->sa.logger, "internal address %s from %s",
-	     str_selector(&c->child.spds.list->remote->client, &iab),
+	     str_selector(&c->child.spds.table->remote->client, &iab),
 	     from);
 
 	return true;
@@ -1975,7 +1975,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				 * used.
 				 */
 				if (table_len(c->local->config->child.sourceip) == 0) {
-					ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
+					ip_address sourceip = spd_end_sourceip(c->child.spds.table->local);
 					pexpect(address_eq_address(a, sourceip));
 					jam_string(buf, ", updating source IP address");
 				}
@@ -2042,7 +2042,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			}
 
 			/* save for building SPDs */
-			ip_selector local_client = c->child.spds.list[0].local->client;
+			ip_selector local_client = c->child.spds.table->local->client;
 
 			/* potentially over-allocate */
 			discard_connection_spds(c);
@@ -2116,7 +2116,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				}
 
 				bool already_split = false;
-				FOR_EACH_ITEM(spd, &c->child.spds) {
+				TABLE_FOR_EACH(spd, &c->child.spds) {
 					if (selector_range_eq_selector_range(split, spd->remote->client)) {
 						/* duplicate entry: ignore */
 						LLOG_JAMBUF(RC_LOG, logger, buf) {
@@ -2145,7 +2145,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				}
 
 				PASSERT(logger, split_nr < c->child.spds.len);
-				struct spd *spd = &c->child.spds.list[split_nr];
+				struct spd *spd = &c->child.spds.table[split_nr];
 				spd->local->client = local_client;
 				spd->remote->client = split;
 				spd_db_add(spd);
