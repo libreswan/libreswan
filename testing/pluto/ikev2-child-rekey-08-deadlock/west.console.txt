@@ -78,27 +78,27 @@ west #
  grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log
 | Message ID: IKE #1 initializing (IKE SA): ike.initiator.sent=0->-1 ike.initiator.recv=0->-1 ike.responder.sent=0->-1 ike.responder.recv=0->-1 ike.wip.initiator=0->-1 ike.wip.responder=0->-1
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
 |    Message ID: 0 (00 00 00 00)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 updating initiator sent message request 0: ike.initiator.sent=-1->0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1->0 ike.wip.responder=-1
 | Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=0 ike.wip.responder=-1
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
 |    Message ID: 0 (00 00 00 00)
 | Message ID: CHILD #1.#2 initializing (CHILD SA): ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=0->-1
 | Message ID: IKE #1 switching from IKE SA initiator message response 0: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=0->-1 ike.wip.responder=-1
 | Message ID: CHILD #1.#2 switching to CHILD SA initiator message response 0: ike.initiator.sent=0 ike.initiator.recv=-1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->0 child.wip.responder=-1
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
 |    Message ID: 1 (00 00 00 01)
 | Message ID: updating counters for #2
 | Message ID: CHILD #1.#2 updating initiator received message response 0: ike.initiator.sent=0 ike.initiator.recv=-1->0 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=0->-1 child.wip.responder=-1
 | Message ID: CHILD #1.#2 updating initiator sent message request 1: ike.initiator.sent=0->1 ike.initiator.recv=0 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=-1->1 child.wip.responder=-1
 | Message ID: IKE #1 no pending message initiators to schedule: ike.initiator.sent=1 ike.initiator.recv=0 ike.responder.sent=-1 ike.responder.recv=-1 ike.wip.initiator=-1 ike.wip.responder=-1
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
+|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
 |    Message ID: 1 (00 00 00 01)
 | Message ID: updating counters for #2
 | Message ID: CHILD #1.#2 updating initiator received message response 1: ike.initiator.sent=1 ike.initiator.recv=0->1 ike.responder.sent=-1 ike.responder.recv=-1 child.wip.initiator=1->-1 child.wip.responder=-1

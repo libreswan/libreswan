@@ -40,5 +40,5 @@ west #
  # confirm the right ID types were sent/received
 west #
  grep "ID type" /tmp/pluto.log | sort | uniq
-|    ID type: ID_FQDN (0x2)
+|    ID type: ID_FQDN (2, 0x02)
 west #
