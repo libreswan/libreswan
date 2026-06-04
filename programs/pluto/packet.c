@@ -1893,6 +1893,23 @@ shunk_t pbs_in_left(const struct pbs_in *pbs)
 	return shunk2(pbs->cur, pbs->roof - pbs->cur);
 }
 
+static void jam_enum_raw(struct jambuf *buf,
+			 size_t size,
+			 uintmax_t n)
+{
+	jam_string(buf, " (");
+	jam(buf, "%ju, 0x%0*jx", n, (int)(size * 2), n);
+#if 0
+	/* no point - above looks like network order */
+	jam_string(buf, ", ");
+	uint8_t raw[sizeof(n)] = {0};
+	raw_hton(n, raw, size);
+	jam_dump_bytes(buf, raw, size);
+#endif
+	jam_string(buf, ")");
+}
+
+
 /*
  * print a natural number using the specified FMT, with the value in
  * network-byte-order appended.
@@ -2005,22 +2022,26 @@ static void LDBG_print_struct(struct logger *logger,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			{
-				/*
-				 * try to deal with fp->desc
-				 * containing a selection of
-				 * AF+<value> and <value> entries.
-				 */
+				/* AF bit set? */
 				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
 					     ISAKMP_ATTR_AF_TV);
-				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
+				last_enum = (n & ~ISAKMP_ATTR_AF_MASK);
+				/*
+				 * Some tables contain AF+VALUE (aka
+				 * n), other tables contain just VALUE
+				 * (aka last_enum); ulgh!
+				 */
 				name_buf nb;
 				if (!enum_long(fp->desc, last_enum, &nb)) {
 					enum_long(fp->desc, n, &nb);
 				}
-				LDBG_log(logger, "   %s: %s%s (0x%jx)",
-					 fp->name,
-					 immediate ? "AF+" : "",
-					 nb.buf, n);
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam(buf, "   %s: %s%s",
+					    fp->name,
+					    immediate ? "AF+" : "",
+					    nb.buf);
+					jam_enum_raw(buf,  fp->size, n);
+				}
 				break;
 			}
 
@@ -2031,20 +2052,21 @@ static void LDBG_print_struct(struct logger *logger,
 			case ft_lss:
 			{
 				last_enum = n;
-				name_buf nb;
-				LDBG_log(logger, "   %s: %s (0x%jx)",
-					 fp->name,
-					 str_enum_long(fp->desc, n, &nb),
-					 n);
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam(buf, "   %s: ", fp->name);
+					jam_enum_long(buf, fp->desc, n);
+					jam_enum_raw(buf, fp->size, n);
+				}
 				break;
 			}
 
 			case ft_loose_enum_enum:
 			{
-				name_buf buf;
-				const char *name = str_enum_enum_long(fp->desc, last_enum, n, &buf);
-				LDBG_log(logger, "   %s: %s (0x%jx)",
-					 fp->name, name, n);
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+					jam(buf, "   %s: ", fp->name);
+					jam_enum_enum_long(buf, fp->desc, last_enum, n);
+					jam_enum_raw(buf, fp->size, n);
+				}
 				break;
 			}
 
