@@ -13,7 +13,7 @@
 
 static bool test_proposals = false;
 static bool test_algs = false;
-static bool debug = false;
+static bool enable_tmi_debugging = false;
 static enum ike_version ike_version = IKEv2;
 static bool ignore_transform_lookup_error = false;
 static bool fips = false;
@@ -582,6 +582,7 @@ const struct option optarg_options[] = {
 	{ OPT("help"), no_argument, NULL, OPT_HELP, },
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("version"), no_argument, NULL, OPT_VERSION, },
+	{ OPT("debug"), optional_argument, NULL, OPT_DEBUG, },
 	{ OPT("ikev1"), no_argument, NULL, OPT_IKEv1, },
 	{ OPT("ikev2"), no_argument, NULL, OPT_IKEv2, },
 	{ OPT("ta"), no_argument, NULL, OPT_TA, },
@@ -655,6 +656,7 @@ int main(int argc, char *argv[])
 			continue;
 		case OPT_DEBUG:
 			optarg_debug(logger, OPTARG_DEBUG_YES);
+			enable_tmi_debugging = (optarg == NULL);
 			continue;
 		case OPT_IGNORE:
 			ignore_transform_lookup_error = true;
@@ -696,11 +698,11 @@ int main(int argc, char *argv[])
 	init_ike_alg(logger);
 
 	/*
-	 * Only enabling debugging and impairing after things have
-	 * started.  Otherwise there's just TMI.
+	 * For --debug, enable pretty much everything; but only after
+	 * NSS has initialized and the real work is about to begin.
 	 */
-	if (debug) {
-		cur_debugging |= DBG_PROPOSAL_PARSER | DBG_CRYPT;
+	if (enable_tmi_debugging) {
+		cur_debugging |= DBG_TMI | DBG_CRYPT;
 	}
 
 	if (test_algs) {
