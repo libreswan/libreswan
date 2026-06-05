@@ -1649,25 +1649,25 @@ ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encryp
 	AES_CBC-HMAC_SHA1-DH21
 algparse --ikev2 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH21
 algparse --ikev2 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --ikev2 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --ikev2 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --ikev2 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --ikev2 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
 ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
@@ -1775,7 +1775,7 @@ algparse --ikev2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 algparse --ikev2 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse --ikev2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+	AES_CBC-HMAC_SHA1-HMAC_SHA2_256_128-DH20
 algparse --ikev2 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
@@ -2188,25 +2188,25 @@ ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encryp
 	AES_CBC-HMAC_SHA1-DH21
 algparse --ikev2 --pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 --pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 --pfs 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH21
 algparse --ikev2 --pfs 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --ikev2 --pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --ikev2 --pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
 ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
@@ -2314,7 +2314,7 @@ algparse --ikev2 --pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 algparse --ikev2 --pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse --ikev2 --pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+	AES_CBC-HMAC_SHA1-HMAC_SHA2_256_128-DH20
 algparse --ikev2 --pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
@@ -2727,25 +2727,25 @@ ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encryp
 	AES_CBC-HMAC_SHA1-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha1-sha1_96-ecp_521' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha2-sha1_96-ecp_521' (expect SUCCESS)
-	AES_CBC-HMAC_SHA1_96-HMAC_SHA2_256-DH21
+	AES_CBC-HMAC_SHA2_256-HMAC_SHA1_96-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha2_256+sha1_96' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --addke --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse --addke --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512-ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --addke --ikev2 --pfs 'ike=aes-sha2_256+sha1_96-sha2_512;ecp_521' (expect SUCCESS)
 ipsec algparse: WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order
-	AES_CBC-HMAC_SHA2_256_128+HMAC_SHA1_96-HMAC_SHA2_512-DH21
+	AES_CBC-HMAC_SHA2_512-HMAC_SHA2_256_128+HMAC_SHA1_96-DH21
 algparse --addke --ikev2 --pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect SUCCESS)
 ipsec algparse: discarding duplicate IKE Encryption Algorithm (cipher) AES_CBC
 ipsec algparse: discarding duplicate IKE Pseudorandom Function (KDF) HMAC_SHA1
@@ -2853,7 +2853,7 @@ algparse --addke --ikev2 --pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 algparse --addke --ikev2 --pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse --addke --ikev2 --pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
-	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+	AES_CBC-HMAC_SHA1-HMAC_SHA2_256_128-DH20
 algparse --addke --ikev2 --pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
