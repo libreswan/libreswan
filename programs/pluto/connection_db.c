@@ -133,6 +133,36 @@ HASH_TABLE(connection, host_pair, , STATE_TABLE_SIZE);
 REHASH_DB_ENTRY(connection, host_pair, );
 
 /*
+ * A table hashed by child.reqid.
+ */
+
+static hash_t hash_connection_reqid(const reqid_t *reqid)
+{
+	return hash_thing(*reqid, zero_hash);
+}
+
+HASH_TABLE(connection, reqid, .child.reqid, STATE_TABLE_SIZE);
+
+REHASH_DB_ENTRY(connection, reqid, .child.reqid);
+
+struct connection *connection_by_reqid(reqid_t reqid)
+{
+	if (reqid == 0) {
+		/* sentinel: not yet assigned */
+		return NULL;
+	}
+	struct connection *c;
+	hash_t hash = hash_connection_reqid(&reqid);
+	struct list_head *bucket = hash_table_bucket(&connection_reqid_hash_table, hash);
+	FOR_EACH_LIST_ENTRY_NEW2OLD(c, bucket) {
+		if (c->child.reqid == reqid) {
+			return c;
+		}
+	}
+	return NULL;
+}
+
+/*
  * Maintain the contents of the hash tables.
  */
 
@@ -140,7 +170,8 @@ HASH_DB(connection,
 	&connection_clonedfrom_hash_table,
 	&connection_serialno_hash_table,
 	&connection_that_id_hash_table,
-	&connection_host_pair_hash_table);
+	&connection_host_pair_hash_table,
+	&connection_reqid_hash_table);
 
 /*
  * See also {new2old,old2new}_state()
