@@ -4,43 +4,42 @@ PROPOSALS = PROPOSAL { "," PROPOSAL }
 
 PROPOSAL = ALGORITHM
            { "-" ALGORITHM }
-           [ ";" KEM_ALGORITHM ]
+           [ ";" KE_ALGORITHM ]
 
 ALGORITHM = ENCRYPTION_ALGORITHM |
             PRF_ALGORITHM (*aka-KDF*) |
             INTEGRITY_ALGORITHM |
-            KEM_ALGORITHM (*aka-DH*)
+            KE_ALGORITHM (*aka-DH*)
 
 (* IKEv2 *)
 
 PROPOSAL = [ ALGORITHMS
              { "-" ALGORITHMS }
-             [ ";" KEM_ALGORITHM (*aka-DH*) ] ]
-           { ";" TYPE "=" ALGORITHMS }
+             [ ";" KE_ALGORITHM (*aka-DH*) ] ]
+           { ";" TYPE_ALGORITHMS }
 
 ALGORITHMS = ENCRYPTION_ALGORITHMS |
              PRF_ALGORITHMS (*aka-KDF*) |
              INTEGRITY_ALGORITHMS |
-             KEM_ALGORITHMS (*aka-DH*) |
-             SN_ALGORITHMS
+             KE_ALGORITHMS (*aka-DH*)
 
 TYPE_ALGORITHMS = "encrypt=" ENCRYPTION_ALGORITHMS |
                   "prf=" PRF_ALGORITHMS (*aka-KDF*) |
                   "integ=" INTEGRITY_ALGORITHMS |
-                  "kem=" KEM_ALGORITHMS (*aka-DH*) |
+                  "ke=" KE_ALGORITHMS (*aka-DH*) |
                   "sn=" SN_ALGORITHMS (*aka-ESN*) |
-                  "addke1=" KEM_ALGORITHMS |
-                  "addke2=" KEM_ALGORITHMS |
+                  "addke1=" KE_ALGORITHMS |
+                  "addke2=" KE_ALGORITHMS |
                   ...
 
 ENCRYPTION_ALGORITHMS = ENCRYPTION_ALGORITHM { "+" ENCRYPTION_ALGORITHM }
 PRF_ALGORITHMS        = PRF_ALGORITHM { "+" PRF_ALGORITHM }
 INTEGRITY_ALGORITHMS  = INTEGRITY_ALGORITHM { "+" INTEGRITY_ALGORITHM }
-KEM_ALGORITHMS        = KEM_ALGORITHM { "+" KEM_ALGORITHM }
+KE_ALGORITHMS         = KE_ALGORITHM { "+" KE_ALGORITHM }
 SN_ALGORITHMS         = SN_ALGORITHM { "+" SN_ALGORITHM }
 
 ENCRYPTION_ALGORITHM = "aes" | "aes_gcm" | ...
 PRF_ALGORITHM        = "sha1" | "sha2_256" | ...
 INTEGRITY_ALGORITHM  = "sha1_96" | "sha2_256_128" | ...
-KEM_ALGORITHM        = "modp2048" | "dh19" | "ml_kem_768" | ...
+KE_ALGORITHM         = "modp2048" | "dh19" | "ml_kem_768" | ...
 SN_ALGORITHM         = "yes" | "no" | "32-bit-sequential" | ...
