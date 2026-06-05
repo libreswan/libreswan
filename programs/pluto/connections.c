@@ -196,7 +196,7 @@ void vdbg_connection(const struct connection *c,
 	/* SPDs local->remote */
 	VERBOSE_JAMBUF(buf) {
 		jam_string(buf, "spds:");
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		TABLE_FOR_EACH(spd, c->child.spds) {
 			jam_string(buf, " ");
 			jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		}
@@ -256,11 +256,10 @@ static void discard_spd_content(struct spd *spd)
 
 void discard_connection_spds(struct connection *c)
 {
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		discard_spd_content(spd);
 	}
-	pfree_list(&c->child.spds);
-	c->child.spds = (struct spds) {0};
+	pfreeany(c->child.spds);
 }
 
 
@@ -998,13 +997,10 @@ void init_connection_spd(struct connection *c, struct spd *spd)
 void alloc_connection_spds(struct connection *c, unsigned nr_spds,
 			   struct verbose verbose)
 {
-	vassert(c->child.spds.len == 0);
+	vassert(c->child.spds == NULL);
 	vdbg("allocating %u SPDs", nr_spds);
-	c->child.spds = (struct spds) {
-		.len = nr_spds,
-		.list = alloc_things(struct spd, nr_spds, "spds"),
-	};
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	c->child.spds = table_alloc(struct spds, nr_spds);
+	TABLE_FOR_EACH(spd, c->child.spds) {
 		init_connection_spd(c, spd);
 	}
 }
@@ -1054,8 +1050,8 @@ void build_connection_spds_from_proposals(struct connection *c)
 				selector_pair_buf spb;
 				vdbg("%s", str_selector_pair(left_selector, right_selector, &spb));
 				verbose.level = 3;
-				struct spd *spd = &c->child.spds.list[spd_nr++];
-				vassert(spd < c->child.spds.list + c->child.spds.len);
+				struct spd *spd = &c->child.spds->table[spd_nr++];
+				vassert(spd < c->child.spds->table + c->child.spds->len);
 				ip_selector *selectors[] = {
 					[LEFT_END] = left_selector,
 					[RIGHT_END] = right_selector,
@@ -2109,8 +2105,8 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * path there is only one (just like there is only one
 	 * selector).
 	 */
-	if (c->child.spds.len == 1) {
-		ip_selector old_client = c->child.spds.list->end[lr].client;
+	if (c->child.spds->len == 1) {
+		ip_selector old_client = c->child.spds->table->end[lr].client;
 		if (!selector_eq_selector(old_selector, old_client)) {
 			selector_buf sb, cb;
 			vlog_pexpect(where,
@@ -2120,7 +2116,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 				     end->config->leftright,
 				     str_selector(&old_client, &cb));
 		}
-		c->child.spds.list->end[lr].client = new_selector;
+		c->child.spds->table->end[lr].client = new_selector;
 	}
 
 	/*
