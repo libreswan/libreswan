@@ -124,7 +124,7 @@ set_file_names()
 start_tcpdump()
 {
 	# call stop if there are any previous runawy tcpdump - don't show output
-	stop_tcpdump >/dev/null 2>&1
+	stop_tcpdump >/dev/null 2>&1 || true
 	rm -f ${out_path}
 	rm -f ${log_path}
 	rm -f ${pid_path}
@@ -191,11 +191,13 @@ case "${action}" in
 	;;
     stop)
 	stop_tcpdump
-	tcpdump -n -r OUTPUT/$(basename ${out_path}) "$@"
+	[ -f "OUTPUT/$(basename ${out_path})" ] && \
+	    tcpdump -n -r "OUTPUT/$(basename ${out_path})" "$@"
 	;;
     wait)
 	wait_tcpdump
-	tcpdump -n -r OUTPUT/$(basename ${out_path}) "$@"
+	[ -f "OUTPUT/$(basename ${out_path})" ] && \
+	    tcpdump -n -r "OUTPUT/$(basename ${out_path})" "$@"
 	;;
     kill)
 	stop_tcpdump
