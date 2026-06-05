@@ -2,7 +2,7 @@
 
 # delete the CA, both ends hardcode both certificates
 /testing/x509/import.sh real/mainca/east.end.p12
-/testing/x509/import.sh /testing/x509/real/mainca/west.end.cert
+/testing/x509/import.sh /testing/x509/pki/real/mainca/west.end.cert
 # check result
 ipsec certutil -L
 
