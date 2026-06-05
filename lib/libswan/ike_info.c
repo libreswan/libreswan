@@ -27,7 +27,7 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 #include "ike_alg_prf.h"
-#include "ike_alg_kem.h"
+#include "ike_alg_ke.h"
 #include "proposals.h"
 
 static bool ike_proposal_ok(struct proposal_parser *parser,

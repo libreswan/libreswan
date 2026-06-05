@@ -24,7 +24,7 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
-#include "ike_alg_kem_ops.h"
+#include "ike_alg_ke_ops.h"
 #include "crypt_symkey.h"
 
 static bool nss_modp_calc_local_secret_1(const struct kem_desc *group,

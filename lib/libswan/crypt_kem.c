@@ -19,7 +19,7 @@
 #include "crypt_symkey.h"
 
 #include "ike_alg.h"
-#include "ike_alg_kem_ops.h"
+#include "ike_alg_ke_ops.h"
 #include "passert.h"
 #include "lswalloc.h"
 

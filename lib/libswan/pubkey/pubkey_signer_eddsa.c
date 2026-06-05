@@ -32,7 +32,7 @@
 #include "lswnss.h"
 #include "lswlog.h"
 #include "secrets.h"
-#include "ike_alg_kem.h"		/* for OID and size of EC algorithms */
+#include "ike_alg_ke.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 #include "crypt_hash.h"
 
