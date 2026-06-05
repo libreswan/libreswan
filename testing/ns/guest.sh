@@ -53,6 +53,7 @@ RM_BIND() {
     local dst=$2
     RUN umount "${dst}" || true
     RUN mkdir -p "${src}"
+    RUN mkdir -p "${dst}"
     RUN rm -rf "${src}"/*
     RUN mount --bind "${src}" "${dst}"
 }
