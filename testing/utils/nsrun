@@ -3110,9 +3110,9 @@ def localhost_sudo(args, testname):
     s = shell.Remote(cmd, logger, hostname=args.node, username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
-        s.sendline('export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS')
-        s.sendline("cd %s/testing/pluto/%s" % (args.libreswandir, testname))
-        s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        s.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        s.child.expect(s.prompt, timeout=60)
+        s.run("cd %s/testing/pluto/%s" % (args.libreswandir, testname))
         # this has to before shell.run()
         s.stty_sane()
         # s.child.setecho(False) # this does not seems to work!
@@ -3404,8 +3404,8 @@ class Vshell(shell.Remote):
         self.initialize(directory)
 
     def initialize(self, directory):
-        self.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
-        self.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        self.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        self.child.expect(self.prompt, timeout=60)
         # this has to before shell.run()
         self.chdir(directory)
         self.stty_sane()
@@ -3552,8 +3552,8 @@ class Namespace:
             # next few lines are bit hackery to get the local prompt behave
             # careful changing the order
             # s.child.delaybeforesend = 0.1
-            s.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
-            s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+            s.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+            s.child.expect(s.prompt, timeout=60)
             # this has to before shell.run()
             s.chdir("%s/testing/pluto/%s" % (test.args.libreswandir, test.name))
             s.stty_sane()
