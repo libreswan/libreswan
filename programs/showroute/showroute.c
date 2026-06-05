@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 		}
 		switch ((enum opt)c) {
 		case OPT_DEBUG:
-			optarg_debug(OPTARG_DEBUG_YES);
+			optarg_debug(logger, OPTARG_DEBUG_YES);
 			continue;
 		case OPT_IPv4:
 			optarg_family(&family, &ipv4_info);

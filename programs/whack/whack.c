@@ -2095,11 +2095,11 @@ int main(int argc, char **argv)
 			continue;
 		case DBGOPT_DEBUG:	/* --debug */
 			whack_command(&msg, WHACK_DEBUG);
-			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack.debug.debugging);
+			optarg_debug_lmod(logger, OPTARG_DEBUG_YES, &msg.whack.debug.debugging);
 			continue;
 		case DBGOPT_NO_DEBUG:	/* --no-debug */
 			whack_command(&msg, WHACK_DEBUG);
-			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack.debug.debugging);
+			optarg_debug_lmod(logger, OPTARG_DEBUG_NO, &msg.whack.debug.debugging);
 			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */

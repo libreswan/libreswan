@@ -172,8 +172,8 @@ enum optarg_debug {
 	OPTARG_DEBUG_NO,
 };
 
-void optarg_debug(enum optarg_debug);
-void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
+void optarg_debug(struct logger *logger, enum optarg_debug);
+void optarg_debug_lmod(struct logger *logger, enum optarg_debug, lmod_t *debugging);
 
 void optarg_version(const char *suffix) NEVER_RETURNS;
 
