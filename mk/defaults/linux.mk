@@ -41,28 +41,43 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
   CKSUM ?= shasum
 
+  # DEBIAN
   # https://wiki.debian.org/LTS
-  ifeq ($(LINUX_VERSION_CODENAME),bullseye) # Debian 11; Jun 2026
+
+  ifeq ($(LINUX_VERSION_CODENAME),bullseye) # Debian 11; Jun 2026; June 2031
     USE_XFRM_HEADER_COPY ?= true
+    # NSS=3.61; EDDSA>=3.99 ML_KEM>3.118
     USE_ML_KEM_768 ?= false
+    USE_ML_KEM_1024 ?= false
     USE_EDDSA ?= false
   endif
 
-  ifeq ($(LINUX_VERSION_CODENAME),bookworm) # Debian 12; Jun 2028
+  ifeq ($(LINUX_VERSION_CODENAME),bookworm) # Debian 12; Jun 2028; June 2033
     USE_XFRM_HEADER_COPY ?= true
-    # NSS 3.87; EDDSA>=3.99
+    # NSS=3.87; EDDSA>=3.99 ML_KEM>3.118
     USE_ML_KEM_768 ?= false
+    USE_ML_KEM_1024 ?= false
     USE_EDDSA ?= false
   endif
 
-  ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; Jun 2030
+  ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; Jun 2030; June 2035
     USE_XFRM_HEADER_COPY ?= true
+    # NSS=3.110; EDDSA>=3.99 ML_KEM>3.118
+    USE_ML_KEM_768 ?= false
+    USE_ML_KEM_1024 ?= false
   endif
 
+  ifeq ($(LINUX_VERSION_CODENAME),forkey) # Debian 14; TBD
+    # NSS=3.124; EDDSA>=3.99 ML_KEM>3.118
+  endif
+
+  # UBUNTU
   # https://ubuntu.com/about/release-cycle
+
   ifeq ($(LINUX_VERSION_CODENAME),focal) # Ubuntu 20.04.6 LTS; May 2025; Pro Apr 2030
     USE_XFRM_HEADER_COPY ?= true
     USE_ML_KEM_768 ?= false
+    USE_ML_KEM_1024 ?= false
     USE_EDDSA ?= false
   endif
 
@@ -76,6 +91,7 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   ifeq ($(LINUX_VERSION_CODENAME),noble) # Ubuntu 24.04.3 LTS; May 2029; Pro Apr 2034
     USE_XFRM_HEADER_COPY ?= true
     USE_ML_KEM_768 ?= false
+    USE_ML_KEM_1024 ?= false
     USE_EDDSA ?= false
   endif
 
