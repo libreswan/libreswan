@@ -22,7 +22,7 @@ west #
  # fail as nothing to do, --debug= ignored
 west #
  ipsec addconn --debug=asdfasdf
-whack: unrecognized --debug='asdfasdf' option ignored
+ipsec addconn: warning: unrecognized --debug='asdfasdf' option ignored
 ipsec addconn: nothing to do, see --help
 west #
  # fail as nothing to do, --config not eaten
