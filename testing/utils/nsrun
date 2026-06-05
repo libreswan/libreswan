@@ -3110,9 +3110,9 @@ def localhost_sudo(args, testname):
     s = shell.Remote(cmd, logger, hostname=args.node, username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
-        s.sendline('export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS')
-        s.sendline("cd %s/testing/pluto/%s" % (args.libreswandir, testname))
-        s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        s.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        s.child.expect(s.prompt, timeout=60)
+        s.run("cd %s/testing/pluto/%s" % (args.libreswandir, testname))
         # this has to before shell.run()
         s.stty_sane()
         # s.child.setecho(False) # this does not seems to work!
@@ -3299,6 +3299,15 @@ def resanitize(args):
     #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)
     #                       print "cat %s/%s"%(testdir,f)
 
+def check_host_ns_support():
+    for ns_type in ["--uts", "--net", "--mount"]:
+        r = subprocess.run(["sudo", "unshare", ns_type, "true"],
+                           capture_output=True)
+        if r.returncode != 0:
+            logger.error("ABORT: kernel missing namespace support for %s", ns_type)
+            return True
+    return False
+
 
 def check_host_xfrm_stack():
     # check if there is XFRM stack on the host
@@ -3308,6 +3317,37 @@ def check_host_xfrm_stack():
         logger.error( "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
         return True
 
+def check_host_networking():
+
+    r = subprocess.run(["sudo", "ip", "link", "add", "_nscheck_br", "type", "bridge"],
+                       capture_output=True)
+    if r.returncode == 0:
+        subprocess.run(["sudo", "ip", "link", "del", "_nscheck_br"], capture_output=True)
+    else:
+        logger.error("ABORT: no Linux bridge support found. cannot run test, %s enable CONFIG_BRIDGE=y is not set", r.stderr.decode())
+        return True
+
+    r = subprocess.run(["sudo", "ip", "link", "add", "_nscheck_veth", "type", "veth",
+                        "peer", "name", "_nscheck_veth2"],
+                       capture_output=True)
+    if r.returncode == 0:
+        subprocess.run(["sudo", "ip", "link", "del", "_nscheck_veth"], capture_output=True)
+    else:
+        logger.error("ABORT: no Linux veth support found. cannot run test, %s enable CONFIG_VETH=y", r.stderr.decode())
+        return True
+
+    return False
+
+
+def check_host_support():
+    if check_host_ns_support():
+        return True
+
+    if check_host_networking():
+        return True
+
+    if check_host_xfrm_stack():
+        return True
 
 def run_docker_q(args, tests, st):
     logger.info(
@@ -3404,8 +3444,8 @@ class Vshell(shell.Remote):
         self.initialize(directory)
 
     def initialize(self, directory):
-        self.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
-        self.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        self.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+        self.child.expect(self.prompt, timeout=60)
         # this has to before shell.run()
         self.chdir(directory)
         self.stty_sane()
@@ -3552,8 +3592,8 @@ class Namespace:
             # next few lines are bit hackery to get the local prompt behave
             # careful changing the order
             # s.child.delaybeforesend = 0.1
-            s.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
-            s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
+            s.sendline("PROMPT_COMMAND=''; export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS; PS1='" + DEFAULTCONFIG["PS1"] + "'")
+            s.child.expect(s.prompt, timeout=60)
             # this has to before shell.run()
             s.chdir("%s/testing/pluto/%s" % (test.args.libreswandir, test.name))
             s.stty_sane()
@@ -3760,8 +3800,8 @@ class Test():
         else:
             self.type = args.testtype
             if not tlr and self.type == "dockerplutotest" or self.type == "nsplutotest":
-                if check_host_xfrm_stack():
-                    return True
+                if check_host_support():
+                    sys.exit(1)
             if self.type == "nsplutotest":
                 # possible recursion ?? abort
                 cmd = "ip netns identify"
@@ -4103,7 +4143,8 @@ class TestListRun():
         if self.nstorun or self.dnottorun:
             sudo = localhost_sudo(self.args, '')
             logger.info("run local host tweaks")
-            check_host_xfrm_stack()
+            if check_host_support():
+                return True
 
             if self.nstorun:
                 ns_host_tweaks(self.args, sudo)

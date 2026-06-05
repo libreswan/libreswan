@@ -71,7 +71,7 @@ def compile_prompt(logger, username=None, hostname=None):
     # The regex code indexes the group dictionary using the string
     # name so this is hopefully easier?
 
-    prompt = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
+    prompt = (r'(|\x1b\[\?2004[hl]\r?)' +
               r'(' +
               (
                   # HOSTNAME#
@@ -85,7 +85,7 @@ def compile_prompt(logger, username=None, hostname=None):
                   r'@' +
                   r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or r'[-a-z0-9]+') + r')' +
                   r' ' +
-                  r'(?P<' + BASENAME_GROUP + r'>' + r'[-+=:,\.a-z0-9A-Z_~]+)' +
+                  r'(?P<' + BASENAME_GROUP + r'>' + r'[-+=:,\.a-z0-9A-Z_~/]+)' +
                   r'(| (?P<' + STATUS_GROUP + r'>[0-9]+))' +
                   r'\]'
               ) +
