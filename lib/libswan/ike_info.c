@@ -74,11 +74,11 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 				 ike_alg_is_ike(&integ->common, logger)));
 	}
 
-	if (!proposal_transform_ok(parser, proposal, transform_type_kem, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_ke, true)) {
 		return false;
 	}
 
-	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_kem) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_ke) {
 		const struct kem_desc *kem = kem_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
 		if (kem == &ike_alg_kem_none) {
@@ -224,7 +224,7 @@ static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	 */
 	.prf = true,
 	.integ = false,
-	.kem = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol ikev2_ike_proposal_protocol = {
@@ -235,7 +235,7 @@ static const struct proposal_protocol ikev2_ike_proposal_protocol = {
 	.encrypt = true,
 	.prf = true,
 	.integ = true,
-	.kem = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol *ike_proposal_protocol[] = {

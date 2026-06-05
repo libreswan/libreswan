@@ -412,14 +412,14 @@ static void remove_duplicate_transforms(struct proposal_parser *parser,
 	table_realloc(*transforms, keep_len);
 }
 
-static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
+static void remove_pfs_vs_ke_transforms(struct proposal_parser *parser,
 					 struct proposal *proposal,
 					 struct verbose verbose)
 {
 	/*
-	 * Drop KEM when no-PFS.
+	 * Drop KE when no-PFS.
 	 *
-	 * Note: the proposal may only have KEM algorithms,
+	 * Note: the proposal may only have KE algorithms,
 	 * which means all will be dropped leaving an empty
 	 * proposal.
 	 */
@@ -429,11 +429,11 @@ static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
 	unsigned len = 0;
 	bool already_logged = false;
 	TABLE_FOR_EACH(new, proposal->transforms) {
-		if (new->type == transform_type_kem) {
+		if (new->type == transform_type_ke) {
 			if (already_logged) {
 				vdbg("ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
 				     parser->protocol->name, new->desc->fqn);
-			} else if (new->desc == &ike_alg_kem_none.common) {
+			} else if (new->desc == &ike_alg_ke_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
 				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
 				     parser->protocol->name);
@@ -478,7 +478,7 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
-		remove_pfs_vs_kem_transforms(parser, proposal, verbose);
+		remove_pfs_vs_ke_transforms(parser, proposal, verbose);
 	}
 
 	vdbg("ordering raw transforms");
@@ -561,7 +561,7 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 		D(encrypt),
 		D(prf),
 		D(integ),
-		D(kem),
+		D(ke),
 #undef D
 		.enckeylen = (first_proposal_transform(proposal, transform_type_encrypt) == NULL ? 0 :
 			      first_proposal_transform(proposal, transform_type_encrypt)->enckeylen),
@@ -633,13 +633,13 @@ const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1] = {
 	S(encrypt),
 	S(prf),
 	S(integ),
-	S(kem),
+	S(ke),
 	S(sn),
 #undef S
 #define S(E) [PROPOSAL_TRANSFORM_##E] = {		\
 		.index = PROPOSAL_TRANSFORM_##E,	\
 		.name = #E,				\
-		.alg = &ike_alg_kem, }
+		.alg = &ike_alg_ke, }
 	S(addke1),
 	S(addke2),
 	S(addke3),
@@ -867,42 +867,42 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	 * algorithms of interest.
 	 */
 
-	const struct proposal *first_proposal_with_no_kem = NULL;
-	const struct proposal *first_proposal_with_kem_none = NULL;
+	const struct proposal *first_proposal_with_no_ke = NULL;
+	const struct proposal *first_proposal_with_ke_none = NULL;
 	/* something other than NONE */
-	const struct ike_alg *first_unique_kem = NULL;
-	const struct ike_alg *second_unique_kem = NULL;
+	const struct ike_alg *first_unique_ke = NULL;
+	const struct ike_alg *second_unique_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		const struct transform *kem = first_proposal_transform(proposal, transform_type_kem);
-		if (kem == NULL) {
-			if (first_proposal_with_no_kem == NULL) {
-				first_proposal_with_no_kem = proposal;
+		const struct transform *ke = first_proposal_transform(proposal, transform_type_ke);
+		if (ke == NULL) {
+			if (first_proposal_with_no_ke == NULL) {
+				first_proposal_with_no_ke = proposal;
 			}
 			continue;
 		}
-		if (kem->desc == &ike_alg_kem_none.common) {
-			if (first_proposal_with_kem_none == NULL) {
-				first_proposal_with_kem_none = proposal;
+		if (ke->desc == &ike_alg_ke_none.common) {
+			if (first_proposal_with_ke_none == NULL) {
+				first_proposal_with_ke_none = proposal;
 			}
 			continue;
 		}
-		if (first_unique_kem == NULL) {
-			first_unique_kem = kem->desc;
+		if (first_unique_ke == NULL) {
+			first_unique_ke = ke->desc;
 			continue;
 		}
-		if (kem->desc == first_unique_kem) {
+		if (ke->desc == first_unique_ke) {
 			continue;
 		}
-		if (second_unique_kem == NULL) {
+		if (second_unique_ke == NULL) {
 			/* not NONE, and not first */
-			second_unique_kem = kem->desc;
+			second_unique_ke = ke->desc;
 		}
 	}
 
 	/*
-	 * Regardless of PFS, no proposal specifying KEM is always ok.
+	 * Regardless of PFS, no proposal specifying KE is always ok.
 	 */
-	if (first_unique_kem == NULL && first_proposal_with_kem_none == NULL) {
+	if (first_unique_ke == NULL && first_proposal_with_ke_none == NULL) {
 		return true;
 	}
 
@@ -914,14 +914,14 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	 * (The converse, no proposals including KE was handled right
 	 * at the start).
 	 */
-	if (first_proposal_with_no_kem != NULL) {
+	if (first_proposal_with_no_ke != NULL) {
 		/* KE was specified */
 		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
 		return false;
 	}
 
-	if (first_unique_kem != NULL && second_unique_kem != NULL) {
+	if (first_unique_ke != NULL && second_unique_ke != NULL) {
 		switch (parser->policy->version) {
 		case IKEv1:
 			/*
@@ -929,8 +929,8 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 			 */
 			proposal_error(parser, "more than one IKEv1 %s Key Exchange algorithm (%s, %s) is not allowed in quick mode",
 				       parser->protocol->name,
-				       first_unique_kem->fqn,
-				       second_unique_kem->fqn);
+				       first_unique_ke->fqn,
+				       second_unique_ke->fqn);
 			return false;
 		case IKEv2:
 			/*
@@ -938,8 +938,8 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 			 */
 			proposal_error(parser, "more than one IKEv2 %s Key Exchange algorithm (%s, %s) requires unimplemented CREATE_CHILD_SA INVALID_KE",
 				       parser->protocol->name,
-				       first_unique_kem->fqn,
-				       second_unique_kem->fqn);
+				       first_unique_ke->fqn,
+				       second_unique_ke->fqn);
 			return false;
 		default:
 			/* ignore */
@@ -1378,9 +1378,9 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	 *     <encrypt>-<PRF>...
 	 *
 	 * When PRF succeeds, optionally try to also parse <INTEG>
-	 * that follows (i.e., <encrypt>-<prf>-<integ>[-<kem>]).
+	 * that follows (i.e., <encrypt>-<prf>-<integ>[-<ke>]).
 	 * If the next token isn't a valid INTEG, backtrack and
-	 * let the caller handle it (likely as KEM).
+	 * let the caller handle it (likely as KE).
 	 *
 	 * The merge code will then either build the INTEG from the
 	 * PRF or, when AEAD, set INTEG to NONE.
@@ -1399,10 +1399,10 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 		vdbg("<encrypt>-<PRF> succeeded");
 		/*
 		 * After PRF succeeds, optionally try to parse <INTEG>
-		 * that follows, as in <encrypt>-<prf>-<INTEG>[-<kem>].
+		 * that follows, as in <encrypt>-<prf>-<INTEG>[-<ke>].
 		 * If the next token isn't a valid INTEG algorithm,
 		 * backtrack and return with just PRF (the caller will
-		 * try the remaining tokens as KEM).
+		 * try the remaining tokens as KE).
 		 */
 		if (tokens->curr.token.ptr != NULL &&
 		    tokens->prev.delim != ';' &&
@@ -1438,7 +1438,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 				vdbg("<encrypt>-<PRF>-<INTEG> ambiguous (also valid PRF), backtracking");
 			}
 
-			/* INTEG failed, NONE or was ambigous; backtrack - remaining tokens may be KEM */
+			/* INTEG failed, NONE or was ambigous; backtrack - remaining tokens may be KE */
 			vdbg("<encrypt>-<PRF>-<INTEG>, backtracking");
 			pfree_diag(&parser->diag);
 			(*tokens) = saved_tokens;
@@ -1489,23 +1489,23 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	pfree_diag(&prf_diag);
 
 	/*
-	 * <encrypt>-<INTEG> can only be followed by -<PRF> or ;<KEM>
-	 * (i.e., <encrypt>-<integ>-<kem> is invalid, see tests).
+	 * <encrypt>-<INTEG> can only be followed by -<PRF> or ;<KE>
+	 * (i.e., <encrypt>-<integ>-<ke> is invalid, see tests).
 	 *
-	 * Exclude ';<KEM>' then try for -<INTEG>.
+	 * Exclude ';<KE>' then try for -<INTEG>.
 	 */
 
 	if (tokens->curr.token.ptr == NULL /*more?*/ ||
-	    tokens->prev.delim == ';' /*;KEM>*/) {
+	    tokens->prev.delim == ';' /*;KE>*/) {
 		return true;
 	}
 	/*
 	 * Reaching here means INTEG was already consumed from the
-	 * proposal string before PRF.  Warn: the order is encrypt-prf-integ-kem.
+	 * proposal string before PRF.  Warn: the order is encrypt-prf-integ-ke.
 	 */
 	if (!proposal_integ_none(proposal)) {
 		llog(parser->policy->stream, parser->policy->logger,
-		     "WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-kem order");
+		     "WARNING: IKE proposal has integ specified before prf; use encrypt-prf-integ-ke order");
 	}
 
 	vdbg("trying <encrypt>-<prf>-<INTEG>");
@@ -1555,7 +1555,7 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		}
 		break;
 
-	case PROPOSAL_TRANSFORM_kem:
+	case PROPOSAL_TRANSFORM_ke:
 		/*
 		 * Parse:
 		 *
@@ -1567,7 +1567,7 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 *
 		 * But only when <encr>-<PRF> didn't succeed.
 		 */
-		if (parser->protocol->kem) {
+		if (parser->protocol->ke) {
 			return parse_transform_algorithms(parser, proposal,
 							  transform_type, tokens,
 							  verbose);
@@ -1693,14 +1693,14 @@ bool parse_proposal(struct proposal_parser *parser,
 			/*
 			 * Warn when integ= is specified explicitly
 			 * before prf=.  The new-syntax order is
-			 * encrypt-prf-integ-kem; specifying integ
+			 * encrypt-prf-integ-ke; specifying integ
 			 * before prf produces confusing output.
 			 */
 			if (tmp == transform_type_integ &&
 			    transform_type <= transform_type_prf &&
 			    parser->protocol->prf) {
 				llog(parser->policy->stream, parser->policy->logger,
-				     "WARNING: IKE proposal has integ= specified before prf=; use encrypt-prf-integ-kem order");
+				     "WARNING: IKE proposal has integ= specified before prf=; use encrypt-prf-integ-ke order");
 			}
 			vdbg("switching from '%s' transforms to '%s' transforms",
 			     transform_type->name,
@@ -1712,13 +1712,13 @@ bool parse_proposal(struct proposal_parser *parser,
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 		} else if (tokens.prev.delim == ';' &&
-			   transform_type <= transform_type_kem) {
+			   transform_type <= transform_type_ke) {
 
-			vdbg("skipping from transform '%s' to ;KEM",
+			vdbg("skipping from transform '%s' to ;KE",
 			     transform_type->name);
 
-			/* treat ;... like KEM=... */
-			transform_type = transform_type_kem;
+			/* treat ;... like KE=... */
+			transform_type = transform_type_ke;
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 		} else if (tokens.prev.delim != ';' &&

@@ -45,7 +45,7 @@ static struct v1_proposal merge_alg_default(struct v1_proposal proposal,
 		case PROPOSAL_TRANSFORM_##TYPE:				\
 			proposal.TYPE = TYPE##_desc(default_alg);	\
 			break
-		T(kem);
+		T(ke);
 		T(encrypt);
 		T(prf);
 		T(integ);
@@ -119,7 +119,7 @@ static bool add_proposal(struct proposal_parser *parser,
 	}
 	A(prf);
 	A(integ);
-	A(kem);
+	A(ke);
 #undef A
 	/* back end? */
 	if (!proposal->protocol->proposal_ok(parser, new)) {
@@ -146,10 +146,10 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
 	 */
-	if (proposal->kem == NULL &&
-	    defaults->transform[PROPOSAL_TRANSFORM_kem] != NULL) {
+	if (proposal->ke == NULL &&
+	    defaults->transform[PROPOSAL_TRANSFORM_ke] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					transform_type_kem,
+					transform_type_ke,
 					verbose);
 	} else if (proposal->encrypt == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_encrypt] != NULL) {

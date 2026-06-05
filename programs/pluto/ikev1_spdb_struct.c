@@ -574,18 +574,18 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		PASSERT(logger, algs.encrypt != NULL);
 		PASSERT(logger, algs.prf != NULL);
-		PASSERT(logger, algs.kem != NULL);
+		PASSERT(logger, algs.ke != NULL);
 
 		unsigned ealg = algs.encrypt->ikev1_oakley_id;
 		unsigned halg = algs.prf->ikev1_oakley_id;
-		unsigned modp = algs.kem->ikev1_oakley_id;
+		unsigned modp = algs.ke->ikev1_oakley_id;
 		unsigned eklen = algs.enckeylen;
 
 		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
 		     __func__,
 		     algs.encrypt->common.fqn, ealg,
 		     algs.prf->common.fqn, halg,
-		     algs.kem->common.fqn, modp,
+		     algs.ke->common.fqn, modp,
 		     eklen);
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.kem->ikev1_oakley_id != (int)last_modp) {
+		    algs.ke->ikev1_oakley_id != (int)last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
@@ -695,7 +695,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					      algs.encrypt->ikev1_oakley_id, &eb),
 				     str_enum_long(&oakley_hash_names,
 					      algs.prf->ikev1_oakley_id, &hb),
-				     algs.kem->common.fqn,
+				     algs.ke->common.fqn,
 				     algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
@@ -796,7 +796,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = algs.kem->ikev1_oakley_id;
+			last_modp = algs.ke->ikev1_oakley_id;
 		}
 
 		PEXPECT(logger, emp_sp == NULL);
@@ -1486,7 +1486,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.prf == ta->ta_prf &&
-		    algs.kem == ta->ta_dh) {
+		    algs.ke == ta->ta_dh) {
 			if (ealg_insecure) {
 				llog(RC_LOG, logger,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",
