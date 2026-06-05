@@ -169,7 +169,10 @@ static bool parse_ikev2_proposal(struct proposal_parser *parser,
 	}
 
 	/* back end? */
-	if (!parser->protocol->proposal_ok(parser, proposal)) {
+	if (proposal_impaired(proposal)) {
+		llog(IMPAIR_STREAM, verbose.logger,
+		     "skipping proposal check");
+	} else if (!parser->protocol->proposal_ok(parser, proposal)) {
 		vassert(parser->diag != NULL);
 		return false;
 	}

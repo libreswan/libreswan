@@ -700,6 +700,10 @@ void append_proposal_transform(struct proposal_parser *parser,
 size_t jam_transform(struct jambuf *buf,
 		     const struct transform *transform)
 {
+	if (transform->desc == NULL) {
+		return 0;
+	}
+
 	size_t s = 0;
 	s += jam_string(buf, transform->desc->fqn);
 	if (transform->enckeylen != 0) {
@@ -1245,6 +1249,18 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 	vassert(transform_type != NULL);
 
 	if (token.len == 0) {
+		if (proposal->impaired) {
+			llog(IMPAIR_STREAM, verbose.logger,
+			     "allowing empty %s proposal %s transform",
+			     proposal->protocol->name,
+			     transform_type->name);
+			struct transform empty_transform = {
+				.type = transform_type,
+			};
+			table_grow(proposal->transforms, empty_transform);
+			return true;
+		}
+
 		proposal_error(parser, "%s %s is empty",
 			       parser->protocol->name,
 			       transform_type->alg->story);
@@ -1585,6 +1601,19 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		break;
 	}
 
+	if (proposal->impaired) {
+		llog(IMPAIR_STREAM, verbose.logger,
+		     "allowing %s proposal %s transform",
+		     proposal->protocol->name,
+		     transform_type->name);
+		if (!parse_transform_algorithms(parser, proposal,
+						transform_type, tokens,
+						verbose)) {
+			return false;
+		}
+		return true;
+	}
+
 	if (typed_how == TRANSFORM_TYPE_EXPLICIT) {
 		/* just in-case DELIM is NUL */
 		proposal_error(parser, "%s proposal contains unexpected explicit "PRI_SHUNK"%c",
@@ -1610,7 +1639,13 @@ bool parse_proposal(struct proposal_parser *parser,
 	verbose.level++;
 	const unsigned verbose_base = verbose.level;
 
-	struct tokens tokens = first_token(input, "-;+=!", verbose);
+	if (hunk_streat(&input, "!")) {
+		proposal->impaired = true;
+		llog(IMPAIR_STREAM, verbose.logger,
+		     "allowing invalid proposal");
+	}
+
+	struct tokens tokens = first_token(input, "-;+=", verbose);
 
 	/* hack to stop non ADDKE reporting missing ADDKE */
 	const struct transform_type *transform_roof =
@@ -1630,55 +1665,6 @@ bool parse_proposal(struct proposal_parser *parser,
 		     curr_delim,
 		     transform_type->name);
 		verbose.level++;
-
-		if (tokens.curr.delim == '!') {
-
-			const struct transform_type *tmp =
-				transform_type_by_name(tokens.curr.token);
-			if (tmp == NULL) {
-				proposal_error(parser, "proposal %s transform '"PRI_SHUNK"' unrecognized",
-					       proposal->protocol->name,
-					       pri_shunk(tokens.curr.token));
-				return false;
-			}
-
-			/* advance to TRANSFORMS after '!' */
-			transform_type = tmp;
-			next_token(&tokens, verbose);
-			proposal->impaired = true;
-
-			/* go directly to the algorithm parser */
-#if 0
-			/*
-			 * A transform with no algorithm should stop
-			 * the proposal being decorated with that
-			 * transforms defaults?
-			 */
-			if (tokens.curr.token.len == 0 &&
-			    tokens.curr.token.ptr != NULL &&
-			    proposal->first[transform_type->index] == NULL) {
-				llog(IMPAIR_STREAM, verbose.logger,
-				     "forcing empty %s proposal %s transform",
-				     proposal->protocol->name,
-				     transform_type->name);
-				append_proposal_transform(parser, proposal, transform_type, NULL, 0, verbose);
-				/* skip empty transform */
-				next_token(&tokens, verbose);
-				continue;
-			}
-#endif
-			llog(IMPAIR_STREAM, verbose.logger,
-			     "forcing %s proposal %s transform",
-			     proposal->protocol->name,
-			     transform_type->name);
-			if (!parse_transform_algorithms(parser, proposal,
-							transform_type, &tokens,
-							verbose)) {
-				return false;
-			}
-			continue;
-
-		}
 
 		enum transform_typed_how typed_how;
 
