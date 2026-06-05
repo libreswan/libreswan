@@ -964,13 +964,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DEBUG_NONE:	/* --debug-none */
-			optarg_debug(OPTARG_DEBUG_NO);
+			optarg_debug(logger, OPTARG_DEBUG_NO);
 			continue;
 		case OPT_DEBUG_ALL:	/* --debug-all */
-			optarg_debug(OPTARG_DEBUG_YES);
+			optarg_debug(logger, OPTARG_DEBUG_YES);
 			continue;
 		case OPT_DEBUG:
-			optarg_debug(OPTARG_DEBUG_YES);
+			optarg_debug(logger, OPTARG_DEBUG_YES);
 			continue;
 
 		case OPT_IMPAIR:

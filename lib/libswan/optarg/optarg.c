@@ -521,23 +521,23 @@ void optarg_verbose(const struct logger *logger, lset_t start)
 	}
 }
 
-void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
+void optarg_debug_lmod(struct logger *logger,
+		       enum optarg_debug debug,
+		       lmod_t *mods)
 {
 	if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
-		fprintf(stderr, "aliases:\n");
+		llog(PRINTF_STREAM, logger, "aliases:");
 		for (struct lmod_alias *a = debug_lmod_info.aliases;
 		     a->name != NULL; a++) {
-			JAMBUF(buf) {
+			LLOG_JAMBUF(PRINTF_STREAM, logger, buf) {
 				jam(buf, "  %s: ", a->name);
 				jam_lset_short(buf, debug_lmod_info.names, "+", a->bits);
-				fprintf(stderr, PRI_SHUNK"\n",
-					pri_shunk(jambuf_as_shunk(buf)));
 			}
 		}
-		fprintf(stderr, "bits:\n");
+		llog(PRINTF_STREAM, logger, "bits:");
 		for (long e = next_enum(&debug_names, -1);
 		     e != -1; e = next_enum(&debug_names, e)) {
-			JAMBUF(buf) {
+			LLOG_JAMBUF(PRINTF_STREAM, logger, buf) {
 				jam(buf, "  ");
 				jam_enum_short(buf, &debug_names, e);
 				name_buf help;
@@ -545,8 +545,6 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 					jam(buf, ": ");
 					jam_string(buf, help.buf);
 				}
-				fprintf(stderr, PRI_SHUNK"\n",
-					pri_shunk(jambuf_as_shunk(buf)));
 			}
 		}
 		exit(1);
@@ -555,14 +553,14 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 	/* work through the updates */
 	const struct option *option = &optarg_options[optarg_index];
 	if (!ttolmod(shunk1(optarg), mods, &debug_lmod_info, debug == OPTARG_DEBUG_YES)) {
-		fprintf(stderr, "whack: unrecognized --%s%s'%s' option ignored\n",
-			option->name,
-			(option->has_arg == optional_argument ? "=" : " "),
-			optarg);
+		llog(WARNING_STREAM, logger, "unrecognized --%s%s'%s' option ignored",
+		     option->name,
+		     (option->has_arg == optional_argument ? "=" : " "),
+		     optarg);
 	}
 }
 
-void optarg_debug(enum optarg_debug debug)
+void optarg_debug(struct logger *logger, enum optarg_debug debug)
 {
 	if (optarg == NULL) {
 		cur_debugging = (debug == OPTARG_DEBUG_YES ? DBG_all :
@@ -570,7 +568,7 @@ void optarg_debug(enum optarg_debug debug)
 				 0);
 	} else {
 		lmod_t mods = {0};
-		optarg_debug_lmod(debug, &mods);
+		optarg_debug_lmod(logger, debug, &mods);
 		cur_debugging = lmod(cur_debugging, mods);
 	}
 }

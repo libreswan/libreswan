@@ -654,7 +654,7 @@ int main(int argc, char *argv[])
 			optarg_verbose(logger, LEMPTY);
 			continue;
 		case OPT_DEBUG:
-			optarg_debug(OPTARG_DEBUG_YES);
+			optarg_debug(logger, OPTARG_DEBUG_YES);
 			continue;
 		case OPT_IGNORE:
 			ignore_transform_lookup_error = true;
