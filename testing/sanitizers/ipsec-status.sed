@@ -1,5 +1,9 @@
 s/^secctx-attr-type=.*/secctx-attr-type=XXXX/g
 s/^secctx-attr-value=.*/secctx-attr-type=XXXX/g
+# Fedora default
+s/\/var\/lib\/unbound/UNBOUND/g
+# Debian default
+s/\/usr\/share\/dns\/root.key/UNBOUND\/root.key/g
 s/\/usr\/local/PATH/g
 s/\/usr/PATH/g
 s/used [0-9]*s ago/used XXs ago/g
