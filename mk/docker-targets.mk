@@ -293,11 +293,11 @@ nsrun: nsrunclean
 .PHONY: nsinstall
 nsinstall:
 	$(MAKE) clean
-	$(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= base
-	sudo $(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= install-base
+	$(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= OBJDIR=$(OBJDIR) base
+	sudo $(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= OBJDIR=$(OBJDIR) install-base
 
 
 .PHONY: nsreinstall
 nsreinstall:
-	$(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= base
-	sudo $(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= install-base
+	$(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= OBJDIR=$(OBJDIR) base
+	sudo $(MAKE) INITSYSTEM=docker DOCKER_PLUTONOFORK= OBJDIR=$(OBJDIR) install-base
