@@ -1,2 +1,2 @@
-ipsec auto --up west
+ipsec up west # sanitize-retransmits
 echo done
