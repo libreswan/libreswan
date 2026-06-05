@@ -512,6 +512,7 @@ USE_LABELED_IPSEC ?= false
 USE_SECCOMP ?= false
 
 # Include LDAP support (currently used for fetching CRLs)
+# This is only needed if libcurl is build without LDAP support.
 USE_LDAP ?= false
 
 # Include libcurl support (currently used for fetching CRLs)
