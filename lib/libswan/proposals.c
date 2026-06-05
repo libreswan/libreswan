@@ -775,22 +775,35 @@ size_t jam_proposal(struct jambuf *buf,
 		const struct transform *prf = first_prf;
 		const struct transform *integ = first_integ;
 		do {
+			if (integ->desc == NULL) {
+				skip_integ = false;
+				break;
+			}
+
+			if (prf->desc == NULL) {
+				skip_integ = false;
+				break;
+			}
+
 			if (prf->desc != &integ_desc(integ->desc)->prf->common) {
 				skip_integ = false;
 				break;
 			}
+
 			prf++;
 			integ++;
 			if (prf > last_prf && integ > last_integ) {
 				/* made it to the end */
 				break;
 			}
+
 			if (prf > last_prf || integ > last_integ) {
 				/* different counts (actually handled
 				 * above) */
 				skip_integ = false;
 				break;
 			}
+
 			if (prf->type != transform_type_prf ||
 			    integ->type != transform_type_integ) {
 				/* jumbled transforms; integ/prf
@@ -802,43 +815,22 @@ size_t jam_proposal(struct jambuf *buf,
 	}
 
 	size_t s = 0;
-	bool first = true;
+	bool first_transform = true;
 	previous_type = transform_types; /*first is 1*/
-	bool jammed_prf_and_integ = false;
 	TABLE_FOR_EACH(transform, proposal->transforms) {
 		/* skip integ? */
 		if (transform->type == transform_type_integ && skip_integ) {
 			continue;
 		}
-		if (transforms_in_order && !skip_integ &&
-		    (transform->type == transform_type_prf ||
-		     transform->type == transform_type_integ)) {
-			if (!jammed_prf_and_integ) {
-				for (const struct transform *integ = first_integ;
-				     integ != NULL && integ <= last_integ; integ++) {
-					s += jam_string(buf, (integ > first_integ ? "+" :
-							      first ? "" : "-"));
-					first = false;
-					s += jam_transform(buf, integ);
-				}
-				for (const struct transform *prf = first_prf;
-				     prf != NULL && prf <= last_prf; prf++) {
-					s += jam_string(buf, (prf > first_prf ? "+" :
-							      first ? "" : "-"));
-					first = false;
-					s += jam_transform(buf, prf);
-				}
-				jammed_prf_and_integ = true;
-			}
-			continue;
-		}
 		if (previous_type < transform->type) {
-			s += jam_string(buf, (first ? "" : "-")); first = false;
+			s += jam_string(buf, (first_transform ? "" : "-"));
+			first_transform = false;
 		} else if (previous_type == transform->type) {
-			pexpect(!first);
+			pexpect(!first_transform);
 			s += jam_string(buf, "+");
 		} else {
-			s += jam_string(buf, (first ? "" : ";")); first = false;
+			s += jam_string(buf, (first_transform ? "" : ";"));
+			first_transform = false;
 			s += jam_string(buf, transform->type->name);
 			s += jam_string(buf, "=");
 		}
