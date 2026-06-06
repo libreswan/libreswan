@@ -39,7 +39,7 @@
 #include "pluto_x509.h"
 #include "ikev2_proposals.h"
 #include "terminate.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "unpack.h"
 #include "ikev2_prf.h"
 #include "ikev2_states.h"

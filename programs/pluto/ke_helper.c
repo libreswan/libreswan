@@ -51,7 +51,7 @@
 #include "test_buffer.h"
 #include "ike_alg.h"
 #include "crypt_dh.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 
 struct task {
 	const struct kem_desc *dh;

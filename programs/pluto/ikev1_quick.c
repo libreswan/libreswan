@@ -78,7 +78,7 @@
 #include "ip_selector.h"
 #include "ikev1_hash.h"
 #include "ikev1_message.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include <blapit.h>
 #include "crypt_dh.h"
 #include "unpack.h"

@@ -24,8 +24,8 @@
  * and checking.)
  */
 
-#ifndef CRYPT_KE_H
-#define CRYPT_KE_H
+#ifndef KE_HELPER_H
+#define KE_HELPER_H
 
 struct kem_initiator;
 

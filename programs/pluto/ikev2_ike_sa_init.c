@@ -35,7 +35,7 @@
 #include "log.h"
 #include "state.h"
 #include "crypt_dh.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
 #include "connections.h"

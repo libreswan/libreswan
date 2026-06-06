@@ -80,7 +80,7 @@
 #include "ikev1_nat.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "fips_mode.h"
 #include "ip_address.h"
 #include "send.h"

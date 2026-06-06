@@ -23,7 +23,7 @@
 #include "lswlog.h"
 #include "unpack.h"
 #include "demux.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "crypt_cipher.h"
 #include "crypt_hash.h"
 

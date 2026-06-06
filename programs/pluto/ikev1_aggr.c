@@ -44,7 +44,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "secrets.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "crypt_dh.h"
 #include "unpack.h"
 #include "ikev1_host_pair.h"

@@ -81,7 +81,7 @@
 #include "ikev2_notification.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"
 #include "iface.h"

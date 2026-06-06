@@ -48,7 +48,7 @@
 #include "kernel.h"
 #include "ikev2_message.h"
 #include "crypt_dh.h"
-#include "crypt_ke.h"
+#include "ke_helper.h"
 #include "unpack.h"
 #include "pending.h"
 #include "ipsec_doi.h"			/* for capture_child_rekey_policy */
