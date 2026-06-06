@@ -2201,56 +2201,56 @@ enum_names ikev2_trans_type_integ_names = {
 
 /* Key Exchange Method names */
 
-static const char *const ikev2_trans_type_kem_name[IKEv2_KEM_ROOF-IKEv2_KEM_FLOOR] = {
-#define S(E) [E - IKEv2_KEM_FLOOR] = #E
-	S(IKEv2_KEM_NONE), /* 0! RFC 7296 */
-	S(IKEv2_KEM_MODP768),
-	S(IKEv2_KEM_MODP1024),
-	S(IKEv2_KEM_GP155),
-	S(IKEv2_KEM_GP185),
-	S(IKEv2_KEM_MODP1536), /* RFC 3526 */
-	S(IKEv2_KEM_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(IKEv2_KEM_MODP2048), /* RFC 3526 */
-	S(IKEv2_KEM_MODP3072), /* RFC 3526 */
-	S(IKEv2_KEM_MODP4096), /* RFC 3526 */
-	S(IKEv2_KEM_MODP6144), /* RFC 3526 */
-	S(IKEv2_KEM_MODP8192), /* RFC 3526 */
-	S(IKEv2_KEM_ECP_256), /* RFC 5903 */
-	S(IKEv2_KEM_ECP_384), /* RFC 5903 */
-	S(IKEv2_KEM_ECP_521), /* RFC 5903 */
-	S(IKEv2_KEM_DH22), /* RFC 5114 */
-	S(IKEv2_KEM_DH23), /* RFC 5114 */
-	S(IKEv2_KEM_DH24), /* RFC 5114 */
-	S(IKEv2_KEM_ECP_192), /* RFC 5114 */
-	S(IKEv2_KEM_ECP_224), /* RFC 5114 */
-	S(IKEv2_KEM_BRAINPOOL_P224R1), /* RFC 6932 */
-	S(IKEv2_KEM_BRAINPOOL_P256R1), /* RFC 6932 */
-	S(IKEv2_KEM_BRAINPOOL_P384R1), /* RFC 6932 */
-	S(IKEv2_KEM_BRAINPOOL_P512R1), /* RFC 6932 */
-	S(IKEv2_KEM_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
-	S(IKEv2_KEM_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
-	S(IKEv2_KEM_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
-	S(IKEv2_KEM_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
-	S(IKEv2_KEM_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	S(IKEv2_KEM_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	S(IKEv2_KEM_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+static const char *const ikev2_trans_type_kem_name[IKEv2_KE_ROOF-IKEv2_KE_FLOOR] = {
+#define S(E) [E - IKEv2_KE_FLOOR] = #E
+	S(IKEv2_KE_NONE), /* 0! RFC 7296 */
+	S(IKEv2_KE_MODP768),
+	S(IKEv2_KE_MODP1024),
+	S(IKEv2_KE_GP155),
+	S(IKEv2_KE_GP185),
+	S(IKEv2_KE_MODP1536), /* RFC 3526 */
+	S(IKEv2_KE_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KE_MODP2048), /* RFC 3526 */
+	S(IKEv2_KE_MODP3072), /* RFC 3526 */
+	S(IKEv2_KE_MODP4096), /* RFC 3526 */
+	S(IKEv2_KE_MODP6144), /* RFC 3526 */
+	S(IKEv2_KE_MODP8192), /* RFC 3526 */
+	S(IKEv2_KE_ECP_256), /* RFC 5903 */
+	S(IKEv2_KE_ECP_384), /* RFC 5903 */
+	S(IKEv2_KE_ECP_521), /* RFC 5903 */
+	S(IKEv2_KE_DH22), /* RFC 5114 */
+	S(IKEv2_KE_DH23), /* RFC 5114 */
+	S(IKEv2_KE_DH24), /* RFC 5114 */
+	S(IKEv2_KE_ECP_192), /* RFC 5114 */
+	S(IKEv2_KE_ECP_224), /* RFC 5114 */
+	S(IKEv2_KE_BRAINPOOL_P224R1), /* RFC 6932 */
+	S(IKEv2_KE_BRAINPOOL_P256R1), /* RFC 6932 */
+	S(IKEv2_KE_BRAINPOOL_P384R1), /* RFC 6932 */
+	S(IKEv2_KE_BRAINPOOL_P512R1), /* RFC 6932 */
+	S(IKEv2_KE_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KE_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KE_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KE_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KE_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KE_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KE_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 #undef S
 };
 
 enum_names ikev2_trans_type_kem_names = {
-	IKEv2_KEM_FLOOR,
-	IKEv2_KEM_ROOF-1,
+	IKEv2_KE_FLOOR,
+	IKEv2_KE_ROOF-1,
 	ARRAY_PTR(ikev2_trans_type_kem_name),
-	"IKEv2_KEM_", /* prefix */
+	"IKEv2_KE_", /* prefix */
 	NULL
 };
 

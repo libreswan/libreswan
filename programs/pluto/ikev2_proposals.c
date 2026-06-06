@@ -660,7 +660,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 						      (type >= IKEv2_TRANS_TYPE_ADDKE1 &&
 						       type <= IKEv2_TRANS_TYPE_ADDKE7));
 				if (kem_algorithm &&
-				    remote_transform.id != IKEv2_KEM_NONE &&
+				    remote_transform.id != IKEv2_KE_NONE &&
 				    (matching_local_proposal->matched_kem_algorithms & LELEM(remote_transform.id))) {
 					vdbg("ignoring previously selected KEM algorithm %u",
 					     remote_transform.id);
@@ -935,9 +935,9 @@ static struct ikev2_proposal_match *alloc_ikev2_proposal_match(const struct ikev
 				if ((type == IKEv2_TRANS_TYPE_INTEG &&
 				     sentinel_transform->id == IKEv2_INTEG_NONE) ||
 				    (type == IKEv2_TRANS_TYPE_KEM &&
-				     sentinel_transform->id == IKEv2_KEM_NONE) ||
+				     sentinel_transform->id == IKEv2_KE_NONE) ||
 				    (IKEv2_TRANS_TYPE_ADDKE1 <= type && type <= IKEv2_TRANS_TYPE_ADDKE7 &&
-				     sentinel_transform->id == IKEv2_KEM_NONE)) {
+				     sentinel_transform->id == IKEv2_KE_NONE)) {
 					optional_transform_types |= LELEM(type);
 				}
 			}
@@ -1200,7 +1200,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				case IKEv2_TRANS_TYPE_ADDKE5:
 				case IKEv2_TRANS_TYPE_ADDKE6:
 				case IKEv2_TRANS_TYPE_ADDKE7:
-					id = IKEv2_KEM_NONE;
+					id = IKEv2_KE_NONE;
 					break;
 				default:
 					bad_case(type);
@@ -1532,7 +1532,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 				 * also include it in the response.
 				 */
 				impairment = impair.v2_proposal_dh;
-				none = IKEv2_KEM_NONE; /* always zero */
+				none = IKEv2_KE_NONE; /* always zero */
 				break;
 			default:
 				impairment = IMPAIR_v2_TRANSFORM_NO;

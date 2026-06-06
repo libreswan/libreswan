@@ -1073,49 +1073,49 @@ enum ikev2_trans_type_integ {
  */
 
 enum ikev2_trans_type_kem {
-#define IKEv2_KEM_FLOOR IKEv2_KEM_NONE
-	IKEv2_KEM_NONE = 0,	/* RFC 7296 */
-	IKEv2_KEM_MODP768 = 1,
-	IKEv2_KEM_MODP1024 = 2,
-	IKEv2_KEM_GP155 = 3, /* IKEv2 reserved */
-	IKEv2_KEM_GP185 = 4, /* IKEv2 reserved */
-	IKEv2_KEM_MODP1536 = 5, /* RFC 3526 */
-	IKEv2_KEM_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	IKEv2_KEM_MODP2048 = 14, /* RFC 3526 */
-	IKEv2_KEM_MODP3072 = 15, /* RFC 3526 */
-	IKEv2_KEM_MODP4096 = 16, /* RFC 3526 */
-	IKEv2_KEM_MODP6144 = 17, /* RFC 3526 */
-	IKEv2_KEM_MODP8192 = 18, /* RFC 3526 */
-	IKEv2_KEM_ECP_256 = 19, /* RFC 5903 */
-	IKEv2_KEM_ECP_384 = 20, /* RFC 5903 */
-	IKEv2_KEM_ECP_521 = 21, /* RFC 5903 */
-	IKEv2_KEM_DH22 = 22, /* RFC 5114 */
-	IKEv2_KEM_DH23 = 23, /* RFC 5114 */
-	IKEv2_KEM_DH24 = 24, /* RFC 5114 */
-	IKEv2_KEM_ECP_192 = 25, /* RFC 5114 */
-	IKEv2_KEM_ECP_224 = 26, /* RFC 5114 */
+#define IKEv2_KE_FLOOR IKEv2_KE_NONE
+	IKEv2_KE_NONE = 0,	/* RFC 7296 */
+	IKEv2_KE_MODP768 = 1,
+	IKEv2_KE_MODP1024 = 2,
+	IKEv2_KE_GP155 = 3, /* IKEv2 reserved */
+	IKEv2_KE_GP185 = 4, /* IKEv2 reserved */
+	IKEv2_KE_MODP1536 = 5, /* RFC 3526 */
+	IKEv2_KE_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KE_MODP2048 = 14, /* RFC 3526 */
+	IKEv2_KE_MODP3072 = 15, /* RFC 3526 */
+	IKEv2_KE_MODP4096 = 16, /* RFC 3526 */
+	IKEv2_KE_MODP6144 = 17, /* RFC 3526 */
+	IKEv2_KE_MODP8192 = 18, /* RFC 3526 */
+	IKEv2_KE_ECP_256 = 19, /* RFC 5903 */
+	IKEv2_KE_ECP_384 = 20, /* RFC 5903 */
+	IKEv2_KE_ECP_521 = 21, /* RFC 5903 */
+	IKEv2_KE_DH22 = 22, /* RFC 5114 */
+	IKEv2_KE_DH23 = 23, /* RFC 5114 */
+	IKEv2_KE_DH24 = 24, /* RFC 5114 */
+	IKEv2_KE_ECP_192 = 25, /* RFC 5114 */
+	IKEv2_KE_ECP_224 = 26, /* RFC 5114 */
 	/* From here on, values are only valid for IKEv2 */
-	IKEv2_KEM_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
-	IKEv2_KEM_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
-	IKEv2_KEM_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
-	IKEv2_KEM_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
-	IKEv2_KEM_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
-	IKEv2_KEM_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+	IKEv2_KE_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
+	IKEv2_KE_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
+	IKEv2_KE_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
+	IKEv2_KE_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
+	IKEv2_KE_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
+	IKEv2_KE_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
 
-	IKEv2_KEM_GOST3410_2012_256 = 33,	/* RFC 9385, Sec. 6.1 */
-	IKEv2_KEM_GOST3410_2012_512 = 34,	/* RFC 9385, Sec. 6.1 */
+	IKEv2_KE_GOST3410_2012_256 = 33,	/* RFC 9385, Sec. 6.1 */
+	IKEv2_KE_GOST3410_2012_512 = 34,	/* RFC 9385, Sec. 6.1 */
 
-	IKEv2_KEM_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	IKEv2_KEM_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	IKEv2_KEM_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-#define IKEv2_KEM_ROOF (IKEv2_KEM_ML_KEM_1024 + 1)
+	IKEv2_KE_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KE_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KE_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+#define IKEv2_KE_ROOF (IKEv2_KE_ML_KEM_1024 + 1)
 
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
