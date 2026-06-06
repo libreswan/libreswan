@@ -244,7 +244,7 @@ static void nss_ml_kem_check(const struct kem_desc *kem, struct logger *logger)
 }
 
 
-const struct kem_ops ike_alg_kem_ml_kem_nss_ops = {
+const struct kem_ops ike_alg_ke_ml_kem_nss_ops = {
 	.backend = "NSS(MLKEM)",
 	.check = nss_ml_kem_check,
 	.calc_local_secret = nss_ml_kem_calc_local_secret,

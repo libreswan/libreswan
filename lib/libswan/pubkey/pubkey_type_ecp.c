@@ -218,9 +218,9 @@ static diag_t ECDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 							 const struct logger *logger)
 {
 	static const struct kem_desc *kem[] = {
-		&ike_alg_kem_secp256r1,
-		&ike_alg_kem_secp384r1,
-		&ike_alg_kem_secp521r1,
+		&ike_alg_ke_secp256r1,
+		&ike_alg_ke_secp384r1,
+		&ike_alg_ke_secp521r1,
 		NULL,
 	};
 	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem, ecKey);
@@ -232,7 +232,7 @@ static diag_t EDDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 {
 #ifdef USE_EDDSA
 	static const struct kem_desc *kem[] = {
-		&ike_alg_kem_ed25519,
+		&ike_alg_ke_ed25519,
 		NULL,
 	};
 	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem, edKey);

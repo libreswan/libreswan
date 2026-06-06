@@ -38,7 +38,7 @@
 const struct kem_desc unset_group;
 
 #ifdef USE_DH2
-const struct kem_desc ike_alg_kem_modp1024 = {
+const struct kem_desc ike_alg_ke_modp1024 = {
 	.common = {
 		.type = IKE_ALG_KEM,
 		.fqn = "MODP1024",
@@ -54,11 +54,11 @@ const struct kem_desc ike_alg_kem_modp1024 = {
 	.bytes = BYTES_FOR_BITS(1024),
 	.initiator_bytes = BYTES_FOR_BITS(1024),
 	.responder_bytes = BYTES_FOR_BITS(1024),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
-const struct kem_desc ike_alg_kem_modp1536 = {
+const struct kem_desc ike_alg_ke_modp1536 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP1536",
@@ -74,10 +74,10 @@ const struct kem_desc ike_alg_kem_modp1536 = {
 	.bytes = BYTES_FOR_BITS(1536),
 	.initiator_bytes = BYTES_FOR_BITS(1536),
 	.responder_bytes = BYTES_FOR_BITS(1536),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_modp2048 = {
+const struct kem_desc ike_alg_ke_modp2048 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP2048",
@@ -94,10 +94,10 @@ const struct kem_desc ike_alg_kem_modp2048 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_modp3072 = {
+const struct kem_desc ike_alg_ke_modp3072 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP3072",
@@ -114,10 +114,10 @@ const struct kem_desc ike_alg_kem_modp3072 = {
 	.bytes = BYTES_FOR_BITS(3072),
 	.initiator_bytes = BYTES_FOR_BITS(3072),
 	.responder_bytes = BYTES_FOR_BITS(3072),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_modp4096 = {
+const struct kem_desc ike_alg_ke_modp4096 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP4096",
@@ -134,10 +134,10 @@ const struct kem_desc ike_alg_kem_modp4096 = {
 	.bytes = BYTES_FOR_BITS(4096),
 	.initiator_bytes = BYTES_FOR_BITS(4096),
 	.responder_bytes = BYTES_FOR_BITS(4096),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_modp6144 = {
+const struct kem_desc ike_alg_ke_modp6144 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP6144",
@@ -154,10 +154,10 @@ const struct kem_desc ike_alg_kem_modp6144 = {
 	.bytes = BYTES_FOR_BITS(6144),
 	.initiator_bytes = BYTES_FOR_BITS(6144),
 	.responder_bytes = BYTES_FOR_BITS(6144),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_modp8192 = {
+const struct kem_desc ike_alg_ke_modp8192 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "MODP8192",
@@ -174,10 +174,10 @@ const struct kem_desc ike_alg_kem_modp8192 = {
 	.bytes = BYTES_FOR_BITS(8192),
 	.initiator_bytes = BYTES_FOR_BITS(8192),
 	.responder_bytes = BYTES_FOR_BITS(8192),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_secp256r1 = {
+const struct kem_desc ike_alg_ke_secp256r1 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH19",
@@ -194,10 +194,10 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 	.responder_bytes = BYTES_FOR_BITS(256) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP256R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_kem_ecp_nss_ops,
+	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_secp384r1 = {
+const struct kem_desc ike_alg_ke_secp384r1 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH20",
@@ -214,10 +214,10 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 	.responder_bytes = BYTES_FOR_BITS(384) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP384R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_kem_ecp_nss_ops,
+	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
-const struct kem_desc ike_alg_kem_secp521r1 = {
+const struct kem_desc ike_alg_ke_secp521r1 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH21",
@@ -234,11 +234,11 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 	.responder_bytes = BYTES_FOR_BITS(521) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP521R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_kem_ecp_nss_ops,
+	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
 #ifdef USE_DH22
-const struct kem_desc ike_alg_kem_dh22 = {
+const struct kem_desc ike_alg_ke_dh22 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH22",
@@ -255,12 +255,12 @@ const struct kem_desc ike_alg_kem_dh22 = {
 	.bytes = BYTES_FOR_BITS(1024),
 	.initiator_bytes = BYTES_FOR_BITS(1024),
 	.responder_bytes = BYTES_FOR_BITS(1024),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
 #ifdef USE_DH23
-const struct kem_desc ike_alg_kem_dh23 = {
+const struct kem_desc ike_alg_ke_dh23 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH23",
@@ -277,12 +277,12 @@ const struct kem_desc ike_alg_kem_dh23 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
 #ifdef USE_DH24
-const struct kem_desc ike_alg_kem_dh24 = {
+const struct kem_desc ike_alg_ke_dh24 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH24",
@@ -299,14 +299,14 @@ const struct kem_desc ike_alg_kem_dh24 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
 /* https://tools.ietf.org/html/rfc8031 */
 
 #ifdef USE_DH31
-const struct kem_desc ike_alg_kem_curve25519 = {
+const struct kem_desc ike_alg_ke_curve25519 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH31",
@@ -321,12 +321,12 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 	.initiator_bytes = 32 /* octets */,
 	.responder_bytes = 32 /* octets */,
 	.nss.ecp.oid = SEC_OID_CURVE25519,
-	.kem_ops = &ike_alg_kem_ecp_nss_ops,
+	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 #endif
 
 #ifdef USE_EDDSA
-const struct kem_desc ike_alg_kem_ed25519 = {
+const struct kem_desc ike_alg_ke_ed25519 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "DH32",
@@ -347,7 +347,7 @@ const struct kem_desc ike_alg_kem_ed25519 = {
 /* https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-mlkem/ */
 
 #ifdef USE_ML_KEM_512
-const struct kem_desc ike_alg_kem_ml_kem_512 = {
+const struct kem_desc ike_alg_ke_ml_kem_512 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_512",
@@ -363,12 +363,12 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 	.responder_bytes = 768,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_512,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem512,
-	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif
 
 #ifdef USE_ML_KEM_768
-const struct kem_desc ike_alg_kem_ml_kem_768 = {
+const struct kem_desc ike_alg_ke_ml_kem_768 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_768",
@@ -384,12 +384,12 @@ const struct kem_desc ike_alg_kem_ml_kem_768 = {
 	.responder_bytes = 1088,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_768,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem768,
-	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif
 
 #ifdef USE_ML_KEM_1024
-const struct kem_desc ike_alg_kem_ml_kem_1024 = {
+const struct kem_desc ike_alg_ke_ml_kem_1024 = {
 	.common = {
 		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_1024",
@@ -405,6 +405,6 @@ const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 	.responder_bytes = 1568,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_1024,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem1024,
-	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif

@@ -68,8 +68,8 @@ struct kem_ops {
 
 };
 
-extern const struct kem_ops ike_alg_kem_ecp_nss_ops;
-extern const struct kem_ops ike_alg_kem_modp_nss_ops;
-extern const struct kem_ops ike_alg_kem_ml_kem_nss_ops;
+extern const struct kem_ops ike_alg_ke_ecp_nss_ops;
+extern const struct kem_ops ike_alg_ke_modp_nss_ops;
+extern const struct kem_ops ike_alg_ke_ml_kem_nss_ops;
 
 #endif

@@ -848,44 +848,44 @@ const struct ike_alg_type ike_alg_encrypt = {
  */
 
 static const struct kem_desc *kem_descriptors[] = {
-	&ike_alg_kem_none,
+	&ike_alg_ke_none,
 #ifdef USE_DH2
-	&ike_alg_kem_modp1024,
+	&ike_alg_ke_modp1024,
 #endif
-	&ike_alg_kem_modp1536,
-	&ike_alg_kem_modp2048,
-	&ike_alg_kem_modp3072,
-	&ike_alg_kem_modp4096,
-	&ike_alg_kem_modp6144,
-	&ike_alg_kem_modp8192,
-	&ike_alg_kem_secp256r1,
-	&ike_alg_kem_secp384r1,
-	&ike_alg_kem_secp521r1,
+	&ike_alg_ke_modp1536,
+	&ike_alg_ke_modp2048,
+	&ike_alg_ke_modp3072,
+	&ike_alg_ke_modp4096,
+	&ike_alg_ke_modp6144,
+	&ike_alg_ke_modp8192,
+	&ike_alg_ke_secp256r1,
+	&ike_alg_ke_secp384r1,
+	&ike_alg_ke_secp521r1,
 #ifdef USE_DH22
-	&ike_alg_kem_dh22,
+	&ike_alg_ke_dh22,
 #endif
 #ifdef USE_DH23
-	&ike_alg_kem_dh23,
+	&ike_alg_ke_dh23,
 #endif
 #ifdef USE_DH24
-	&ike_alg_kem_dh24,
+	&ike_alg_ke_dh24,
 #endif
 
 #ifdef USE_DH31
-	&ike_alg_kem_curve25519,
+	&ike_alg_ke_curve25519,
 #endif
 #ifdef USE_DH32
-	&ike_alg_kem_curve448,
+	&ike_alg_ke_curve448,
 #endif
 
 #ifdef USE_ML_KEM_512
-	&ike_alg_kem_ml_kem_512,
+	&ike_alg_ke_ml_kem_512,
 #endif
 #ifdef USE_ML_KEM_768
-	&ike_alg_kem_ml_kem_768,
+	&ike_alg_ke_ml_kem_768,
 #endif
 #ifdef USE_ML_KEM_1024
-	&ike_alg_kem_ml_kem_1024,
+	&ike_alg_ke_ml_kem_1024,
 #endif
 };
 
@@ -1083,7 +1083,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_kem_none.common &&
+		    alg != &ike_alg_ke_none.common &&
 		    alg != &ike_alg_sn_32_bit_sequential.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
@@ -1160,7 +1160,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_kem_none.common) {
+		    alg != &ike_alg_ke_none.common) {
 			pexpect_ike_alg(logger, alg, type->desc_check != NULL);
 			type->desc_check(alg, logger);
 		}

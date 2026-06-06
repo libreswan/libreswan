@@ -29,7 +29,6 @@ struct logger;
 struct name_buf;
 
 /* rename hacks */
-#define ike_alg_ke_none ike_alg_kem_none
 #define ke_desc kem_desc
 #define PROPOSAL_TRANSFORM_ke PROPOSAL_TRANSFORM_kem
 #define ike_alg_ke ike_alg_kem

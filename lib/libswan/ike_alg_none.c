@@ -104,7 +104,7 @@ const struct integ_desc ike_alg_integ_none = {
 /*
  * Blame RFC7296!
  */
-const struct kem_desc ike_alg_kem_none = {
+const struct kem_desc ike_alg_ke_none = {
 	.common = {
 		.fqn = "NONE",
 		.names = "none,null,dh0",
@@ -118,7 +118,7 @@ const struct kem_desc ike_alg_kem_none = {
 		 * IKEv2, during the initial exchanges, negotiates a
 		 * child SA without DH (or if screwing with the RFC,
 		 * DH=NONE).  Either way, the result is a child state
-		 * with .ta_dh == &ike_alg_kem_none.
+		 * with .ta_dh == &ike_alg_ke_none.
 		 *
 		 * Other code gets the job of rejecting "none".
 		 */
@@ -127,5 +127,5 @@ const struct kem_desc ike_alg_kem_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.kem_ops = &ike_alg_kem_modp_nss_ops,
+	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
