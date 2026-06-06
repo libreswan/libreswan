@@ -131,7 +131,7 @@ static const struct ike_alg *default_ikev1_groups[] = {
 const struct proposal_defaults ikev1_ike_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_ike_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev1_ike_proposals,
-	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev1_groups,
+	.transform[PROPOSAL_TRANSFORM_ke] = default_ikev1_groups,
 	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev1_ike_prfs,
 };
 
@@ -205,7 +205,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_ike_proposals,
 	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
-	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev2_groups,
+	.transform[PROPOSAL_TRANSFORM_ke] = default_ikev2_groups,
 };
 
 /*

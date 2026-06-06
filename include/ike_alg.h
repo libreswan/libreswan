@@ -30,7 +30,6 @@ struct name_buf;
 
 /* rename hacks */
 #define ke_desc kem_desc
-#define PROPOSAL_TRANSFORM_ke PROPOSAL_TRANSFORM_kem
 
 /*
  * More meaningful passert.
