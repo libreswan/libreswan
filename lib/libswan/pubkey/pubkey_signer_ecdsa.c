@@ -41,7 +41,7 @@
 #include "lswnss.h"
 #include "lswlog.h"
 #include "secrets.h"
-#include "ike_alg_kem.h"		/* for OID and size of EC algorithms */
+#include "ike_alg_ke.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,

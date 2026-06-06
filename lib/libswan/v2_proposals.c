@@ -24,7 +24,7 @@
 #include "proposals.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_kem.h"
+#include "ike_alg_ke.h"
 #include "alg_byname.h"
 
 /*

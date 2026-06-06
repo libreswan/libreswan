@@ -75,7 +75,7 @@ extern const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1];
 #define transform_type_encrypt (&transform_types[PROPOSAL_TRANSFORM_encrypt])
 #define transform_type_prf (&transform_types[PROPOSAL_TRANSFORM_prf])
 #define transform_type_integ (&transform_types[PROPOSAL_TRANSFORM_integ])
-#define transform_type_kem (&transform_types[PROPOSAL_TRANSFORM_kem])
+#define transform_type_ke (&transform_types[PROPOSAL_TRANSFORM_ke])
 #define transform_type_addke1 (&transform_types[PROPOSAL_TRANSFORM_addke1])
 #define transform_type_roof (&transform_types[PROPOSAL_TRANSFORM_ROOF])
 
@@ -169,7 +169,7 @@ struct proposal_protocol {
 	bool encrypt;
 	bool prf;
 	bool integ;
-	bool kem;
+	bool ke;
 };
 
 /*
@@ -332,7 +332,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct kem_desc *kem;
+	const struct kem_desc *ke;
 	const struct proposal_protocol *protocol;
 };
 

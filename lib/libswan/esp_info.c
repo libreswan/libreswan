@@ -142,7 +142,7 @@ static const struct proposal_protocol ikev1_esp_proposal_protocol = {
 	.proposal_ok = esp_proposal_ok,
 	.encrypt = true,
 	.integ = true,
-	.kem = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol ikev2_esp_proposal_protocol = {
@@ -152,7 +152,7 @@ static const struct proposal_protocol ikev2_esp_proposal_protocol = {
 	.proposal_ok = esp_proposal_ok,
 	.encrypt = true,
 	.integ = true,
-	.kem = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol *esp_proposal_protocol[] = {

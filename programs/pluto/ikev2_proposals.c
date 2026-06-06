@@ -50,7 +50,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_kem.h"
+#include "ike_alg_ke.h"
 #include "demux.h"
 #include "ikev2.h"
 #include "rnd.h"
@@ -2296,12 +2296,12 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KEM,
 				 force_kem->ikev2_alg_id, 0);
-	} else if (first_proposal_transform(proposal, transform_type_kem) != NULL) {
+	} else if (first_proposal_transform(proposal, transform_type_ke) != NULL) {
 		/*
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
 		 * DH was specified on the esp= line.
 		 */
-		TRANSFORMS_FOR_EACH(alg, proposal, transform_type_kem) {
+		TRANSFORMS_FOR_EACH(alg, proposal, transform_type_ke) {
 			const struct kem_desc *dh = kem_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
@@ -2471,7 +2471,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * pass=2.
 			 */
 			if (pass == 2 && default_kem == &ike_alg_kem_none &&
-			    first_proposal_transform(proposal, transform_type_kem) == NULL) {
+			    first_proposal_transform(proposal, transform_type_ke) == NULL) {
 				/*
 				 * First pass didn't include DH.
 				 */
@@ -2721,7 +2721,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 */
 	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
 	const struct transform *proposal_dh =
-		first_proposal_transform(proposal, transform_type_kem);
+		first_proposal_transform(proposal, transform_type_ke);
 
 	struct ikev2_proposals *proposals;
 	if (ike_auth_child_rekey_needs_dh && cc->config->pfs_rekey_workaround) {

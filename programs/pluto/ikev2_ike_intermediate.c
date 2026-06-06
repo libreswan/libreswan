@@ -17,7 +17,7 @@
 
 #include "defs.h"
 
-#include "ike_alg_kem.h"		/* for ike_alg_kem_none; */
+#include "ike_alg_ke.h"		/* for ike_alg_kem_none; */
 #include "state.h"
 #include "demux.h"
 #include "keys.h"

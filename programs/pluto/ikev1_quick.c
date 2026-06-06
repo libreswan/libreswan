@@ -136,7 +136,7 @@ const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 		return NULL;
 	}
 	struct proposal *proposal = next_proposal(proposals.p, NULL);
-	const struct transform *kem = first_proposal_transform(proposal, transform_type_kem);
+	const struct transform *kem = first_proposal_transform(proposal, transform_type_ke);
 	if (kem == NULL) {
 		return NULL;
 	}

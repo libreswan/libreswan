@@ -229,11 +229,11 @@ OBJS += ike_alg_ipcomp.o
 OBJS += ike_alg_sn.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_hash_nss_ops.o
-OBJS += ike_alg_kem.o
-OBJS += ike_alg_kem_ecp_nss_ops.o
-OBJS += ike_alg_kem_modp_nss_ops.o
+OBJS += ike_alg_ke.o
+OBJS += ike_alg_ke_ecp_nss_ops.o
+OBJS += ike_alg_ke_modp_nss_ops.o
 ifeq ($(USE_ML_KEM),true)
-OBJS += ike_alg_kem_ml_kem_nss_ops.o
+OBJS += ike_alg_ke_ml_kem_nss_ops.o
 endif
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o

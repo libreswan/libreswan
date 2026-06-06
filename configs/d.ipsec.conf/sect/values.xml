@@ -161,10 +161,11 @@
     </para>
 
     <para>
-      Including KEM algorithms in either an &ESP; or &AH; proposal is
-      not recommended.  When a proposal requires KEM algorithms (for
-      instance when PFS is enabled) the proposal will automatically
-      include the KEM algorithm negotiated during the IKE exchange.
+      Specifying Key Exchange Methods in either an &ESP; or &AH;
+      proposal is not recommended.  When a proposal requires Key
+      Exchange Methods (for instance when PFS is enabled) the proposal
+      will automatically include the Key Exchange Method negotiated
+      during the IKE exchange.
     </para>
 
     <para>
@@ -178,8 +179,8 @@
 	System Wide Crypto Policy to specify the default
 	<option>ike=</option> and <option>esp=</option> proposals.
 	Specifying your own proposals using either
-	<option>ike=</option> or <option>esp=</option> will overriding
-	all these system or software recommended defaults (but can be
+	<option>ike=</option> or <option>esp=</option> will override
+	these system or software recommended defaults (but can be
 	necessary at times).
       </para>
     </note>
@@ -197,6 +198,10 @@
       <option>IKE_FOLLOWUP_KE</option> exchange.
     </para>
 
-  </refsect3>
+    <para>
+      Note: The abbreviation "KEM" can refer to either Key Exchange
+      Method or Key Encapsulation Method.
+    </para>
 
+  </refsect3>
 </refsect2>
