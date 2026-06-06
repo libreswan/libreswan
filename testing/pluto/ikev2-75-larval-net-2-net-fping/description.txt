@@ -1,0 +1,10 @@
+IKEv2 PSK net-to-net with auto=ondemand and negotiationshunt=hold.
+
+With xfrm_larval_drop=0, a burst of 10 packets is sent back-to-back (-p 0)
+before the SA is established. The packets are queued in the kernel XFRM hold
+queue while IKE negotiates. IKE negotiation is deliberately slowed using
+ipsec whack --impair helper_thread_delay to ensure ping packets are in-flight
+during negotiation. Once the SA comes up, xfrm_policy_queue_process
+re-injects all queued packets through the real SA.
+Uses fping --lossy with a 32-second timeout to accept partial loss during
+the negotiation window.
