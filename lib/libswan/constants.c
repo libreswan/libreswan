@@ -2323,7 +2323,7 @@ static const char *const ikev2_trans_type_name[IKEv2_TRANS_TYPE_ROOF - IKEv2_TRA
 	S(IKEv2_TRANS_TYPE_ENCR),
 	S(IKEv2_TRANS_TYPE_PRF),
 	S(IKEv2_TRANS_TYPE_INTEG),
-	S(IKEv2_TRANS_TYPE_KEM),
+	S(IKEv2_TRANS_TYPE_KE),
 #if 1
 	S(IKEv2_TRANS_TYPE_ESN),
 #else
@@ -2355,7 +2355,7 @@ static enum_names *const ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ROOF-IKEv2_TRA
 	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
 	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_KEM, ikev2_trans_type_ke_names),          /* 4 */
+	S(IKEv2_TRANS_TYPE_KE, ikev2_trans_type_ke_names),          /* 4 */
 #if 1
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
 #else

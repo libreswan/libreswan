@@ -954,7 +954,7 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_PRF = 2,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_INTEG = 3,	/* RFC 7296 */
-	IKEv2_TRANS_TYPE_KEM = 4,	/* RFC 7296 + RFC 9370; IANA calls it KE but that's the BLOB, grrr */
+	IKEv2_TRANS_TYPE_KE = 4,	/* RFC 7296 + RFC 9370; IANA calls it KE but that's the BLOB, grrr */
 	IKEv2_TRANS_TYPE_ESN = 5,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_SN = 5,	/* RFC 7296 + draft-ietf-ipsecme-ikev2-rename-esn */
 	IKEv2_TRANS_TYPE_ADDKE1 = 6,	/* RFC 9370 */

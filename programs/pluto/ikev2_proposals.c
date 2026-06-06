@@ -656,7 +656,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				 * Reject duplicate KEM algorithms.
 				 * See notes below.
 				 */
-				bool kem_algorithm = (type == IKEv2_TRANS_TYPE_KEM ||
+				bool kem_algorithm = (type == IKEv2_TRANS_TYPE_KE ||
 						      (type >= IKEv2_TRANS_TYPE_ADDKE1 &&
 						       type <= IKEv2_TRANS_TYPE_ADDKE7));
 				if (kem_algorithm &&
@@ -934,7 +934,7 @@ static struct ikev2_proposal_match *alloc_ikev2_proposal_match(const struct ikev
 				 */
 				if ((type == IKEv2_TRANS_TYPE_INTEG &&
 				     sentinel_transform->id == IKEv2_INTEG_NONE) ||
-				    (type == IKEv2_TRANS_TYPE_KEM &&
+				    (type == IKEv2_TRANS_TYPE_KE &&
 				     sentinel_transform->id == IKEv2_KE_NONE) ||
 				    (IKEv2_TRANS_TYPE_ADDKE1 <= type && type <= IKEv2_TRANS_TYPE_ADDKE7 &&
 				     sentinel_transform->id == IKEv2_KE_NONE)) {
@@ -1192,7 +1192,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				case IKEv2_TRANS_TYPE_INTEG:
 					id = IKEv2_INTEG_NONE;
 					break;
-				case IKEv2_TRANS_TYPE_KEM:
+				case IKEv2_TRANS_TYPE_KE:
 				case IKEv2_TRANS_TYPE_ADDKE1:
 				case IKEv2_TRANS_TYPE_ADDKE2:
 				case IKEv2_TRANS_TYPE_ADDKE3:
@@ -1523,7 +1523,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 				impairment = impair.v2_proposal_integ;
 				none = IKEv2_INTEG_NONE; /* always zero */
 				break;
-			case IKEv2_TRANS_TYPE_KEM:
+			case IKEv2_TRANS_TYPE_KE:
 				/*
 				 * CHILD SA proposals are allowed to
 				 * include the transform KEM=NONE to
@@ -1839,7 +1839,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				ta.ta_integ = integ;
 				break;
 			}
-			case IKEv2_TRANS_TYPE_KEM:
+			case IKEv2_TRANS_TYPE_KE:
 			{
 				name_buf b;
 				const struct kem_desc *group = ikev2_kem_desc(transform->id, &b);
@@ -2057,7 +2057,7 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 				      &ike_alg_integ_none.common,
 				      verbose);
 		/* ... and forcing KEM */
-		force_transform(proposal, IKEv2_TRANS_TYPE_KEM, &kem[p]->common);
+		force_transform(proposal, IKEv2_TRANS_TYPE_KE, &kem[p]->common);
 	}
 
 	VDBG_JAMBUF(buf) {
@@ -2294,7 +2294,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * For instance, a rekey forces the proposal to the
 		 * previously negotiated DH.
 		 */
-		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KEM,
+		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 force_kem->ikev2_alg_id, 0);
 	} else if (first_proposal_transform(proposal, transform_type_ke) != NULL) {
 		/*
@@ -2307,7 +2307,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 			 * WHILE DH=NONE is included in the proposal it is
 			 * omitted when emitted.
 			 */
-			append_transform(v2_proposal, IKEv2_TRANS_TYPE_KEM,
+			append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 					 dh->ikev2_alg_id, 0);
 		}
 	} else if (default_kem != NULL) {
@@ -2317,7 +2317,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * CREATE_CHILD_SA(REKEY) for the IKE_AUTH child where
 		 * DH wasn't negotiated.
 		 */
-		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KEM,
+		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 default_kem->ikev2_alg_id, 0);
 	}
 
@@ -2515,7 +2515,8 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 const struct kem_desc *ikev2_proposal_first_kem(const struct ikev2_proposal *proposal,
 						struct verbose verbose)
 {
-	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_KEM];
+	const struct ikev2_transforms *transforms =
+		&proposal->transforms[IKEv2_TRANS_TYPE_KE];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
 		name_buf b;
@@ -2565,7 +2566,8 @@ bool ikev2_proposals_include_kem(const struct ikev2_proposals *proposals,
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_KEM];
+		const struct ikev2_transforms *transforms =
+			&proposal->transforms[IKEv2_TRANS_TYPE_KE];
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			if (transform->id == kem) {
@@ -2814,7 +2816,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->id = encr;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_PRF].transform->id = prf;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_INTEG].transform->id = integ;
-	temp_proposal->transforms[IKEv2_TRANS_TYPE_KEM].transform->id = kem;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_KE].transform->id = kem;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->attr_keylen = enc_keylen;
 
 	for(int i=1; i<5; i++) {
