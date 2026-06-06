@@ -854,7 +854,7 @@ const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf,
 				      struct name_buf *b);
 const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ,
 					  struct name_buf *b);
-const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_kem,
+const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_ke,
 				      struct name_buf *b);
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo,
 					    struct name_buf *b);

@@ -232,7 +232,7 @@ struct ticket {
 			enum ikev2_trans_type_encr sr_encr;
 			enum ikev2_trans_type_prf sr_prf;
 			enum ikev2_trans_type_integ sr_integ;
-			enum ikev2_trans_type_kem sr_kem;
+			enum ikev2_trans_type_ke sr_kem;
 			unsigned sr_enc_keylen;
 		} state;
 		uint8_t tag[16];
@@ -251,7 +251,7 @@ struct session {
 	enum ikev2_trans_type_encr sr_encr;
 	enum ikev2_trans_type_prf sr_prf;
 	enum ikev2_trans_type_integ sr_integ;
-	enum ikev2_trans_type_kem sr_kem;
+	enum ikev2_trans_type_ke sr_kem;
 	unsigned sr_enc_keylen;
 
 	/*
