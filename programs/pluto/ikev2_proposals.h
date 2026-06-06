@@ -117,7 +117,7 @@ const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *p
  * It's the caller's problem to check that it is actually supported.
  */
 bool ikev2_proposals_include_kem(const struct ikev2_proposals *proposals,
-				 enum ikev2_trans_type_kem kem);
+				 enum ikev2_trans_type_ke kem);
 
 void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ike_proposal,
 					ike_spi_t *cookie);
@@ -126,7 +126,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 				 enum ikev2_trans_type_encr sr_encr,
 				 enum ikev2_trans_type_prf sr_prf,
 				 enum ikev2_trans_type_integ sr_integ,
-				 enum ikev2_trans_type_kem sr_kem,
+				 enum ikev2_trans_type_ke sr_kem,
 				 unsigned sr_enc_keylen);
 
 #endif

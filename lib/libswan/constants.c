@@ -2201,7 +2201,7 @@ enum_names ikev2_trans_type_integ_names = {
 
 /* Key Exchange Method names */
 
-static const char *const ikev2_trans_type_kem_name[IKEv2_KE_ROOF-IKEv2_KE_FLOOR] = {
+static const char *const ikev2_trans_type_ke_name[IKEv2_KE_ROOF-IKEv2_KE_FLOOR] = {
 #define S(E) [E - IKEv2_KE_FLOOR] = #E
 	S(IKEv2_KE_NONE), /* 0! RFC 7296 */
 	S(IKEv2_KE_MODP768),
@@ -2246,10 +2246,10 @@ static const char *const ikev2_trans_type_kem_name[IKEv2_KE_ROOF-IKEv2_KE_FLOOR]
 #undef S
 };
 
-enum_names ikev2_trans_type_kem_names = {
+enum_names ikev2_trans_type_ke_names = {
 	IKEv2_KE_FLOOR,
 	IKEv2_KE_ROOF-1,
-	ARRAY_PTR(ikev2_trans_type_kem_name),
+	ARRAY_PTR(ikev2_trans_type_ke_name),
 	"IKEv2_KE_", /* prefix */
 	NULL
 };
@@ -2355,19 +2355,19 @@ static enum_names *const ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ROOF-IKEv2_TRA
 	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
 	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_KEM, ikev2_trans_type_kem_names),          /* 4 */
+	S(IKEv2_TRANS_TYPE_KEM, ikev2_trans_type_ke_names),          /* 4 */
 #if 1
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
 #else
 	S(IKEv2_TRANS_TYPE_SN, ikev2_trans_type_sn_names),            /* 5 */
 #endif
-	S(IKEv2_TRANS_TYPE_ADDKE1, ikev2_trans_type_kem_names),       /* 6 */
-	S(IKEv2_TRANS_TYPE_ADDKE2, ikev2_trans_type_kem_names),       /* 7 */
-	S(IKEv2_TRANS_TYPE_ADDKE3, ikev2_trans_type_kem_names),       /* 8 */
-	S(IKEv2_TRANS_TYPE_ADDKE4, ikev2_trans_type_kem_names),       /* 9 */
-	S(IKEv2_TRANS_TYPE_ADDKE5, ikev2_trans_type_kem_names),       /* 10 */
-	S(IKEv2_TRANS_TYPE_ADDKE6, ikev2_trans_type_kem_names),       /* 11 */
-	S(IKEv2_TRANS_TYPE_ADDKE7, ikev2_trans_type_kem_names),       /* 12 */
+	S(IKEv2_TRANS_TYPE_ADDKE1, ikev2_trans_type_ke_names),       /* 6 */
+	S(IKEv2_TRANS_TYPE_ADDKE2, ikev2_trans_type_ke_names),       /* 7 */
+	S(IKEv2_TRANS_TYPE_ADDKE3, ikev2_trans_type_ke_names),       /* 8 */
+	S(IKEv2_TRANS_TYPE_ADDKE4, ikev2_trans_type_ke_names),       /* 9 */
+	S(IKEv2_TRANS_TYPE_ADDKE5, ikev2_trans_type_ke_names),       /* 10 */
+	S(IKEv2_TRANS_TYPE_ADDKE6, ikev2_trans_type_ke_names),       /* 11 */
+	S(IKEv2_TRANS_TYPE_ADDKE7, ikev2_trans_type_ke_names),       /* 12 */
 	S(IKEv2_TRANS_TYPE_KWA, ikev2_trans_type_kwa_names),          /* 13 */
 	S(IKEv2_TRANS_TYPE_GCAUTH, ikev2_trans_type_gcauth_names),    /* 14 */
 #undef S

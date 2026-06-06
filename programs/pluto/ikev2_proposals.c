@@ -2560,7 +2560,7 @@ const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *p
  * It's the caller's problem to check that it is actually supported.
  */
 bool ikev2_proposals_include_kem(const struct ikev2_proposals *proposals,
-				 enum ikev2_trans_type_kem kem)
+				 enum ikev2_trans_type_ke kem)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
@@ -2802,7 +2802,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 				 enum ikev2_trans_type_encr encr,
 				 enum ikev2_trans_type_prf prf,
 				 enum ikev2_trans_type_integ integ,
-				 enum ikev2_trans_type_kem kem,
+				 enum ikev2_trans_type_ke kem,
 				 unsigned enc_keylen)
 {
 	PASSERT(ike->sa.logger, ike->sa.st_v2_accepted_proposal == NULL);

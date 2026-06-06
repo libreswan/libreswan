@@ -1072,7 +1072,7 @@ enum ikev2_trans_type_integ {
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8
  */
 
-enum ikev2_trans_type_kem {
+enum ikev2_trans_type_ke {
 #define IKEv2_KE_FLOOR IKEv2_KE_NONE
 	IKEv2_KE_NONE = 0,	/* RFC 7296 */
 	IKEv2_KE_MODP768 = 1,
@@ -1121,7 +1121,7 @@ enum ikev2_trans_type_kem {
 	/* 32768 - 65535 Reserved for private use */
 };
 
-extern const struct enum_names ikev2_trans_type_kem_names;
+extern const struct enum_names ikev2_trans_type_ke_names;
 
 /*
  * Transform Type 5 - Sequence Numbers Transform IDs.
