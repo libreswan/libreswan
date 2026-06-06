@@ -152,7 +152,7 @@ bool kernel_alg_is_ok(const struct ike_alg *alg,
 		llog_pexpect(logger, HERE,
 			     "algorithm needs to be valid (non-NULL)");
 		return false;
-	} else if (alg->type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_ke) {
 		return kernel_alg_dh_ok(kem_desc(alg), logger);
 	} else if (alg->type == &ike_alg_encrypt) {
 		return kernel_alg_encrypt_ok(encrypt_desc(alg), logger);

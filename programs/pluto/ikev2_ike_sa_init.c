@@ -1052,7 +1052,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	passert(new_kem != NULL);
 	llog_sa(RC_LOG, ike,
 		"received unauthenticated INVALID_KE_PAYLOAD response to %s %s; resending with suggested %s",
-		ike_alg_kem.story,
+		ike_alg_ke.story,
 		ike->sa.st_oakley.ta_dh->common.fqn,
 		new_kem->common.fqn);
 	ike->sa.st_oakley.ta_dh = new_kem;

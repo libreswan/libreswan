@@ -82,7 +82,7 @@ static const struct ike_alg_type *const ike_alg_types[] = {
 	&ike_alg_hash,
 	&ike_alg_prf,
 	&ike_alg_integ,
-	&ike_alg_kem,
+	&ike_alg_ke,
 	&ike_alg_ipcomp,
 	&ike_alg_sn,
 };
@@ -135,7 +135,7 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 
 const struct kem_desc **next_kem_desc(const struct kem_desc **last)
 {
-	return (const struct kem_desc**)next_alg(&ike_alg_kem,
+	return (const struct kem_desc**)next_alg(&ike_alg_ke,
 						(const struct ike_alg**)last);
 }
 
@@ -273,7 +273,7 @@ const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, name_buf
 
 const struct kem_desc *ikev1_ike_kem_desc(enum oakley_group id, name_buf *b)
 {
-	return kem_desc(ikev1_oakley_lookup(&ike_alg_kem, id, b));
+	return kem_desc(ikev1_oakley_lookup(&ike_alg_ke, id, b));
 }
 
 const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform id, name_buf *b)
@@ -320,7 +320,7 @@ const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct
 const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_ke id,
 				      struct name_buf *b)
 {
-	return kem_desc(ikev2_lookup(&ike_alg_kem, id, b));
+	return kem_desc(ikev2_lookup(&ike_alg_ke, id, b));
 }
 
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct name_buf *b)
@@ -919,8 +919,8 @@ static bool kem_desc_is_ike(const struct ike_alg *alg)
 
 static struct algorithm_table kem_algorithms = ALGORITHM_TABLE(kem_descriptors);
 
-const struct ike_alg_type ike_alg_kem = {
-	.name = "KEM",
+const struct ike_alg_type ike_alg_ke = {
+	.name = "KE",
 	.story = "Key Exchange Method (DH)",
 	.algorithms = &kem_algorithms,
 	.enum_names = {
@@ -1190,7 +1190,7 @@ static const char *backend_name(const struct ike_alg *alg)
 		if (encrypt->encrypt_ops != NULL) {
 			return encrypt->encrypt_ops->backend;
 		}
-	} else if (alg->type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_ke) {
 		const struct kem_desc *kem = kem_desc(alg);
 		if (kem->kem_ops != NULL) {
 			return kem->kem_ops->backend;
@@ -1274,7 +1274,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		/* NULL not allowed for AH */
 		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
-	} else if (alg->type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_ke) {
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else if (alg->type == &ike_alg_ipcomp) {
@@ -1435,7 +1435,7 @@ void init_ike_alg(struct logger *logger)
 static bool default_alg_is_ok(const struct ike_alg *alg,
 			      const struct logger *logger)
 {
-	if (alg->type == &ike_alg_kem) {
+	if (alg->type == &ike_alg_ke) {
 		/* require an in-process/ike implementation of DH */
 		return ike_alg_is_ike(alg, logger);
 	} else {

@@ -31,7 +31,6 @@ struct name_buf;
 /* rename hacks */
 #define ke_desc kem_desc
 #define PROPOSAL_TRANSFORM_ke PROPOSAL_TRANSFORM_kem
-#define ike_alg_ke ike_alg_kem
 
 /*
  * More meaningful passert.
@@ -125,7 +124,7 @@ extern const struct ike_alg_type ike_alg_encrypt;
 extern const struct ike_alg_type ike_alg_hash;
 extern const struct ike_alg_type ike_alg_prf;
 extern const struct ike_alg_type ike_alg_integ;
-extern const struct ike_alg_type ike_alg_kem;
+extern const struct ike_alg_type ike_alg_ke;
 extern const struct ike_alg_type ike_alg_ipcomp;
 extern const struct ike_alg_type ike_alg_sn;
 
