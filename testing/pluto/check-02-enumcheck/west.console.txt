@@ -5588,13 +5588,13 @@ name for -1 present (should be absent)
          jam_enum_short 3: integ OK
          jam_enum_human 3: integ OK
          match integ [short]: OK
-    4 -> PROPOSAL_TRANSFORM_kem
-         jam_enum 4: PROPOSAL_TRANSFORM_kem OK
-         match PROPOSAL_TRANSFORM_kem: OK
-         short_name 4: kem OK
-         jam_enum_short 4: kem OK
-         jam_enum_human 4: kem OK
-         match kem [short]: OK
+    4 -> PROPOSAL_TRANSFORM_ke
+         jam_enum 4: PROPOSAL_TRANSFORM_ke OK
+         match PROPOSAL_TRANSFORM_ke: OK
+         short_name 4: ke OK
+         jam_enum_short 4: ke OK
+         jam_enum_human 4: ke OK
+         match ke [short]: OK
     5 -> PROPOSAL_TRANSFORM_sn
          jam_enum 5: PROPOSAL_TRANSFORM_sn OK
          match PROPOSAL_TRANSFORM_sn: OK
