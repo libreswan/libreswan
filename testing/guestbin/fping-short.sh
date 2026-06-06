@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -u
 
 # Send a ping packets using fping and then wait for a reply.
@@ -57,7 +57,7 @@ count=1
 FPING=${fping-fping}
 wait=5
 
-OPTIONS=$(getopt -o I: --long up,down,lossy:,src:,help, -- "$@")
+OPTIONS=$(getopt -o I:p: --long up,down,lossy:,count:,timeout:,src:,help, -- "$@")
 if [ $? -gt 0 ]; then
     err 4 "Error calling getopt"
 fi
@@ -78,6 +78,10 @@ while true; do
 	    op=up
 	    count=$2
 	    wait=$(expr 1 + ${count})
+	    shift 2
+	    ;;
+	--count )
+	    count=$2
 	    shift 2
 	    ;;
 	--fire-and-forget | --forget )
@@ -106,7 +110,11 @@ while true; do
 	    shift 2
 	    ;;
 	--timeout )
-	    timeout=$2
+	    wait=$2
+	    shift 2
+	    ;;
+	-p )
+	    period=$2
 	    shift 2
 	    ;;
 	-I| --src ) # -I in fping --src
@@ -133,12 +141,13 @@ fi
 timeout=" --timeout ${wait}000" # milliseconds
 size=${size:+--size ${size}}
 src=${src:+--src ${src}}
+period=${period:+-p ${period}}
 
 # Record the fping command that will run (the secret sauce used to
 # invoke fping is subject to change, it is hidden from the test
 # results).
 
-fping="${FPING} -n -c ${count} ${timeout} ${size} ${args} ${src} "$@""
+fping="${FPING} -n -c ${count} ${timeout} ${period} ${size} ${args} ${src} "$@""
 
 echo ==== cut ====
 echo "${fping}"
@@ -185,7 +194,7 @@ case "${result}-${op}" in
 	;;
     * )
         echo unexpected status ${status}
-	echo "# ${ping}"
+	echo "# ${fping}"
 	echo "${output}"
 	exit 1 ;;
 esac
