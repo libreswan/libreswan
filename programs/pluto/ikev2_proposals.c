@@ -1915,19 +1915,20 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				ta.ta_dh = group;
 				break;
 			}
-			case IKEv2_TRANS_TYPE_ESN:
+			case IKEv2_TRANS_TYPE_SN:
 				switch (transform->id) {
-				case IKEv2_ESN_YES:
+				case IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL:
 					ta.esn_enabled = true;
 					break;
-				case IKEv2_ESN_NO:
+				case IKEv2_SN_32_BIT_SEQUENTIAL:
 					ta.esn_enabled = false;
 					break;
+				case IKEv2_SN_32_BIT_UNSPECIFIED:
 				default:
 					ta.esn_enabled = false;
-					llog_pexpect(logger, HERE,
-						     "accepted IKEv2 proposal contains unexpected ESN %d",
-						     transform->id);
+					llog(RC_LOG, logger,
+					     "accepted IKEv2 proposal contains unexpected SN %d",
+					     transform->id);
 					return false;
 				}
 				break;
@@ -2444,15 +2445,17 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 	return v2_proposals;
 }
 
-static void add_esn_transforms(struct ikev2_proposal *proposal,
-			       const struct connection *c)
+static void add_sn_transforms(struct ikev2_proposal *proposal,
+			      const struct connection *c)
 {
-	passert(!proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0].valid);
+	passert(!proposal->transforms[IKEv2_TRANS_TYPE_SN].transform[0].valid);
 	if (c->config->esn.yes) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_YES, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_SN,
+				 IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL, 0);
 	}
 	if (c->config->esn.no) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_NO, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_SN,
+				 IKEv2_SN_32_BIT_SEQUENTIAL, 0);
 	}
 }
 
@@ -2555,7 +2558,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 								  default_kem,
 								  verbose);
 			if (v2_proposal != NULL) {
-				add_esn_transforms(v2_proposal, c);
+				add_sn_transforms(v2_proposal, c);
 				vdbg_ikev2_proposal(verbose, "... ", v2_proposal);
 				v2_proposals->roof++;
 			}
