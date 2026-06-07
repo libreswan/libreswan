@@ -162,7 +162,7 @@ static void jam_traffic_selector_payloads(struct jambuf *buf,
 }
 
 static void jam_traffic_selector_proposal(struct jambuf *buf, const char *ts,
-					  ip_selectors *selectors,
+					  const ip_selectors *selectors,
 					  shunk_t sec_label)
 {
 	jam_string(buf, ts);
@@ -492,7 +492,7 @@ static ip_selector impair_selector_to_supernet(ip_selector ts)
 static bool emit_v2TS_payload(struct pbs_out *outpbs,
 			      const struct child_sa *child,
 			      const struct_desc *ts_desc,
-			      ip_selectors *selectors,
+			      const ip_selectors *selectors,
 			      shunk_t sec_label,
 			      const struct impair_unsigned *impaired_len,
 			      const char *name)
@@ -620,7 +620,7 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 		}
 	}
 
-	ip_selectors *accepted_ts_i =
+	const ip_selectors *accepted_ts_i =
 		(c->remote->child.selectors.accepted.len > 0 ? &c->remote->child.selectors.accepted :
 		 c->remote->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_i_desc, accepted_ts_i,
@@ -630,7 +630,7 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 		return false;
 	}
 
-	ip_selectors *accepted_ts_r =
+	const ip_selectors *accepted_ts_r =
 		(c->local->child.selectors.accepted.len > 0 ?
 		 &c->local->child.selectors.accepted :
 		 c->local->child.selectors.proposed);
