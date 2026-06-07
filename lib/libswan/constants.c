@@ -2254,21 +2254,6 @@ enum_names ikev2_trans_type_ke_names = {
 	NULL
 };
 
-static const char *const ikev2_trans_type_esn_name[] = {
-#define S(E) [E - IKEv2_ESN_FLOOR] = #E
-	S(IKEv2_ESN_YES),
-	S(IKEv2_ESN_NO),
-#undef S
-};
-
-enum_names ikev2_trans_type_esn_names = {
-	IKEv2_ESN_FLOOR,
-	IKEv2_ESN_ROOF-1,
-	ARRAY_PTR(ikev2_trans_type_esn_name),
-	"IKEv2_ESN_", /* prefix */
- 	NULL
- };
-
 static const char *const ikev2_trans_type_sn_name[IKEv2_SN_ROOF-IKEv2_SN_FLOOR] = {
 #define S(E) [E - IKEv2_SN_FLOOR] = #E
 	S(IKEv2_SN_32_BIT_SEQUENTIAL),
@@ -2347,36 +2332,6 @@ enum_names ikev2_trans_type_names = {
 	ARRAY_PTR(ikev2_trans_type_name),
 	"IKEv2_TRANS_TYPE_", /* prefix */
 	NULL
-};
-
-/* for each IKEv2 transform attribute, which enum_names describes its values? */
-static enum_names *const ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ROOF-IKEv2_TRANS_TYPE_FLOOR] = {
-#define S(E,V) [E - IKEv2_TRANS_TYPE_FLOOR] = &V
-	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
-	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
-	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_KE, ikev2_trans_type_ke_names),          /* 4 */
-#if 1
-	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
-#else
-	S(IKEv2_TRANS_TYPE_SN, ikev2_trans_type_sn_names),            /* 5 */
-#endif
-	S(IKEv2_TRANS_TYPE_ADDKE1, ikev2_trans_type_ke_names),       /* 6 */
-	S(IKEv2_TRANS_TYPE_ADDKE2, ikev2_trans_type_ke_names),       /* 7 */
-	S(IKEv2_TRANS_TYPE_ADDKE3, ikev2_trans_type_ke_names),       /* 8 */
-	S(IKEv2_TRANS_TYPE_ADDKE4, ikev2_trans_type_ke_names),       /* 9 */
-	S(IKEv2_TRANS_TYPE_ADDKE5, ikev2_trans_type_ke_names),       /* 10 */
-	S(IKEv2_TRANS_TYPE_ADDKE6, ikev2_trans_type_ke_names),       /* 11 */
-	S(IKEv2_TRANS_TYPE_ADDKE7, ikev2_trans_type_ke_names),       /* 12 */
-	S(IKEv2_TRANS_TYPE_KWA, ikev2_trans_type_kwa_names),          /* 13 */
-	S(IKEv2_TRANS_TYPE_GCAUTH, ikev2_trans_type_gcauth_names),    /* 14 */
-#undef S
-};
-
-enum_enum_names v2_transform_ID_enums = {
-	IKEv2_TRANS_TYPE_FLOOR,
-	IKEv2_TRANS_TYPE_ROOF-1,
-	ARRAY_PTR(ikev2_transid_val_descs)
 };
 
 /*
