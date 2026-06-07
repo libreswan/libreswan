@@ -217,15 +217,15 @@ const char *str_selector_pair_sensitive(const ip_selector *src,
 	return out->buf;
 }
 
-size_t jam_selectors(struct jambuf *buf, ip_selectors selectors)
+size_t jam_selectors(struct jambuf *buf, const ip_selectors *selectors)
 {
 	size_t s = 0;
 	s += jam_string(buf, "[");
 	const char *sep = "";
-	for (unsigned i = 0; i < selectors.len; i++) {
+	FOR_EACH_ITEM(selector, selectors) {
 		s += jam_string(buf, sep);
 		sep = " ";
-		s += jam_selector(buf, &selectors.list[i]);
+		s += jam_selector(buf, selector);
 	}
 	s += jam_string(buf, "]");
 	return s;

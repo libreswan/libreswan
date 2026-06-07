@@ -1760,7 +1760,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 				jam_string(buf, "; packet dst ");
 				jam_selector(buf, &packet_src);
 				jam_string(buf, " not in selectors ");
-				jam_selectors(buf, c->local->child.selectors.proposed);
+				jam_selectors(buf, &c->local->child.selectors.proposed);
 			}
 			continue;
 		}
@@ -1786,7 +1786,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 				jam_string(buf, "; packet dst ");
 				jam_endpoint(buf, &packet_dst);
 				jam_string(buf, " not in selectors ");
-				jam_selectors(buf, c->remote->child.selectors.proposed);
+				jam_selectors(buf, &c->remote->child.selectors.proposed);
 			}
 			continue;
 		}
