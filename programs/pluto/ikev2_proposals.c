@@ -282,7 +282,7 @@ struct ikev2_proposals {
 static void jam_ikev2_transform(struct jambuf *buf, enum ikev2_trans_type type,
 				const struct ikev2_transform *transform)
 {
-	jam_enum_enum_short(buf, &v2_transform_ID_enums,
+	jam_enum_enum_short(buf, &ikev2_trans_type_transform_names,
 			    type, transform->id);
 	if (transform->attr_keylen > 0) {
 		jam(buf, "_%d", transform->attr_keylen);
@@ -299,10 +299,59 @@ static void jam_trans_types(struct jambuf *buf, lset_t types)
 	jam_lset_short(buf, &ikev2_trans_type_names, "+", types);
 }
 
-/* <TRANSFORM-TYPE> "=" <TRANSFORM> */
+/*
+ * XXX: note hack so that ...-ESN={YES,NO} is logged.  Returns FALSE
+ * when a non-ESN transform is found.  Caller then reverts to dumping
+ * new names.
+ */
+
+static bool jam_esn_transform(struct jambuf *buf,
+			      const struct ikev2_transform *transform)
+{
+	switch (transform->id) {
+	case IKEv2_SN_32_BIT_SEQUENTIAL:
+		jam_string(buf, "NO");
+		return true;
+	case IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL:
+		jam_string(buf, "YES");
+		return true;
+	case IKEv2_SN_32_BIT_UNSPECIFIED:
+	default:
+		return false;
+	}
+}
+
+static bool jam_esn_transforms(struct jambuf *buf,
+			       const struct ikev2_transforms *transforms)
+{
+	jam_string(buf, "ESN:");
+	char *sep = "";
+	const struct ikev2_transform *transform;
+	FOR_EACH_TRANSFORM(transform, transforms) {
+		jam_string(buf, sep); sep = "+";
+		if (!jam_esn_transform(buf, transform)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+ * <TRANSFORM-TYPE> "=" <TRANSFORM>.
+ */
+
 static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 			       const struct ikev2_transform *transform)
 {
+	if (type == IKEv2_TRANS_TYPE_SN) {
+		jampos_t start = jambuf_get_pos(buf);
+		jam_string(buf, "ESN=");
+		if (jam_esn_transform(buf, transform)) {
+			return;
+		}
+		jambuf_set_pos(buf, &start);
+	}
+
 	jam_trans_type(buf, type);
 	jam_string(buf, "=");
 	jam_ikev2_transform(buf, type, transform);
@@ -316,7 +365,20 @@ static void jam_protoid(struct jambuf *buf, enum ikev2_sec_proto_id protoid)
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
 static void jam_ikev2_transforms(struct jambuf *buf, enum ikev2_trans_type type,
 				 const struct ikev2_transforms *transforms)
-{	char *sep = "";
+{
+	if (type == IKEv2_TRANS_TYPE_SN) {
+		/*
+		 * Assume it's ESN, but when it isn't, toss buffer and
+		 * use new names.
+		 */
+		jampos_t start = jambuf_get_pos(buf);
+		if (jam_esn_transforms(buf, transforms)) {
+			return;
+		}
+		jambuf_set_pos(buf, &start);
+	}
+
+	char *sep = "";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		jam_string(buf, sep);
@@ -340,13 +402,6 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
 			jam_string(buf, sep);
-			/*
-			 * XXX: hack so that ...-ESN:YES+NO is logged.
-			 * Other fields are self explanatory.
-			 */
-			if (type == IKEv2_TRANS_TYPE_ESN) {
-				jam_string(buf, "ESN:");
-			}
 			jam_ikev2_transforms(buf, type, transforms);
 			sep = "-";
 		}
