@@ -24,9 +24,9 @@ from the new port while outgoing packets still use the old port.
 
 - EAST notices the kernel mapping change and initiates MOBIKE
 
-- EAST sends an INFORMATIONAL with NAT-D payloads to ROAD on the new port
+- EAST sends an MOBIKE(INFORMATIONAL with NAT-D payloads) to ROAD on the new port
 
-- ROAD responds with an INFORMATIONAL and updates its end
+- ROAD responds with an MOBIKE(INFORMATIONAL) and updates its end
 
 - EAST receives the response and updates its end
 
