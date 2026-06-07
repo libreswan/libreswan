@@ -976,6 +976,7 @@ enum ikev2_trans_type {
 };
 
 extern const struct enum_names ikev2_trans_type_names;
+extern const struct enum_enum_names ikev2_trans_type_transform_names;
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
