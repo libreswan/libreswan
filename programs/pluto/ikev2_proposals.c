@@ -1553,9 +1553,9 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			name_buf esb_type; /* same scope */
 			const char *transform_type_name =
 				str_enum_short(&ikev2_trans_type_names, transform_type, &esb_type);
-			name_buf esb_id; /* same scope */
+			name_buf esb_id; /* same scope as ... */
 			const char *transform_id_name =
-				str_enum_enum_short(&v2_transform_ID_enums,
+				str_enum_enum_short(&ikev2_trans_type_transform_names,
 						    transform_type, transform->id, &esb_id);
 
 			enum impair_v2_transform impairment;
@@ -1672,7 +1672,8 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 				if (type == IKEv2_TRANS_TYPE_IMPAIR_ROOF) {
 					jam(buf, "%d", transform_id);
 				} else {
-					jam_enum_enum_short(buf, &v2_transform_ID_enums, transform_type, transform_id);
+					jam_enum_enum_short(buf, &ikev2_trans_type_transform_names,
+							    transform_type, transform_id);
 				}
 				jam(buf, " (0x%x)", transform_id);
 			}
