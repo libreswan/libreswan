@@ -583,11 +583,14 @@ struct child_end {
 		 * proposed.len.  Entries are appended; hence don't
 		 * assume IPv4->IPv6 ordering.
 		 *
-		 * The see append_end_selector(), but be warned other
-		 * code fiddles with this.
+		 * See append_end_selector(), but be warned other code
+		 * fiddles with this.
 		 */
 		ip_selector assigned[IP_VERSION_ROOF/*space for IPv4+IPv6 in no order*/];
-		ip_selectors proposed; /* either .config->selectors or above; do not free */
+		/*
+		 * Either .config->selectors or above; do not free.
+		 */
+		ip_selectors proposed[1];
 		/*
 		 * XXX: used when logging the established description
 		 * of the child in jam_connection_child()?

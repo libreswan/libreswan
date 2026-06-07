@@ -179,8 +179,8 @@ struct connection *group_instantiate(struct connection *group,
 
 #define set_end_selector(END, SELECTOR, LOGGER)				\
 	{								\
-		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
-		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
+		PASSERT(LOGGER, (END)->child.selectors.proposed->list == NULL); \
+		PASSERT(LOGGER, (END)->child.selectors.proposed->len == 0); \
 		struct verbose verbose_ = VERBOSE(DEBUG_STREAM, LOGGER, NULL); \
 		append_end_selector(END, SELECTOR, verbose_);		\
 	}
@@ -531,15 +531,15 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vassert(end->child.selectors.proposed.list == NULL);
-		vassert(end->child.selectors.proposed.len == 0);
+		vassert(end->child.selectors.proposed->list == NULL);
+		vassert(end->child.selectors.proposed->len == 0);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
-			end->child.selectors.proposed = end->child.config->selectors;
+			*end->child.selectors.proposed = end->child.config->selectors;
 			/* see also clone_connection */
 			set_end_child_has_client(d, end->config->index, true);
 			continue;
@@ -671,8 +671,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 {
 	vassert(is_template(t));
 	vassert(oriented(t)); /* else won't instantiate */
-	vassert(t->local->child.selectors.proposed.len == 1);
-	vassert(t->remote->child.selectors.proposed.len == 1);
+	vassert(t->local->child.selectors.proposed->len == 1);
+	vassert(t->remote->child.selectors.proposed->len == 1);
 
 	/*
 	 * Instance inherits remote ID of child; exception being when
@@ -691,14 +691,14 @@ static struct connection *oppo_instantiate(struct connection *t,
 	/*
 	 * Fill in the local client - just inherit the parent's value.
 	 */
-	ip_selector local_selector = t->local->child.selectors.proposed.list[0];
+	ip_selector local_selector = t->local->child.selectors.proposed->list[0];
 	set_end_selector(d->local, local_selector, d->logger);
 
 	/*
 	 * Fill in peer's client side.
 	 */
-	PASSERT(d->logger, t->remote->child.selectors.proposed.len == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	PASSERT(d->logger, t->remote->child.selectors.proposed->len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	/* see also caller checks */
 	PASSERT(d->logger, address_in_selector_range(remote_address, remote_template));
 	ip_selector remote_selector =
@@ -731,8 +731,8 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	 * it falls within the selector's range (can't match port as
 	 * not yet known).
 	 */
-	vassert(t->remote->child.selectors.proposed.len == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	vassert(t->remote->child.selectors.proposed->len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	vassert(address_in_selector_range(remote_address, remote_template));
 	return oppo_instantiate(t, remote_address, __func__, verbose, where);
 }
@@ -752,8 +752,8 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 * endpoint that needs to be negotiated.  Hence this endpoint
 	 * must be fully within the template's selector).
 	 */
-	vassert(t->remote->child.selectors.proposed.len == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	vassert(t->remote->child.selectors.proposed->len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);
 	vassert(endpoint_in_selector(remote_endpoint, remote_template));
 	ip_address local_address = packet_src_address(packet);

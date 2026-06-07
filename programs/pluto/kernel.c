@@ -2163,8 +2163,8 @@ void orphan_holdpass(struct connection *c,
 		 */
 		co_serial_t template_serialno;
 		struct connection *t = c->clonedfrom;
-		if (selector_eq_selector(src, t->local->child.selectors.proposed.list[0]) &&
-		    selector_eq_selector(dst, t->remote->child.selectors.proposed.list[0])) {
+		if (selector_eq_selector(src, t->local->child.selectors.proposed->list[0]) &&
+		    selector_eq_selector(dst, t->remote->child.selectors.proposed->list[0])) {
 			template_serialno = t->serialno;
 		} else {
 			template_serialno = COS_NOBODY;
