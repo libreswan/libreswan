@@ -231,7 +231,7 @@ static void nss_ecp_check(const struct kem_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
 }
 
-const struct kem_ops ike_alg_kem_ecp_nss_ops = {
+const struct kem_ops ike_alg_ke_ecp_nss_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_local_secret = nss_ecp_calc_local_secret,

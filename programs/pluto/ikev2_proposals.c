@@ -1912,7 +1912,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 						     max_addke);
 					return false;
 				}
-				if (kem == &ike_alg_kem_none) {
+				if (kem == &ike_alg_ke_none) {
 					name_buf tb;
 					llog(RC_LOG, logger, "dropping %s=NONE from list of negotiated IKE_INTERMEDIATE exchanges",
 					     str_enum_short(&ikev2_trans_type_names, type, &tb));
@@ -2010,7 +2010,7 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	unsigned dhc = 0;
 	FOR_EACH_THING(d,
 		       ikev2_proposal_first_kem(accepted_proposal, verbose),
-		       default_kem, &ike_alg_kem_none) {
+		       default_kem, &ike_alg_ke_none) {
 		if (d != NULL) {
 			dhc++;
 			vassert(dhc < elemsof(kem));
@@ -2021,11 +2021,11 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	}
 
 	/* also add ms-downgrade if needed */
-	if (ms_dh_downgrade && kem[0] != &ike_alg_kem_none) {
+	if (ms_dh_downgrade && kem[0] != &ike_alg_ke_none) {
 		/* space for duplicate proposal with none */
 		dhc++;
 		vassert(dhc < elemsof(kem));
-		kem[dhc] = &ike_alg_kem_none;
+		kem[dhc] = &ike_alg_ke_none;
 		vdbg("XXX: using KEM[%u] %s", dhc, kem[dhc]->common.fqn);
 	}
 
@@ -2425,7 +2425,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	 * proposal[0] is empty so +1
 	 */
 	unsigned nr_passes =
-		(strip_kem && default_kem == &ike_alg_kem_none ? 1 :
+		(strip_kem && default_kem == &ike_alg_ke_none ? 1 :
 		 c->config->ms_dh_downgrade ? 2 :
 		 1);
 	int v2_proposals_roof =
@@ -2470,7 +2470,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * no point duplicating it with no DH during
 			 * pass=2.
 			 */
-			if (pass == 2 && default_kem == &ike_alg_kem_none &&
+			if (pass == 2 && default_kem == &ike_alg_ke_none &&
 			    first_proposal_transform(proposal, transform_type_ke) == NULL) {
 				/*
 				 * First pass didn't include DH.
@@ -2487,7 +2487,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * forces the DH to &ike_alg_none.
 			 */
 			const struct kem_desc *force_kem =
-				(pass == 2 ? &ike_alg_kem_none :
+				(pass == 2 ? &ike_alg_ke_none :
 				 strip_kem ? default_kem :
 				 NULL);
 
@@ -2531,7 +2531,7 @@ const struct kem_desc *ikev2_proposal_first_kem(const struct ikev2_proposal *pro
 			continue;
 		}
 
-		if (group == &ike_alg_kem_none) {
+		if (group == &ike_alg_ke_none) {
 			vdbg("ignoring DH=none when looking for first DH");
 			continue;
 		}
@@ -2591,7 +2591,7 @@ struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	return get_v2_child_proposals(c, "loading config",
 				      /*strip_kem*/true,
-				      /*default_kem*/&ike_alg_kem_none,
+				      /*default_kem*/&ike_alg_ke_none,
 				      verbose);
 }
 
@@ -2651,7 +2651,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 */
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
-						   &ike_alg_kem_none,
+						   &ike_alg_ke_none,
 						   verbose);
 	}
 
@@ -2765,7 +2765,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		vexpect(proposal_dh != NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_kem*/false,
-						   /*default-ignored*/&ike_alg_kem_none,
+						   /*default-ignored*/&ike_alg_ke_none,
 						   verbose);
 	} else {
 		/*
@@ -2778,7 +2778,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		vexpect(cc->config->child.pfs == (accepted_dh != NULL));
 		proposals = proposals_from_accepted("rekey CHILD",
 						    accepted_proposal,
-						    &ike_alg_kem_none,
+						    &ike_alg_ke_none,
 						    cc->config->ms_dh_downgrade,
 						    verbose);
 	}
@@ -2795,7 +2795,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
 {
 	return proposals_from_accepted("rekey IKE",
 				       established_ike->sa.st_v2_accepted_proposal,
-				       /*default_kem-ignored*/&ike_alg_kem_none,
+				       /*default_kem-ignored*/&ike_alg_ke_none,
 				       /*ms_dh_downgrade*/false,
 				       verbose);
 }

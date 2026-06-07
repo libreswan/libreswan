@@ -17,7 +17,7 @@
 
 #include "defs.h"
 
-#include "ike_alg_ke.h"		/* for ike_alg_kem_none; */
+#include "ike_alg_ke.h"		/* for ike_alg_ke_none; */
 #include "state.h"
 #include "demux.h"
 #include "keys.h"
@@ -514,7 +514,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 	PEXPECT(logger, null_md == NULL);
 
 	if (task->exchange.addke.kem != NULL &&
-	    task->exchange.addke.kem != &ike_alg_kem_none) {
+	    task->exchange.addke.kem != &ike_alg_ke_none) {
 		diag_t d = kem_initiator_key_gen(task->exchange.addke.kem,
 						 &task->initiator, logger);
 		if (d != NULL) {
@@ -757,7 +757,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 						      struct logger *logger)
 {
 	if (task->exchange.addke.kem != NULL &&
-	    task->exchange.addke.kem != &ike_alg_kem_none) {
+	    task->exchange.addke.kem != &ike_alg_ke_none) {
 		shunk_t initiator_ke;
 		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
 						   &initiator_ke, logger)) {

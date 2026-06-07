@@ -81,7 +81,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_ke) {
 		const struct kem_desc *kem = kem_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
-		if (kem == &ike_alg_kem_none) {
+		if (kem == &ike_alg_ke_none) {
 			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
 			return false;
 		}
@@ -121,17 +121,17 @@ static const struct ike_alg *default_ikev1_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev1_groups[] = {
-	&ike_alg_kem_modp2048.common,
-	&ike_alg_kem_modp1536.common,
-	&ike_alg_kem_secp256r1.common,
-	&ike_alg_kem_curve25519.common,
+	&ike_alg_ke_modp2048.common,
+	&ike_alg_ke_modp1536.common,
+	&ike_alg_ke_secp256r1.common,
+	&ike_alg_ke_curve25519.common,
 	NULL,
 };
 
 const struct proposal_defaults ikev1_ike_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_ike_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev1_ike_proposals,
-	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev1_groups,
+	.transform[PROPOSAL_TRANSFORM_ke] = default_ikev1_groups,
 	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev1_ike_prfs,
 };
 
@@ -187,16 +187,16 @@ static const struct ike_alg *default_ikev2_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev2_groups[] = {
-	&ike_alg_kem_secp256r1.common,
-	&ike_alg_kem_secp384r1.common,
-	&ike_alg_kem_secp521r1.common,
+	&ike_alg_ke_secp256r1.common,
+	&ike_alg_ke_secp384r1.common,
+	&ike_alg_ke_secp521r1.common,
 #ifdef USE_DH31
-	&ike_alg_kem_curve25519.common,
+	&ike_alg_ke_curve25519.common,
 #endif
-	&ike_alg_kem_modp4096.common,
-	&ike_alg_kem_modp3072.common,
-	&ike_alg_kem_modp2048.common,
-	&ike_alg_kem_modp8192.common,
+	&ike_alg_ke_modp4096.common,
+	&ike_alg_ke_modp3072.common,
+	&ike_alg_ke_modp2048.common,
+	&ike_alg_ke_modp8192.common,
 	NULL,
 };
 
@@ -205,7 +205,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_ike_proposals,
 	.transform[PROPOSAL_TRANSFORM_prf] = default_ikev2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
-	.transform[PROPOSAL_TRANSFORM_kem] = default_ikev2_groups,
+	.transform[PROPOSAL_TRANSFORM_ke] = default_ikev2_groups,
 };
 
 /*
