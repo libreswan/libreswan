@@ -282,7 +282,7 @@ struct ikev2_proposals {
 static void jam_ikev2_transform(struct jambuf *buf, enum ikev2_trans_type type,
 				const struct ikev2_transform *transform)
 {
-	jam_enum_enum_short(buf, &v2_transform_ID_enums,
+	jam_enum_enum_short(buf, &ikev2_trans_type_transform_names,
 			    type, transform->id);
 	if (transform->attr_keylen > 0) {
 		jam(buf, "_%d", transform->attr_keylen);
@@ -299,10 +299,59 @@ static void jam_trans_types(struct jambuf *buf, lset_t types)
 	jam_lset_short(buf, &ikev2_trans_type_names, "+", types);
 }
 
-/* <TRANSFORM-TYPE> "=" <TRANSFORM> */
+/*
+ * XXX: note hack so that ...-ESN={YES,NO} is logged.  Returns FALSE
+ * when a non-ESN transform is found.  Caller then reverts to dumping
+ * new names.
+ */
+
+static bool jam_esn_transform(struct jambuf *buf,
+			      const struct ikev2_transform *transform)
+{
+	switch (transform->id) {
+	case IKEv2_SN_32_BIT_SEQUENTIAL:
+		jam_string(buf, "NO");
+		return true;
+	case IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL:
+		jam_string(buf, "YES");
+		return true;
+	case IKEv2_SN_32_BIT_UNSPECIFIED:
+	default:
+		return false;
+	}
+}
+
+static bool jam_esn_transforms(struct jambuf *buf,
+			       const struct ikev2_transforms *transforms)
+{
+	jam_string(buf, "ESN:");
+	char *sep = "";
+	const struct ikev2_transform *transform;
+	FOR_EACH_TRANSFORM(transform, transforms) {
+		jam_string(buf, sep); sep = "+";
+		if (!jam_esn_transform(buf, transform)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+ * <TRANSFORM-TYPE> "=" <TRANSFORM>.
+ */
+
 static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 			       const struct ikev2_transform *transform)
 {
+	if (type == IKEv2_TRANS_TYPE_SN) {
+		jampos_t start = jambuf_get_pos(buf);
+		jam_string(buf, "ESN=");
+		if (jam_esn_transform(buf, transform)) {
+			return;
+		}
+		jambuf_set_pos(buf, &start);
+	}
+
 	jam_trans_type(buf, type);
 	jam_string(buf, "=");
 	jam_ikev2_transform(buf, type, transform);
@@ -316,7 +365,20 @@ static void jam_protoid(struct jambuf *buf, enum ikev2_sec_proto_id protoid)
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
 static void jam_ikev2_transforms(struct jambuf *buf, enum ikev2_trans_type type,
 				 const struct ikev2_transforms *transforms)
-{	char *sep = "";
+{
+	if (type == IKEv2_TRANS_TYPE_SN) {
+		/*
+		 * Assume it's ESN, but when it isn't, toss buffer and
+		 * use new names.
+		 */
+		jampos_t start = jambuf_get_pos(buf);
+		if (jam_esn_transforms(buf, transforms)) {
+			return;
+		}
+		jambuf_set_pos(buf, &start);
+	}
+
+	char *sep = "";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		jam_string(buf, sep);
@@ -340,13 +402,6 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 		if (transforms->transform[0].valid) {
 			/* at least one transform */
 			jam_string(buf, sep);
-			/*
-			 * XXX: hack so that ...-ESN:YES+NO is logged.
-			 * Other fields are self explanatory.
-			 */
-			if (type == IKEv2_TRANS_TYPE_ESN) {
-				jam_string(buf, "ESN:");
-			}
 			jam_ikev2_transforms(buf, type, transforms);
 			sep = "-";
 		}
@@ -1498,9 +1553,9 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			name_buf esb_type; /* same scope */
 			const char *transform_type_name =
 				str_enum_short(&ikev2_trans_type_names, transform_type, &esb_type);
-			name_buf esb_id; /* same scope */
+			name_buf esb_id; /* same scope as ... */
 			const char *transform_id_name =
-				str_enum_enum_short(&v2_transform_ID_enums,
+				str_enum_enum_short(&ikev2_trans_type_transform_names,
 						    transform_type, transform->id, &esb_id);
 
 			enum impair_v2_transform impairment;
@@ -1617,7 +1672,8 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 				if (type == IKEv2_TRANS_TYPE_IMPAIR_ROOF) {
 					jam(buf, "%d", transform_id);
 				} else {
-					jam_enum_enum_short(buf, &v2_transform_ID_enums, transform_type, transform_id);
+					jam_enum_enum_short(buf, &ikev2_trans_type_transform_names,
+							    transform_type, transform_id);
 				}
 				jam(buf, " (0x%x)", transform_id);
 			}
@@ -1859,19 +1915,20 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				ta.ta_dh = group;
 				break;
 			}
-			case IKEv2_TRANS_TYPE_ESN:
+			case IKEv2_TRANS_TYPE_SN:
 				switch (transform->id) {
-				case IKEv2_ESN_YES:
+				case IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL:
 					ta.esn_enabled = true;
 					break;
-				case IKEv2_ESN_NO:
+				case IKEv2_SN_32_BIT_SEQUENTIAL:
 					ta.esn_enabled = false;
 					break;
+				case IKEv2_SN_32_BIT_UNSPECIFIED:
 				default:
 					ta.esn_enabled = false;
-					llog_pexpect(logger, HERE,
-						     "accepted IKEv2 proposal contains unexpected ESN %d",
-						     transform->id);
+					llog(RC_LOG, logger,
+					     "accepted IKEv2 proposal contains unexpected SN %d",
+					     transform->id);
 					return false;
 				}
 				break;
@@ -2388,15 +2445,17 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 	return v2_proposals;
 }
 
-static void add_esn_transforms(struct ikev2_proposal *proposal,
-			       const struct connection *c)
+static void add_sn_transforms(struct ikev2_proposal *proposal,
+			      const struct connection *c)
 {
-	passert(!proposal->transforms[IKEv2_TRANS_TYPE_ESN].transform[0].valid);
+	passert(!proposal->transforms[IKEv2_TRANS_TYPE_SN].transform[0].valid);
 	if (c->config->esn.yes) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_YES, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_SN,
+				 IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL, 0);
 	}
 	if (c->config->esn.no) {
-		append_transform(proposal, IKEv2_TRANS_TYPE_ESN, IKEv2_ESN_NO, 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_SN,
+				 IKEv2_SN_32_BIT_SEQUENTIAL, 0);
 	}
 }
 
@@ -2499,7 +2558,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 								  default_kem,
 								  verbose);
 			if (v2_proposal != NULL) {
-				add_esn_transforms(v2_proposal, c);
+				add_sn_transforms(v2_proposal, c);
 				vdbg_ikev2_proposal(verbose, "... ", v2_proposal);
 				v2_proposals->roof++;
 			}

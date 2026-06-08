@@ -2789,21 +2789,6 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-  ikev2_trans_type_esn_names: [0..2)
-    0 -> IKEv2_ESN_NO
-         jam_enum 0: IKEv2_ESN_NO OK
-         match IKEv2_ESN_NO: OK
-         short_name 0: NO OK
-         jam_enum_short 0: NO OK
-         jam_enum_human 0: no OK
-         match NO [short]: OK
-    1 -> IKEv2_ESN_YES
-         jam_enum 1: IKEv2_ESN_YES OK
-         match IKEv2_ESN_YES: OK
-         short_name 1: YES OK
-         jam_enum_short 1: YES OK
-         jam_enum_human 1: yes OK
-         match YES [short]: OK
   ikev2_trans_type_gcauth_names: [1..3)
     1 -> IKEv2_GCAUTH_IMPLICIT
          jam_enum 1: IKEv2_GCAUTH_IMPLICIT OK
@@ -3250,13 +3235,13 @@ name for -1 present (should be absent)
          jam_enum_short 4: KE OK
          jam_enum_human 4: ke OK
          match KE [short]: OK
-    5 -> IKEv2_TRANS_TYPE_ESN
-         jam_enum 5: IKEv2_TRANS_TYPE_ESN OK
-         match IKEv2_TRANS_TYPE_ESN: OK
-         short_name 5: ESN OK
-         jam_enum_short 5: ESN OK
-         jam_enum_human 5: esn OK
-         match ESN [short]: OK
+    5 -> IKEv2_TRANS_TYPE_SN
+         jam_enum 5: IKEv2_TRANS_TYPE_SN OK
+         match IKEv2_TRANS_TYPE_SN: OK
+         short_name 5: SN OK
+         jam_enum_short 5: SN OK
+         jam_enum_human 5: sn OK
+         match SN [short]: OK
     6 -> IKEv2_TRANS_TYPE_ADDKE1
          jam_enum 6: IKEv2_TRANS_TYPE_ADDKE1 OK
          match IKEv2_TRANS_TYPE_ADDKE1: OK

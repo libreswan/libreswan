@@ -956,7 +956,8 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
 	{ ft_loose_enum, 8 / BITS_IN_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_IN_BYTE, "reserved", NULL },
-	{ ft_loose_enum_enum, 16 / BITS_IN_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
+	{ ft_loose_enum_enum, 16 / BITS_IN_BYTE, "IKEv2 transform ID",
+	  &ikev2_trans_type_transform_names }, /* select enum based on transform type */
 	{ ft_end,  0, NULL, NULL }
 };
 

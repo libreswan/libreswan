@@ -376,13 +376,13 @@ int main(int argc UNUSED, char *argv[])
 	 * Some hard-wired checks of enum_enum_name.  If a lookup
 	 * should fail, pass NULL for the enum table.
 	 */
-	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+	test_enum_enum("IKEv2 transforms", &ikev2_trans_type_transform_names,
 		       IKEv2_TRANS_TYPE_ENCR, &ikev2_trans_type_encr_names,
 		       IKEv2_ENCR_3DES, true);
-	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+	test_enum_enum("IKEv2 transforms", &ikev2_trans_type_transform_names,
 		       IKEv2_TRANS_TYPE_ROOF, NULL,
 		       1, false);
-	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+	test_enum_enum("IKEv2 transforms", &ikev2_trans_type_transform_names,
 		       IKEv2_TRANS_TYPE_PRF, &ikev2_trans_type_prf_names,
 		       IKEv2_PRF_INVALID, false);
 	printf("\n");
