@@ -841,8 +841,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vexpect(end->child.selectors.proposed->list == NULL);
-		vexpect(end->child.selectors.proposed->len == 0);
+		vexpect(end->child.selectors.proposed == NULL);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
@@ -855,8 +854,8 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 					jam_selector(buf, selector);
 				}
 			}
-			*end->child.selectors.proposed =
-				end->child.config->selectors;
+			end->child.selectors.proposed =
+				&end->child.config->selectors;
 			/*
 			 * This is important, but why?
 			 *
@@ -2044,23 +2043,24 @@ void append_end_selector(struct connection_end *end,
 			 ip_selector selector/*can be unset!*/,
 			 struct verbose verbose)
 {
-	/* space? */
-	vassert(end->child.selectors.proposed->len < elemsof(end->child.selectors.assigned));
-
 	/*
 	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
-	if (end->child.selectors.proposed->list == NULL) {
-		vassert(end->child.selectors.proposed->len == 0);
-		end->child.selectors.proposed->list = end->child.selectors.assigned;
+	if (end->child.selectors.proposed == NULL) {
+		end->child.selectors.assigned->list = end->child.selectors.tmp;
+		end->child.selectors.assigned->len = 0;
+		end->child.selectors.proposed = end->child.selectors.assigned;
 	} else {
+		vassert(end->child.selectors.proposed == end->child.selectors.assigned);
 		vassert(end->child.selectors.proposed->len > 0);
-		vassert(end->child.selectors.proposed->list == end->child.selectors.assigned);
 	}
 
 	/* append the selector to assigned */
-	unsigned i = end->child.selectors.proposed->len++;
-	end->child.selectors.assigned[i] = selector;
+	vassert(end->child.selectors.assigned != NULL);
+	vassert(end->child.selectors.assigned->list == end->child.selectors.tmp);
+	vassert(end->child.selectors.assigned->len < elemsof(end->child.selectors.tmp));
+	unsigned i = end->child.selectors.assigned->len++;
+	end->child.selectors.assigned->list[i] = selector;
 
 	selector_buf nb;
 	vdbg("%s.child.selectors.proposed[%d] %s "PRI_WHERE,
@@ -2098,7 +2098,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * single selector.  Reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	zero(&end->child.selectors.proposed);
+	end->child.selectors.proposed = NULL;
 	append_end_selector(end, new_selector, verbose);
 
 	/*

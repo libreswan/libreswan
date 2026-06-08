@@ -586,11 +586,12 @@ struct child_end {
 		 * See append_end_selector(), but be warned other code
 		 * fiddles with this.
 		 */
-		ip_selector assigned[IP_VERSION_ROOF/*space for IPv4+IPv6 in no order*/];
+		ip_selector tmp[IP_VERSION_ROOF/*space for IPv4+IPv6 in no order*/];
+		ip_selectors assigned[1];
 		/*
 		 * Either .config->selectors or above; do not free.
 		 */
-		ip_selectors proposed[1];
+		const ip_selectors *proposed;
 		/*
 		 * XXX: used when logging the established description
 		 * of the child in jam_connection_child()?

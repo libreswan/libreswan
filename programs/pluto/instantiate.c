@@ -179,8 +179,7 @@ struct connection *group_instantiate(struct connection *group,
 
 #define set_end_selector(END, SELECTOR, LOGGER)				\
 	{								\
-		PASSERT(LOGGER, (END)->child.selectors.proposed->list == NULL); \
-		PASSERT(LOGGER, (END)->child.selectors.proposed->len == 0); \
+		PASSERT(LOGGER, (END)->child.selectors.proposed == NULL); \
 		struct verbose verbose_ = VERBOSE(DEBUG_STREAM, LOGGER, NULL); \
 		append_end_selector(END, SELECTOR, verbose_);		\
 	}
@@ -531,15 +530,14 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vassert(end->child.selectors.proposed->list == NULL);
-		vassert(end->child.selectors.proposed->len == 0);
+		vassert(end->child.selectors.proposed == NULL);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
-			*end->child.selectors.proposed = end->child.config->selectors;
+			end->child.selectors.proposed = &end->child.config->selectors;
 			/* see also clone_connection */
 			set_end_child_has_client(d, end->config->index, true);
 			continue;
