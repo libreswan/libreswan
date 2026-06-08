@@ -66,6 +66,7 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(REDIRECT_SUPPORTED);
 	C(REKEY_SA);
 	C(SIGNATURE_HASH_ALGORITHMS);
+	C(SUPPORTED_AUTH_METHODS);
 	C(UPDATE_SA_ADDRESSES);
 	C(USE_PPK);
 	C(USE_PPK_INT);
