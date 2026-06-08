@@ -7,16 +7,23 @@ connection_name=algo
 if test $# -lt 1 ; then
     cat <<EOF 1>&3
 Usage:
-   $0 [ <connection-param> ... ] [ -- <wait-until-alive-param> ... ]
-Run:
+
+   $0 <connection-name> [ <connection-param> ... ] [ -- <wait-until-alive-param> ... ]
+
+Runs the following commands in sequence:
+
 - ipsec start
-  always start afresh so state and connection numbers are deterministic
-- ipsec addconn --name ${connection_name} also=<hostname> <connection-param>
-  the also= lets generic parameters be in ipsec.conf
+
+- ipsec addconn --name ${connection_name} <connection-param>
+
 - ipsec up ${connection_name}
+
 - wait-until-alive <wait-until-alive-param>
+
   but only when <wait-until-alive-param> are specified
+
 - ipsec stop
+
   clean up ready for next test
 EOF
     exit 1
@@ -45,7 +52,6 @@ RUN ipsec start
 ../../guestbin/wait-until-pluto-started
 RUN ipsec addconn \
     --name ${connection_name} \
-    also=`hostname` \
     ${connection_param}
 RUN ipsec up ${connection_name}
 if test -n "${wait_until_alive_param}" ; then

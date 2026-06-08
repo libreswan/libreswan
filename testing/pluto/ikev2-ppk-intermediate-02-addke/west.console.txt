@@ -14,7 +14,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20'                                   -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20
+ ipsec addconn --name algo ike=aes;dh20
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -33,7 +33,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20' intermediate=yes                  -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20 intermediate=yes
+ ipsec addconn --name algo ike=aes;dh20 intermediate=yes
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -55,7 +55,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=none'                       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20;addke1=none
+ ipsec addconn --name algo ike=aes;dh20;addke1=none
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -78,7 +78,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=none;addke2=ml_kem_768'     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20;addke1=none;addke2=ml_kem_768
+ ipsec addconn --name algo ike=aes;dh20;addke1=none;addke2=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -101,7 +101,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=modp8192;addke2=none'       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20;addke1=modp8192;addke2=none
+ ipsec addconn --name algo ike=aes;dh20;addke1=modp8192;addke2=none
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -124,7 +124,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768' -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768
+ ipsec addconn --name algo ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

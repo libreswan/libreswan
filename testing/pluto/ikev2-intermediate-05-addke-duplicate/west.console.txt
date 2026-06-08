@@ -15,10 +15,10 @@ initdone
 west #
  # this should negotiate dh19, dh20, dh21
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh leftcert=west 'ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21' -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21
+ ipsec addconn --name algo leftcert=west ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -41,10 +41,10 @@ Redirecting to: [initsystem]
 west #
  # this should negotiate dh19, dh20, dh21
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh19+dh20+dh21-dh20+dh21+dh19-dh21+dh19+dh20' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh leftcert=west 'ike=aes;dh19+dh20+dh21-dh20+dh21+dh19-dh21+dh19+dh20' -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh19+dh20+dh21-dh20+dh21+dh19-dh21+dh19+dh20
+ ipsec addconn --name algo leftcert=west ike=aes;dh19+dh20+dh21-dh20+dh21+dh19-dh21+dh19+dh20
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -67,10 +67,10 @@ Redirecting to: [initsystem]
 west #
  # this should negotiate dh19, none, dh21
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh19+dh20+dh21-none-dh21+dh19+dh20' -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh leftcert=west 'ike=aes;dh19+dh20+dh21-none-dh21+dh19+dh20'           -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh19+dh20+dh21-none-dh21+dh19+dh20
+ ipsec addconn --name algo leftcert=west ike=aes;dh19+dh20+dh21-none-dh21+dh19+dh20
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -91,10 +91,10 @@ Redirecting to: [initsystem]
 west #
  # this fail; no backtracking so ADDKE2 fails
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20'
+ ../../guestbin/pluto-up-down.sh leftcert=west 'ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20'
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20
+ ipsec addconn --name algo leftcert=west ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

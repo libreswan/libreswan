@@ -8,7 +8,7 @@ west #
  ../../guestbin/pluto-up-down.sh 'ike=aes;ke=ml_kem_768' -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;ke=ml_kem_768
+ ipsec addconn --name algo ike=aes;ke=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

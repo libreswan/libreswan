@@ -7,7 +7,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp256
+ ipsec addconn --name algo keyexchange=ikev1 ike=aes128-sha2-ecp256
 "algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -27,7 +27,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp384 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp384
+ ipsec addconn --name algo keyexchange=ikev1 ike=aes128-sha2-ecp384
 "algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -47,7 +47,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521
+ ipsec addconn --name algo keyexchange=ikev1 ike=aes128-sha2-ecp521
 "algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -67,7 +67,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes
+ ipsec addconn --name algo keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes
 "algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -87,7 +87,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256
+ ipsec addconn --name algo keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256
 "algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -107,7 +107,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp256
+ ipsec addconn --name algo keyexchange=ikev2 ike=aes128-sha2-ecp256
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -125,7 +125,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp384 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp384
+ ipsec addconn --name algo keyexchange=ikev2 ike=aes128-sha2-ecp384
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -143,7 +143,7 @@ west #
  ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp521 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp521
+ ipsec addconn --name algo keyexchange=ikev2 ike=aes128-sha2-ecp521
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
