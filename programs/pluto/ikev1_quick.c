@@ -1214,15 +1214,15 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
 	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
-	     c->remote->child.selectors.proposed.len,
-	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
+	     c->remote->child.selectors.proposed->len,
+	     str_selector(&c->remote->child.selectors.proposed->list[0], &csb));
 
 	/* fill in the client's true port */
 
 	if (c->remote->config->child.protoport.has_port_wildcard) {
 		ip_selector selector =
-			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
-							  selector_protocol(c->remote->child.selectors.proposed.list[0]),
+			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed->list[0]),
+							  selector_protocol(c->remote->child.selectors.proposed->list[0]),
 							  selector_port(remote_client));
 		update_first_selector(c, remote, selector);
 	}

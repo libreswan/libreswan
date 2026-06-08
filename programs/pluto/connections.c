@@ -168,7 +168,7 @@ void vdbg_connection(const struct connection *c,
 		jam_string(buf, "selectors");
 		jam_string(buf, " proposed:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-			FOR_EACH_ITEM(selector, &end->selectors.proposed) {
+			FOR_EACH_ITEM(selector, end->selectors.proposed) {
 				jam_string(buf, " ");
 				jam_selector(buf, selector);
 			}
@@ -841,8 +841,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vexpect(end->child.selectors.proposed.list == NULL);
-		vexpect(end->child.selectors.proposed.len == 0);
+		vexpect(end->child.selectors.proposed == NULL);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
@@ -855,7 +854,8 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 					jam_selector(buf, selector);
 				}
 			}
-			end->child.selectors.proposed = end->child.config->selectors;
+			end->child.selectors.proposed =
+				&end->child.config->selectors;
 			/*
 			 * This is important, but why?
 			 *
@@ -1011,8 +1011,8 @@ void build_connection_spds_from_proposals(struct connection *c)
 	vdbg("adding connection spds using proposed");
 	verbose.level++;
 
-	const ip_selectors *left_proposals = &c->end[LEFT_END].child.selectors.proposed;
-	const ip_selectors *right_proposals = &c->end[RIGHT_END].child.selectors.proposed;
+	const ip_selectors *left_proposals = c->end[LEFT_END].child.selectors.proposed;
+	const ip_selectors *right_proposals = c->end[RIGHT_END].child.selectors.proposed;
 	vdbg("left=%u right=%u", left_proposals->len, right_proposals->len);
 
 	/*
@@ -1283,7 +1283,7 @@ diag_t add_connection(const struct whack_message *wm,
 static connection_priority_t max_prefix_len(struct connection_end *end)
 {
 	int len = 0;
-	FOR_EACH_ITEM(selector, &end->child.selectors.proposed) {
+	FOR_EACH_ITEM(selector, end->child.selectors.proposed) {
 		int prefix_len = selector_prefix_len((*selector));
 		if (prefix_len >= 0) {
 			len = max(len, prefix_len);
@@ -1340,7 +1340,7 @@ static size_t jam_connection_child(struct jambuf *b,
 {
 	const ip_selectors *selectors =
 		(child->selectors.accepted.len > 0 ? &child->selectors.accepted :
-		 child->selectors.proposed.len > 0 ? &child->selectors.proposed :
+		 child->selectors.proposed->len > 0 ? child->selectors.proposed :
 		 NULL);
 	size_t s = 0;
 	if (selectors == NULL) {
@@ -1732,7 +1732,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 */
 
 		connection_priority_t src = 0;
-		FOR_EACH_ITEM(local, &c->local->child.selectors.proposed) {
+		FOR_EACH_ITEM(local, c->local->child.selectors.proposed) {
 			/*
 			 * The packet source address is a selector, and not endpoint.
 			 *
@@ -1766,7 +1766,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		}
 
 		connection_priority_t dst = 0;
-		FOR_EACH_ITEM(remote, &c->remote->child.selectors.proposed) {
+		FOR_EACH_ITEM(remote, c->remote->child.selectors.proposed) {
 			/*
 			 * The packet destination address is always a
 			 * proper endpoint.
@@ -2043,23 +2043,24 @@ void append_end_selector(struct connection_end *end,
 			 ip_selector selector/*can be unset!*/,
 			 struct verbose verbose)
 {
-	/* space? */
-	vassert(end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
-
 	/*
 	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
-	if (end->child.selectors.proposed.list == NULL) {
-		vassert(end->child.selectors.proposed.len == 0);
-		end->child.selectors.proposed.list = end->child.selectors.assigned;
+	if (end->child.selectors.proposed == NULL) {
+		end->child.selectors.assigned->list = end->child.selectors.tmp;
+		end->child.selectors.assigned->len = 0;
+		end->child.selectors.proposed = end->child.selectors.assigned;
 	} else {
-		vassert(end->child.selectors.proposed.len > 0);
-		vassert(end->child.selectors.proposed.list == end->child.selectors.assigned);
+		vassert(end->child.selectors.proposed == end->child.selectors.assigned);
+		vassert(end->child.selectors.proposed->len > 0);
 	}
 
 	/* append the selector to assigned */
-	unsigned i = end->child.selectors.proposed.len++;
-	end->child.selectors.assigned[i] = selector;
+	vassert(end->child.selectors.assigned != NULL);
+	vassert(end->child.selectors.assigned->list == end->child.selectors.tmp);
+	vassert(end->child.selectors.assigned->len < elemsof(end->child.selectors.tmp));
+	unsigned i = end->child.selectors.assigned->len++;
+	end->child.selectors.assigned->list[i] = selector;
 
 	selector_buf nb;
 	vdbg("%s.child.selectors.proposed[%d] %s "PRI_WHERE,
@@ -2080,8 +2081,8 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	struct child_end_selectors *end_selectors = &end->child.selectors;
 	const char *leftright = end->config->leftright;
 
-	vexpect(end_selectors->proposed.len == 1);
-	ip_selector old_selector = end_selectors->proposed.list[0];
+	vexpect(end_selectors->proposed->len == 1);
+	ip_selector old_selector = end_selectors->proposed->list[0];
 	selector_buf ob, nb;
 	vdbg("%s() update %s.child.selector %s -> %s "PRI_WHERE,
 	     __func__, leftright,
@@ -2097,7 +2098,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * single selector.  Reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	zero(&end->child.selectors.proposed);
+	end->child.selectors.proposed = NULL;
 	append_end_selector(end, new_selector, verbose);
 
 	/*
