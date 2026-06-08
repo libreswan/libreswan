@@ -803,8 +803,8 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 			 */
 			PEXPECT(ike->sa.logger, c->config->host.cisco.split);
 			ip_selector remote_client;
-			if (c->remote->config->child.selectors.len > 0) {
-				remote_client = c->remote->config->child.selectors.list[0];
+			if (len(c->remote->config->child.selectors) > 0) {
+				remote_client = c->remote->config->child.selectors->list[0];
 			} else {
 				const struct ip_info *client_afi = selector_info(c->child.spds->table->remote->client);
 				remote_client = client_afi->selector.all;

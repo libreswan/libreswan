@@ -522,7 +522,10 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown.argv);
-			pfree_list(&end->child.selectors);
+			if (end->child.selectors != NULL) {
+				pfreeany(end->child.selectors->list);
+				pfreeany(end->child.selectors);
+			}
 			pfreeany(end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
 			pfreeany(end->child.addresspools);
@@ -845,17 +848,17 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
-		if (end->child.config->selectors.len > 0) {
+		if (len(end->child.config->selectors) > 0) {
 			VDBG_JAMBUF(buf) {
 				jam_string(buf, leftright);
 				jam_string(buf, " proposals from child config selectors");
-				FOR_EACH_ITEM(selector, &end->child.config->selectors) {
+				FOR_EACH_ITEM(selector, end->child.config->selectors) {
 					jam_string(buf, " ");
 					jam_selector(buf, selector);
 				}
 			}
 			end->child.selectors.proposed =
-				&end->child.config->selectors;
+				end->child.config->selectors;
 			/*
 			 * This is important, but why?
 			 *
@@ -2134,8 +2137,8 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * It scribbles the result of the TS negotiation on the
 	 * child.selector.
 	 */
-	if (child->config->selectors.len > 0) {
-		ip_selector selector = child->config->selectors.list[0];
+	if (len(child->config->selectors) > 0) {
+		ip_selector selector = child->config->selectors->list[0];
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
 			vdbg("%s.child.selector %s matches selectors[0] "PRI_WHERE,
@@ -2166,7 +2169,7 @@ err_t connection_requires_tss(const struct connection *c)
 		if (len(end->config->child.addresspools) > 1) {
 			return "addresspools";
 		}
-		if (end->config->child.selectors.len > 1) {
+		if (len(end->config->child.selectors) > 1) {
 			return "subnets";
 		}
 		if (len(end->config->child.sourceip) > 1) {

@@ -200,12 +200,12 @@ struct connection *group_instantiate(struct connection *group,
 	 */
 
 	ip_selector local_selector;
-	if (t->local->child.config->selectors.len > 0) {
+	if (len(t->local->child.config->selectors) > 0) {
 		/*
 		 * Selector contains subnet= possibly already merged
 		 * with protoport=.
 		 */
-		local_selector = t->local->child.config->selectors.list[0];
+		local_selector = t->local->child.config->selectors->list[0];
 	} else {
 		/*
 		 * Need to mash protoport and local .host_addr
@@ -534,10 +534,10 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
-		if (end->child.config->selectors.len > 0) {
+		if (len(end->child.config->selectors) > 0) {
 			vdbg("%s selectors from %d child.selectors",
-			     leftright, end->child.config->selectors.len);
-			end->child.selectors.proposed = &end->child.config->selectors;
+			     leftright, len(end->child.config->selectors));
+			end->child.selectors.proposed = end->child.config->selectors;
 			/* see also clone_connection */
 			set_end_child_has_client(d, end->config->index, true);
 			continue;

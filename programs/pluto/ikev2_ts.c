@@ -1797,9 +1797,9 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 
 			/* responder so cross streams */
 			vexpect(t->remote->child.selectors.proposed == t->remote->child.selectors.assigned ||
-				t->remote->child.selectors.proposed == &t->remote->config->child.selectors);
+				t->remote->child.selectors.proposed == t->remote->config->child.selectors);
 			vexpect(t->local->child.selectors.proposed == t->local->child.selectors.assigned ||
-				t->local->child.selectors.proposed == &t->local->config->child.selectors);
+				t->local->child.selectors.proposed == t->local->config->child.selectors);
 			vexpect(selector_eq_selector(t->child.spds->table->remote->client,
 						     t->remote->child.selectors.proposed->list[0]));
 			vexpect(selector_eq_selector(t->child.spds->table->local->client,
@@ -1861,9 +1861,9 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 
 	/* initiator so don't cross streams */
 	vexpect(c->remote->child.selectors.proposed == c->remote->child.selectors.assigned ||
-		c->remote->child.selectors.proposed == &c->remote->config->child.selectors);
+		c->remote->child.selectors.proposed == c->remote->config->child.selectors);
 	vexpect(c->local->child.selectors.proposed == c->local->child.selectors.assigned ||
-		c->local->child.selectors.proposed == &c->local->config->child.selectors);
+		c->local->child.selectors.proposed == c->local->config->child.selectors);
 	vexpect(selector_eq_selector(c->child.spds->table->remote->client,
 				     c->remote->child.selectors.proposed->list[0]));
 	vexpect(selector_eq_selector(c->child.spds->table->local->client,
@@ -1948,9 +1948,9 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 
 	/* responder so cross streams */
 	vexpect(c->remote->child.selectors.proposed == c->remote->child.selectors.assigned ||
-		c->remote->child.selectors.proposed == &c->remote->config->child.selectors);
+		c->remote->child.selectors.proposed == c->remote->config->child.selectors);
 	vexpect(c->local->child.selectors.proposed == c->local->child.selectors.assigned ||
-		c->local->child.selectors.proposed == &c->local->config->child.selectors);
+		c->local->child.selectors.proposed == c->local->config->child.selectors);
 	vexpect(selector_eq_selector(c->child.spds->table->remote->client,
 				     c->remote->child.selectors.proposed->list[0]));
 	vexpect(selector_eq_selector(c->child.spds->table->local->client,

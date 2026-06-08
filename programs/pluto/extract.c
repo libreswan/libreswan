@@ -2134,7 +2134,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		return d;
 	}
 
-	ip_selectors *child_selectors = &child_config->selectors;
+	child_config->selectors = alloc_thing(ip_selectors, "ip selectors");
+	ip_selectors *child_selectors = child_config->selectors;
 
 	/*
 	 * Figure out the end's child selectors.
@@ -2219,22 +2220,22 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		     leftright, leftright, leftright);
 		ip_address nonzero_host;
 		diag_t d = ttoselectors_num(shunk1(src->we_subnet), ", ", NULL,
-					    &child_config->selectors, &nonzero_host);
+					    child_config->selectors, &nonzero_host);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->we_subnet);
 		}
 
 		if (protoport.ip.is_set) {
-			if (child_config->selectors.len > 1) {
+			if (len(child_config->selectors) > 1) {
 				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
 					    leftright, leftright);
 			}
-			if (!selector_is_subnet(child_config->selectors.list[0])) {
+			if (!selector_is_subnet(child_config->selectors->list[0])) {
 				return diag("%ssubnet= cannot be a selector when combined with %sprotoport=",
 					    leftright, leftright);
 			}
-			ip_subnet subnet = selector_subnet(child_config->selectors.list[0]);
+			ip_subnet subnet = selector_subnet(child_config->selectors->list[0]);
 			vdbg("%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 			     leftright, leftright, leftright, leftright);
 			child_selectors->list[0] =
@@ -2317,13 +2318,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			}
 			seen[afi->ip.version] = (*sourceip);
 
-			if (child_config->selectors.len > 0) {
+			if (len(child_config->selectors) > 0) {
 				/* skip aliases; they hide the selectors list */
 				if (wm->wm_connalias != NULL) {
 					continue;
 				}
 				bool within = false;
-				FOR_EACH_ITEM(sel, &child_config->selectors) {
+				FOR_EACH_ITEM(sel, child_config->selectors) {
 					/*
 					 * Only compare the address
 					 * against the selector's
@@ -4769,7 +4770,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (ike_version == IKEv1) {
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 			const char *leftright = config->end[lr].leftright;
-			if (config->end[lr].child.selectors.len <= 1) {
+			if (len(config->end[lr].child.selectors) <= 1) {
 				continue;
 			}
 			if (config->host.cisco.split &&
@@ -4798,7 +4799,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		const char *value;
 	} end_family[END_ROOF][IP_VERSION_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
+		const ip_selectors *const selectors = c->end[end].config->child.selectors;
 		const ip_pools *const pools = c->end[end].config->child.addresspools;
 		if (len(selectors) > 0) {
 			FOR_EACH_ITEM(selector, selectors) {

@@ -150,7 +150,7 @@ struct child_end_config {
 
 	bool has_client_address_translation;		/* aka CAT */
 
-	ip_selectors selectors;
+	ip_selectors *selectors;
 	ip_addresses *sourceip;
 
 	/*
