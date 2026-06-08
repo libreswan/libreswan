@@ -11,10 +11,29 @@ west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20'                     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20'                                   -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;dh20
+"algo": added oriented IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_AUTH
+"algo" #1: PPK AUTH calculated as initiator
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(PPK_IDENTITY),IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20' intermediate=yes                  -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20 intermediate=yes
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -33,10 +52,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none'                -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=none'                       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20-none
+ ipsec addconn --name algo also=west ike=aes;dh20;addke1=none
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -56,10 +75,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none-ml_kem_768'     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=none;addke2=ml_kem_768'     -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20-none-ml_kem_768
+ ipsec addconn --name algo also=west ike=aes;dh20;addke1=none;addke2=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -79,10 +98,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-none'       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=modp8192;addke2=none'       -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20-modp8192-none
+ ipsec addconn --name algo also=west ike=aes;dh20;addke1=modp8192;addke2=none
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -102,10 +121,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-ml_kem_768' -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768' -- -I 192.0.1.254 192.0.2.254 # sanitize-retransmits
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo also=west ike=aes;dh20-modp8192-ml_kem_768
+ ipsec addconn --name algo also=west ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
