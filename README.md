@@ -47,7 +47,14 @@ For Debian / Ubuntu / Mint
       libldns-dev xmlto libcurl4-openssl-dev \
       systemd-dev
 
-For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
+
+For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.:
+
+    If you have source repositories enabled:
+
+    dnf builddep libreswan
+
+    Otherwise:
 
     dnf install audit-libs-devel bison curl-devel flex \
       gcc ldns-devel libcap-ng-devel libevent-devel \
