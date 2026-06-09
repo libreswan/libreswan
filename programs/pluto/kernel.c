@@ -462,8 +462,8 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 	 */
 	ip_selector local_route;
 	ip_selector remote_route;
-	const ip_selectors *local = &c->local->child.selectors.accepted;
-	const ip_selectors *remote = &c->remote->child.selectors.accepted;
+	const ip_selectors *local = c->local->child.selectors.accepted;
+	const ip_selectors *remote = c->remote->child.selectors.accepted;
 	switch (kernel_mode) {
 	case KERNEL_MODE_TUNNEL:
 		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
@@ -477,9 +477,9 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 		 * - CP which skips setting TS
 		 * - CK_PERMENANT that doesn't update TS
 		 */
-		local_route = (local->len > 0 ? local->list[0] :
+		local_route = (len(local) > 0 ? local->list[0] :
 			       c->child.spds->table->local->client);
-		ip_selector remote_client = (remote->len > 0 ? remote->list[0] :
+		ip_selector remote_client = (len(remote) > 0 ? remote->list[0] :
 					     c->child.spds->table->remote->client);
 		/* reroute remote to pair up with dest */
 		remote_route = selector_from_address_protocol_port(c->remote->host.addr,

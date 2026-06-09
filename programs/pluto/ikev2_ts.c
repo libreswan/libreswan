@@ -257,21 +257,22 @@ static const char *str_fit_story(enum fit fit)
 	}
 }
 
-static void scribble_accepted_selectors(ip_selectors *selectors,
-					const struct narrowed_selector_payload *nsp,
-					struct verbose verbose)
+static void scribble_accepted_selectors(ip_selectors **selectors,
+				   const struct narrowed_selector_payload *nsp,
+				   struct verbose verbose)
 {
-	if (len(selectors) > 0) {
-		vexpect(selectors->list != NULL);
+	if (len(*selectors) > 0) {
+		vexpect((*selectors)->list != NULL);
 		vdbg("skipping scribble as already scribbled");
 	} else {
-		vexpect(selectors->list == NULL);
-		*selectors = (ip_selectors) {
+		vexpect((*selectors) == NULL);
+		(*selectors) = alloc_thing(ip_selectors, "ip_selectors");
+		(**selectors) = (ip_selectors) {
 			.len = nsp->nr,
 			.list = alloc_things(ip_selector, nsp->nr, "accepted-selectors"),
 		};
 		for (unsigned i = 0; i < nsp->nr; i++) {
-			selectors->list[i] = nsp->ns[i].selector;
+			(*selectors)->list[i] = nsp->ns[i].selector;
 		}
 	}
 }
@@ -305,8 +306,10 @@ static void scribble_selectors_on_spd(struct connection *c,
 				      const struct narrowed_selector_payload *remote_nsp,
 				      struct verbose verbose)
 {
-	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, verbose);
-	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, verbose);
+	scribble_accepted_selectors(&c->local->child.selectors.accepted,
+				    local_nsp, verbose);
+	scribble_accepted_selectors(&c->remote->child.selectors.accepted,
+				    remote_nsp, verbose);
 
 	/*
 	 * Log accepted list when multiple traffic selectors are
@@ -612,14 +615,14 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	 * don't scribble on the TS
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (c->end[end].child.selectors.accepted.len == 0) {
+		if (len(c->end[end].child.selectors.accepted) == 0) {
 			ldbg_sa(child, "connection %s does not have accepted selectors",
 				c->end[end].config->leftright);
 		}
 	}
 
 	const ip_selectors *accepted_ts_i =
-		(c->remote->child.selectors.accepted.len > 0 ? &c->remote->child.selectors.accepted :
+		(len(c->remote->child.selectors.accepted) > 0 ? c->remote->child.selectors.accepted :
 		 c->remote->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_i_desc, accepted_ts_i,
 			       HUNK_AS_SHUNK(&c->child.sec_label),
@@ -629,8 +632,7 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	}
 
 	const ip_selectors *accepted_ts_r =
-		(c->local->child.selectors.accepted.len > 0 ?
-		 &c->local->child.selectors.accepted :
+		(len(c->local->child.selectors.accepted) > 0 ? c->local->child.selectors.accepted :
 		 c->local->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_r_desc, accepted_ts_r,
 			       HUNK_AS_SHUNK(&c->child.sec_label),

@@ -176,7 +176,7 @@ void vdbg_connection(const struct connection *c,
 		}
 		jam_string(buf, " accepted:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-			FOR_EACH_ITEM(selector, &end->selectors.accepted) {
+			FOR_EACH_ITEM(selector, end->selectors.accepted) {
 				jam_string(buf, " ");
 				jam_selector(buf, selector);
 			}
@@ -475,7 +475,10 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
-		pfree_list(&end->child.selectors.accepted);
+		if (end->child.selectors.accepted != NULL) {
+			pfreeany(end->child.selectors.accepted->list);
+			pfreeany(end->child.selectors.accepted);
+		}
 	}
 
 	connection_delref(&c->clonedfrom, logger);
@@ -974,7 +977,10 @@ void delete_connection_proposals(struct connection *c)
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		struct child_end *child = &c->end[lr].child;
 
-		pfreeany(child->selectors.accepted.list);
+		if (child->selectors.accepted != NULL) {
+			pfreeany(child->selectors.accepted->list);
+			pfreeany(child->selectors.accepted);
+		}
 		zero(&child->selectors.accepted);
 		zero(&child->selectors.proposed);
 		child->has_client = false;
@@ -1342,7 +1348,7 @@ static size_t jam_connection_child(struct jambuf *b,
 				   const ip_address host_addr)
 {
 	const ip_selectors *selectors =
-		(child->selectors.accepted.len > 0 ? &child->selectors.accepted :
+		(len(child->selectors.accepted) > 0 ? child->selectors.accepted :
 		 len(child->selectors.proposed) > 0 ? child->selectors.proposed :
 		 NULL);
 	size_t s = 0;

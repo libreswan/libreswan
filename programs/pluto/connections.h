@@ -596,7 +596,7 @@ struct child_end {
 		 * XXX: used when logging the established description
 		 * of the child in jam_connection_child()?
 		 */
-		ip_selectors accepted; /* must pfree(.list) */
+		ip_selectors *accepted; /* must pfree(.list) */
 	} selectors;
 
 	/*
