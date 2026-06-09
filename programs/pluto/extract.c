@@ -4810,7 +4810,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					family->value = whack_ends[end]->we_subnet;
 				}
 			}
-		} else if (table_len(pools) > 0) {
+		} else if (len(pools) > 0) {
 			TABLE_FOR_EACH(pool, pools) {
 				const struct ip_info *afi = pool_type(pool);
 				/* only one for now */

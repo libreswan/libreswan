@@ -1340,7 +1340,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; initial-contact=false");
 	} else if (!c->local->config->host.modecfg.server) {
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; local is not a modecfg server");
-	} else if (table_len(c->remote->config->child.addresspools) == 0) {
+	} else if (len(c->remote->config->child.addresspools) == 0) {
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote has no IPv4 addresspool range");
 	} else if (c->remote->child.lease[IPv4].ip.is_set) {
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote already has a lease");

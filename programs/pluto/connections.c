@@ -867,7 +867,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (table_len(end->child.config->addresspools) > 0) {
+		if (len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
@@ -1351,7 +1351,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (table_len(child->config->addresspools) > 0) {
+		if (len(child->config->addresspools) > 0) {
 			s += jam_string(b, "{");
 		}
 		const char *sep = "";
@@ -1366,7 +1366,7 @@ static size_t jam_connection_child(struct jambuf *b,
 			}
 			jam_string(b, sep); sep = ",";
 		}
-		if (table_len(child->config->addresspools) > 0) {
+		if (len(child->config->addresspools) > 0) {
 			s += jam_string(b, "}");
 		}
 		s += jam_string(b, suffix);
@@ -2163,13 +2163,13 @@ err_t connection_requires_tss(const struct connection *c)
 		return NULL;
 	}
 	FOR_EACH_ELEMENT(end, c->end) {
-		if (table_len(end->config->child.addresspools) > 1) {
+		if (len(end->config->child.addresspools) > 1) {
 			return "addresspools";
 		}
 		if (end->config->child.selectors.len > 1) {
 			return "subnets";
 		}
-		if (table_len(end->config->child.sourceip) > 1) {
+		if (len(end->config->child.sourceip) > 1) {
 			return "sourceips";
 		}
 	}

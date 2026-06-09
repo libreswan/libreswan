@@ -64,7 +64,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 			if (end->host.modecfg.server) {
 				jam_string(buf, " server");
 			}
-			if (table_len(end->child.addresspools) > 0) {
+			if (len(end->child.addresspools) > 0) {
 				jam_string(buf, " addresspool");
 			}
 		}
@@ -72,7 +72,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 		if (cc->config->modecfg.domains != NULL) {
 			jam_string(buf, " domains");
 		}
-		if (table_len(cc->config->modecfg.dns) > 0) {
+		if (len(cc->config->modecfg.dns) > 0) {
 			jam_string(buf, " dns");
 		}
 		if (is_opportunistic(cc)) {
@@ -107,7 +107,7 @@ bool send_v2CP_request(const struct connection *const cc,
 {
 	bool send = (need_v2CP_payload(cc, this_end_behind_nat) ||
 		     cc->config->modecfg.domains != NULL ||
-		     table_len(cc->config->modecfg.dns) > 0);
+		     len(cc->config->modecfg.dns) > 0);
 	ldbg_cp(cc->logger, cc, "send-v2CP=%s", bool_str(send));
 	return send;
 }

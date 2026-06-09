@@ -55,9 +55,6 @@
 		table_;							\
 	})
 
-#define table_len(TABLE) ((TABLE) == NULL ? 0 :	\
-			  (TABLE)->len)
-
 #define table_end(TABLE) ((TABLE) == NULL ? NULL :		\
 			  ((TABLE)->table + (TABLE)->len));
 
@@ -67,7 +64,7 @@
 
 #define table_realloc(TABLE, COUNT)					\
 	{								\
-		unsigned old_len_ = table_len(TABLE);			\
+		unsigned old_len_ = len(TABLE);				\
 		unsigned new_len_ = (COUNT);				\
 		size_t old_size_ = ((TABLE) == NULL ? 0 :		\
 				    table_size(TABLE, old_len_));	\
@@ -82,7 +79,7 @@
 #define table_grow(TABLE, ...)						\
 	{								\
 		const typeof((TABLE)->table[0]) values_[] = { __VA_ARGS__ }; \
-		unsigned old_end_ = table_len(TABLE);			\
+		unsigned old_end_ = len(TABLE);				\
 		table_realloc(TABLE, old_end_ + elemsof(values_));	\
 		memcpy(&(TABLE)->table[old_end_],			\
 		       values_, sizeof(values_));			\

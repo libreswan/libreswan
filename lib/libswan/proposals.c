@@ -408,7 +408,7 @@ static void remove_duplicate_transforms(struct proposal_parser *parser,
 		}
 	}
 	vdbg("updated transform length after duplicate removal %u (from %u)",
-	     keep_len, table_len(*transforms));
+	     keep_len, len(*transforms));
 	table_realloc(*transforms, keep_len);
 }
 
@@ -451,7 +451,7 @@ static void remove_pfs_vs_ke_transforms(struct proposal_parser *parser,
 		}
 	}
 	vdbg("after PFS removal there are %u (from %u) transforms",
-	     len, table_len(proposal->transforms));
+	     len, len(proposal->transforms));
 	table_realloc(proposal->transforms, len);
 }
 
@@ -507,12 +507,12 @@ void append_proposal(struct proposal_parser *parser,
 	for (end = &proposals->proposals; (*end) != NULL; end = &(*end)->next) {
 		const struct proposal *old_proposal = (*end);
 		const struct proposal *new_proposal = (*proposal);
-		if (table_len(old_proposal->transforms) !=
-		    table_len(new_proposal->transforms)) {
+		if (len(old_proposal->transforms) !=
+		    len(new_proposal->transforms)) {
 			continue;
 		}
 		bool same = true;
-		for (unsigned t = 0; t < table_len(new_proposal->transforms); t++) {
+		for (unsigned t = 0; t < len(new_proposal->transforms); t++) {
 			const struct transform *old = &old_proposal->transforms->table[t];
 			const struct transform *new = &new_proposal->transforms->table[t];
 			if (old->desc != new->desc) {
@@ -1393,7 +1393,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("trying <encrypt>-<PRF>");
 	tokens_at_start = (*tokens);
-	const unsigned nr_transforms_at_start = table_len(proposal->transforms); /* for unwinding */
+	const unsigned nr_transforms_at_start = len(proposal->transforms); /* for unwinding */
 	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
 		vdbg("<encrypt>-<PRF> succeeded");
@@ -1408,7 +1408,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 		    tokens->prev.delim != ';' &&
 		    parser->protocol->integ) {
 			struct tokens saved_tokens = (*tokens);
-			const unsigned saved_len = table_len(proposal->transforms);
+			const unsigned saved_len = len(proposal->transforms);
 
 			if (parse_transform_algorithms(parser, proposal,
 						       transform_type_integ,
@@ -1423,7 +1423,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 				 * rejected.
 				 */
 				struct tokens check_tokens = saved_tokens;
-				unsigned check_len = table_len(proposal->transforms);
+				unsigned check_len = len(proposal->transforms);
 				bool also_prf = parse_transform_algorithms(
 					parser, proposal,
 					transform_type_prf,

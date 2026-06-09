@@ -558,7 +558,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (table_len(end->child.config->addresspools) > 0) {
+		if (len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
