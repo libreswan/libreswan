@@ -725,10 +725,9 @@ static const char *const esp_transform_name[] = {
 	S(IKEv1_ESP_CAMELLIA_CCM_12), /* not assigned in/for IKEv1 */
 	S(IKEv1_ESP_CAMELLIA_CCM_16), /* not assigned in/for IKEv1 */
 #undef S
+	/* THIS TABLE IS CLOSED */
 	/* IKEv1: 24-248 Unassigned */
 	/* IKEv1: 249-255 reserved for private use */
-	/* IKEv2: 28-1023 Unassigned */
-	/* IKEv2: 1024-65535 reserved for private use */
 };
 
 enum_names esp_transformid_names = {
@@ -2132,7 +2131,14 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	S(IKEv2_ENCR_CAMELLIA_CCM_8),		/* CAMELLIA_CCM_8 RFC 5529 */
 	S(IKEv2_ENCR_CAMELLIA_CCM_12),		/* CAMELLIA_CCM_12 RFC 5529 */
 	S(IKEv2_ENCR_CAMELLIA_CCM_16),		/* CAMELLIA_CCM_16 RFC 5529 */
-	S(IKEv2_ENCR_CHACHA20_POLY1305), /* RFC 7634 */
+	S(IKEv2_ENCR_CHACHA20_POLY1305),	/* RFC 7634 */
+	S(IKEv2_ENCR_AES_CCM_8_IIV),		/* RFC 8750 */
+	S(IKEv2_ENCR_AES_GCM_16_IIV),		/* RFC 8750 */
+	S(IKEv2_ENCR_CHACHA20_POLY1305_IIV),	/* RFC 8750 */
+	S(IKEv2_ENCR_KUZNYECHIK_MGM_KTREE),	/* RFC 9227 */
+	S(IKEv2_ENCR_MAGMA_MGM_KTREE),		/* RFC 9227 */
+	S(IKEv2_ENCR_KUZNYECHIK_MGM_MAC_KTREE), /* RFC 9227 */
+	S(IKEv2_ENCR_MAGMA_MGM_MAC_KTREE),	/* RFC 9227 */
 	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
 #undef S
@@ -2140,7 +2146,7 @@ static const char *const ikev2_trans_type_encr_name[] = {
 
 enum_names ikev2_trans_type_encr_names = {
 	IKEv2_ENCR_DES_IV64,
-	IKEv2_ENCR_CHACHA20_POLY1305,
+	IKEv2_ENCR_MAGMA_MGM_MAC_KTREE,
 	ARRAY_PTR(ikev2_trans_type_encr_name),
 	"IKEv2_ENCR_", /* prefix */
 	&ikev2_trans_type_encr_names_private_use1
@@ -2157,13 +2163,14 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	S(IKEv2_PRF_HMAC_SHA2_256),
 	S(IKEv2_PRF_HMAC_SHA2_384),
 	S(IKEv2_PRF_HMAC_SHA2_512),
-	S(IKEv2_PRF_AES128_CMAC)
+	S(IKEv2_PRF_AES128_CMAC),
+	S(IKEv2_PRF_HMAC_STREEBOG_512)
 #undef S
 };
 
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,
-	IKEv2_PRF_AES128_CMAC,
+	IKEv2_PRF_HMAC_STREEBOG_512,
 	ARRAY_PTR(ikev2_trans_type_prf_name),
 	"IKEv2_PRF_", /* prefix */
 	NULL

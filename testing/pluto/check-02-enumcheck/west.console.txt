@@ -2768,6 +2768,55 @@ name for -1 present (should be absent)
          jam_enum_short 28: CHACHA20_POLY1305 OK
          jam_enum_human 28: chacha20-poly1305 OK
          match CHACHA20_POLY1305 [short]: OK
+   29 -> IKEv2_ENCR_AES_CCM_8_IIV
+         jam_enum 29: IKEv2_ENCR_AES_CCM_8_IIV OK
+         match IKEv2_ENCR_AES_CCM_8_IIV: OK
+         short_name 29: AES_CCM_8_IIV OK
+         jam_enum_short 29: AES_CCM_8_IIV OK
+         jam_enum_human 29: aes-ccm-8-iiv OK
+         match AES_CCM_8_IIV [short]: OK
+   30 -> IKEv2_ENCR_AES_GCM_16_IIV
+         jam_enum 30: IKEv2_ENCR_AES_GCM_16_IIV OK
+         match IKEv2_ENCR_AES_GCM_16_IIV: OK
+         short_name 30: AES_GCM_16_IIV OK
+         jam_enum_short 30: AES_GCM_16_IIV OK
+         jam_enum_human 30: aes-gcm-16-iiv OK
+         match AES_GCM_16_IIV [short]: OK
+   31 -> IKEv2_ENCR_CHACHA20_POLY1305_IIV
+         jam_enum 31: IKEv2_ENCR_CHACHA20_POLY1305_IIV OK
+         match IKEv2_ENCR_CHACHA20_POLY1305_IIV: OK
+         short_name 31: CHACHA20_POLY1305_IIV OK
+         jam_enum_short 31: CHACHA20_POLY1305_IIV OK
+         jam_enum_human 31: chacha20-poly1305-iiv OK
+         match CHACHA20_POLY1305_IIV [short]: OK
+   32 -> IKEv2_ENCR_KUZNYECHIK_MGM_KTREE
+         jam_enum 32: IKEv2_ENCR_KUZNYECHIK_MGM_KTREE OK
+         match IKEv2_ENCR_KUZNYECHIK_MGM_KTREE: OK
+         short_name 32: KUZNYECHIK_MGM_KTREE OK
+         jam_enum_short 32: KUZNYECHIK_MGM_KTREE OK
+         jam_enum_human 32: kuznyechik-mgm-ktree OK
+         match KUZNYECHIK_MGM_KTREE [short]: OK
+   33 -> IKEv2_ENCR_MAGMA_MGM_KTREE
+         jam_enum 33: IKEv2_ENCR_MAGMA_MGM_KTREE OK
+         match IKEv2_ENCR_MAGMA_MGM_KTREE: OK
+         short_name 33: MAGMA_MGM_KTREE OK
+         jam_enum_short 33: MAGMA_MGM_KTREE OK
+         jam_enum_human 33: magma-mgm-ktree OK
+         match MAGMA_MGM_KTREE [short]: OK
+   34 -> IKEv2_ENCR_KUZNYECHIK_MGM_MAC_KTREE
+         jam_enum 34: IKEv2_ENCR_KUZNYECHIK_MGM_MAC_KTREE OK
+         match IKEv2_ENCR_KUZNYECHIK_MGM_MAC_KTREE: OK
+         short_name 34: KUZNYECHIK_MGM_MAC_KTREE OK
+         jam_enum_short 34: KUZNYECHIK_MGM_MAC_KTREE OK
+         jam_enum_human 34: kuznyechik-mgm-mac-ktree OK
+         match KUZNYECHIK_MGM_MAC_KTREE [short]: OK
+   35 -> IKEv2_ENCR_MAGMA_MGM_MAC_KTREE
+         jam_enum 35: IKEv2_ENCR_MAGMA_MGM_MAC_KTREE OK
+         match IKEv2_ENCR_MAGMA_MGM_MAC_KTREE: OK
+         short_name 35: MAGMA_MGM_MAC_KTREE OK
+         jam_enum_short 35: MAGMA_MGM_MAC_KTREE OK
+         jam_enum_human 35: magma-mgm-mac-ktree OK
+         match MAGMA_MGM_MAC_KTREE [short]: OK
   65004 -> IKEv2_ENCR_SERPENT_CBC
          jam_enum 65004: IKEv2_ENCR_SERPENT_CBC OK
          match IKEv2_ENCR_SERPENT_CBC: OK
@@ -3305,7 +3354,7 @@ name for -1 present (should be absent)
          jam_enum_short 14: GCAUTH OK
          jam_enum_human 14: gcauth OK
          match GCAUTH [short]: OK
-  ikev2_trans_type_prf_names: [1..9)
+  ikev2_trans_type_prf_names: [1..10)
     1 -> IKEv2_PRF_HMAC_MD5
          jam_enum 1: IKEv2_PRF_HMAC_MD5 OK
          match IKEv2_PRF_HMAC_MD5: OK
@@ -3362,6 +3411,13 @@ name for -1 present (should be absent)
          jam_enum_short 8: AES128_CMAC OK
          jam_enum_human 8: aes128-cmac OK
          match AES128_CMAC [short]: OK
+    9 -> IKEv2_PRF_HMAC_STREEBOG_512
+         jam_enum 9: IKEv2_PRF_HMAC_STREEBOG_512 OK
+         match IKEv2_PRF_HMAC_STREEBOG_512: OK
+         short_name 9: HMAC_STREEBOG_512 OK
+         jam_enum_short 9: HMAC_STREEBOG_512 OK
+         jam_enum_human 9: hmac-streebog-512 OK
+         match HMAC_STREEBOG_512 [short]: OK
   ikev2_trans_type_sn_names: [0..3)
     0 -> IKEv2_SN_32_BIT_SEQUENTIAL
          jam_enum 0: IKEv2_SN_32_BIT_SEQUENTIAL OK
