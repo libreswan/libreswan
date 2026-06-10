@@ -1015,7 +1015,8 @@ struct_desc ikev2_trans_attr_desc = {
  *              Figure 10:  Key Exchange Payload Format
  *
  */
-static field_desc ikev2_ke_fields[] = {
+
+static field_desc ikev2_ke_payload_fields[] = {
 	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
@@ -1024,10 +1025,10 @@ static field_desc ikev2_ke_fields[] = {
 	{ ft_end,  0, NULL, NULL },
 };
 
-struct_desc ikev2_ke_desc = {
+struct_desc ikev2_ke_payload_desc = {
 	.name = "IKEv2 Key Exchange Payload",
-	.fields = ikev2_ke_fields,
-	.size = sizeof(struct ikev2_ke),
+	.fields = ikev2_ke_payload_fields,
+	.size = sizeof(struct ikev2_ke_payload),
 	.pt = ISAKMP_NEXT_v2KE,
 };
 
@@ -1761,7 +1762,7 @@ struct_desc *v2_payload_desc(unsigned p)
 {
 	static struct_desc *const v2_payload_descs[] = {
 		&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
-		&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
+		&ikev2_ke_payload_desc,         /* 34 ISAKMP_NEXT_v2KE */
 		&ikev2_id_i_desc,		/* 35 ISAKMP_NEXT_v2IDi */
 		&ikev2_id_r_desc,		/* 36 ISAKMP_NEXT_v2IDr */
 		&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */

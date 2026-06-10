@@ -30,7 +30,8 @@
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
+
+bool emit_v2KE(shunk_t ke_blob, const struct kem_desc *ke_alg, struct pbs_out *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
 		llog(IMPAIR_STREAM, outs->logger, "omitting KE payload");
@@ -38,12 +39,12 @@ bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 	}
 
 
-	struct ikev2_ke v2ke = {
-		.isak_kem = kem->ikev2_alg_id,
+	struct ikev2_ke_payload v2ke = {
+		.isak_ke = ke_alg->ikev2_alg_id,
 	};
 
 	struct pbs_out ke_pbs;
-	if (!pbs_out_struct(outs, v2ke, &ikev2_ke_desc, &ke_pbs))
+	if (!pbs_out_struct(outs, v2ke, &ikev2_ke_payload_desc, &ke_pbs))
 		return false;
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
@@ -51,7 +52,8 @@ bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 		llog(IMPAIR_STREAM, outs->logger,
 		     "sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
-		if (!pbs_out_repeated_byte(&ke_pbs, byte, ke.len, "ikev2 impair KE (g^x) == 0")) {
+		if (!pbs_out_repeated_byte(&ke_pbs, byte, ke_blob.len,
+					   "ikev2 impair KE (g^x) == 0")) {
 			/* already logged */
 			return false; /*fatal*/
 		}
@@ -62,7 +64,7 @@ bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 			return false; /*fatal*/
 		}
 	} else {
-		if (!pbs_out_hunk(&ke_pbs, ke, "ikev2 g^x"))
+		if (!pbs_out_hunk(&ke_pbs, ke_blob, "ikev2 g^x"))
 			return false;
 	}
 

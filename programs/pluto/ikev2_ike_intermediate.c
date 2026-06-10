@@ -433,9 +433,9 @@ struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(s
 	return exchange;
 }
 
-static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
+static bool extract_ike_intermediate_v2KE(const struct kem_desc *ke_alg,
 					  struct msg_digest *md,
-					  shunk_t *ke,
+					  shunk_t *ke_blob,
 					  struct logger *logger)
 {
 	const struct payload_digest *v2ke = md->chain[ISAKMP_NEXT_v2KE];
@@ -444,33 +444,34 @@ static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 		name_buf rb;
 		llog(RC_LOG, logger,
 		     "%s KE missing from IKE_INTERMEDIATE %s",
-		     kem->common.fqn,
+		     ke_alg->common.fqn,
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 		return false;
 	}
 
-	if (v2ke->payload.v2ke.isak_kem != kem->ikev2_alg_id) {
+	if (v2ke->payload.v2ke.isak_ke != ke_alg->ikev2_alg_id) {
 		name_buf rb;
 		name_buf gb;
 		llog(RC_LOG, logger,
 		     "expecting KE for %s in IKE_INTERMEDIATE %s received KE for %s",
-		     kem->common.fqn,
+		     ke_alg->common.fqn,
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
-		     str_enum_short(&ikev2_trans_type_ke_names, v2ke->payload.v2ke.isak_kem, &gb));
+		     str_enum_short(&ikev2_trans_type_ke_names,
+				    v2ke->payload.v2ke.isak_ke, &gb));
 		return false;
 	}
 
-	*ke = pbs_in_left(&v2ke->pbs);
+	(*ke_blob) = pbs_in_left(&v2ke->pbs);
 
-	size_t ke_bytes = (v2_msg_role(md) == MESSAGE_REQUEST ? kem->initiator_bytes :
-			   kem->responder_bytes);
-	if (ke->len != ke_bytes) {
+	size_t ke_bytes = (v2_msg_role(md) == MESSAGE_REQUEST ? ke_alg->initiator_bytes :
+			   ke_alg->responder_bytes);
+	if (ke_blob->len != ke_bytes) {
 		name_buf rb;
 		llog(RC_LOG, logger,
 		     "%s KE in IKE_INTERMEDIATE %s is %zu bytes long but should be %zu bytes",
-		     kem->common.fqn,
+		     ke_alg->common.fqn,
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
-		     ke->len, ke_bytes);
+		     ke_blob->len, ke_bytes);
 		return false;
 	}
 

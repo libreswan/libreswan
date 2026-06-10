@@ -208,7 +208,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       enum payload_security security)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	int ke_kem = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_kem;
+	int ke_kem = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_ke;
 
 	if (accepted_kem->ikev2_alg_id != ke_kem) {
 		name_buf ke_esb;
