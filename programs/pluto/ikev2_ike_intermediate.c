@@ -433,7 +433,7 @@ struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(s
 	return exchange;
 }
 
-static bool extract_ike_intermediate_v2KE(const struct kem_desc *ke_alg,
+static bool extract_ike_intermediate_v2KE(const struct ke_desc *ke_alg,
 					  struct msg_digest *md,
 					  shunk_t *ke_blob,
 					  struct logger *logger)

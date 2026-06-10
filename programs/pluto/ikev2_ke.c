@@ -31,7 +31,7 @@
  * used by IKEv2: parent, child (PFS)
  */
 
-bool emit_v2KE(shunk_t ke_blob, const struct kem_desc *ke_alg, struct pbs_out *outs)
+bool emit_v2KE(shunk_t ke_blob, const struct ke_desc *ke_alg, struct pbs_out *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
 		llog(IMPAIR_STREAM, outs->logger, "omitting KE payload");

@@ -42,7 +42,7 @@ struct ike_sa;
 struct msg_digest;
 enum ikev2_auth_method;
 struct child_sa;
-struct kem_desc;
+struct ke_desc;
 struct v2_message;
 struct state;
 

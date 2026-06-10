@@ -35,10 +35,10 @@
  */
 
 /* magic signifier */
-const struct kem_desc unset_group;
+const struct ke_desc unset_group;
 
 #ifdef USE_DH2
-const struct kem_desc ike_alg_ke_modp1024 = {
+const struct ke_desc ike_alg_ke_modp1024 = {
 	.common = {
 		.type = IKE_ALG_KEM,
 		.fqn = "MODP1024",
@@ -58,7 +58,7 @@ const struct kem_desc ike_alg_ke_modp1024 = {
 };
 #endif
 
-const struct kem_desc ike_alg_ke_modp1536 = {
+const struct ke_desc ike_alg_ke_modp1536 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP1536",
@@ -77,7 +77,7 @@ const struct kem_desc ike_alg_ke_modp1536 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_modp2048 = {
+const struct ke_desc ike_alg_ke_modp2048 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP2048",
@@ -97,7 +97,7 @@ const struct kem_desc ike_alg_ke_modp2048 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_modp3072 = {
+const struct ke_desc ike_alg_ke_modp3072 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP3072",
@@ -117,7 +117,7 @@ const struct kem_desc ike_alg_ke_modp3072 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_modp4096 = {
+const struct ke_desc ike_alg_ke_modp4096 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP4096",
@@ -137,7 +137,7 @@ const struct kem_desc ike_alg_ke_modp4096 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_modp6144 = {
+const struct ke_desc ike_alg_ke_modp6144 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP6144",
@@ -157,7 +157,7 @@ const struct kem_desc ike_alg_ke_modp6144 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_modp8192 = {
+const struct ke_desc ike_alg_ke_modp8192 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "MODP8192",
@@ -177,7 +177,7 @@ const struct kem_desc ike_alg_ke_modp8192 = {
 	.kem_ops = &ike_alg_ke_modp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_secp256r1 = {
+const struct ke_desc ike_alg_ke_secp256r1 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH19",
@@ -197,7 +197,7 @@ const struct kem_desc ike_alg_ke_secp256r1 = {
 	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_secp384r1 = {
+const struct ke_desc ike_alg_ke_secp384r1 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH20",
@@ -217,7 +217,7 @@ const struct kem_desc ike_alg_ke_secp384r1 = {
 	.kem_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
-const struct kem_desc ike_alg_ke_secp521r1 = {
+const struct ke_desc ike_alg_ke_secp521r1 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH21",
@@ -238,7 +238,7 @@ const struct kem_desc ike_alg_ke_secp521r1 = {
 };
 
 #ifdef USE_DH22
-const struct kem_desc ike_alg_ke_dh22 = {
+const struct ke_desc ike_alg_ke_dh22 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH22",
@@ -260,7 +260,7 @@ const struct kem_desc ike_alg_ke_dh22 = {
 #endif
 
 #ifdef USE_DH23
-const struct kem_desc ike_alg_ke_dh23 = {
+const struct ke_desc ike_alg_ke_dh23 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH23",
@@ -282,7 +282,7 @@ const struct kem_desc ike_alg_ke_dh23 = {
 #endif
 
 #ifdef USE_DH24
-const struct kem_desc ike_alg_ke_dh24 = {
+const struct ke_desc ike_alg_ke_dh24 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH24",
@@ -306,7 +306,7 @@ const struct kem_desc ike_alg_ke_dh24 = {
 /* https://tools.ietf.org/html/rfc8031 */
 
 #ifdef USE_DH31
-const struct kem_desc ike_alg_ke_curve25519 = {
+const struct ke_desc ike_alg_ke_curve25519 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH31",
@@ -326,7 +326,7 @@ const struct kem_desc ike_alg_ke_curve25519 = {
 #endif
 
 #ifdef USE_EDDSA
-const struct kem_desc ike_alg_ke_ed25519 = {
+const struct ke_desc ike_alg_ke_ed25519 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "DH32",
@@ -347,7 +347,7 @@ const struct kem_desc ike_alg_ke_ed25519 = {
 /* https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-mlkem/ */
 
 #ifdef USE_ML_KEM_512
-const struct kem_desc ike_alg_ke_ml_kem_512 = {
+const struct ke_desc ike_alg_ke_ml_kem_512 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "ML_KEM_512",
@@ -368,7 +368,7 @@ const struct kem_desc ike_alg_ke_ml_kem_512 = {
 #endif
 
 #ifdef USE_ML_KEM_768
-const struct kem_desc ike_alg_ke_ml_kem_768 = {
+const struct ke_desc ike_alg_ke_ml_kem_768 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "ML_KEM_768",
@@ -389,7 +389,7 @@ const struct kem_desc ike_alg_ke_ml_kem_768 = {
 #endif
 
 #ifdef USE_ML_KEM_1024
-const struct kem_desc ike_alg_ke_ml_kem_1024 = {
+const struct ke_desc ike_alg_ke_ml_kem_1024 = {
 	.common = {
 		.type = &ike_alg_ke,
 		.fqn = "ML_KEM_1024",

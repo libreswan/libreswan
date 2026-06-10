@@ -26,7 +26,7 @@
 #include "passert.h"
 #include "lswalloc.h"
 
-static bool nss_ml_kem_calc_local_secret_1(const struct kem_desc *kem,
+static bool nss_ml_kem_calc_local_secret_1(const struct ke_desc *kem,
 					   SECKEYPrivateKey **private_key,
 					   SECKEYPublicKey **public_key,
 					   struct logger *logger,
@@ -52,7 +52,7 @@ static bool nss_ml_kem_calc_local_secret_1(const struct kem_desc *kem,
 	return true;
 }
 
-static bool nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
+static bool nss_ml_kem_calc_local_secret(const struct ke_desc *kem,
 					 SECKEYPrivateKey **private_key,
 					 SECKEYPublicKey **public_key,
 					 struct logger *logger)
@@ -71,7 +71,7 @@ static bool nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
 	return ok;
 }
 
-static shunk_t nss_ml_kem_local_secret_ke(const struct kem_desc *kem,
+static shunk_t nss_ml_kem_local_secret_ke(const struct ke_desc *kem,
 					  const SECKEYPublicKey *public_key)
 {
 	/* this only works on the initiator */
@@ -80,7 +80,7 @@ static shunk_t nss_ml_kem_local_secret_ke(const struct kem_desc *kem,
 		      public_key->u.kyber.publicValue.len);
 }
 
-static diag_t nss_ml_kem_encapsulate_1(const struct kem_desc *kem,
+static diag_t nss_ml_kem_encapsulate_1(const struct ke_desc *kem,
 				       shunk_t initiator_ke,
 				       PK11SymKey **shared_key,
 				       chunk_t *responder_ke,
@@ -171,7 +171,7 @@ static diag_t nss_ml_kem_encapsulate_1(const struct kem_desc *kem,
 	return NULL;
 }
 
-static diag_t nss_ml_kem_encapsulate(const struct kem_desc *kem,
+static diag_t nss_ml_kem_encapsulate(const struct ke_desc *kem,
 				     shunk_t initiator_ke,
 				     PK11SymKey **shared_key,
 				     chunk_t *responder_ke,
@@ -197,7 +197,7 @@ static diag_t nss_ml_kem_encapsulate(const struct kem_desc *kem,
 	return d;
 }
 
-static diag_t nss_ml_kem_decapsulate(const struct kem_desc *kem UNUSED,
+static diag_t nss_ml_kem_decapsulate(const struct ke_desc *kem UNUSED,
 				     SECKEYPrivateKey *initiator_private_key,
 				     shunk_t responder_ke,
 				     PK11SymKey**shared_key,
@@ -231,7 +231,7 @@ static diag_t nss_ml_kem_decapsulate(const struct kem_desc *kem UNUSED,
 	return NULL;
 }
 
-static void nss_ml_kem_check(const struct kem_desc *kem, struct logger *logger)
+static void nss_ml_kem_check(const struct ke_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id < 0);

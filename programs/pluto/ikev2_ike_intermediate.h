@@ -31,7 +31,7 @@ bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
 
 struct ikev2_ike_intermediate_exchange {
 	struct {
-		const struct kem_desc *kem;
+		const struct ke_desc *kem;
 		enum ikev2_trans_type type;
 	} addke;
 	bool ppk;

@@ -204,7 +204,7 @@ void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
-			       const struct kem_desc *accepted_kem,
+			       const struct ke_desc *accepted_kem,
 			       enum payload_security security)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);

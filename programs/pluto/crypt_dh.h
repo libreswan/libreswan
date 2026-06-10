@@ -33,7 +33,7 @@
 #include "chunk.h"
 #include "ike_spi.h"
 
-struct kem_desc;
+struct ke_desc;
 struct state;
 struct msg_digest;
 struct logger;
@@ -49,13 +49,13 @@ enum sa_role;
  */
 struct dh_local_secret;
 
-struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *group,
+struct dh_local_secret *calc_dh_local_secret(const struct ke_desc *group,
 					     enum sa_role role,
 					     shunk_t initiator_ke,
 					     struct logger *logger);
 
 shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret);
-const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
+const struct ke_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret,
 					       where_t where);

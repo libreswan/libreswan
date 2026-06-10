@@ -28,7 +28,7 @@ struct kem_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct kem_desc *alg, struct logger *logger);
+	void (*const check)(const struct ke_desc *alg, struct logger *logger);
 
 	/*
 	 * Create the local secret and KE for remote.
@@ -41,26 +41,26 @@ struct kem_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	bool (*calc_local_secret)(const struct kem_desc *group,
+	bool (*calc_local_secret)(const struct ke_desc *group,
 				  SECKEYPrivateKey **local_privk,
 				  SECKEYPublicKey **locak_pubk,
 				  struct logger *logger);
-	shunk_t (*local_secret_ke)(const struct kem_desc *group,
+	shunk_t (*local_secret_ke)(const struct ke_desc *group,
 				   const SECKEYPublicKey *local_pubk);
-	diag_t (*calc_shared_secret)(const struct kem_desc *group,
+	diag_t (*calc_shared_secret)(const struct ke_desc *group,
 				     SECKEYPrivateKey *local_privk,
 				     const SECKEYPublicKey *local_pubk,
 				     shunk_t remote_ke,
 				     PK11SymKey **shared_secret,
 				     struct logger *logger) MUST_USE_RESULT;
 
-	diag_t (*kem_encapsulate)(const struct kem_desc *kem,
+	diag_t (*kem_encapsulate)(const struct ke_desc *kem,
 				  shunk_t initiator_ke,
 				  PK11SymKey **shared_key,
 				  chunk_t *responder_ke,
 				  struct logger *logger) MUST_USE_RESULT;
 
-	diag_t (*kem_decapsulate)(const struct kem_desc *kem,
+	diag_t (*kem_decapsulate)(const struct ke_desc *kem,
 				  SECKEYPrivateKey *initiator_private_key,
 				  shunk_t responder_ke,
 				  PK11SymKey**shared_key,
