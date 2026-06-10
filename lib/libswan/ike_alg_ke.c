@@ -74,7 +74,7 @@ const struct ke_desc ike_alg_ke_modp1536 = {
 	.bytes = BYTES_FOR_BITS(1536),
 	.initiator_bytes = BYTES_FOR_BITS(1536),
 	.responder_bytes = BYTES_FOR_BITS(1536),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_modp2048 = {
@@ -94,7 +94,7 @@ const struct ke_desc ike_alg_ke_modp2048 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_modp3072 = {
@@ -114,7 +114,7 @@ const struct ke_desc ike_alg_ke_modp3072 = {
 	.bytes = BYTES_FOR_BITS(3072),
 	.initiator_bytes = BYTES_FOR_BITS(3072),
 	.responder_bytes = BYTES_FOR_BITS(3072),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_modp4096 = {
@@ -134,7 +134,7 @@ const struct ke_desc ike_alg_ke_modp4096 = {
 	.bytes = BYTES_FOR_BITS(4096),
 	.initiator_bytes = BYTES_FOR_BITS(4096),
 	.responder_bytes = BYTES_FOR_BITS(4096),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_modp6144 = {
@@ -154,7 +154,7 @@ const struct ke_desc ike_alg_ke_modp6144 = {
 	.bytes = BYTES_FOR_BITS(6144),
 	.initiator_bytes = BYTES_FOR_BITS(6144),
 	.responder_bytes = BYTES_FOR_BITS(6144),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_modp8192 = {
@@ -174,7 +174,7 @@ const struct ke_desc ike_alg_ke_modp8192 = {
 	.bytes = BYTES_FOR_BITS(8192),
 	.initiator_bytes = BYTES_FOR_BITS(8192),
 	.responder_bytes = BYTES_FOR_BITS(8192),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_secp256r1 = {
@@ -194,7 +194,7 @@ const struct ke_desc ike_alg_ke_secp256r1 = {
 	.responder_bytes = BYTES_FOR_BITS(256) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP256R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_ke_ecp_nss_ops,
+	.ke_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_secp384r1 = {
@@ -214,7 +214,7 @@ const struct ke_desc ike_alg_ke_secp384r1 = {
 	.responder_bytes = BYTES_FOR_BITS(384) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP384R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_ke_ecp_nss_ops,
+	.ke_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
 const struct ke_desc ike_alg_ke_secp521r1 = {
@@ -234,7 +234,7 @@ const struct ke_desc ike_alg_ke_secp521r1 = {
 	.responder_bytes = BYTES_FOR_BITS(521) * 2,
 	.nss.ecp.oid = SEC_OID_SECG_EC_SECP521R1,
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
-	.kem_ops = &ike_alg_ke_ecp_nss_ops,
+	.ke_ops = &ike_alg_ke_ecp_nss_ops,
 };
 
 #ifdef USE_DH22
@@ -255,7 +255,7 @@ const struct ke_desc ike_alg_ke_dh22 = {
 	.bytes = BYTES_FOR_BITS(1024),
 	.initiator_bytes = BYTES_FOR_BITS(1024),
 	.responder_bytes = BYTES_FOR_BITS(1024),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
@@ -277,7 +277,7 @@ const struct ke_desc ike_alg_ke_dh23 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
@@ -299,7 +299,7 @@ const struct ke_desc ike_alg_ke_dh24 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.initiator_bytes = BYTES_FOR_BITS(2048),
 	.responder_bytes = BYTES_FOR_BITS(2048),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };
 #endif
 
@@ -321,7 +321,7 @@ const struct ke_desc ike_alg_ke_curve25519 = {
 	.initiator_bytes = 32 /* octets */,
 	.responder_bytes = 32 /* octets */,
 	.nss.ecp.oid = SEC_OID_CURVE25519,
-	.kem_ops = &ike_alg_ke_ecp_nss_ops,
+	.ke_ops = &ike_alg_ke_ecp_nss_ops,
 };
 #endif
 
@@ -363,7 +363,7 @@ const struct ke_desc ike_alg_ke_ml_kem_512 = {
 	.responder_bytes = 768,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_512,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem512,
-	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
+	.ke_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif
 
@@ -384,7 +384,7 @@ const struct ke_desc ike_alg_ke_ml_kem_768 = {
 	.responder_bytes = 1088,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_768,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem768,
-	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
+	.ke_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif
 
@@ -405,6 +405,6 @@ const struct ke_desc ike_alg_ke_ml_kem_1024 = {
 	.responder_bytes = 1568,
 	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_1024,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem1024,
-	.kem_ops = &ike_alg_ke_ml_kem_nss_ops,
+	.ke_ops = &ike_alg_ke_ml_kem_nss_ops,
 };
 #endif

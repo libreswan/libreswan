@@ -12,8 +12,8 @@
  * for more details.
  */
 
-#ifndef IKE_ALG_KEM_OPS_H
-#define IKE_ALG_KEM_OPS_H
+#ifndef IKE_ALG_KE_OPS_H
+#define IKE_ALG_KE_OPS_H
 
 #include "diag.h"
 #include "chunk.h"
@@ -22,7 +22,7 @@ struct logger;
 struct kem_initiator;
 struct kem_responder;
 
-struct kem_ops {
+struct ke_ops {
 	const char *backend;
 
 	/*
@@ -68,8 +68,8 @@ struct kem_ops {
 
 };
 
-extern const struct kem_ops ike_alg_ke_ecp_nss_ops;
-extern const struct kem_ops ike_alg_ke_modp_nss_ops;
-extern const struct kem_ops ike_alg_ke_ml_kem_nss_ops;
+extern const struct ke_ops ike_alg_ke_ecp_nss_ops;
+extern const struct ke_ops ike_alg_ke_modp_nss_ops;
+extern const struct ke_ops ike_alg_ke_ml_kem_nss_ops;
 
 #endif

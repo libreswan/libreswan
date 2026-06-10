@@ -895,26 +895,26 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 	/* IKEv1 always supports this */
 	pexpect_ike_alg(logger, alg, ke_alg->ikev1_oakley_id == ke_alg->ikev1_ipsec_id);
 	/* always implemented */
-	pexpect_ike_alg(logger, alg, ke_alg->kem_ops != NULL);
-	if (ke_alg->kem_ops != NULL) {
-		pexpect_ike_alg(logger, alg, ke_alg->kem_ops->backend != NULL);
-		pexpect_ike_alg(logger, alg, ke_alg->kem_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, ke_alg->kem_ops->calc_local_secret != NULL);
+	pexpect_ike_alg(logger, alg, ke_alg->ke_ops != NULL);
+	if (ke_alg->ke_ops != NULL) {
+		pexpect_ike_alg(logger, alg, ke_alg->ke_ops->backend != NULL);
+		pexpect_ike_alg(logger, alg, ke_alg->ke_ops->check != NULL);
+		pexpect_ike_alg(logger, alg, ke_alg->ke_ops->calc_local_secret != NULL);
 		/* all-in or none-in! */
-		pexpect_ike_alg(logger, alg, ((ke_alg->kem_ops->calc_shared_secret == NULL) ==
-					      ((ke_alg->kem_ops->kem_encapsulate != NULL) &&
-					       (ke_alg->kem_ops->kem_decapsulate != NULL))));
-		pexpect_ike_alg(logger, alg, ((ke_alg->kem_ops->kem_encapsulate != NULL) ==
-					      (ke_alg->kem_ops->kem_decapsulate != NULL)));
+		pexpect_ike_alg(logger, alg, ((ke_alg->ke_ops->calc_shared_secret == NULL) ==
+					      ((ke_alg->ke_ops->kem_encapsulate != NULL) &&
+					       (ke_alg->ke_ops->kem_decapsulate != NULL))));
+		pexpect_ike_alg(logger, alg, ((ke_alg->ke_ops->kem_encapsulate != NULL) ==
+					      (ke_alg->ke_ops->kem_decapsulate != NULL)));
 		/* more? */
-		ke_alg->kem_ops->check(ke_alg, logger);
+		ke_alg->ke_ops->check(ke_alg, logger);
 	}
 }
 
 static bool kem_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct ke_desc *ke_alg = ke_desc(alg);
-	return ke_alg->kem_ops != NULL;
+	return ke_alg->ke_ops != NULL;
 }
 
 static struct algorithm_table kem_algorithms = ALGORITHM_TABLE(kem_descriptors);
@@ -1192,8 +1192,8 @@ static const char *backend_name(const struct ike_alg *alg)
 		}
 	} else if (alg->type == &ike_alg_ke) {
 		const struct ke_desc *ke_alg = ke_desc(alg);
-		if (ke_alg->kem_ops != NULL) {
-			return ke_alg->kem_ops->backend;
+		if (ke_alg->ke_ops != NULL) {
+			return ke_alg->ke_ops->backend;
 		}
 	} else if (alg->type == &ike_alg_ipcomp) {
 		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);

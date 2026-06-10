@@ -66,7 +66,7 @@
 
 struct dh_local_secret {
 	refcnt_t refcnt;	/* must be first */
-	const struct ke_desc *kem;
+	const struct ke_desc *ke_alg;
 	SECKEYPrivateKey *private_key;
 	SECKEYPublicKey *public_key;
 	PK11SymKey *shared_key;
@@ -77,10 +77,10 @@ struct dh_local_secret {
 
 static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secret)
 {
-	jam(buf, "DH secret %s@%p: ", secret->kem->common.fqn, secret);
+	jam(buf, "DH secret %s@%p: ", secret->ke_alg->common.fqn, secret);
 }
 
-struct dh_local_secret *calc_dh_local_secret(const struct ke_desc *kem,
+struct dh_local_secret *calc_dh_local_secret(const struct ke_desc *ke_alg,
 					     enum sa_role role,
 					     shunk_t initiator_ke,
 					     struct logger *logger)
@@ -88,45 +88,46 @@ struct dh_local_secret *calc_dh_local_secret(const struct ke_desc *kem,
 	SECKEYPrivateKey *private_key;
 	SECKEYPublicKey *public_key;
         PK11SymKey *shared_key;
-	shunk_t ke;
+	shunk_t ke_blob;
 	chunk_t responder_ke;
 	if (role == SA_RESPONDER &&
-	    kem->kem_ops->kem_encapsulate != NULL) {
+	    ke_alg->ke_ops->kem_encapsulate != NULL) {
 		ldbgf(DBG_CRYPT, logger, "responder kem_encapsulate(initator_ke.len=%zu)",
 		      initiator_ke.len);
 		if (PBAD(logger, initiator_ke.len == 0)) {
 			return NULL;
 		}
-		diag_t d = kem->kem_ops->kem_encapsulate(kem,
-							 initiator_ke,
-							 &shared_key,
-							 &responder_ke,
-							 logger);
+		diag_t d = ke_alg->ke_ops->kem_encapsulate(ke_alg,
+							   initiator_ke,
+							   &shared_key,
+							   &responder_ke,
+							   logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "computing responder KE: %s",
 			     str_diag(d));
 			pfree_diag(&d);
 			return NULL;
 		}
-		ke = HUNK_AS_SHUNK(&responder_ke);
+		ke_blob = HUNK_AS_SHUNK(&responder_ke);
 		private_key = NULL;
 		public_key = NULL;
 	} else {
-		if (!kem->kem_ops->calc_local_secret(kem, &private_key, &public_key, logger)) {
+		if (!ke_alg->ke_ops->calc_local_secret(ke_alg, &private_key,
+						       &public_key, logger)) {
 			return NULL;
 		}
 		shared_key = NULL;
 		zero(&responder_ke);
 		passert(private_key != NULL);
 		passert(public_key != NULL);
-		ke = kem->kem_ops->local_secret_ke(kem, public_key);
+		ke_blob = ke_alg->ke_ops->local_secret_ke(ke_alg, public_key);
 	}
 	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, logger, HERE);
-	secret->kem = kem;
+	secret->ke_alg = ke_alg;
 	secret->private_key = private_key;
 	secret->public_key = public_key;
 	secret->shared_key = shared_key;
-	secret->ke = ke;
+	secret->ke = ke_blob;
 	secret->responder_ke = responder_ke;
 	secret->role = role;
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
@@ -143,7 +144,7 @@ shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 
 const struct ke_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 {
-	return local_secret->kem;
+	return local_secret->ke_alg;
 }
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
@@ -188,15 +189,15 @@ static void compute_dh_shared_secret(struct logger *logger,
 {
 
 	struct dh_local_secret *secret = task->local_secret;
-	const struct ke_desc *kem = secret->kem;
+	const struct ke_desc *ke_alg = secret->ke_alg;
 	diag_t d = NULL;
-	if (kem->kem_ops->calc_shared_secret != NULL) {
-		d = kem->kem_ops->calc_shared_secret(kem,
-						     secret->private_key,
-						     secret->public_key,
-						     HUNK_AS_SHUNK(&task->remote_ke),
-						     &task->shared_secret,
-						     logger);
+	if (ke_alg->ke_ops->calc_shared_secret != NULL) {
+		d = ke_alg->ke_ops->calc_shared_secret(ke_alg,
+						       secret->private_key,
+						       secret->public_key,
+						       HUNK_AS_SHUNK(&task->remote_ke),
+						       &task->shared_secret,
+						       logger);
 	} else {
 		switch (secret->role) {
 		case SA_RESPONDER:
@@ -209,11 +210,11 @@ static void compute_dh_shared_secret(struct logger *logger,
 		case SA_INITIATOR:
 		{
 			PASSERT(logger, secret->private_key != NULL);
-			d = kem->kem_ops->kem_decapsulate(kem,
-							  secret->private_key,
-							  HUNK_AS_SHUNK(&task->remote_ke),
-							  &task->shared_secret,
-							  logger);
+			d = ke_alg->ke_ops->kem_decapsulate(ke_alg,
+							    secret->private_key,
+							    HUNK_AS_SHUNK(&task->remote_ke),
+							    &task->shared_secret,
+							    logger);
 			break;
 		}
 		default:

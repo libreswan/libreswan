@@ -127,5 +127,5 @@ const struct ke_desc ike_alg_ke_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };

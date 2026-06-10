@@ -149,7 +149,7 @@ static void nss_modp_check(const struct ke_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
 }
 
-const struct kem_ops ike_alg_ke_modp_nss_ops = {
+const struct ke_ops ike_alg_ke_modp_nss_ops = {
 	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
 	.calc_local_secret = nss_modp_calc_local_secret,

@@ -721,7 +721,7 @@ struct ke_desc {
 #endif
 	} nss;
 
-	const struct kem_ops *kem_ops;
+	const struct ke_ops *ke_ops;
 };
 
 extern const struct ke_desc unset_group;      /* magic signifier */
