@@ -47,7 +47,7 @@
 static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 						       struct pubkey_content *pkc,
 						       const struct logger *logger,
-						       const struct kem_desc *kems[],
+						       const struct ke_desc *kems[],
 						       KeyType key_type)
 {
 	PEXPECT(logger, (pkc->type == &pubkey_type_ecdsa ||
@@ -60,9 +60,9 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 	 * Raw EC pubkeys contain the EC point (or points).
 	 */
 
-	const struct kem_desc *kem = NULL;
+	const struct ke_desc *kem = NULL;
 	shunk_t raw = null_shunk;
-	for (const struct kem_desc **e = kems; (*e) != NULL; e++) {
+	for (const struct ke_desc **e = kems; (*e) != NULL; e++) {
 		kem = (*e);
 
 		ldbg(logger, "pkc=%s kem=%s pubkey=%p.%zu expected=%zu uncompressed=%s",
@@ -217,7 +217,7 @@ static diag_t ECDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 							 struct pubkey_content *pkc,
 							 const struct logger *logger)
 {
-	static const struct kem_desc *kem[] = {
+	static const struct ke_desc *kem[] = {
 		&ike_alg_ke_secp256r1,
 		&ike_alg_ke_secp384r1,
 		&ike_alg_ke_secp521r1,
@@ -231,7 +231,7 @@ static diag_t EDDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 							 const struct logger *logger)
 {
 #ifdef USE_EDDSA
-	static const struct kem_desc *kem[] = {
+	static const struct ke_desc *kem[] = {
 		&ike_alg_ke_ed25519,
 		NULL,
 	};

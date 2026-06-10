@@ -22,7 +22,7 @@
 #include "packet.h"		/* for struct pbs_out; */
 
 struct msg_digest;
-struct kem_desc;
+struct ke_desc;
 struct ike_sa;
 struct state;
 struct spd_end;

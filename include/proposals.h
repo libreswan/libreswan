@@ -332,7 +332,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct kem_desc *ke;
+	const struct ke_desc *ke;
 	const struct proposal_protocol *protocol;
 };
 

@@ -21,9 +21,9 @@
 
 #include "shunk.h"
 
-struct kem_desc;
+struct ke_desc;
 struct pbs_out;
 
-bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs);
+bool emit_v2KE(shunk_t ke, const struct ke_desc *kem, struct pbs_out *outs);
 
 #endif

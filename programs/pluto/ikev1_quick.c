@@ -130,17 +130,17 @@ static void update_quick_iv(struct child_sa *child,
 	child->sa.st_v1_phase_2_iv = iv;
 }
 
-const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
+const struct ke_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
 		return NULL;
 	}
 	struct proposal *proposal = next_proposal(proposals.p, NULL);
-	const struct transform *kem = first_proposal_transform(proposal, transform_type_ke);
-	if (kem == NULL) {
+	const struct transform *ke = first_proposal_transform(proposal, transform_type_ke);
+	if (ke == NULL) {
 		return NULL;
 	}
-	return kem_desc(kem->desc);
+	return ke_desc(ke->desc);
 }
 
 /* accept_PFS_KE

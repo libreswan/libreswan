@@ -1013,15 +1013,16 @@ struct ikev2_trans_attr {
 };
 
 /* rfc4306, section 3.4 */
-struct ikev2_ke {
+
+struct ikev2_ke_payload {
 	uint8_t isak_np;		/* Next payload */
 	uint8_t isak_critical;
 	uint16_t isak_length;		/* Payload length */
-	uint16_t isak_kem;		/* transform type */
+	uint16_t isak_ke;		/* transform type */
 	uint16_t isak_res2;
 };
 
-extern struct_desc ikev2_ke_desc;
+extern struct_desc ikev2_ke_payload_desc;
 
 /* rfc4306, section 3.5 */
 struct ikev2_id {
@@ -1259,7 +1260,7 @@ union payload {
 	struct isakmp_nat_oa nat_oa;
 	struct isakmp_mode_attr mode_attribute;
 	struct ikev2_generic v2gen;
-	struct ikev2_ke v2ke;
+	struct ikev2_ke_payload v2ke;
 	struct ikev2_trans v2trans;
 	struct ikev2_prop v2prop;
 	struct ikev2_sa v2sa;

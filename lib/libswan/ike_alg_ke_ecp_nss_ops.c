@@ -36,7 +36,7 @@
 #include "ike_alg_ke_ops.h"
 #include "crypt_symkey.h"
 
-static bool nss_ecp_calc_local_secret_1(const struct kem_desc *kem,
+static bool nss_ecp_calc_local_secret_1(const struct ke_desc *kem,
 					SECKEYPrivateKey **privk,
 					SECKEYPublicKey **pubk,
 					struct logger *logger,
@@ -70,7 +70,7 @@ static bool nss_ecp_calc_local_secret_1(const struct kem_desc *kem,
 }
 
 
-static bool nss_ecp_calc_local_secret(const struct kem_desc *kem,
+static bool nss_ecp_calc_local_secret(const struct ke_desc *kem,
 					SECKEYPrivateKey **privk,
 					SECKEYPublicKey **pubk,
 					struct logger *logger)
@@ -107,7 +107,7 @@ static bool nss_ecp_calc_local_secret(const struct kem_desc *kem,
  * what is needed is the plain EC coordinate without that prefix (see
  * documentation in pk11_get_EC_PointLenInBytes()).
  */
-static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *kem,
+static shunk_t nss_ecp_local_secret_ke(const struct ke_desc *kem,
 				       const SECKEYPublicKey *local_pubk)
 {
 	struct logger *logger = &global_logger;
@@ -127,7 +127,7 @@ static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *kem,
 	return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 }
 
-static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *kem,
+static diag_t nss_ecp_calc_shared_secret(const struct ke_desc *kem,
 					 SECKEYPrivateKey *local_privk,
 					 const SECKEYPublicKey *local_pubk,
 					 shunk_t remote_ke,
@@ -220,7 +220,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *kem,
 	return NULL;
 }
 
-static void nss_ecp_check(const struct kem_desc *kem, struct logger *logger)
+static void nss_ecp_check(const struct ke_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->nss.ecp.oid > 0);
@@ -231,7 +231,7 @@ static void nss_ecp_check(const struct kem_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
 }
 
-const struct kem_ops ike_alg_ke_ecp_nss_ops = {
+const struct ke_ops ike_alg_ke_ecp_nss_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_local_secret = nss_ecp_calc_local_secret,

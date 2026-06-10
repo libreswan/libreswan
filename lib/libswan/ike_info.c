@@ -79,9 +79,9 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	}
 
 	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_ke) {
-		const struct kem_desc *kem = kem_desc(alg->desc);
-		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
-		if (kem == &ike_alg_ke_none) {
+		const struct ke_desc *ke_alg = ke_desc(alg->desc);
+		PASSERT(logger, ike_alg_is_ike(&ke_alg->common, logger));
+		if (ke_alg == &ike_alg_ke_none) {
 			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
 			return false;
 		}

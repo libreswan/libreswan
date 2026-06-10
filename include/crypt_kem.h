@@ -23,15 +23,15 @@
 #include "diag.h"
 
 struct logger;
-struct kem_desc;
+struct ke_desc;
 struct kem_responder;
 struct kem_initiator;
 
-diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+diag_t kem_initiator_key_gen(const struct ke_desc *kem,
 			     struct kem_initiator **kemk,
 			     struct logger *logger);
 
-diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+diag_t kem_responder_encapsulate(const struct ke_desc *kem,
 				 shunk_t initiator_ke,
 				 struct kem_responder **responder,
 				 struct logger *logger);

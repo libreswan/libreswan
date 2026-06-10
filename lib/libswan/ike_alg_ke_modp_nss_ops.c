@@ -27,7 +27,7 @@
 #include "ike_alg_ke_ops.h"
 #include "crypt_symkey.h"
 
-static bool nss_modp_calc_local_secret_1(const struct kem_desc *group,
+static bool nss_modp_calc_local_secret_1(const struct ke_desc *group,
 					 SECKEYPrivateKey **privk,
 					 SECKEYPublicKey **pubk,
 					 struct logger *logger,
@@ -70,7 +70,7 @@ static bool nss_modp_calc_local_secret_1(const struct kem_desc *group,
 	return true;
 }
 
-static bool nss_modp_calc_local_secret(const struct kem_desc *group,
+static bool nss_modp_calc_local_secret(const struct ke_desc *group,
 				       SECKEYPrivateKey **privk,
 				       SECKEYPublicKey **pubk,
 				       struct logger *logger)
@@ -90,7 +90,7 @@ static bool nss_modp_calc_local_secret(const struct kem_desc *group,
 	return ok;
 }
 
-static shunk_t nss_modp_local_secret_ke(const struct kem_desc *group,
+static shunk_t nss_modp_local_secret_ke(const struct ke_desc *group,
 					const SECKEYPublicKey *local_pubk)
 {
 	/* clone secitem as chunk()? */
@@ -98,7 +98,7 @@ static shunk_t nss_modp_local_secret_ke(const struct kem_desc *group,
 	return shunk2(local_pubk->u.dh.publicValue.data, group->bytes);
 }
 
-static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
+static diag_t nss_modp_calc_shared_secret(const struct ke_desc *group,
 					  SECKEYPrivateKey *local_privk,
 					  const SECKEYPublicKey *local_pubk,
 					  shunk_t remote_ke,
@@ -136,7 +136,7 @@ static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 	return NULL;
 }
 
-static void nss_modp_check(const struct kem_desc *kem, struct logger *logger)
+static void nss_modp_check(const struct ke_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->nss.modp.base != NULL);
@@ -149,7 +149,7 @@ static void nss_modp_check(const struct kem_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
 }
 
-const struct kem_ops ike_alg_ke_modp_nss_ops = {
+const struct ke_ops ike_alg_ke_modp_nss_ops = {
 	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
 	.calc_local_secret = nss_modp_calc_local_secret,

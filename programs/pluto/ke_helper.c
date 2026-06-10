@@ -54,7 +54,7 @@
 #include "ke_helper.h"
 
 struct task {
-	const struct kem_desc *dh;
+	const struct ke_desc *dh;
 	chunk_t nonce;
 	struct dh_local_secret *local_secret;
 	chunk_t initiator_ke;
@@ -114,7 +114,7 @@ static const struct task_handler ke_and_nonce_handler = {
 void submit_ke_and_nonce(struct state *callback_sa,
 			 struct state *task_sa,
 			 struct msg_digest *md,
-			 const struct kem_desc *dh,
+			 const struct ke_desc *dh,
 			 ke_and_nonce_cb *cb,
 			 bool detach_whack,
 			 where_t where)
@@ -162,7 +162,7 @@ void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secre
 	 * responder comes back with a vald accepted propsal and KE.
 	 */
 	if (LDBGP(DBG_CRYPT, logger)) {
-		const struct kem_desc *group = dh_local_secret_desc(local_secret);
+		const struct ke_desc *group = dh_local_secret_desc(local_secret);
 		LDBG_log(logger, "wire (crypto helper) group %s and state group %s %s",
 			 group->common.fqn,
 			 st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",

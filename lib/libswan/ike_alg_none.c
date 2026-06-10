@@ -104,7 +104,7 @@ const struct integ_desc ike_alg_integ_none = {
 /*
  * Blame RFC7296!
  */
-const struct kem_desc ike_alg_ke_none = {
+const struct ke_desc ike_alg_ke_none = {
 	.common = {
 		.fqn = "NONE",
 		.names = "none,null,dh0",
@@ -127,5 +127,5 @@ const struct kem_desc ike_alg_ke_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
+	.ke_ops = &ike_alg_ke_modp_nss_ops,
 };

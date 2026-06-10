@@ -105,7 +105,7 @@ struct trans_attrs {
 	const struct ipcomp_desc *ta_ipcomp;	/* package of ipcomp routines */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
-	const struct kem_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	const struct ke_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 	/*
 	 * For ADDKE, pack the valid KEMs into an array - negotiation
 	 * can leave holes but they are removed here.
@@ -114,7 +114,7 @@ struct trans_attrs {
 		unsigned len;
 		struct {
 			enum ikev2_trans_type type; /*ADDKE1..ADDKE8*/
-			const struct kem_desc *kem;
+			const struct ke_desc *kem;
 		} list[8/*magic*/];
 	} ta_addke;
 
@@ -296,7 +296,7 @@ struct state {
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
-	const struct kem_desc *st_pfs_kem;   /*group for Phase 2 PFS */
+	const struct ke_desc *st_pfs_kem;   /*group for Phase 2 PFS */
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */

@@ -25,7 +25,7 @@
 
 struct kem_initiator {
 	/* set by crypt_kem_key_gen() */
-	const struct kem_desc *kem;
+	const struct ke_desc *kem;
 	shunk_t ke;
 	/* set by crypt_kem_decapsulate() */
 	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
@@ -48,7 +48,7 @@ PK11SymKey *kem_initiator_shared_key(struct kem_initiator *initiator)
 
 struct kem_responder {
 	/* set by crypt_kem_encapsulate() */
-	const struct kem_desc *kem;
+	const struct ke_desc *kem;
 	shunk_t ke;
 	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
 	/* internal use only */
@@ -70,26 +70,26 @@ PK11SymKey *kem_responder_shared_key(struct kem_responder *responder)
 	return responder->shared_key;
 }
 
-diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+diag_t kem_initiator_key_gen(const struct ke_desc *kem,
 			     struct kem_initiator **initiator,
 			     struct logger *logger)
 {
 	(*initiator) = alloc_thing(struct kem_initiator, "kem-initiator");
 	(*initiator)->kem = kem;
-	if (!kem->kem_ops->calc_local_secret(kem,
-					     &(*initiator)->internal.private_key,
-					     &(*initiator)->internal.public_key,
-					     logger)) {
+	if (!kem->ke_ops->calc_local_secret(kem,
+					    &(*initiator)->internal.private_key,
+					    &(*initiator)->internal.public_key,
+					    logger)) {
 		return diag("ML_KEM failed");
 	}
 	PASSERT(logger, (*initiator)->internal.private_key != NULL);
 	PASSERT(logger, (*initiator)->internal.public_key != NULL);
-	(*initiator)->ke = kem->kem_ops->local_secret_ke(kem, (*initiator)->internal.public_key);
+	(*initiator)->ke = kem->ke_ops->local_secret_ke(kem, (*initiator)->internal.public_key);
 	PASSERT(logger, (*initiator)->ke.len == kem->initiator_bytes);
 	return NULL;
 }
 
-diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+diag_t kem_responder_encapsulate(const struct ke_desc *kem,
 				 shunk_t initiator_ke,
 				 struct kem_responder **responder,
 				 struct logger *logger)
@@ -99,34 +99,34 @@ diag_t kem_responder_encapsulate(const struct kem_desc *kem,
 	(*responder)->kem = kem;
 
 	diag_t d;
-	if (kem->kem_ops->kem_encapsulate != NULL) {
-		d = kem->kem_ops->kem_encapsulate(kem, initiator_ke,
-						  &(*responder)->shared_key,
-						  &(*responder)->internal.ke,
-						  logger);
+	if (kem->ke_ops->kem_encapsulate != NULL) {
+		d = kem->ke_ops->kem_encapsulate(kem, initiator_ke,
+						 &(*responder)->shared_key,
+						 &(*responder)->internal.ke,
+						 logger);
 		if (d != NULL) {
 			pfree_kem_responder(responder, logger);
 			return d;
 		}
 		(*responder)->ke = HUNK_AS_SHUNK(&(*responder)->internal.ke);
 	} else {
-		if (!kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key,
-						     &(*responder)->internal.public_key, logger)) {
+		if (!kem->ke_ops->calc_local_secret(kem, &(*responder)->internal.private_key,
+						    &(*responder)->internal.public_key, logger)) {
 			return diag("ML_KEM failed");
 		}
 		PASSERT(logger, (*responder)->internal.private_key != NULL);
 		PASSERT(logger, (*responder)->internal.public_key != NULL);
-		d = kem->kem_ops->calc_shared_secret(kem,
-						     (*responder)->internal.private_key,
-						     (*responder)->internal.public_key,
-						     initiator_ke,
-						     &(*responder)->shared_key,
-						     logger);
+		d = kem->ke_ops->calc_shared_secret(kem,
+						    (*responder)->internal.private_key,
+						    (*responder)->internal.public_key,
+						    initiator_ke,
+						    &(*responder)->shared_key,
+						    logger);
 		if (d != NULL) {
 			pfree_kem_responder(responder, logger);
 			return d;
 		}
-		(*responder)->ke = kem->kem_ops->local_secret_ke(kem, (*responder)->internal.public_key);
+		(*responder)->ke = kem->ke_ops->local_secret_ke(kem, (*responder)->internal.public_key);
 	}
 
 	if (d != NULL) {
@@ -145,19 +145,19 @@ diag_t kem_initiator_decapsulate(struct kem_initiator *initiator,
 {
 	PASSERT(logger, responder_ke.len == initiator->kem->responder_bytes);
 	diag_t d;
-	if (initiator->kem->kem_ops->kem_decapsulate != NULL) {
-		d = initiator->kem->kem_ops->kem_decapsulate(initiator->kem,
-							     initiator->internal.private_key,
-							     responder_ke,
-							     &initiator->shared_key,
-							     logger);
+	if (initiator->kem->ke_ops->kem_decapsulate != NULL) {
+		d = initiator->kem->ke_ops->kem_decapsulate(initiator->kem,
+							    initiator->internal.private_key,
+							    responder_ke,
+							    &initiator->shared_key,
+							    logger);
 	} else {
-		d = initiator->kem->kem_ops->calc_shared_secret(initiator->kem,
-								initiator->internal.private_key,
-								initiator->internal.public_key,
-								responder_ke,
-								&initiator->shared_key,
-								logger);
+		d = initiator->kem->ke_ops->calc_shared_secret(initiator->kem,
+							       initiator->internal.private_key,
+							       initiator->internal.public_key,
+							       responder_ke,
+							       &initiator->shared_key,
+							       logger);
 	}
 
 	if (d != NULL) {

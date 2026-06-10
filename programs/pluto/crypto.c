@@ -176,28 +176,29 @@ void show_ike_alg_status(struct show *s)
 		}
 	}
 
-	for (const struct kem_desc **kemp = next_kem_desc(NULL);
-	     kemp != NULL; kemp = next_kem_desc(kemp)) {
-		const struct kem_desc *kem = *kemp;
+	for (const struct ke_desc **kep = next_ke_desc(NULL);
+	     kep != NULL; kep = next_ke_desc(kep)) {
+		const struct ke_desc *ke_alg = *kep;
 		/* nothing crazy like 'none' */
-		if (kem->bytes == 0 &&
-		    kem->initiator_bytes == 0 &&
-		    kem->responder_bytes == 0) {
+		if (ke_alg->bytes == 0 &&
+		    ke_alg->initiator_bytes == 0 &&
+		    ke_alg->responder_bytes == 0) {
 			continue;
 		}
 		SHOW_JAMBUF(s, buf) {
-			jam(buf, "algorithm IKE %s:", kem->common.type->story);
-			jam(buf, " name=%s", kem->common.fqn);
-			if (kem->bytes > 0) {
-				jam(buf, ", bits=%zu", kem->bytes * BITS_IN_BYTE);
+			jam(buf, "algorithm IKE %s:", ke_alg->common.type->story);
+			jam(buf, " name=%s", ke_alg->common.fqn);
+			if (ke_alg->bytes > 0) {
+				jam(buf, ", bits=%zu", ke_alg->bytes * BITS_IN_BYTE);
 			}
-			if (kem->initiator_bytes > 0 &&
-			    kem->initiator_bytes != kem->bytes) {
-				jam(buf, ", initiator-bytes=%zu", kem->initiator_bytes);
+			if (ke_alg->initiator_bytes > 0 &&
+			    ke_alg->initiator_bytes != ke_alg->bytes) {
+				jam(buf, ", initiator-bytes=%zu", ke_alg->initiator_bytes);
 			}
-			if (kem->responder_bytes > 0 &&
-			    kem->responder_bytes != kem->bytes) {
-				jam(buf, ", responder-bytes=%zu", kem->responder_bytes);
+			if (ke_alg->responder_bytes > 0 &&
+			    ke_alg->responder_bytes != ke_alg->bytes) {
+				jam(buf, ", responder-bytes=%zu",
+				    ke_alg->responder_bytes);
 			}
 		}
 	}

@@ -48,7 +48,7 @@
  */
 
 bool extract_KE(struct state *st/*ike-or-child*/,
-		const struct kem_desc *kem,
+		const struct ke_desc *kem,
 		struct msg_digest *md)
 {
 	const struct logger *logger = st->logger;

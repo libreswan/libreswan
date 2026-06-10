@@ -1048,14 +1048,14 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
 	name_buf ignore;
-	const struct kem_desc *new_kem = ikev2_kem_desc(sk.sk_kem, &ignore);
-	passert(new_kem != NULL);
+	const struct ke_desc *new_ke_alg = ikev2_ke_desc(sk.sk_kem, &ignore);
+	passert(new_ke_alg != NULL);
 	llog_sa(RC_LOG, ike,
 		"received unauthenticated INVALID_KE_PAYLOAD response to %s %s; resending with suggested %s",
 		ike_alg_ke.story,
 		ike->sa.st_oakley.ta_dh->common.fqn,
-		new_kem->common.fqn);
-	ike->sa.st_oakley.ta_dh = new_kem;
+		new_ke_alg->common.fqn);
+	ike->sa.st_oakley.ta_dh = new_ke_alg;
 	/* wipe our mismatched KE */
 	dh_local_secret_delref(&ike->sa.st_dh_local_secret, HERE);
 	/*
