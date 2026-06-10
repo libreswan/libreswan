@@ -199,8 +199,8 @@
     </para>
 
     <para>
-      Note: The abbreviation "KEM" can refer to either Key Exchange
-      Method or Key Encapsulation Method.
+      Note: The abbreviation "KE" can refer to either Key Exchange
+      Method (e.g. "modp2048" or "dh19") or Key Encapsulation Method (e.g. "ml_kem_768").
     </para>
 
   </refsect3>

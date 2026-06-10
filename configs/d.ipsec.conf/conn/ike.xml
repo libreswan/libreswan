@@ -19,7 +19,7 @@
     </para>
     <para>
       The basic syntax is:
-      <programlisting>ENCRYPTION_ALGORITHMS["-"PRF_ALGORITHMS]["-"INTEGRITY_ALGORITHMS]["-"KEM_ALGORITHMS]</programlisting>
+      <programlisting>ENCRYPTION_ALGORITHMS["-"PRF_ALGORITHMS]["-"INTEGRITY_ALGORITHMS]["-"KE_ALGORITHMS]</programlisting>
       For the full syntax, see the Proposals section.  Specifying both
       a PRF and INTEGRITY algorithm is not recommended.
     </para>
