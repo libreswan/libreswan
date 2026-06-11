@@ -14,7 +14,7 @@
     </para>
     <para>
       The basic syntax is:
-      <programlisting>INTEGRITY_ALGORITHMS["-"KEM_ALGORITHMS]</programlisting>
+      <programlisting>INTEGRITY_ALGORITHMS["-"KE_ALGORITHMS]</programlisting>
       For the full syntax, see the Proposals section.
     </para>
     <para>
