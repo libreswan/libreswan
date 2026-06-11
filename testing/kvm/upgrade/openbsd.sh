@@ -4,9 +4,11 @@ set -xe ; exec < /dev/null
 
 PREFIX=@@KVM_PREFIX@@
 
+release=$(uname -r)
+
 # create a package cache directory
 
-export PKG_CACHE=/pool/pkg.openbsd.$(uname -r)
+export PKG_CACHE=/pool/pkg.openbsd.${release}
 echo PKG_CACHE=${PKG_CACHE}
 mkdir -p ${PKG_CACHE}
 
@@ -34,7 +36,7 @@ add bash
 # add gcc%11
 # add llvm%21
 
-for kernel in /pool/${PREFIX}openbsd-kernel /pool/kernel.openbsd ; do
+for kernel in /pool/${PREFIX}openbsd-kernel.${release} /pool/kernel.openbsd.${release} ; do
     if test -r ${kernel} ; then
 	cp -v ${kernel} /bsd
 	break

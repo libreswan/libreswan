@@ -4,6 +4,8 @@ set -xe ; exec < /dev/null
 
 PREFIX=@@KVM_PREFIX@@
 
+release=$(uname -r)
+
 cat <<EOF | tee /etc/pkg_install.conf
 PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/10.0/All
 EOF
@@ -14,7 +16,7 @@ pkg_add pkgin
 
 # Next hack pkgin's cache to point at /pool
 
-pkgdir=/pool/pkg.netbsd.$(uname -r)
+pkgdir=/pool/pkg.netbsd.${release}
 mkdir -p "${pkgdir}"
 #rmdir /var/db/pkgin/cache
 ln -s "${pkgdir}" /var/db/pkgin/cache
@@ -40,7 +42,7 @@ pkgin -y install racoon2
 pkg_admin fetch-pkg-vulnerabilities
 pkg_admin audit || true
 
-for kernel in /pool/${PREFIX}netbsd-kernel /pool/kernel.netbsd ; do
+for kernel in /pool/${PREFIX}netbsd-kernel.${release} /pool/kernel.netbsd.${release} ; do
     if test -r ${kernel} ; then
 	cp -v ${kernel} /netbsd
 	break
