@@ -10,9 +10,12 @@ many others.
 
 Download: https://download.libreswan.org/
 
-Git: `git clone https://github.com/libreswan/libreswan.git`
+[Git](https://github.com/libreswan/libreswan): `git clone
+https://github.com/libreswan/libreswan.git`
 
 Documentation: https://testing.libreswan.org/current/documentation
+
+Wiki: https://github.com/libreswan/libreswan/wiki
 
 _Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04.  See the CREDITS files for contributor
@@ -26,19 +29,31 @@ have a different license.
 
 ## Installing Prebuilt Binaries
 
-Pre-built Libreswan packages have been made available by the following
-Operating System distributions:
+We encourage you to run the current version of Libreswan.
 
-Alpine, Arch, CentOS, Debian, Fedora, FreeBSD, Mint, OpenWrt, Oracle
-Linux, Red Hat Enterprise Linux, Ubuntu
+Most Operating System Distributions provide the current version of
+Libreswan as a pre-built package, greatly simplifying installation.
+These Distributions include:
 
-On NetBSD the package sources are in pkgsrc/wip/libreswan.  OpenBSD
+Alpine, Arch, CentOS, Debian, Fedora, FreeBSD, Mint, Oracle Linux,
+Red Hat Enterprise Linux, Ubuntu
+
+On NetBSD the package files are in pkgsrc/wip/libreswan.  OpenBSD
 needs to be built from source.
 
-Unless you're needing to run mainline, it is typically best to use the
-pre-built version of the distribution you are using.
+If your Operating System Distribution does not package the the current
+version of Libreswan then we recommend building from source.  Please
+read on.
 
 ## Installing from Source
+
+### Obtain the Sources
+
+The source code for libreswan is available from
+[GitHub](https://github.com/libreswan/libreswan).
+
+You can either checkout the latest release, or mainline; but if you
+suspect there's a problem then we encourage you to build mainline.
 
 ### Building from scratch into `/usr/local`
 
