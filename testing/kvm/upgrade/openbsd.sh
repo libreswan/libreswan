@@ -31,8 +31,8 @@ add curl
 add git
 add bash
 # stem with branch, see pkg_add
-add gcc%11
-add llvm%21
+# add gcc%11
+# add llvm%21
 
 for kernel in /pool/${PREFIX}openbsd-kernel /pool/kernel.openbsd ; do
     if test -r ${kernel} ; then
