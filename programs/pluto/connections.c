@@ -867,7 +867,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (table_len(end->child.config->addresspools) > 0) {
+		if (len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
@@ -1340,18 +1340,18 @@ static size_t jam_connection_child(struct jambuf *b,
 {
 	const ip_selectors *selectors =
 		(child->selectors.accepted.len > 0 ? &child->selectors.accepted :
-		 child->selectors.proposed->len > 0 ? child->selectors.proposed :
+		 len(child->selectors.proposed) > 0 ? child->selectors.proposed :
 		 NULL);
 	size_t s = 0;
 	if (selectors == NULL) {
 		/* no point */
-	} else if (selectors->len == 1 &&
+	} else if (len(selectors) == 1 &&
 		   /* i.e., selector==host.addr[+protoport] */
 		   range_eq_address(selector_range(selectors->list[0]), host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (table_len(child->config->addresspools) > 0) {
+		if (len(child->config->addresspools) > 0) {
 			s += jam_string(b, "{");
 		}
 		const char *sep = "";
@@ -1366,7 +1366,7 @@ static size_t jam_connection_child(struct jambuf *b,
 			}
 			jam_string(b, sep); sep = ",";
 		}
-		if (table_len(child->config->addresspools) > 0) {
+		if (len(child->config->addresspools) > 0) {
 			s += jam_string(b, "}");
 		}
 		s += jam_string(b, suffix);
@@ -2052,7 +2052,7 @@ void append_end_selector(struct connection_end *end,
 		end->child.selectors.proposed = end->child.selectors.assigned;
 	} else {
 		vassert(end->child.selectors.proposed == end->child.selectors.assigned);
-		vassert(end->child.selectors.proposed->len > 0);
+		vassert(len(end->child.selectors.proposed) > 0);
 	}
 
 	/* append the selector to assigned */
@@ -2081,7 +2081,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	struct child_end_selectors *end_selectors = &end->child.selectors;
 	const char *leftright = end->config->leftright;
 
-	vexpect(end_selectors->proposed->len == 1);
+	vexpect(len(end_selectors->proposed) == 1);
 	ip_selector old_selector = end_selectors->proposed->list[0];
 	selector_buf ob, nb;
 	vdbg("%s() update %s.child.selector %s -> %s "PRI_WHERE,
@@ -2163,13 +2163,13 @@ err_t connection_requires_tss(const struct connection *c)
 		return NULL;
 	}
 	FOR_EACH_ELEMENT(end, c->end) {
-		if (table_len(end->config->child.addresspools) > 1) {
+		if (len(end->config->child.addresspools) > 1) {
 			return "addresspools";
 		}
 		if (end->config->child.selectors.len > 1) {
 			return "subnets";
 		}
-		if (table_len(end->config->child.sourceip) > 1) {
+		if (len(end->config->child.sourceip) > 1) {
 			return "sourceips";
 		}
 	}

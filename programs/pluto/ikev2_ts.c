@@ -261,12 +261,10 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 					const struct narrowed_selector_payload *nsp,
 					struct verbose verbose)
 {
-	if (selectors->len > 0) {
-		vexpect(selectors->len > 0);
+	if (len(selectors) > 0) {
 		vexpect(selectors->list != NULL);
 		vdbg("skipping scribble as already scribbled");
 	} else {
-		vexpect(selectors->len == 0);
 		vexpect(selectors->list == NULL);
 		*selectors = (ip_selectors) {
 			.len = nsp->nr,
@@ -497,7 +495,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 			      const struct impair_unsigned *impaired_len,
 			      const char *name)
 {
-	unsigned nr_ts = selectors->len;
+	unsigned nr_ts = len(selectors);
 	if (sec_label.len > 0) {
 		nr_ts++;
 	}
@@ -1232,7 +1230,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 	bool matched = false;
 	nsp->nr = 0; /*passert?*/
 
-	for (unsigned i = 0; i < end->selectors->len; i++) {
+	for (unsigned i = 0; i < len(end->selectors); i++) {
 		bool match = false;
 
 		/*

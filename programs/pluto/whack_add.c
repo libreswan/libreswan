@@ -108,14 +108,14 @@ static bool parse_subnets(struct subnets *sn,
 			return false;
 		}
 		/* make space */
-		len += table_len(subnets);
+		len += len(subnets);
 	}
 
 	/*
 	 * Merge lists.
 	 */
 	sn->start = (subnet.ip.is_set ? 0 :
-		     table_len(subnets) == 0 ? 0 :
+		     len(subnets) == 0 ? 0 :
 		     1);
 	sn->subnets = table_alloc(ip_subnets, len);
 	unsigned pos = 0;
@@ -140,7 +140,7 @@ static const struct ip_info *next_subnet(char **subnetstr,
 					 const ip_subnets *subnets,
 					 unsigned i)
 {
-	if (table_len(subnets) > 0) {
+	if (len(subnets) > 0) {
 		ip_subnet subnet = subnets->table[i];
 		subnet_buf b;
 		str_subnet(&subnet, &b);
@@ -189,11 +189,11 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 	 */
 
 	for (unsigned left_i = 0;
-	     left_i == 0 || left_i < table_len(left->subnets);
+	     left_i == 0 || left_i < len(left->subnets);
 	     left_i++) {
 
 		for (unsigned right_i = 0;
-		     right_i == 0 || right_i < table_len(right->subnets);
+		     right_i == 0 || right_i < len(right->subnets);
 		     right_i++) {
 
 			/*

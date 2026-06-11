@@ -510,7 +510,7 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 		 * XXX: could this, with misconfiguration, cause the
 		 * client to send the DNS name to the server?
 		 */
-		if (table_len(c->config->modecfg.dns) == 0) {
+		if (len(c->config->modecfg.dns) == 0) {
 			ldbg(ike->sa.logger, "skip sending internal DNS in %s payload, nothing to send",
 			     modecfg_payload);
 			return true;
@@ -1974,7 +1974,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				 * config file, the lease will be
 				 * used.
 				 */
-				if (table_len(c->local->config->child.sourceip) == 0) {
+				if (len(c->local->config->child.sourceip) == 0) {
 					ip_address sourceip = spd_end_sourceip(c->child.spds->table->local);
 					pexpect(address_eq_address(a, sourceip));
 					jam_string(buf, ", updating source IP address");

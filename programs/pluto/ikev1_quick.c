@@ -1171,7 +1171,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 *
 	 * XXX: IKEv1 only does IPv4.
 	 */
-	if (table_len(c->remote->config->child.addresspools) == 0) {
+	if (len(c->remote->config->child.addresspools) == 0) {
 		vdbg("connection has no addresspool");
 	} else if (c->remote->child.lease[IPv4].ip.is_set) {
 		vdbg("connection already has a lease");
@@ -1214,7 +1214,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
 	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
-	     c->remote->child.selectors.proposed->len,
+	     len(c->remote->child.selectors.proposed),
 	     str_selector(&c->remote->child.selectors.proposed->list[0], &csb));
 
 	/* fill in the client's true port */

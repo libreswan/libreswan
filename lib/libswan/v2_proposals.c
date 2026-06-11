@@ -99,7 +99,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 				 * loop construct.
 				 */
 				const struct transforms *transforms = proposal_transforms(proposal);
-				if (t >= table_len(transforms)) {
+				if (t >= len(transforms)) {
 					break;
 				}
 

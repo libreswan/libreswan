@@ -168,4 +168,10 @@
 #define is_set(POINTER_TO_THING) ((POINTER_TO_THING) != NULL && (POINTER_TO_THING)->is_set)
 #define is_unset(POINTER_TO_THING) (!is_set(POINTER_TO_THING))
 
+#define len(BLOB)						\
+	({							\
+		typeof(BLOB) len_blob_ = (BLOB);		\
+		(len_blob_ == NULL ? 0 : len_blob_->len);	\
+	})
+
 #endif

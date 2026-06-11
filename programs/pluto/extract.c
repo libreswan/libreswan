@@ -4800,7 +4800,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_pools *const pools = c->end[end].config->child.addresspools;
-		if (selectors->len > 0) {
+		if (len(selectors) > 0) {
 			FOR_EACH_ITEM(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
 				struct end_family *family = &end_family[end][afi->ip.version];
@@ -4810,7 +4810,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					family->value = whack_ends[end]->we_subnet;
 				}
 			}
-		} else if (table_len(pools) > 0) {
+		} else if (len(pools) > 0) {
 			TABLE_FOR_EACH(pool, pools) {
 				const struct ip_info *afi = pool_type(pool);
 				/* only one for now */

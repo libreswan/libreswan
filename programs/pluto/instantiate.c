@@ -558,7 +558,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		}
 
 		/* {left,right}addresspool= */
-		if (table_len(end->child.config->addresspools) > 0) {
+		if (len(end->child.config->addresspools) > 0) {
 			/*
 			 * Set the selectors to the pool range:
 			 *
@@ -669,8 +669,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 {
 	vassert(is_template(t));
 	vassert(oriented(t)); /* else won't instantiate */
-	vassert(t->local->child.selectors.proposed->len == 1);
-	vassert(t->remote->child.selectors.proposed->len == 1);
+	vassert(len(t->local->child.selectors.proposed) == 1);
+	vassert(len(t->remote->child.selectors.proposed) == 1);
 
 	/*
 	 * Instance inherits remote ID of child; exception being when
@@ -695,7 +695,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	/*
 	 * Fill in peer's client side.
 	 */
-	PASSERT(d->logger, t->remote->child.selectors.proposed->len == 1);
+	PASSERT(d->logger, len(t->remote->child.selectors.proposed) == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	/* see also caller checks */
 	PASSERT(d->logger, address_in_selector_range(remote_address, remote_template));
@@ -729,7 +729,7 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	 * it falls within the selector's range (can't match port as
 	 * not yet known).
 	 */
-	vassert(t->remote->child.selectors.proposed->len == 1);
+	vassert(len(t->remote->child.selectors.proposed) == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	vassert(address_in_selector_range(remote_address, remote_template));
 	return oppo_instantiate(t, remote_address, __func__, verbose, where);
@@ -750,7 +750,7 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 * endpoint that needs to be negotiated.  Hence this endpoint
 	 * must be fully within the template's selector).
 	 */
-	vassert(t->remote->child.selectors.proposed->len == 1);
+	vassert(len(t->remote->child.selectors.proposed) == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
 	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);
 	vassert(endpoint_in_selector(remote_endpoint, remote_template));
