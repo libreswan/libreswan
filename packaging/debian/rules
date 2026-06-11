@@ -26,7 +26,6 @@ override_dh_auto_build:
 		PREFIX=/usr \
 		LIBEXECDIR=/usr/libexec/ipsec \
 		MANDIR=/usr/share/man \
-		USE_LDAP=true \
 		INITSYSTEM=systemd \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX)
@@ -39,7 +38,6 @@ override_dh_auto_install-arch:
 		PREFIX=/usr \
 		LIBEXECDIR=/usr/libexec/ipsec \
 		MANDIR=/usr/share/man \
-		USE_LDAP=true \
 		INITSYSTEM=systemd \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
