@@ -1,0 +1,3 @@
+Initiator auth=rsasig (RSA cert), responder auth=digsig (ECDSA cert).
+Responder should detect the ECDSA cert and sign with ECDSA.
+Connection should establish.

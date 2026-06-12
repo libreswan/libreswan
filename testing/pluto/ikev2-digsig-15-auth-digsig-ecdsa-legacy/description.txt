@@ -1,0 +1,4 @@
+Initiator auth=digsig, responder auth=ecdsa impaired to legacy wire
+method, both with ECDSA certs.
+Initiator should fall back to legacy ECDSA.
+Connection should establish.

@@ -114,6 +114,7 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_ECDSA: return (struct authby) { .ecdsa = true, };
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
+	case AUTH_DIGSIG: return AUTHBY_DIGITAL_SIGNATURE;
 	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
