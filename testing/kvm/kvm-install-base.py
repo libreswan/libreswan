@@ -25,13 +25,13 @@ import re
 from enum import Enum
 from enum import auto
 
-from platform import alpine
-from platform import debian
-from platform import fedora
-from platform import linux
-from platform import freebsd
-from platform import netbsd
-from platform import openbsd
+from base import alpine
+from base import debian
+from base import fedora
+from base import linux
+from base import freebsd
+from base import netbsd
+from base import openbsd
 
 args = sys.argv[1:]
 
