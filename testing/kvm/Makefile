@@ -877,16 +877,16 @@ KVM_GET ?= \
 # Alpine
 #
 
-KVM_ALPINE_VERSION ?= v3.23
-KVM_ALPINE_RELEASE ?= 3.23.4
+KVM_ALPINE_VERSION ?= 3.24
+KVM_ALPINE_RELEASE ?= $(KVM_ALPINE_VERSION).0
 KVM_ALPINE_MACHINE ?= x86
 KVM_ALPINE_OSINFO  ?= $(strip $(shell osinfo-query -f short-id os | grep ' alpinelinux' | sort -V | tail -1))
 
-KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/alpine/$(KVM_ALPINE_VERSION)/releases/$(KVM_ALPINE_MACHINE)
+KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/alpine/v$(KVM_ALPINE_VERSION)/releases/$(KVM_ALPINE_MACHINE)
 
 KVM_ALPINE_ISO ?= $(KVM_POOLDIR)/alpine-standard-$(KVM_ALPINE_RELEASE)-$(KVM_ALPINE_MACHINE).iso
 KVM_ALPINE_ISO_HASH = SHA256
-KVM_ALPINE_ISO_CKSUM ?= 5b196fe37dd2b3602e0a38dba658a6c68528b4dcdd12b6aea2e89c7b9d2cbc5a
+KVM_ALPINE_ISO_CKSUM ?= 997dd16c26420e200bb198dc5943eecdecf4436084f32922af459467efcfc8df
 KVM_ALPINE_ISO_URL ?= $(KVM_ALPINE_URL)/$(notdir $(KVM_ALPINE_ISO))
 
 $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
