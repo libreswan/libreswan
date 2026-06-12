@@ -1,14 +1,22 @@
-- did you use "AI".
+We would like to use this pull-request's _Subject_ and _Description_
+(i.e., this text) as part of the Merge commit message!  So please be
+concise with what you say!
 
-  We're assuming this pull-request is your, and your co-authors, work;
-  and it made available under the terms of the GPLv2+.
+Don't use AI to write the code, the results won't impress.
 
-- have you seen our
-  [Programming Conventions](https://github.com/libreswan/libreswan/wiki/Hacking:-Programming-Conventions)
+- We're assuming this pull-request is your, and your co-authors, work;
+  and it is made available under the terms of the GPLv2+.
+
+  If you use AI then that assumption doesn't hold.
+
+Please be sure to work through through the following:
+
+- our [Programming
+  Conventions](https://github.com/libreswan/libreswan/wiki/Hacking:-Programming-Conventions)
   guideline
 
-- have you seen our
-  [Git, GitHub, and Pull Requests](https://github.com/libreswan/libreswan/wiki/Hacking:-Git,-GitHub,-and-Pull-Requests)
+- our [Git, GitHub, and Pull
+  Requests](https://github.com/libreswan/libreswan/wiki/Hacking:-Git,-GitHub,-and-Pull-Requests)
   guideline
 
 _If you're a GSoC candidate then creating a pull-request is not the
