@@ -47,8 +47,14 @@ west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten
 west #
- ../../guestbin/wait-for-pluto.sh 'TS_UNACCEPTABLE'
+ ../../guestbin/wait-for-pluto.sh 'processing IKE_AUTH response'
 "labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(TS_UNACCEPTABLE)}
+west #
+ ../../guestbin/wait-for-pluto.sh 'IKE_AUTH response rejected Child SA'
+"labeled"[1][1] 192.1.2.23 #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+west #
+ ../../guestbin/wait-for-pluto.sh 'peer rejected Child SA'
+"labeled"[1] 192.1.2.23 #1: peer rejected Child SA  (TS_UNACCEPTABLE) and IKE SA does not have policy UP
 west #
  # there should be 0 tunnels - child rejected
 west #
