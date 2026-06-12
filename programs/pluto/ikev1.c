@@ -2057,7 +2057,34 @@ static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
 
 static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
 {
-	jam_parent_sa_details(buf, st);
+	passert(st->st_oakley.ta_encrypt != NULL);
+	passert(st->st_oakley.ta_prf != NULL);
+	passert(st->st_oakley.ta_dh != NULL);
+
+	jam_string(buf, "{");
+
+	jam_string(buf, "auth=");
+	jam_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
+
+	jam_string(buf, " cipher=");
+	jam_string(buf, st->st_oakley.ta_encrypt->common.fqn);
+	if (st->st_oakley.enckeylen > 0) {
+		/* XXX: also check omit key? */
+		jam(buf, "_%d", st->st_oakley.enckeylen);
+	}
+
+	/*
+	 * For IKEv1, since the INTEG algorithm is potentially
+	 * (always?) NULL.  Display the PRF.  The choice and behaviour
+	 * are historic.
+	 */
+	jam_string(buf, " integ=");
+	jam_string(buf, st->st_oakley.ta_prf->common.fqn);
+
+	jam_string(buf, " group=");
+	jam_string(buf, st->st_oakley.ta_dh->common.fqn);
+
+	jam_string(buf, "}");
 }
 
 /* complete job started by the state-specific state transition function
