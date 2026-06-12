@@ -2134,9 +2134,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		return d;
 	}
 
-	child_config->selectors = alloc_thing(ip_selectors, "ip selectors");
-	ip_selectors *child_selectors = child_config->selectors;
-
 	/*
 	 * Figure out the end's child selectors.
 	 */
@@ -2220,7 +2217,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		     leftright, leftright, leftright);
 		ip_address nonzero_host;
 		diag_t d = ttoselectors_num(shunk1(src->we_subnet), ", ", NULL,
-					    child_config->selectors, &nonzero_host);
+					    &child_config->selectors, &nonzero_host);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->we_subnet);
@@ -2231,14 +2228,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
 					    leftright, leftright);
 			}
-			if (!selector_is_subnet(child_config->selectors->list[0])) {
+			if (!selector_is_subnet(child_config->selectors->table[0])) {
 				return diag("%ssubnet= cannot be a selector when combined with %sprotoport=",
 					    leftright, leftright);
 			}
-			ip_subnet subnet = selector_subnet(child_config->selectors->list[0]);
+			ip_subnet subnet = selector_subnet(child_config->selectors->table[0]);
 			vdbg("%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 			     leftright, leftright, leftright, leftright);
-			child_selectors->list[0] =
+			child_config->selectors->table[0] =
 				selector_from_subnet_protoport(subnet, protoport);
 		}
 
@@ -2324,7 +2321,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					continue;
 				}
 				bool within = false;
-				FOR_EACH_ITEM(sel, child_config->selectors) {
+				TABLE_FOR_EACH(sel, child_config->selectors) {
 					/*
 					 * Only compare the address
 					 * against the selector's
@@ -4802,7 +4799,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		const ip_selectors *const selectors = c->end[end].config->child.selectors;
 		const ip_pools *const pools = c->end[end].config->child.addresspools;
 		if (len(selectors) > 0) {
-			FOR_EACH_ITEM(selector, selectors) {
+			TABLE_FOR_EACH(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
 				struct end_family *family = &end_family[end][afi->ip.version];
 				if (!family->used) {

@@ -335,10 +335,13 @@ static void scribble_remote_lease(struct connection *c,
 	/* update the selectors */
 	ip_selector selector = selector_from_cidr(cidr);
 	struct child_end_selectors *remote_selectors = &c->remote->child.selectors;
-	if (!PEXPECT_WHERE(logger, where, assigned_nr < elemsof(remote_selectors->tmp))) {
+	if (!PEXPECT_WHERE(logger, where, assigned_nr < len(remote_selectors->assigned))) {
 		return;
 	}
-	remote_selectors->assigned->list[assigned_nr] = selector;
+	/* check */
+	PEXPECT(logger, remote_selectors->proposed == remote_selectors->assigned);
+	/* scribble */
+	remote_selectors->assigned->table[assigned_nr] = selector;
 
 	selector_buf nb;
 	ldbg(c->logger, "%s() remote.child.selectors.assigned[%d] %s "PRI_WHERE,

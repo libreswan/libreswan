@@ -444,7 +444,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 		 * 0.0.0.0/0.  This matches previous behavour
 		 * (previous to what?).  See caller.
 		 */
-		FOR_EACH_ITEM(selector, c->local->config->child.selectors) {
+		TABLE_FOR_EACH(selector, c->local->config->child.selectors) {
 			ip_address mask = selector_prefix_mask(*selector);
 			ip_address addr = selector_prefix(*selector);
 			address_buf ab, mb;
@@ -2097,7 +2097,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 				if (len(c->remote->config->child.selectors) > 0) {
 					bool found = false;
-					FOR_EACH_ITEM(selector, c->remote->config->child.selectors) {
+					TABLE_FOR_EACH(selector, c->remote->config->child.selectors) {
 						if (selector_in_selector(split, *selector)) {
 							found = true;
 							break;

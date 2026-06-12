@@ -477,9 +477,9 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 		 * - CP which skips setting TS
 		 * - CK_PERMENANT that doesn't update TS
 		 */
-		local_route = (len(local) > 0 ? local->list[0] :
+		local_route = (len(local) > 0 ? local->table[0] :
 			       c->child.spds->table->local->client);
-		ip_selector remote_client = (len(remote) > 0 ? remote->list[0] :
+		ip_selector remote_client = (len(remote) > 0 ? remote->table[0] :
 					     c->child.spds->table->remote->client);
 		/* reroute remote to pair up with dest */
 		remote_route = selector_from_address_protocol_port(c->remote->host.addr,
@@ -2163,8 +2163,8 @@ void orphan_holdpass(struct connection *c,
 		 */
 		co_serial_t template_serialno;
 		struct connection *t = c->clonedfrom;
-		if (selector_eq_selector(src, t->local->child.selectors.proposed->list[0]) &&
-		    selector_eq_selector(dst, t->remote->child.selectors.proposed->list[0])) {
+		if (selector_eq_selector(src, t->local->child.selectors.proposed->table[0]) &&
+		    selector_eq_selector(dst, t->remote->child.selectors.proposed->table[0])) {
 			template_serialno = t->serialno;
 		} else {
 			template_serialno = COS_NOBODY;

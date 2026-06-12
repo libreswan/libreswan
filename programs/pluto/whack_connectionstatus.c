@@ -427,10 +427,10 @@ void show_connection_clients(struct show *s, const struct connection *c,
 			show_client(s, c, &this, &that);
 		}
 	} else {
-		FOR_EACH_ITEM(local, c->local->child.selectors.proposed) {
+		TABLE_FOR_EACH(local, c->local->child.selectors.proposed) {
 			struct connection_client this =
 				connection_config_client(c->local, local);
-			FOR_EACH_ITEM(remote, c->remote->child.selectors.proposed) {
+			TABLE_FOR_EACH(remote, c->remote->child.selectors.proposed) {
 				struct connection_client that =
 					connection_config_client(c->remote, remote);
 				show_client(s, c, &this, &that);

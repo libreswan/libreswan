@@ -297,7 +297,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	bool ask_for_ip[IP_VERSION_ROOF] = {0};
 	bool ask_for_something = false;
 
-	FOR_EACH_ITEM(proposed, cc->local->child.selectors.proposed) {
+	TABLE_FOR_EACH(proposed, cc->local->child.selectors.proposed) {
 		const struct ip_info *afi = selector_type(proposed);
 		ldbg(child->sa.logger, "pool says to ask for %s", afi->ip_name);
 		ask_for_ip[afi->ip.version] = true;

@@ -205,7 +205,7 @@ struct connection *group_instantiate(struct connection *group,
 		 * Selector contains subnet= possibly already merged
 		 * with protoport=.
 		 */
-		local_selector = t->local->child.config->selectors->list[0];
+		local_selector = t->local->child.config->selectors->table[0];
 	} else {
 		/*
 		 * Need to mash protoport and local .host_addr
@@ -689,14 +689,14 @@ static struct connection *oppo_instantiate(struct connection *t,
 	/*
 	 * Fill in the local client - just inherit the parent's value.
 	 */
-	ip_selector local_selector = t->local->child.selectors.proposed->list[0];
+	ip_selector local_selector = t->local->child.selectors.proposed->table[0];
 	set_end_selector(d->local, local_selector, d->logger);
 
 	/*
 	 * Fill in peer's client side.
 	 */
 	PASSERT(d->logger, len(t->remote->child.selectors.proposed) == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
+	ip_selector remote_template = t->remote->child.selectors.proposed->table[0];
 	/* see also caller checks */
 	PASSERT(d->logger, address_in_selector_range(remote_address, remote_template));
 	ip_selector remote_selector =
@@ -730,7 +730,7 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	 * not yet known).
 	 */
 	vassert(len(t->remote->child.selectors.proposed) == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
+	ip_selector remote_template = t->remote->child.selectors.proposed->table[0];
 	vassert(address_in_selector_range(remote_address, remote_template));
 	return oppo_instantiate(t, remote_address, __func__, verbose, where);
 }
@@ -751,7 +751,7 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 * must be fully within the template's selector).
 	 */
 	vassert(len(t->remote->child.selectors.proposed) == 1);
-	ip_selector remote_template = t->remote->child.selectors.proposed->list[0];
+	ip_selector remote_template = t->remote->child.selectors.proposed->table[0];
 	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);
 	vassert(endpoint_in_selector(remote_endpoint, remote_template));
 	ip_address local_address = packet_src_address(packet);

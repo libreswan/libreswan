@@ -168,7 +168,7 @@ void vdbg_connection(const struct connection *c,
 		jam_string(buf, "selectors");
 		jam_string(buf, " proposed:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-			FOR_EACH_ITEM(selector, end->selectors.proposed) {
+			TABLE_FOR_EACH(selector, end->selectors.proposed) {
 				jam_string(buf, " ");
 				jam_selector(buf, selector);
 			}
@@ -176,7 +176,7 @@ void vdbg_connection(const struct connection *c,
 		}
 		jam_string(buf, " accepted:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-			FOR_EACH_ITEM(selector, end->selectors.accepted) {
+			TABLE_FOR_EACH(selector, end->selectors.accepted) {
 				jam_string(buf, " ");
 				jam_selector(buf, selector);
 			}
@@ -475,10 +475,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
-		if (end->child.selectors.accepted != NULL) {
-			pfreeany(end->child.selectors.accepted->list);
-			pfreeany(end->child.selectors.accepted);
-		}
+		pfreeany(end->child.selectors.accepted);
+		pfreeany(end->child.selectors.assigned);
 	}
 
 	connection_delref(&c->clonedfrom, logger);
@@ -525,10 +523,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown.argv);
-			if (end->child.selectors != NULL) {
-				pfreeany(end->child.selectors->list);
-				pfreeany(end->child.selectors);
-			}
+			pfreeany(end->child.selectors);
 			pfreeany(end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
 			pfreeany(end->child.addresspools);
@@ -855,7 +850,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 			VDBG_JAMBUF(buf) {
 				jam_string(buf, leftright);
 				jam_string(buf, " proposals from child config selectors");
-				FOR_EACH_ITEM(selector, end->child.config->selectors) {
+				TABLE_FOR_EACH(selector, end->child.config->selectors) {
 					jam_string(buf, " ");
 					jam_selector(buf, selector);
 				}
@@ -977,11 +972,7 @@ void delete_connection_proposals(struct connection *c)
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		struct child_end *child = &c->end[lr].child;
 
-		if (child->selectors.accepted != NULL) {
-			pfreeany(child->selectors.accepted->list);
-			pfreeany(child->selectors.accepted);
-		}
-		zero(&child->selectors.accepted);
+		pfreeany(child->selectors.accepted);
 		zero(&child->selectors.proposed);
 		child->has_client = false;
 	}
@@ -1034,9 +1025,9 @@ void build_connection_spds_from_proposals(struct connection *c)
 	 */
 
 	unsigned nr_spds = 0;
-	FOR_EACH_ITEM(left_selector, left_proposals) {
+	TABLE_FOR_EACH(left_selector, left_proposals) {
 		vexpect(left_selector->ip.version != 0);
-		FOR_EACH_ITEM(right_selector, right_proposals) {
+		TABLE_FOR_EACH(right_selector, right_proposals) {
 			vexpect(right_selector->ip.version != 0);
 			if (left_selector->ip.version == right_selector->ip.version) {
 				nr_spds ++;
@@ -1052,8 +1043,8 @@ void build_connection_spds_from_proposals(struct connection *c)
 	 */
 
 	unsigned spd_nr = 0;
-	FOR_EACH_ITEM(left_selector, left_proposals) {
-		FOR_EACH_ITEM(right_selector, right_proposals) {
+	TABLE_FOR_EACH(left_selector, left_proposals) {
+		TABLE_FOR_EACH(right_selector, right_proposals) {
 			verbose.level = 2;
 			if (left_selector->ip.version == right_selector->ip.version) {
 				selector_pair_buf spb;
@@ -1061,7 +1052,7 @@ void build_connection_spds_from_proposals(struct connection *c)
 				verbose.level = 3;
 				struct spd *spd = &c->child.spds->table[spd_nr++];
 				vassert(spd < c->child.spds->table + c->child.spds->len);
-				ip_selector *selectors[] = {
+				const ip_selector *selectors[] = {
 					[LEFT_END] = left_selector,
 					[RIGHT_END] = right_selector,
 				};
@@ -1292,7 +1283,7 @@ diag_t add_connection(const struct whack_message *wm,
 static connection_priority_t max_prefix_len(struct connection_end *end)
 {
 	int len = 0;
-	FOR_EACH_ITEM(selector, end->child.selectors.proposed) {
+	TABLE_FOR_EACH(selector, end->child.selectors.proposed) {
 		int prefix_len = selector_prefix_len((*selector));
 		if (prefix_len >= 0) {
 			len = max(len, prefix_len);
@@ -1356,7 +1347,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		/* no point */
 	} else if (len(selectors) == 1 &&
 		   /* i.e., selector==host.addr[+protoport] */
-		   range_eq_address(selector_range(selectors->list[0]), host_addr)) {
+		   range_eq_address(selector_range(selectors->table[0]), host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
@@ -1364,7 +1355,7 @@ static size_t jam_connection_child(struct jambuf *b,
 			s += jam_string(b, "{");
 		}
 		const char *sep = "";
-		FOR_EACH_ITEM(selector, selectors) {
+		TABLE_FOR_EACH(selector, selectors) {
 			if (pexpect(selector->ip.is_set)) {
 				s += jam_selector_range(b, selector);
 				if (selector_is_zero(*selector)) {
@@ -1741,7 +1732,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 */
 
 		connection_priority_t src = 0;
-		FOR_EACH_ITEM(local, c->local->child.selectors.proposed) {
+		TABLE_FOR_EACH(local, c->local->child.selectors.proposed) {
 			/*
 			 * The packet source address is a selector, and not endpoint.
 			 *
@@ -1775,7 +1766,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		}
 
 		connection_priority_t dst = 0;
-		FOR_EACH_ITEM(remote, c->remote->child.selectors.proposed) {
+		TABLE_FOR_EACH(remote, c->remote->child.selectors.proposed) {
 			/*
 			 * The packet destination address is always a
 			 * proper endpoint.
@@ -2056,20 +2047,23 @@ void append_end_selector(struct connection_end *end,
 	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
 	if (end->child.selectors.proposed == NULL) {
-		end->child.selectors.assigned->list = end->child.selectors.tmp;
-		end->child.selectors.assigned->len = 0;
-		end->child.selectors.proposed = end->child.selectors.assigned;
+		/* toss any pre-existing assigned selectors */
+		vdbg("resetting assigned with length %d",
+		     len(end->child.selectors.assigned));
+		pfreeany(end->child.selectors.assigned);
 	} else {
 		vassert(end->child.selectors.proposed == end->child.selectors.assigned);
 		vassert(len(end->child.selectors.proposed) > 0);
 	}
 
-	/* append the selector to assigned */
-	vassert(end->child.selectors.assigned != NULL);
-	vassert(end->child.selectors.assigned->list == end->child.selectors.tmp);
-	vassert(end->child.selectors.assigned->len < elemsof(end->child.selectors.tmp));
-	unsigned i = end->child.selectors.assigned->len++;
-	end->child.selectors.assigned->list[i] = selector;
+	unsigned i = len(end->child.selectors.assigned);
+
+	/*
+	 * Expand assigned adding the new selector.  Update proposed
+	 * to the new pointer.
+	 */
+	table_grow(end->child.selectors.assigned, selector);
+	end->child.selectors.proposed = end->child.selectors.assigned;
 
 	selector_buf nb;
 	vdbg("%s.child.selectors.proposed[%d] %s "PRI_WHERE,
@@ -2091,12 +2085,14 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	const char *leftright = end->config->leftright;
 
 	vexpect(len(end_selectors->proposed) == 1);
-	ip_selector old_selector = end_selectors->proposed->list[0];
+	ip_selector old_selector = end_selectors->proposed->table[0];
 	selector_buf ob, nb;
-	vdbg("%s() update %s.child.selector %s -> %s "PRI_WHERE,
-	     __func__, leftright,
+	vdbg("%s() update %s.child.selector %s -> %s len(assigned)=%u "PRI_WHERE,
+	     __func__,
+	     leftright,
 	     str_selector(&old_selector, &ob),
 	     str_selector(&new_selector, &nb),
+	     len(end_selectors->assigned),
 	     pri_where(where));
 	verbose.level++;
 
@@ -2144,7 +2140,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * child.selector.
 	 */
 	if (len(child->config->selectors) > 0) {
-		ip_selector selector = child->config->selectors->list[0];
+		ip_selector selector = child->config->selectors->table[0];
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
 			vdbg("%s.child.selector %s matches selectors[0] "PRI_WHERE,

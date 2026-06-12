@@ -804,7 +804,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 			PEXPECT(ike->sa.logger, c->config->host.cisco.split);
 			ip_selector remote_client;
 			if (len(c->remote->config->child.selectors) > 0) {
-				remote_client = c->remote->config->child.selectors->list[0];
+				remote_client = c->remote->config->child.selectors->table[0];
 			} else {
 				const struct ip_info *client_afi = selector_info(c->child.spds->table->remote->client);
 				remote_client = client_afi->selector.all;
@@ -1215,14 +1215,14 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	     bool_str(is_virtual_remote(c, verbose)),
 	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
 	     len(c->remote->child.selectors.proposed),
-	     str_selector(&c->remote->child.selectors.proposed->list[0], &csb));
+	     str_selector(&c->remote->child.selectors.proposed->table[0], &csb));
 
 	/* fill in the client's true port */
 
 	if (c->remote->config->child.protoport.has_port_wildcard) {
 		ip_selector selector =
-			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed->list[0]),
-							  selector_protocol(c->remote->child.selectors.proposed->list[0]),
+			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed->table[0]),
+							  selector_protocol(c->remote->child.selectors.proposed->table[0]),
 							  selector_port(remote_client));
 		update_first_selector(c, remote, selector);
 	}
