@@ -209,7 +209,7 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 		jam_string(buf, " prf=");
 		jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
 
-		jam_string(buf, " group=");
+		jam_string(buf, " ke=");
 		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
 
 		jam_string(buf, "}");
