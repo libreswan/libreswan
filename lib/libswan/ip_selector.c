@@ -222,7 +222,7 @@ size_t jam_selectors(struct jambuf *buf, const ip_selectors *selectors)
 	size_t s = 0;
 	s += jam_string(buf, "[");
 	const char *sep = "";
-	FOR_EACH_ITEM(selector, selectors) {
+	TABLE_FOR_EACH(selector, selectors) {
 		s += jam_string(buf, sep);
 		sep = " ";
 		s += jam_selector(buf, selector);

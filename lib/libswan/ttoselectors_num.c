@@ -21,12 +21,9 @@
 #include "ip_selector.h"
 #include "ip_info.h"
 
-#define ip_token ip_selector
-#define ip_tokens ip_selectors
-
 diag_t ttoselectors_num(shunk_t input, const char *delims,
 			const struct ip_info *input_afi,
-			ip_tokens *output,
+			ip_selectors **output,
 			ip_address *nonzero_host)
 {
 	zero(output);
@@ -59,31 +56,30 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 	}
 
 	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
-
-	output->list = alloc_things(ip_token, tokens->len, "selectors");
-	output->len = tokens->len;
+	(*output) = table_alloc(ip_selectors, tokens->len);
 
 	unsigned nr = 0;
 	TABLE_FOR_EACH(token, tokens) {
 		ip_address tmp_nonzero;
+		ip_selector tmp;
 		diag_t d = ttoselector_num(*token, input_afi,
-					   &output->list[nr++],
-					   &tmp_nonzero);
+					   &tmp, &tmp_nonzero);
 		/* validate during first pass */
 		if (d != NULL) {
 			d = diag_diag(&d, PRI_SHUNK" invalid, ",
 				      pri_shunk(*token));
 			pfree(tokens);
-			pfree(output->list);
-			zero(output);
+			pfreeany(*output);
 			return d;
 		}
 		if (tmp_nonzero.ip.is_set && !nonzero_host->ip.is_set) {
 			*nonzero_host = tmp_nonzero; /* save first */
 		}
+		passert(nr < (*output)->len);
+		(*output)->table[nr++] = tmp;
 	}
 
-	passert(output->len == tokens->len);
+	passert((*output)->len == tokens->len);
 	pfree(tokens);
 	return NULL;
 }

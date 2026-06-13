@@ -514,7 +514,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 		case CK_INSTANCE:
 
 			if (is_template(d) &&
-			    d->remote->config->child.selectors.len > 0) {
+			    len(d->remote->config->child.selectors) > 0) {
 				/*
 				 * For instance when the template''s
 				 * peer's protoport=udp/%any but

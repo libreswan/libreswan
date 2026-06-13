@@ -150,7 +150,7 @@ struct child_end_config {
 
 	bool has_client_address_translation;		/* aka CAT */
 
-	ip_selectors selectors;
+	ip_selectors *selectors;
 	ip_addresses *sourceip;
 
 	/*
@@ -586,8 +586,7 @@ struct child_end {
 		 * See append_end_selector(), but be warned other code
 		 * fiddles with this.
 		 */
-		ip_selector tmp[IP_VERSION_ROOF/*space for IPv4+IPv6 in no order*/];
-		ip_selectors assigned[1];
+		ip_selectors *assigned;
 		/*
 		 * Either .config->selectors or above; do not free.
 		 */
@@ -596,7 +595,7 @@ struct child_end {
 		 * XXX: used when logging the established description
 		 * of the child in jam_connection_child()?
 		 */
-		ip_selectors accepted; /* must pfree(.list) */
+		ip_selectors *accepted; /* must pfree(.list) */
 	} selectors;
 
 	/*

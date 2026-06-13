@@ -114,14 +114,15 @@ diag_t ttoselector_num(shunk_t src, const struct ip_info *afi,
 
 typedef struct {
 	unsigned len;
-	ip_selector *list COUNTED_BY_PTR(len);
+	ip_selector table[] COUNTED_BY(len);
 } ip_selectors;
 
 extern const ip_selectors empty_ip_selectors;
 
 diag_t ttoselectors_num(shunk_t input, const char *delims,
 			const struct ip_info *afi,
-			ip_selectors *output, ip_address *nonzero_host);
+			ip_selectors **output,
+			ip_address *nonzero_host);
 
 size_t jam_selectors(struct jambuf *buf, const ip_selectors *selectors);
 
