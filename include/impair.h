@@ -111,6 +111,8 @@ struct impair {
 
 	struct impair_unsigned ike_initiator_spi;
 	struct impair_unsigned ike_responder_spi;
+	struct impair_unsigned ike_initiator_nonce;
+	struct impair_unsigned ike_responder_nonce;
 
 	bool bust_mi2;
 	bool bust_mr2;
