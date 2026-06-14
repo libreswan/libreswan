@@ -89,7 +89,7 @@ IMPAIR: stop processing inbound drip packet 1
 
 linuxwest# ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT'
 
-"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}
 
 linuxwest# ../../guestbin/wait-for-inbound.sh 3
 

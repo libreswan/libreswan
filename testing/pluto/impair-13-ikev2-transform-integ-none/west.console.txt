@@ -15,7 +15,7 @@ west #
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE excluded when counting transforms
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"integ" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"integ" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE excluded when counting transforms
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
@@ -38,7 +38,7 @@ west #
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE included when counting transforms
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
-"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}
 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
@@ -65,7 +65,7 @@ west #
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE excluded when counting transforms
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
-"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}
 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
@@ -100,7 +100,7 @@ west #
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE included when counting transforms
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"integ" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"integ" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE included when counting transforms
 IMPAIR: "integ" #1: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
@@ -123,7 +123,7 @@ west #
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE excluded when counting transforms
 IMPAIR: "integ" #3: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
-"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}
 "integ" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ
@@ -150,7 +150,7 @@ west #
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE included when counting transforms
 IMPAIR: "integ" #5: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #5: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
-"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
+"integ" #5: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 ke=MODP2048}
 "integ" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-child --name integ

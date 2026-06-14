@@ -48,7 +48,7 @@ west #
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
-"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
 west #
  ../../guestbin/wait-for-pluto.sh '#1: sent IKE_AUTH request'
 "east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
@@ -70,7 +70,7 @@ west #
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
-"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
+"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
  ../../guestbin/drip-inbound.sh 4 '#4: responder established Child SA'
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4

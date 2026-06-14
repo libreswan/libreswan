@@ -28,7 +28,6 @@ struct state;
 struct jambuf;
 
 extern void jam_child_sa_details(struct jambuf *buf, struct state *st);
-extern void jam_parent_sa_details(struct jambuf *buf, struct state *st);
 
 struct child_policy capture_child_rekey_policy(struct state *st);
 

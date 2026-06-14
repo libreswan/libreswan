@@ -49,6 +49,7 @@
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 #include "ike_alg_ke.h"
+#include "ike_alg_integ.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "packet.h"
@@ -184,8 +185,35 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 		} else {
 			jam(buf, " established IKE SA");
 		}
-		jam(buf, " ");
-		jam_parent_sa_details(buf, &larval->sa);
+
+		jam_string(buf, " {");
+
+		jam_string(buf, "cipher=");
+		jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
+		if (ike->sa.st_oakley.enckeylen > 0) {
+			/* XXX: also check omit key? */
+			jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
+		}
+
+		/*
+		 * Note: for IKEv2 and AEAD encrypters,
+		 * ike->sa.st_oakley.ta_integ is 'none'!
+		 */
+		jam_string(buf, " integ=");
+		if (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none) {
+			jam_string(buf, "n/a");
+		} else {
+			jam_string(buf, ike->sa.st_oakley.ta_integ->common.fqn);
+		}
+
+		jam_string(buf, " prf=");
+		jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
+
+		jam_string(buf, " ke=");
+		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
+
+		jam_string(buf, "}");
+
 	}
 }
 

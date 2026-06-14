@@ -106,7 +106,7 @@ static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 
 	jam_string(buf, " ");
 
-	jam_string(buf, "group=");
+	jam_string(buf, "ke=");
 	jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
 
 	jam_string(buf, "}");

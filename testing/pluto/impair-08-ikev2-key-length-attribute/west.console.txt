@@ -21,7 +21,7 @@ west #
 "aes128": added oriented IKEv2 connection
 "aes128" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"aes128" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 "aes128" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "aes128" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -60,7 +60,7 @@ west #
 "aes128": added oriented IKEv2 connection
 "aes128" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"aes128" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 IMPAIR: "aes128" #5: emitting fixed-length key-length attribute with 0 key
 "aes128" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "aes128" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
@@ -81,7 +81,7 @@ west #
 "aes128" #8: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #8: duplicating key-length attribute
 "aes128" #8: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #8: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"aes128" #8: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 "aes128" #8: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #9 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "aes128" #8: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #8: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -102,7 +102,7 @@ west #
 "aes128": added oriented IKEv2 connection
 "aes128" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 IMPAIR: "aes128" #10: duplicating key-length attribute
 "aes128" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #11 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "aes128" #10: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -142,7 +142,7 @@ west #
 "aes128": added oriented IKEv2 connection
 "aes128" #14: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #14: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 IMPAIR: "aes128" #14: omitting fixed-size key-length attribute
 "aes128" #14: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #15 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "aes128" #14: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
@@ -200,7 +200,7 @@ west #
 "3des": added oriented IKEv2 connection
 "3des" #21: initiating IKEv2 connection to 192.1.2.23 using UDP
 "3des" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"3des" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"3des" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 "3des" #21: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #22 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "3des" #21: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "3des" #21: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -224,7 +224,7 @@ west #
 "3des" #23: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "3des" #23: emitting fixed-length key-length attribute with 0 key
 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"3des" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
+"3des" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
 "3des" #23: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #24 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "3des" #23: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "3des" #23: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
