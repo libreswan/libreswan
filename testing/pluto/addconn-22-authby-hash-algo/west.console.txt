@@ -66,11 +66,11 @@ west #
 "ecdsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa-sha2":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"ecdsa-sha2_256":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ecdsa-sha2_256":   policy: IKEv2+ECDSA+ECDSA_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2_256":   v2-auth-hash-policy: SHA2_256;
-"ecdsa-sha2_384":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ecdsa-sha2_384":   policy: IKEv2+ECDSA+ECDSA_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2_384":   v2-auth-hash-policy: SHA2_384;
-"ecdsa-sha2_512":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ecdsa-sha2_512":   policy: IKEv2+ECDSA+ECDSA_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2_512":   v2-auth-hash-policy: SHA2_512;
 "eddsa":   policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "eddsa":   v2-auth-hash-policy: IDENTITY;
@@ -80,11 +80,11 @@ west #
 "rsa-sha1":   v2-auth-hash-policy: none;
 "rsa-sha2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"rsa-sha2_256":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"rsa-sha2_256":   policy: IKEv2+RSASIG+RSASIG_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2_256":   v2-auth-hash-policy: SHA2_256;
-"rsa-sha2_384":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"rsa-sha2_384":   policy: IKEv2+RSASIG+RSASIG_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2_384":   v2-auth-hash-policy: SHA2_384;
-"rsa-sha2_512":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"rsa-sha2_512":   policy: IKEv2+RSASIG+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2_512":   v2-auth-hash-policy: SHA2_512;
 west #
  # these should fail to load

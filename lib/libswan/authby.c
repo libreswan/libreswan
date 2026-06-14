@@ -27,7 +27,13 @@
 	 (LHS).rsasig OP			\
 	 (LHS).rsasig_v1_5 OP			\
 	 (LHS).eddsa OP				\
-	 (LHS).ecdsa)
+	 (LHS).ecdsa OP				\
+	 (LHS).rsasig_sha2_256 OP	\
+	 (LHS).rsasig_sha2_384 OP	\
+	 (LHS).rsasig_sha2_512 OP	\
+	 (LHS).ecdsa_sha2_256 OP	\
+	 (LHS).ecdsa_sha2_384 OP	\
+	 (LHS).ecdsa_sha2_512)
 
 #define OP(LHS, OP, RHS)						\
 	({								\
@@ -39,6 +45,12 @@
 			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
 			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
 			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
+			.rsasig_sha2_256 = (LHS).rsasig_sha2_256 OP (RHS).rsasig_sha2_256, \
+			.rsasig_sha2_384 = (LHS).rsasig_sha2_384 OP (RHS).rsasig_sha2_384, \
+			.rsasig_sha2_512 = (LHS).rsasig_sha2_512 OP (RHS).rsasig_sha2_512, \
+			.ecdsa_sha2_256 = (LHS).ecdsa_sha2_256 OP (RHS).ecdsa_sha2_256, \
+			.ecdsa_sha2_384 = (LHS).ecdsa_sha2_384 OP (RHS).ecdsa_sha2_384, \
+			.ecdsa_sha2_512 = (LHS).ecdsa_sha2_512 OP (RHS).ecdsa_sha2_512, \
 		};							\
 		tmp_;							\
 	})
@@ -111,9 +123,20 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return (struct authby) { .ecdsa = true, };
+	case AUTH_ECDSA: return (struct authby) { 
+		.ecdsa = true, 
+		.ecdsa_sha2_256 = true, 
+		.ecdsa_sha2_384 = true, 
+		.ecdsa_sha2_512 = true, 
+	};
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
-	case AUTH_RSASIG: return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
+	case AUTH_RSASIG: return (struct authby) { 
+		.rsasig = true, 
+		.rsasig_v1_5 = true, 
+		.rsasig_sha2_256 = true, 
+		.rsasig_sha2_384 = true, 
+		.rsasig_sha2_512 = true, 
+	};
 	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
@@ -133,7 +156,17 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	const char *sep = "";
 	JAM_AUTHBY(psk, PSK);
 	JAM_AUTHBY(rsasig, RSASIG);
+	if (!authby_le(AUTHBY_ALL_RSASIG_SHA2, authby)) {
+		JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
+		JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
+		JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+	}
 	JAM_AUTHBY(ecdsa, ECDSA);
+	if (!authby_le(AUTHBY_ALL_ECDSA_SHA2, authby)) {
+		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
+		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
+		JAM_AUTHBY(ecdsa_sha2_512, ECDSA_SHA2_512);
+	}
 	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);

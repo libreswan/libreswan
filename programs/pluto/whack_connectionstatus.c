@@ -605,6 +605,9 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			struct authby expect = authby_from_auth(end->auth);
 			struct authby mask = (oriented(c) && end == c->local->host.config ? expect : AUTHBY_ALL);
 			expect.rsasig_v1_5 = false;
+			expect.rsasig_sha2_256 = false;
+			expect.rsasig_sha2_384 = false;
+			expect.rsasig_sha2_512 = false;
 			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
 				jam_enum_human(buf, &auth_names, end->auth);
