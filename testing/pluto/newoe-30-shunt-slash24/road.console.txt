@@ -38,7 +38,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -50,19 +50,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negopass.failnone.pass EXPECT NO SHUNTS
@@ -81,7 +81,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negopass --failnone
 :
@@ -110,7 +110,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -120,7 +120,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-ike TRY NEGOTIATION PING
 up
 : oe.negopass.failnone.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -131,7 +131,7 @@ up
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -142,7 +142,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negopass --failnone
 :
@@ -171,7 +171,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -179,7 +179,7 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -189,7 +189,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failnone.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -200,7 +200,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-pass.sh        --negopass --faildrop
 :
@@ -229,7 +229,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -241,19 +241,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negopass.faildrop.pass EXPECT NO SHUNTS
@@ -272,7 +272,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negopass --faildrop
 :
@@ -301,7 +301,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -311,7 +311,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-ike TRY NEGOTIATION PING
 up
 : oe.negopass.faildrop.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -326,7 +326,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -339,7 +339,7 @@ down
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negopass --faildrop
 :
@@ -368,7 +368,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -380,7 +380,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -394,7 +394,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.faildrop.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -407,7 +407,7 @@ down
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-pass.sh        --negopass --failpass
 :
@@ -436,7 +436,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -448,19 +448,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negopass.failpass.pass EXPECT NO SHUNTS
@@ -479,7 +479,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negopass --failpass
 :
@@ -508,7 +508,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -518,7 +518,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-ike TRY NEGOTIATION PING
 up
 : oe.negopass.failpass.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -531,7 +531,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -544,7 +544,7 @@ up
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negopass --failpass
 :
@@ -573,7 +573,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -583,7 +583,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -595,7 +595,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negopass.failpass.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -608,7 +608,7 @@ up
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-pass.sh        --negodrop --failnone
 :
@@ -637,7 +637,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -649,19 +649,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negodrop.failnone.pass EXPECT NO SHUNTS
@@ -680,7 +680,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negodrop --failnone
 :
@@ -709,7 +709,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -717,11 +717,11 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-ike TRY NEGOTIATION PING
 down
 : oe.negodrop.failnone.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -732,7 +732,7 @@ down
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -743,7 +743,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negodrop --failnone
 :
@@ -772,7 +772,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -780,7 +780,7 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -790,7 +790,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failnone.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -801,7 +801,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-pass.sh        --negodrop --faildrop
 :
@@ -830,7 +830,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -842,19 +842,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negodrop.faildrop.pass EXPECT NO SHUNTS
@@ -873,7 +873,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negodrop --faildrop
 :
@@ -902,7 +902,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -910,11 +910,11 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-ike TRY NEGOTIATION PING
 down
 : oe.negodrop.faildrop.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -929,7 +929,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -942,7 +942,7 @@ down
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negodrop --faildrop
 :
@@ -971,7 +971,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -983,7 +983,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -997,7 +997,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.faildrop.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -1010,7 +1010,7 @@ down
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-pass.sh        --negodrop --failpass
 :
@@ -1039,7 +1039,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -1051,19 +1051,19 @@ up
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir in priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16397 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.pass EXPECT ONE PACKET
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 : oe.negodrop.failpass.pass EXPECT NO SHUNTS
@@ -1082,7 +1082,7 @@ Bare Shunt list:
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-ike.sh    --negodrop --failpass
 :
@@ -1111,7 +1111,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -1119,11 +1119,11 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-ike TRY NEGOTIATION PING
 down
 : oe.negodrop.failpass.fail-ike WAIT FOR IKE_SA_INIT TO FAIL
@@ -1136,7 +1136,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -1149,7 +1149,7 @@ up
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #
  ./oe-fail-child.sh  --negodrop --failpass
 :
@@ -1178,7 +1178,7 @@ loading group "/etc/ipsec.d/policies/road"
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -1188,7 +1188,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
@@ -1200,7 +1200,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 : oe.negodrop.failpass.fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
@@ -1213,5 +1213,5 @@ up
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority 3850449 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 road #

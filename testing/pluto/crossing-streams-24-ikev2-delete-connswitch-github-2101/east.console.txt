@@ -43,5 +43,5 @@ east #
 src 192.0.20.0/24 dst 192.0.3.254/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 east #

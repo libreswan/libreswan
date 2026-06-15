@@ -2277,7 +2277,11 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	 * Run through rtattributes looking for XFRMA_SEC_CTX
 	 * Instead, it should loop through all (known rtattributes
 	 * and use/log them.
+	 *
+	 * Also capture the first tmpl reqid: add_spd_kernel_policy()
+	 * planted reqid here.
 	 */
+	reqid_t acquire_reqid = 0;
 	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
@@ -2303,6 +2307,11 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 				jam(buf, " ealgos: %ju", (uintmax_t) tmpl->ealgos);
 				jam(buf, " calgos: %ju", (uintmax_t) tmpl->calgos);
 				jam(buf, "}");
+			}
+			if (acquire_reqid == 0) {
+				acquire_reqid = tmpl->reqid;
+				ldbg(logger, "netlink_acquire: captured reqid %ju from XFRMA_TMPL",
+				     (uintmax_t) acquire_reqid);
 			}
 			break;
 		}
@@ -2377,7 +2386,8 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.background = true, /* no whack so doesn't matter */
 		.sec_label = sec_label,
 		.state_id = acquire->seq,
-		.policy_id = acquire->policy.index,
+		.policy_id = (acquire_reqid != 0 ? acquire_reqid
+						 : acquire->policy.index),
 	};
 
 	initiate_ondemand(&b);

@@ -20,7 +20,7 @@ west #
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 west #
  # initiate a connection
 west #
@@ -34,7 +34,7 @@ west #
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 west #
  # wait for it to fail
 west #
@@ -45,7 +45,7 @@ west #
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 west #
  # let larval state expire
 west #
@@ -116,7 +116,7 @@ west #
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 west #
  ipsec _kernel state
 west #

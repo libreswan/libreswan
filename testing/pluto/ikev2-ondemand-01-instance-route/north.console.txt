@@ -20,7 +20,7 @@ north #
 src 192.0.3.254/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 north #
  ipsec unroute initiator
 north #
@@ -34,7 +34,7 @@ north #
 src 192.0.3.254/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 north #
  # one ping to trigger IKE
 north #
@@ -103,7 +103,7 @@ north #
 src 192.0.3.254/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 north #
  ipsec _kernel state
 north #

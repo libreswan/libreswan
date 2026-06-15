@@ -359,6 +359,14 @@ bool add_spd_kernel_policy(const struct spd *spd,
 					&nic_offload,
 					where);
 
+	/*
+	 * Plant the  reqid into the policy template so the kernel
+	 * echoes it back in XFRMA_TMPL.
+	 */
+	if (kernel_policy.nr_rules > 0) {
+		kernel_policy.rule[0].reqid = c->child.reqid;
+	}
+
 	if (!kernel_ops_policy_add(op, direction,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
@@ -450,6 +458,9 @@ bool replace_spd_kernel_policy(const struct spd *spd,
 					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
+	if (kernel_policy.nr_rules > 0) {
+		kernel_policy.rule[0].reqid = c->child.reqid;
+	}
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
 				 &spd->remote->client,
@@ -485,6 +496,9 @@ static bool restore_spd_kernel_policy(const struct spd *spd,
 					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
+	if (kernel_policy.nr_rules > 0) {
+		kernel_policy.rule[0].reqid = c->child.reqid;
+	}
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
 				 &spd->local->client,
 				 &spd->remote->client,
