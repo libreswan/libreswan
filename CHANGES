@@ -1,5 +1,11 @@
 See also https://libreswan.org/
 
+v5.3.1 (June 24, 2026)
+* Security: Fixes http://libreswan.org/security/CVE-2026-12413
+* Security: Fixes http://libreswan.org/security/CVE-2026-50721
+* Security: Fixes http://libreswan.org/security/CVE-2026-50722
+* IKEv2: Fix error: variable ‘local_proposal’ set but not used [Daiki]
+
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
