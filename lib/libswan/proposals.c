@@ -1591,9 +1591,9 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 	case PROPOSAL_TRANSFORM_addke7:
 		/*
 		 * Parse additional key exchanges.
+		 * explicit-only (;addkeN=)
 		 */
-		if (parser->policy->addke ||
-		    typed_how == TRANSFORM_TYPE_EXPLICIT) {
+		if (typed_how == TRANSFORM_TYPE_EXPLICIT) {
 			return parse_transform_algorithms(parser, proposal,
 							  transform_type, tokens,
 							  verbose);
@@ -1647,11 +1647,6 @@ bool parse_proposal(struct proposal_parser *parser,
 
 	struct tokens tokens = first_token(input, "-;+=", verbose);
 
-	/* hack to stop non ADDKE reporting missing ADDKE */
-	const struct transform_type *transform_roof =
-		(parser->policy->addke ? transform_type_roof :
-		 transform_type_addke1);
-
 	const struct transform_type *transform_type = transform_type_floor;
 
 	while (tokens.curr.token.ptr != NULL) {
@@ -1684,7 +1679,7 @@ bool parse_proposal(struct proposal_parser *parser,
 			}
 
 			if (parser->policy->version == IKEv1 &&
-			    tmp >= transform_roof) {
+			    tmp >= transform_type_addke1) {
 				proposal_error(parser, "transform '"PRI_SHUNK"' invalid",
 					       pri_shunk(tokens.curr.token));
 				return false;
@@ -1722,7 +1717,7 @@ bool parse_proposal(struct proposal_parser *parser,
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 		} else if (tokens.prev.delim != ';' &&
-			   transform_type < transform_roof) {
+			   transform_type <= transform_type_ke) {
 
 			typed_how = TRANSFORM_TYPE_IMPLICIT;
 
