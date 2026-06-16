@@ -974,7 +974,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	passert(md->chain[ISAKMP_NEXT_v2SK] == NULL);
 	passert(md->chain[ISAKMP_NEXT_v2SKF] != NULL);
 	pexpect(md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);
-	passert(md->digest_roof < elemsof(md->digest));
+	passert(md->digest_roof <= elemsof(md->digest));
 
 	/*
 	 * Pass 1: Compute the total payload size.
