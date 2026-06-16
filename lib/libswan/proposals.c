@@ -826,13 +826,15 @@ size_t jam_proposal(struct jambuf *buf,
 		if (transform->type == transform_type_integ && skip_integ) {
 			continue;
 		}
-		if (previous_type < transform->type) {
+		if (previous_type < transform->type &&
+			transform->type <= transform_type_ke) {
 			s += jam_string(buf, (first_transform ? "" : "-"));
 			first_transform = false;
 		} else if (previous_type == transform->type) {
 			pexpect(!first_transform);
 			s += jam_string(buf, "+");
 		} else {
+			/* backward jump, or sn/addke slot */
 			s += jam_string(buf, (first_transform ? "" : ";"));
 			first_transform = false;
 			s += jam_string(buf, transform->type->name);
