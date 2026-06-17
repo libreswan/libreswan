@@ -71,6 +71,7 @@
 #include "ikev2_ke.h"
 #include "ikev2_auth.h"
 #include "terminate.h"
+#include "ikev2_create_child_sa.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -292,6 +293,16 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	if (cc->config->child.send.esp_tfc_padding_not_supported &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
+	}
+
+	/* SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
+	if (!ike_auth_exchange &&
+	    larval_child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE) {
+		ldbg(logger, "sending SA_RESOURCE_INFO for Additional Child SA (cpu=%u)",
+		     larval_child->sa.st_v2_resource_info.cpu_id);
+		if (!emit_v2N(v2N_SA_RESOURCE_INFO, pbs)) {
+			return false;
+		}
 	}
 
 	return true;
@@ -1085,6 +1096,24 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		return n;
 	}
 
+	/* Check if initiator supports per-CPU Child SAs (RFC 9611) */
+	if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
+		child->sa.st_v2_resource_info.state = RESOURCE_INFO_RECV;
+		ldbg(child->sa.logger, "initiator supports per-CPU Child SAs");
+
+		/* Send SA_RESOURCE_INFO back if wanted for the connection */
+		struct connection *c = child->sa.st_connection;
+		if (c->config->child.clones.nr > 0) {
+			llog(RC_LOG, child->sa.logger, "sending SA_RESOURCE_INFO (clones=%u)",
+			     c->config->child.clones.nr);
+			if (!emit_v2N(v2N_SA_RESOURCE_INFO, sk_pbs)) {
+				return v2N_INVALID_SYNTAX;
+			}
+			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+			llog_sa(RC_LOG, child, "per-CPU SA negotiation complete");
+		}
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1194,6 +1223,36 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 */
 	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
+	/* Check if responder supports per-CPU Child SAs (RFC 9611) */
+	if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
+		passert(child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT);
+		child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+		llog_sa(RC_LOG, child, "per-CPU child SA negotiation complete");
+
+		/* Note: this Child SA is the Initial SA */
+
+		/* Create Additional Child SAs */
+		unsigned int num_additional_sas = child->sa.st_connection->config->child.clones.nr;
+		unsigned int num_to_create = (num_additional_sas < MAX_ADDITIONAL_SAS) ? num_additional_sas : MAX_ADDITIONAL_SAS;
+
+		if (num_to_create < num_additional_sas) {
+			llog_sa(RC_LOG, child,
+				"Additional Child SAs count reduced from %u to %u (limit)",
+				num_additional_sas, MAX_ADDITIONAL_SAS);
+		}
+
+		for (unsigned int i = 0; i < num_to_create; i++) {
+			llog_sa(RC_LOG, child, "creating Additional Child SA %u", i);
+			submit_v2_CREATE_CHILD_SA_additional_child(ike, child, i);
+		}
+
+	} else {
+		if (child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT) {
+			llog_sa(RC_LOG, child, "peer does not support per-CPU child SA");
+
+		}
+	}
+
 	/*
 	 * Was there an error notification for the Child SA in the
 	 * response?  The RFC says this list isn't definitive.
@@ -1243,6 +1302,17 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			/* handled */
 			return n;
 		}
+	}
+
+	/*
+	 * Check TS_MAX_QUEUE from responder (RFC 9611)
+	 *
+	 * This means the responder reached its limit for number of Additional
+	 * Child SA - no more Additional SAs.
+	 */
+	if (response_md->pd[PD_v2N_TS_MAX_QUEUE] != NULL) {
+		llog_sa(RC_LOG, child,
+			"responder reached maximum Additional Child SAs");
 	}
 
 	/*

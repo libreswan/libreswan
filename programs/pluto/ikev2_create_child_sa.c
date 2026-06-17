@@ -532,6 +532,55 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
+/*
+ * Create Additional Child SA (RFC 9611)
+ *
+ * Creates an Additional Child SA with identical Traffic Selectors as
+ * the Initial SA but bound to a specific CPU via cpu_id. Both TS and
+ * proposals are re-used. Lifetime is synchornized with the Initial SA.
+ */
+struct child_sa *submit_v2_CREATE_CHILD_SA_additional_child(struct ike_sa *ike,
+							      struct child_sa *initial_sa,
+							      uint32_t cpu_id)
+{
+	ldbg(ike->sa.logger, "initiating Additional Child SA (cpu=%u)", cpu_id);
+
+	struct child_sa *larval_child = new_v2_child_sa(initial_sa->sa.st_connection, ike, CHILD_SA,
+							 SA_INITIATOR,
+							 STATE_V2_REKEY_CHILD_I0);
+	whack_attach(&larval_child->sa, initial_sa->sa.logger);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
+
+	free_chunk_content(&larval_child->sa.st_ni);
+	free_chunk_content(&larval_child->sa.st_nr);
+
+	/* Mark as Additional SA (ie. cpu_id != CPU_ID_NONE) */
+	larval_child->sa.st_v2_resource_info.cpu_id = cpu_id;
+	larval_child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+
+	/* Use same policy and proposals as Initial SA */
+	larval_child->sa.st_policy = capture_child_rekey_policy(&initial_sa->sa);
+	larval_child->sa.st_v2_create_child_sa_proposals =
+		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child, verbose);
+	larval_child->sa.st_pfs_kem =
+		ikev2_proposals_first_kem(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
+
+	/* Synchronize lifetime with Initial SA */
+	larval_child->sa.st_replace_margin = initial_sa->sa.st_replace_margin;
+
+	ldbg(larval_child->sa.logger,
+	     "submitting crypto for Additional Child SA (cpu=%u) using IKE SA "PRI_SO,
+	     cpu_id, pri_so(ike->sa.st_serialno));
+
+	submit_ke_and_nonce(&larval_child->sa, &larval_child->sa, NULL,
+			    larval_child->sa.st_pfs_kem,
+			    queue_v2_CREATE_CHILD_SA_new_child_request,
+			    false, HERE);
+
+	return larval_child;
+}
+
+
 void llog_success_initiate_v2_CREATE_CHILD_SA_child_request(struct ike_sa *ike,
 							    const struct msg_digest *md)
 {
@@ -823,6 +872,78 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	return STF_OK; /* IKE */
 }
 
+/*
+ * Get number of Additional Child SAs for this connection (RFC 9611)
+ *
+ * Note: Any SA with cpu_id != CPU_ID_NONE is Additional
+ */
+static uint32_t count_additional_sas(struct connection *c)
+{
+	uint32_t count = 0;
+	struct state_filter sf = {
+		.connection_serialno = c->serialno,
+		.search = {
+			.order = NEW2OLD,
+			.where = HERE,
+		},
+	};
+
+	while (next_state(&sf)) {
+		struct child_sa *child = IS_CHILD_SA(sf.st) ? pexpect_child_sa(sf.st) : NULL;
+		if (child != NULL &&
+		    child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE) {
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/*
+ * Find first unused CPU (RFC 9611)
+ *
+ * Notes:
+ *
+ *  - once all CPUs are used, round-robin follows
+ *  - no load-balancing between connections
+ *
+ */
+static uint32_t assign_least_loaded_cpu(struct connection *c, uint32_t sa_index)
+{
+	uint32_t clones_nr = c->config->child.clones.nr;
+	uint32_t actual_cpus = nr_processors_online();
+	uint32_t num_cpus = (clones_nr < actual_cpus) ? clones_nr : actual_cpus;
+	bool used[MAX_ADDITIONAL_SAS] = {false};
+
+	/* Mark which CPU IDs are in use for this connection */
+	struct state_filter sf = {
+		.connection_serialno = c->serialno,
+		.search = {
+			.order = NEW2OLD,
+			.where = HERE,
+		},
+	};
+
+	while (next_state(&sf)) {
+		struct child_sa *child = IS_CHILD_SA(sf.st) ? pexpect_child_sa(sf.st) : NULL;
+		if (child != NULL &&
+		    child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE &&
+		    child->sa.st_v2_resource_info.cpu_id < num_cpus) {
+			used[child->sa.st_v2_resource_info.cpu_id] = true;
+		}
+	}
+
+	uint32_t cpu_id;
+	for (cpu_id = 0; cpu_id < num_cpus; cpu_id++) {
+		if (!used[cpu_id]) {
+			return cpu_id;
+		}
+	}
+
+	/* All CPUs are used - use round-robin (normal when multiple SAs per CPU) */
+	return sa_index % num_cpus;
+}
+
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct child_sa *unused_child,
 							  struct msg_digest *md)
@@ -854,12 +975,39 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, predecessor, verbose);
 
 	if (!verify_rekey_child_request_ts(larval_child, md)) {
-		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_TS_UNACCEPTABLE, empty_shunk/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		delete_child_sa(&larval_child);
-		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return STF_OK; /*IKE*/
+
+		/* Check if this is an Additional SA request (RFC 9611) */
+		if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL &&
+		    ike->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE) {
+			ldbg(ike->sa.logger, "duplicate TS allowed for Additional Child SA");
+			larval_child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+
+			/* Limit Additional Child SAs, reject more with TS_MAX_QUEUE */
+			uint32_t count = count_additional_sas(larval_child->sa.st_connection);
+			if (count >= MAX_ADDITIONAL_SAS) {
+				llog_sa(RC_LOG, larval_child,
+					"refusing Additional Child SA %u (Dlimit=%u)",
+					count + 1, MAX_ADDITIONAL_SAS);
+				record_v2N_response(ike->sa.logger, ike, md,
+						   v2N_TS_MAX_QUEUE, empty_shunk,
+						   ENCRYPTED_PAYLOAD);
+				delete_child_sa(&larval_child);
+				ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+				return STF_OK;
+			}
+
+			larval_child->sa.st_v2_resource_info.cpu_id = assign_least_loaded_cpu(larval_child->sa.st_connection, count);
+
+			ldbg(larval_child->sa.logger,
+			     "assigned Additional Child SA %u to CPU %u",
+			     count, larval_child->sa.st_v2_resource_info.cpu_id);
+		} else {
+			record_v2N_response(ike->sa.logger, ike, md,
+				v2N_TS_UNACCEPTABLE, empty_shunk/*no data*/, ENCRYPTED_PAYLOAD);
+			delete_child_sa(&larval_child);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			return STF_OK; /*IKE*/
+		}
 	}
 
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
