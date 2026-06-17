@@ -201,6 +201,8 @@ struct kernel_state {
 	uint32_t tfcpad;
 
 	const struct config_iptfs *iptfs;	/* non-NULL when enabled */
+
+	uint32_t cpu_id; /* CPU ID or CPU_ID_NONE (RFC 9611) */
 };
 
 struct kernel_ops {
