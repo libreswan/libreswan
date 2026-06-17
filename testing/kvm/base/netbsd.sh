@@ -73,7 +73,7 @@ case $(uname -m) in
     * ) tgz=tar.xz ;;
 esac
 
-ls ${sets}
+ls -lh ${sets}
 for f in ${sets}/[a-jl-z]*.${tgz} ${sets}/[a-jl-z]*.${tgz} ; do
     if test -r "${f}" ; then
 	echo $f
@@ -85,9 +85,14 @@ done
 for f in kern-GENERIC.${tgz} kern_generic.${tgz} ; do
     k=${sets}/${f}
     if test -r ${k} ; then
-	( cd /targetroot && tar xpvf ${k} )
+	( cd /targetroot && tar xpf ${k} )
 	break
     fi
+done
+
+for f in /mnt/*src.tgz ; do
+    echo $f
+    ( cd /targetroot && tar xpf ${f} )
 done
 
 
