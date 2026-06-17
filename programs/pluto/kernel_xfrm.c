@@ -1735,6 +1735,22 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		}
+
+		/*
+		 * RFC 9611 - Per-CPU Child SAs
+		 *
+		 *  - Initial SA = no cpu binding (CPU_ID_NONE)
+		 *  - Additional SA = cpu binding via XFRMA_SA_PCPU
+		 */
+		if (sa->cpu_id != CPU_ID_NONE) {
+			ldbg(logger, "%s() setting XFRMA_SA_PCPU to %u for Additional Child SA", __func__, sa->cpu_id);
+			attr->rta_type = XFRMA_SA_PCPU;
+			attr->rta_len = RTA_LENGTH(sizeof(sa->cpu_id));
+			memcpy(RTA_DATA(attr), &sa->cpu_id, sizeof(sa->cpu_id));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		}
+
 		if (sa->nopmtudisc) {
 			ldbg(logger, "%s() disabling Path MTU Discovery", __func__);
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
