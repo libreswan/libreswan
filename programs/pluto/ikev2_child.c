@@ -830,6 +830,28 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	     pri_so(child->sa.st_serialno),
 	     child->sa.st_connection->name);
 	unpend(ike, child->sa.st_connection);
+
+	/* If this is a rekeyed Initial SA... (RFC 9611) */
+	if (child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+		struct child_sa *predecessor = child_sa_by_serialno(child->sa.st_v2_rekey_pred);
+		if (predecessor != NULL &&
+		    predecessor->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
+		    predecessor->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE &&
+		    child->sa.st_connection->config->child.clones.nr > 0) {
+			llog_sa(RC_LOG, child, "Initial Child SA rekeyed - recreating %u Additional Child SAs",
+				child->sa.st_connection->config->child.clones.nr);
+
+			/* RESOURCE_INFO negotiation already happened (CPU_ID_NONE set already) */
+			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+
+			/* Recreate Additional SAs for new Initial SA */
+			unsigned int num_additional_sas = child->sa.st_connection->config->child.clones.nr;
+			for (unsigned int i = 0; i < num_additional_sas; i++) {
+				llog_sa(RC_LOG, child, "creating Additional Child SA %u for rekeyed Initial SA", i);
+				submit_v2_CREATE_CHILD_SA_additional_child(ike, child, i);
+			}
+		}
+	}
 }
 
 v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct child_sa *child,
