@@ -6,14 +6,6 @@ On NetBSD with ipsecif(4):
 - add tunnel describing ESP
 - add inet/inet6 describing what is tunneled
 
-=> BUG?
-
-   it seems IPv6 is limited to single addresses:
-     ifconfig inet6 2001:db8:45::45/64 2001:db8:23::23
-   is rejected, but:
-     ifconfig inet6 2001:db8:45::45/128 2001:db8:23::23
-   is ok
-
 Now the magic!
 
 By default, NetBSD autogenerates the kernel policy and then assigns

@@ -47,8 +47,8 @@ west# route add -inet6 2001:db8:23::/64 2001:db8:45::45
 east# echo 'add 192.1.2.45 192.1.2.23 esp 452304 -m transport -u '${reqid_ipv4}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 east# echo 'add 192.1.2.23 192.1.2.45 esp 234504 -m transport -u '${reqid_ipv4}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 
-east# # echo 'add 192.1.2.45 192.1.2.23 esp 452306 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
-east# # echo 'add 192.1.2.23 192.1.2.45 esp 234506 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+east# echo 'add 192.1.2.45 192.1.2.23 esp 452306 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+east# echo 'add 192.1.2.23 192.1.2.45 esp 234506 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 
 east# ipsec _kernel state
 
@@ -57,15 +57,15 @@ east# ipsec _kernel state
 west# echo 'add 192.1.2.45 192.1.2.23 esp 452304 -m transport -u '${reqid_ipv4}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 west# echo 'add 192.1.2.23 192.1.2.45 esp 234504 -m transport -u '${reqid_ipv4}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 
-west# # echo 'add 192.1.2.45 192.1.2.23 esp 452306 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
-west# # echo 'add 192.1.2.23 192.1.2.45 esp 234506 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+west# echo 'add 192.1.2.45 192.1.2.23 esp 452306 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+west# echo 'add 192.1.2.23 192.1.2.45 esp 234506 -m transport -u '${reqid_ipv6}' -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 
 west# ipsec _kernel state
 
 # east 05-netbsdeast-ping.sh
 
 east# ping-once.sh --up    198.18.45.45
-east# # ping-once.sh --up 2001:db8:45::45
+east# ping-once.sh --up 2001:db8:45::45
 
 east# ipsec _kernel state
 east# ipsec _kernel policy
@@ -73,7 +73,7 @@ east# ipsec _kernel policy
 # west 06-netbsdwest-ping.sh
 
 west# ping-once.sh --up    198.18.23.23
-west# # ping-once.sh --up 2001:db8:23::23
+west# ping-once.sh --up 2001:db8:23::23
 
 west# ipsec _kernel state
 west# ipsec _kernel policy
