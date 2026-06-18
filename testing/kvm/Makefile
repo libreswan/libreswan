@@ -1323,7 +1323,7 @@ KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_
 
 .PHONY: kvm-transmogrify kvm-uninstall
 kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
-kvm-uninstall: kvm-destroy-test-domains
+kvm-uninstall: kvm-undefine-test-domains
 kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
@@ -1332,7 +1332,7 @@ kvm-transmogrify-%: kvm-uninstall-%
 	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
-kvm-uninstall-%: kvm-destroy-test-domains
+kvm-uninstall-%: kvm-undefine-test-domains
 	: $@=$*
 	rm -f $(KVM_$($*)_TEST_XML)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
@@ -1437,7 +1437,7 @@ kvm-make-install-all-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORMS)): \
-kvm-install-%: kvm-destroy-test-domains
+kvm-install-%: kvm-undefine-test-domains
 	: $@
 	$(MAKE) kvm-make-install-base-$*
 	$(KVMSH) --shutdown $(KVM_PREFIX)$*
@@ -1534,17 +1534,17 @@ $(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
-.PHONY: kvm-destroy-test-domains
-kvm-destroy-test-domains:
-	./bin/destroy.sh $(notdir $(KVM_TEST_DOMAINS))
+.PHONY: kvm-undefine-test-domains
+kvm-undefine-test-domains:
+	./bin/undefine.sh $(notdir $(KVM_TEST_DOMAINS))
 
 .PHONY: kvm-shutdown
 
-kvm-shutdown: kvm-destroy-test-domains
+kvm-shutdown: kvm-undefine-test-domains
 kvm-shutdown: $(foreach os, $(KVM_OS), kvm-shutdown-$(os))
 
 $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORMS)): \
-kvm-shutdown-%: kvm-destroy-test-domains
+kvm-shutdown-%: kvm-undefine-test-domains
 	: $@=$*
 	./bin/shutdown.sh $(notdir $(KVM_$($*)_BASE_DOMAIN))
 	./bin/shutdown.sh $(notdir $(KVM_$($*)_UPGRADE_DOMAIN))
