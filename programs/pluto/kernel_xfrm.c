@@ -3112,6 +3112,46 @@ static bool qry_xfrm_iptfs_support(struct logger *logger) {
 	return qry_xfrm_base_support(logger, true, true);
 }
 
+static bool qry_xfrm_pcpu_support(struct logger *logger)
+{
+	uint8_t fakekey[max(AES_BLOCK_SIZE, SHA2_256_DIGEST_SIZE)];
+	get_rnd_bytes(&fakekey, sizeof(fakekey));
+
+	const struct encrypt_desc *cipher = &ike_alg_encrypt_aes_cbc;
+	shunk_t cipher_key = shunk2(fakekey, AES_BLOCK_SIZE);
+
+	const struct integ_desc *integ = &ike_alg_integ_sha2_256;
+	shunk_t integ_key = shunk2(fakekey, SHA2_256_DIGEST_SIZE);
+
+	struct kernel_state sa = {
+		.mode = KERNEL_MODE_TUNNEL,
+		.src.address = ipv4_info.address.zero,
+		.dst.address = ipv4_info.address.zero,
+		.proto = &ip_protocol_esp,
+		.direction = DIRECTION_OUTBOUND,
+		.spi = 1,
+		.state_id = DEFAULT_KERNEL_STATE_ID,
+		.reqid = 1,
+		.story = "PCPU Probe",
+		.encrypt = cipher,
+		.integ = integ,
+		.encrypt_key = cipher_key,
+		.integ_key = integ_key,
+		.cpu_id = 0,  /* Check support of XFRMA_SA_PCPU with CPU 0 */
+	};
+
+	if (netlink_add_sa(&sa, false, logger)) {
+		ldbg(logger, "kernel: XFRMA_SA_PCPU (per-CPU SAs) supported");
+		if (!xfrm_del_ipsec_spi(sa.spi, sa.proto,
+			&sa.src.address, &sa.dst.address,
+			"del percpu probe", logger)) {
+			llog(RC_LOG, logger, "kernel: per-CPU probe SA deletion failed - ignored");
+		}
+		return true;
+	}
+	ldbg(logger, "kernel: XFRMA_SA_PCPU (per-CPU SAs) not supported");
+	return false;
+}
 
 static bool qry_xfrm_migrate_support(const struct logger *logger)
 {
@@ -3264,6 +3304,26 @@ static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
+static err_t xfrm_pcpu_ipsec_sa_is_enabled(struct logger *logger)
+{
+	static enum {
+		UNKNOWN, ENABLED, DISABLED,
+	} state = UNKNOWN;
+	static const char disabled_message[] = "requires kernel with XFRMA_SA_PCPU support";
+
+	switch (state) {
+	case UNKNOWN:
+		state = (qry_xfrm_pcpu_support(logger) ? ENABLED : DISABLED);
+		return state == ENABLED ? NULL : disabled_message;
+	case ENABLED:
+		return NULL;
+	case DISABLED:
+		return disabled_message;
+	default:
+		bad_case(state);
+	}
+}
+
 static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
 {
 	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
@@ -3403,6 +3463,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,
 	.directional_ipsec_sa_is_enabled = xfrm_directional_ipsec_sa_is_enabled,
 	.iptfs_ipsec_sa_is_enabled = xfrm_iptfs_ipsec_sa_is_enabled,
+	.pcpu_ipsec_sa_is_enabled = xfrm_pcpu_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.sha2_truncbug_support = true,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
