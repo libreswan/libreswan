@@ -1172,6 +1172,9 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		return false;
 	}
 
+	vdbg("in %s() extracting info ...", __func__);
+	verbose.level++;
+
 	while (resp.base_cursor.len > 0) {
 
 		shunk_t ext_cursor;
@@ -1190,12 +1193,13 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				hunk_get_thing(&ext_cursor, const struct sadb_lifetime);
 			if (lifetime == NULL) {
 				llog_pexpect(logger, HERE, "getting policy");
-				return 0;
+				return false;
 			}
-			llog_sadb_lifetime(verbose, req.base, lifetime);
+			llog_sadb_lifetime(verbose, resp.base, lifetime);
 			*bytes = lifetime->sadb_lifetime_bytes;
 			*add_time = lifetime->sadb_lifetime_addtime;
-			break;
+			vdbg("bytes=%"PRIu64" lifetime=%"PRIu64"", *bytes, *add_time);
+			return true;
 		}
 		case SADB_EXT_ADDRESS_DST:
 		case SADB_EXT_ADDRESS_SRC:
@@ -1236,6 +1240,8 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		}
 		}
 	}
+
+	vdbg("SADB_EXT_LIFETIME_CURRENT not found");
 
 	return false;
 }
