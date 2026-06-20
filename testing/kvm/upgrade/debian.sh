@@ -27,6 +27,7 @@ bpfcc-tools		# for offcputime-bpfcc
 build-essential
 dnsutils		# dig nslookup
 flex
+fping
 gawk
 iptables
 libcap-ng-dev

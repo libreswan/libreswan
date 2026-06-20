@@ -26,6 +26,7 @@ add bison          bison-doc
 add bsd-compat-headers
 add coreutils      coreutils-doc
 add curl-dev       curl-doc
+add fping          fping-doc
 add flex           flex-doc
 add gawk           gawk-doc
 add gcc            gcc-doc
