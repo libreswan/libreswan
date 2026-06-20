@@ -198,6 +198,24 @@ static bool recv_msg(struct inbuf *msg, const char *what, struct verbose verbose
 	return true;
 }
 
+static bool msg_send(const struct outbuf *req,
+		     struct verbose verbose)
+{
+	vdbg("in %s() sending message for %s",
+	     __func__, req->what);
+	verbose.level++;
+	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
+
+	ssize_t s = send(pfkeyv2_fd, req->buf.ptr,
+			 req->ptr - req->buf.ptr, 0);
+	if (s < 0) {
+		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
+		return false;
+	}
+
+	return true;
+}
+
 static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg *req,
 		     struct verbose verbose)
 {
@@ -272,15 +290,16 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
 
-	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - req->buf.ptr, 0);
-	if (s < 0) {
-		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
+	if (!msg_send(req, verbose)) {
 		return false;
 	}
 
-	return msg_recv(recv, req->what, msg, verbose);
+	if (!msg_recv(recv, req->what, msg, verbose)) {
+		return false;
+	}
+
+	return true;
 }
 
 static struct sadb_msg *put_sadb_base(struct outbuf *msg,
