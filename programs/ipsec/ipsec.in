@@ -797,150 +797,73 @@ ipsec_checknss() {
 	shift
     done
 
-    if [ -d "${IPSEC_NSSDIR}" -a -w "${IPSEC_NSSDIR}" ]; then
-	IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
-	# Handle nssdir default change from /etc/ipsec.d to /var/lib/ipsec/nss
-	if [ "${IPSEC_CONFDDIR}" != "${IPSEC_NSSDIR}" -a \
-	    "${cmd}" = "checknss" ]
-	then
-	    # Check for legacy nss db format in old location and give failure
-	    # We can't handle two operations at same time.
-	    if [ -f "${IPSEC_CONFDDIR}/cert8.db" -a \
-		! -f "${IPSEC_CONFDDIR}/cert9.db" -a \
-		! -f "${IPSEC_NSSDIR}/cert9.db" ]
-	    then
-		echo "Failure - we cannot handle both nss db format conversion and nss db move to new location in one run." >&2
-		echo "Run \"ipsec checknss --nssdir ${IPSEC_CONFDDIR}\" manually first to convert db format" >&2
-		exit 4
-	    fi
-	    for file in cert9.db key4.db pkcs11.txt; do
-		if [ -f "${IPSEC_CONFDDIR}/${file}" -a \
-		    ! -f "${IPSEC_NSSDIR}/${file}" ]
-		then
-		    if ! mv "${IPSEC_CONFDDIR}/${file}" \
-			"${IPSEC_NSSDIR}/${file}"
-		    then
-			echo "Failed to mv ${IPSEC_CONFDDIR}/${file} ${IPSEC_NSSDIR}/${file}" >&2
-			exit 4
-		    fi
-		fi
-	    done
-	fi
-	# if we have old database
-	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
-	    -f "${IPSEC_NSSDIR}/key3.db" -o \
-	    -f "${IPSEC_NSSDIR}/secmod.db" ]
-	then
-	    if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
-		! -f "${IPSEC_NSSDIR}/key4.db" ]; then
-		IMPORTDBPW=""
-		NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXXXX)
-		if [ $? -gt 0 ]; then
-		    echo "Failed to create temporary directory for NSS db migration" >&2
-		    exit 4
-		fi
-		# save current umask
-		umask=$(umask)
-		# set safe umask
-		umask 077
-		echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
-		# this section works around a few certutil quirks
-		# to maintain the current password and merge keys
-		@@CERTUTIL@@ -N -d sql:"${NSSTMP}" --empty-password
-		if [ $? -gt 0 ]; then
-		    echo "Failed to initialize nss database sql:${NSSTMP}" >&2
-		    exit 4
-		fi
-		if [ -f "${IPSEC_NSSPW}" ]; then
-		    # Look for FIPS format of token:pw, or just the pw
-		    grep -q ':' "${IPSEC_NSSPW}"
-		    if [ $? -eq 0 ]; then
-			cut -d':' -f2 "${IPSEC_NSSPW}" \
-			    > "${NSSTMP}/nsspassword.txt"
-			cut -d':' -f2 "${IPSEC_NSSPW}" \
-			    >> "${NSSTMP}/nsspassword.txt"
-		    else
-			cat "${IPSEC_NSSPW}" > "${NSSTMP}/nsspassword.txt"
-			cat "${IPSEC_NSSPW}" >> "${NSSTMP}/nsspassword.txt"
-		    fi
-		    # For the empty password prompt:
-		    printf "\n\n" > "${NSSTMP}/nsspassword2.txt"
-		    # Change blank pw to the current, and use
-		    # for certutil --upgrade-merge
-		    @@CERTUTIL@@ -W -d sql:"${NSSTMP}" \
-			-f "${NSSTMP}/nsspassword2.txt" \
-			-@ "${NSSTMP}/nsspassword.txt"
-		    DBPW="-f ${NSSTMP}/nsspassword.txt -@ ${NSSTMP}/nsspassword.txt"
-		    IMPORTDBPW="-f ${NSSTMP}/nsspassword.txt"
-		fi
-		# restore umask
-		umask ${umask}
-		@@CERTUTIL@@ --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
-		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
-		rc=$?
-		if [ ${rc} -ne 0 ]; then
-		    echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against ${IPSEC_NSSDIR_SQL}"
-		    exit ${rc}
-		fi
-		# import cacerts and crls
-		if [ -d "${CACERTDIR}" ]; then
-		    for file in "${CACERTDIR}"/*; do
-			if [ -f "${file}" ]; then
-			    filename=$(basename "${file}")
-			    name=${filename%%.*}
-			    @@CERTUTIL@@ -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
-			    [ $? -eq 0 ] || printf "%s\n" "${file}"
-			fi
-		    done
-		fi
-		if [ -d "${CRLDIR}" ]; then
-		    for file in "${CRLDIR}"/*; do
-			if [ -f "${file}" ]; then
-			    @@CRLUTIL@@ -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
-			    [ $? -eq 0 ] || printf "%s\n" "${file}"
-			fi
-		    done
-		fi
-		cp "${NSSTMP}"/*.db "${NSSTMP}"/*.txt "${IPSEC_NSSDIR}"
-		rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
-		rmdir "${NSSTMP}"
-		echo "NSS upgrade complete"
-	    fi
-	    exit 0
-	fi	# old database
-	if [ -f "${IPSEC_NSSDIR}/cert9.db" -o -f "${IPSEC_NSSDIR}/key4.db" ]; then
-	    if [ "${cmd}" = "initnss" ]; then
-		echo "NSS database already initialised - aborted"
-		echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
-		echo "To wipe the old modules, issue: rm ${IPSEC_NSSDIR}/pkcs11.txt"
-		exit 42
-	    else
-		if [ "${set_trusts}" = "yes" ]; then
-		    set_nss_db_trusts
-		fi
-		exit 0
-	    fi
-	fi
-	echo "Initializing NSS database"
-	echo
-	if [ -r "${IPSEC_NSSDIR}/pkcs11.txt" ]; then
-	    echo "WARNING: using existing modules from ${IPSEC_NSSDIR}/pkcs11.txt" 1>&2
-	fi
-
-	@@CERTUTIL@@ -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
-	if [ $? -gt 0 ]; then
-	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
-	    exit 4
-	fi
-	restorecon="$(which restorecon 2>/dev/null)"
-	if [ -n "${restorecon}" -a -x "${restorecon}" ]; then
-	    "${restorecon}" -Rv "${IPSEC_NSSDIR}"
-	fi
-	exit 0
-    else
-	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
+    if [ ! -d "${IPSEC_NSSDIR}" -o ! -w "${IPSEC_NSSDIR}" ]; then
+	echo "FATAL ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
 	exit 1
     fi
+
+    # Reject old DB
+    old_db="cert8.db key3.db secmod.db"
+    for dir in "${IPSEC_NSSDIR}" "${IPSEC_CONFDDIR}" ; do
+	for db in ${old_db} ; do
+	    if [ -f "${dir}/${db}" ]; then
+		echo "FATAL ERROR: NSS Berkley DB format (${dir}/${db}) is no longer supported" >&2
+		echo "See certutil(1) for how to upgrade the NSS database to SQLITE." >&2
+		exit 4
+	    fi
+	done
+    done
+
+    # Handle nssdir default change from /etc/ipsec.d to /var/lib/ipsec/nss
+    if [ "${IPSEC_CONFDDIR}" != "${IPSEC_NSSDIR}" -a \
+			     "${cmd}" = "checknss" ]
+    then
+	for file in cert9.db key4.db pkcs11.txt; do
+	    if [ -f "${IPSEC_CONFDDIR}/${file}" -a \
+		    ! -f "${IPSEC_NSSDIR}/${file}" ]
+	    then
+		if ! mv "${IPSEC_CONFDDIR}/${file}" \
+		     "${IPSEC_NSSDIR}/${file}"
+		then
+		    echo "FATAL ERROR: failed to: mv ${IPSEC_CONFDDIR}/${file} ${IPSEC_NSSDIR}/${file}" >&2
+		    exit 4
+		fi
+	    fi
+	done
+    fi
+
+    # Already Initialized?
+    if [ -f "${IPSEC_NSSDIR}/cert9.db" -o -f "${IPSEC_NSSDIR}/key4.db" ]; then
+	if [ "${cmd}" = "initnss" ]; then
+	    echo "FATAL ERROR: NSS database already initialised - aborted"
+	    echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
+	    echo "To wipe the old modules, issue: rm ${IPSEC_NSSDIR}/pkcs11.txt"
+	    exit 42
+	else
+	    if [ "${set_trusts}" = "yes" ]; then
+		set_nss_db_trusts
+	    fi
+	    exit 0
+	fi
+    fi
+
+    echo "Initializing NSS database"
+    echo
+    if [ -r "${IPSEC_NSSDIR}/pkcs11.txt" ]; then
+	echo "WARNING: using existing modules from ${IPSEC_NSSDIR}/pkcs11.txt" 1>&2
+    fi
+
+    IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+    @@CERTUTIL@@ -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
+    if [ $? -gt 0 ]; then
+	echo "FATAL ERROR: failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
+	exit 4
+    fi
+    restorecon="$(which restorecon 2>/dev/null)"
+    if [ -n "${restorecon}" -a -x "${restorecon}" ]; then
+	"${restorecon}" -Rv "${IPSEC_NSSDIR}"
+    fi
+    exit 0
 }
 
 ipsec_nsscmd() {
