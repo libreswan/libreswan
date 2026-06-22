@@ -14,38 +14,14 @@ body:
         options._
   - type: textarea
     attributes:
-      label: Please Tell Us About Your Operating System
+      label: Please Tell Us About Your System Configuration
       description: |
-        - what is the local machine's Operating System?<br>
-          Please include the output from `uname -a`.<br>
-          For build problems, also include `/etc/os-release` (when available).
-        - which Liberswan version is the local machine running?<br>
-          Please include the output from `ipsec whack --version`.<br>
-          You're more likely to get someones attention when the
-          problem has been reproduced in the current release
-        - is the peer different?<br> If so, please include its
-          details.
-        - please do not include screen grabs<br>
-          Instead format console output using triple-backticks
-      placeholder: Your system details
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Please Describe Your IPsec Configuration
-      description: |
-        - what are the host and client addresses?
-        - are you using IKEv1 or IKEv2?<br>
-          IKEv1 is [deprecated](https://www.rfc-editor.org/rfc/rfc9395).<br>
-          You're more likely to get attention when a problem can
-          be reproduced using IKEv2.
-        - are you using ESP or AH, TRANSPORT or TUNNEL mode, IPCOMP, IP-TFS?<br>
-          AH has been made largely obsolete by `esp=null`.
-        - (on Linux) are you using VTI or IPsec Interfaces (XFRMI)?<br>
-          If you're using VTI then please try IPsec Interfaces.
-        - please do not include screen grabs<br>
-          Instead format console output using triple-backticks
+        - please start by filling in as many "Fields" (on the right) as possible
+        - for connection problems, please describe the topology <br> i.e., which machines are involved, and what they are running (`uname -a`)
+        - for build problems, please include `/etc/os-release` (when available).
         - if possible, include `ipsec.conf` (wrapped in markdown's tripple backticks)
+        - please do not include screen grabs <br> Instead format console output using triple-backticks
+      placeholder: Your system details
     validations:
       required: true
   - type: textarea
@@ -54,16 +30,11 @@ body:
       description: |
         Please also tell us, what you think should happen.<br>
         - include relevant log output wrapped in triple-backticks
-          + include the log of the connection being loaded<br>
-            There should be no warnings!
-          + include the entire IKE and Child exchange<br>
-            Not just the last line
-          + remove sensitive details; public addresses? and certificate IDs?<br>
-            but keep as much information as possible
-          + but do not include debug logs<br>
-            _Initially, we're interested in the big picture_.
-        - please do not include screen grabs<br>
-          Instead format console output using triple-backticks
+          + include the log of the connection being loaded <br> There should be no warnings!
+          + include the entire IKE and Child exchange <br> Not just the last line
+          + remove sensitive details; public addresses? and certificate IDs? <br> but keep as much information as possible
+          + but do not include debug logs <br> _Initially, we're interested in the big picture_.
+        - please do not include screen grabs <br> Instead format console output using triple-backticks
     validations:
       required: true
   - type: markdown
