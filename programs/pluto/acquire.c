@@ -106,9 +106,31 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	struct connection *c = find_connection_for_packet(b->packet,
-							  b->sec_label,
-							  b->logger);
+	struct connection *c = NULL;
+
+	/*
+	 * Fast path: the kernel echoed our planted reqid in the
+	 * ACQUIRE tmpl
+	 */
+	if (b->policy_id != 0 && b->sec_label.len == 0) {
+		c = connection_by_reqid((reqid_t) b->policy_id);
+		if (c != NULL && !oriented(c)) {
+			/* defensive: treat as miss */
+			c = NULL;
+		}
+		if (c != NULL) {
+			ldbg(b->logger,
+			     "reqid lookup matched connection %s (policy_id "PRI_REQID")",
+			     c->name, pri_reqid((reqid_t) b->policy_id));
+		}
+	}
+
+	if (c == NULL) {
+		c = find_connection_for_packet(b->packet,
+					       b->sec_label,
+					       b->logger);
+	}
+
 	if (c == NULL) {
 		/*
 		 * No connection explicitly handles the clients and
@@ -150,6 +172,15 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	whack_attach(cp, b->logger);
 	LLOG_JAMBUF(RC_LOG, cp->logger, buf) {
 		jam_kernel_acquire(buf, b);
+	}
+
+
+	if (b->by_acquire) {
+		if (cp->negotiating_child_sa != SOS_NOBODY) {
+			ldbg(cp->logger,
+			     "ACQUIRE for connection with in-progress child SA "PRI_SO": rekey already underway, ACQUIRE will be ignored",
+			     pri_so(cp->negotiating_child_sa));
+		}
 	}
 
 	const struct child_policy policy = child_sa_policy(cp);

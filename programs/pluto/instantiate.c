@@ -708,6 +708,13 @@ static struct connection *oppo_instantiate(struct connection *t,
 	PEXPECT(d->logger, oriented(d));
 	build_connection_spds_from_proposals(d);
 
+	/*
+	 * Force a unique reqid on every oppo clone, even when the
+	 * template config pinned sa_reqid.
+	 */
+	d->child.reqid = gen_reqid();
+	connection_db_rehash_reqid(d);
+
 	vdbg_connection(d, verbose, where, "%s: from %s",
 			func, t->name);
 	return d;

@@ -79,6 +79,7 @@ struct kernel_acquire;
  */
 
 struct connection *connection_by_serialno(co_serial_t serialno);
+struct connection *connection_by_reqid(reqid_t reqid);
 
 /*
  * IKE SA configuration.
@@ -929,6 +930,7 @@ struct connection {
 		struct list_entry that_id;
 		struct list_entry clonedfrom;
 		struct list_entry host_pair;
+		struct list_entry reqid;
 	} connection_db_entries;
 
 	struct pending *pending;
@@ -1163,6 +1165,7 @@ bool next_spd(struct spd_filter *srf);
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
 void connection_db_rehash_that_id(struct connection *c);
 void connection_db_rehash_host_pair(struct connection *c);
+void connection_db_rehash_reqid(struct connection *c);
 
 void spd_db_rehash_remote_client(struct spd *sr);
 
