@@ -130,9 +130,7 @@ rise #
 "rise-set" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet0)
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet0)
-"rise-set" #2: failed to pull traffic counters from outbound IPsec SA
-"rise-set" #2: failed to pull traffic counters from inbound IPsec SA
-"rise-set" #2: ESP traffic information: in=0B out=0B
+"rise-set" #2: ESP traffic information: in=168B out=304B
 rise #
  setkey -F
 rise #

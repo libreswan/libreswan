@@ -190,7 +190,8 @@ void llog_sadb_key(struct verbose verbose, const struct sadb_msg *b,
 	JAM_FOOTER();
 }
 
-void llog_sadb_lifetime(struct verbose verbose, const struct sadb_msg *b,
+void llog_sadb_lifetime(struct verbose verbose,
+			const struct sadb_msg *b,
 			const struct sadb_lifetime *m)
 {
 	JAM_HEADER_SADB(sadb_lifetime);

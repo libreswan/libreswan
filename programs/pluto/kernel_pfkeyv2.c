@@ -198,6 +198,24 @@ static bool recv_msg(struct inbuf *msg, const char *what, struct verbose verbose
 	return true;
 }
 
+static bool msg_send(const struct outbuf *req,
+		     struct verbose verbose)
+{
+	vdbg("in %s() sending message for %s",
+	     __func__, req->what);
+	verbose.level++;
+	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
+
+	ssize_t s = send(pfkeyv2_fd, req->buf.ptr,
+			 req->ptr - req->buf.ptr, 0);
+	if (s < 0) {
+		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
+		return false;
+	}
+
+	return true;
+}
+
 static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg *req,
 		     struct verbose verbose)
 {
@@ -272,15 +290,16 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
 
-	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - req->buf.ptr, 0);
-	if (s < 0) {
-		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
+	if (!msg_send(req, verbose)) {
 		return false;
 	}
 
-	return msg_recv(recv, req->what, msg, verbose);
+	if (!msg_recv(recv, req->what, msg, verbose)) {
+		return false;
+	}
+
+	return true;
 }
 
 static struct sadb_msg *put_sadb_base(struct outbuf *msg,
@@ -1153,6 +1172,9 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		return false;
 	}
 
+	vdbg("in %s() extracting info ...", __func__);
+	verbose.level++;
+
 	while (resp.base_cursor.len > 0) {
 
 		shunk_t ext_cursor;
@@ -1171,12 +1193,13 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				hunk_get_thing(&ext_cursor, const struct sadb_lifetime);
 			if (lifetime == NULL) {
 				llog_pexpect(logger, HERE, "getting policy");
-				return 0;
+				return false;
 			}
-			llog_sadb_lifetime(verbose, req.base, lifetime);
+			llog_sadb_lifetime(verbose, resp.base, lifetime);
 			*bytes = lifetime->sadb_lifetime_bytes;
 			*add_time = lifetime->sadb_lifetime_addtime;
-			break;
+			vdbg("bytes=%"PRIu64" lifetime=%"PRIu64"", *bytes, *add_time);
+			return true;
 		}
 		case SADB_EXT_ADDRESS_DST:
 		case SADB_EXT_ADDRESS_SRC:
@@ -1217,6 +1240,8 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		}
 		}
 	}
+
+	vdbg("SADB_EXT_LIFETIME_CURRENT not found");
 
 	return false;
 }
