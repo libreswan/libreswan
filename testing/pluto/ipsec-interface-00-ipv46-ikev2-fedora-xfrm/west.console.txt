@@ -18,15 +18,15 @@ west #
 west #
  # ignore forward policy
 west #
- #ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir fwd tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
+ #ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir fwd tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid REQID mode tunnel
 west #
- ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir out tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
+ ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir out tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid REQID mode tunnel
 west #
- ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir in  tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
+ ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir in  tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid REQID mode tunnel
 west #
- ip.sh xfrm policy add src ::/0 dst ::/0 if_id 1 dir out tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
+ ip.sh xfrm policy add src ::/0 dst ::/0 if_id 1 dir out tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid REQID mode tunnel
 west #
- ip.sh xfrm policy add src ::/0 dst ::/0 if_id 1 dir in  tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
+ ip.sh xfrm policy add src ::/0 dst ::/0 if_id 1 dir in  tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid REQID mode tunnel
 west #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
