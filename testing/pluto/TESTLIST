@@ -1474,7 +1474,7 @@ kvmplutotest	seccomp-01-enabled-ikev1	good	github/795
 kvmplutotest	seccomp-01-enabled-ikev2	good	github/795
 kvmplutotest	seccomp-02-tolerant-ikev1	good	github/795
 kvmplutotest	seccomp-02-tolerant-ikev2	good	github/795
-kvmplutotest	seccomp-03-updown-ikev2		wip	github/492
+kvmplutotest	seccomp-03-updown-ikev2		good	github/492
 
 #################################################################
 #
