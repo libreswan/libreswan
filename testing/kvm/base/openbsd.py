@@ -20,8 +20,6 @@ import sys
 import time
 import os
 
-FILTER_OUTPUT = False
-
 def es(child, expect, send, t=60):
     try:
         print("expecting", expect);

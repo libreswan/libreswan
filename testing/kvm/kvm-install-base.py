@@ -63,7 +63,7 @@ OS = {
 }
 
 for os in OS:
-    for attr in ["install_base", "FILTER_OUTPUT"]:
+    for attr in ["install_base"]:
         # will barf when missing
         getattr(OS[os], attr)
 
@@ -127,8 +127,9 @@ class State(Enum):
     #
     STRING_TERMINATOR = auto()
 
-
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
 # https://en.wikipedia.org/wiki/ANSI_escape_code#OSC
+
 class EscapeStringSequence(Enum):
     OSC = ord(']')
     ST  = ord('\\')
@@ -136,7 +137,9 @@ class EscapeStringSequence(Enum):
     SOS = ord('X')
     PM  = ord('^')
     APC = ord('_')
-    # linux stuff see console_codes(4)
+
+# linux stuff see console_codes(4)
+class LinuxConsoleCodes(Enum):
     RIS = ord('c')
     IND = ord('D')
     NEL = ord('E')
@@ -171,7 +174,7 @@ class ControlSequenceFinalByte(Enum):
     ERASE_CHARACTERS = ord('X')
 
 # https://en.wikipedia.org/wiki/ISO/IEC_2022#Character_set_designations
-_character_set_intermediate = re.compile(rb'[\x20-\x2f]')
+_character_set_intermediate = re.compile(rb'[\x20-\x2f]') # " !"#$%&,,,
 _character_set_final = re.compile(rb'[\x30-\x7e]')
 
 class Filter:
@@ -179,15 +182,7 @@ class Filter:
         self.stream=sys.stdout.buffer
         self.state = State.NORMAL
         self.sequence = b''
-
-    def _putChar(self, char):
-        if char <= 0x1f:
-            self.stream.write(Char(char).safe)
-            return
-        if char > 0x7f:
-            self.stream.write(f'<{char}>'.encode())
-            return
-        self.stream.write(bytes([char]));
+        self.echo = True
 
     def _processChar(self, char):
         # print(self.state, type(char), char)
@@ -199,7 +194,7 @@ class Filter:
                     self.state = State.ESCAPE_SEQUENCE
                     self.sequence = b''
                     return
-                self._putChar(char)
+                self.stream.write(byte)
                 return
 
             case State.ESCAPE_SEQUENCE:
@@ -215,10 +210,20 @@ class Filter:
                     self.sequence += byte
                     return
                 if char in EscapeStringSequence:
-                    # https://en.wikipedia.org/wiki/ANSI_escape_code#OSC et.al.
+                    # https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
+                    # flip echo based on ST
+                    echo = (char == EscapeStringSequence.ST.value)
                     self.stream.write(b'<')
                     self.stream.write(EscapeStringSequence(char).name.encode());
-                    self.stream.write(b'>')
+                    self.stream.write(echo and b':ECHO>' or b':NOECHO>')
+                    self.state = State.NORMAL
+                    return
+                if char in LinuxConsoleCodes:
+                    # console_codes(4)
+                    #self.stream.write(b'<')
+                    #self.stream.write(LinuxConsoleCodes(char).name.encode());
+                    #self.stream.write(b'>')
+                    self.stream.write(Char.ESC.byte + byte)
                     self.state = State.NORMAL
                     return
 
@@ -265,7 +270,7 @@ class Filter:
                     return
                 if _character_set_final.match(byte):
                     self.sequence += byte
-                    #self.stream.write(b"<nF>")
+                    self.stream.write(Char.ESC.byte + self.sequence)
                     self.state = State.NORMAL
                     return
 
@@ -274,7 +279,7 @@ class Filter:
         self.state = State.NORMAL
         self.stream.write(b'<ESC')
         self.stream.write(self.sequence)
-        self._putChar(char)
+        self.stream.write(byte)
         self.stream.write(b'>')
 
     def write(self, record):
@@ -292,19 +297,20 @@ class Raw:
     def flush(self):
         self.stream.flush()
 
-if os.FILTER_OUTPUT:
+echo = False
+if echo:
+    logfile = Raw()
+else:
     logfile = Filter()
     print("========================================")
     print("   ENGAGING CONTROL CHARACTER SHIELD")
     print("        BLOCKING CHARACTERS")
     print("     THAT MESS WITH THE TERMINAL")
     print("========================================")
-else:
-    logfile = Raw()
 
 child = pexpect.spawn(command=command[0],
                       args=command[1:],
                       logfile=logfile,
-                      echo=False)
+                      echo=echo)
 
 os.install_base(child, param)

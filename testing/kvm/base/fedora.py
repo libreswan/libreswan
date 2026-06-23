@@ -20,8 +20,6 @@
 import pexpect
 import sys
 
-FILTER_OUTPUT = True
-
 def i(child):
     '''go interactive then quit'''
     child.logfile = None
