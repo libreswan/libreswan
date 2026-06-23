@@ -7,8 +7,6 @@ ipsec algparse --tp --ikev1 --pfs
 ipsec algparse --tp --ikev2
 ipsec algparse --tp --ikev2 --pfs
 
-ipsec algparse --tp --ikev2 --pfs --addke
-
 # Run the algorithm tests; there should be no fails.
 
 ipsec algparse --ta > /dev/null

@@ -25,10 +25,10 @@ west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/pluto-up-down.sh ike=aes-sha1-modp8192-ml_kem_768 -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes-sha1-modp8192;addke1=ml_kem_768' -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo ike=aes-sha1-modp8192-ml_kem_768
+ ipsec addconn --name algo ike=aes-sha1-modp8192;addke1=ml_kem_768
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -46,10 +46,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh ike=aes-sha1-modp8192-ml_kem_768 fragmentation=no -- -I 192.0.1.254 192.0.2.254
+ ../../guestbin/pluto-up-down.sh 'ike=aes-sha1-modp8192;addke1=ml_kem_768' fragmentation=no -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo ike=aes-sha1-modp8192-ml_kem_768 fragmentation=no
+ ipsec addconn --name algo ike=aes-sha1-modp8192;addke1=ml_kem_768 fragmentation=no
 "algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

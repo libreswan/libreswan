@@ -18,7 +18,6 @@ static enum ike_version ike_version = IKEv2;
 static bool ignore_transform_lookup_error = false;
 static bool fips = false;
 static bool pfs = false;
-static bool addke = false;
 static int failures = 0;
 
 #define ERROR 124
@@ -38,9 +37,7 @@ static void check(const struct ike_alg_protocol *protocol,
 	if (fips) {
 		printf(" --fips");
 	}
-	if (addke) {
-		printf(" --addke");
-	}
+
 	switch (ike_version) {
 	case IKEv1: printf(" --ikev1"); break;
 	case IKEv2: printf(" --ikev2"); break;
@@ -67,7 +64,6 @@ static void check(const struct ike_alg_protocol *protocol,
 		.version = ike_version,
 		.alg_is_ok = protocol->alg_is_ok,
 		.pfs = pfs,
-		.addke = addke,
 		.stream = WHACK_STREAM,
 		.logger = logger,
 		.check_pfs_vs_ke = protocol->pfs_vs_dh,
@@ -367,7 +363,7 @@ static void test_esp(struct logger *logger)
 	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
 	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
 
-	esp(addke && ike_version == IKEv2, "aes_gcm;modp2048-modp2048");
+	esp(false, "aes_gcm;modp2048-modp2048"); /* dash-addke removed; use ;addke1= */
 
 	esp(false, "ke=modp8192"); /* missing encryption */
 
@@ -433,7 +429,7 @@ static void test_ah(struct logger *logger)
 #endif
 	ah(false, "ripemd"); /* support removed */
 
-	ah(addke && ike_version == IKEv2, "sha2;modp2048-modp2048");
+	ah(false, "sha2;modp2048-modp2048"); /* dash-addke removed; use ;addke1= */
 
 	ah(ike_version == IKEv2, "ke=modp8192");
 
@@ -541,7 +537,7 @@ static void test_ike(struct logger *logger)
 
 	/* addke */
 
-	ike(addke && ike_version == IKEv2, "aes;modp2048-modp2048");
+	ike(false, "aes;modp2048-modp2048"); /* dash-addke removed; use ;addke1= */
 	ike(ike_version == IKEv2, "aes;addke1=modp2048");
 	ike(ike_version == IKEv2, "aes-sha2;prf=sha1;ke=dh20"); /*additive*/
 	ike(false, "ke=modp8192"); /* missing encrypt */
@@ -568,7 +564,6 @@ enum opt {
 	OPT_TP,
 	OPT_TA,
 	OPT_PFS,
-	OPT_ADDKE,
 	OPT_FIPS,
 	OPT_IGNORE,
 	OPT_NSSDIR,
@@ -588,7 +583,6 @@ const struct option optarg_options[] = {
 	{ OPT("ta"), no_argument, NULL, OPT_TA, },
 	{ OPT("tp"), no_argument, NULL, OPT_TP, },
 	{ OPT("pfs", "{yes,no}"), optional_argument, NULL, OPT_PFS, },
-	{ OPT("addke", "{yes,no}"), optional_argument, NULL, OPT_ADDKE, },
 	{ OPT("fips", "{yes,no}"), optional_argument, NULL, OPT_FIPS, },
 	NSS_OPTS,
 	{ 0, 0, 0, 0 }
@@ -638,9 +632,6 @@ int main(int argc, char *argv[])
 			continue;
 		case OPT_PFS:
 			pfs = optarg_bool(logger);
-			continue;
-		case OPT_ADDKE:
-			addke = optarg_bool(logger);
 			continue;
 		case OPT_FIPS:
 			if (optarg_bool(logger)) {

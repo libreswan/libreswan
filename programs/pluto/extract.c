@@ -3965,7 +3965,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_transform_lookup_error = (wm->wm_ike == NULL),
-			.addke = intermediate,
 		};
 
 		struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
@@ -4022,9 +4021,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_transform_lookup_error = (encap_alg == NULL),
-#if 0
-			.addke = intermediate,
-#endif
 		};
 
 		/*
