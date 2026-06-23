@@ -168,7 +168,7 @@ def _run_command(args, domain, command, all_verbose_txt, timeout):
                 txt.write(ascii) # convert byte to string
             if args.log_console_output:
                 for line in ascii.splitlines():
-                    domain.logger.info(line)
+                    domain.logger.info(f"{repr(line)}")
 
         # with the output done, handle what matched and determine the
         # status.
