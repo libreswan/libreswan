@@ -15,7 +15,8 @@ v5.4 (unreleased)
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
   - log default crypto policy during startup [Vinayak Sandur #2759 #2753]
 * Kernel:
-  - fix metrics on VTI interfaces [Cleberson Batista, Andrew #2601]
+  - fix host-to-host on FreeBSD [Amrinder Singh]
+  - fix metrics on Linux VTI interfaces [Cleberson Batista, Andrew #2601]
   - include selectors in Linux policy error logs [Amrinder Singh #1544 #2651]
   - include XFRM message name in Linux errors [Anish #2701 #2653]
   - drop redundant "SPI" from kernel logs [Sabari07 #2694 #2654]
