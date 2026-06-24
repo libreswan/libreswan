@@ -999,7 +999,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	struct msg_digest *md = md_addref((*frags)->md);
 
 	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SK] == NULL);
-	PASSERT(logger, md->digest_roof < elemsof(md->digest));
+	PASSERT(logger, md->digest_roof <= elemsof(md->digest));
 	struct payload_digest *old_skf = md->chain[ISAKMP_NEXT_v2SKF];
 	PASSERT(logger, old_skf != NULL);
 	PEXPECT(logger, old_skf->payload.v2skf.isaskf_number == 1);
