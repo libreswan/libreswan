@@ -166,10 +166,11 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 		struct crypt_mac hash_to_sign = crypt_hash_hunks("hash-to-sign",
 								 task->hasher,
 								 &hunks, logger);
-		task->signature = task->signer->sign_hash(task->pks,
-							  HUNK_AS_SHUNK(&hash_to_sign),
-							  task->hasher,
-							  logger);
+		task->signature = pubkey_sign_hash(task->signer,
+						   task->pks,
+						   &hash_to_sign,
+						   task->hasher,
+						   logger);
 	}
 	logtime_stop(&start, "%s()", __func__);
 }

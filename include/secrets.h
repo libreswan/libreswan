@@ -231,7 +231,7 @@ struct pubkey_signer {
 					      const struct hash_hunks *hunks,
 					      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
-					   shunk_t hash_to_sign,
+					   const struct crypt_mac *hash_to_sign,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
 	/*
@@ -259,6 +259,12 @@ struct pubkey_signer {
 				  const struct pubkey *,
 				  const struct hash_desc *);
 };
+
+struct hash_signature pubkey_sign_hash(const struct pubkey_signer *signer,
+				       const struct secret_pubkey_stuff *pks,
+				       const struct crypt_mac *hash_to_sign,
+				       const struct hash_desc *hash_alg,
+				       struct logger *logger);
 
 extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
 
