@@ -125,6 +125,13 @@ struct pbs_out {
 	uint8_t *cur;				/* public: current position (end) of stream */
 	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
 
+	/*
+	 * Number of sub-pbs structures this PBS contains.  At the top
+	 * level this is the payload count.
+	 */
+
+	unsigned nr_structs;
+
 	/* For an output PBS some things may need to be patched up. */
 
 	/*
