@@ -2,7 +2,7 @@ See also https://libreswan.org/
 
 v5.4 (unreleased)
 * IKEv2:
-  - update IKE_INTERMEDIATE code to RFC 9370 [Daiki Ueno, Andrew]
+  - update IKE_INTERMEDIATE code to RFC 9370 [Daiki Ueno, Ruiliio, Andrew]
   - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew, Daiki]
     + requires NSS >= 3.118.1
   - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir #2348]
