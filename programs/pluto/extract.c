@@ -651,7 +651,11 @@ static diag_t extract_updown(const struct whack_message *wm,
 		vdbg("never-negotiate updown");
 		updown_argv = NULL;
 	} else if (updown_kv.value == NULL) {
-		updown_argv = argv_from_sh_command(DEFAULT_UPDOWN, verbose);
+		char *updown = alloc_printf("%s/_updown.%s",
+					    IPSEC_EXECDIR,
+					    kernel_ops->updown_name);
+		updown_argv = argv_from_sh_command(updown, verbose);
+		pfreeany(updown);
 	} else if (streq(updown_kv.value, UPDOWN_DISABLED) ||
 		   streq(updown_kv.value, "")) {
 		/* disabled */
