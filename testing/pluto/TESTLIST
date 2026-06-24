@@ -1781,6 +1781,7 @@ kvmplutotest	pfkeyv2-esn-ah-freebsd			good
 
 kvmplutotest	pfkeyv2-ondemand-transport		wip #netbsd-wip
 kvmplutotest	pfkeyv2-ondemand-tunnel			wip #netbsd-wip
+kvmplutotest	pfkeyv2-host-to-host-transport		good	github/2602
 
 # Racoon interop
 

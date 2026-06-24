@@ -14,10 +14,16 @@
  */
 
 #include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#if defined(__FreeBSD__)
+#include <netipsec/ipsec.h>
+#endif
 
 #include "lsw_socket.h"
 
@@ -718,6 +724,48 @@ static void pfkeyv2_plug_holes(struct logger *logger)
 {
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
+
+#if defined(__FreeBSD__)
+static bool pfkeyv2_poke_ipsec_policy_dir(int fd, int sol, int opt,
+					  const char *dir, struct logger *logger)
+{
+	char *policy = ipsec_set_policy((char *)dir, strlen(dir)); /* must free() */
+	if (policy == NULL) {
+		llog(ERROR_STREAM, logger,
+		     "ipsec_set_policy %s: %s", dir, ipsec_strerror());
+		return false;
+	}
+	bool ok = (setsockopt(fd, sol, opt, policy, ipsec_get_policylen(policy)) == 0);
+	if (!ok) {
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "setsockopt IP_IPSEC_POLICY %s: ", dir);
+	}
+	free(policy); /* not pfree() */
+	return ok;
+}
+
+static bool pfkeyv2_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger)
+{
+	int af = afi->af;
+
+	int opt, sol;
+	switch (af) {
+	case AF_INET:
+		sol = IPPROTO_IP;
+		opt = IP_IPSEC_POLICY;
+		break;
+	case AF_INET6:
+		sol = IPPROTO_IPV6;
+		opt = IPV6_IPSEC_POLICY;
+		break;
+	default:
+		bad_case(af);
+	}
+
+	return pfkeyv2_poke_ipsec_policy_dir(fd, sol, opt, "in bypass", logger) &&
+	       pfkeyv2_poke_ipsec_policy_dir(fd, sol, opt, "out bypass", logger);
+}
+#endif
 
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
@@ -1871,6 +1919,9 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.flush = pfkeyv2_flush,
 	.poke_holes = pfkeyv2_poke_holes,
 	.plug_holes = pfkeyv2_plug_holes,
+#if defined(__FreeBSD__)
+	.poke_ipsec_policy_hole = pfkeyv2_poke_ipsec_policy_hole,
+#endif
 	.shutdown = pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,

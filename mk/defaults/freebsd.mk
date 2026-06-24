@@ -19,6 +19,8 @@ NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 
 USE_PFKEYV2 = true
 
+USERLAND_LDFLAGS += -lipsec
+
 USE_LIBCAP_NG = false
 USE_PTHREAD_SETSCHEDPRIO = false
 
