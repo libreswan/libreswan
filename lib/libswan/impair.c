@@ -305,10 +305,11 @@ struct impairment impairments[] = {
 	 */
 
 	E(add_unknown_v2_payload_to, ikev2_exchange_names,
-	  "impair the (unencrypted) part of the exchange"),
+	  "add an unknown payload to the (unencrypted) part of the exchange"),
 	E(add_unknown_v2_payload_to_sk, ikev2_exchange_names,
-	  "impair the encrypted part of the exchange"),
-	B(unknown_v2_payload_critical, "include the unknown payload in the encrypted SK payload"),
+	  "add an unknonwn payload to the encrypted part of the exchange"),
+	B(unknown_v2_payload_critical, "mark the unknown payload as critical"),
+	U(pad_with_unknown_v2_payloads, "pad the exchange with unknown payloads: 0=MAX+1, 1=MAX, 2=MAX-1, ..."),
 
 	E(add_v2_notification, v2_notification_names, "add a notification to the message",
 	  .unsigned_help = "notification"),

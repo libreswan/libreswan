@@ -122,6 +122,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragments **frags, struct log
 bool emit_v2UNKNOWN(const char *victim,
 		    enum ikev2_exchange exchange_type,
 		    const struct impair_unsigned *impair,
-		    struct pbs_out *outs);
+		    struct pbs_out *outs,
+		    const unsigned payload_limit);
 
 #endif

@@ -1653,25 +1653,29 @@ bool open_v2_message(const char *story,
 		.security = security,
 		.outgoing_fragments = (request_md == NULL ? &ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments :
 				       &ike->sa.st_v2_msgid_windows.responder.outgoing_fragments),
+		.exchange_type = exchange_type,
+		.message = open_pbs_out(story, buf, sizeof_buf, logger),
 	};
 
-	message->message = open_pbs_out(story, buf, sizeof_buf, logger);
-
-	if (!open_v2_message_body(&message->message, ike, request_md,
-				  exchange_type, &message->body)) {
+	if (!open_v2_message_body(&message->message,
+				  ike, request_md,
+				  message->exchange_type,
+				  &message->body)) {
 		llog(RC_LOG, message->logger,
 		     "error initializing hdr for encrypted notification");
 		return false;
 	}
 
-	if (!emit_v2UNKNOWN("unencrypted", exchange_type,
-			    &impair.add_unknown_v2_payload_to,
-			    &message->body)) {
-		return false;
-	}
-
 	switch (security) {
 	case ENCRYPTED_PAYLOAD:
+
+		if (!emit_v2UNKNOWN("unencrypted", exchange_type,
+				    &impair.add_unknown_v2_payload_to,
+				    &message->body,
+				    PAYLIMIT-1)) {
+			return false;
+		}
+
 		/*
 		 * Never encrypt the initial exchange (peer requires
 		 * Nr in response before it can compute keys and
@@ -1699,11 +1703,6 @@ bool open_v2_message(const char *story,
 		}
 
 		message->pbs = &message->sk.pbs;
-		if (!emit_v2UNKNOWN("encrypted", exchange_type,
-				    &impair.add_unknown_v2_payload_to_sk,
-				    message->pbs)) {
-			return false;
-		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
 		/*
@@ -1717,6 +1716,7 @@ bool open_v2_message(const char *story,
 		 * the response (for IKE_SA_INIT it is only computed
 		 * upon the arrival of the IKE_AUTH message).
 		 */
+
 		if (exchange_type != ISAKMP_v2_IKE_SA_INIT &&
 		    exchange_type != ISAKMP_v2_IKE_SESSION_RESUME) {
 			name_buf nb;
@@ -1742,13 +1742,26 @@ bool close_v2_message(struct v2_message *message)
 
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
+		if (!emit_v2UNKNOWN("encrypted", message->exchange_type,
+				    &impair.add_unknown_v2_payload_to_sk,
+				    &message->sk.pbs,
+				    PAYLIMIT)) {
+			return false;
+		}
 		if (!close_v2SK_payload(&message->sk)) {
 			return false;
 		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
+		if (!emit_v2UNKNOWN("uncrypted", message->exchange_type,
+				    &impair.add_unknown_v2_payload_to,
+				    &message->body,
+				    PAYLIMIT)) {
+			return false;
+		}
 		break;
 	}
+
 	close_pbs_out(&message->body);
 	close_pbs_out(&message->message);
 	return true;

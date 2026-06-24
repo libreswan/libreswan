@@ -1808,7 +1808,9 @@ struct_desc *v2_payload_desc(unsigned p)
 		/* .previous_np_struct = NULL, */	\
 		}
 
-struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
+struct pbs_out open_pbs_out(const char *name,
+			    uint8_t *buffer,
+			    size_t sizeof_buffer,
 			    struct logger *logger)
 {
 	struct pbs_out outs = PBS_INIT(buffer, sizeof_buffer, name);
@@ -2755,6 +2757,10 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 		return false;
 	}
 
+	/*
+	 * Adding another struct to the pbs.
+	 */
+	outs->nr_structs++;
 
 	bool immediate = false;
 

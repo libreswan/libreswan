@@ -94,29 +94,44 @@ void record_v2_outgoing_message(shunk_t message,
 bool emit_v2UNKNOWN(const char *victim,
 		    enum ikev2_exchange exchange_type,
 		    const struct impair_unsigned *impairment,
-		    struct pbs_out *outs)
+		    struct pbs_out *outs,
+		    const unsigned payload_limit)
 {
 	if (impairment->value != exchange_type) {
 		/* successfully did nothing */
 		return true;
 	}
 
+	unsigned count;
+	if (impair.pad_with_unknown_v2_payloads.enabled) {
+		count = (payload_limit + 1 -
+			 outs->nr_structs -
+			 impair.pad_with_unknown_v2_payloads.value);
+	} else {
+		count = 1;
+	}
+
 	name_buf xb;
 	llog(IMPAIR_STREAM, outs->logger,
-	     "adding an unknown%s payload of type %d to %s %s message",
-	     impair.unknown_v2_payload_critical ? " critical" : "",
+	     "adding %u %s unknown%s payload(s) of type %d to %s message containing %u payloads",
+	     count, victim,
+	     (impair.unknown_v2_payload_critical ? " critical" : ""),
 	     ikev2_unknown_payload_desc.pt,
-	     victim,
-	     str_enum_short(&ikev2_exchange_names, exchange_type, &xb));
-	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->logger),
-	};
-	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, gen, &ikev2_unknown_payload_desc, &pbs)) {
-		/* already logged */
-		return false; /*fatal*/
+	     str_enum_short(&ikev2_exchange_names, exchange_type, &xb),
+	     outs->nr_structs);
+
+	for (unsigned nr = outs->nr_structs; nr < count; nr++) {
+		struct ikev2_generic gen = {
+			.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->logger),
+		};
+		struct pbs_out pbs;
+		if (!pbs_out_struct(outs, gen, &ikev2_unknown_payload_desc, &pbs)) {
+			/* already logged */
+			return false; /*fatal*/
+		}
+
+		close_pbs_out(&pbs);
 	}
-	close_pbs_out(&pbs);
 	return true;
 }
 

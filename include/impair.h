@@ -164,6 +164,7 @@ struct impair {
 	struct impair_unsigned add_unknown_v2_payload_to;
 	struct impair_unsigned add_unknown_v2_payload_to_sk;
 	bool unknown_v2_payload_critical;
+	struct impair_unsigned pad_with_unknown_v2_payloads;
 
 	struct impair_unsigned force_v2_auth_method;
 

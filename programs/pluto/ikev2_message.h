@@ -64,6 +64,7 @@ struct v2_message {
 	struct logger *logger;
 	struct pbs_out *pbs; /* where to put message (POINTER!); either .BODY or .SK */
 	/* internal fields */
+	enum ikev2_exchange exchange_type;
 	enum payload_security security;
 	struct pbs_out message;
 	struct pbs_out body;
