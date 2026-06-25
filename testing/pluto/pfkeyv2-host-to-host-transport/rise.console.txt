@@ -18,7 +18,7 @@ rise #
  ipsec up rise-set
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
-"rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
 "rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@rise'; Child SA #2 {ESP <0xESPESP} [198.18.1.12/32===198.18.1.15/32]
 "rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_TRANSPORT_MODE)}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@set'
@@ -64,9 +64,7 @@ rise #
  ipsec down rise-set
 "rise-set": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "rise-set" #1: sent INFORMATIONAL request to delete IKE SA
-"rise-set" #2: failed to pull traffic counters from outbound IPsec SA
-"rise-set" #2: failed to pull traffic counters from inbound IPsec SA
-"rise-set" #2: ESP traffic information: in=0B out=0B
+"rise-set" #2: ESP traffic information: in=84B out=120B
 "rise-set" #1: deleting IKE SA (established IKE SA)
 rise #
  ipsec _kernel state

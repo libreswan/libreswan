@@ -4,7 +4,7 @@ west #
 Initializing NSS database
 west #
  ipsec initnss # fail
-NSS database already initialised - aborted
+FATAL ERROR: NSS database already initialised - aborted
 To wipe the old NSS database, issue: rm /var/lib/ipsec/nss/*.db
 To wipe the old modules, issue: rm /var/lib/ipsec/nss/pkcs11.txt
 west #
