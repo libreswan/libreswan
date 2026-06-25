@@ -25,7 +25,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #1: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #1: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -69,7 +69,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #3: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #3: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -88,7 +88,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #4: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #4: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -113,7 +113,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #5: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #5: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -138,7 +138,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #6: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #6: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -176,7 +176,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #8: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #8: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -220,7 +220,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #10: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #10: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -264,7 +264,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #12: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #12: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -308,7 +308,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #14: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #14: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -352,7 +352,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #16: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #16: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -396,7 +396,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #18: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #18: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -440,7 +440,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #20: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #20: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:
@@ -484,7 +484,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0, 0x00)
 |    length: 278 (01 16)
-"westnet-eastnet" #22: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
+"westnet-eastnet" #22: authenticated peer using preloaded certificate '@west' and 2nnn-bit raw RSA with SHA1 signature
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (8, 0x08)
 | ***parse ISAKMP Hash Payload:

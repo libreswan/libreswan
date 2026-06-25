@@ -11,6 +11,7 @@ s/{\([A-Z]*\)\([a-z]*[A-Z]*\) <0x[a-f0-9]*\(.*\)}/{\1\2 <0x\1\1\3}/
 s/{\(.* IPCOMP\) <0x[a-f0-9]*\(.*\)}/{\1 <0xCPI\2}/
 
 # Generated RSA keys have some fuzz
+s/ \([0-9]\)[0-9][0-9][0-9]-bit raw RSA/ \1nnn-bit raw RSA/
 s/ \([0-9]\)[0-9][0-9][0-9]-bit RSA/ \1nnn-bit RSA/
 s/ \([0-9]\)[0-9][0-9]-bit RSA/ \1nn-bit RSA/
 
