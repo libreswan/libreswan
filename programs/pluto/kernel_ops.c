@@ -443,7 +443,7 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 			jam(buf, "%s", proto->name);
 			jam_string(buf, "->");
 			jam_address(buf, dst);
-			jam(buf, " reqid=%x", reqid);
+			jam(buf, " reqid="PRI_REQID, reqid);
 			jam(buf, " [%jx,%jx]", min, max);
 		}
 	}
