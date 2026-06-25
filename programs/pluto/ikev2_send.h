@@ -111,18 +111,4 @@ void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **frags,
 				   const char *story);
 void free_v2_outgoing_fragments(struct v2_outgoing_fragments **frags, struct logger *logger);
 
-/*
- * Emit an IKEv2 payload.
- *
- * Like the out_*() primitives, these have struct pbs_out for emission
- * as the last parameter (or second last if the last one is the struct
- * pbs_out for the sub-payload).
- */
-
-bool emit_v2UNKNOWN(const char *victim,
-		    enum ikev2_exchange exchange_type,
-		    const struct impair_unsigned *impair,
-		    struct pbs_out *outs,
-		    const unsigned payload_limit);
-
 #endif

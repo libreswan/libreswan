@@ -1584,6 +1584,54 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 }
 
 /*
+ * Emit a nasty IKEv2 payload.
+ */
+
+static bool emit_v2UNKNOWN(const char *victim,
+			   enum ikev2_exchange exchange_type,
+			   const struct impair_unsigned *impairment,
+			   struct pbs_out *outs,
+			   const unsigned payload_limit)
+{
+	if (impairment->value != exchange_type) {
+		/* successfully did nothing */
+		return true;
+	}
+
+	unsigned count;
+	if (impair.pad_with_unknown_v2_payloads.enabled) {
+		count = (payload_limit + 1 -
+			 outs->nr_structs -
+			 impair.pad_with_unknown_v2_payloads.value);
+	} else {
+		count = 1;
+	}
+
+	name_buf xb;
+	llog(IMPAIR_STREAM, outs->logger,
+	     "adding %u %s unknown%s payload(s) of type %d to %s message containing %u payloads",
+	     count, victim,
+	     (impair.unknown_v2_payload_critical ? " critical" : ""),
+	     ikev2_unknown_payload_desc.pt,
+	     str_enum_short(&ikev2_exchange_names, exchange_type, &xb),
+	     outs->nr_structs);
+
+	const struct ikev2_generic gen = {
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->logger),
+	};
+
+	for (unsigned nr = 0; nr < count; nr++) {
+		struct pbs_out pbs;
+		if (!pbs_out_struct(outs, gen, &ikev2_unknown_payload_desc, &pbs)) {
+			/* already logged */
+			return false; /*fatal*/
+		}
+		close_pbs_out(&pbs);
+	}
+	return true;
+}
+
+/*
  * Encrypt and Record the message ready for sending.  If needed, first
  * fragment it.
  */
@@ -1669,6 +1717,15 @@ bool open_v2_message(const char *story,
 	switch (security) {
 	case ENCRYPTED_PAYLOAD:
 
+		/*
+		 * Prepend one or more unknown payloads to the
+		 * unencrypted part of the encrypted message.  Can't
+		 * append as SK/SKF MUST be the last payload.
+		 *
+		 * Limit is PAYLIMIT-1 to leave space for the SK/SKF
+		 * payload.
+		 */
+
 		if (!emit_v2UNKNOWN("unencrypted", exchange_type,
 				    &impair.add_unknown_v2_payload_to,
 				    &message->body,
@@ -1704,7 +1761,9 @@ bool open_v2_message(const char *story,
 
 		message->pbs = &message->sk.pbs;
 		break;
+
 	case UNENCRYPTED_PAYLOAD:
+
 		/*
 		 * Only send the initial exchange unencrypted (peer
 		 * needs unencrypted response containing Nr before it
@@ -1742,6 +1801,10 @@ bool close_v2_message(struct v2_message *message)
 
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
+		/*
+		 * When enabled, pad the encrypted SK/SKF payload with
+		 * unknown payloads.
+		 */
 		if (!emit_v2UNKNOWN("encrypted", message->exchange_type,
 				    &impair.add_unknown_v2_payload_to_sk,
 				    &message->sk.pbs,
@@ -1753,7 +1816,11 @@ bool close_v2_message(struct v2_message *message)
 		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
-		if (!emit_v2UNKNOWN("uncrypted", message->exchange_type,
+		/*
+		 * When enabled, pad the unencrypted message with
+		 * unknown payloads.
+		 */
+		if (!emit_v2UNKNOWN("unencrypted", message->exchange_type,
 				    &impair.add_unknown_v2_payload_to,
 				    &message->body,
 				    PAYLIMIT)) {
