@@ -45,6 +45,7 @@
 #include "ikev2_parent.h"		/* for emit_v2KE() */
 #include "ikev2_ke.h"
 #include "ikev2_helper.h"
+#include "ikev2_supported_auth.h"
 
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
 void extract_v2_ike_intermediate_keys(struct ike_sa *ike, PK11SymKey *keymat);
@@ -382,7 +383,8 @@ bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 
 	unsigned next_exchange = ike->sa.st_v2_ike_intermediate.next_exchange;
 	unsigned nr_exchanges = ike->sa.st_oakley.ta_addke.len;
-	if (nr_exchanges == 0 && ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+	if (nr_exchanges == 0 && (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE ||
+			ike->sa.st_supported_auth_methods_intermediate)) {
 		nr_exchanges++;
 	}
 
@@ -420,6 +422,11 @@ struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(s
 	     current_exchange + 1 == ike->sa.st_oakley.ta_addke.len /*last*/) &&
 	    ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
 		exchange.ppk = true;
+	}
+
+	if (!next_is_ikev2_ike_intermediate_exchange(ike) &&
+		ike->sa.st_supported_auth_methods_intermediate) {
+			exchange.supported_auth_methods = true;
 	}
 
 	name_buf tn;
@@ -902,6 +909,13 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 		close_pbs_out(&ppks);
+	}
+
+	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
+	if (task->exchange.supported_auth_methods) {
+		if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (!close_v2_message(&response)) {

@@ -877,7 +877,12 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
 	if (c->config->host.send_supported_auth_methods) {
-		if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, response.pbs)) {
+		if (ike->sa.st_v2_ike_intermediate.enabled) {
+			if (!emit_v2N(v2N_SUPPORTED_AUTH_METHODS, response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+			ike->sa.st_supported_auth_methods_intermediate = true;
+		} else if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

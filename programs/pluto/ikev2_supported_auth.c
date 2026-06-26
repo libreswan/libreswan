@@ -54,7 +54,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	 */
 
 	if (authby.psk) {
-		uint8_t ann2[2] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, 
+		uint8_t ann2[TWO_OCTET_ANNOUNCEMENT_LENGTH] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, 
 					IKEv2_AUTH_SHARED_KEY_MAC };
 		if (!pbs_out_raw(&n_pbs, ann2, sizeof(ann2) , 
 				"SUPPORTED_AUTH_METHODS 'PSK' announced")) {
@@ -63,7 +63,8 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	}
 
 	if (authby.null) {
-		uint8_t ann2[2] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, IKEv2_AUTH_NULL };
+		uint8_t ann2[TWO_OCTET_ANNOUNCEMENT_LENGTH] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, 
+					IKEv2_AUTH_NULL };
 		if (!pbs_out_raw(&n_pbs, ann2, sizeof(ann2), 
 				"SUPPORTED_AUTH_METHODS 'NULL' announced")) {
 			return false;
@@ -80,7 +81,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	 */
 
 	if (authby.rsasig_v1_5) {
-		uint8_t ann3[3] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
+		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
 					IKEv2_AUTH_RSA_DIGITAL_SIGNATURE, 0 /* cert link */ };
 		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
 				"SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced")) {
@@ -89,7 +90,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	}
 
 	if (authby.ecdsa_sha2_256) {
-		uint8_t ann3[3] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
+		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
 					IKEv2_AUTH_ECDSA_SHA2_256_P256, 0 /* cert link */ };
 		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
 				"SUPPORTED_AUTH_METHODS 'ECDSA-SHA2-256-P256' announced")) {
@@ -98,7 +99,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	}
 
 	if (authby.ecdsa_sha2_384) {
-		uint8_t ann3[3] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
+		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
 					IKEv2_AUTH_ECDSA_SHA2_384_P384, 0 /* cert link */ };
 		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
 				"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_384_P384' announced")) {
@@ -107,7 +108,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	}
 
 	if (authby.ecdsa_sha2_512) {
-		uint8_t ann3[3] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
+		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
 					IKEv2_AUTH_ECDSA_SHA2_512_P521, 0 /* cert link */ };
 		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
 				"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_512_P521' announced")) {
@@ -135,7 +136,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			if (b.len > 0) {															\
 				/* +1/-1 skips the first byte, which contains the size of the blob */	\
 				shunk_t algid = shunk2(b.ptr + 1, b.len - 1);							\
-				uint8_t hdr[3] = { 														\
+				uint8_t hdr[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { 						\
 					(uint8_t)(THREE_OCTET_ANNOUNCEMENT_LENGTH + algid.len),				\
 						IKEv2_AUTH_DIGITAL_SIGNATURE, 0 /* cert link */ };				\
 				if (!pbs_out_raw(&n_pbs, hdr, sizeof(hdr),								\
