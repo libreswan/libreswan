@@ -28,7 +28,7 @@ rise #
 198.18.1.12 198.18.1.15
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=8 flags=0x00000400 state=mature 
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last:                     	hard: 0(s)	soft: 0(s)
@@ -38,7 +38,7 @@ rise #
 198.18.1.15 198.18.1.12
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=8 flags=0x00000400 state=mature 
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last:                     	hard: 0(s)	soft: 0(s)
