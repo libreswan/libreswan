@@ -43,8 +43,8 @@ for xml in testingdir.glob("kvm/vm/*.xml"):
     _HOSTS[host.name] = host
 
 PLATFORMS = Set() # netbsd freebsd fedora ...
-for platform in testingdir.glob("kvm/platform/[a-z]*/"):
-    p = platform.name
+for platform in testingdir.glob("kvm/upgrade/[a-z]*.sh"):
+    p = platform.stem
     PLATFORMS.add(p)
 
 _GUESTS = Dict() # netbsdrise fedoraset east freebsdwest ...
