@@ -77,6 +77,7 @@
 #include "peer_id.h"
 #include "ddos.h"
 #include "ikev2_nat.h"
+#include "ikev2_supported_auth.h"
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
 static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
@@ -306,6 +307,13 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	if (!emit_local_v2AUTH(ike, auth_sig, request.pbs)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	/* Send the initiator's SUPPORTED_AUTH_METHODS notification */
+	if (ike->sa.st_connection->config->host.send_supported_auth_methods) {
+		if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (ike->sa.st_connection->config->mobike) {
