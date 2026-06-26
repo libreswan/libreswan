@@ -704,6 +704,8 @@ struct state {
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow auth=NULL / authby=NULL */
 
+	bool st_supported_auth_methods_intermediate;	/* peer will send supported_auth_methods notification in intermediate exchange */
+
 	/* IKEv2 IKE SA only */
 	struct {
 		bool enabled;			/* did we agree to MOBIKE? */
