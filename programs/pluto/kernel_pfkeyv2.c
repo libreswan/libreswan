@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <netipsec/ipsec.h>
 #endif
 
@@ -725,7 +725,7 @@ static void pfkeyv2_plug_holes(struct logger *logger)
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 static bool pfkeyv2_poke_ipsec_policy_dir(int fd, int sol, int opt,
 					  const char *dir, struct logger *logger)
 {
@@ -1919,7 +1919,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.flush = pfkeyv2_flush,
 	.poke_holes = pfkeyv2_poke_holes,
 	.plug_holes = pfkeyv2_plug_holes,
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 	.poke_ipsec_policy_hole = pfkeyv2_poke_ipsec_policy_hole,
 #endif
 	.shutdown = pfkeyv2_shutdown,

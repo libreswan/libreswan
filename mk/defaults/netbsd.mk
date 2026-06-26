@@ -18,6 +18,9 @@ CRYPT_LDFLAGS =
 
 LIBEVENT_LDFLAGS = -levent -levent_pthreads
 USE_PFKEYV2 = true
+
+USERLAND_LDFLAGS += -lipsec
+
 USE_LIBCAP_NG = false
 
 INITSYSTEM=rc.d
