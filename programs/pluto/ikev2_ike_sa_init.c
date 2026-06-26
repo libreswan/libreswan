@@ -67,6 +67,7 @@
 #include "ikev2_notification.h"
 #include "ipsecconf/setup.h"
 #include "ikev2_ke.h"
+#include "ikev2_supported_auth.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -910,6 +911,13 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	if (c->config->sighash_policy != LEMPTY) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
+	if (c->config->send_supported_auth_methods) {
+		if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
