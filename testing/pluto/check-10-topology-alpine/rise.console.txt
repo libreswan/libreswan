@@ -1,0 +1,14 @@
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+          inet addr:198.18.1.12  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:1::12/64 Scope:Global
+rise #
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+          inet addr:192.0.2.12  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:0:2::12/64 Scope:Global
+rise #
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_darknet4
+up
+rise #

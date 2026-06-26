@@ -1,0 +1,14 @@
+ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:1::12/64 flags 0
+	inet 198.18.1.12/24 broadcast 198.18.1.255 flags 0
+rise #
+ ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet6 2001:db8:0:2::12/64 flags 0
+	inet 192.0.2.12/24 broadcast 192.0.2.255 flags 0
+rise #
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_darknet4
+up
+rise #

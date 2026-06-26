@@ -1,0 +1,14 @@
+ifconfig vio0 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet 198.18.1.12 netmask 0xffffff00 broadcast 198.18.1.255
+	inet6 2001:db8:1::12 prefixlen 64
+rise #
+ ifconfig vio1 | grep -e 'inet ' -e 'inet6 .*2001:'
+	inet 192.0.2.12 netmask 0xffffff00 broadcast 192.0.2.255
+	inet6 2001:db8:0:2::12 prefixlen 64
+rise #
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_darknet4
+up
+rise #
