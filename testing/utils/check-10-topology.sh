@@ -5,7 +5,6 @@ bindir=$(dirname $0)
 basedir=testing/pluto/$(basename $0 .sh)
 
 . ${bindir}/../kvm/bin/topology.sh
-hosts=$(echo ${hosts} | sed -e 's/road//')
 
 # connectivity HOST name-of-dest ...
 
@@ -66,7 +65,14 @@ EOF
     esac
 
     # start again
-    sh=${dir}/all.${platform}east-${platform}west-${platform}rise-${platform}set-nic-${platform}north.sh
+    sh=${dir}/all.nic
+    for host in ${hosts} ; do
+	case ${host} in
+	    nic ) ;;
+	    * )	sh=${sh}-${platform}${host} ;;
+	esac
+    done
+    sh=${sh}.sh
     rm -f ${sh}
     do_not_modify > ${sh}
 
@@ -93,6 +99,8 @@ EOF
     connectivity rise east_eastnet4 set_darknet4
     connectivity set  west_westnet4 rise_darknet4
 
-    connectivity north north_northnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+    connectivity north road_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+
+    connectivity road north_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
 
 done
