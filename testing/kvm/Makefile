@@ -291,11 +291,12 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 # expand anything using $1 (such as make variable names and values)
 # immediately, but delay everything else by using $$.
 
-# Linux also has ROAD and NIC
-KVM_OS_TEST_HOST_NAMES = east west rise set north
-KVM_LINUX_TEST_HOST_NAMES = $(KVM_OS_TEST_HOST_NAMES) road nic
+KVM_TEST_HOST_NAMES := $(notdir $(basename $(wildcard vm/*.xml)))
 
-KVM_TEST_HOST_NAMES   = $(KVM_LINUX_TEST_HOST_NAMES)
+# NIC is not OS specific (it always runs LINUX)
+KVM_OS_TEST_HOST_NAMES = $(filter-out nic, $(KVM_TEST_HOST_NAMES))
+KVM_LINUX_TEST_HOST_NAMES = $(KVM_TEST_HOST_NAMES)
+
 KVM_TEST_DOMAINS      = $(foreach prefix, $(KVM_TEST_PREFIXES), $(addprefix $(prefix), $(KVM_TEST_HOST_NAMES)))
 
 KVM_BASEDIR ?= $(KVM_POOLDIR)

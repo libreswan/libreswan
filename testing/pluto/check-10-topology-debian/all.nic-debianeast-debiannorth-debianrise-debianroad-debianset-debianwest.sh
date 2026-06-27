@@ -30,9 +30,15 @@ rise# ../../guestbin/ping-once.sh --up 198.18.1.15 # set_darknet4
 # set to west_westnet4 rise_darknet4
 set# ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet4
 set# ../../guestbin/ping-once.sh --up 198.18.1.12 # rise_darknet4
-# north to north_northnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
-north# ../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet4
+# north to road_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+north# ../../guestbin/ping-once.sh --up 192.1.3.209 # road_nicnet4
 north# ../../guestbin/ping-once.sh --up 192.1.3.254 # nic_nicnet4
 north# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_internet4
 north# ../../guestbin/ping-once.sh --up 192.1.2.23 # east_internet4
 north# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_internet4
+# road to north_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+road# ../../guestbin/ping-once.sh --up 192.1.3.33 # north_nicnet4
+road# ../../guestbin/ping-once.sh --up 192.1.3.254 # nic_nicnet4
+road# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_internet4
+road# ../../guestbin/ping-once.sh --up 192.1.2.23 # east_internet4
+road# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_internet4
