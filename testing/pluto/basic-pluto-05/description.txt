@@ -1,2 +1,0 @@
-This is a test of the NORTH-EAST connection, without NAT
-
