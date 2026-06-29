@@ -1,0 +1,1 @@
+Test initiator fallback to classical when responder lacks ML-KEM support

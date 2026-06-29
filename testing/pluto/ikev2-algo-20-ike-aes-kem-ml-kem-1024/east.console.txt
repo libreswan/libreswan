@@ -1,0 +1,10 @@
+../../guestbin/swan-prep --46
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east
+"east": added oriented IKEv2 connection
+east #
