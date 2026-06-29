@@ -67,5 +67,11 @@ net default gw ${ipv6_gw}
 EOF
     fi
 
+    if ${forwarding} ; then
+	sysctl net.ipv4.ip_forward=1
+	sysctl net.ipv6.conf.all.forwarding=1
+	sysctl net.ipv6.conf.default.forwarding=1
+    fi
+
     mv /etc/network/interfaces.new /etc/network/interfaces
 }

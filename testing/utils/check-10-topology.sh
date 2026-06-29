@@ -93,13 +93,27 @@ EOF
 
     # connectivity
 
-    connectivity east west_internet4 nic_internet4 north_nicnet4 rise_eastnet4
-    connectivity west east_internet4 nic_internet4 north_nicnet4  set_westnet4
+    # east/west defaults are nic
 
-    connectivity rise east_eastnet4 set_darknet4
-    connectivity set  west_westnet4 rise_darknet4
+    connectivity east west_internet4 nic_internet4 nic_nicnet4 north_nicnet4
+    connectivity west east_internet4 nic_internet4 nic_nicnet4 north_nicnet4
+
+    connectivity east rise_eastnet4
+    connectivity west  set_westnet4
+
+    # rise/set defaults are east/west
+
+    connectivity rise east_eastnet4 east_internet4 west_internet4 nic_internet4 north_nicnet4
+    connectivity set  west_westnet4 west_internet4 east_internet4 nic_internet4 north_nicnet4
+
+    connectivity rise set_darknet4
+    connectivity set rise_darknet4
+
+    # north's default is nic
 
     connectivity north road_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+
+    # roads's default is nic
 
     connectivity road north_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
 

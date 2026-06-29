@@ -8,3 +8,5 @@ Address=2001:db8:0:2::12/64
 IPForward=yes
 IPv6DuplicateAddressDetection=0
 IPv6AcceptRouterAdvertisements=false
+Gateway=192.0.2.254
+Gateway=2001:db8:0:2::254
