@@ -9,6 +9,18 @@ rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet4
 up
 rise #
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east_internet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 192.1.2.45 # west_internet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_internet4
+up
+rise #
+ ../../guestbin/ping-once.sh --up 192.1.3.33 # north_nicnet4
+up
+rise #
  ../../guestbin/ping-once.sh --up 198.18.1.15 # set_darknet4
 up
 rise #
