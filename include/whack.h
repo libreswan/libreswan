@@ -25,6 +25,7 @@
 #define WHACK_H
 
 #include <stdint.h>		/* for uintmax_t et.al. */
+#include "reqid.h"
 
 #include "ietf_constants.h"
 #include "lset.h"
@@ -232,6 +233,7 @@ struct whack_acquire {
 	struct whack_pubkey pubkey; /* embedded side effect */
 	const char *label;
 	unsigned ipproto;
+	reqid_t reqid;
 };
 
 struct whack_deletestate {
