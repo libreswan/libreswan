@@ -18,4 +18,9 @@ test "${ipv6_eth2}" && ifconfig vio2 inet6 -tentative ${ipv6_eth2} up
 test "${ipv4_gw}" && route add default ${ipv4_gw}
 test "${ipv6_gw}" && route add default ${ipv6_gw}
 
+if ${forwarding} ; then
+   sysctl -w net.inet.ip.forwarding=1
+   sysctl -w net.inet6.ip6.forwarding=1
+fi
+
 dhcpleasectl vio${dhcp_ethN}

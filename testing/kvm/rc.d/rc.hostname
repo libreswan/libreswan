@@ -40,6 +40,7 @@ case ${hostname} in
 	dhcp_ethN=2
 	ipv4_gw=192.1.2.254
 	ipv6_gw=2001:db8:1:2::254
+	forwarding=true
 	;;
     west)
 	ipv4_eth0=192.0.1.254/24
@@ -49,6 +50,7 @@ case ${hostname} in
 	dhcp_ethN=2
 	ipv4_gw=192.1.2.254
 	ipv6_gw=2001:db8:1:2::254
+	forwarding=true
 	;;
     north)
 	ipv4_eth0=192.0.3.254/24
@@ -58,6 +60,7 @@ case ${hostname} in
 	dhcp_ethN=2
 	ipv4_gw=192.1.3.254
 	ipv6_gw=2001:db8:1.3::254
+	forwarding=true
 	;;
     road)
 	ipv4_eth0=192.1.3.209/24
@@ -65,6 +68,7 @@ case ${hostname} in
 	dhcp_ethN=1
 	ipv4_gw=192.1.3.254
 	ipv6_gw=2001:db8:1.3::254
+	forwarding=false
 	;;
     rise)
 	ipv4_eth0=198.18.1.12/24
@@ -74,6 +78,7 @@ case ${hostname} in
 	dhcp_ethN=2
 	ipv4_gw=192.0.2.254
 	ipv6_gw=2001:db8:0:2::254
+	forwarding=false
 	;;
     set)
 	ipv4_eth0=198.18.1.15/24
@@ -83,10 +88,12 @@ case ${hostname} in
 	dhcp_ethN=2
 	ipv4_gw=192.0.1.254
 	ipv6_gw=2001:db8:0:1::254
+	forwarding=false
 	;;
     *)
 	dhcp_ethN=0
 	ipv4_gw=192.19.0.1
+	forwarding=false
 	;;
 esac
 
