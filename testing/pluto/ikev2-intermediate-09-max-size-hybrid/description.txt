@@ -1,0 +1,2 @@
+Tests realistic maximum-size hybrid configuration (MODP8192 + ML-KEM-1024)
+

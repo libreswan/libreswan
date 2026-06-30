@@ -84,7 +84,8 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	*blob++ = (struct hash_hunk) { "idhash", HUNK_REF(idhash), };
 
-	if (ike->sa.st_v2_ike_intermediate.enabled) {
+	/* Include intermediate auth only if an IKE_INTERMEDIATE was processed. */
+	if (ike->sa.st_v2_ike_intermediate.id != 0) {
 		chunk_t ia1;
 		chunk_t ia2;
 		switch (role) {
