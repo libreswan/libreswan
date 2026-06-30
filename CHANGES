@@ -68,6 +68,7 @@ v5.4 (unreleased)
   - add/use COUNTED_BY(len) on open array structures [Andrew]
   - add/use COUNTED_BY_PTR(len) on dynamic arrays when CLANG [Andrew]
   - support packaging on Amazon Linux [Patric Kerpan]
+  - Make variable LIBEXECDIR=.../libexec/ipsec renamed to IPSEC_EXECDIR [Andrew #2825]
 * testing:
   - increase expiration on PKI keys to 1 month [islem52 #2726 #2720]
   - Alpine test domain upgraded to 3.22.2 [Andrew]
