@@ -215,7 +215,7 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 	}
 }
 
-static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
+void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
 	update_sa_clonedfrom(new_ike, SOS_NOBODY);
