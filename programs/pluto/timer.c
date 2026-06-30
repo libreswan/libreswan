@@ -146,6 +146,8 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		return &st->st_v2_liveness_event;
 	case EVENT_v2_ADDR_CHANGE:
 		return &st->st_v2_addr_change_event;
+	case EVENT_v2_MAPPING_CHANGE:
+		return &st->st_v2_mapping_change_event;
 	case EVENT_v2_REKEY:
 		return &st->st_v2_rekey_event;
 	case EVENT_v2_REPLACE:
@@ -267,6 +269,12 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		ldbg(st->logger, PRI_SO" IKEv2 local address change",
 		     pri_so(st->st_serialno));
 		ikev2_addr_change(st);
+		break;
+
+	case EVENT_v2_MAPPING_CHANGE:
+		ldbg(st->logger, PRI_SO" IKEv2 remote mapping change",
+		     pri_so(st->st_serialno));
+		ikev2_mapping_change(st);
 		break;
 
 	case EVENT_v1_RETRANSMIT:

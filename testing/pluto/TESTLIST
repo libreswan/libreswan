@@ -1634,6 +1634,7 @@ kvmplutotest	ikev2-mobike-04				good
 kvmplutotest	ikev2-mobike-05-gcm			good
 kvmplutotest	ikev2-mobike-06				good
 kvmplutotest	ikev2-mobike-07-unsolicited-response	good
+kvmplutotest	ikev2-mobike-08-nat-east		good
 kvmplutotest	ikev2-mobike-08-nat-expire-liveness-east		good	github/1762
 kvmplutotest	ikev2-mobike-08-nat-expire-liveness-road-mobike-no	good	github/1762
 kvmplutotest	ikev2-mobike-08-nat-expire-liveness-road-mobike-yes	wip	github/1762
