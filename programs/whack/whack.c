@@ -177,7 +177,7 @@ static void help(void)
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
 		"	--opposport <port> --oppodport <port> \\\n"
-		"	[--oppoproto <protocol>]\n"
+		"	[--oppoproto <protocol>] [--opporeqid <reqid>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
@@ -440,6 +440,7 @@ enum opt {
 	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
 	OPT_OPPO_LABEL,
+	OPT_OPPO_REQID,
 
 	/* List options */
 
@@ -753,6 +754,7 @@ const struct option optarg_options[] = {
 	{ OPT("opposport", "<source-port> (0)"), required_argument, NULL, OPT_OPPO_SPORT },
 	{ OPT("oppodport", "<destination-port> (8)"), required_argument, NULL, OPT_OPPO_DPORT },
 	{ OPT("oppolabel", "<security-label>"), required_argument, NULL, OPT_OPPO_LABEL },
+	{ OPT("opporeqid", "<reqid>"), required_argument, NULL, OPT_OPPO_REQID },
 
 	ASYNC_OPTS,
 
@@ -1436,6 +1438,10 @@ int main(int argc, char **argv)
 		case OPT_OPPO_LABEL:	/* --oppolabel <security-label> */
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.label = optarg;
+			continue;
+		case OPT_OPPO_REQID:	/* --opporeqid <reqid> */
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.reqid = optarg_uintmax(logger);
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
