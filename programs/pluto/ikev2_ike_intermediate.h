@@ -41,4 +41,9 @@ struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(s
 
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
 
+bool extract_v2KE_for_ke(const struct ke_desc *ke_alg,
+			 struct msg_digest *md,
+			 shunk_t *ke_blob,
+			 struct logger *logger);
+
 #endif

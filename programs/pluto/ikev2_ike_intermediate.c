@@ -433,18 +433,20 @@ struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(s
 	return exchange;
 }
 
-static bool extract_ike_intermediate_v2KE(const struct ke_desc *ke_alg,
-					  struct msg_digest *md,
-					  shunk_t *ke_blob,
-					  struct logger *logger)
+bool extract_v2KE_for_ke(const struct ke_desc *ke_alg,
+			 struct msg_digest *md,
+			 shunk_t *ke_blob,
+			 struct logger *logger)
 {
 	const struct payload_digest *v2ke = md->chain[ISAKMP_NEXT_v2KE];
 
 	if (v2ke == NULL) {
 		name_buf rb;
+		name_buf xb;
 		llog(RC_LOG, logger,
-		     "%s KE missing from IKE_INTERMEDIATE %s",
+		     "%s KE missing from %s %s",
 		     ke_alg->common.fqn,
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 		return false;
 	}
@@ -452,9 +454,11 @@ static bool extract_ike_intermediate_v2KE(const struct ke_desc *ke_alg,
 	if (v2ke->payload.v2ke.isak_ke != ke_alg->ikev2_alg_id) {
 		name_buf rb;
 		name_buf gb;
+		name_buf xb;
 		llog(RC_LOG, logger,
-		     "expecting KE for %s in IKE_INTERMEDIATE %s received KE for %s",
+		     "expecting KE for %s in %s %s received KE for %s",
 		     ke_alg->common.fqn,
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
 		     str_enum_short(&ikev2_trans_type_ke_names,
 				    v2ke->payload.v2ke.isak_ke, &gb));
@@ -467,9 +471,11 @@ static bool extract_ike_intermediate_v2KE(const struct ke_desc *ke_alg,
 			   ke_alg->responder_bytes);
 	if (ke_blob->len != ke_bytes) {
 		name_buf rb;
+		name_buf xb;
 		llog(RC_LOG, logger,
-		     "%s KE in IKE_INTERMEDIATE %s is %zu bytes long but should be %zu bytes",
+		     "%s KE in %s %s is %zu bytes long but should be %zu bytes",
 		     ke_alg->common.fqn,
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
 		     ke_blob->len, ke_bytes);
 		return false;
@@ -760,8 +766,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 	if (task->exchange.addke.kem != NULL &&
 	    task->exchange.addke.kem != &ike_alg_ke_none) {
 		shunk_t initiator_ke;
-		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
-						   &initiator_ke, logger)) {
+		if (!extract_v2KE_for_ke(task->exchange.addke.kem, md,
+					 &initiator_ke, logger)) {
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
@@ -1004,8 +1010,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 {
 	if (task->initiator != NULL) {
 		shunk_t responder_ke = null_shunk;
-		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
-						   &responder_ke, logger)) {
+		if (!extract_v2KE_for_ke(task->exchange.addke.kem, md,
+					 &responder_ke, logger)) {
 			/* already logged */
 			return STF_FATAL;
 		}

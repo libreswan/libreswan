@@ -94,7 +94,8 @@ PK11SymKey *ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(const struct prf_desc *prf_
 	PK11SymKey *skeyseed =
 		prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
 							       new_ke_secret,
-							       Ni, Nr, logger);
+							       Ni, Nr, 0, NULL,
+							       logger);
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam(buf, "  ... %s() -> ", __func__);
 		jam_symkey(buf, skeyseed);
@@ -179,7 +180,45 @@ PK11SymKey *ikev2_IKE_INTERMEDIATE_kem_skeyseed(const struct prf_desc *prf_desc,
 	PK11SymKey *skeyseed =
 		prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, old_SK_d,
 							       new_ke_secret,
-							       Ni, Nr, logger);
+							       Ni, Nr, 0, NULL,
+							       logger);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "  ... %s() -> ", __func__);
+		jam_symkey(buf, skeyseed);
+	}
+	return skeyseed;
+}
+
+/*
+ * Compute: SKEYSEED = prf(SK_d, SK(0) | Ni | Nr [ | SK(1) ... | SK(n) ])
+ *
+ * XXX: once NSS is figured out this should become part of the PRF
+ * vector (as it was on the branch).
+ */
+PK11SymKey *ikev2_IKE_FOLLOWUP_KE_skeyseed(const struct prf_desc *prf_desc,
+					   PK11SymKey *old_SK_d,
+					   PK11SymKey *new_ke_secret,
+					   const chunk_t Ni, const chunk_t Nr,
+					   size_t nr_additional_secrets,
+					   PK11SymKey **additional_secrets,
+					   struct logger *logger)
+{
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam(buf, "%s(%s", __func__, prf_desc->common.fqn);
+		jam_string(buf, " old_SK_d=");
+		jam_symkey(buf, old_SK_d);
+		jam(buf, " new_ke_secret=");
+		jam_symkey(buf, new_ke_secret);
+		jam(buf, " Ni Nr) ...");
+	}
+
+	PK11SymKey *skeyseed =
+		prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, old_SK_d,
+							       new_ke_secret,
+							       Ni, Nr,
+							       nr_additional_secrets,
+							       additional_secrets,
+							       logger);
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam(buf, "  ... %s() -> ", __func__);
 		jam_symkey(buf, skeyseed);
@@ -208,13 +247,38 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 	}
 	PK11SymKey *keymat =
 		prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_ke_secret,
-							 Ni, Nr, required_bytes,
+							 Ni, Nr, 0, NULL,
+							 required_bytes,
 							 logger);
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam(buf, "  ... %s() -> ", __func__);
 		jam_symkey(buf, keymat);
 	}
 	return keymat;
+}
+
+/*
+ * Compute: prf+(SK_d, g^ir (new) | Ni | Nr [ | SK(1) ... | SK(n) ])
+ *
+ * XXX: once NSS is figured out this should become part of the PRF
+ * vector (as it was on the branch).
+ */
+PK11SymKey *ikev2_IKE_FOLLOWUP_KE_child_sa_keymat(const struct prf_desc *prf_desc,
+						  PK11SymKey *SK_d,
+						  PK11SymKey *new_ke_secret,
+						  const chunk_t Ni, const chunk_t Nr,
+						  size_t nr_additional_secrets,
+						  PK11SymKey **additional_secrets,
+						  size_t required_bytes,
+						  struct logger *logger)
+{
+	return prf_desc->prf_ikev2_ops->child_sa_keymat(
+		prf_desc, SK_d, new_ke_secret,
+		Ni, Nr,
+		nr_additional_secrets,
+		additional_secrets,
+		required_bytes,
+		logger);
 }
 
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,

@@ -212,6 +212,11 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 		jam_string(buf, " ke=");
 		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
 
+		FOR_EACH_ITEM(ke, &ike->sa.st_oakley.ta_addke) {
+			jam_string(buf, " ke=");
+			jam_string(buf, ke->kem->common.fqn);
+		}
+
 		jam_string(buf, "}");
 
 	}

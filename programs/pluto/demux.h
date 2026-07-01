@@ -94,6 +94,7 @@ struct payload_summary {
 enum v2_pd {
 	PD_v2_INVALID = 0,
 
+	PD_v2N_ADDITIONAL_KEY_EXCHANGE,
 	PD_v2N_AUTHENTICATION_FAILED,
 	PD_v2N_COOKIE,
 	PD_v2N_COOKIE2,
