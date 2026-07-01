@@ -52,6 +52,7 @@ west #
 "road-chain-B":   dpd: passive; delay:0s; timeout:0s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "road-chain-B":   routing: unrouted;
+"road-chain-B":   reqid: REQID;
 "road-chain-B":   conn serial: $1;
 west #
  ipsec certutil -L

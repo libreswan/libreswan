@@ -122,6 +122,7 @@ Connection list:
 "failureshunt":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "failureshunt":   nat-traversal: encapsulation:auto; keepalive:20s
 "failureshunt":   routing: unrouted;
+"failureshunt":   reqid: REQID;
 "failureshunt":   conn serial: $1;
 "westnet-eastnet": 192.1.2.23...192.1.2.45; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
@@ -144,6 +145,7 @@ Connection list:
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet":   routing: unrouted;
+"westnet-eastnet":   reqid: REQID;
 "westnet-eastnet":   conn serial: $2;
  
 Total IPsec connections: loaded 2, routed 0, active 0

@@ -56,6 +56,7 @@ west #
 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
 "west":   nat-traversal: encapsulation:auto; keepalive:20s
 "west":   routing: unrouted;
+"west":   reqid: REQID;
 "west":   conn serial: $1;
 west #
  ipsec auto --up west

@@ -30,6 +30,7 @@ east #
 "westnet-eastnet-aggr":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-aggr":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aggr":   routing: unrouted;
+"westnet-eastnet-aggr":   reqid: REQID;
 "westnet-eastnet-aggr":   conn serial: $1;
 "westnet-eastnet-aggr":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-MODP2048
 east #

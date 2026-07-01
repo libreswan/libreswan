@@ -53,6 +53,7 @@ west #
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;
+"road-chain-B":   reqid: REQID;
 "road-chain-B":   conn serial: $1;
 west #
  ipsec certutil -L

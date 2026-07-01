@@ -48,6 +48,7 @@ east #
 "nss-cert-ocsp":   dpd: passive; delay:0s; timeout:0s
 "nss-cert-ocsp":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "nss-cert-ocsp":   routing: unrouted;
+"nss-cert-ocsp":   reqid: REQID;
 "nss-cert-ocsp":   conn serial: $1;
 east #
  echo "initdone"

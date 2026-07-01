@@ -28,6 +28,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; owner: IKE SA #1; negotiating IKE SA: #1;
+"westnet-eastnet-ipv4-psk-ikev2":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #1: "westnet-eastnet-ipv4-psk-ikev2":500 sent IKE_SA_INIT request; RETRANSMIT in XXs; idle;
 #1: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
@@ -57,6 +58,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; owner: IKE SA #1; negotiating IKE SA: #1;
+"westnet-eastnet-ipv4-psk-ikev2":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #1: "westnet-eastnet-ipv4-psk-ikev2":500 sent IKE_SA_INIT request; RETRANSMIT in XXs; idle;
 #1: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
@@ -88,6 +90,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:20s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted-bare-negotiation; owner: IKE SA #2; negotiating IKE SA: #2;
+"westnet-eastnet-ipv4-psk-ikev2":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 #2: "westnet-eastnet-ipv4-psk-ikev2":500 sent IKE_SA_INIT request; RETRANSMIT in XXs; idle;
 #2: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"

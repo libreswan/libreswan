@@ -49,6 +49,7 @@ west #
 "westnet-eastnet-alias":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-alias":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-alias":   routing: unrouted;
+"westnet-eastnet-alias":   reqid: REQID;
 "westnet-eastnet-alias":   conn serial: $1;
 "westnet-eastnet-alias":   aliases: franklin
 "westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -71,6 +72,7 @@ west #
 "westnet-eastnet-second":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-second":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-second":   routing: unrouted;
+"westnet-eastnet-second":   reqid: REQID;
 "westnet-eastnet-second":   conn serial: $2;
 "westnet-eastnet-second":   aliases: abigail franklin
 west #

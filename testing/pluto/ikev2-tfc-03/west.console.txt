@@ -47,6 +47,7 @@ west #
 "tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "tfc":   nat-traversal: encapsulation:auto; keepalive:20s
 "tfc":   routing: unrouted;
+"tfc":   reqid: REQID;
 "tfc":   conn serial: $1;
 west #
  ipsec whack --impair suppress_retransmits

@@ -31,6 +31,7 @@ east #
 "road-east-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-east-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east-ikev2":   routing: unrouted;
+"road-east-ikev2":   reqid: REQID;
 "road-east-ikev2":   conn serial: $1;
 east #
  # east should have only one public key of its own

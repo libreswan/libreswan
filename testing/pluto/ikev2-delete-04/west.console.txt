@@ -33,6 +33,7 @@ west #
 "west-east-delete1":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "west-east-delete1":   nat-traversal: encapsulation:auto; keepalive:20s
 "west-east-delete1":   routing: unrouted;
+"west-east-delete1":   reqid: REQID;
 "west-east-delete1":   conn serial: $1;
 west #
  echo "initdone"

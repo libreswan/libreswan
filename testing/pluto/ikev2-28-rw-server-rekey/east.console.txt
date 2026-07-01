@@ -31,6 +31,7 @@ east #
 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-eastnet-nonat":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-eastnet-nonat":   routing: unrouted;
+"road-eastnet-nonat":   reqid: REQID;
 "road-eastnet-nonat":   conn serial: $1;
 east #
  echo "initdone"

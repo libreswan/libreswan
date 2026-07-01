@@ -31,6 +31,7 @@ east #
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;
+"east-any":   reqid: REQID;
 "east-any":   conn serial: $1;
 east #
  # east should have only one public key of its own

@@ -31,6 +31,7 @@ east #
 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "ipv4-psk-ikev2-transport":   nat-traversal: encapsulation:auto; keepalive:20s
 "ipv4-psk-ikev2-transport":   routing: unrouted;
+"ipv4-psk-ikev2-transport":   reqid: REQID;
 "ipv4-psk-ikev2-transport":   conn serial: $1;
 "ipv4-psk-ikev2-transport":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
 east #

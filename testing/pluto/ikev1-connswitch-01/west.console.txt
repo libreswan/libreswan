@@ -45,6 +45,7 @@ west #
 "westnet-eastnet-ikev1":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-ikev1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-ikev1":   routing: unrouted;
+"westnet-eastnet-ikev1":   reqid: REQID;
 "westnet-eastnet-ikev1":   conn serial: $1;
 west #
  ipsec whack --impair suppress_retransmits

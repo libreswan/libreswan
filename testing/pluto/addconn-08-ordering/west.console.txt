@@ -31,5 +31,6 @@ west #
 "order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "order-test":   nat-traversal: encapsulation:auto; keepalive:20s
 "order-test":   routing: unrouted;
+"order-test":   reqid: REQID;
 "order-test":   conn serial: $1;
 west #

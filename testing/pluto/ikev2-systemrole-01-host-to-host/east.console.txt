@@ -153,6 +153,7 @@ Connection list:
 "192.1.2.23-to-192.1.2.45":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "192.1.2.23-to-192.1.2.45":   nat-traversal: encapsulation:auto; keepalive:20s
 "192.1.2.23-to-192.1.2.45":   routing: routed-ondemand;
+"192.1.2.23-to-192.1.2.45":   reqid: REQID;
 "192.1.2.23-to-192.1.2.45":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 1, active 0

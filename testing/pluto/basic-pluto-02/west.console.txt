@@ -130,6 +130,7 @@ west #
 "westnet-all":   dpd: passive; delay:0s; timeout:0s
 "westnet-all":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-all":   routing: unrouted;
+"westnet-all":   reqid: REQID;
 "westnet-all":   conn serial: $14;
 west #
  echo done

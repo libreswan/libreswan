@@ -40,6 +40,7 @@ east #
 "north-east-x509-pluto-02":   dpd: passive; delay:0s; timeout:0s
 "north-east-x509-pluto-02":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "north-east-x509-pluto-02":   routing: unrouted;
+"north-east-x509-pluto-02":   reqid: REQID;
 "north-east-x509-pluto-02":   conn serial: $1;
 east #
  echo "initdone"

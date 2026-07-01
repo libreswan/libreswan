@@ -123,6 +123,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-ipv4-psk-ikev1":   routing: routed-tunnel; owner: IPsec SA #2; established ISAKMP SA: #1; established IPsec SA: #2;
+"westnet-eastnet-ipv4-psk-ikev1":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev1":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>

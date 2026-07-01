@@ -56,6 +56,7 @@ Connection list:
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;
+"east-any":   reqid: REQID;
 "east-any":   conn serial: $1;
 "east-any"[1]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]==={192.0.2.101/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.101;
 "east-any"[1]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.209; established IKE SA: #1;
@@ -80,6 +81,7 @@ Connection list:
 "east-any"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
+"east-any"[1]:   reqid: REQID;
 "east-any"[1]:   conn serial: $2, instantiated from: $1;
 "east-any"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "east-any"[1]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
@@ -106,6 +108,7 @@ Connection list:
 "east-any"[2]:   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any"[2]:   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any"[2]:   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #3; established Child SA: #4;
+"east-any"[1]:   reqid: REQID;
 "east-any"[2]:   conn serial: $3, instantiated from: $1;
 "east-any"[2]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "east-any"[2]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>

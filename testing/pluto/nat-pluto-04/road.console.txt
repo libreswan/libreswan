@@ -30,6 +30,7 @@ road #
 "road-eastnet-nat":   dpd: passive; delay:0s; timeout:0s
 "road-eastnet-nat":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "road-eastnet-nat":   routing: unrouted;
+"road-eastnet-nat":   reqid: REQID;
 "road-eastnet-nat":   conn serial: $1;
 road #
  ipsec whack --impair suppress_retransmits

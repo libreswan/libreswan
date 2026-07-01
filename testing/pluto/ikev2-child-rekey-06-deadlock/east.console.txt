@@ -31,6 +31,7 @@ east #
 "east":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
 "east":   nat-traversal: encapsulation:auto; keepalive:20s
 "east":   routing: unrouted;
+"east":   reqid: REQID;
 "east":   conn serial: $1;
 east #
  ipsec whack --impair revival
