@@ -34,6 +34,9 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						     struct connection *c, /*child+whack*/
 						     const struct child_policy *policy,
 						     bool detach_whack);
+struct child_sa *submit_v2_CREATE_CHILD_SA_additional_child(struct ike_sa *ike,
+							      struct child_sa *initial_sa,
+							      uint32_t cpu_id);
 
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_new_child_request;
 
@@ -49,5 +52,6 @@ extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_failure_response;
 extern const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange;
 extern const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange;
 extern const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange;
+
 
 #endif

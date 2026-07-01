@@ -79,6 +79,36 @@ struct child_policy {
 
 #define has_child_policy(POLICY) ((POLICY) != NULL && (POLICY)->is_set)
 
+/*
+ * Maximum number of Additional Child SAs per connection (RFC 9611)
+ *
+ * The limit prevents initiators from exhausting responder resources
+ * by creating too many Additional SAs.
+ */
+#define MAX_ADDITIONAL_SAS 64
+
+/*
+ * No CPU bound to SA (RFC 9611)
+ *
+ * Also used also for Initial Child SA.
+ */
+#define CPU_ID_NONE ((uint32_t)-1)
+
+/*
+ * State of negotiation of using Additional SAs (RFC 9611)
+ *
+ *   NONE - no negotiated
+ *   SENT - SA_RESOURCE_INFO notify message sent
+ *   RECV - SA_RESOURCE_INFO notify message received
+ *   DONE - successfully negotiated
+ */
+enum resource_info_state {
+	RESOURCE_INFO_NONE = 0,
+	RESOURCE_INFO_SENT,
+	RESOURCE_INFO_RECV,
+	RESOURCE_INFO_DONE,
+};
+
 typedef struct {
 	char buf[32];
 } child_policy_buf;
@@ -424,6 +454,11 @@ struct state {
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
 		unsigned next_exchange;
 	} st_v2_ike_intermediate;
+
+	struct {
+		uint32_t cpu_id;                    /* CPU_ID_NONE for Initial SA, or 0..N for Additional SA */
+		enum resource_info_state state;     /* RFC 9611 SA_RESOURCE_INFO negotiation state */
+	} st_v2_resource_info;
 
 	/** end of IKEv2-only things **/
 
