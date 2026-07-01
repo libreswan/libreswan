@@ -1189,7 +1189,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 		     c->name);
 		return;
 	case NIC_OFFLOAD_PACKET:
-		if (PBAD(logger, !c->iface->nic_offload)) {
+		if (PBAD(logger, !c->iface->nic_offload_packet)) {
 			return;
 		}
 		nic_offload->dev = c->iface->real_device_name;

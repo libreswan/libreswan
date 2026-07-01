@@ -684,7 +684,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 				 enum expect_kernel_policy what_about_inbound,
 				 const char *story, const char *adstory,
-				 struct logger *logger, const char *func)
+				 struct logger *logger, const char *func,
+				 int ok_errno, int *error_code)
 {
 	struct nlm_resp rsp;
 
@@ -701,6 +702,10 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	 */
 
 	int error = -rsp.u.e.error;
+
+	if (error_code != NULL) {
+		*error_code = error;
+	}
 
 	switch (what_about_inbound) {
 	case KERNEL_POLICY_PRESENT_OR_MISSING:
@@ -756,6 +761,15 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 		}
 #endif
 		break;
+	}
+
+	if (ok_errno != 0 && error == ok_errno) {
+		name_buf sb;
+		ldbg(logger,
+		     "%s()   %s for flow %s %s not supported: %s (errno %d)",
+		     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
+		     story, adstory, strerror(error), error);
+		return false;
 	}
 
 	name_buf sb;
@@ -1108,7 +1122,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		 KERNEL_POLICY_PRESENT);
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       spb.buf,
-				       logger, func);
+				       logger, func, 0, NULL);
 
 	/*
 	 * ??? deal with any forwarding policy.
@@ -1132,7 +1146,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			info->dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
 						   policy_name, spb.buf,
-						   logger, func);
+						   logger, func, 0, NULL);
 			break;
 		default:
 			break; /*no-op*/
@@ -1198,7 +1212,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 
 	bool ok = sendrecv_xfrm_policy(&req.n, expect_kernel_policy, "delete",
 				       spb.buf,
-				       logger, func);
+				       logger, func, 0, NULL);
 
 	/*
 	 * ??? deal with any forwarding policy.
@@ -1219,7 +1233,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 		id->dir = XFRM_POLICY_FWD;
 		ok &= sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT_OR_MISSING,
 					   "delete", spb.buf,
-					   logger, func);
+					   logger, func, 0, NULL);
 	}
 	return ok;
 }
@@ -2908,17 +2922,17 @@ static bool fiddle_icmpv6_bypass(struct nlmsghdr *n, uint8_t *dir,
 {
 	*dir = XFRM_POLICY_IN;
 	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
-				  story, "(in)", logger, __func__))
+				  story, "(in)", logger, __func__, 0, NULL))
 		return false;
 
 	*dir = XFRM_POLICY_FWD;
 	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
-				  story, "(fwd)", logger, __func__))
+				  story, "(fwd)", logger, __func__, 0, NULL))
 		return false;
 
 	*dir = XFRM_POLICY_OUT;
 	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
-				  story, "(out)", logger, __func__))
+				  story, "(out)", logger, __func__, 0, NULL))
 		return false;
 
 	return true;
@@ -3264,10 +3278,14 @@ static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
-static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
+static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload,
+						   bool *packet_supported,
+						   struct logger *logger)
 {
 	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
 		return false;
+
+	*packet_supported = false;
 
 	struct {
 		struct nlmsghdr n;
@@ -3320,17 +3338,28 @@ static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offlo
 	};
 
 	char *text = "add IPv4 ike port bypass for nic-offload";
+	int error = 0;
 
 	if (!sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT,
-				  text, "(out)", logger, __func__))
+				  text, "(out)", logger, __func__, EINVAL, &error)) {
+		if (error == EINVAL) {
+			ldbg(logger, "packet offload not supported on interface %s",
+			     nic_offload->dev);
+			return true;
+		}
 		return false;
+	}
 
 	text = "add IPv6 ike port bypass for nic-offload";
 	req.nlmsg.p.sel.family = AF_INET6;
+	error = 0;
 	if (!sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT,
-				  text, "(out)", logger, __func__))
+				  text, "(out)", logger, __func__, EINVAL, &error) &&
+	    error != EINVAL) {
 		return false;
+	}
 
+	*packet_supported = true;
 	return true;
 }
 

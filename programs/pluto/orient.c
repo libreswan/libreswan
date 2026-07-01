@@ -220,6 +220,21 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 	jam_string(buf, iface->real_device_name);
 }
 
+static bool iface_offload_capable(const struct connection *c,
+				  const struct iface_device *iface)
+{
+	switch (c->config->nic_offload) {
+	case NIC_OFFLOAD_PACKET:
+		return iface->nic_offload_packet;
+	case NIC_OFFLOAD_CRYPTO:
+		return iface->nic_offload;
+	case NIC_OFFLOAD_UNSET:
+	case NIC_OFFLOAD_NO:
+		return false;
+	}
+	bad_case(c->config->nic_offload);
+}
+
 bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attached*/)
 {
 	if (verbose.debug) {
@@ -280,7 +295,7 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 				END_ROOF);
 		vassert(end != END_ROOF);
 
-		if (need_offload && !iface->nic_offload) {
+		if (need_offload && !iface_offload_capable(c, iface)) {
 			vlog("interface search skipped interface %s as it does not have nic-offload support",
 			     iface->real_device_name);
 			continue;

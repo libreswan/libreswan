@@ -87,6 +87,7 @@ struct iface_device {
 	struct list_entry entry;
 	char *real_device_name;
 	bool nic_offload;
+	bool nic_offload_packet;
 	ip_address local_address;
 	enum { IFD_ADD, IFD_KEEP, IFD_DELETE } ifd_change;
 };

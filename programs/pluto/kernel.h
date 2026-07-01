@@ -308,7 +308,9 @@ struct kernel_ops {
 	bool (*directional_ipsec_sa)(struct child_sa *child);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, const struct logger *logger);
-	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
+	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload,
+					       bool *packet_supported,
+					       struct logger *logger);
 
 	/* extensions */
 	const struct kernel_ipsec_interface *ipsec_interface;

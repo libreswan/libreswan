@@ -656,9 +656,14 @@ static void add_new_ifaces(struct logger *logger)
 				.dev = ifd->real_device_name,
 				.type = KERNEL_OFFLOAD_PACKET,
 			};
+			bool packet_supported = false;
 
-			if (!kernel_ops->poke_ipsec_offload_policy_hole(&nic_offload, logger))
+			if (!kernel_ops->poke_ipsec_offload_policy_hole(&nic_offload,
+									&packet_supported,
+									logger))
 				llog(RC_LOG, logger, "poke_ipsec_offload_policy_hole failed");
+			else
+				ifd->nic_offload_packet = packet_supported;
 			/* non-fatal; stumble on */
 		}
 	}
