@@ -119,6 +119,7 @@ Connection list:
 "westnet-eastnet-no-sha1":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-no-sha1":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-no-sha1":   routing: unrouted;
+"westnet-eastnet-no-sha1":   reqid: REQID;
 "westnet-eastnet-no-sha1":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

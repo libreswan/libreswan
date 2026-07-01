@@ -103,6 +103,7 @@ west #
 "westnet-eastnet-ikev2":   liveness: active; dpddelay:3s; retransmit-timeout:10s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2":   routing: routed-ondemand;
+"westnet-eastnet-ikev2":   reqid: REQID;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
  ipsec _kernel policy
@@ -138,6 +139,7 @@ west #
 "westnet-eastnet-ikev2":   liveness: active; dpddelay:3s; retransmit-timeout:10s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2":   routing: routed-negotiation; owner: IKE SA #3; negotiating IKE SA: #3;
+"westnet-eastnet-ikev2":   reqid: REQID;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
  ipsec _kernel policy

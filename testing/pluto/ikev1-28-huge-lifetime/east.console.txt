@@ -118,6 +118,7 @@ Connection list:
 "westnet-eastnet":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet":   routing: unrouted;
+"westnet-eastnet":   reqid: REQID;
 "westnet-eastnet":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

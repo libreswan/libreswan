@@ -30,6 +30,7 @@ east #
 "westnet-eastnet-compress":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-compress":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-compress":   routing: unrouted;
+"westnet-eastnet-compress":   reqid: REQID;
 "westnet-eastnet-compress":   conn serial: $1;
 east #
  echo "initdone"

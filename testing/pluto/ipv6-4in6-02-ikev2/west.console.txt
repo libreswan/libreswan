@@ -45,6 +45,7 @@ west #
 "westnet-eastnet-4in6":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-4in6":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-4in6":   routing: unrouted;
+"westnet-eastnet-4in6":   reqid: REQID;
 "westnet-eastnet-4in6":   conn serial: $1;
 west #
  ipsec whack --impair suppress_retransmits

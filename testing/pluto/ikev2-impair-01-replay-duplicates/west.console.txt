@@ -135,6 +135,7 @@ Connection list:
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet":   routing: unrouted;
+"westnet-eastnet":   reqid: REQID;
 "westnet-eastnet":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

@@ -140,6 +140,7 @@ Connection list:
 "v6-transport":   dpd: passive; delay:0s; timeout:0s
 "v6-transport":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "v6-transport":   routing: unrouted;
+"v6-transport":   reqid: REQID;
 "v6-transport":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

@@ -37,6 +37,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
 "roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
+"roadnet-eastnet-ipv4-psk-ikev1":   reqid: REQID;
 "roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]==={192.0.2.1/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
@@ -60,6 +61,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   dpd: passive; delay:0s; timeout:0s
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   routing: routed-tunnel; owner: IPsec SA #4; established ISAKMP SA: #3; established IPsec SA: #4;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   reqid: REQID;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn serial: $2, instantiated from: $1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>

@@ -129,6 +129,7 @@ Connection list:
 "northnet-eastnet-nonat":   dpd: passive; delay:0s; timeout:0s
 "northnet-eastnet-nonat":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "northnet-eastnet-nonat":   routing: unrouted;
+"northnet-eastnet-nonat":   reqid: REQID;
 "northnet-eastnet-nonat":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

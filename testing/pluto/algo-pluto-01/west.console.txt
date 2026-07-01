@@ -48,6 +48,7 @@ west #
 "westnet-eastnet-aes256":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-aes256":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aes256":   routing: unrouted;
+"westnet-eastnet-aes256":   reqid: REQID;
 "westnet-eastnet-aes256":   conn serial: $1;
 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_256-HMAC_SHA1-MODP2048
 "westnet-eastnet-aes256":   ESP algorithms: AES_CBC_256-HMAC_SHA1_96

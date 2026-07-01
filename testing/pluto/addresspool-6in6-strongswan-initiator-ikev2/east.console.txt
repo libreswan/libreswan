@@ -124,6 +124,7 @@ Connection list:
 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "rw-eastnet-ipv6":   nat-traversal: encapsulation:auto; keepalive:20s
 "rw-eastnet-ipv6":   routing: unrouted;
+"rw-eastnet-ipv6":   reqid: REQID;
 "rw-eastnet-ipv6":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

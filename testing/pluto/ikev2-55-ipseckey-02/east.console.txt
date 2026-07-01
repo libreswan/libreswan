@@ -31,6 +31,7 @@ east #
 "road-east":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "road-east":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-east":   routing: unrouted;
+"road-east":   reqid: REQID;
 "road-east":   conn serial: $2;
 east #
  # eash should have only one pub key not road.

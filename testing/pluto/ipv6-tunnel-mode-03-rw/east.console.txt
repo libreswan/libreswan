@@ -30,6 +30,7 @@ east #
 "v6-tunnel-east-road":   dpd: passive; delay:0s; timeout:0s
 "v6-tunnel-east-road":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "v6-tunnel-east-road":   routing: unrouted;
+"v6-tunnel-east-road":   reqid: REQID;
 "v6-tunnel-east-road":   conn serial: $1;
 east #
  echo "initdone"

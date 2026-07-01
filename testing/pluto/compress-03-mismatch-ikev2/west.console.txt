@@ -47,6 +47,7 @@ west #
 "westnet-eastnet-ipcomp":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipcomp":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipcomp":   routing: unrouted;
+"westnet-eastnet-ipcomp":   reqid: REQID;
 "westnet-eastnet-ipcomp":   conn serial: $1;
 west #
  echo "initdone"

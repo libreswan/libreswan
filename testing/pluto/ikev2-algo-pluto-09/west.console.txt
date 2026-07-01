@@ -47,6 +47,7 @@ west #
 "westnet-eastnet-dh19":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-dh19":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-dh19":   routing: unrouted;
+"westnet-eastnet-dh19":   reqid: REQID;
 "westnet-eastnet-dh19":   conn serial: $1;
 "westnet-eastnet-dh19":   IKE algorithms: AES_CBC-HMAC_SHA1-DH19
 "westnet-eastnet-dh19":   ESP algorithms: AES_CBC-HMAC_SHA1_96-DH19

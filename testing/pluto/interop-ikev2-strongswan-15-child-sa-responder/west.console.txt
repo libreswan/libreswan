@@ -86,6 +86,7 @@ west #
 "westnet-eastnet-ikev2a":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ikev2a":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2a":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
+"westnet-eastnet-ikev2a":   reqid: REQID;
 "westnet-eastnet-ikev2a":   conn serial: $1;
 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_CBC_192-HMAC_MD5-MODP2048
@@ -112,6 +113,7 @@ west #
 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ikev2b":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2b":   routing: routed-tunnel; owner: Child SA #3; established Child SA: #3;
+"westnet-eastnet-ikev2b":   reqid: REQID;
 "westnet-eastnet-ikev2b":   conn serial: $2;
 "westnet-eastnet-ikev2b":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 "westnet-eastnet-ikev2b":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
@@ -137,6 +139,7 @@ west #
 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ikev2c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2c":   routing: routed-tunnel; owner: Child SA #4; established Child SA: #4;
+"westnet-eastnet-ikev2c":   reqid: REQID;
 "westnet-eastnet-ikev2c":   conn serial: $3;
 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC-HMAC_MD5-MODP2048
 "westnet-eastnet-ikev2c":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256

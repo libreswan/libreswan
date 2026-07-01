@@ -31,6 +31,7 @@ east #
 "westnet-eastnet-null":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-null":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-null":   routing: unrouted;
+"westnet-eastnet-null":   reqid: REQID;
 "westnet-eastnet-null":   conn serial: $7;
 east #
  echo "initdone"

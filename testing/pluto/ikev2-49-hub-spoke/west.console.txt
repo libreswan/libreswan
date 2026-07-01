@@ -119,6 +119,7 @@ Connection list:
 "westnet-northnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-northnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-northnet-ipv4-psk":   routing: unrouted;
+"westnet-northnet-ipv4-psk":   reqid: REQID;
 "westnet-northnet-ipv4-psk":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

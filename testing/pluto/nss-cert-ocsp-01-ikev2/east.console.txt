@@ -47,6 +47,7 @@ east #
 "nss-cert-ocsp":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "nss-cert-ocsp":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-ocsp":   routing: unrouted;
+"nss-cert-ocsp":   reqid: REQID;
 "nss-cert-ocsp":   conn serial: $1;
 east #
  echo "initdone"

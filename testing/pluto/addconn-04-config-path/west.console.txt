@@ -33,6 +33,7 @@ west #
 "tmp":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "tmp":   nat-traversal: encapsulation:auto; keepalive:20s
 "tmp":   routing: unrouted;
+"tmp":   reqid: REQID;
 "tmp":   conn serial: $1;
 west #
  ipsec whack --shutdown
@@ -66,6 +67,7 @@ west #
 "path":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "path":   nat-traversal: encapsulation:auto; keepalive:20s
 "path":   routing: unrouted;
+"path":   reqid: REQID;
 "path":   conn serial: $1;
 west #
  ipsec whack --shutdown

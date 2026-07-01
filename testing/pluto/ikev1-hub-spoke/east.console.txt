@@ -121,6 +121,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
 "northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "northnet-westnet-ipv4-psk":   routing: unrouted;
+"northnet-westnet-ipv4-psk":   reqid: REQID;
 "northnet-westnet-ipv4-psk":   conn serial: $2;
 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-northnet-ipv4-psk":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
@@ -142,6 +143,7 @@ Connection list:
 "westnet-northnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
 "westnet-northnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-northnet-ipv4-psk":   routing: unrouted;
+"westnet-northnet-ipv4-psk":   reqid: REQID;
 "westnet-northnet-ipv4-psk":   conn serial: $1;
  
 Total IPsec connections: loaded 2, routed 0, active 0

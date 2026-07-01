@@ -49,6 +49,7 @@ Connection list:
 "a":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
 "a":   nat-traversal: encapsulation:auto; keepalive:20s
 "a":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #3; established Child SA: #2;
+"a":   reqid: REQID;
 "a":   conn serial: $1;
 "a":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "a":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
@@ -73,6 +74,7 @@ Connection list:
 "b":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
 "b":   nat-traversal: encapsulation:auto; keepalive:20s
 "b":   routing: routed-tunnel; owner: Child SA #4; established Child SA: #4;
+"b":   reqid: REQID;
 "b":   conn serial: $2;
 "b":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
  

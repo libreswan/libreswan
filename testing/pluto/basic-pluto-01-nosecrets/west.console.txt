@@ -134,6 +134,7 @@ Connection list:
 "nosecrets":   dpd: passive; delay:0s; timeout:0s
 "nosecrets":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "nosecrets":   routing: unrouted;
+"nosecrets":   reqid: REQID;
 "nosecrets":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

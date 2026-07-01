@@ -157,6 +157,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
+"westnet-eastnet-ipv4-psk-ikev2":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
@@ -293,6 +294,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: routed-ondemand;
+"westnet-eastnet-ipv4-psk-ikev2":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 1, active 0

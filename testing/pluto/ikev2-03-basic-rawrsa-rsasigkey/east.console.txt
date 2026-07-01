@@ -121,6 +121,7 @@ Connection list:
 "west-rsasigkey-east-rsasigkey":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "west-rsasigkey-east-rsasigkey":   nat-traversal: encapsulation:auto; keepalive:20s
 "west-rsasigkey-east-rsasigkey":   routing: unrouted;
+"west-rsasigkey-east-rsasigkey":   reqid: REQID;
 "west-rsasigkey-east-rsasigkey":   conn serial: $1;
  
 Total IPsec connections: loaded 1, routed 0, active 0

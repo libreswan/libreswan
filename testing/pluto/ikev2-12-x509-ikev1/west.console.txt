@@ -40,6 +40,7 @@ west #
 "westnet-eastnet-ikev2":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-ikev2":   routing: unrouted;
+"westnet-eastnet-ikev2":   reqid: REQID;
 "westnet-eastnet-ikev2":   conn serial: $1;
 west #
  echo "initdone"

@@ -117,6 +117,7 @@ west #
 "east-west":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-west":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-west":   routing: routed-tunnel; owner: Child SA #3; established IKE SA: #2; established Child SA: #3;
+"east-west":   reqid: REQID;
 "east-west":   conn serial: $1;
 "east-west":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "east-west":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>

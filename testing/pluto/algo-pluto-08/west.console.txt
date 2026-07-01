@@ -46,6 +46,7 @@ west #
 "westnet-eastnet-dh15":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-dh15":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-dh15":   routing: unrouted;
+"westnet-eastnet-dh15":   reqid: REQID;
 "westnet-eastnet-dh15":   conn serial: $1;
 "westnet-eastnet-dh15":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP3072
 "westnet-eastnet-dh15":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96-MODP3072

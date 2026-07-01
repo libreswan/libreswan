@@ -46,6 +46,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ipv4-psk-ppk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
+"westnet-eastnet-ipv4-psk-ppk":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
 west #
  echo "initdone"

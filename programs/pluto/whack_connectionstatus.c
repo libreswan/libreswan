@@ -1046,6 +1046,15 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_owners(buf, c, IKE_SA_OWNER_FLOOR, IKE_SA_OWNER_ROOF);
 		jam_connection_owners(buf, c, CHILD_SA_OWNER_FLOOR, CHILD_SA_OWNER_ROOF);
 	}
+	/*
+	 * display the reqid for a particular connection
+	 */
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, c->name);
+		jam_string(buf, ":  ");
+		jam(buf, " reqid: "PRI_REQID";",
+		    c->child.reqid);
+	}
 
 	if (c->config->session_resumption) {
 		SHOW_JAMBUF(s, buf) {

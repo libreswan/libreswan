@@ -43,6 +43,7 @@ west #
 "nss-cert-chain":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "nss-cert-chain":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-chain":   routing: unrouted;
+"nss-cert-chain":   reqid: REQID;
 "nss-cert-chain":   conn serial: $1;
 west #
  ipsec whack --impair suppress_retransmits

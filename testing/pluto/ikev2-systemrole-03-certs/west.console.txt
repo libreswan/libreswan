@@ -63,6 +63,7 @@ west #
 "192.1.2.45-to-192.1.2.23":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "192.1.2.45-to-192.1.2.23":   nat-traversal: encapsulation:auto; keepalive:20s
 "192.1.2.45-to-192.1.2.23":   routing: routed-ondemand;
+"192.1.2.45-to-192.1.2.23":   reqid: REQID;
 "192.1.2.45-to-192.1.2.23":   conn serial: $1;
 west #
  # connection is ondemand, but we will --up so we can see X.509 auth
