@@ -154,7 +154,7 @@ static void help(void)
 		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
 		"       [--pass | --drop]\\\n"
 		"	[--failnone | --failpass | --faildrop]\\\n"
-		"	[--negopass | --negodrop]\\\n"
+		"	[--negopass | --negohold]\\\n"
 		"	[--reauth ] \\\n"
 		"	[--nic-offload <packet|crypto|no>] \\\n"
 		"	--to\n"
@@ -834,8 +834,8 @@ const struct option optarg_options[] = {
 	{ "pass\0", no_argument, NULL, CDS_PASS },
 	{ REPLACE_OPT("reject", "drop", "5.3"), no_argument, NULL, CDS_DROP },
 
-	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
-	{ "negohold\0negodrop", no_argument, NULL, CDS_NEGOTIATION_HOLD },
+	{ "negohold\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
+	{ "negodrop\0negohold", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negopass\0", no_argument, NULL, CDS_NEGOTIATION_PASS },
 
 	{ "faildrop\0", no_argument, NULL, CDS_FAILURE_DROP },
@@ -1747,8 +1747,8 @@ int main(int argc, char **argv)
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
 			msg.wm_negotiationshunt = "pass";
 			continue;
-		case CDS_NEGOTIATION_HOLD:	/* --negodrop|--negohold */
-			msg.wm_negotiationshunt = "drop";
+		case CDS_NEGOTIATION_HOLD:	/* --negohold|--negodrop */
+			msg.wm_negotiationshunt = "hold";
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */
