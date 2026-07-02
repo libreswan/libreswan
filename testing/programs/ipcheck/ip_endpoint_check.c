@@ -120,7 +120,7 @@ void ip_endpoint_check(void)
 		 */
 
 		/* host port */
-		uint16_t heport = endpoint_hport(e);
+		uint16_t heport = endpoint_hport(e, HERE);
 		if (!memeq(&heport, &t->hport, sizeof(heport))) {
 			FAIL("endpoint_hport() returned '%d', expected '%d'",
 				heport, t->hport);

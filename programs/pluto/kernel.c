@@ -1323,12 +1323,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			encap_type = child->sa.st_iface_endpoint->io->protocol->encap_esp;
 			switch (direction) {
 			case DIRECTION_INBOUND:
-				encap_sport = endpoint_hport(child->sa.st_remote_endpoint);
-				encap_dport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint);
+				encap_sport = endpoint_hport(child->sa.st_remote_endpoint, HERE);
+				encap_dport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint, HERE);
 				break;
 			case DIRECTION_OUTBOUND:
-				encap_sport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint);
-				encap_dport = endpoint_hport(child->sa.st_remote_endpoint);
+				encap_sport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint, HERE);
+				encap_dport = endpoint_hport(child->sa.st_remote_endpoint, HERE);
 				break;
 			default:
 				bad_case(direction);

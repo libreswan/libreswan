@@ -220,8 +220,10 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	ldbg(outs->logger, "emitting NAT-D payloads");
 
-	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
-	unsigned short local_port = endpoint_hport(st->st_iface_endpoint->local_endpoint);
+	unsigned remote_port =
+		endpoint_hport(st->st_remote_endpoint, HERE);
+	unsigned short local_port =
+		endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
 		ldbg(outs->logger, "NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		local_port = remote_port = 0;
@@ -424,7 +426,8 @@ void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
 		detect_ikev1_natd(md, ike);
 
 		if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
-			nat_traversal_show_result(&ike->sa, endpoint_hport(md->sender));
+			nat_traversal_show_result(&ike->sa,
+						  endpoint_hport(md->sender, HERE));
 		}
 	}
 
@@ -449,7 +452,7 @@ void ikev1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    nat_traversal_detected(st) &&
-	    endpoint_hport(st->st_iface_endpoint->local_endpoint) != NAT_IKE_UDP_PORT) {
+	    endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE) != NAT_IKE_UDP_PORT) {
 		ldbg(st->logger, "NAT-T: "PRI_SO" in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		     pri_so(st->st_serialno), st->st_state->short_name,
 		     NAT_IKE_UDP_PORT);

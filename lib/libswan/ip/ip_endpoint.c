@@ -67,13 +67,14 @@ ip_address endpoint_address(const ip_endpoint endpoint)
 	return address_from_raw(HERE, afi, endpoint.bytes);
 }
 
-int endpoint_hport(const ip_endpoint endpoint)
+int endpoint_hport(const ip_endpoint endpoint, where_t where)
 {
 	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		ldbg(&global_logger, "%s has unspecified type", __func__);
+		ldbg(&global_logger, "endpoint has unspecified type "PRI_WHERE,
+		     pri_where(where));
 		return -1;
 	}
 

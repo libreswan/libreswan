@@ -182,7 +182,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		jam_so(buf, st->st_serialno);
 		jam_string(buf, ": ");
 		jam_connection(buf, c);
-		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint));
+		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint, HERE));
 
 		if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");

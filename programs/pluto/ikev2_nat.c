@@ -58,7 +58,7 @@ bool ikev2_out_nat_v2n(struct pbs_out *outs, struct state *st,
 	};
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
-	uint16_t lport = endpoint_hport(st->st_iface_endpoint->local_endpoint);
+	uint16_t lport = endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
 		ldbg(st->logger, "NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		lport = 0;
@@ -236,7 +236,7 @@ bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 * XXX: see also end_host_port().  Some of these are
 	 * redundant, but logging is useful.
 	 */
-	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint);
+	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint, HERE);
 	if (port_is_specified(ike->sa.st_connection->remote->host.config->ikeport)) {
 		ldbg(ike->sa.logger,
 		     "NAT: "PRI_SO" not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
