@@ -1,0 +1,18 @@
+The JSON files used to publish the CVEs with MITRE
+using the 'cve' command from python3-cvelib.
+
+reserve one or more CVE IDs:
+
+cve -i reserve <count>
+
+publish a CVE:
+
+cve -i publish CVE-XXXX-YYYYY -f CVE-XXXX-YYYYY.json
+
+This requires proper env setting of:
+
+CVE_API_KEY=
+CVE_ENVIRONMENT=
+CVE_ORG=libreswan
+CVE_USER=
+
