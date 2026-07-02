@@ -1655,6 +1655,9 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 		} else {
 			ldbg(logger, "%s() tunnel enabling non-inner transport mode", __func__);
 			req.p.mode = XFRM_MODE_TRANSPORT;
+			if (sa->direction == DIRECTION_OUTBOUND) {
+				req.p.flags |= XFRM_STATE_AF_UNSPEC;
+			}
 		}
 		break;
 	case KERNEL_MODE_TRANSPORT:
