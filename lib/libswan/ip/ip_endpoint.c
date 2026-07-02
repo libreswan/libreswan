@@ -93,19 +93,22 @@ ip_port endpoint_port(const ip_endpoint endpoint)
 	return ip_hport(endpoint.hport);
 }
 
-ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
+ip_endpoint set_endpoint_port(const ip_endpoint endpoint,
+			      ip_port port,
+			      where_t where)
 {
 	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		ldbg(&global_logger, "endpoint has unspecified type");
+		ldbg(&global_logger, "endpoint has unspecified type "PRI_WHERE,
+		     pri_where(where));
 		return unset_endpoint;
 	}
 
 	ip_endpoint dst = endpoint;
 	dst.hport = hport(port);
-	pexpect_endpoint(&dst, HERE);
+	pexpect_endpoint(&dst, where);
 	return dst;
 }
 

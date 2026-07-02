@@ -148,6 +148,7 @@ bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address ad
 
 int endpoint_hport(const ip_endpoint endpoint);
 ip_endpoint set_endpoint_port(const ip_endpoint endpoint,
-			      ip_port port) MUST_USE_RESULT;
+			      ip_port port,
+			      where_t where) MUST_USE_RESULT;
 
 #endif

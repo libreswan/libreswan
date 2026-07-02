@@ -232,7 +232,8 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	/* first: emit payload with hash of sender IP & port */
 
-	const ip_endpoint remote_endpoint = set_endpoint_port(md->sender, ip_hport(remote_port));
+	const ip_endpoint remote_endpoint =
+		set_endpoint_port(md->sender, ip_hport(remote_port), HERE);
 	struct crypt_mac hash;
 
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
@@ -244,7 +245,10 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	/* second: emit payload with hash of my IP & port */
 
-	const ip_endpoint local_endpoint = set_endpoint_port(md->iface->local_endpoint, ip_hport(local_port));
+	const ip_endpoint local_endpoint =
+		set_endpoint_port(md->iface->local_endpoint,
+				  ip_hport(local_port),
+				  HERE);
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, local_endpoint,
 			 st->logger);
@@ -466,7 +470,9 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 * exchanges use that port.
 	 */
 	endpoint_buf b1, b2;
-	ip_endpoint new_local_endpoint = set_endpoint_port(st->st_iface_endpoint->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
+	ip_endpoint new_local_endpoint =
+		set_endpoint_port(st->st_iface_endpoint->local_endpoint,
+				  ip_hport(NAT_IKE_UDP_PORT), HERE);
 	ldbg(st->logger, "NAT: "PRI_SO" floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
 	     pri_so(st->st_serialno),
 	     str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
@@ -498,8 +504,9 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	/*
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
 	 */
-	ip_endpoint new_endpoint = set_endpoint_port(st->st_remote_endpoint,
-						     ip_hport(NAT_IKE_UDP_PORT));
+	ip_endpoint new_endpoint =
+		set_endpoint_port(st->st_remote_endpoint,
+				  ip_hport(NAT_IKE_UDP_PORT), HERE);
 	endpoint_buf oep, nep;
 	ldbg(st->logger,
 	     "NAT-T: "PRI_SO" floating remote port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
