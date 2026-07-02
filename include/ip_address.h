@@ -65,8 +65,6 @@ typedef struct {
 		pri_ip_version((A)->ip.version),	\
 		pri_ip_bytes((A)->bytes)
 
-void pexpect_address(const ip_address *a, where_t where);
-
 /*
  * Constructors.
  */
