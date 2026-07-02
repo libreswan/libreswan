@@ -29,6 +29,9 @@ ip_cidr cidr_from_raw(where_t where,
 		      const struct ip_bytes bytes,
 		      unsigned prefix_len)
 {
+	if (PBAD_WHERE(&global_logger, where, prefix_len > afi->mask_cnt)) {
+		return unset_cidr;
+	}
 
  	/* combine */
 	ip_cidr cidr = {
@@ -37,7 +40,8 @@ ip_cidr cidr_from_raw(where_t where,
 		.bytes = bytes,
 		.prefix_len = prefix_len,
 	};
-	pexpect_cidr(cidr, where);
+
+
 	return cidr;
 }
 
@@ -207,15 +211,6 @@ const char *str_cidr_sensitive(const ip_cidr *cidr, cidr_buf *dst)
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_cidr_sensitive(&buf, cidr);
 	return dst->buf;
-}
-
-void pexpect_cidr(const ip_cidr cidr, where_t where)
-{
-	if (cidr.ip.is_set == false ||
-	    cidr.ip.version == 0) {
-		llog_pexpect(&global_logger, where,
-			     "invalid "PRI_IP_CIDR, pri_ip_cidr(cidr));
-	}
 }
 
 bool cidr_eq_cidr(const ip_cidr l, const ip_cidr r)
