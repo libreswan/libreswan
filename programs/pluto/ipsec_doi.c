@@ -193,7 +193,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		ini = " ";
 		jam_string(buf, "NATD=");
 		jam_address_sensitive(buf, &st->hidden_variables.st_natd);
-		jam(buf, ":%d", endpoint_hport(st->st_remote_endpoint));
+		jam(buf, ":%d", endpoint_hport(st->st_remote_endpoint, HERE));
 	}
 
 	jam_string(buf, ini);

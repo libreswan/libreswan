@@ -1329,13 +1329,13 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 			.address = src->end->host->addr,
 			.new_address = src->end->host->addr,	/* may change */
 			.client = src->end->client,
-			.encap_port = endpoint_hport(src->endpoint),	/* may change */
+			.encap_port = endpoint_hport(src->endpoint, HERE),	/* may change */
 		},
 		.dst = {
 			.address = dst->end->host->addr,
 			.new_address = dst->end->host->addr,	/* may change */
 			.client = dst->end->client,
-			.encap_port = endpoint_hport(dst->endpoint),	/* may change */
+			.encap_port = endpoint_hport(dst->endpoint, HERE),	/* may change */
 		},
 		/* WWW what about sec_label? */
 	};
@@ -1360,7 +1360,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	struct kernel_migrate_end *changing_ke = (old_ei == src) ? &migrate->src : &migrate->dst;
 
 	changing_ke->new_address = endpoint_address(new_ep);
-	changing_ke->encap_port = endpoint_hport(new_ep);
+	changing_ke->encap_port = endpoint_hport(new_ep, HERE);
 
 	if (encap_type == NULL)
 		migrate->src.encap_port = migrate->dst.encap_port = 0;

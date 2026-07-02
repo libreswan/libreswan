@@ -120,7 +120,7 @@ void ip_endpoint_check(void)
 		 */
 
 		/* host port */
-		uint16_t heport = endpoint_hport(e);
+		uint16_t heport = endpoint_hport(e, HERE);
 		if (!memeq(&heport, &t->hport, sizeof(heport))) {
 			FAIL("endpoint_hport() returned '%d', expected '%d'",
 				heport, t->hport);
@@ -147,7 +147,8 @@ void ip_endpoint_check(void)
 		}
 
 		/* hport+1 -> nport+1 */
-		ip_endpoint hp = set_endpoint_port(e, ip_hport(hport_plus_one));
+		ip_endpoint hp = set_endpoint_port(e, ip_hport(hport_plus_one),
+						   HERE);
 		uint16_t nportp = nport(endpoint_port(hp));
 		if (!memeq(&nportp, &nport_plus_one, sizeof(nportp))) {
 			FAIL("endpoint_nport(set_endpoint_hport(+1)) returned '%04x', expected '%04x'",
