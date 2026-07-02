@@ -37,6 +37,12 @@ ip_pool pool_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes hi,
 			unsigned subprefix)
 {
+	if (PBAD_WHERE(&global_logger, where,
+		       ip_bytes_cmp(afi->ip.version, lo,
+				    afi->ip.version, hi) > 0)) {
+		return unset_pool;
+	}
+
 	ip_pool r = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
@@ -44,7 +50,7 @@ ip_pool pool_from_raw(where_t where, const struct ip_info *afi,
 		.hi = hi,
 		.subprefix = subprefix,
 	};
-	pexpect_pool(&r, where);
+
 	return r;
 }
 
@@ -464,22 +470,4 @@ err_t cidr_to_pool_offset(const ip_pool pool, const ip_cidr cidr, uintmax_t *off
 	}
 
 	return NULL;
-}
-
-void pexpect_pool(const ip_pool *r, where_t where)
-{
-	if (r == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (pool_eq_pool(*r, unset_pool)) {
-		return;
-	}
-
-	if (r->ip.is_set == false ||
-	    r->ip.version == 0 ||
-	    ip_bytes_cmp(r->ip.version, r->lo, r->ip.version, r->hi) > 0) {
-		llog_pexpect(&global_logger, where, "invalid pool: "PRI_POOL, pri_pool(r));
-	}
 }
