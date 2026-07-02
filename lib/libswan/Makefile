@@ -57,7 +57,6 @@ OBJS += constants.o \
 	lex.o \
 	sameaddr.o \
 	ttodata.o \
-	ttosaid.o \
 	secitem_chunk.o \
 	lswnss.o \
 	alg_byname.o
@@ -79,22 +78,7 @@ OBJS += pubkey/pubkey_sign_hash.o
 
 OBJS += sparse_names.o
 
-OBJS += ttoaddress_dns.o
-OBJS += ttoaddress_num.o
-OBJS += ttoaddresses_num.o
 OBJS += ttobool.o
-OBJS += ttocidr_num.o
-OBJS += ttopool_num.o
-OBJS += ttopools_num.o
-OBJS += ttoport.o
-OBJS += ttoprotocol.o
-OBJS += ttoprotoport.o
-OBJS += ttorange_num.o
-OBJS += ttoranges_num.o
-OBJS += ttoselector_num.o
-OBJS += ttoselectors_num.o
-OBJS += ttosubnet_num.o
-OBJS += ttosubnets_num.o
 
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o
@@ -150,25 +134,6 @@ OBJS += ckaid.o
 OBJS += chunk.o
 OBJS += shunk.o
 OBJS += hunk.o
-
-OBJS += ip_address.o
-OBJS += ip_base.o
-OBJS += ip_bytes.o
-OBJS += ip_cidr.o
-OBJS += ip_encap.o
-OBJS += ip_endpoint.o
-OBJS += ip_info.o
-OBJS += ip_packet.o
-OBJS += ip_port.o
-OBJS += ip_port_range.o
-OBJS += ip_protocol.o
-OBJS += ip_protoport.o
-OBJS += ip_range.o
-OBJS += ip_pool.o
-OBJS += ip_said.o
-OBJS += ip_selector.o
-OBJS += ip_sockaddr.o
-OBJS += ip_subnet.o
 
 OBJS += flags.o
 OBJS += lmod.o
@@ -381,6 +346,47 @@ OBJS += ipsecconf/interfaces.o
 OBJS += ipsecconf/keywords.o
 OBJS += ipsecconf/keyword_type_names.o
 OBJS += ipsecconf/starterwhack.o
+
+#
+# ip address stuff
+
+$(OBJS): | $(builddir)/ip/
+
+OBJS += ip/ip_address.o
+OBJS += ip/ip_base.o
+OBJS += ip/ip_bytes.o
+OBJS += ip/ip_cidr.o
+OBJS += ip/ip_encap.o
+OBJS += ip/ip_endpoint.o
+OBJS += ip/ip_info.o
+OBJS += ip/ip_packet.o
+OBJS += ip/ip_pool.o
+OBJS += ip/ip_port.o
+OBJS += ip/ip_port_range.o
+OBJS += ip/ip_protocol.o
+OBJS += ip/ip_protoport.o
+OBJS += ip/ip_range.o
+OBJS += ip/ip_said.o
+OBJS += ip/ip_selector.o
+OBJS += ip/ip_sockaddr.o
+OBJS += ip/ip_subnet.o
+
+OBJS += ip/ttoaddress_dns.o
+OBJS += ip/ttoaddress_num.o
+OBJS += ip/ttoaddresses_num.o
+OBJS += ip/ttocidr_num.o
+OBJS += ip/ttopool_num.o
+OBJS += ip/ttopools_num.o
+OBJS += ip/ttoport.o
+OBJS += ip/ttoprotocol.o
+OBJS += ip/ttoprotoport.o
+OBJS += ip/ttorange_num.o
+OBJS += ip/ttoranges_num.o
+OBJS += ip/ttosaid.o
+OBJS += ip/ttoselector_num.o
+OBJS += ip/ttoselectors_num.o
+OBJS += ip/ttosubnet_num.o
+OBJS += ip/ttosubnets_num.o
 
 # Avoid flex bugs:
 #
