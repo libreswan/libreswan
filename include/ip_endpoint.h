@@ -60,8 +60,6 @@ typedef struct {
 		pri_ip_protocol((A)->ipproto),		\
 		(A)->hport
 
-void pexpect_endpoint(const ip_endpoint *e, where_t where);
-
 /*
  * Constructors.
  */
