@@ -21,6 +21,31 @@
 
 const ip_selector unset_selector;
 
+ip_selector selector_from_raw(where_t where,
+			      const struct ip_info *afi,
+			      const struct ip_bytes lo,
+			      const struct ip_bytes hi,
+			      const struct ip_protocol *protocol,
+			      const ip_port port)
+{
+	if (PBAD_WHERE(&global_logger, where,
+		       ip_bytes_cmp(protocol->ipproto, lo,
+				    protocol->ipproto, hi) > 0)) {
+		return unset_selector;
+	}
+
+	ip_selector selector = {
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
+		.lo = lo,
+		.hi = hi,
+		.ipproto = protocol->ipproto,
+		.hport = port.hport,
+	};
+
+	return selector;
+}
+
 bool selector_is_unset(const ip_selector *selector)
 {
 	return ip_is_unset(selector);
@@ -229,24 +254,6 @@ size_t jam_selectors(struct jambuf *buf, const ip_selectors *selectors)
 	}
 	s += jam_string(buf, "]");
 	return s;
-}
-
-ip_selector selector_from_raw(where_t where,
-			      const struct ip_info *afi,
-			      const struct ip_bytes lo,
-			      const struct ip_bytes hi,
-			      const struct ip_protocol *protocol, const ip_port port)
-{
-	ip_selector selector = {
-		.ip.is_set = true,
-		.ip.version = afi->ip.version,
-		.lo = lo,
-		.hi = hi,
-		.ipproto = protocol->ipproto,
-		.hport = port.hport,
-	};
-	pexpect_selector(&selector, where);
-	return selector;
 }
 
 ip_selector selector_from_address(const ip_address address)
@@ -640,24 +647,6 @@ bool selector_overlaps_selector(const ip_selector l, const ip_selector r)
 {
 	/* since these are just subnets */
 	return (selector_in_selector(l, r) || selector_in_selector(r, l));
-}
-
-void pexpect_selector(const ip_selector *s, where_t where)
-{
-	if (s == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (selector_eq_selector(*s, unset_selector)) {
-		return;
-	}
-
-	if (s->ip.is_set == false ||
-	    s->ip.version == 0) {
-		llog_pexpect(&global_logger, where,
-			     "invalid "PRI_IP_SELECTOR, pri_ip_selector(s));
-	}
 }
 
 int selector_hport(const ip_selector s)

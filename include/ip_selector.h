@@ -71,8 +71,6 @@ typedef struct {
 		pri_ip_protocol((S)->ipproto),		\
 		(S)->hport
 
-void pexpect_selector(const ip_selector *s, where_t where);
-
 ip_selector selector_from_raw(where_t where, const struct ip_info *afi,
 			      const struct ip_bytes lo,
 			      const struct ip_bytes hi,
