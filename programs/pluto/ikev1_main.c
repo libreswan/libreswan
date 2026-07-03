@@ -1065,9 +1065,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
-			if (!ikev1_out_generic_raw(&isakmp_hash_desc,
-						   rbody,
-						   hash.ptr, hash.len, "HASH_I"))
+			if (!ikev1_out_generic_hunk(&isakmp_hash_desc,
+						    rbody, &hash, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_I out */
@@ -1078,10 +1077,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
-						   rbody,
-						   sig.ptr, sig.len,
-						   "SIG_I"))
+			if (!ikev1_out_generic_hunk(&isakmp_signature_desc,
+						    rbody, &sig, "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1284,8 +1281,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_R out */
-			if (!ikev1_out_generic_raw(&isakmp_hash_desc, &rbody,
-						   hash.ptr, hash.len, "HASH_R"))
+			if (!ikev1_out_generic_hunk(&isakmp_hash_desc, &rbody,
+						    &hash, "HASH_R"))
 				return STF_INTERNAL_ERROR;
 		} else {
 			/* SIG_R out */
@@ -1296,9 +1293,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
-			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
-						   &rbody, sig.ptr, sig.len,
-						   "SIG_R"))
+			if (!ikev1_out_generic_hunk(&isakmp_signature_desc,
+						    &rbody, &sig, "SIG_R"))
 				return STF_INTERNAL_ERROR;
 		}
 	}

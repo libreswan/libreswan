@@ -38,7 +38,7 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *
 bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)
 {
-	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
+	return ikev1_out_generic_hunk(&isakmp_nonce_desc, outs, n, name);
 }
 
 bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
@@ -73,15 +73,13 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 {
 	switch (impair.ke_payload) {
 	case IMPAIR_EMIT_NO:
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
-					       "keyex value");
+		return ikev1_out_generic_hunk(&isakmp_keyex_desc, outs, g, "keyex value");
 	case IMPAIR_EMIT_OMIT:
 		llog(IMPAIR_STREAM, logger, "sending no KE (g^x) payload");
 		return true;
 	case IMPAIR_EMIT_EMPTY:
 		llog(IMPAIR_STREAM, logger, "sending empty KE (g^x)");
-		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
-					       EMPTY_CHUNK, "empty KE");
+		return ikev1_out_generic_hunk(&isakmp_keyex_desc, outs, &null_shunk, "empty KE");
 	default:
 	{
 		struct pbs_out z;

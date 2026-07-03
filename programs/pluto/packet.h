@@ -313,11 +313,12 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 extern bool ikev1_out_generic(struct_desc *sd,
 			      struct pbs_out *outs,
 			      struct pbs_out *obj_pbs) MUST_USE_RESULT;
-extern bool ikev1_out_generic_raw(struct_desc *sd,
-				  struct pbs_out *outs, const void *bytes, size_t len,
-				  const char *name) MUST_USE_RESULT;
-#define ikev1_out_generic_chunk(sd, outs, ch, name) \
-	ikev1_out_generic_raw((sd), (outs), (ch).ptr, (ch).len, (name))
+extern bool ikev1_out_generic_shunk(struct_desc *sd,
+				    struct pbs_out *outs,
+				    shunk_t hunk,
+				    const char *name) MUST_USE_RESULT;
+#define ikev1_out_generic_hunk(sd, outs, HUNK, name)			\
+	ikev1_out_generic_shunk((sd), (outs), HUNK_AS_SHUNK(HUNK), (name))
 
 bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name) MUST_USE_RESULT;
 

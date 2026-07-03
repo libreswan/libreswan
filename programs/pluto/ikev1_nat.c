@@ -241,8 +241,7 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, remote_endpoint,
 			 st->logger);
-	if (!ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
-				   "NAT-D"))
+	if (!ikev1_out_generic_hunk(pd, outs, &hash, "NAT-D"))
 		return false;
 
 	/* second: emit payload with hash of my IP & port */
@@ -254,8 +253,7 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 	hash = natd_hash(st->st_oakley.ta_prf->hasher,
 			 &ike_spis, local_endpoint,
 			 st->logger);
-	return ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
-				     "NAT-D");
+	return ikev1_out_generic_hunk(pd, outs, &hash, "NAT-D");
 }
 
 /*

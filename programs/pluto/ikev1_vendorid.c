@@ -146,8 +146,8 @@ bool out_v1VID(struct pbs_out *outs, unsigned int id)
 	name_buf eb;
 	const char *descr = str_vendorid(id, &eb);
 	ldbg(outs->logger, "%s(): sending [%s]", __func__, descr);
-	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-				     blob.ptr, blob.len, "V_ID");
+	return ikev1_out_generic_hunk(&isakmp_vendor_id_desc, outs,
+				      &blob, "V_ID");
 }
 
 /*
@@ -171,10 +171,9 @@ bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 {
 	/* cusomizeable Vendor ID */
 	if (c->config->send_vendorid) {
-		const char *vendorid = config_setup_vendorid();
-		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-					   vendorid, strlen(vendorid),
-					   "Pluto Vendor ID")) {
+		shunk_t vendorid = shunk1(config_setup_vendorid());
+		if (!ikev1_out_generic_hunk(&isakmp_vendor_id_desc, outs,
+					    &vendorid, "Pluto Vendor ID")) {
 			return false;
 		}
 	}

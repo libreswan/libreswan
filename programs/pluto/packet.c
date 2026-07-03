@@ -2920,16 +2920,16 @@ bool ikev1_out_generic(struct_desc *sd,
 	return pbs_out_struct(outs, gen, sd, obj_pbs);
 }
 
-bool ikev1_out_generic_raw(struct_desc *sd,
-		     struct pbs_out *outs, const void *bytes, size_t len,
-		     const char *name)
+bool ikev1_out_generic_shunk(struct_desc *sd, struct pbs_out *outs,
+			     shunk_t hunk, const char *name)
 {
 	struct pbs_out pbs;
 
 	if (!ikev1_out_generic(sd, outs, &pbs)) {
-		return false;
+		/* already logged */
 	}
-	if (!pbs_out_raw(&pbs, bytes, len, name)) {
+
+	if (!pbs_out_hunk(&pbs, hunk, name)) {
 		/* already logged */
 		return false;
 	}
