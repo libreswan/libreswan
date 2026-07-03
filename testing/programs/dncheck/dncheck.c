@@ -198,61 +198,36 @@ static void dn_check(void)
 
 		/* convert it to a string */
 
-#define CHECK_JAM_DN(OUT, NSS_COMPATIBLE)				\
-		{							\
-			dn_buf dnbuf = { "", };				\
-			struct jambuf dnjam = ARRAY_AS_JAMBUF(dnbuf.buf);	\
-			jam_raw_dn(&dnjam, ASN1(dn), jam_raw_bytes, NSS_COMPATIBLE); \
-			if (!streq(dnbuf.buf, OUT)) {			\
-				FAIL(" jam_raw_dn(NSS_COMPATIBLE=%s) returned '%s', expecting '%s'", \
-				     bool_str(NSS_COMPATIBLE),		\
-				     dnbuf.buf, OUT);			\
-			}						\
-		}
-
-		CHECK_JAM_DN(t->out, false);
-		if (t->nss != NULL) {
-			CHECK_JAM_DN(t->nss, true);
-		}
-
-		/* Can NSS can parse its variant? */
-
 		{
-			const char *nss_dn = t->nss != NULL ? t->nss : t->out;
-			CERTName *nss_name = CERT_AsciiToName(nss_dn);
-			if (nss_name == NULL) {
-				/* PORT_Error()? */
-				FAIL(" CERT_AsciiToName() unexpectedly failed to parse '%s'",
-				     nss_dn);
+			dn_buf dnbuf = { "", };
+			struct jambuf dnjam = ARRAY_AS_JAMBUF(dnbuf.buf);
+			jam_dn(&dnjam, ASN1(dn), jam_raw_bytes);
+			if (!streq(dnbuf.buf, t->out)) {
+				FAIL(" jam_dn() returned '%s', expecting '%s'",
+				     dnbuf.buf, t->out);
 			}
-			CERT_DestroyName(nss_name);
 		}
 
 		/* see if libreswan can parse it */
 
-#define CHECK_ATODN(IN)							\
-		{							\
-			chunk_t adn;					\
-			err_t err = atodn(IN, &adn); /* static data */	\
-			if (err != NULL) {				\
-				FAIL(" atodn('%s') unexpectedly failed: %s", \
-				     IN, err);				\
-			} else {					\
-				dn_buf adnbuf = { "", };		\
-				struct jambuf adnjam = ARRAY_AS_JAMBUF(adnbuf.buf); \
-				jam_raw_dn(&adnjam, ASN1(adn), jam_raw_bytes, false); \
-				if (!streq(adnbuf.buf, t->out)) {	\
-					FAIL(" jam_dn(atodn('%s')) returned '%s', expecting '%s'", \
-					     IN, adnbuf.buf, t->out);	\
-				}					\
-				free_chunk_content(&adn);		\
-			}						\
+		{
+			chunk_t adn;
+			err_t err = atodn(t->out, &adn); /* static data */
+			if (err != NULL) {
+				FAIL(" atodn('%s') unexpectedly failed: %s",
+				     t->out, err);
+			} else {
+				dn_buf adnbuf = { "", };
+				struct jambuf adnjam = ARRAY_AS_JAMBUF(adnbuf.buf);
+				jam_dn(&adnjam, ASN1(adn), jam_raw_bytes);
+				if (!streq(adnbuf.buf, t->out)) {
+					FAIL(" jam_dn(atodn('%s')) returned '%s', expecting '%s'",
+					     t->out, adnbuf.buf, t->out);
+				}
+				free_chunk_content(&adn);
+			}
 		}
 
-		CHECK_ATODN(t->out);
-		if (t->nss != NULL) {
-			CHECK_ATODN(t->nss);
-		}
 
 	}
 }
