@@ -162,14 +162,16 @@ static void detect_ikev1_natd(struct msg_digest *md, struct ike_sa *ike)
 
 	/* First: one with my IP & port */
 
-	struct crypt_mac hash_local = natd_hash(hasher, &ike->sa.st_ike_spis,
-						md->iface->local_endpoint,
-						ike->sa.logger);
+	struct crypt_mac hash_local =
+		natd_hash_endpoint(hasher, &ike->sa.st_ike_spis,
+				   md->iface->local_endpoint,
+				   ike->sa.logger);
 
 	/* Second: one with sender IP & port */
 
-	struct crypt_mac hash_remote = natd_hash(hasher, &ike->sa.st_ike_spis,
-						 md->sender, ike->sa.logger);
+	struct crypt_mac hash_remote =
+		natd_hash_endpoint(hasher, &ike->sa.st_ike_spis,
+				   md->sender, ike->sa.logger);
 
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "expected NAT-D(local):");
@@ -236,12 +238,12 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	const ip_endpoint remote_endpoint =
 		set_endpoint_port(md->sender, ip_hport(remote_port), HERE);
-	struct crypt_mac hash;
 
-	hash = natd_hash(st->st_oakley.ta_prf->hasher,
-			 &ike_spis, remote_endpoint,
-			 st->logger);
-	if (!ikev1_out_generic_hunk(pd, outs, &hash, "NAT-D"))
+	struct crypt_mac remote_hash =
+		natd_hash_endpoint(st->st_oakley.ta_prf->hasher,
+				   &ike_spis, remote_endpoint,
+				   st->logger);
+	if (!ikev1_out_generic_hunk(pd, outs, &remote_hash, "NAT-D(remote)"))
 		return false;
 
 	/* second: emit payload with hash of my IP & port */
@@ -250,10 +252,11 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 		set_endpoint_port(md->iface->local_endpoint,
 				  ip_hport(local_port),
 				  HERE);
-	hash = natd_hash(st->st_oakley.ta_prf->hasher,
-			 &ike_spis, local_endpoint,
-			 st->logger);
-	return ikev1_out_generic_hunk(pd, outs, &hash, "NAT-D");
+	struct crypt_mac local_hash =
+		natd_hash_endpoint(st->st_oakley.ta_prf->hasher,
+				   &ike_spis, local_endpoint,
+				   st->logger);
+	return ikev1_out_generic_hunk(pd, outs, &local_hash, "NAT-D(local)");
 }
 
 /*

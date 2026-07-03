@@ -80,17 +80,21 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 
 	/* First: one with local (source) IP & port */
 
-	struct crypt_mac hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *local_endpoint,
-					outs->logger);
-	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
+	struct crypt_mac local_hash =
+		natd_hash_endpoint(&ike_alg_hash_sha1, ike_spis,
+				   *local_endpoint,
+				   outs->logger);
+	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, local_hash, outs)) {
 		return false;
 	}
 
 	/* Second: one with remote (destination) IP & port */
 
-	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *remote_endpoint,
-		       outs->logger);
-	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, hb, outs)) {
+	struct crypt_mac remote_hash =
+		natd_hash_endpoint(&ike_alg_hash_sha1, ike_spis,
+				   *remote_endpoint,
+				   outs->logger);
+	if (!emit_v2N_hunk(v2N_NAT_DETECTION_DESTINATION_IP, remote_hash, outs)) {
 		return false;
 	}
 
@@ -152,8 +156,9 @@ void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 		 * peer) hash, hence, will use that when computing the
 		 * hash (again found in the header).
 		 */
-		struct crypt_mac computed_hash = natd_hash(hasher, &md->hdr.isa_ike_spis,
-							   d->endpoint, ike->sa.logger);
+		struct crypt_mac computed_hash =
+			natd_hash_endpoint(hasher, &md->hdr.isa_ike_spis,
+					   d->endpoint, ike->sa.logger);
 		/*
 		 * Now extract what the peer sent over the wire.
 		 */
