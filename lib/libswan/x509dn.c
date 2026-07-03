@@ -570,7 +570,7 @@ err_t parse_dn(asn1_t dn)
 	dn_buf dnb;
 	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
 	size_t s;/*ignored*/
-	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/, &s);
+	return format_dn(&buf, dn, jam_raw_bytes, false/*nss_compatible;don't care*/, &s);
 }
 
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
