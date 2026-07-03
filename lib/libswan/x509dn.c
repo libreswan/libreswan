@@ -240,40 +240,56 @@ bool dn_has_wildcards(asn1_t dn)
 }
 
 /*
- * Formats an ASN.1 Distinguished Name into an ASCII string of
- * OID/value pairs.  If there's a problem, return err_t (buf's
- * contents should be ignored).
+ * See NSS bug 1709676.
  *
- * Since the raw output is fed to CERT_AsciiToName() and that,
- * according to the comments, expects RFC-1485 (1993) (A String
- * Representation of Distinguished Names (OSI-DS 23 (v5))) and
- * successors, this function should be emitting the same.
+ * Formats an ASN.1 Distinguished Name into an ASCII string of
+ * OID/value pairs according to:
+ *
+ *    RFC-4514 - Lightweight Directory Access Protocol (v3): UTF-8
+ *    String Representation of Distinguished Names
+ *
+ * If there's a problem, return err_t (caller should discard buf's
+ * contents).
+ *
+ * NEVER FEED THIS OUTPUT TO CERT_AsciiToName(); NEVER EVER!
+ *
+ * CERT_AsciiToName() expects (broken) RFC-1485:
+ *
+ * - '\#1 My Street, ...' is totally screwed up
+ *
+ *   Strips leading '\' but then interprets string as a BER.
+ *
+ * - need '#' and '=' escaped everywhere
+ *
+ * According to the comments, CERT_AsciiToName() expects RFC-1485
+ * (1993) (A String Representation of Distinguished Names (OSI-DS 23
+ * (v5))) and successors.
  *
  * RFC-1485 was obsoleted by RFC-1779 - A String Representation of
  * Distinguished Names - in 1995.
  *
- * XXX: added OID.N.N.N; added '#' prefix; added \ escape; according
- * to NSS bug 210584 this was all added in 2007.
+ * -> added OID.N.N.N; added '#' prefix; added \ escape
+ *
+ *    according to NSS bug 210584 this was added to CERT_AsciiToName()
+ *    in 2007
  *
  * RFC-1779 was obsoleted by RFC-2253 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
  * in 1997.
  *
- * XXX: deprecated OID.N.N.N; according to NSS bug 1342137 this was
- * fixed in 2017.
+ * -> deprecated OID.N.N.N
+ *
+ *    according to NSS bug 1342137 this was fixed in
+ *    CERT_AsciiToName() in 2017
  *
  * RFC-2253 was obsoleted by RFC-4514 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
  * in 2006.
  *
- * Hence this tries to implement https://tools.ietf.org/html/rfc4514
- * using \<CHAR> for printable and \XX for non-printable.
- *
- * See also NSS bug 1709676.
  */
 
 static err_t format_dn(struct jambuf *buf, asn1_t dn,
-		       jam_bytes_fn *jam_bytes, bool nss_compatible,
+		       jam_bytes_fn *jam_bytes,
 		       size_t *ss)
 {
 	asn1_t rdn;
@@ -376,14 +392,7 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 			s += jam_string(buf, oid_names[oid_code].name);
 		}
 		s += jam_string(buf, "=");
-		if (oid_code == OID_UNKNOWN ||
-		    /*
-		     * NSS totally screws up a leading '#' - stripping
-		     * off the escape and then interpreting it as a
-		     * #BER.
-		     */
-		    (nss_compatible &&
-		     ((const char*)value_content.ptr)[0] == '#')) {
+		if (oid_code == OID_UNKNOWN) {
 			/* BER */
 			s += jam_string(buf, "#");
 			for (unsigned i = 0; i < value_ber.len; i++) {
@@ -484,17 +493,6 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 						     c == ';' ||
 						     c == '<' ||
 						     c == '>');
-				if (nss_compatible) {
-					/*
-					 * XXX: Old versions of NSS
-					 * also wants these special
-					 * characters escaped
-					 * everywhere.
-					 */
-					needs_prefix = (needs_prefix ||
-							c == '#' ||
-							c == '=');
-				}
 				bool printable = (c >= 0x20 && c <= 0x7e &&
 						  !needs_prefix);
 				if (printable) {
@@ -546,7 +544,7 @@ err_t parse_dn(asn1_t dn)
 	dn_buf dnb;
 	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
 	size_t s;/*ignored*/
-	return format_dn(&buf, dn, jam_raw_bytes, false/*nss_compatible;don't care*/, &s);
+	return format_dn(&buf, dn, jam_raw_bytes, &s);
 }
 
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
@@ -560,7 +558,7 @@ size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 	/* save start in case things screw up */
 	jampos_t pos = jambuf_get_pos(buf);
 	size_t s = 0;
-	err_t ugh = format_dn(buf, dn, jam_bytes, false/*nss_compatible*/, &s);
+	err_t ugh = format_dn(buf, dn, jam_bytes, &s);
 	if (ugh == NULL) {
 		return s;
 	}
