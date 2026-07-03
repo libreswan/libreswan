@@ -87,11 +87,6 @@ SECItem same_shunk_as_dercert_secitem(shunk_t shunk)
 	return same_shunk_as_secitem(shunk, siDERCertBuffer);
 }
 
-static const char *dntoasi(dn_buf *dst, SECItem si)
-{
-	return str_dn(same_secitem_as_shunk(si), dst);
-}
-
 /*
  * does our CA match one of the requested CAs?
  */
@@ -860,16 +855,16 @@ static void show_cert_detail(struct show *s, CERTCertificate *cert)
 		     is_CA ? "CA" : "End",
 		     cert->nickname, print_sn);
 
-	{
-		dn_buf sbuf;
-		show(s, "  subject: %s",
-			     dntoasi(&sbuf, cert->derSubject));
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "  subject: ");
+		jam_dn(buf, same_secitem_as_shunk(cert->derSubject),
+		       jam_sanitized_bytes);
 	}
 
-	{
-		dn_buf ibuf;
-		show(s, "  issuer: %s",
-			     dntoasi(&ibuf, cert->derIssuer));
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "  issuer: ");
+		jam_dn(buf, same_secitem_as_shunk(cert->derIssuer),
+		       jam_sanitized_bytes);
 	}
 
 	{
@@ -907,11 +902,10 @@ static void crl_detail_to_whacklog(struct show *s, CERTCrl *crl)
 {
 	show_blank(s);
 
-	{
-		dn_buf ibuf;
-
-		show(s, "issuer: %s",
-			dntoasi(&ibuf, crl->derName));
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "issuer: ");
+		jam_dn(buf, same_secitem_as_shunk(crl->derName),
+		       jam_sanitized_bytes);
 	}
 
 	{
