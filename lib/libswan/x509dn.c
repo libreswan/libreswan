@@ -541,30 +541,6 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
  * into LDAP-style human-readable ASCII format
  */
 
-size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
-		  bool nss_compatible)
-{
-	struct logger *logger = &global_logger;
-
-	size_t s = 0;
-	/* save start in case things screw up */
-	jampos_t pos = jambuf_get_pos(buf);
-	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible, &s);
-	if (ugh != NULL) {
-		/* error: print DN as hex string */
-		if (LDBGP(DBG_BASE, logger)) {
-			LDBG_log(logger, "error in DN parsing: %s; bad DN:", ugh);
-			LDBG_hunk(logger, &dn);
-		}
-		/* reset the buffer */
-		jambuf_set_pos(buf, &pos);
-		s = 0;
-		s += jam_string(buf, "0x");
-		s += jam_HEX_bytes(buf, dn.ptr, dn.len);
-	}
-	return s;
-}
-
 err_t parse_dn(asn1_t dn)
 {
 	dn_buf dnb;
@@ -575,11 +551,31 @@ err_t parse_dn(asn1_t dn)
 
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 {
+	struct logger *logger = &global_logger;
+
 	if (dn.len == 0) {
 		return jam_string(buf, "(empty)");
 	}
 
-	return jam_raw_dn(buf, dn, jam_bytes, false/*nss_compatible*/);
+	/* save start in case things screw up */
+	jampos_t pos = jambuf_get_pos(buf);
+	size_t s = 0;
+	err_t ugh = format_dn(buf, dn, jam_bytes, false/*nss_compatible*/, &s);
+	if (ugh == NULL) {
+		return s;
+	}
+
+	/* error: print DN as hex string */
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "error in DN parsing: %s; bad DN:", ugh);
+		LDBG_hunk(logger, &dn);
+	}
+	/* reset the buffer */
+	jambuf_set_pos(buf, &pos);
+	s = 0;
+	s += jam_string(buf, "0x");
+	s += jam_HEX_bytes(buf, dn.ptr, dn.len);
+	return s;
 }
 
 const char *str_dn(asn1_t dn, dn_buf *dst)
