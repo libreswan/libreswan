@@ -582,13 +582,6 @@ size_t jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
 	}
 }
 
-const char *str_dn_or_null(asn1_t dn, const char *null_dn, dn_buf *dst)
-{
-	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_dn_or_null(&buf, dn, null_dn, jam_sanitized_bytes);
-	return dst->buf;
-}
-
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 {
 	return jam_dn_or_null(buf, dn, "(empty)", jam_bytes);

@@ -217,7 +217,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 		if (LDBGP(DBG_BASE, ike->sa.logger)) {
 			dn_buf buf;
 			LDBG_log(ike->sa.logger, "requested CA: '%s'",
-				 str_dn_or_null(ca_name, "%any", &buf));
+				 str_dn(ca_name, &buf));
 		}
 		break;
 	}

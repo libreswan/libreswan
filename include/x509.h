@@ -132,7 +132,6 @@ typedef struct {
 } dn_buf;
 
 const char *str_dn(asn1_t dn, dn_buf *buf);
-const char *str_dn_or_null(asn1_t dn, const char *null_dn, dn_buf *buf);
 
 size_t jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
 		      jam_bytes_fn *jam_bytes);

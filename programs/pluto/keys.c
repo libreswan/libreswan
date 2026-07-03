@@ -254,7 +254,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 			dn_buf buf;
 			vdbg("skipping '%s' with untrusted CA '%s'",
 			    str_id(&key->id, &printkid),
-			    str_dn_or_null(key->issuer, "%any", &buf));
+			    str_dn(key->issuer, &buf));
 			continue;
 		}
 
@@ -278,7 +278,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 		const char *keyid_str = str_keyid(*pubkey_keyid(key));
 		vdbg("trying '%s' aka *%s issued by CA '%s'",
 		    str_id(&key->id, &printkid), keyid_str,
-		    str_dn_or_null(key->issuer, "%any", &buf));
+		    str_dn(key->issuer, &buf));
 		s->tried_cnt++;
 
 		if (!described) {
@@ -365,7 +365,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	dn_buf buf;
 	ldbg(logger, "CA is '%s' for %s key using %s signature",
-	     str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &buf),
+	     str_dn(ASN1(c->remote->host.config->ca), &buf),
 	     signer->type->name, signer->name);
 
 	PASSERT(logger, ike->sa.st_remote_certs.processed);
