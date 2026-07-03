@@ -572,19 +572,13 @@ err_t parse_dn(asn1_t dn)
 	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/, &s);
 }
 
-size_t jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
-		    jam_bytes_fn *jam_bytes)
-{
-	if (dn.ptr == NULL) {
-		return jam_string(buf, null_dn);
-	} else {
-		return jam_raw_dn(buf, dn, jam_bytes, true/*nss_compatible*/);
-	}
-}
-
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 {
-	return jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
+	if (dn.len == 0) {
+		return jam_string(buf, "(empty)");
+	}
+
+	return jam_raw_dn(buf, dn, jam_bytes, true/*nss_compatible*/);
 }
 
 const char *str_dn(asn1_t dn, dn_buf *dst)

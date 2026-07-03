@@ -213,9 +213,9 @@ static bool build_updown_environ(struct updown_environ *environ,
 			  int pathlen;	/* value ignored */
 			  if (key->content.type == &pubkey_type_rsa &&
 			      same_id(&c->remote->host.id, &key->id) &&
-			      trusted_ca(key->issuer, ASN1(c->remote->host.config->ca),
-					 &pathlen, verbose)) {
-				  jam_dn_or_null(&jb, key->issuer, "", jam_sanitized_bytes);
+			      trusted_ca(key->issuer, ASN1(c->remote->host.config->ca), &pathlen, verbose) &&
+			      key->issuer.len > 0) {
+				  jam_dn(&jb, key->issuer, jam_sanitized_bytes);
 				  break;
 			  }
 		  });
