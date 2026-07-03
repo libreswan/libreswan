@@ -222,13 +222,11 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	ldbg(outs->logger, "emitting NAT-D payloads");
 
-	unsigned remote_port =
-		endpoint_hport(st->st_remote_endpoint, HERE);
-	unsigned short local_port =
-		endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE);
+	ip_port remote_port = endpoint_port(st->st_remote_endpoint);
+	ip_port local_port = endpoint_port(st->st_iface_endpoint->local_endpoint);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
 		ldbg(outs->logger, "NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
-		local_port = remote_port = 0;
+		local_port = remote_port = ip_hport(0);
 	}
 
 	struct_desc *pd = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES ? &isakmp_nat_d :
@@ -236,26 +234,21 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	/* first: emit payload with hash of sender IP & port */
 
-	const ip_endpoint remote_endpoint =
-		set_endpoint_port(md->sender, ip_hport(remote_port), HERE);
-
+	const ip_address remote_address = endpoint_address(md->sender);
 	struct crypt_mac remote_hash =
-		natd_hash_endpoint(st->st_oakley.ta_prf->hasher,
-				   &ike_spis, remote_endpoint,
-				   st->logger);
+		natd_hash_address_port(st->st_oakley.ta_prf->hasher, &ike_spis,
+				       remote_address, remote_port,
+				       st->logger);
 	if (!ikev1_out_generic_hunk(pd, outs, &remote_hash, "NAT-D(remote)"))
 		return false;
 
 	/* second: emit payload with hash of my IP & port */
 
-	const ip_endpoint local_endpoint =
-		set_endpoint_port(md->iface->local_endpoint,
-				  ip_hport(local_port),
-				  HERE);
+	const ip_address local_address = endpoint_address(md->iface->local_endpoint);
 	struct crypt_mac local_hash =
-		natd_hash_endpoint(st->st_oakley.ta_prf->hasher,
-				   &ike_spis, local_endpoint,
-				   st->logger);
+		natd_hash_address_port(st->st_oakley.ta_prf->hasher, &ike_spis,
+				       local_address, local_port,
+				       st->logger);
 	return ikev1_out_generic_hunk(pd, outs, &local_hash, "NAT-D(local)");
 }
 
