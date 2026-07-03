@@ -20,7 +20,7 @@ west #
  ipsec up psk
 "psk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "psk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"psk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 ke=DH20}, initiating IKE_INTERMEDIATE
+"psk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 ke=DH20 addke1=DH21}, initiating IKE_INTERMEDIATE
 "psk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH21}
 "psk" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "psk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
@@ -44,7 +44,7 @@ west #
  ipsec up rsa-west
 "rsa-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "rsa-west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"rsa-west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 ke=DH20}, initiating IKE_INTERMEDIATE
+"rsa-west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 ke=DH20 addke1=DH21}, initiating IKE_INTERMEDIATE
 "rsa-west" #3: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH21}
 "rsa-west" #3: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "rsa-west" #3: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH

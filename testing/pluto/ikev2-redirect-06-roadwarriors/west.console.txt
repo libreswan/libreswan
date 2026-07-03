@@ -108,7 +108,7 @@ Connection list:
 "east-any"[2]:   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "east-any"[2]:   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any"[2]:   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #3; established Child SA: #4;
-"east-any"[1]:   reqid: REQID;
+"east-any"[2]:   reqid: REQID;
 "east-any"[2]:   conn serial: $3, instantiated from: $1;
 "east-any"[2]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "east-any"[2]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
