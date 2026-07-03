@@ -579,7 +579,7 @@ size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 		return jam_string(buf, "(empty)");
 	}
 
-	return jam_raw_dn(buf, dn, jam_bytes, true/*nss_compatible*/);
+	return jam_raw_dn(buf, dn, jam_bytes, false/*nss_compatible*/);
 }
 
 const char *str_dn(asn1_t dn, dn_buf *dst)
