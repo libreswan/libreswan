@@ -386,12 +386,16 @@ static bool add_mobike_payloads(struct ike_sa *ike,
 {
 	PASSERT(ike->sa.logger, null_child == NULL);
 
-	ip_endpoint local_endpoint = ike->sa.st_v2_mobike.local_endpoint;
-	ip_endpoint remote_endpoint = ike->sa.st_remote_endpoint;
 	if (!emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs)) {
 		return false;
 	}
-	if (!ikev2_out_natd(&local_endpoint, &remote_endpoint,
+
+	ip_endpoint local_endpoint = ike->sa.st_v2_mobike.local_endpoint;
+	ip_address local_address = endpoint_address(local_endpoint);
+	ip_port local_port = endpoint_port(local_endpoint);
+	ip_endpoint remote_endpoint = ike->sa.st_remote_endpoint;
+	if (!ikev2_out_natd(local_address, local_port,
+			    &remote_endpoint,
 			    &ike->sa.st_ike_spis, pbs)) {
 		return false;
 	}

@@ -58,20 +58,23 @@ bool ikev2_out_nat_v2n(struct pbs_out *outs, struct state *st,
 	};
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
-	uint16_t lport = endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE);
+	ip_endpoint local_endpoint = st->st_iface_endpoint->local_endpoint;
+	ip_address local_address = endpoint_address(local_endpoint);
+	ip_port local_port = endpoint_port(local_endpoint);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
 		ldbg(st->logger, "NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
-		lport = 0;
+		local_port = ip_hport(0);
 	}
-	ip_endpoint local_endpoint =
-		set_endpoint_port(st->st_iface_endpoint->local_endpoint,
-				  ip_hport(lport), HERE);
+
 	ip_endpoint remote_endpoint = st->st_remote_endpoint;
-	return ikev2_out_natd(&local_endpoint, &remote_endpoint,
+
+	return ikev2_out_natd(local_address, local_port,
+			      &remote_endpoint,
 			      &ike_spis, outs);
 }
 
-bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+bool ikev2_out_natd(const ip_address local_address,
+		    const ip_port local_port,
 		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
 		    struct pbs_out *outs)
@@ -81,9 +84,9 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	/* First: one with local (source) IP & port */
 
 	struct crypt_mac local_hash =
-		natd_hash_endpoint(&ike_alg_hash_sha1, ike_spis,
-				   *local_endpoint,
-				   outs->logger);
+		natd_hash_address_port(&ike_alg_hash_sha1, ike_spis,
+				       local_address, local_port,
+				       outs->logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, local_hash, outs)) {
 		return false;
 	}

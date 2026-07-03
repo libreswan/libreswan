@@ -33,7 +33,8 @@ void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md);
 void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike);
 bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
 
-bool ikev2_out_natd(const ip_endpoint *local_endpoint,
+bool ikev2_out_natd(const ip_address local_address,
+		    const ip_port local_port,
 		    const ip_endpoint *remote_endpoint,
 		    const ike_spis_t *ike_spis,
 		    struct pbs_out *outs);
