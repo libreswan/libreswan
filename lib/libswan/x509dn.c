@@ -31,6 +31,7 @@
 #include "lswlog.h"
 #include "id.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 
 /* coding of X.501 distinguished name */
 typedef const struct {
@@ -1062,42 +1063,15 @@ static bool match_rdn_unordered(const CERTRDN *const rdn_a,
 	return matched > 0 && matched == ava_num;
 }
 
-static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
+static bool match_dn_unordered(CERTName *a_name,
+			       CERTName *b_name,
+			       int *const wildcards,
 			       struct verbose verbose)
 {
-	dn_buf a_dnbuf = { "", };
-	dn_buf b_dnbuf = { "", };
-
-
-	/*
-	 * Escape the ASN.1 into RFC-1485 (actually RFC-4514 and
-	 * printable ASCII) so that that it is suitable for NSS's
-	 * CERT_AsciiToName().
-	 */
-	const char *abuf = str_dn(a, &a_dnbuf); /* RFC1485 for NSS */
-	const char *bbuf = str_dn(b, &b_dnbuf); /* RFC1485 for NSS */
-
-	/*
-	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
-	 * encoded string and that can contain UTF-8 (i.e.,
-	 * !isprint()).  Strip that out before logging.
-	 */
-	vdbg("matching unordered DNs A: '%s' B: '%s'", abuf, bbuf);
-
-	CERTName *const a_name = CERT_AsciiToName(abuf);
-	CERTName *const b_name = CERT_AsciiToName(bbuf);
-
-	if (a_name == NULL || b_name == NULL) {
-		/* NULL is ignored; see NSS commit 206 */
-		CERT_DestroyName(a_name);
-		CERT_DestroyName(b_name);
-		return false;
-	}
-
 	int rdn_num = 0;
 	int matched = 0;
-	CERTRDN *const *rdns_b;
-	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
+
+	for (CERTRDN *const *rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
 		CERTRDN *const rdn_b = *rdns_b;
 
 		rdn_num++;
@@ -1117,9 +1091,6 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 		}
 	}
 
-	CERT_DestroyName(a_name);
-	CERT_DestroyName(b_name);
-
 	bool ok = (matched > 0 && rdn_num > 0 && matched == rdn_num);
 	vdbg("%s() matched: %d, rdn_num: %d, wildcards: %d; %s",
 	     __func__, matched, rdn_num,
@@ -1129,18 +1100,58 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 	return ok;
 }
 
+static bool dn_to_CERTName(PORTCheapArenaPool *arena,
+			   asn1_t dn,
+			   CERTName *name)
+{
+	SECItem item = same_shunk_as_secitem(HUNK_AS_SHUNK(&dn),
+					     siDERNameBuffer);
+	return (SEC_QuickDERDecodeItem(&arena->arena, name,
+				       CERT_NameTemplate,
+				       &item) == SECSuccess);
+}
+
 bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
 			     struct verbose verbose)
 {
-	bool ret = match_dn(a, b, wildcards, verbose);
-
-	if (!ret) {
-		vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",
-		     __func__, *wildcards);
-		/* recount wildcards */
-		*wildcards = 0;
-		ret = match_dn_unordered(a, b, wildcards, verbose);
+	if (match_dn(a, b, wildcards, verbose)) {
+		return true;
 	}
+
+	vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",
+	     __func__, *wildcards);
+
+	/* recount wildcards */
+	*wildcards = 0;
+
+	/*
+	 * XXX: should be passing in CERTName for at least one of the
+	 * DNs - its being called from a loop so doesn't need to be
+	 * constanly re-extracted.
+	 *
+	 * XXX: match_dn() should use CERTName, eliminating more
+	 * bespoke code.
+	 *
+	 * XXX: NSS doesn't seem to have wild-card match so match_dn()
+	 * can't be replaced by NSS code?x
+	 */
+
+	PORTCheapArenaPool arena;
+	PORT_InitCheapArena(&arena, DER_DEFAULT_CHUNKSIZE);
+
+	CERTName a_name = {0};
+	CERTName b_name = {0};
+	if (!dn_to_CERTName(&arena, a, &a_name) ||
+	    !dn_to_CERTName(&arena, b, &b_name)) {
+		PORT_DestroyCheapArena(&arena);
+		return false;
+	}
+
+	bool ret = match_dn_unordered(&a_name, &b_name,
+				      wildcards, verbose);
+
+	PORT_DestroyCheapArena(&arena);
+
 	return ret;
 }
 
