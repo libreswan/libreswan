@@ -439,6 +439,16 @@ void show_connection_clients(struct show *s, const struct connection *c,
 	}
 }
 
+static void jam_dn_or_any(struct jambuf *buf, chunk_t dn)
+{
+	if (dn.len == 0) {
+		jam_string(buf, "%any");
+	} else {
+		jam_dn(buf, ASN1(dn), jam_sanitized_bytes);
+	}
+}
+
+
 static void show_connection_status(struct show *s, const struct connection *c)
 {
 	/* Show topology. */
@@ -724,13 +734,13 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_string(buf, " CAs: ");
 			/* this */
 			jam_string(buf, "'");
-			jam_dn_or_null(buf, ASN1(c->local->host.config->ca), "%any", jam_sanitized_bytes);
+			jam_dn_or_any(buf, c->local->host.config->ca);
 			jam_string(buf, "'");
 			/* sep */
 			jam_string(buf, "...");
 			/* that */
 			jam_string(buf, "'");
-			jam_dn_or_null(buf, ASN1(c->remote->host.config->ca), "%any", jam_sanitized_bytes);
+			jam_dn_or_any(buf, c->remote->host.config->ca);
 			jam_string(buf, "'");
 		}
 	}
