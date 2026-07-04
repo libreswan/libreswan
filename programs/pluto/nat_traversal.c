@@ -71,10 +71,11 @@ void init_nat_traversal_timer(deltatime_t keep_alive, struct logger *logger)
 	     str_deltatime(nat_keepalive_period, &db));
 }
 
-struct crypt_mac natd_hash(const struct hash_desc *hasher,
-			   const ike_spis_t *spis,
-			   const ip_endpoint endpoint,
-			   struct logger *logger)
+struct crypt_mac natd_hash_address_port(const struct hash_desc *hasher,
+					const ike_spis_t *spis,
+					const ip_address address,
+					const ip_port port,
+					struct logger *logger)
 {
 	/* only responder's IKE SPI can be zero */
 	if (ike_spi_is_zero(&spis->initiator)) {
@@ -100,11 +101,10 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	crypt_hash_digest_thing(ctx, "IKE SPIi", spis->initiator);
 	crypt_hash_digest_thing(ctx, "IKE SPIr", spis->responder);
 
-	ip_address ip = endpoint_address(endpoint);
-	shunk_t ap = address_as_shunk(&ip);
+	shunk_t ap = address_as_shunk(&address);
 	crypt_hash_digest_hunk(ctx, "IP addr", ap);
 
-	uint16_t np = nport(endpoint_port(endpoint));
+	uint16_t np = nport(port);
 	crypt_hash_digest_thing(ctx, "PORT", np);
 	struct crypt_mac hash = crypt_hash_final_mac(&ctx);
 
@@ -118,6 +118,17 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 		LDBG_log(logger, "hash:"); LDBG_thing(logger, hash);
 	}
 	return hash;
+}
+
+struct crypt_mac natd_hash_endpoint(const struct hash_desc *hasher,
+				    const ike_spis_t *spis,
+				    const ip_endpoint endpoint,
+				    struct logger *logger)
+{
+	return natd_hash_address_port(hasher, spis,
+				      endpoint_address(endpoint),
+				      endpoint_port(endpoint),
+				      logger);
 }
 
 /*

@@ -88,10 +88,16 @@ void detect_nat_common(struct ike_sa *ike,
 		       const ip_endpoint sender,
 		       bool found_me, bool found_peer);
 
-struct crypt_mac natd_hash(const struct hash_desc *hasher,
-			   const ike_spis_t *spis,
-			   const ip_endpoint endpoint,
-			   struct logger *logger);
+struct crypt_mac natd_hash_endpoint(const struct hash_desc *hasher,
+				    const ike_spis_t *spis,
+				    const ip_endpoint endpoint,
+				    struct logger *logger);
+
+struct crypt_mac natd_hash_address_port(const struct hash_desc *hasher,
+					const ike_spis_t *spis,
+					const ip_address address,
+					const ip_port port,
+					struct logger *logger);
 
 /**
  * NAT-keep_alive
