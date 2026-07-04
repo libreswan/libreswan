@@ -997,10 +997,13 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards, struct verbose verbose)
 
 /*
  * match an equal number of RDNs, in any order
- * if wildcards != NULL, wildcard matches are enabled
+ *
+ * If wildcards != NULL, wildcard matches are enabled.
  */
 
-static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
+static bool match_rdn_unordered(const CERTRDN *const rdn_a,
+				const CERTRDN *const rdn_b,
+				bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
 		return false;
@@ -1008,37 +1011,51 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 	int matched = 0;
 	int ava_num = 0;
 
-	CERTAVA *const *avas_b;
-	for (avas_b = rdn_b->avas; *avas_b != NULL; avas_b++) {
+	for (CERTAVA *const *avas_b = rdn_b->avas;
+	     *avas_b != NULL; avas_b++) {
+
 		CERTAVA *const ava_b = *avas_b;
 		const SECOidTag tag_b = CERT_GetAVATag(ava_b);
 
 		ava_num++;
 
-		CERTAVA *const *avas_a;
-		for (avas_a = rdn_a->avas; *avas_a != NULL; avas_a++) {
+		for (CERTAVA *const *avas_a = rdn_a->avas;
+		     *avas_a != NULL; avas_a++) {
+
 			CERTAVA *const ava_a = *avas_a;
+			const SECOidTag tag_a = CERT_GetAVATag(ava_a);
 
-			if (CERT_GetAVATag(ava_a) == tag_b) {
+			if (tag_a != tag_b) {
+				continue;
+			}
+
+			/*
+			 * XXX Can CERT_DecodeAVAValue() return NULL?
+			 * No man page :(
+			 *
+			 * XXX: Ah, but there is the source; answer
+			 * YES!
+			 */
+			if (has_wild != NULL) {
 				SECItem *val_b = CERT_DecodeAVAValue(&ava_b->value);
-
-				/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
-				if (val_b != NULL) {
-					if (has_wild != NULL &&
-					    val_b->len == 1 &&
-					    val_b->data[0] == '*') {
-						*has_wild = true;
-						matched++;
-						SECITEM_FreeItem(val_b, PR_TRUE);
-						break;
-					}
-					SECITEM_FreeItem(val_b, PR_TRUE);
+				if (val_b == NULL) {
+					continue;
 				}
-				if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+				if (val_b->len == 1 &&
+				    val_b->data[0] == '*') {
+					*has_wild = true;
 					matched++;
+					SECITEM_FreeItem(val_b, PR_TRUE);
 					break;
 				}
+				SECITEM_FreeItem(val_b, PR_TRUE);
 			}
+
+			if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+				matched++;
+				break;
+			}
+
 		}
 	}
 
@@ -1090,8 +1107,8 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 			CERTRDN *const rdn_a = *rdns_a;
 			bool has_wild = false;
 
-			if (match_rdn(rdn_a, rdn_b,
-				      wildcards != NULL ? &has_wild : NULL)) {
+			if (match_rdn_unordered(rdn_a, rdn_b,
+						(wildcards != NULL ? &has_wild : NULL))) {
 				matched++;
 				if (wildcards != NULL && has_wild)
 					(*wildcards)++;
