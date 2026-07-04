@@ -30,13 +30,24 @@ ip_subnet subnet_from_raw(where_t where,
 			  const struct ip_bytes bytes,
 			  unsigned prefix_len)
 {
+	/* confirm bytes only contains PREFIX */
+	struct ip_bytes prefix = ip_bytes_blit(afi, bytes,
+					       &keep_routing_prefix,
+					       &clear_host_identifier,
+					       prefix_len);
+	if (PBAD_WHERE(&global_logger, where,
+		       ip_bytes_cmp(afi->ip.version, bytes,
+				    afi->ip.version, prefix) != 0)) {
+		return unset_subnet;
+	}
+
 	ip_subnet s = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
-		.bytes = bytes,
+		.bytes = prefix,
 		.maskbits = prefix_len,
 	};
-	pexpect_subnet(&s, where);
+
 	return s;
 }
 
@@ -209,23 +220,6 @@ size_t jam_subnets(struct jambuf *buf, const ip_subnets *subnets)
 		s += jam_subnet(buf, subnet);
 	}
 	return s;
-}
-
-void pexpect_subnet(const ip_subnet *s, where_t where)
-{
-	if (s == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (subnet_eq_subnet(*s, unset_subnet)) {
-		return;
-	}
-
-	if (s->ip.is_set == false ||
-	    s->ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid subnet: "PRI_SUBNET, pri_subnet(s));
-	}
 }
 
 bool subnet_eq_subnet(const ip_subnet l, const ip_subnet r)

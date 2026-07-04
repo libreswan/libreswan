@@ -43,8 +43,6 @@ typedef struct {
 		pri_ip_bytes((R)->hi),			\
 		(R)->subprefix
 
-void pexpect_pool(const ip_pool *r, where_t where);
-
 /* caller knows best */
 ip_pool pool_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes start,

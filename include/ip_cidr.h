@@ -44,8 +44,6 @@ typedef struct {
 		pri_ip_bytes((A).bytes),	\
 		(A).prefix_len
 
-void pexpect_cidr(const ip_cidr a, where_t where);
-
 extern const ip_cidr unset_cidr;
 
 /* convert CIDR address/mask; does not judge the result */

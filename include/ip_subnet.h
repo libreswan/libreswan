@@ -58,8 +58,6 @@ typedef struct {
 		pri_ip_bytes((S)->bytes),		\
 		(S)->maskbits
 
-void pexpect_subnet(const ip_subnet *s, where_t where);
-
 /*
  * Constructors
  */

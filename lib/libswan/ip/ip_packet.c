@@ -31,6 +31,23 @@ ip_packet packet_from_raw(where_t where,
 			  const struct ip_protocol *protocol,
 			  ip_port src_port, ip_port dst_port)
 {
+	if (PBAD_WHERE(&global_logger, where, ip_bytes_is_zero(src_bytes)) ||
+	    PBAD_WHERE(&global_logger, where, ip_bytes_is_zero(dst_bytes))) {
+		return unset_packet;
+	}
+
+	/*
+	 * An acquire triggered by a packet with no specified source
+	 * port will have a zero source port.
+	 *
+	 * However, the DST_PORT must always be non-zero (when
+	 * required).
+	 */
+	if (PBAD_WHERE(&global_logger, where,
+		       protocol->zero_port_is_any && dst_port.hport == 0)) {
+		return unset_packet;
+	}
+
 	ip_packet packet = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
@@ -44,7 +61,7 @@ ip_packet packet_from_raw(where_t where,
 			.hport = dst_port.hport,
 		},
 	};
-	pexpect_packet(&packet, where);
+
 	return packet;
 }
 
@@ -180,43 +197,4 @@ const char *str_packet(const ip_packet *packet, packet_buf *dst)
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_packet(&buf, packet);
 	return dst->buf;
-}
-
-void pexpect_packet(const ip_packet *packet, where_t where)
-{
-	const struct ip_info *afi = packet_type(packet);
-	if (afi == NULL) {
-		llog_pexpect(&global_logger, where, "unset");
-		return;
-	}
-
-	const struct ip_protocol *protocol = protocol_from_ipproto(packet->ipproto);
-	if (protocol == NULL) {
-		llog_pexpect(&global_logger, where,
-			     "ipproto invalid in "PRI_PACKET, pri_packet(packet));
-		return;
-	}
-
-	if (ip_bytes_is_zero(&packet->src.bytes)) {
-		llog_pexpect(&global_logger, where,
-			     "src.bytes invalid in "PRI_PACKET, pri_packet(packet));
-		return;
-	}
-
-	if (ip_bytes_is_zero(&packet->dst.bytes)) {
-		llog_pexpect(&global_logger, where,
-			     "dst.bytes invalid in "PRI_PACKET, pri_packet(packet));
-		return;
-	}
-
-	/*
-	 * An acquire triggered by a packet with no specified source
-	 * port will have a zero source port.
-	 */
-	if (protocol->zero_port_is_any && packet->dst.hport == 0) {
-		llog_pexpect(&global_logger, where,
-			     "dst.port invalid in "PRI_PACKET, pri_packet(packet));
-		return;
-	}
-
 }

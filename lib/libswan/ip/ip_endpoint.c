@@ -31,6 +31,27 @@ ip_endpoint endpoint_from_raw(where_t where,
 			      const struct ip_protocol *protocol,
 			      ip_port port)
 {
+
+	/*
+	 * XXX: xfrm generates tcp acquires of the form:
+	 *
+	 *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
+	 *
+	 * Presumably source port 0 is because the connect(?) call
+	 * specified no source port.
+	 *
+	 * Until there's an ip_packet object to wrap this up, this
+	 * passert can't require a port.
+	 *
+	 * XXX: Oh wait!  There's an IP_PACKET now!
+	 *
+	 * XXX: is [::]:TCP/10 valid?
+	 */
+	if (PBAD_WHERE(&global_logger, where,
+		       protocol->zero_port_is_any && port.hport == 0)) {
+		return unset_endpoint;
+	}
+
 	ip_endpoint endpoint = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
@@ -38,7 +59,7 @@ ip_endpoint endpoint_from_raw(where_t where,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
 	};
-	pexpect_endpoint(&endpoint, where);
+
 	return endpoint;
 }
 
@@ -107,10 +128,15 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint,
 		return unset_endpoint;
 	}
 
-	ip_endpoint dst = endpoint;
-	dst.hport = hport(port);
-	pexpect_endpoint(&dst, where);
-	return dst;
+	const struct ip_protocol *protocol = endpoint_protocol(endpoint);
+	if (protocol == NULL) {
+		ldbg(&global_logger, "endpoint has unknown protocol "PRI_WHERE,
+		     pri_where(where));
+		return unset_endpoint;
+	}
+
+	return endpoint_from_raw(where, afi, endpoint.bytes,
+				 protocol, port);
 }
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
@@ -301,40 +327,4 @@ bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address ad
 {
 	ip_address ea = endpoint_address(endpoint);
 	return address_eq_address(ea, address);
-}
-
-void pexpect_endpoint(const ip_endpoint *e, where_t where)
-{
-	if (e == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (endpoint_eq_endpoint(*e, unset_endpoint)) {
-		return;
-	}
-
-	/*
-	 * XXX: xfrm generates tcp acquires of the form:
-	 *
-	 *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
-	 *
-	 * Presumably source port 0 is because the connect(?) call
-	 * specified no source port.
-	 *
-	 * Until there's an ip_traffic object to wrap this up, this
-	 * passert can't require a port.
-	 *
-	 * XXX: is [::]:TCP/10 valid?
-	 */
-
-	const struct ip_protocol *protocol = endpoint_protocol(*e);
-	if (e->ip.is_set == false ||
-	    e->ip.version == 0 ||
-	    e->ipproto == 0 ||
-	    protocol == NULL /* ||
-	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
-		llog_pexpect(&global_logger, where,
-			     "invalid "PRI_IP_ENDPOINT, pri_ip_endpoint(e));
-	}
 }

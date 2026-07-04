@@ -36,13 +36,19 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes lo,
 			const struct ip_bytes hi)
 {
+	if (PBAD_WHERE(&global_logger, where,
+		       ip_bytes_cmp(afi->ip.version, lo,
+				    afi->ip.version, hi) > 0)) {
+		return unset_range;
+	}
+
 	ip_range r = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
 	};
-	pexpect_range(&r, where);
+
 	return r;
 }
 
@@ -376,22 +382,4 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 
 	*dst = subnet_from_raw(HERE, afi, range.lo, prefix_bits);
 	return NULL;
-}
-
-void pexpect_range(const ip_range *r, where_t where)
-{
-	if (r == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (range_eq_range(*r, unset_range)) {
-		return;
-	}
-
-	if (r->ip.is_set == false ||
-	    r->ip.version == 0 ||
-	    ip_bytes_cmp(r->ip.version, r->lo, r->ip.version, r->hi) > 0) {
-		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));
-	}
 }

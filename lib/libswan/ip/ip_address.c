@@ -25,7 +25,7 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address address_from_raw(where_t where,
+ip_address address_from_raw(where_t where UNUSED,
 			    const struct ip_info *afi,
 			    const struct ip_bytes bytes)
 {
@@ -34,7 +34,7 @@ ip_address address_from_raw(where_t where,
 		.ip.version = afi->ip.version,
 		.bytes = bytes,
 	};
-	pexpect_address(&a, where);
+
 	return a;
 }
 
@@ -249,21 +249,4 @@ bool address_is_loopback(const ip_address address)
 	}
 
 	return address_eq_address(address, afi->address.loopback);
-}
-
-void pexpect_address(const ip_address *a, where_t where)
-{
-	if (a == NULL) {
-		return;
-	}
-
-	/* more strict than is_unset() */
-	if (address_eq_address(*a, unset_address)) {
-		return;
-	}
-
-	if (a->ip.is_set == false ||
-	    a->ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid address: "PRI_ADDRESS, pri_address(a));
-	}
 }

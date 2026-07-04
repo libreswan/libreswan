@@ -39,8 +39,6 @@ typedef struct {
 		pri_ip_bytes((R)->lo),			\
 		pri_ip_bytes((R)->hi)
 
-void pexpect_range(const ip_range *r, where_t where);
-
 /* caller knows best */
 ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes start,
