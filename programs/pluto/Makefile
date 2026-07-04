@@ -156,6 +156,9 @@ endif
 
 ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_pfkeyv2.o
+ifeq ($(OSDEP),openbsd)
+OBJS += kernel_pfkeyv2_openbsd.o
+endif
 endif
 
 # PKIX: Public-Key Infrastructure using X.509

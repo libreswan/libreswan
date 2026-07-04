@@ -36,6 +36,7 @@
 
 #include "kernel.h"
 #include "kernel_alg.h"
+#include "kernel_pfkeyv2.h"
 #include "kernel_sadb.h"
 #include "kernel_policy.h"
 #include "log.h"
@@ -1919,7 +1920,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.flush = pfkeyv2_flush,
 	.poke_holes = pfkeyv2_poke_holes,
 	.plug_holes = pfkeyv2_plug_holes,
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	.poke_ipsec_policy_hole = pfkeyv2_poke_ipsec_policy_hole,
 #endif
 	.shutdown = pfkeyv2_shutdown,
