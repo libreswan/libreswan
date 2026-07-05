@@ -31,6 +31,7 @@
 #include "lswlog.h"
 #include "id.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 
 /* coding of X.501 distinguished name */
 typedef const struct {
@@ -997,10 +998,13 @@ bool match_dn(asn1_t a, asn1_t b, int *wildcards, struct verbose verbose)
 
 /*
  * match an equal number of RDNs, in any order
- * if wildcards != NULL, wildcard matches are enabled
+ *
+ * If wildcards != NULL, wildcard matches are enabled.
  */
 
-static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
+static bool match_rdn_unordered(const CERTRDN *const rdn_a,
+				const CERTRDN *const rdn_b,
+				bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
 		return false;
@@ -1008,79 +1012,66 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 	int matched = 0;
 	int ava_num = 0;
 
-	CERTAVA *const *avas_b;
-	for (avas_b = rdn_b->avas; *avas_b != NULL; avas_b++) {
+	for (CERTAVA *const *avas_b = rdn_b->avas;
+	     *avas_b != NULL; avas_b++) {
+
 		CERTAVA *const ava_b = *avas_b;
 		const SECOidTag tag_b = CERT_GetAVATag(ava_b);
 
 		ava_num++;
 
-		CERTAVA *const *avas_a;
-		for (avas_a = rdn_a->avas; *avas_a != NULL; avas_a++) {
+		for (CERTAVA *const *avas_a = rdn_a->avas;
+		     *avas_a != NULL; avas_a++) {
+
 			CERTAVA *const ava_a = *avas_a;
+			const SECOidTag tag_a = CERT_GetAVATag(ava_a);
 
-			if (CERT_GetAVATag(ava_a) == tag_b) {
+			if (tag_a != tag_b) {
+				continue;
+			}
+
+			/*
+			 * XXX Can CERT_DecodeAVAValue() return NULL?
+			 * No man page :(
+			 *
+			 * XXX: Ah, but there is the source; answer
+			 * YES!
+			 */
+			if (has_wild != NULL) {
 				SECItem *val_b = CERT_DecodeAVAValue(&ava_b->value);
-
-				/* XXX Can CERT_DecodeAVAValue() return NULL? No man page :( */
-				if (val_b != NULL) {
-					if (has_wild != NULL &&
-					    val_b->len == 1 &&
-					    val_b->data[0] == '*') {
-						*has_wild = true;
-						matched++;
-						SECITEM_FreeItem(val_b, PR_TRUE);
-						break;
-					}
-					SECITEM_FreeItem(val_b, PR_TRUE);
+				if (val_b == NULL) {
+					continue;
 				}
-				if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+				if (val_b->len == 1 &&
+				    val_b->data[0] == '*') {
+					*has_wild = true;
 					matched++;
+					SECITEM_FreeItem(val_b, PR_TRUE);
 					break;
 				}
+				SECITEM_FreeItem(val_b, PR_TRUE);
 			}
+
+			if (CERT_CompareAVA(ava_a, ava_b) == SECEqual) {
+				matched++;
+				break;
+			}
+
 		}
 	}
 
 	return matched > 0 && matched == ava_num;
 }
 
-static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
+static bool match_dn_unordered(CERTName *a_name,
+			       CERTName *b_name,
+			       int *const wildcards,
 			       struct verbose verbose)
 {
-	dn_buf a_dnbuf = { "", };
-	dn_buf b_dnbuf = { "", };
-
-
-	/*
-	 * Escape the ASN.1 into RFC-1485 (actually RFC-4514 and
-	 * printable ASCII) so that that it is suitable for NSS's
-	 * CERT_AsciiToName().
-	 */
-	const char *abuf = str_dn(a, &a_dnbuf); /* RFC1485 for NSS */
-	const char *bbuf = str_dn(b, &b_dnbuf); /* RFC1485 for NSS */
-
-	/*
-	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
-	 * encoded string and that can contain UTF-8 (i.e.,
-	 * !isprint()).  Strip that out before logging.
-	 */
-	vdbg("matching unordered DNs A: '%s' B: '%s'", abuf, bbuf);
-
-	CERTName *const a_name = CERT_AsciiToName(abuf);
-	CERTName *const b_name = CERT_AsciiToName(bbuf);
-
-	if (a_name == NULL || b_name == NULL) {
-		/* NULL is ignored; see NSS commit 206 */
-		CERT_DestroyName(a_name);
-		CERT_DestroyName(b_name);
-		return false;
-	}
-
 	int rdn_num = 0;
 	int matched = 0;
-	CERTRDN *const *rdns_b;
-	for (rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
+
+	for (CERTRDN *const *rdns_b = b_name->rdns; *rdns_b != NULL; rdns_b++) {
 		CERTRDN *const rdn_b = *rdns_b;
 
 		rdn_num++;
@@ -1090,8 +1081,8 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 			CERTRDN *const rdn_a = *rdns_a;
 			bool has_wild = false;
 
-			if (match_rdn(rdn_a, rdn_b,
-				      wildcards != NULL ? &has_wild : NULL)) {
+			if (match_rdn_unordered(rdn_a, rdn_b,
+						(wildcards != NULL ? &has_wild : NULL))) {
 				matched++;
 				if (wildcards != NULL && has_wild)
 					(*wildcards)++;
@@ -1099,9 +1090,6 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 			}
 		}
 	}
-
-	CERT_DestroyName(a_name);
-	CERT_DestroyName(b_name);
 
 	bool ok = (matched > 0 && rdn_num > 0 && matched == rdn_num);
 	vdbg("%s() matched: %d, rdn_num: %d, wildcards: %d; %s",
@@ -1112,18 +1100,58 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 	return ok;
 }
 
+static bool dn_to_CERTName(PORTCheapArenaPool *arena,
+			   asn1_t dn,
+			   CERTName *name)
+{
+	SECItem item = same_shunk_as_secitem(HUNK_AS_SHUNK(&dn),
+					     siDERNameBuffer);
+	return (SEC_QuickDERDecodeItem(&arena->arena, name,
+				       CERT_NameTemplate,
+				       &item) == SECSuccess);
+}
+
 bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
 			     struct verbose verbose)
 {
-	bool ret = match_dn(a, b, wildcards, verbose);
-
-	if (!ret) {
-		vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",
-		     __func__, *wildcards);
-		/* recount wildcards */
-		*wildcards = 0;
-		ret = match_dn_unordered(a, b, wildcards, verbose);
+	if (match_dn(a, b, wildcards, verbose)) {
+		return true;
 	}
+
+	vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",
+	     __func__, *wildcards);
+
+	/* recount wildcards */
+	*wildcards = 0;
+
+	/*
+	 * XXX: should be passing in CERTName for at least one of the
+	 * DNs - its being called from a loop so doesn't need to be
+	 * constanly re-extracted.
+	 *
+	 * XXX: match_dn() should use CERTName, eliminating more
+	 * bespoke code.
+	 *
+	 * XXX: NSS doesn't seem to have wild-card match so match_dn()
+	 * can't be replaced by NSS code?x
+	 */
+
+	PORTCheapArenaPool arena;
+	PORT_InitCheapArena(&arena, DER_DEFAULT_CHUNKSIZE);
+
+	CERTName a_name = {0};
+	CERTName b_name = {0};
+	if (!dn_to_CERTName(&arena, a, &a_name) ||
+	    !dn_to_CERTName(&arena, b, &b_name)) {
+		PORT_DestroyCheapArena(&arena);
+		return false;
+	}
+
+	bool ret = match_dn_unordered(&a_name, &b_name,
+				      wildcards, verbose);
+
+	PORT_DestroyCheapArena(&arena);
+
 	return ret;
 }
 
