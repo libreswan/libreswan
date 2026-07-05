@@ -132,10 +132,7 @@ typedef struct {
 } dn_buf;
 
 const char *str_dn(asn1_t dn, dn_buf *buf);
-
 size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes);
-size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
-		  bool nss_compatible);
 err_t parse_dn(asn1_t dn);
 
 #endif /* _X509_H */
