@@ -244,19 +244,21 @@ bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 * XXX: see also end_host_port().  Some of these are
 	 * redundant, but logging is useful.
 	 */
-	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint, HERE);
+	ip_port remote_port = endpoint_port(ike->sa.st_remote_endpoint);
 	if (port_is_specified(ike->sa.st_connection->remote->host.config->ikeport)) {
 		ldbg(ike->sa.logger,
 		     "NAT: "PRI_SO" not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
 		     pri_so(ike->sa.st_serialno),
 		     pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
 		     pri_where(where));
-	} else if (remote_hport != IKE_UDP_PORT) {
+	} else if (hport(remote_port) != IKE_UDP_PORT) {
 		ldbg(ike->sa.logger,
-		     "NAT: "PRI_SO" not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
-		     pri_so(ike->sa.st_serialno), remote_hport, pri_where(where));
+		     "NAT: "PRI_SO" not floating remote port; already pointing at non-IKE_UDP_PORT "PRI_HPORT" "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     pri_hport(remote_port),
+		     pri_where(where));
 	} else {
-		pexpect(remote_hport == IKE_UDP_PORT);
+		pexpect(hport(remote_port) == IKE_UDP_PORT);
 		/* same address+protocol; change port */
 		ip_endpoint new_endpoint =
 			set_endpoint_port(ike->sa.st_remote_endpoint,
