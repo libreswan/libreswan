@@ -2190,9 +2190,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			case v2N_INVALID_KE_PAYLOAD:
 			{
 				if (ike->sa.st_oakley.ta_dh == NULL) {
-					name_buf nb;
+					name_buf nb, xb;
 					llog_sa(RC_LOG, (*larval_child),
-						"CREATE_CHILD_SA failed with error notification %s response but no KE was sent",
+						"%s failed with error notification %s response but no KE was sent",
+						str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 						str_enum_short(&v2_notification_names, n, &nb));
 					status = STF_FATAL;
 					break;
@@ -2209,9 +2210,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 							 &ikev2_suggested_kem_desc,
 							 &sk, sizeof(sk), NULL);
 				if (d != NULL) {
-					name_buf nb;
+					name_buf nb, xb;
 					llog(RC_LOG, (*larval_child)->sa.logger,
-					     "CREATE_CHILD_SA failed with error notification %s response: %s",
+					     "%s failed with error notification %s response: %s",
+					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					     str_enum_short(&v2_notification_names, n, &nb),
 					     str_diag(d));
 					pfree_diag(&d);
@@ -2222,9 +2224,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				pstats(invalidke_recv_s, sk.sk_kem);
 				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
-				name_buf nb, sgb;
+				name_buf nb, sgb, xb;
 				llog_sa(RC_LOG, (*larval_child),
-					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
+					"%s failed with error notification %s response suggesting %s instead of %s",
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					str_enum_short(&v2_notification_names, n, &nb),
 					str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
 					ike->sa.st_oakley.ta_dh->common.fqn);
@@ -2233,9 +2236,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			}
 			default:
 			{
-				name_buf esb;
+				name_buf esb, xb;
 				llog(RC_LOG, (*larval_child)->sa.logger,
-					"CREATE_CHILD_SA failed with error notification %s",
+					"%s failed with error notification %s",
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					str_enum_short(&v2_notification_names, n, &esb));
 				ldbg((*larval_child)->sa.logger,
 				     "re-add child to pending queue with exponential back-off?");
