@@ -375,7 +375,7 @@ bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st
 		emit_one_natoa(outs, pd, ipresp, "NAT-OAr"));
 }
 
-static void nat_traversal_show_result(struct state *st, uint16_t sport)
+static void nat_traversal_show_result(struct state *st, ip_port sport)
 {
 	lset_t nt = st->hidden_variables.st_nat_traversal;
 	const char *rslt = (st->hidden_variables.st_nated_host ? "I am behind NAT" :
@@ -383,13 +383,13 @@ static void nat_traversal_show_result(struct state *st, uint16_t sport)
 			    "no NAT detected");
 
 	name_buf nb;
-	ldbg(st->logger, "NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
-	     LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? str_enum_long(&natt_method_names,
-								     NAT_TRAVERSAL_METHOD_IETF_RFC, &nb) :
-	     LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? str_enum_long(&natt_method_names,
-								       NAT_TRAVERSAL_METHOD_IETF_02_03, &nb) :
-	     "unknown or unsupported method",
-	     sport,
+	ldbg(st->logger, "NAT-Traversal: Result using %s sender port "PRI_HPORT": %s",
+	     (LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? str_enum_long(&natt_method_names,
+								      NAT_TRAVERSAL_METHOD_IETF_RFC, &nb) :
+	      LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? str_enum_long(&natt_method_names,
+									NAT_TRAVERSAL_METHOD_IETF_02_03, &nb) :
+	      "unknown or unsupported method"),
+	     pri_hport(sport),
 	     rslt);
 }
 
@@ -420,8 +420,7 @@ void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
 		detect_ikev1_natd(md, ike);
 
 		if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
-			nat_traversal_show_result(&ike->sa,
-						  endpoint_hport(md->sender, HERE));
+			nat_traversal_show_result(&ike->sa, endpoint_port(md->sender));
 		}
 	}
 
