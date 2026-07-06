@@ -64,6 +64,7 @@
 #include "packet.h"
 #include "state_category.h"
 #include "terminate_reason.h"
+#include "authby.h"
 
 struct whack_message;
 struct v2_transition;
@@ -705,6 +706,7 @@ struct state {
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow auth=NULL / authby=NULL */
 
 	bool st_supported_auth_methods_intermediate;	/* peer will send supported_auth_methods notification in intermediate exchange */
+	struct authby st_v2_peer_authby;		/* received in supported_auth_methods notification */
 
 	/* IKEv2 IKE SA only */
 	struct {
