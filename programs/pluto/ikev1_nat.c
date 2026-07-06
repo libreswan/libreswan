@@ -445,10 +445,11 @@ void ikev1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    nat_traversal_detected(st) &&
-	    endpoint_hport(st->st_iface_endpoint->local_endpoint, HERE) != NAT_IKE_UDP_PORT) {
-		ldbg(st->logger, "NAT-T: "PRI_SO" in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
+	    hport(endpoint_port(st->st_iface_endpoint->local_endpoint)) != NAT_IKE_UDP_PORT) {
+		ldbg(st->logger,
+		     "NAT-T: "PRI_SO" in %s floating IKEv1 ports to PLUTO_NAT_PORT "PRI_HPORT,
 		     pri_so(st->st_serialno), st->st_state->short_name,
-		     NAT_IKE_UDP_PORT);
+		     pri_hport(ip_hport(NAT_IKE_UDP_PORT)));
 		v1_natify_initiator_endpoints(st, where);
 	}
 }
