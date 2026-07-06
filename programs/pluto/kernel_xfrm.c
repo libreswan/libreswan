@@ -1232,7 +1232,7 @@ struct kernel_migrate {
 		 * encapsulated (in UDP or TCP) the port is also needed.
 		 */
 		ip_address address;
-		int encap_port;
+		ip_port encap_port;
 		/*
 		 * This is not the subnet you're looking for: the transport
 		 * selector or packet filter.
@@ -1329,13 +1329,13 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 			.address = src->end->host->addr,
 			.new_address = src->end->host->addr,	/* may change */
 			.client = src->end->client,
-			.encap_port = endpoint_hport(src->endpoint, HERE),	/* may change */
+			.encap_port = endpoint_port(src->endpoint),	/* may change */
 		},
 		.dst = {
 			.address = dst->end->host->addr,
 			.new_address = dst->end->host->addr,	/* may change */
 			.client = dst->end->client,
-			.encap_port = endpoint_hport(dst->endpoint, HERE),	/* may change */
+			.encap_port = endpoint_port(dst->endpoint),	/* may change */
 		},
 		/* WWW what about sec_label? */
 	};
@@ -1360,10 +1360,11 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	struct kernel_migrate_end *changing_ke = (old_ei == src) ? &migrate->src : &migrate->dst;
 
 	changing_ke->new_address = endpoint_address(new_ep);
-	changing_ke->encap_port = endpoint_hport(new_ep, HERE);
+	changing_ke->encap_port = endpoint_port(new_ep);
 
-	if (encap_type == NULL)
-		migrate->src.encap_port = migrate->dst.encap_port = 0;
+	if (encap_type == NULL) {
+		migrate->src.encap_port = migrate->dst.encap_port = unset_port;
+	}
 
 	ip_said said = said_from_address_protocol_spi(dst->end->host->addr,
 						      proto_info->protocol,
@@ -1427,15 +1428,17 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *migrate, struct logger 
 	}
 
 	if (migrate->encap_type != NULL) {
-		ldbg(logger, "adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		ldbg(logger,
+		     "adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport="PRI_HPORT" dport="PRI_HPORT,
 		     pri_ip_encap(migrate->encap_type),
-		     migrate->src.encap_port, migrate->dst.encap_port);
+		     pri_hport(migrate->src.encap_port),
+		     pri_hport(migrate->dst.encap_port));
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = migrate->encap_type->encap_type;
-		natt.encap_sport = ntohs(migrate->src.encap_port);
-		natt.encap_dport = ntohs(migrate->dst.encap_port);
+		natt.encap_sport = nport(migrate->src.encap_port);
+		natt.encap_dport = nport(migrate->dst.encap_port);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
