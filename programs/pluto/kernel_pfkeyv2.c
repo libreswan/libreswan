@@ -1130,13 +1130,13 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 * addresses to also include the port and protocol?
 	 */
 	if (k->encap_type == &ip_encap_esp_in_udp) {
-		if (k->src.encap_port != 4500) {
+		if (hport(k->src.encap_port) != 4500) {
 			llog(RC_LOG, logger,
-			     "SADB_X_EXT_UDPENCAP assumes the source port is 4500, not %d",
-			     k->src.encap_port);
+			     "SADB_X_EXT_UDPENCAP assumes the source port is 4500, not "PRI_HPORT,
+			     pri_hport(k->src.encap_port));
 		}
 		put_sadb_ext(&req, sadb_x_udpencap, sadb_x_ext_udpencap,
-			     .sadb_x_udpencap_port = htons(k->dst.encap_port));
+			     .sadb_x_udpencap_port = nport(k->dst.encap_port));
 	}
 #endif
 

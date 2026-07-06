@@ -1946,14 +1946,15 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 	}
 
 	if (sa->encap_type != NULL) {
-		ldbg(logger, "adding xfrm-encap-tmpl when adding sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		ldbg(logger,
+		     "adding xfrm-encap-tmpl when adding sa encap_type="PRI_IP_ENCAP" sport="PRI_HPORT" dport="PRI_HPORT,
 		     pri_ip_encap(sa->encap_type),
-		     sa->src.encap_port, sa->dst.encap_port);
+		     pri_hport(sa->src.encap_port), pri_hport(sa->dst.encap_port));
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->encap_type->encap_type;
-		natt.encap_sport = ntohs(sa->src.encap_port);
-		natt.encap_dport = ntohs(sa->dst.encap_port);
+		natt.encap_sport = nport(sa->src.encap_port);
+		natt.encap_dport = nport(sa->dst.encap_port);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
