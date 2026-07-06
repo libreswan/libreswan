@@ -25,4 +25,7 @@
 bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike, 
                                 struct pbs_out *outs);
 
+bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike, 
+							    const struct pbs_in *notify_pbs);
+
 #endif

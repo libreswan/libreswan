@@ -171,3 +171,158 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	close_pbs_out(&n_pbs);
 	return true;
 }
+
+
+bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike, 
+							const struct pbs_in *notify_pbs)
+{
+	struct authby peer = {0};
+	struct pbs_in input_pbs = *notify_pbs;
+	diag_t d;
+
+	while (pbs_left(&input_pbs) > 0) {
+		uint8_t length;
+		uint8_t auth_method;
+
+		d = pbs_in_thing(&input_pbs, length, "SUPPORTED_AUTH_METHODS announcement length");
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
+			return false;
+		}
+
+		d = pbs_in_thing(&input_pbs, auth_method, "SUPPORTED_AUTH_METHODS auth method");
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
+			return false;
+		}
+
+		if (length == TWO_OCTET_ANNOUNCEMENT_LENGTH) {
+			switch (auth_method) {
+			case IKEv2_AUTH_SHARED_KEY_MAC:
+				peer.psk = true;
+				break;
+			case IKEv2_AUTH_NULL:
+				peer.null = true;
+				break;
+			default:
+				ldbg(ike->sa.logger,
+					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+					auth_method, length);
+				break;
+			}
+		} else if (length == THREE_OCTET_ANNOUNCEMENT_LENGTH) {
+			uint8_t cert_link;
+			
+			d = pbs_in_thing(&input_pbs, cert_link, "SUPPORTED_AUTH_METHODS Cert Link");
+			if (d != NULL) {
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
+				return false;
+			}
+
+			switch (auth_method) {
+			case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
+				peer.rsasig_v1_5 = true;
+				break;
+			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+				peer.ecdsa_sha2_256 = true;
+				peer.ecdsa = true;
+				break;
+			case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+				peer.ecdsa_sha2_384 = true;
+				peer.ecdsa = true;
+				break;
+			case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+				peer.ecdsa_sha2_512 = true;
+				peer.ecdsa = true;
+				break;
+			default:
+				ldbg(ike->sa.logger,
+					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+					auth_method, length);
+				break;
+			}
+		} else if (length > THREE_OCTET_ANNOUNCEMENT_LENGTH && 
+				auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
+			uint8_t cert_link;
+			d = pbs_in_thing(&input_pbs, cert_link, "SUPPORTED_AUTH_METHODS Cert Link");
+			if (d != NULL) {
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
+				return false;
+			}
+			shunk_t algid;
+			d = pbs_in_shunk(&input_pbs, length - 3, &algid, "AlgorithmIdentifier");
+			if (d != NULL) {
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
+				return false;
+			}
+
+			bool matched = false;
+
+#define MATCH_DIGSIG(AUTH, HASH, BLOB)										\
+			{																\
+				if (!matched) {												\
+					shunk_t b = (HASH)->digital_signature_blob[BLOB];		\
+					if (b.len > 0) {										\
+						/*
+						 * +1/-1 skips the first byte, which contains 		
+						 * the size of the blob
+						 */													\
+						shunk_t known = shunk2(b.ptr + 1, b.len - 1);		\
+						if (hunk_eq(algid, known)) {						\
+							peer.AUTH = true;								\
+							matched = true;									\
+						}													\
+					}														\
+				}															\
+			}																					
+
+			MATCH_DIGSIG(rsasig_sha2_512, &ike_alg_hash_sha2_512, 
+					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(rsasig_sha2_384, &ike_alg_hash_sha2_384, 
+					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(rsasig_sha2_256, &ike_alg_hash_sha2_256, 
+					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(ecdsa_sha2_512, &ike_alg_hash_sha2_512, 
+					DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(ecdsa_sha2_384, &ike_alg_hash_sha2_384, 
+					DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(ecdsa_sha2_256, &ike_alg_hash_sha2_256, 
+					DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(eddsa, &ike_alg_hash_identity, 
+					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
+			MATCH_DIGSIG(eddsa, &ike_alg_hash_identity, 
+					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB);
+#undef MATCH_DIGSIG
+		} else {
+			shunk_t skip_bytes;
+
+			d = pbs_in_shunk(&input_pbs, length - 2, &skip_bytes, 
+					"Unknown SUPPORTED_AUTH_METHODS Announcement");
+			if (d != NULL) {
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
+				return false;
+			}
+	
+			ldbg(ike->sa.logger,
+					"SUPPORTED_AUTH_METHODS ignoring unknown announcement");
+		}
+	}
+
+	if (authby_is_set(authby_and(peer, AUTHBY_ALL_RSASIG_SHA2))) {
+		peer.rsasig = true;
+	}
+
+	if (authby_is_set(authby_and(peer, AUTHBY_ALL_ECDSA_SHA2))) {
+		peer.ecdsa = true;
+	}
+
+	ike->sa.st_v2_peer_authby = peer;
+
+	return true;
+}

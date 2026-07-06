@@ -784,6 +784,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 
+	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+			return STF_FATAL;
+		}
+	}
+
 	return STF_OK;
 }
 

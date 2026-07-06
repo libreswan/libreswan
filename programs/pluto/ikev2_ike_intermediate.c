@@ -1104,6 +1104,14 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 		}
 	}
 
+	if (task->exchange.supported_auth_methods) {
+		if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
+			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+				return STF_FATAL;
+			}
+		}
+	}
+
 	/*
 	 * We've done an intermediate exchange round, if required
 	 * perform another.

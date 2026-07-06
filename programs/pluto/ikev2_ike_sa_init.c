@@ -1163,6 +1163,21 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		ike->sa.st_seen_hashnotify = true;
 	}
 
+	/* 
+	 * If we received an empty notification, we expect the responder to send
+	 * the full notification in the intermediate exchange, otherwise
+	 * we process the notification.
+	 */
+	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (pbs_left(&md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs) == 0) {
+			ike->sa.st_supported_auth_methods_intermediate = true;
+		} else {
+			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+				return STF_FATAL;
+			}
+		}
+	}
+
 	/*
 	 * the responder sent us back KE, Gr, Nr, and it's our time to calculate
 	 * the shared key values.
