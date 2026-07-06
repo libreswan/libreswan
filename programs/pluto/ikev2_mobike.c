@@ -154,27 +154,33 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
+	{
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_v2_mobike.local_endpoint);
-		ldbg(logger, "%s() %s.host_port: %u->%u", __func__,
+		ip_port new_port = endpoint_port(child->sa.st_v2_mobike.local_endpoint);
+		ldbg(logger, "%s() %s.host_port: "PRI_HPORT"->"PRI_HPORT, __func__,
 		     c->local->config->leftright,
-		     c->local->host.port,
-		     endpoint_hport(child->sa.st_v2_mobike.local_endpoint, HERE));
-		c->local->host.port =
-			endpoint_hport(child->sa.st_v2_mobike.local_endpoint, HERE);
+		     pri_hport(c->local->host.port),
+		     pri_hport(new_port));
+		c->local->host.port = new_port;
 		c->local->host.nexthop = child->sa.st_v2_mobike.host_nexthop;
 		break;
+	}
 	case MESSAGE_REQUEST:
+	{
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
-		ldbg(logger, "%s() %s.host_port: %u->%u",
+		ip_port new_port = endpoint_port(md->sender);
+		ldbg(logger, "%s() %s.host_port: "PRI_HPORT"->"PRI_HPORT,
 		     __func__, c->remote->config->leftright,
-		     c->remote->host.port, endpoint_hport(md->sender, HERE));
-		c->remote->host.port = endpoint_hport(md->sender, HERE);
+		     pri_hport(c->remote->host.port),
+		     pri_hport(new_port));
+		c->remote->host.port = new_port;
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;
 		break;
+	}
 	default:
 		bad_case(md_role);
 	}
