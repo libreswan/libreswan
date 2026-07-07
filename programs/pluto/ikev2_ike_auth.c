@@ -314,6 +314,15 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
+	/* Send SA_RESOURCE_INFO if per-CPU Child SAs are requested (RFC 9611) */
+	if (pc->config->child.clones.nr > 0) {
+		llog(RC_LOG, ike->sa.logger, "sending SA_RESOURCE_INFO (clones=%u)",
+		     pc->config->child.clones.nr);
+		if (!emit_v2N(v2N_SA_RESOURCE_INFO, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	/* Notification payload for ticket request */
 	if (ike->sa.st_connection->config->session_resumption) {
 		llog(RC_LOG, ike->sa.logger, "asking for session resume ticket");
@@ -360,6 +369,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		release_whack(cc->logger, HERE);
 
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
+
+		if (pc->config->child.clones.nr > 0) {
+			child->sa.st_v2_resource_info.state = RESOURCE_INFO_SENT;
+		}
 
 		if (cc != pc) {
 			llog(RC_LOG, child->sa.logger,

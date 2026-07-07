@@ -152,6 +152,24 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;
+
+	/*
+	 * Log optional SA_RESOURCE_INFO data if peer sends it (RFC 9611)
+	 *
+	 * Notice that we don't send any.
+	 */
+	if (n == v2N_SA_RESOURCE_INFO) {
+		shunk_t data = pbs_in_left(&notify->pbs);
+
+		if (pbs_left(&notify->pbs) == sizeof(uint32_t)) {
+			uint32_t peer_data;
+			memcpy(&peer_data, data.ptr, sizeof(peer_data));
+			peer_data = ntohl(peer_data);
+			ldbg(logger, "peer SA_RESOURCE_INFO data: 0x%08x", peer_data);
+		} else if (pbs_left(&notify->pbs) > 0) {
+			ldbg(logger, "peer SA_RESOURCE_INFO data: %zu bytes", data.len);
+		}
+	}
 }
 
 void decode_v2N_payloads(struct logger *logger, struct msg_digest *md)

@@ -1890,6 +1890,12 @@ static err_t pfkeyv2_migrate_ipsec_sa_is_enabled(struct logger *logger)
 	return "not supported";
 }
 
+static err_t pfkeyv2_pcpu_ipsec_sa_is_enabled(struct logger *logger)
+{
+	ldbg(logger, "%s() called; nothing to do", __func__);
+	return "not supported";
+}
+
 static const char *pfkeyv2_protostack_names[] = {
 	"pfkeyv2",
 	"pfkey",
@@ -1934,5 +1940,6 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.ipsec_interface = &kernel_ipsec_interface_ifconfig,
 	.directional_ipsec_sa_is_enabled = pfkeyv2_directional_ipsec_sa_is_enabled,
 	.iptfs_ipsec_sa_is_enabled = pfkeyv2_iptfs_ipsec_sa_is_enabled,
+	.pcpu_ipsec_sa_is_enabled = pfkeyv2_pcpu_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa_is_enabled = pfkeyv2_migrate_ipsec_sa_is_enabled,
 };
