@@ -220,10 +220,10 @@ static void check_ip_info_endpoint(void)
 		CHECK_COND2(endpoint, is_specified);
 
 		if (!t->is_unset) {
-			int hport = endpoint_hport(*endpoint, HERE);
-			if (hport != t->hport) {
+			int porth = hport(endpoint_port(*endpoint));
+			if (porth != t->hport) {
 				FAIL(" endpoint_port() returned %d, expecting %d",
-				     hport, t->hport);
+				     porth, t->hport);
 			}
 		}
 
