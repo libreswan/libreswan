@@ -561,17 +561,25 @@ void jam_connection_priority(struct jambuf *buf, const struct connection *);
 struct host_end {
 	const struct host_end_config *config;
 	bool encap;			/* are packets encapsulated */
-	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifies interface to send packets */
 	struct id id;
-	ip_address addr;
-	ip_address first_addr;		/* The address to use when
-					 * first initiating or
-					 * reviving a connection; a
-					 * connection established after
-					 * a redirect ends up with
-					 * .addr pointing at the
-					 * redirect. */
+	/*
+	 * These + protocol combine to get the endpoint.
+	 *
+	 * XXX: It's currently limited to XOR IPv[46].  Should
+	 * first_address be a list of first endpoints + current
+	 * attempt?
+	 */
+	ip_port port;			/* Which IKE port to use,
+					 * switches between
+					 * 500->4500. */
+	ip_address first_addr;		/* The resolved address; at
+					 * the start of an initiate or
+					 * revival this address is
+					 * used. */
+	ip_address addr;		/* The current address;
+					 * redirect will scribble on
+					 * this.  */
 };
 
 struct child_end {

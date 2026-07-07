@@ -1316,25 +1316,29 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		const struct trans_attrs *ta = &child->sa.st_esp.trans_attrs;
 
 		const struct ip_encap *encap_type = NULL;
-		uint16_t encap_sport = 0, encap_dport = 0;
+		ip_port encap_sport = unset_port;
+		ip_port encap_dport = unset_port;
 
 		if (nat_traversal_detected(&child->sa) ||
 		    child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			encap_type = child->sa.st_iface_endpoint->io->protocol->encap_esp;
 			switch (direction) {
 			case DIRECTION_INBOUND:
-				encap_sport = endpoint_hport(child->sa.st_remote_endpoint, HERE);
-				encap_dport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint, HERE);
+				encap_sport = endpoint_port(child->sa.st_remote_endpoint);
+				encap_dport = endpoint_port(child->sa.st_iface_endpoint->local_endpoint);
 				break;
 			case DIRECTION_OUTBOUND:
-				encap_sport = endpoint_hport(child->sa.st_iface_endpoint->local_endpoint, HERE);
-				encap_dport = endpoint_hport(child->sa.st_remote_endpoint, HERE);
+				encap_sport = endpoint_port(child->sa.st_iface_endpoint->local_endpoint);
+				encap_dport = endpoint_port(child->sa.st_remote_endpoint);
 				break;
 			default:
 				bad_case(direction);
 			}
-			ldbg(child->sa.logger, "kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
-			     pri_ip_encap(encap_type), encap_sport, encap_dport);
+			ldbg(child->sa.logger,
+			     "kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport="PRI_HPORT" dport="PRI_HPORT,
+			     pri_ip_encap(encap_type),
+			     pri_hport(encap_sport),
+			     pri_hport(encap_dport));
 		}
 
 		ldbg(child->sa.logger, "kernel: looking for alg with encrypt: %s keylen: %d integ: %s",

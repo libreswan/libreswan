@@ -586,7 +586,7 @@ static bool get_initiator_endpoints(struct connection *c,
 
 		(*remote_endpoint) =
 			endpoint_from_address_protocol_port(remote_addr, &ip_protocol_udp,
-							    ip_hport(c->remote->host.port));
+							    c->remote->host.port);
 		ip_endpoint local_endpoint =
 			endpoint_from_address_protocol_port(c->iface->local_address,
 							    &ip_protocol_udp, local_host_port(c));

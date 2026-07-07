@@ -123,7 +123,7 @@ void ip_endpoint_check(void)
 		 */
 
 		/* host port */
-		uint16_t heport = endpoint_hport(e, HERE);
+		uint16_t heport = hport(endpoint_port(e));
 		if (!memeq(&heport, &t->hport, sizeof(heport))) {
 			FAIL("endpoint_hport() returned '%d', expected '%d'",
 				heport, t->hport);

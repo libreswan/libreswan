@@ -127,7 +127,7 @@ struct kernel_state_end {
 	 * for that matter the protocol?
 	 */
 	ip_address address;
-	int encap_port;
+	ip_port encap_port;
 	/*
 	 * This is not the subnet you're looking for: the transport
 	 * selector or packet filter.

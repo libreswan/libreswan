@@ -104,8 +104,8 @@ void jam_end_host(struct jambuf *buf,
 		 * XXX: only print anomalies: since the host address
 		 * is zero, so too should be the port.
 		 */
-		if (end->port != 0) {
-			jam(buf, ":%u", end->port);
+		if (port_is_specified(end->port)) {
+			jam(buf, ":"PRI_HPORT, pri_hport(end->port));
 		}
 	} else {
 		/* ADDRESS[:PORT][<HOSTNAME>] */
@@ -115,14 +115,14 @@ void jam_end_host(struct jambuf *buf,
 		 * IKE_UDP_PORT.
 		 */
 		bool include_port = (port_is_specified(end->config->ikeport) ||
-				     end->port != IKE_UDP_PORT);
+				     hport(end->port) != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
 			jam_string(buf, "<address>");
 		} else if (include_port) {
 			/* [ADDRESS]:PORT */
 			jam_address_wrapped(buf, &end->addr);
-			jam(buf, ":%u", end->port);
+			jam(buf, ":"PRI_HPORT, pri_hport(end->port));
 		} else {
 			/* ADDRESS */
 			jam_address(buf, &end->addr);

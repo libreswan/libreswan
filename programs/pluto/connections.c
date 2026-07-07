@@ -645,10 +645,11 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
 	if (address_is_specified(host_addr)) {
-		unsigned host_port = hport(end_host_port(host, peer));
-		vdbg("updated %s.host.port from %u to %u",
-		    host->config->leftright,
-		    host->port, host_port);
+		ip_port host_port = end_host_port(host, peer);
+		vdbg("updated %s.host.port from "PRI_HPORT" to "PRI_HPORT,
+		     host->config->leftright,
+		     pri_hport(host->port),
+		     pri_hport(host_port));
 		host->port = host_port;
 	}
 

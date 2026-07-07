@@ -132,8 +132,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 		if (nat) {
 			ldbg(st->logger,
-			     "NAT-T: NAT Traversal detected - their IKE port is '%d'",
-			     c->remote->host.port);
+			     "NAT-T: NAT Traversal detected - their IKE port is '"PRI_HPORT"'",
+			     pri_hport(c->remote->host.port));
 		}
 
 		jam(buf, "ESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
@@ -193,7 +193,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		ini = " ";
 		jam_string(buf, "NATD=");
 		jam_address_sensitive(buf, &st->hidden_variables.st_natd);
-		jam(buf, ":%d", endpoint_hport(st->st_remote_endpoint, HERE));
+		jam(buf, ":"PRI_HPORT, pri_hport(endpoint_port(st->st_remote_endpoint)));
 	}
 
 	jam_string(buf, ini);
