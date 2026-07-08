@@ -9,14 +9,14 @@ east #
 east #
  ipsec _kernel state
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid 1 mode transport
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
@@ -25,14 +25,14 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid 1 mode transport
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
@@ -76,21 +76,21 @@ src fe80::/64 dst fe80::/64
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
 	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-		proto comp reqid REQID mode tunnel
+		proto comp reqid 1 mode tunnel
 		level use
 	tmpl src :: dst ::
-		proto esp reqid REQID mode transport
+		proto esp reqid 1 mode transport
 src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
 	dir in priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-		proto comp reqid REQID mode tunnel
+		proto comp reqid 1 mode tunnel
 		level use
 	tmpl src :: dst ::
-		proto esp reqid REQID mode transport
+		proto esp reqid 1 mode transport
 src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-		proto comp spi 0xSPISPI reqid REQID mode tunnel
+		proto comp spi 0xSPISPI reqid 1 mode tunnel
 	tmpl src :: dst ::
-		proto esp spi 0xSPISPI reqid REQID mode transport
+		proto esp spi 0xSPISPI reqid 1 mode transport
 east #

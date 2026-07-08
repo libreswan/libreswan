@@ -74,12 +74,12 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 1 mode tunnel
 	if_id 0x2
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 1 mode tunnel
 	if_id 0x2
 west #
  ipsec _kernel state

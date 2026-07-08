@@ -2,6 +2,6 @@
 
 /^ nft /,/^[a-z][a-z]* #$/ {
 
-  s/ reqid [1-9][0-9]* / reqid REQID /
+  s/ reqid [1-9][0-9]\{4,\} / reqid REQID /
 
 }

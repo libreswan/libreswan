@@ -21,12 +21,12 @@ west #
 west #
  ipsec _kernel state
 src 2.2.2.2 dst 1.1.1.1
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 1000 mode tunnel
 	replay-window 0 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 1.1.1.1 dst 2.2.2.2
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 1000 mode tunnel
 	replay-window 0 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -35,15 +35,15 @@ west #
 src 10.0.1.0/24 dst 10.0.2.0/24
 	dir out priority 0 ptype main
 	tmpl src 1.1.1.1 dst 2.2.2.2
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 1000 mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24
 	dir fwd priority 0 ptype main
 	tmpl src 2.2.2.2 dst 1.1.1.1
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 1000 mode tunnel
 src 10.0.2.0/24 dst 10.0.1.0/24
 	dir in priority 0 ptype main
 	tmpl src 2.2.2.2 dst 1.1.1.1
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 1000 mode tunnel
 west #
  # start pluto
 west #
