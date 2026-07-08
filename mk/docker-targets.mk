@@ -53,15 +53,6 @@ LOCAL_MAKE_FLAGS=
 MAKE_BASE = base
 MAKE_INSTLL_BASE = install-base
 
-ifdef TRAVIS_ENABLED
-BRANCH = $(shell test -d .git -o -f .git && (git rev-parse --abbrev-ref HEAD || echo ''))
-TRAVIS_BANCH ?= $(call W1, $(BRANCH),'')
-endif
-ifeq ($(TRAVIS_BANCH), travis)
-	DISTRO =  $(call W2, $(BRANCH),fedora)
-	DISTRO_REL = $(call W3, $(BRANCH),27)
-endif
-
 #
 # Distribution specific tweaks
 #
@@ -179,14 +170,6 @@ install-deb-dep:
 	# give another kick
 	apt-get --fix-broken install -y
 
-.PHONY: travis-docker-image
-travis-docker-image:
-	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
-
-.PHONY: travis-docker-base
-travis-docker-base:
-	$(MAKE) $(MAKE_BASE)
-
 define debian_exp_repo
 	if [ $(1) == "experimental" ] ; then \
 		echo 'RUN echo "deb http://deb.debian.org/debian experimental main" >> /etc/apt/sources.list.d/experimental.list' >> $(2);\
@@ -227,14 +210,6 @@ docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 docker-instance-name:
 	echo $(DI_T)
 
-.PHONY: travis-docker-make
-travis-docker-make:
-	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) make-base"
-
-.PHONY: travis-docker-make-install
-travis-docker-make-install:
-	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) make-install"
-
 .PHONY: docker-exec
 docker-exec:
 	$(DOCKER_CMD) exec -ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && $(MAKE) $(1)"
@@ -273,12 +248,6 @@ docker-make-base: docker-stop
 		-v /sys/fs/cgroup:/sys/fs/cgroup:ro \
 		-ti $(DI_T) /bin/bash -c "cd /home/build/libreswan && \
 		$(LOCAL_MAKE_FLAGS) $(MAKE) $(MAKE_BASE)"
-
-.PHONY: travis-docker-start
-travis-docker-start:
-	$(DOCKER_CMD) run -h $(DI_T) --privileged  --name $(DI_T) \
-		-v $(PWD):/home/build/libreswan/ \
-		-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d $(DI_T)
 
 .PHONY: nsrunclean
 nsrunclean:
