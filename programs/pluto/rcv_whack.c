@@ -483,10 +483,12 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 	};
 
 	struct logger *logger = show_logger(s);
-	PASSERT(logger, wm->whack_command < elemsof(commands));
-	const struct command *command = &commands[wm->whack_command];
+	if (!PEXPECT(logger, wm->whack_command < elemsof(commands))) {
+		return;
+	}
 
-	if (PBAD(logger, command->name == NULL)) {
+	const struct command *command = &commands[wm->whack_command];
+	if (!PEXPECT(logger, command->name != NULL)) {
 		return;
 	}
 
@@ -503,8 +505,9 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 		}
 	}
 
-	if (PBAD(logger, (command->op == NULL &&
-			  command->wop == NULL))) {
+	/* only one */
+	if (!PEXPECT(logger, ((command->op != NULL) !=
+			      (command->wop != NULL)))) {
 		return;
 	}
 

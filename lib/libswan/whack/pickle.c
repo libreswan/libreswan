@@ -68,6 +68,7 @@ static bool pack_raw(struct whackpacker *wp,
 	if (!pack_bytes(wp, (*bytes), nr_bytes, what, logger)) {
 		return false;
 	}
+
 	(*bytes) = NULL;
 	return true;
 }
@@ -77,6 +78,10 @@ static bool unpack_raw(struct whackpacker *wp,
 		       const char *what,
 		       struct logger *logger)
 {
+	if (!PEXPECT(logger, (*bytes) == NULL)) {
+		return false;
+	}
+
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
 		/* overflow */
@@ -85,6 +90,7 @@ static bool unpack_raw(struct whackpacker *wp,
 		     what, __func__, space, nr_bytes);
 		return false;
 	}
+
 	(*bytes) = wp->str_next;
 	wp->str_next += nr_bytes;
 	return true;
@@ -111,7 +117,7 @@ static bool unpack_str(struct whackpacker *wp,
 	void *value = wp->str_next;
 	void *nul = memchr(value, '\0', wp->str_roof - wp->str_next);
 	if (nul == NULL) {
-		llog(RC_LOG, logger, "%s is missing NUL", what);
+		llog(PEXPECT_STREAM, logger, "%s is missing NUL", what);
 		return false;
 	}
 	*string = value;
@@ -149,16 +155,18 @@ static bool unpack_str(struct whackpacker *wp,
 
 #define UNPACK_HUNK(WP, HUNK, WHAT)					\
 	{								\
-		if (HUNK->len == 0) {					\
-			/* expect wire-pointer to be NULL */		\
-			pexpect(HUNK->ptr == NULL);			\
-			HUNK->ptr = NULL;				\
-			return true;					\
-		}							\
-		if (!unpack_raw(WP, (void**)&(HUNK)->ptr,		\
-				HUNK->len, WHAT, logger)) {		\
+		/* expect wire-pointer to be NULL */			\
+		if (!PEXPECT(logger, HUNK->ptr == NULL)) {		\
 			return false;					\
 		}							\
+		if (HUNK->len == 0) {					\
+			return true;					\
+		}							\
+		void *ptr = NULL;					\
+		if (!unpack_raw(WP, &ptr, HUNK->len, WHAT, logger)) {	\
+			return false;					\
+		}							\
+		HUNK->ptr = ptr;					\
 		return true;						\
 	}
 
@@ -206,6 +214,7 @@ static bool pack_string(struct whackpacker *wp, const char **p, const char *what
 		return true;
 	}
 
+	/* include '\0' byte so empty string has length 1 */
 	size_t nr_bytes = strlen((*p)) + 1;
 	if (!pack_bytes(wp, (*p), nr_bytes, what, logger)) {
 		return false;
@@ -231,7 +240,7 @@ static bool unpack_string(struct whackpacker *wp, const char **p, const char *wh
 
 	*p = s;
 	if ((*p)[nr_bytes-1] != '\0') {
-		llog(RC_LOG, logger, "%s lost its terminating NUL", what);
+		llog(PEXPECT_STREAM, logger, "%s lost its terminating NUL", what);
 		return false;
 	}
 
@@ -272,16 +281,17 @@ static bool pack_constant_string(struct whackpacker *wp UNUSED,
 		ldbgf(DBG_TMI, logger, "%s: '%s' was: %s (%s)", __func__, what, *string, constant);
 		passert(streq(*string, constant));
 		*string = NULL;
-	} else {
-		/*
-		 * For instance, when whack sends control messages
-		 * such as "status" the whack_end .leftright field is
-		 * still NULL.
-		 *
-		 * The unpack will set the field, oops.
-		 */
-		ldbgf(DBG_TMI, logger, "%s: '%s' was null (%s)", __func__, what, constant);
+		return true;
 	}
+
+	/*
+	 * For instance, when whack sends control messages
+	 * such as "status" the whack_end .leftright field is
+	 * still NULL.
+	 *
+	 * The unpack will set the field, oops.
+	 */
+	ldbgf(DBG_TMI, logger, "%s: '%s' was null (%s)", __func__, what, constant);
 	return true;
 }
 
@@ -291,7 +301,10 @@ static bool unpack_constant_string(struct whackpacker *wp UNUSED,
 				   const char *what,
 				   struct logger *logger)
 {
-	pexpect(*string == NULL);
+	if (!PEXPECT(logger, (*string) == NULL)) {
+		return false;
+	}
+
 	*string = constant;
 	ldbgf(DBG_TMI, logger, "%s: '%s' is %s", __func__, what, *string);
 	return true;
