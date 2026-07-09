@@ -207,6 +207,8 @@ struct impair {
 
 	bool ignore_viable_parent;
 
+	bool mangle_cert_pubkey;
+
 	/*
 	 * add more here
 	 */

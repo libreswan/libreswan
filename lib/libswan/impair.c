@@ -391,6 +391,8 @@ struct impairment impairments[] = {
 
 	B(ignore_viable_parent, "always initiate a new IKE SA (ignoring any existing viable parent)"),
 
+	B(mangle_cert_pubkey, "mangle the pubkey part of the certificate payload (currently assumes RSA)"),
+
 #undef U
 #undef B
 #undef V
