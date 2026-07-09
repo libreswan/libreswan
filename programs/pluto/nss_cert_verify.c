@@ -390,7 +390,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		 * auth for some for some seamingly unrelated reason.
 		 */
 		llog_nss_error(RC_LOG, logger,
-			       "NSS: decoding certificate payload using CERT_NewTempCertificate() failed");
+			       "decoding certificate payload using CERT_NewTempCertificate() failed");
 		if (PR_GetError() == SEC_ERROR_REUSED_ISSUER_AND_SERIAL) {
 			enum stream stream = log_limiter_stream(logger, CERTIFICATE_LOG_LIMITER);
 			if (stream != NO_STREAM) {
