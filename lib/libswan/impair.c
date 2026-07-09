@@ -396,6 +396,8 @@ struct impairment impairments[] = {
 
 	U(truncate_signed_hash, "truncate HASH being signed to N bytes"),
 
+	B(mangle_cert_pubkey, "mangle the pubkey part of the certificate payload (currently assumes RSA)"),
+
 #undef U
 #undef B
 #undef V

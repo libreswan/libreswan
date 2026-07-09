@@ -89,10 +89,30 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 
 		ldbg(outpbs->logger, "sending [CERT] of certificate: %s", cert_nickname(mycert));
 
-		if (!pbs_out_struct(outpbs, certhdr, &ikev2_certificate_desc, &cert_pbs) ||
-		    !pbs_out_hunk(&cert_pbs, cert_der(mycert), "CERT")) {
+		if (!pbs_out_struct(outpbs, certhdr, &ikev2_certificate_desc, &cert_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
+		}
+
+		uint8_t *der_start = cert_pbs.cur;
+		if (!pbs_out_hunk(&cert_pbs, cert_der(mycert), "CERT")) {
+			free_auth_chain(auth_chain, chain_len);
+			return STF_INTERNAL_ERROR;
+		}
+
+		if (impair.mangle_cert_pubkey) {
+			const char exponent_65537[] = { 0x02, 0x03, 0x01, 0x00, 0x01 };
+			uint8_t *exponent = memmem(der_start, cert_pbs.cur - der_start,
+						   exponent_65537, sizeof(exponent_65537));
+			if (exponent == NULL) {
+				llog(IMPAIR_STREAM, outpbs->logger,
+				     "could not find RSA pubkey's exponent to mangle");
+				return STF_INTERNAL_ERROR;
+			}
+			llog(IMPAIR_STREAM, outpbs->logger,
+			     "mangling RSA pubkey's exponent");
+			const char exponent_0[] = { 0x02, 0x03, 0x00, 0x00, 0x00 };
+			memcpy(exponent, exponent_0, sizeof(exponent_0));
 		}
 
 		close_pbs_out(&cert_pbs);
