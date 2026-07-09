@@ -382,6 +382,7 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 		     * #BER.
 		     */
 		    (nss_compatible &&
+		     value_content.len > 0 &&
 		     ((const char*)value_content.ptr)[0] == '#')) {
 			/* BER */
 			s += jam_string(buf, "#");
