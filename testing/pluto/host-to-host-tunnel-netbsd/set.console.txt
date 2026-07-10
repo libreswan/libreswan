@@ -1,0 +1,19 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+set #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec whack --impair suppress_retransmits
+set #
+ ipsec add rise-set
+"rise-set": added oriented IKEv2 connection
+set #
+ echo "initdone"
+initdone
+set #
