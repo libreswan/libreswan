@@ -431,7 +431,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 	 */
 	{
 		int local_propnum;
-		const struct ikev2_proposal *local_proposal;
+		const struct ikev2_proposal *local_proposal UNUSED;
 		FOR_EACH_V2_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 					      local_propnum_base, local_propnum_bound) {
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
@@ -675,7 +675,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 	}
 
 	int local_propnum;
-	struct ikev2_proposal *local_proposal;
+	struct ikev2_proposal *local_proposal UNUSED;
 	FOR_EACH_V2_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				      local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
