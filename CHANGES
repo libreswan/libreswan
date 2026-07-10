@@ -1,5 +1,9 @@
 See also https://libreswan.org/
 
+v5.3.2 (July 15, 2026)
+* Security: Fixes http://libreswan.org/security/CVE-2026-14957
+* x509: tighten nss_compat BER check [Andrew]
+
 v5.3.1 (June 24, 2026)
 * Security: Fixes http://libreswan.org/security/CVE-2026-12413
 * Security: Fixes http://libreswan.org/security/CVE-2026-50721
