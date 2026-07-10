@@ -37,8 +37,9 @@
 #include "ikev2_send.h"		/* for send_v2_notification_from_md() et.al. */
 #include "log_limiter.h"
 
-static void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
-			       const struct payload_digest *notify);
+static void decode_v2N_payload(struct msg_digest *md,
+			       const struct payload_digest *notify,
+			       struct logger *logger, enum log_limiter limiter);
 
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
@@ -92,8 +93,9 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	}
 }
 
-void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
-			const struct payload_digest *notify)
+void decode_v2N_payload(struct msg_digest *md,
+			const struct payload_digest *notify,
+			struct logger *logger, enum log_limiter limiter)
 {
 	v2_notification_t n = notify->payload.v2n.isan_type;
 
@@ -105,63 +107,70 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		return;
 	}
 
+	/*
+	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting
+	 *   errors.  An implementation receiving a Notify payload
+	 *   with one of these types that it does not recognize in a
+	 *   response MUST assume that the corresponding request has
+	 *   failed entirely.  Unrecognized error types in a request
+	 *   and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 *
+	 * Record the first error; and complain and ignore when there
+	 * are more.
+	 *
+	 * XXX: RFC doesn't explicitly preclude peer sending back
+	 * multiple errors; but text suggests it doesn't happen -
+	 * errors seem to abort processing.
+	 */
+
 	const char *type;
-	if (n < 16384) {
-		type = "error";
-		/*
-		 * https://tools.ietf.org/html/rfc7296#section-3.10.1
-		 *
-		 *   Types in the range 0 - 16383 are intended for
-		 *   reporting errors.  An implementation receiving a
-		 *   Notify payload with one of these types that it
-		 *   does not recognize in a response MUST assume that
-		 *   the corresponding request has failed entirely.
-		 *   Unrecognized error types in a request and status
-		 *   types in a request or response MUST be ignored,
-		 *   and they should be logged.
-		 *
-		 * Record the first error; and complain when there are
-		 * more.
-		 */
-		if (md->v2N_error == NULL) {
-			md->v2N_error = notify;
-		} else {
-			/* XXX: is this allowed? */
-			name_buf eb, nb;
-			ldbg(logger, "message contains multiple error notifications: %s %s",
-			     str_enum_short(&v2_notification_names, md->v2N_error->payload.v2n.isan_type, &eb),
-			     str_enum_short(&v2_notification_names, n, &nb));
-		}
-	} else {
+	if (n >= v2N_STATUS_FLOOR) {
 		type = "status";
+	} else if (md->v2N_error == NULL) {
+		md->v2N_error = notify;
+		type = "error";
+	} else {
+		name_buf nb;
+		limited_llog(logger, limiter, "ignoring additional error notification %s",
+			     str_enum_short(&v2_notification_names, n, &nb));
+		return;
 	}
 
 	name_buf name;
 	if (!enum_long(&v2_notification_names, n, &name)) {
-		ldbg(logger, "%s notification %d is unknown", type, n);
+		limited_llog(logger, limiter, "%s notification %d is unknown", type, n);
 		return;
 	}
+
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
 		ldbg(logger, "%s notification %s is not supported", type, name.buf);
 		return;
 	}
+
 	if (md->pd[v2_pd] != NULL) {
 		ldbg(logger, "%s duplicate notification %s ignored", type, name.buf);
 		return;
 	}
+
 	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
+
 	md->pd[v2_pd] = notify;
 }
 
-void decode_v2N_payloads(struct logger *logger, struct msg_digest *md)
+void decode_v2N_payloads(struct msg_digest *md,
+			 struct logger *logger,
+			 enum log_limiter limiter)
 {
 	for (struct payload_digest *n = md->chain[ISAKMP_NEXT_v2N];
 	     n != NULL; n = n->next) {
-		decode_v2N_payload(logger, md, n);
+		decode_v2N_payload(md, n, logger, limiter);
 	}
 }
 
