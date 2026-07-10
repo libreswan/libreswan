@@ -20,7 +20,7 @@
   # ip xfrm policy
 
   / spi 0x00000000 /! s/ spi 0x[^ ]* / spi 0xSPISPI /g
-  s/ reqid [1-9][0-9]* / reqid REQID /g
+  s/ reqid [1-9][0-9]\{4,\} / reqid REQID /g
   # dir ... priority 2080718 ptype ...
   s/ priority [1-9][0-9]* ptype / priority PRIORITY ptype /
 

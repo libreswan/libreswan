@@ -7,14 +7,14 @@ initdone
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid 1 mode transport
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
@@ -23,14 +23,14 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid 1 mode transport
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn af-unspec
 	comp deflate 
 	dir in
@@ -55,21 +55,21 @@ src 192.1.2.0/24 dst 192.1.2.0/24
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto comp reqid REQID mode tunnel
+		proto comp reqid 1 mode tunnel
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 1 mode transport
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto comp reqid REQID mode tunnel
+		proto comp reqid 1 mode tunnel
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 1 mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto comp spi 0xSPISPI reqid REQID mode tunnel
+		proto comp spi 0xSPISPI reqid 1 mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp spi 0xSPISPI reqid REQID mode transport
+		proto esp spi 0xSPISPI reqid 1 mode transport
 east #
