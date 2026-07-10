@@ -1,0 +1,1 @@
+Test  ipsec whack --oppohere <ip> --oppothere<ip> --opporeqid <reqid> takes the acquire fastpath.

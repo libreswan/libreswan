@@ -1498,6 +1498,7 @@ kvmplutotest	whack-ctlsocket-01			good
 # "ipsec add/start/ondemand
 
 kvmplutotest	whack-add-01-auto-up-async-hang		good	github/2615
+kvmplutotest	whack-oppo-01-opporeqid			good
 
 # "ipsec newhostkey" "ipsec showhostkey"
 
