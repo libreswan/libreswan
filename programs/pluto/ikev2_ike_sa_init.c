@@ -1002,12 +1002,12 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 								  struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-
 	pexpect(null_child == NULL);
-	if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
+
+	if (!PEXPECT(ike->sa.logger, md->v2N_error->payload.v2n.isan_type == v2N_INVALID_KE_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
-	struct pbs_in invalid_ke_pbs = md->pd[PD_v2N_INVALID_KE_PAYLOAD]->pbs;
+	struct pbs_in invalid_ke_pbs = md->v2N_error->pbs;
 
 	/* careful of DDOS, only log with debugging on? */
 	/* we treat this as a "retransmit" event to rate limit these */
