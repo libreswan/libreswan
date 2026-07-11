@@ -16,6 +16,6 @@ west# ipsec _kernel state
 west# ipsec _kernel policy
 
 # trigger acquire
-west# ../../guestbin/ping-once.sh --fire-and-forget -I 192.0.1.254 192.0.2.254
-west# sleep 5 # negotiate
-west# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+west# ../../guestbin/ping-once.sh --fire-and-forget 192.1.2.23
+west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+west# ../../guestbin/ping-once.sh --up 192.1.2.23

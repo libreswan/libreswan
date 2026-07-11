@@ -1779,8 +1779,8 @@ kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		good
 kvmplutotest	pfkeyv2-esn-esp-freebsd			good
 kvmplutotest	pfkeyv2-esn-ah-freebsd			good
 
-kvmplutotest	pfkeyv2-ondemand-transport		wip #netbsd-wip
-kvmplutotest	pfkeyv2-ondemand-tunnel			wip #netbsd-wip
+kvmplutotest	pfkeyv2-ondemand-transport		good
+kvmplutotest	pfkeyv2-ondemand-tunnel			good
 kvmplutotest	host-to-host-transport-freebsd		good	github/2602
 kvmplutotest	host-to-host-transport-netbsd		good	github/2602
 kvmplutotest	host-to-host-transport-openbsd		good	github/2602
