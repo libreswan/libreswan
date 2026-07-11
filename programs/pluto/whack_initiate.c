@@ -134,6 +134,7 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 		.logger = logger, /*on-stack*/
 		.background = wm->whack_async,
 		.sec_label = shunk1(wa->label),
+		.policy_id = wa->reqid,
 	};
 
 	initiate_ondemand(&b);
