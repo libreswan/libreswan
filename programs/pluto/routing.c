@@ -443,6 +443,28 @@ bool kernel_route_installed(const struct connection *c)
 	bad_case(r);
 }
 
+bool outbound_kernel_policy_installed(const struct connection *c)
+{
+	enum routing r = c->routing.state;
+	switch (r) {
+	case RT_UNROUTED:
+	case RT_UNROUTED_BARE_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
+		return false;
+	case RT_ROUTED_NEVER_NEGOTIATE:
+	case RT_ROUTED_ONDEMAND:
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_UNROUTED_INBOUND_NEGOTIATION:
+	case RT_ROUTED_INBOUND_NEGOTIATION:
+	case RT_UNROUTED_TUNNEL:
+	case RT_ROUTED_TUNNEL:
+		return true;
+	}
+	bad_case(r);
+}
+
 bool kernel_policy_installed(const struct connection *c)
 {
 	switch (c->routing.state) {

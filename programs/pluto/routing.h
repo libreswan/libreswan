@@ -76,6 +76,7 @@ enum shunt_kind spd_shunt_kind(const struct spd *spd);
 
 bool kernel_route_installed(const struct connection *c);
 bool kernel_policy_installed(const struct connection *c);
+bool outbound_kernel_policy_installed(const struct connection *c);
 
 void connection_routing_init(struct connection *);
 bool pexpect_connection_is_unrouted(struct connection *c, struct logger *, where_t where);
