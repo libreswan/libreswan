@@ -961,6 +961,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		PEXPECT(logger, spd->wip.ok);
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.bare_shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
+			 outbound_kernel_policy_installed(c) ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
