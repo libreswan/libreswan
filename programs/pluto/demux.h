@@ -201,15 +201,14 @@ struct msg_digest {
 
 	/*
 	 * The first IKEv2 error notification found in the payload
-	 * (error notifications are <16384), else v2N_NOTHING_WRONG
-	 * i.e., 0.
+	 * (error notifications are <16384), else NULL.
 	 *
 	 * Error notifications don't necessarially mean that things
 	 * have totally failed.  For instance, an IKE_AUTH response
 	 * can contain an error notification indicating that the CHILD
 	 * SA failed (but the IKE SA succeeded).
 	 */
-	v2_notification_t v2N_error;
+	const struct payload_digest *v2N_error;
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS

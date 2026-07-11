@@ -123,12 +123,14 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		 * Record the first error; and complain when there are
 		 * more.
 		 */
-		if (md->v2N_error == v2N_NOTHING_WRONG) {
-			md->v2N_error = n;
+		if (md->v2N_error == NULL) {
+			md->v2N_error = notify;
 		} else {
 			/* XXX: is this allowed? */
-			ldbg(logger, "message contains multiple error notifications: %d %d",
-			     md->v2N_error, n);
+			name_buf eb, nb;
+			ldbg(logger, "message contains multiple error notifications: %s %s",
+			     str_enum_short(&v2_notification_names, md->v2N_error->payload.v2n.isan_type, &eb),
+			     str_enum_short(&v2_notification_names, n, &nb));
 		}
 	} else {
 		type = "status";
