@@ -44,6 +44,7 @@
 #include "pluto_stats.h"
 #include "ikev2_child.h"
 #include "ikev2_create_child_sa.h"
+#include "ikev2_ike_followup_ke.h"
 #include "addresspool.h"
 #include "kernel.h"
 #include "ikev2_message.h"
@@ -215,7 +216,7 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 	}
 }
 
-static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
+void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
 	update_sa_clonedfrom(new_ike, SOS_NOBODY);
@@ -382,7 +383,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	passert(ike != NULL);
 	pexpect((request_md != NULL) == (larval_ike->sa.st_sa_role == SA_RESPONDER));
 	pexpect((request_md == NULL) == (larval_ike->sa.st_state == &state_v2_REKEY_IKE_I0));
-	pexpect((request_md != NULL) == (larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0));
+	pexpect((request_md != NULL) == (larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0) || (larval_ike->sa.st_state == &state_v2_REKEY_IKE_FOLLOWUP_KE_R0));
 
 	struct v2_message message;
 	if (!open_v2_message("CREATE_CHILD_SA rekey ike",
@@ -424,6 +425,19 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		if (!emit_v2SA_proposal(message.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
+		}
+
+		/* send N(ADDITIONAL_KEY_EXCHANGE) if there will be followup-ke exchanges */
+		if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+			generate_ikev2_followup_ke_link(&larval_ike->sa);
+			struct addke_link *link =
+				&larval_ike->sa.st_v2_ike_followup_ke.link;
+			if (!emit_v2N_bytes(v2N_ADDITIONAL_KEY_EXCHANGE,
+					    link->bytes, sizeof(link->bytes),
+					    message.pbs)) {
+				llog_sa(RC_LOG, larval_ike, "outaddke fail");
+				return false;
+			}
 		}
 		break;
 	}
@@ -1988,6 +2002,29 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 		return STF_FATAL; /* IKE family is doomed */
 	}
 
+	/* REKEY_IKE_R0 -> REKEY_IKE_FOLLOWUP_KE_R0 */
+	set_larval_v2_transition(larval_ike, &state_v2_REKEY_IKE_FOLLOWUP_KE_R0, HERE);
+	change_v2_state(&larval_ike->sa);
+
+	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+		if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		larval_ike->sa.st_v2_ike_followup_ke.keys =
+			table_alloc(struct prf_keys, 0);
+
+		ike->sa.st_v2_ike_followup_ke.larval_sa =
+			ike->sa.st_v2_msgid_windows.responder.wip_sa;
+		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+		return STF_OK;
+	}
+
+	/*
+	 * Drive the larval IKE SA's state machine.
+	 */
+	set_larval_v2_transition(larval_ike, &state_v2_ESTABLISHED_IKE_SA, HERE);
+
 	if (!calc_v2_rekey_ike_keymat(ike, larval_ike,
 				      &larval_ike->sa.st_ike_rekey_spis,
 				      HERE)) {
@@ -2020,16 +2057,16 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa) &&
+	    !extract_ikev2_followup_ke_link(&larval_ike->sa, response_md, larval_ike->sa.logger)) {
+		return STF_FATAL;
+	}
+
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
 
 	pexpect(larval_ike->sa.st_sa_kind_when_established == IKE_SA);
 	pexpect(ike->sa.st_serialno == larval_ike->sa.st_clonedfrom); /* not yet emancipated */
 	struct connection *c = larval_ike->sa.st_connection;
-
-	/*
-	 * Drive the larval IKE SA's state machine.
-	 */
-	set_larval_v2_transition(larval_ike, &state_v2_ESTABLISHED_IKE_SA, HERE);
 
 	/* Ni in */
 	if (!accept_v2_nonce(larval_ike->sa.logger, response_md, &larval_ike->sa.st_nr, "Nr")) {
@@ -2143,6 +2180,29 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 		return STF_FATAL;
 	}
 
+	/* REKEY_IKE_I1 -> REKEY_IKE_FOLLOWUP_KE_I0 */
+	set_larval_v2_transition(larval_ike, &state_v2_REKEY_IKE_FOLLOWUP_KE_I0, HERE);
+	change_v2_state(&larval_ike->sa);
+
+	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+		larval_ike->sa.st_v2_ike_followup_ke.keys =
+			table_alloc(struct prf_keys, 0);
+
+		ike->sa.st_v2_ike_followup_ke.larval_sa =
+			ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+		return next_v2_exchange(ike, response_md, &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange, HERE);
+	}
+
+	/* REKEY_IKE_FOLLOWUP_KE_I0 -> REKEY_IKE_FOLLOWUP_KE_I1 */
+	set_larval_v2_transition(larval_ike, &state_v2_REKEY_IKE_FOLLOWUP_KE_I1, HERE);
+	change_v2_state(&larval_ike->sa);
+
+	/*
+	 * Drive the larval IKE SA's state machine.
+	 */
+	set_larval_v2_transition(larval_ike, &state_v2_ESTABLISHED_IKE_SA, HERE);
+
 	if (!calc_v2_rekey_ike_keymat(ike, larval_ike,
 				      &larval_ike->sa.st_ike_rekey_spis/* new SPIs */,
 				      HERE)) {
@@ -2190,9 +2250,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			case v2N_INVALID_KE_PAYLOAD:
 			{
 				if (ike->sa.st_oakley.ta_dh == NULL) {
-					name_buf nb;
+					name_buf nb, xb;
 					llog_sa(RC_LOG, (*larval_child),
-						"CREATE_CHILD_SA failed with error notification %s response but no KE was sent",
+						"%s failed with error notification %s response but no KE was sent",
+						str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 						str_enum_short(&v2_notification_names, n, &nb));
 					status = STF_FATAL;
 					break;
@@ -2209,9 +2270,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 							 &ikev2_suggested_kem_desc,
 							 &sk, sizeof(sk), NULL);
 				if (d != NULL) {
-					name_buf nb;
+					name_buf nb, xb;
 					llog(RC_LOG, (*larval_child)->sa.logger,
-					     "CREATE_CHILD_SA failed with error notification %s response: %s",
+					     "%s failed with error notification %s response: %s",
+					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					     str_enum_short(&v2_notification_names, n, &nb),
 					     str_diag(d));
 					pfree_diag(&d);
@@ -2222,9 +2284,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				pstats(invalidke_recv_s, sk.sk_kem);
 				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
-				name_buf nb, sgb;
+				name_buf nb, sgb, xb;
 				llog_sa(RC_LOG, (*larval_child),
-					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
+					"%s failed with error notification %s response suggesting %s instead of %s",
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					str_enum_short(&v2_notification_names, n, &nb),
 					str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
 					ike->sa.st_oakley.ta_dh->common.fqn);
@@ -2233,9 +2296,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			}
 			default:
 			{
-				name_buf esb;
+				name_buf esb, xb;
 				llog(RC_LOG, (*larval_child)->sa.logger,
-					"CREATE_CHILD_SA failed with error notification %s",
+					"%s failed with error notification %s",
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					str_enum_short(&v2_notification_names, n, &esb));
 				ldbg((*larval_child)->sa.logger,
 				     "re-add child to pending queue with exponential back-off?");

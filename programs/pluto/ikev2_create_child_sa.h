@@ -41,6 +41,8 @@ extern struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike
 							      struct child_sa *child,
 							      bool detach_whack);
 
+void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike);
+
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
 
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;

@@ -108,14 +108,25 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 }
 
 /*
- * SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)
+ * SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr [ | SK(1) ... | SK(n) ])
  */
 static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					 PK11SymKey *SK_d_old,
 					 PK11SymKey *new_ke_secret,
 					 const chunk_t Ni, const chunk_t Nr,
+					 const struct prf_keys *additional_ke_secrets,
 					 struct logger *logger)
 {
+	if (additional_ke_secrets != NULL) {
+		return ike_alg_prf_ikev2_mac_ops.ike_sa_rekey_skeyseed(
+			prf_desc,
+			SK_d_old,
+			new_ke_secret,
+			Ni, Nr,
+			additional_ke_secrets,
+			logger);
+	}
+
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_FALSE,
@@ -174,15 +185,27 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 }
 
 /*
- * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr)
+ * Compute: prf+(SK_d, [ g^ir (new) | ] Ni | Nr [ | SK(1) ... | SK(n) ])
  */
 static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   PK11SymKey *SK_d,
 				   PK11SymKey *new_ke_secret,
 				   const chunk_t Ni, const chunk_t Nr,
+				   const struct prf_keys *additional_ke_secrets,
 				   size_t required_bytes,
 				   struct logger *logger)
 {
+	if (additional_ke_secrets != NULL) {
+		return ike_alg_prf_ikev2_mac_ops.child_sa_keymat(
+			prf_desc,
+			SK_d,
+			new_ke_secret,
+			Ni, Nr,
+			additional_ke_secrets,
+			required_bytes,
+			logger);
+	}
+
 	if (required_bytes == 0) {
 		/*
 		 * For instance esp=null-none.  Caller should

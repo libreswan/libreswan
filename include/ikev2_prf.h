@@ -28,6 +28,11 @@
 
 struct prf_desc;
 
+struct prf_keys {
+	unsigned len;
+	PK11SymKey *table[] COUNTED_BY(len);
+};
+
 /*
  * IKE SA
  */
@@ -67,6 +72,13 @@ PK11SymKey *ikev2_IKE_SESSION_RESUME_skeyseed(const struct prf_desc *prf_desc,
 					      const chunk_t Ni, const chunk_t Nr,
 					      struct logger *logger);
 
+PK11SymKey *ikev2_IKE_FOLLOWUP_KE_skeyseed(const struct prf_desc *prf_desc,
+					   PK11SymKey *old_SK_d,
+					   PK11SymKey *new_ke_secret,
+					   const chunk_t Ni, const chunk_t Nr,
+					   const struct prf_keys *additional_ke_secrets,
+					   struct logger *logger);
+
 /*
  * IKE SA's keymat.
  */
@@ -88,6 +100,14 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes,
 				  struct logger *logger);
+
+PK11SymKey *ikev2_IKE_FOLLOWUP_KE_child_sa_keymat(const struct prf_desc *prf_desc,
+						  PK11SymKey *SK_d,
+						  PK11SymKey *new_ke_secret,
+						  const chunk_t Ni, const chunk_t Nr,
+						  const struct prf_keys *additional_ke_secrets,
+						  size_t required_bytes,
+						  struct logger *logger);
 
 /*
  * Authentication.

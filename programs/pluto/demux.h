@@ -114,6 +114,7 @@ enum v2_pd {
 	/*CHILD_SA_NOT_FOUND*/			/* CHILD informational */
 
 	/* status notifications */
+	PD_v2N_ADDITIONAL_KEY_EXCHANGE,
 	PD_v2N_COOKIE,
 	PD_v2N_COOKIE2,
 	PD_v2N_CHILDLESS_IKEV2_SUPPORTED,
