@@ -1,5 +1,4 @@
-west #
- ../../guestbin/prep.sh
+../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 west #
@@ -7,6 +6,8 @@ west #
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
+west #
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
@@ -20,19 +21,18 @@ west #
 No SAD entries.
 west #
  ipsec _kernel policy
-192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
+192.1.2.45[any] 192.1.2.23[any] 255(reserved)
 	out ipsec
 	esp/transport//require
 	spid=1 seq=0 pid=PID
 	refcnt=0
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-unexpected status 2
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/ping-once.sh --fire-and-forget 192.1.2.23
+fired and forgotten
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-unexpected status 2
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+"eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #

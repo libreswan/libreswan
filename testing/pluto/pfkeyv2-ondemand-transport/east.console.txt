@@ -7,6 +7,9 @@ east #
 east #
  ipsec whack --impair suppress_retransmits
 east #
+ ipsec add eastnet-westnet-ikev2
+"eastnet-westnet-ikev2": added oriented IKEv2 connection
+east #
  echo "initdone"
 initdone
 east #

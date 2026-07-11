@@ -48,7 +48,7 @@ No SAD entries.
 
 netbsdwest# ipsec _kernel policy
 
-192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
+192.1.2.45[any] 192.1.2.23[any] 255(reserved)
 	out ipsec
 	esp/transport//require
 	spid=1 seq=0 pid=PID
@@ -56,12 +56,15 @@ netbsdwest# ipsec _kernel policy
 
 # trigger acquire
 
-netbsdwest# ../../guestbin/ping-once.sh --fire-and-forget -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --fire-and-forget 192.1.2.23
 
 fired and forgotten
 
-netbsdwest# sleep 5 # negotiate
+netbsdwest# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 
-netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+"eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+
+netbsdwest# ../../guestbin/ping-once.sh --up 192.1.2.23
 
 up
+
