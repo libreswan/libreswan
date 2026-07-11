@@ -2289,48 +2289,37 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 
         pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
 
-	stf_status status = STF_ROOF; /*IKE;place holder*/
 
 	/*
-	 * This assumes that the first notify is the (fatal) error
-	 * (logging all notifies would probably be bad).
+	 * There _should_ be an error notification.
 	 */
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		v2_notification_t n = ntfy->payload.v2n.isan_type;
-		if (n < v2N_ERROR_PSTATS_ROOF) {
-			pstat(ikev2_recv_notifies_e, n);
-			switch (n) {
-			case v2N_INVALID_KE_PAYLOAD:
-			{
-				status = process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(ike,
-											   (*larval_child),
-											   md, ntfy);
-				break;
-			}
-			default:
-			{
-				name_buf esb, xb;
-				llog(RC_LOG, (*larval_child)->sa.logger,
-					"%s failed with error notification %s",
-					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-					str_enum_short(&v2_notification_names, n, &esb));
-				ldbg((*larval_child)->sa.logger,
-				     "re-add child to pending queue with exponential back-off?");
-				status = (n == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
-					  STF_OK/*keep IKE*/);
-				break;
-			}
-			}
-			break;
-		}
-	}
 
-	if (status == STF_ROOF) {
+	enum v2_notification error =
+		(md->v2N_error == NULL ? v2N_NOTHING_WRONG :
+		 md->v2N_error->payload.v2n.isan_type);
+	pstat(ikev2_recv_notifies_e, error); /* yes, counts nothing wrong */
+
+	stf_status status;
+	if (error == v2N_INVALID_KE_PAYLOAD) {
+		status = process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(ike,
+									   (*larval_child),
+									   md, md->v2N_error);
+	} else if (error != v2N_NOTHING_WRONG) {
+		name_buf esb, xb;
+		llog(RC_LOG, (*larval_child)->sa.logger,
+		     "%s failed with error notification %s",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&v2_notification_names, error, &esb));
+		ldbg((*larval_child)->sa.logger,
+		     "re-add child to pending queue with exponential back-off?");
+		status = (error == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
+			  STF_OK/*keep IKE*/);
+	} else {
 		/* there was no reason, huh? */
 		status = STF_OK;/*keep IKE?*/
 		/* log something */
-		llog_sa(RC_LOG, (*larval_child), "state transition '%s' failed",
-			(*larval_child)->sa.st_v2_transition->story);
+		llog(RC_LOG, (*larval_child)->sa.logger, "state transition '%s' failed",
+		     (*larval_child)->sa.st_v2_transition->story);
 	}
 
 	/*
