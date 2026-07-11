@@ -1,0 +1,4 @@
+test for https://github.com/libreswan/libreswan/issues/574
+
+Verify that an acquire triggered by traffic picks the connection that
+installed the kernel policy ("west-to-east"), not the "distraction"

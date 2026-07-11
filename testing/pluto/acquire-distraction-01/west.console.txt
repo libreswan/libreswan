@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add distraction
+"distraction": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/ping-once.sh --forget -I 192.0.1.254 192.0.2.254
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match west-to-east -- ipsec whack --trafficstatus
+#2: "west-to-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ ipsec whack --trafficstatus
+#2: "west-to-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #

@@ -131,6 +131,7 @@ kvmplutotest	algparse-02-fips				good
 #
 #################################################################
 
+kvmplutotest    acquire-distraction-01				good
 kvmplutotest	addconn-01-left-is-right			good
 kvmplutotest	addconn-02-many-routes				good
 kvmplutotest	addconn-04-config-path				good
