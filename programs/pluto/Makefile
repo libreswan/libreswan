@@ -95,6 +95,7 @@ OBJS += quirks.o
 OBJS += rcv_whack.o
 OBJS += visit_connection.o
 OBJS += whack_add.o
+OBJS += whack_autoall.o
 OBJS += whack_briefconnectionstatus.o
 OBJS += whack_connectionstatus.o
 OBJS += whack_crash.o

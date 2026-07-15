@@ -22,6 +22,8 @@
 #include "connections.h"
 #include "whack_delete.h"
 #include "extract.h"
+#include "visit_connection.h"
+#include "hash_table.h"
 
 PRINTF_LIKE(2)
 static void llog_add_connection_failed(struct verbose verbose,
@@ -344,6 +346,77 @@ static void add_connections(const struct whack_message *wm,
 	pfreeany(right.subnets);
 }
 
+static struct config_digest compute_config_digest(const struct whack_message *wm)
+{
+	return (struct config_digest) {
+		.valid = true,
+		.hash = hash_bytes(wm->string, wm->str_size, zero_hash),
+	};
+}
+
+static bool config_digest_equal(const struct config_digest *a,
+				const struct config_digest *b)
+{
+	return (a->valid && b->valid &&
+		a->hash.hash == b->hash.hash);
+}
+
+struct autoall_match_context {
+	struct config_digest new_digest;
+	bool matched;
+};
+
+static unsigned autoall_match(const struct whack_message *m UNUSED,
+			      struct show *s UNUSED,
+			      struct connection *c,
+			      struct connection_visitor_context *context)
+{
+	struct autoall_match_context *ctx =
+		(struct autoall_match_context *)context;
+	if (c->clonedfrom != NULL) {
+		return 0;
+	}
+	if (ctx->matched) {
+		return 1;
+	}
+	if (config_digest_equal(&c->config_digest, &ctx->new_digest)) {
+		ctx->matched = true;
+	}
+	return 1;
+}
+
+static unsigned autoall_clear_stale(const struct whack_message *m UNUSED,
+				    struct show *s UNUSED,
+				    struct connection *c,
+				    struct connection_visitor_context *context UNUSED)
+{
+	if (c->clonedfrom != NULL) {
+		return 0;
+	}
+	c->autoall_stale = false;
+	return 1;
+}
+
+struct autoall_save_context {
+	struct config_digest new_digest;
+};
+
+static unsigned autoall_save(const struct whack_message *m UNUSED,
+			     struct show *s UNUSED,
+			     struct connection *c,
+			     struct connection_visitor_context *context)
+{
+	struct autoall_save_context *ctx =
+		(struct autoall_save_context *)context;
+	if (c->clonedfrom != NULL) {
+		return 0;
+	}
+	if (!c->config_digest.valid) {
+		c->config_digest = ctx->new_digest;
+	}
+	return 1;
+}
+
 void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 {
 	const struct whack_message *wm = &wmr->wm;
@@ -367,6 +440,28 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 		 * This is old-to-new which means that aliases are processed
 		 * before templates.
 		 */
+		if (wm->whack_check_message) {
+			struct autoall_match_context match_ctx = {
+				.new_digest = compute_config_digest(wm),
+				.matched = false,
+			};
+			whack_connection_roots(wm, s, OLD2NEW, autoall_match,
+					       (struct connection_visitor_context *)&match_ctx,
+					       (struct each) {
+						       .log_unknown_name = false,
+					       });
+			if (match_ctx.matched) {
+				whack_connection_roots(wm, s, OLD2NEW,
+						       autoall_clear_stale, NULL,
+						       (struct each) {
+							       .log_unknown_name = false,
+						       });
+				ldbg(show_logger(s),
+				     "connection \"%s\" unchanged, skipping",
+				     wm->name);
+				return;
+			}
+		}
 		whack_addconn_delete(wm, s);
 		/*
 		 * Confirm above did its job.
@@ -409,5 +504,17 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 
 		add_connections(wm, &extracted_host_addrs, verbose);
 	}
+
+	{
+		struct autoall_save_context save_ctx = {
+			.new_digest = compute_config_digest(wm),
+		};
+		whack_connection_roots(wm, s, OLD2NEW, autoall_save,
+				       (struct connection_visitor_context *)&save_ctx,
+				       (struct each) {
+					       .log_unknown_name = false,
+				       });
+	}
+
 	free_logger(&conn_logger, HERE);
 }

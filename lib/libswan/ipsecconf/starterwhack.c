@@ -50,7 +50,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   struct logger *logger,
 			   bool dry_run,
 			   enum yn_options async,
-			   enum whack_noise noise)
+			   enum whack_noise noise,
+			   bool check_message)
 {
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_ADDCONN);
@@ -58,6 +59,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.whack_command = WHACK_ADD;
 	msg.name = conn->name;
 	msg.whack_async = (async == YN_YES);
+	msg.whack_check_message = check_message;
 
 	for (enum config_conn_keyword kw = 1; kw < CONFIG_CONN_KEYWORD_ROOF; kw++) {
 		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
@@ -88,4 +90,24 @@ int starter_whack_add_conn(const char *ctlsocket,
 		return r;
 
 	return 0;
+}
+
+int starter_whack_autoall_start(const char *ctlsocket,
+				struct logger *logger,
+				enum whack_noise noise)
+{
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
+	msg.whack_command = WHACK_AUTOALL_START;
+	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);
+}
+
+int starter_whack_autoall_stop(const char *ctlsocket,
+			       struct logger *logger,
+			       enum whack_noise noise)
+{
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
+	msg.whack_command = WHACK_AUTOALL_STOP;
+	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);
 }

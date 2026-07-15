@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"corp/1x1"
+"corp/1x2"
+west #
+ ipsec add --autoall --config /testing/pluto/addconn-57-autoall-sweep-modified/west-modified.conf
+"alpha": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=9.10.11.12 match an interface)
+"corp/1x1": added unoriented IKEv2 connection (neither left=4.5.6.7 nor right=8.9.10.11 match an interface)
+"corp/1x2": added unoriented IKEv2 connection (neither left=4.5.6.7 nor right=8.9.10.11 match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"corp/1x1"
+"corp/1x2"
+west #
