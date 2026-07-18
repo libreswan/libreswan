@@ -18,26 +18,26 @@ east #
 east #
  # ignore forward policy
 east #
- #ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir fwd tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid REQID mode tunnel
+ #ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir fwd tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
 east #
- ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir in  tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid REQID mode tunnel
+ ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir in  tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
 east #
- ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir out tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid REQID mode tunnel
+ ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir out tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
 east #
- ip.sh xfrm policy add src ::/0 dst ::/0 if_id 0x1 dir in  tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid REQID mode tunnel
+ ip.sh xfrm policy add src ::/0 dst ::/0 if_id 0x1 dir in  tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
 east #
- ip.sh xfrm policy add src ::/0 dst ::/0 if_id 0x1 dir out tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid REQID mode tunnel
+ ip.sh xfrm policy add src ::/0 dst ::/0 if_id 0x1 dir out tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 2345 mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	if_id 0x1
 	dir out
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 4523 mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
@@ -48,22 +48,22 @@ east #
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority 0 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 4523 mode tunnel
 	if_id 0x1
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir out priority 0 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 2345 mode tunnel
 	if_id 0x1
 src ::/0 dst ::/0
 	dir in priority 0 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 4523 mode tunnel
 	if_id 0x1
 src ::/0 dst ::/0
 	dir out priority 0 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
+		proto esp reqid 2345 mode tunnel
 	if_id 0x1
 east #
  ping-once.sh --up    198.18.45.45
@@ -74,7 +74,7 @@ up
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 2345 mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
@@ -82,7 +82,7 @@ src 192.1.2.23 dst 192.1.2.45
 	if_id 0x1
 	dir out
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid 4523 mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
