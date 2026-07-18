@@ -20,7 +20,7 @@ include $(top_srcdir)/mk/config.mk
 MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
 
-XMLTO_SEARCHPATH = $(abs_srcdir):$(abs_top_srcdir)/mk
+XMLTO_SEARCHPATH = $(abs_builddir):$(abs_srcdir):$(abs_top_srcdir)/mk
 
 # different mode
 ipsec.secrets.INSTFLAGS = -m 0600
@@ -130,6 +130,7 @@ $(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml
 $(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_XML)
 $(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_EXAMPLE)
 $(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
+$(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.entities.xml
 
 $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
@@ -138,10 +139,6 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 		b=$$(basename $${x} .xml) ; \
 		f=d.ipsec.conf/$${d}/$${b}.xml ; \
 		e=$${d}.$${b} ; \
-		if ! grep '"'$${f}'"' ipsec.conf.5.xml > /dev/null ; then \
-			echo include 'ENTITY ... "'$${f}'"' missing ; \
-			exit 1 ; \
-		fi ; \
 		if ! grep '&'$${e}';' ipsec.conf.5.xml d.ipsec.conf/sect/*.xml > /dev/null ; then \
 			echo use '&'$${e}';' missing ; \
 			exit 1 ; \
@@ -154,6 +151,10 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 	touch $@
 
 $(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*/*.xml
+
+$(builddir)/ipsec.conf.5.entities.xml: $(D_IPSEC_CONF_XML) $(srcdir)/ipsec.conf.5.entities.sh
+	$(srcdir)/ipsec.conf.5.entities.sh $(D_IPSEC_CONF_XML) > $@.tmp
+	mv $@.tmp $@
 
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
