@@ -27,6 +27,8 @@
  *
  */
 
+#define _GNU_SOURCE	/* for memmem() on old glibc; added to POXIX in 2024 */
+
 #include "lswnss.h"
 
 #include "defs.h"
