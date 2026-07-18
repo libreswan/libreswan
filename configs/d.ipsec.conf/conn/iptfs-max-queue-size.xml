@@ -1,0 +1,16 @@
+<varlistentry id='conn.iptfs-max-queue-size'>
+  <term>
+    <option>iptfs-max-queue-size=</option>
+  </term>
+  <listitem>
+    <para>
+      The default IP-TFS max output queue size in octets. The output
+      queue is where received packets destined for output over an
+      IP-TFS tunnel are stored prior to being output in
+      aggregated/fragmented form over the IP-TFS tunnel.
+    </para>
+    <para>
+      The default is <literal>1000000</literal>.
+    </para>
+  </listitem>
+</varlistentry>

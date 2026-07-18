@@ -72,6 +72,11 @@
       &conn.clientaddrfamily;
       &conn.type;
       &conn.iptfs;
+      &conn.iptfs-fragmentation;
+      &conn.iptfs-max-queue-size;
+      &conn.iptfs-drop-time;
+      &conn.iptfs-init-delay;
+      &conn.iptfs-reorder-window;
       &conn.host;
       &conn.subnet;
       &conn.subnets;

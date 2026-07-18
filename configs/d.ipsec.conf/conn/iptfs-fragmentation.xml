@@ -1,0 +1,20 @@
+<varlistentry id='conn.iptfs-fragmentation'>
+  <term>
+    <option>iptfs-fragmentation=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether or not to fragment IP-TFS.
+    </para>
+    <para>
+      On &Linux; and
+      <option>iptfs-fragmentation=&no;</option>, this passes
+      <option>XFRMA_IPTFS_DONT_FRAG</option> to the kernel.  (Unclear
+      to at least one author if this means regular ICMP Dont Fragment
+      sending, or whether it stops IP-TFS from fragmenting).
+    </para>
+    <para>
+      The default is &yes;.
+    </para>
+  </listitem>
+</varlistentry>

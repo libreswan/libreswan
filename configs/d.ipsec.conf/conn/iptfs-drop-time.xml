@@ -1,0 +1,15 @@
+<varlistentry id='conn.iptfs-drop-time'>
+  <term>
+    <option>iptfs-drop-time=&seconds;</option>
+  </term>
+  <listitem>
+    <para>
+      The amount of time before a missing out-of-order IP-TFS tunnel
+      packet is considered lost.  See also
+      <option>iptfs-reorder-window</option>.
+    </para>
+    <para>
+      The default is 1 second (<literal>1s</literal>.
+    </para>
+  </listitem>
+</varlistentry>

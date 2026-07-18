@@ -1,0 +1,15 @@
+<varlistentry id='conn.iptfs-reorder-window'>
+  <term>
+    <option>iptfs-reorder-window=&count;</option>
+  </term>
+  <listitem>
+    <para>
+      The default IP-TFS reorder window size. The reorder window size
+      dictates the maximum number of IP-TFS tunnel packets in a
+      sequence that may arrive out of order.
+    </para>
+    <para>
+      The default is <literal>3</literal>.
+    </para>
+  </listitem>
+</varlistentry>
