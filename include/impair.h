@@ -210,6 +210,9 @@ struct impair {
 	bool ignore_viable_parent;
 
 	struct impair_unsigned truncate_signed_hash;
+
+	bool mangle_cert_pubkey;
+
 	/*
 	 * add more here
 	 */
