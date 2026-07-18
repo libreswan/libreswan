@@ -142,7 +142,7 @@ static struct ikev2_ike_followup_ke_exchange current_ikev2_ike_followup_ke_excha
 }
 
 static bool find_v2N_ADDITIONAL_KEY_EXCHANGE_link(struct msg_digest *md,
-						  struct addke_link *link,
+						  shunk_t *link,
 						  struct logger *logger)
 {
 	const struct payload_digest *additional_key_exchange_payls =
@@ -154,12 +154,7 @@ static bool find_v2N_ADDITIONAL_KEY_EXCHANGE_link(struct msg_digest *md,
 	}
 
 	struct pbs_in pbs = additional_key_exchange_payls->pbs;
-	diag_t d = pbs_in_thing(&pbs, link->bytes, "followup ke link");
-	if (d != NULL) {
-		llog(RC_LOG, logger, "%s", str_diag(d));
-		return false;
-	}
-
+	*link = pbs_in_left(&pbs);
 	return true;
 }
 
@@ -167,12 +162,12 @@ bool extract_ikev2_followup_ke_link(struct state *st,
 				    struct msg_digest *md,
 				    struct logger *logger)
 {
-	struct addke_link link;
+	shunk_t link;
 	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, logger)) {
 		return false;
 	}
-	memcpy(&st->st_v2_ike_followup_ke.link.bytes,
-	       link.bytes, sizeof(link.bytes));
+	free_chunk_content(&st->st_v2_ike_followup_ke.link);
+	st->st_v2_ike_followup_ke.link = clone_hunk_as_chunk(&link, "followup-ke link");
 	return true;
 }
 
@@ -180,18 +175,18 @@ static bool validate_ikev2_followup_ke_link(struct state *st,
 					    struct msg_digest *md,
 					    struct logger *logger)
 {
-	struct addke_link link;
+	shunk_t link;
 	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, logger)) {
 		return false;
 	}
-	return memeq(st->st_v2_ike_followup_ke.link.bytes,
-		     link.bytes, sizeof(link.bytes));
+	return hunk_eq(st->st_v2_ike_followup_ke.link, link);
 }
 
 void generate_ikev2_followup_ke_link(struct state *st)
 {
-	struct addke_link *link = &st->st_v2_ike_followup_ke.link;
-	get_rnd_bytes(link->bytes, sizeof(link->bytes));
+	free_chunk_content(&st->st_v2_ike_followup_ke.link);
+	st->st_v2_ike_followup_ke.link =
+		alloc_rnd_chunk(DEFAULT_ADDKE_LINK_SIZE, "followup-ke link");
 }
 
 /*
@@ -290,10 +285,9 @@ stf_status initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa 
 	}
 
 	/* echo N(ADDITIONAL_KEY_EXCHANGE) from the previous response */
-	if (!emit_v2N_bytes(v2N_ADDITIONAL_KEY_EXCHANGE,
-			    larval_ike->sa.st_v2_ike_followup_ke.link.bytes,
-			    sizeof(larval_ike->sa.st_v2_ike_followup_ke.link.bytes),
-			    request.pbs)) {
+	if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
+			   larval_ike->sa.st_v2_ike_followup_ke.link,
+			   request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -337,12 +331,8 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *ike,
 	}
 
 	if (!validate_ikev2_followup_ke_link(&larval_ike->sa, md, larval_ike->sa.logger)) {
-		shunk_t shunk = (shunk_t) {
-			.ptr = larval_ike->sa.st_v2_ike_followup_ke.link.bytes,
-			.len = 8,
-		};
 		llog(RC_LOG, larval_ike->sa.logger, "responder IKE_FOLLOWUP_KE link does not match");
-		LDBG_hunk(larval_ike->sa.logger, &shunk);
+		LDBG_hunk(larval_ike->sa.logger, &larval_ike->sa.st_v2_ike_followup_ke.link);
 		return STF_FATAL;
 	}
 
@@ -469,10 +459,9 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 		}
 
 		generate_ikev2_followup_ke_link(&larval_ike->sa);
-		if (!emit_v2N_bytes(v2N_ADDITIONAL_KEY_EXCHANGE,
-				    larval_ike->sa.st_v2_ike_followup_ke.link.bytes,
-				    sizeof(larval_ike->sa.st_v2_ike_followup_ke.link.bytes),
-				    response.pbs)) {
+		if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
+				   larval_ike->sa.st_v2_ike_followup_ke.link,
+				   response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

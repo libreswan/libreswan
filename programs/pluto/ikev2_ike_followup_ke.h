@@ -20,7 +20,6 @@
 
 struct ike_sa;
 struct child_sa;
-struct addke_link;
 
 bool next_is_ikev2_ike_followup_ke_exchange(struct state *st);
 
