@@ -1,0 +1,13 @@
+<varlistentry id='conn.modecfgdns'>
+  <term>
+    <option>modecfgdns=</option>
+  </term>
+  <listitem>
+    <para>
+      The <option>modecfgdns=</option> option takes a comma or space
+      separated list of IP addresses that can be used for DNS
+      resolution.  When the connection is brought down, the previous
+      DNS resolving state is restored.
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,0 +1,12 @@
+<varlistentry id='conn.modecfgdomains'>
+  <term>
+    <option>modecfgdomains=</option>
+  </term>
+  <listitem>
+    <para>
+      The <option>modecfgdomains=</option> option takes a comma or
+      space separated list of internal domain names that are reachable
+      via the supplied modecfgdns DNS servers.
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,0 +1,10 @@
+<varlistentry id='conn.modecfgbanner'>
+  <term>
+    <option>modecfgbanner=</option>
+  </term>
+  <listitem>
+    <para>
+      Banner to display when peer connects using &IKEv1;.
+    </para>
+  </listitem>
+</varlistentry>
