@@ -2222,6 +2222,59 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	return STF_OK; /* IKE */
 }
 
+static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
+								    struct child_sa *larval_child,
+								    const struct msg_digest *md,
+								    const struct payload_digest *notify)
+{
+	if (!PEXPECT(larval_child->sa.logger,
+		     notify != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	enum v2_notification error = notify->payload.v2n.isan_type;
+	if (!PEXPECT(larval_child->sa.logger, error == v2N_INVALID_KE_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (ike->sa.st_oakley.ta_dh == NULL) {
+		name_buf nb, xb;
+		llog(RC_LOG, larval_child->sa.logger,
+		     "%s failed with error notification %s response but no KE was sent",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&v2_notification_names, error, &nb));
+		return STF_FATAL;
+	}
+
+	struct pbs_in invalid_ke_pbs = notify->pbs;
+	struct ikev2_suggested_kem sk;
+	diag_t d = pbs_in_struct(&invalid_ke_pbs,
+				 &ikev2_suggested_kem_desc,
+				 &sk, sizeof(sk), NULL);
+	if (d != NULL) {
+		name_buf nb, xb;
+		llog(RC_LOG, larval_child->sa.logger,
+		     "%s failed with error notification %s response: %s",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&v2_notification_names, error, &nb),
+		     str_diag(d));
+		pfree_diag(&d);
+		return STF_FATAL;
+	}
+
+	pstats(invalidke_recv_s, sk.sk_kem);
+	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
+
+	name_buf nb, sgb, xb;
+	llog(RC_LOG, larval_child->sa.logger,
+	     "%s failed with error notification %s response suggesting %s instead of %s",
+	     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+	     str_enum_short(&v2_notification_names, error, &nb),
+	     str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
+	     ike->sa.st_oakley.ta_dh->common.fqn);
+	return STF_OK; /* let IKE stumble on */
+}
+
 stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 						       struct child_sa *unused_child UNUSED,
 						       struct msg_digest *md UNUSED)
@@ -2249,49 +2302,9 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			switch (n) {
 			case v2N_INVALID_KE_PAYLOAD:
 			{
-				if (ike->sa.st_oakley.ta_dh == NULL) {
-					name_buf nb, xb;
-					llog_sa(RC_LOG, (*larval_child),
-						"%s failed with error notification %s response but no KE was sent",
-						str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-						str_enum_short(&v2_notification_names, n, &nb));
-					status = STF_FATAL;
-					break;
-				}
-
-				if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
-					status = STF_INTERNAL_ERROR;
-					break;
-				}
-
-				struct pbs_in invalid_ke_pbs = md->pd[PD_v2N_INVALID_KE_PAYLOAD]->pbs;
-				struct ikev2_suggested_kem sk;
-				diag_t d = pbs_in_struct(&invalid_ke_pbs,
-							 &ikev2_suggested_kem_desc,
-							 &sk, sizeof(sk), NULL);
-				if (d != NULL) {
-					name_buf nb, xb;
-					llog(RC_LOG, (*larval_child)->sa.logger,
-					     "%s failed with error notification %s response: %s",
-					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-					     str_enum_short(&v2_notification_names, n, &nb),
-					     str_diag(d));
-					pfree_diag(&d);
-					status = STF_FATAL;
-					break;
-				}
-
-				pstats(invalidke_recv_s, sk.sk_kem);
-				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
-
-				name_buf nb, sgb, xb;
-				llog_sa(RC_LOG, (*larval_child),
-					"%s failed with error notification %s response suggesting %s instead of %s",
-					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-					str_enum_short(&v2_notification_names, n, &nb),
-					str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
-					ike->sa.st_oakley.ta_dh->common.fqn);
-				status = STF_OK; /* let IKE stumble on */
+				status = process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(ike,
+											   (*larval_child),
+											   md, ntfy);
 				break;
 			}
 			default:
