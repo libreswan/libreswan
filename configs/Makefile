@@ -129,13 +129,15 @@ D_IPSEC_CONF_EXAMPLE = $(srcdir)/d.ipsec.conf/*.example
 DEPS += $(srcdir)/ipsec.conf.5.xml
 DEPS += $(D_IPSEC_CONF_XML)
 DEPS += $(D_IPSEC_CONF_EXAMPLE)
-DEPS += $(builddir)/ipsec.conf.5.ok
+DEPS += $(builddir)/ipsec.conf.5.use.ok
+DEPS += $(builddir)/ipsec.conf.5.aliases.ok
+DEPS += $(builddir)/ipsec.conf.5.param.ok
 DEPS += $(builddir)/ipsec.conf.5.entities.xml
 
 $(builddir)/ipsec.conf.5.man: $(DEPS)
 $(builddir)/ipsec.conf.5.html: $(DEPS)
 
-$(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
+$(builddir)/ipsec.conf.5.use.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
 	for x in $(D_IPSEC_CONF_XML) ; do \
 		d=$$(basename $$(dirname $${x})) ; \
@@ -151,6 +153,9 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 			exit 1 ; \
 		fi ; \
 	done
+	touch $@
+
+$(builddir)/ipsec.conf.5.aliases.ok: $(D_IPSEC_CONF_XML) Makefile
 	: do all aliases get an historic mention?
 	for a in $$(awk -F '"' '/ A.*"/ { print $$2 }' ../lib/libswan/ipsecconf/conn.c) ; do \
 		if test -f d.ipsec.conf/conn/$$a.xml ; then \
@@ -160,6 +165,15 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 		if ! grep $$a d.ipsec.conf/conn/*.xml ; then \
 			echo alias $$a needs an historic mention ; \
 			exit 1 ; \
+		fi ; \
+	done
+	touch $@
+
+$(builddir)/ipsec.conf.5.param.ok: $(D_IPSEC_CONF_XML) Makefile
+	: do all keywords have a man page?
+	for p in $$(awk -F '"' '/ K.*".*KWS_/ { print $$2 }' ../lib/libswan/ipsecconf/conn.c) ; do \
+		if test ! -f d.ipsec.conf/conn/$$p.xml ; then \
+			echo parameter $$p is not documented ; \
 		fi ; \
 	done
 	touch $@
