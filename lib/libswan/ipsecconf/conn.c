@@ -208,7 +208,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* DPD */
   KWS("dpddelay", LEMPTY, KWS_DPDDELAY),
-  KWS("ikev1-dpdtimeout", LEMPTY, KWS_DPDTIMEOUT),
+  KWS("dpdtimeout", LEMPTY, KWS_DPDTIMEOUT),
 
   KWS("sendca", LEMPTY, KWS_SENDCA),
 
@@ -242,7 +242,7 @@ static const struct keyword_def config_conn_keyword[] = {
   A("aggrmode", LEMPTY, KWS_AGGRESSIVE),
   A("keylife", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
   A("lifetime", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
-  A("dpdtimeout", LEMPTY, KWS_DPDTIMEOUT), /* old name */
+  A("ikev1-dpdtimeout", LEMPTY, KWS_DPDTIMEOUT), /* old name */
 #ifdef USE_NFLOG
   A("nflog", LEMPTY, KWS_NFLOG_GROUP), /* old-name */
 #endif
