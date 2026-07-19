@@ -1,0 +1,30 @@
+<varlistentry id='conn.send-esp-tfc-padding-not-supported'>
+  <term>
+    <option>send-esp-tfc-padding-not-supported=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether or not to send the
+      <option>ESP_TFC_PADDING_NOT_SUPPORTED</option> notification to
+      the peer informing it that that this end does not support
+      Traffic Flow Confidentiality ("TFC") (RFC-4303).  Possible
+      values are &no; (do not send notifification), which allows the
+      peer to use TFC, and &yes; (send notification) which prevents to
+      peer from using TFC when sending &ESP; packets.
+    </para>
+    <para>
+      This does not affect whether this endpoint uses TFC when sending
+      &ESP; packets - it depends on the <option>tfc=</option>
+      parameter and the peer sending sending an
+      <option>ESP_TFC_PADDING_NOT_SUPPORTED</option> notification).
+    </para>
+    <para>
+      History: the parameter <option>send-no-esp-tfc=</option> was
+      added in &Libreswan; 3.18; in &Libreswan; 5.3, the parameter was
+      renamed to <option>send-esp-tfc-padding-not-supported=</option>.
+    </para>
+    <para>
+      The default is &no;.  This option is only valid for &IKEv2;.
+    </para>
+  </listitem>
+</varlistentry>

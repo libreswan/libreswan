@@ -200,7 +200,7 @@
       &conn.metric;
       &conn.mtu;
       &conn.tfc;
-      &conn.send-no-esp-tfc;
+      &conn.send-esp-tfc-padding-not-supported;
       &conn.nflog-group;
       &conn.mark;
       &conn.mark-in;
