@@ -87,6 +87,7 @@
 #include "ikev2_eap.h"
 #include "terminate.h"
 #include "ikev2_parent.h"
+#include "log_limiter.h"
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
@@ -1342,7 +1343,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 * The exception is seems to be v2N - both cookie and redirect
 	 * code happen early and use the values.
 	 */
-	decode_v2N_payloads(ike->sa.logger, md);
+	decode_v2N_payloads(md, ike->sa.logger, PAYLOAD_ERRORS_LOG_LIMITER);
 
 	/*
 	 * XXX: is SECURED_PAYLOAD_FAILED redundant?  Earlier checks

@@ -95,20 +95,20 @@ enum v2_pd {
 	PD_v2_INVALID = 0,
 
 	/* error notifications */
-	PD_v2N_UNSUPPORTED_CRITICAL_PAYLOAD,	/* IKE FATAL */
+	/*UNSUPPORTED_CRITICAL_PAYLOAD*/	/* IKE FATAL */
 	/*INVALID_IKE_SPI*/			/* IKE drop */
-	PD_v2N_INVALID_MAJOR_VERSION,		/* IKE drop */
-	PD_v2N_INVALID_SYNTAX,			/* IKE FATAL */
+	/*INVALID_MAJOR_VERSION*/		/* IKE drop */
+	/*INVALID_SYNTAX*/			/* IKE FATAL */
 	/*INVALID_MESSAGE_ID*/			/* IKE */
 	/*INVALID_SPI*/				/* IKE */
-	PD_v2N_NO_PROPOSAL_CHOSEN,		/* IKE+CHILD */
-	PD_v2N_INVALID_KE_PAYLOAD,		/* IKE+CHILD */
-	PD_v2N_AUTHENTICATION_FAILED,		/* IKE FATAL */
-	PD_v2N_SINGLE_PAIR_REQUIRED,		/* CHILD fails */
+	/*NO_PROPOSAL_CHOSEN*/			/* IKE+CHILD */
+	/*INVALID_KE_PAYLOAD*/			/* IKE+CHILD */
+	/*AUTHENTICATION_FAILED*/		/* IKE FATAL */
+	/*SINGLE_PAIR_REQUIRED*/		/* CHILD fails */
 	/*NO_ADDITIONAL_SAS*/			/* CHILD fails */
-	PD_v2N_INTERNAL_ADDRESS_FAILURE,	/* CHILD fails */
-	PD_v2N_FAILED_CP_REQUIRED,		/* CHILD fails */
-	PD_v2N_TS_UNACCEPTABLE,			/* CHILD fails */
+	/*INTERNAL_ADDRESS_FAILURE*/		/* CHILD fails */
+	/*FAILED_CP_REQUIRED*/			/* CHILD fails */
+	/*TS_UNACCEPTABLE*/			/* CHILD fails */
 	/*INVALID_SELECTORS*/			/* CHILD fails */
 	/*TEMPORARY_FAILURE*/			/* IKE+CHILD retry */
 	/*CHILD_SA_NOT_FOUND*/			/* CHILD informational */
@@ -201,15 +201,14 @@ struct msg_digest {
 
 	/*
 	 * The first IKEv2 error notification found in the payload
-	 * (error notifications are <16384), else v2N_NOTHING_WRONG
-	 * i.e., 0.
+	 * (error notifications are <16384), else NULL.
 	 *
 	 * Error notifications don't necessarially mean that things
 	 * have totally failed.  For instance, an IKE_AUTH response
 	 * can contain an error notification indicating that the CHILD
 	 * SA failed (but the IKE SA succeeded).
 	 */
-	v2_notification_t v2N_error;
+	const struct payload_digest *v2N_error;
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS

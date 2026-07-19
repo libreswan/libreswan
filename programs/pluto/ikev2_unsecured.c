@@ -283,7 +283,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * The exception is seems to be v2N - both cookie and redirect
 	 * code happen early and use the values.
 	 */
-	decode_v2N_payloads(md->logger, md);
+	decode_v2N_payloads(md, md->logger, UNSECURED_LOG_LIMITER);
 
 	/*
 	 * Do I want a cookie?
@@ -564,7 +564,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	 * The exception is seems to be v2N - both cookie and redirect
 	 * code happen early and use the values.
 	 */
-	decode_v2N_payloads(ike->sa.logger, md);
+	decode_v2N_payloads(md, ike->sa.logger, UNSECURED_LOG_LIMITER);
 
 	/* transition? */
 	const struct v2_transition *transition = NULL;

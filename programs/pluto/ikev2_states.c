@@ -418,9 +418,21 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 		errors.bad = true;
 	}
 
-	if (payloads->notification != v2N_NOTHING_WRONG) {
+	if (payloads->notification >= v2N_STATUS_FLOOR) {
 		enum v2_pd v2_pd = v2_pd_from_notification(payloads->notification);
 		if (md->pd[v2_pd] == NULL) {
+			errors.bad = true;
+			errors.notification = payloads->notification;
+		}
+	} else if (payloads->notification > v2N_NOTHING_WRONG) {
+		/*
+		 * XXX: can't apply reverse test.  .v2N_error with no
+		 * .notification does not imply an error.  For
+		 * instance, in the IKE_AUTH exchange .v2N_error may
+		 * be intended for the Child SA!
+		 */
+		if (md->v2N_error == NULL ||
+		    md->v2N_error->payload.v2n.isan_type != payloads->notification) {
 			errors.bad = true;
 			errors.notification = payloads->notification;
 		}
@@ -960,7 +972,7 @@ static void vdbg_transition(struct verbose verbose,
 				jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
 				if (optional) jam(buf, "]");
 			}
-			if (payloads->notification != 0) {
+			if (payloads->notification != v2N_NOTHING_WRONG) {
 				jam(buf, " N(");
 				jam_enum_short(buf, &v2_notification_names, payloads->notification);
 				jam(buf, ")");
@@ -996,7 +1008,7 @@ static void validate_state_larval_sa_transition(struct verbose verbose,
 	vassert(to->ike_version == IKEv2);
 	vdbg_transition(verbose, t);
 	FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
-		vassert(payloads->notification == 0);
+		vassert(payloads->notification == v2N_NOTHING_WRONG);
 		vassert(payloads->required == LEMPTY);
 		vassert(payloads->optional == LEMPTY);
 	}

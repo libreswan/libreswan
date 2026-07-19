@@ -1481,98 +1481,88 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 
 	/*
-	 * Try to print a meaningful log of the notification error;
-	 * but do it in slightly different ways so it is possible to
-	 * figure out which code path was taken.
+	 * There should be one notification, pointed at by .v2N_error,
+	 * containing the error notification.
+	 *
+	 * But for the case there isn't, extract the first
+	 * notification's value.
 	 */
+
+	enum v2_notification error =
+		(md->v2N_error == NULL ? v2N_NOTHING_WRONG :
+		 md->v2N_error->payload.v2n.isan_type);
+
+	enum v2_notification status =
+		(md->v2N_error != NULL ? v2N_NOTHING_WRONG :
+		 md->chain[ISAKMP_NEXT_v2N] == NULL ? v2N_NOTHING_WRONG :
+		 md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type);
+
+	const char *multiple_notifications =
+		((md->chain[ISAKMP_NEXT_v2N] != NULL &&
+		  md->chain[ISAKMP_NEXT_v2N]->next != NULL) ? "; additional notifications ignored" : "");
 
 	/*
-	 * These are all IKE SA failures - try to blame IKE first.
+	 * Try to print a meaningful log of the error notification
+	 * error.
 	 */
 
-	bool logged_something_serious = false;
-	FOR_EACH_THING(pd, PD_v2N_INVALID_SYNTAX, PD_v2N_AUTHENTICATION_FAILED,
-		       PD_v2N_UNSUPPORTED_CRITICAL_PAYLOAD) {
-		if (md->pd[pd] != NULL) {
-			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
-			pstat(ikev2_recv_notifies_e, n);
-			name_buf wb;
-			llog_sa(RC_LOG, ike,
-				"IKE SA authentication request rejected by peer: %s",
-				str_enum_short(&v2_notification_names, n, &wb));
-			logged_something_serious = true;
+	pstat(ikev2_recv_notifies_e, error); /* yes count nothing wrong! */
+	if (error != v2N_NOTHING_WRONG) {
+		/*
+		 * If the notification seems to be intended for a
+		 * child (even though the response didn't construct
+		 * the IKE SA), try to blame the child.
+		 *
+		 * see RFC 7296 Section 1.2
+		 */
+		switch(error) {
+		case v2N_NO_PROPOSAL_CHOSEN:
+		case v2N_SINGLE_PAIR_REQUIRED:
+		case v2N_NO_ADDITIONAL_SAS:
+		case v2N_INTERNAL_ADDRESS_FAILURE:
+		case v2N_FAILED_CP_REQUIRED:
+		case v2N_TS_UNACCEPTABLE:
+		case v2N_INVALID_SELECTORS:
+		{
+			if (child == NULL) {
+				name_buf nb;
+				llog(RC_LOG, ike->sa.logger,
+				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s%s",
+				     str_enum_short(&v2_notification_names, error, &nb),
+				     multiple_notifications);
+			} else {
+				name_buf nb;
+				llog(RC_LOG, ike->sa.logger,
+				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s for "PRI_SO"%s",
+				     str_enum_short(&v2_notification_names, error, &nb),
+				     pri_so(child->sa.st_serialno),
+				     multiple_notifications);
+			}
 			break;
 		}
-	}
-
-	if (!logged_something_serious) {
-		/*
-		 * Dump as much information as possible.
-		 */
-		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
-		     ntfy != NULL; ntfy = ntfy->next) {
-			v2_notification_t n = ntfy->payload.v2n.isan_type;
-			/* same scope */
-			name_buf esb;
-			const char *name = str_enum_short(&v2_notification_names, n, &esb);
-
-			if (ntfy->payload.v2n.isan_spisize != 0) {
-				/* invalid-syntax, but can't do anything about it */
-				llog_sa(RC_LOG, ike,
-					"received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
-					name);
-				logged_something_serious = true;
-				break;
-			}
-
-			if (n >= v2N_STATUS_FLOOR) {
-				/* just log */
-				pstat(ikev2_recv_notifies_s, n);
-				llog_sa(RC_LOG, ike,
-					"IKE_AUTH response contained the status notification %s",
-					name);
-			} else {
-				pstat(ikev2_recv_notifies_e, n);
-				logged_something_serious = true;
-				/*
-				 * There won't be a child state
-				 * transition, so log if error is
-				 * child related.
-				 *
-				 * see RFC 7296 Section 1.2
-				 */
-				switch(n) {
-				case v2N_NO_PROPOSAL_CHOSEN:
-				case v2N_SINGLE_PAIR_REQUIRED:
-				case v2N_NO_ADDITIONAL_SAS:
-				case v2N_INTERNAL_ADDRESS_FAILURE:
-				case v2N_FAILED_CP_REQUIRED:
-				case v2N_TS_UNACCEPTABLE:
-				case v2N_INVALID_SELECTORS:
-					if (child == NULL) {
-						llog_sa(RC_LOG, ike,
-							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child",
-							name);
-					} else {
-						llog_sa(RC_LOG, child,
-							"IKE_AUTH response contained the error notification %s", name);
-					}
-					break;
-				default:
-					llog_sa(RC_LOG, ike,
-						"IKE_AUTH response contained the error notification %s",
-						name);
-					break;
-				}
-				/* first is enough */
-				break;
-			}
+		default:
+		{
+			name_buf nb;
+			llog(RC_LOG, ike->sa.logger,
+			     "IKE SA authentication request rejected by peer: %s%s",
+			     str_enum_short(&v2_notification_names, error, &nb),
+			     multiple_notifications);
+			break;
 		}
-	}
-
-	if (!logged_something_serious) {
+		}
+	} else if (status != v2N_NOTHING_WRONG) {
+		/*
+		 * Dump first status notification.
+		 */
+		pstat(ikev2_recv_notifies_s, status);
+		name_buf nb;
 		llog_sa(RC_LOG, ike,
-			  "IKE SA authentication request rejected by peer: unrecognized response");
+			"IKE SA authentication failed, incomplete IKE_AUTH response contains the status notification %s%s",
+			str_enum_short(&v2_notification_names, status, &nb),
+			multiple_notifications);
+	} else {
+ 		llog(RC_LOG, ike->sa.logger,
+		     "IKE SA authentication failed, unrecognized IKE_AUTH response");
 	}
 
 	return STF_FATAL;
@@ -1685,6 +1675,7 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
+	  /* could also be incomplete */
 	  .to = &state_v2_IKE_AUTH_I,
 	  .exchange = &v2_IKE_AUTH_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,

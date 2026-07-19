@@ -37,33 +37,27 @@
 #include "ikev2_send.h"		/* for send_v2_notification_from_md() et.al. */
 #include "log_limiter.h"
 
-static void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
-			       const struct payload_digest *notify);
+static void decode_v2N_payload(struct msg_digest *md,
+			       const struct payload_digest *notify,
+			       struct logger *logger, enum log_limiter limiter);
 
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
 	switch (n) {
 #define C(N) case v2N_##N: return PD_v2N_##N;
 	C(ADDITIONAL_KEY_EXCHANGE);
-	C(AUTHENTICATION_FAILED);
 	C(COOKIE);
 	C(COOKIE2);
 	C(CHILDLESS_IKEV2_SUPPORTED);
 	C(ESP_TFC_PADDING_NOT_SUPPORTED);
-	C(FAILED_CP_REQUIRED);
 	C(IKEV2_FRAGMENTATION_SUPPORTED);
 	C(INITIAL_CONTACT);
 	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
-	C(INTERNAL_ADDRESS_FAILURE);
-	C(INVALID_KE_PAYLOAD);
-	C(INVALID_MAJOR_VERSION);
-	C(INVALID_SYNTAX);
 	C(IPCOMP_SUPPORTED);
 	C(MOBIKE_SUPPORTED);
 	C(NAT_DETECTION_DESTINATION_IP);
 	C(NAT_DETECTION_SOURCE_IP);
 	C(NO_PPK_AUTH);
-	C(NO_PROPOSAL_CHOSEN);
 	C(NULL_AUTH);
 	C(PPK_IDENTITY);
 	C(PPK_IDENTITY_KEY);
@@ -72,9 +66,6 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(REDIRECT_SUPPORTED);
 	C(REKEY_SA);
 	C(SIGNATURE_HASH_ALGORITHMS);
-	C(SINGLE_PAIR_REQUIRED);
-	C(TS_UNACCEPTABLE);
-	C(UNSUPPORTED_CRITICAL_PAYLOAD);
 	C(UPDATE_SA_ADDRESSES);
 	C(USE_PPK);
 	C(USE_PPK_INT);
@@ -92,8 +83,9 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	}
 }
 
-void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
-			const struct payload_digest *notify)
+void decode_v2N_payload(struct msg_digest *md,
+			const struct payload_digest *notify,
+			struct logger *logger, enum log_limiter limiter)
 {
 	v2_notification_t n = notify->payload.v2n.isan_type;
 
@@ -105,61 +97,70 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		return;
 	}
 
+	/*
+	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting
+	 *   errors.  An implementation receiving a Notify payload
+	 *   with one of these types that it does not recognize in a
+	 *   response MUST assume that the corresponding request has
+	 *   failed entirely.  Unrecognized error types in a request
+	 *   and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 *
+	 * Record the first error; and complain and ignore when there
+	 * are more.
+	 *
+	 * XXX: RFC doesn't explicitly preclude peer sending back
+	 * multiple errors; but text suggests it doesn't happen -
+	 * errors seem to abort processing.
+	 */
+
 	const char *type;
-	if (n < 16384) {
-		type = "error";
-		/*
-		 * https://tools.ietf.org/html/rfc7296#section-3.10.1
-		 *
-		 *   Types in the range 0 - 16383 are intended for
-		 *   reporting errors.  An implementation receiving a
-		 *   Notify payload with one of these types that it
-		 *   does not recognize in a response MUST assume that
-		 *   the corresponding request has failed entirely.
-		 *   Unrecognized error types in a request and status
-		 *   types in a request or response MUST be ignored,
-		 *   and they should be logged.
-		 *
-		 * Record the first error; and complain when there are
-		 * more.
-		 */
-		if (md->v2N_error == v2N_NOTHING_WRONG) {
-			md->v2N_error = n;
-		} else {
-			/* XXX: is this allowed? */
-			ldbg(logger, "message contains multiple error notifications: %d %d",
-			     md->v2N_error, n);
-		}
-	} else {
+	if (n >= v2N_STATUS_FLOOR) {
 		type = "status";
+	} else if (md->v2N_error == NULL) {
+		md->v2N_error = notify;
+		type = "error";
+	} else {
+		name_buf nb;
+		limited_llog(logger, limiter, "ignoring additional error notification %s",
+			     str_enum_short(&v2_notification_names, n, &nb));
+		return;
 	}
 
 	name_buf name;
 	if (!enum_long(&v2_notification_names, n, &name)) {
-		ldbg(logger, "%s notification %d is unknown", type, n);
+		limited_llog(logger, limiter, "%s notification %d is unknown", type, n);
 		return;
 	}
+
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
 		ldbg(logger, "%s notification %s is not supported", type, name.buf);
 		return;
 	}
+
 	if (md->pd[v2_pd] != NULL) {
 		ldbg(logger, "%s duplicate notification %s ignored", type, name.buf);
 		return;
 	}
+
 	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
+
 	md->pd[v2_pd] = notify;
 }
 
-void decode_v2N_payloads(struct logger *logger, struct msg_digest *md)
+void decode_v2N_payloads(struct msg_digest *md,
+			 struct logger *logger,
+			 enum log_limiter limiter)
 {
 	for (struct payload_digest *n = md->chain[ISAKMP_NEXT_v2N];
 	     n != NULL; n = n->next) {
-		decode_v2N_payload(logger, md, n);
+		decode_v2N_payload(md, n, logger, limiter);
 	}
 }
 

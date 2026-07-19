@@ -846,12 +846,14 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	 *   and status types in a request or response MUST be
 	 *   ignored, and they should be logged.
 	 */
-	if (md->v2N_error != v2N_NOTHING_WRONG) {
+	if (md->v2N_error != NULL) {
+		enum v2_notification error = md->v2N_error->payload.v2n.isan_type;
 		name_buf esb;
-		llog_sa(RC_LOG, child, "received ERROR NOTIFY (%d): %s ",
-			  md->v2N_error,
-			  str_enum_long(&v2_notification_names, md->v2N_error, &esb));
-		return md->v2N_error;
+		llog(RC_LOG, child->sa.logger,
+		     "received ERROR NOTIFY (%d): %s ",
+		     error,
+		     str_enum_long(&v2_notification_names, error, &esb));
+		return error;
 	}
 
 	/* check for Child SA related NOTIFY payloads */
@@ -1195,54 +1197,43 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
 	/*
-	 * Was there an error notification for the Child SA in the
-	 * response?  The RFC says this list isn't definitive.
+	 * Assume reaching here with an error notification means that
+	 * the Child SA failed (error notifications intended for the
+	 * IKE SA should have been processed earlier).
 	 *
 	 * Since the peer rejected the Child SA (i.e., never created
 	 * it), there's no need to send a delete.
-	 *
-	 * XXX: can this code assume that the response contains only
-	 * one notify and that is for the child?  Given notifies are
-	 * used to communicate compression I've my doubt.
 	 */
-	FOR_EACH_THING(pd,
-		       PD_v2N_NO_PROPOSAL_CHOSEN,
-		       PD_v2N_TS_UNACCEPTABLE,
-		       PD_v2N_SINGLE_PAIR_REQUIRED,
-		       PD_v2N_INTERNAL_ADDRESS_FAILURE,
-		       PD_v2N_FAILED_CP_REQUIRED) {
-		if (response_md->pd[pd] != NULL) {
-			/* convert PD to N */
-			v2_notification_t n = response_md->pd[pd]->payload.v2n.isan_type;
-			/*
-			 * Log something the testsuite expects for
-			 * now.  It provides an anchor when looking at
-			 * test changes.
-			 */
-			name_buf esb;
-			llog_sa(RC_LOG, child,
-				"IKE_AUTH response rejected Child SA with %s",
-				str_enum_short(&v2_notification_names, n, &esb));
-			/*
-			 * Remove the Child SA's connection from the
-			 * pending queue.
-			 */
-			ldbg(child->sa.logger, "unpending IKE SA "PRI_SO" CHILD SA "PRI_SO" connection %s",
-			     pri_so(ike->sa.st_serialno),
-			     pri_so(child->sa.st_serialno),
-			     child->sa.st_connection->name);
-			unpend(ike, child->sa.st_connection);
-			/*
-			 * Clean up the Child SA.
-			 *
-			 * If the caller sees the Child SA it will
-			 * assume that it needs to initiate a delete.
-			 */
-			connection_teardown_child(&child, REASON_DELETED, HERE);
-			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
-			/* handled */
-			return n;
-		}
+	if (response_md->v2N_error != NULL) {
+		v2_notification_t error =
+			response_md->v2N_error->payload.v2n.isan_type;
+		/*
+		 * Log something the testsuite expects for now.  It
+		 * provides an anchor when looking at test changes.
+		 */
+		name_buf esb;
+		llog(RC_LOG, child->sa.logger,
+		     "IKE_AUTH response rejected Child SA with %s",
+		     str_enum_short(&v2_notification_names, error, &esb));
+		/*
+		 * Remove the Child SA's connection from the pending
+		 * queue.
+		 */
+		ldbg(child->sa.logger, "unpending IKE SA "PRI_SO" CHILD SA "PRI_SO" connection %s",
+		     pri_so(ike->sa.st_serialno),
+		     pri_so(child->sa.st_serialno),
+		     child->sa.st_connection->name);
+		unpend(ike, child->sa.st_connection);
+		/*
+		 * Clean up the Child SA.
+		 *
+		 * If the caller sees the Child SA it will assume that
+		 * it needs to initiate a delete.
+		 */
+		connection_teardown_child(&child, REASON_DELETED, HERE);
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
+		/* handled */
+		return error;
 	}
 
 	/*
