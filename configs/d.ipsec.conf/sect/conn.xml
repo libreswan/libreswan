@@ -125,7 +125,6 @@
       &conn.auto;
       &conn.authby;
       &conn.ike;
-      &conn.phase2;
       &conn.sha2-truncbug;
       &conn.ms-dh-downgrade;
       &conn.dns-match-id;
@@ -136,6 +135,8 @@
       &conn.share-lease;
       &conn.esp;
       &conn.ah;
+      &conn.phase2;
+      &conn.phase2alg;
       &conn.fragmentation;
       &conn.ikepad;
       &conn.mobike;

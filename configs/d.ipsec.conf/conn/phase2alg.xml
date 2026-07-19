@@ -1,0 +1,30 @@
+<varlistentry id='conn.phase2alg'>
+  <term>
+    <option>phase2alg=<replaceable>proposal,...</replaceable></option>
+  </term>
+  <listitem>
+    <para>
+      Specify the cryptographic algorithms to be negotiated as part of
+      establishing <option>phase2=</option> Child (IPsec) SA.  For a
+      detailed description of the proposal syntax see the Proposals
+      section.
+    </para>
+    <para>
+      Instead of specifying both <option>phase2=</option> and
+      <option>phase2alg=</option>, the parameters <option>ah=</option>
+      and <option>esp=</option> can be used to directly specify the
+      Child (IPsec) SA's protocol and cryptographic algorithms.
+    </para>
+    <para>
+      Historic note: the term Phase 2 dates back to the original &IKEv1;
+      specificiation where the Child (IPsec) SA was established using
+      a second (Phase 2) exchange; since &IKEv2; can establish a Child
+      SA during the initial exchange the term no longer applies.
+    </para>
+    <para>
+      History: <option>ah=</option> and <option>esp=</option> were
+      made fully functional in &Libreswan; 5.3, prior to this they
+      were aliases for <option>phase2alg=</option>.
+    </para>
+  </listitem>
+</varlistentry>

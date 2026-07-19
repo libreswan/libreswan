@@ -5,21 +5,39 @@
   <listitem>
     <para>
       Sets the type of SA that will be produced.  Valid options are:
-      &esp; for encryption, &ah; for authentication only.
+      &esp; for encryption and integrity protection, &ah; for
+      integrity protection only.
     </para>
     <para>
-      The default is &esp;.
+      Instead of specifying both <option>phase2=</option> and
+      <option>phase2alg=</option>, the parameters <option>ah=</option>
+      and <option>esp=</option> can be used to directly specify the
+      Child (IPsec) SA's protocol and cryptographic algorithms.
     </para>
     <para>
-      The very first IPsec designs called for use of AH plus ESP to
-      offer authentication, integrity and confidentiality. That dual
-      protocol use was a significant burden, so ESP was extended to
-      offer all three services, and AH remained as an auth/integ. The
-      old mode of <option>ah+esp</option> is no longer supported in
-      compliance with RFC 8221 Section 4.  Additionally, AH does not
-      play well with NATs, so it is strongly recommended to use ESP
-      with the null cipher if you require unencrypted authenticated
-      transport.
+      Historic note: The very first IPsec designs called for use of AH
+      plus ESP to offer authentication, integrity and
+      confidentiality. That dual protocol use was a significant
+      burden, so ESP was extended to offer all three services, and AH
+      remained as an auth/integ. The old mode of
+      <option>ah+esp</option> is no longer supported in compliance
+      with RFC 8221 Section 4.  Additionally, AH does not play well
+      with NATs, so it is strongly recommended to use ESP with the
+      null cipher if you require unencrypted authenticated transport.
+    </para>
+    <para>
+      Historic note: the term Phase 2 dates back to the original &IKEv1;
+      specificiation where the Child (IPsec) SA was established using
+      a second (Phase 2) exchange; since &IKEv2; can establish a Child
+      SA during the initial exchange the term no longer applies.
+    </para>
+    <para>
+      History: <option>ah=</option> and <option>esp=</option> were
+      made fully functional in &Libreswan; 5.3, prior to this they
+      were aliases for <option>phase2alg=</option>.
+    </para>
+    <para>
+      The default is <option>phase2=&esp;</option>.
     </para>
   </listitem>
 </varlistentry>
