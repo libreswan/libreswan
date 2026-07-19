@@ -4,24 +4,26 @@
   </term>
   <listitem>
     <para>
-      How long a particular instance of a connection (a set of
-      encryption/authentication keys for user packets) should last up
-      to a maximum of 24 hours (<option>1d</option> or
+      How long a particular instance of a connection's IPsec SA (a set
+      of encryption/authentication keys for user packets) should last
+      up to a maximum of 24 hours (<option>1d</option> or
       <option>24h</option>); from successful negotiation to expiry.
     </para>
     <para>
       Normally, the connection is renegotiated (via the keying
       channel) before it expires.  The two ends need not exactly agree
-      on <option>salifetime</option>.
+      on <option>ipsec-lifetime=</option>.
     </para>
     <para>
-      The default is 8 hours (<literal>8h</literal>)).
-    </para>
-    <para>
-      History: the original parameter was called all of
-      <option>keylife=</option>, <option>lifetime</option>, and
+      History: the original parameter was called
+      <option>keylife=</option>, <option>lifetime=</option>, and
       <option>salifetime=</option>; these were replaced by
       <option>ipsec-lifetime=</option> in &Libreswan; 4.8.
+    </para>
+    <para>
+      The default is
+      <option>ipsec-lifetime=<literal>8h</literal></option> (eight
+      hours).
     </para>
   </listitem>
 </varlistentry>

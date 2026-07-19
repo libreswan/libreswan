@@ -154,6 +154,7 @@
 <!ENTITY auto '<literal>auto</literal>'>
 <!ENTITY both '<literal>both</literal>'>
 <!ENTITY busy '<literal>busy</literal>'>
+<!ENTITY cisco '<literal>cisco</literal>'>
 <!ENTITY crypto '<literal>crypto</literal>'>
 <!ENTITY drafts '<literal>drafts</literal>'>
 <!ENTITY drop '<literal>drop</literal>'>
@@ -166,6 +167,7 @@
 <!ENTITY get '<literal>get</literal>'>
 <!ENTITY hard '<literal>hard</literal>'>
 <!ENTITY hold '<literal>hold</literal>'>
+<!ENTITY ietf '<literal>ietf</literal>'>
 <!ENTITY ikev1 '<literal>ikev1</literal>'>
 <!ENTITY ikev2 '<literal>ikev2</literal>'>
 <!ENTITY insist '<literal>insist</literal>'>

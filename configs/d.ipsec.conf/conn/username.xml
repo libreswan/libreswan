@@ -8,9 +8,14 @@
   <listitem>
     <para>
       The username associated with this connection. The username can
-      be the IKEv2 XAUTH username, a GSSAPI username or IKEv2 CP
-      username. For the XAUTH username, the XAUTH password can be
-      configured in the <option>ipsec.secrets</option> file. This
-      option was previously called leftxauthusername.</para>
+      be the &IKEv1; XAUTH username, a GSSAPI username or &IKEv2; CP
+      username.  For the XAUTH username, the XAUTH password can be
+      configured in the file &ipsec.secrets.5;.
+    </para>
+    <para>
+      History: the parameter was originally called
+      <option>xauthusername=</option>; it was renamed to
+      <option>username=</option> in &Libreswan; 3.17.
+    </para>
   </listitem>
 </varlistentry>

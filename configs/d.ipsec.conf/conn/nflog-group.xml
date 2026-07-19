@@ -13,12 +13,13 @@
       number. During the updown phase of a connection, iptables will
       be used to add and remove the source/destination pair to the
       nflog group specified.  The rules are setup with the
-      nflog-prefix matching the connection name. See also the global
-      <option>nflog-all</option> option.
+      nflog-prefix matching the connection name.  See also the global
+      <option>nflog-all=</option> option.
     </para>
     <para>
-      Prior to &Libreswan; version 5.3, this option was called
-      <option>nflog</option>.
+      History: the original parameter was called
+      <option>nflog=</option>; it was renamed to
+      <option>nflog-group=</option> in &Libreswan; version 5.3.
     </para>
   </listitem>
 </varlistentry>

@@ -19,12 +19,15 @@
       <option>ESP_TFC_PADDING_NOT_SUPPORTED</option> notification).
     </para>
     <para>
-      History: the parameter <option>send-no-esp-tfc=</option> was
-      added in &Libreswan; 3.18; in &Libreswan; 5.3, the parameter was
-      renamed to <option>send-esp-tfc-padding-not-supported=</option>.
+      History: the parameter, added in &Libreswan; 3.18, was
+      originally called <option>send-no-esp-tfc=</option>; it was
+      renamed to <option>send-esp-tfc-padding-not-supported=</option>
+      in &Libreswan; 5.3.
     </para>
     <para>
-      The default is &no;.  This option is only valid for &IKEv2;.
+      The default is
+      <option>send-esp-padding-not-supported=&no;</option>.  This
+      option is only valid for &IKEv2;.
     </para>
   </listitem>
 </varlistentry>

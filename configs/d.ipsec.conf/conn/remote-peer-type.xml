@@ -5,13 +5,17 @@
   <listitem>
     <para>
       Set the remote peer type. This can enable additional processing
-      during the IKEv1 negotiation. Acceptable values are
-      <option>cisco</option> or <option>ietf</option> (the
-      default). When set to cisco, support for Cisco IPsec gateway
-      redirection and Cisco obtained DNS and domainname are
-      enabled. This includes automatically updating (and restoring)
-      /etc/resolv.conf. These options require that XAUTH is also
-      enabled on this connection.
+      during the &IKEv1; negotiation.  Acceptable values are &cisco;
+      or &ietf; (the default). When set to &cisco;, support for
+      &Cisco; IPsec gateway redirection and &Cisco; obtained DNS and
+      domainname are enabled.  This includes automatically updating
+      (and restoring) <filename>/etc/resolv.conf</filename>.  These
+      options require that XAUTH is also enabled on this connection.
+    </para>
+    <para>
+      History: the parameter was originally called
+      <option>remote_peer_type=</option>; it was renamed to
+      <option>remote-peer-type=</option> in &Libreswan; 3.9.
     </para>
   </listitem>
 </varlistentry>

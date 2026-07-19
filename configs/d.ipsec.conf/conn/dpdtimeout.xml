@@ -12,12 +12,21 @@
       <option>dpddelay</option> also needs to be set.
     </para>
     <para>
-      The default is <option>0</option> meaning disabled.
+      The default is <option>dpdtimeout=<literal>0</literal></option>,
+      meaning disabled.
     </para>
     <para>
-      This option is only valid for IKEv1.  IKEv2 only uses the
-      <option>retransmit-timeout</option> (the timeout implies that
-      the IKE SA is dead).
+      This option is only valid for &IKEv1;.  &IKEv2; uses the
+      <option>retransmit-timeout</option> (any retransmit timeout
+      implies that the IKE SA is dead).
+    </para>
+    <para>
+      History: the original parameter was called
+      <option>dpdtimeout=</option>; it was renamed to
+      <option>ikev1-dpdtimeout=</option> &Libreswan; 5.0 (with
+      <option>dpdtimeout=</option> as an alias); it was renamed back
+      in &Libreswan; 5.4 (<option>ikev1-dpdtimeout=</option> made the
+      alias).
     </para>
   </listitem>
 </varlistentry>

@@ -14,5 +14,11 @@
     <para>
       Labeled IPsec support is IKEv2 only.
     </para>
+    <para>
+      History: the parameter was originally called
+      <option>policy-label=</option>; it was renamed to
+      <option>sec-label=</option> in &Libreswan; 4.2; &IKEv1; support
+      for Labeled IPsec was removed in &Libreswan; 5.0.
+    </para>
   </listitem>
 </varlistentry>
