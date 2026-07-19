@@ -249,7 +249,6 @@ static const struct keyword_def config_conn_keyword[] = {
   A("salifetime", LEMPTY, KWS_IPSEC_LIFETIME), /* old name */
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   A("xauthusername", kv_leftright, KWS_USERNAME), /* old alias */
-  A("ah", LEMPTY, KWS_ESP),
   A("policy-label", LEMPTY, KWS_SEC_LABEL), /* obsolete variant */
   /* another alias used by NetworkManager-libreswan :/ */
   A("remote_peer_type", LEMPTY, KWS_REMOTE_PEER_TYPE),
