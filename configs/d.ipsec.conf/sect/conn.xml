@@ -68,6 +68,7 @@
     </para>
     <variablelist>
       &conn.keyexchange;
+      &conn.ikev2;
       &conn.hostaddrfamily;
       &conn.clientaddrfamily;
       &conn.type;

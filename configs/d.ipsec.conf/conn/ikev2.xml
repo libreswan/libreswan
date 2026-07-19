@@ -1,0 +1,26 @@
+<varlistentry id='conn.ikev2'>
+  <term>
+    <option>ikev2=&yn_option;</option>
+  </term>
+  <listitem>
+    <note>
+      <para>
+	<option>ikev2=</option> has been deprecated since &Libreswan;
+	5.0; use <option>keyexchange=ikev1</option> or
+	<option>keyexchange=ikev2</option>.
+      </para>
+    </note>
+    <para>
+      Whether to use &IKEv2; (RFC 7296) or &IKEv1; (RFC 4301).  The
+      accepted values are &yes;, signifying only &IKEv2; is accepted,
+      and &no;, signifying only &IKEv1; is accepted.
+    </para>
+    <para>
+      History: the original <option>ikev2=</option> parameter allowed
+      the values &yes;, &no;, &propose;, &permit;, and &insist;;
+      support for &propose;, &permit;, and &insist; was removed in
+      &Libreswan; 3.28; the parameter <option>ikev2=</option> was
+      deprecated in &Libreswan; 5.0.
+    </para>
+  </listitem>
+</varlistentry>
