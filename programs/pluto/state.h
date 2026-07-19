@@ -161,10 +161,7 @@ struct v2_id_payload {
 /* Used by IKE_FOLLOWUP_KE to link between previous response and the
  * next request.
  */
-#define ADDKE_LINK_SIZE 8
-struct addke_link {
-	uint8_t bytes[ADDKE_LINK_SIZE];
-};
+#define DEFAULT_ADDKE_LINK_SIZE 8
 
 /*
  * internal state that
@@ -440,7 +437,7 @@ struct state {
 
 	struct {
 		struct child_sa *larval_sa;
-		struct addke_link link; /* opaque value set by responder */
+		chunk_t link; /* opaque value set by responder */
 		unsigned next_exchange;
 		struct prf_keys *keys;
 	} st_v2_ike_followup_ke;
