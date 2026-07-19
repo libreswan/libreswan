@@ -212,7 +212,7 @@
       &conn.interface-ip;
       &conn.priority;
       &conn.sendca;
-      &conn.policy-label;
+      &conn.sec-label;
       &conn.failureshunt;
       &conn.negotiationshunt;
       &conn.debug;

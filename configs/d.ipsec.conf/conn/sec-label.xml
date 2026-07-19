@@ -1,6 +1,6 @@
-<varlistentry id='conn.policy-label'>
+<varlistentry id='conn.sec-label'>
   <term>
-    <option>policy-label=</option>
+    <option>sec-label=</option>
   </term>
   <listitem>
     <para>
