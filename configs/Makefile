@@ -126,11 +126,14 @@ list-local-base:
 D_IPSEC_CONF_XML = $(srcdir)/d.ipsec.conf/*/*.xml
 D_IPSEC_CONF_EXAMPLE = $(srcdir)/d.ipsec.conf/*.example
 
-$(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml
-$(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_XML)
-$(builddir)/ipsec.conf.5.man: $(D_IPSEC_CONF_EXAMPLE)
-$(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
-$(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.entities.xml
+DEPS += $(srcdir)/ipsec.conf.5.xml
+DEPS += $(D_IPSEC_CONF_XML)
+DEPS += $(D_IPSEC_CONF_EXAMPLE)
+DEPS += $(builddir)/ipsec.conf.5.ok
+DEPS += $(builddir)/ipsec.conf.5.entities.xml
+
+$(builddir)/ipsec.conf.5.man: $(DEPS)
+$(builddir)/ipsec.conf.5.html: $(DEPS)
 
 $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
@@ -149,8 +152,6 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 		fi ; \
 	done
 	touch $@
-
-$(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*/*.xml
 
 $(builddir)/ipsec.conf.5.entities.xml: $(D_IPSEC_CONF_XML) $(srcdir)/ipsec.conf.5.entities.sh
 	$(srcdir)/ipsec.conf.5.entities.sh $(D_IPSEC_CONF_XML) > $@.tmp
