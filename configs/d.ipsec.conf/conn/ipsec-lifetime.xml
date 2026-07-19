@@ -1,6 +1,6 @@
-<varlistentry id='conn.salifetime'>
+<varlistentry id='conn.ipsec-lifetime'>
   <term>
-    <option>salifetime=&seconds;</option>
+    <option>ipsec-lifetime=&seconds;</option>
   </term>
   <listitem>
     <para>
@@ -18,8 +18,10 @@
       The default is 8 hours (<literal>8h</literal>)).
     </para>
     <para>
-      The keywords "keylife" and "lifetime" are obsoleted aliases for
-      "salifetime."  Change your configs to use "salifetime" instead.
+      History: the original parameter was called all of
+      <option>keylife=</option>, <option>lifetime</option>, and
+      <option>salifetime=</option>; these were replaced by
+      <option>ipsec-lifetime=</option> in &Libreswan; 4.8.
     </para>
   </listitem>
 </varlistentry>

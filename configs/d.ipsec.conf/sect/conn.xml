@@ -186,7 +186,7 @@
       &conn.dpdtimeout;
       &conn.pfs;
       &conn.aggressive;
-      &conn.salifetime;
+      &conn.ipsec-lifetime;
       &conn.ipsec-max-bytes;
       &conn.ipsec-max-packets;
       &conn.replay-window;
