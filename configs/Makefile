@@ -151,6 +151,17 @@ $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 			exit 1 ; \
 		fi ; \
 	done
+	: do all aliases get an historic mention?
+	for a in $$(awk -F '"' '/ A.*"/ { print $$2 }' ../lib/libswan/ipsecconf/conn.c) ; do \
+		if test -f d.ipsec.conf/conn/$$a.xml ; then \
+			echo alias $$a should not have an entry ; \
+			exit 1 ; \
+		fi ; \
+		if ! grep $$a d.ipsec.conf/conn/*.xml ; then \
+			echo alias $$a needs an historic mention ; \
+			exit 1 ; \
+		fi ; \
+	done
 	touch $@
 
 $(builddir)/ipsec.conf.5.entities.xml: $(D_IPSEC_CONF_XML) $(srcdir)/ipsec.conf.5.entities.sh
