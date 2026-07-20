@@ -1,2 +1,2 @@
-ipsec delete rise-set
+ipsec delete west-east
 ipsecctl -F
