@@ -1,0 +1,64 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ ../../guestbin/ip.sh address show eth0 | grep global | sort
+    inet 192.0.1.254/24 scope global eth0
+    inet6 2001:db8:0:1::254/64 scope global
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-cuckold
+"west-cuckold": added oriented IKEv2 connection
+west #
+ ipsec add west-cuckoo
+"west-cuckoo": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-cuckold # sanitize-retransmits
+"west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-cuckold" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"west-cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.3.0/24===192.0.2.0/24]
+"west-cuckold" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # stop the CREATE_CHILD_SA making it out
+west #
+ ipsec whack --impair block_outbound:yes
+IMPAIR: recording all outbound messages
+IMPAIR: block all outbound messages: no -> yes
+west #
+ ipsec up --async west-cuckoo # sanitize-retransmits
+"west-cuckoo" #3: initiating Child SA using IKE SA #1
+west #
+ /testing/guestbin/wait-for-pluto.sh '"west-cuckoo" #3: sent CREATE_CHILD_SA request'
+"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.3.0/24===192.0.20.0/24]
+west #
+ # deleting the wedged CUCKOO Child SA deletes the CUCKOLD IKE SA
+west #
+ ipsec delete west-cuckoo
+"west-cuckoo": terminating SAs using this connection
+"west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+IMPAIR: "west-cuckold" #1: blocking outbound message 2
+"west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "west-cuckold" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
+west #
+ # deletes cuckold trying to revive
+west #
+ ipsec delete west-cuckold
+west #

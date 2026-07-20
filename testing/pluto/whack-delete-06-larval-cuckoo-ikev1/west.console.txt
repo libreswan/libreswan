@@ -1,0 +1,68 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ ../../guestbin/ip.sh address show eth0 | grep global | sort
+    inet 192.0.1.254/24 scope global eth0
+    inet6 2001:db8:0:1::254/64 scope global
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-cuckold
+"west-cuckold": added oriented IKEv1 connection
+west #
+ ipsec add west-cuckoo
+"west-cuckoo": added oriented IKEv1 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-cuckold # sanitize-retransmits
+"west-cuckold" #1: initiating IKEv1 Main Mode connection
+"west-cuckold" #1: sent Main Mode request
+"west-cuckold" #1: sent Main Mode I2
+"west-cuckold" #1: sent Main Mode I3
+"west-cuckold" #1: Peer ID is FQDN: '@east'
+"west-cuckold" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.2.0/24}
+"west-cuckold" #2: sent Quick Mode request
+"west-cuckold" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # stop the CREATE_CHILD_SA making it out
+west #
+ ipsec whack --impair block_outbound:yes
+IMPAIR: recording all outbound messages
+IMPAIR: block all outbound messages: no -> yes
+west #
+ ipsec up --async west-cuckoo
+"west-cuckoo" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.20.0/24}
+west #
+ /testing/guestbin/wait-for-pluto.sh --match '"west-cuckoo" #3: sent Quick Mode request'
+"west-cuckoo" #3: sent Quick Mode request
+west #
+ # deleting the wedged CUCKOO Child SA deletes the CUCKOLD IKE SA
+west #
+ ipsec delete west-cuckoo
+"west-cuckoo": terminating SAs using this connection
+"west-cuckoo" #3: deleting IPsec SA (QUICK_I1) and NOT sending notification
+west #
+ # deletes cuckold trying to revive
+west #
+ ipsec delete west-cuckold
+"west-cuckold": terminating SAs using this connection
+"west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+IMPAIR: "west-cuckold" #1: blocking outbound message 2
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+IMPAIR: "west-cuckold" #1: blocking outbound message 3
+west #
