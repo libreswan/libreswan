@@ -236,10 +236,11 @@ static void terminate_connection_states(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct connection_state_visitor_context *context)
+					struct connection_state_visitor_context *context,
+					struct verbose verbose)
 {
 	if (context->count == 0) {
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		vlog("terminating SAs using this connection");
 	}
 	context->count++;
 	switch (c->config->ike_version) {

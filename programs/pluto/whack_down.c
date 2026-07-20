@@ -178,7 +178,8 @@ static void down_ikev1_connection_state(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct connection_state_visitor_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED,
+					struct verbose verbose)
 {
 	switch (visit_kind) {
 
@@ -201,7 +202,7 @@ static void down_ikev1_connection_state(struct connection *c,
 		}
 
 		/* log in the order that they will be deleted */
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" and %s "PRI_SO,
+		vlog("initiating delete of connection's %s "PRI_SO" and %s "PRI_SO,
 		     c->config->ike_info->child_sa_name,
 		     pri_so((*child)->sa.st_serialno),
 		     c->config->ike_info->parent_sa_name,
@@ -211,7 +212,7 @@ static void down_ikev1_connection_state(struct connection *c,
 		return;
 
 	case VISIT_CONNECTION_CHILD_OF_NONE:
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
+		vlog("initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->child_sa_name,
 		     pri_so((*child)->sa.st_serialno));
 		delete_ikev1_child(c, child, HERE);
@@ -237,7 +238,7 @@ static void down_ikev1_connection_state(struct connection *c,
 			return;
 		}
 
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
+		vlog("initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
 		delete_ikev1_ike(c, ike, HERE);
@@ -255,7 +256,8 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct connection_state_visitor_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED,
+					struct verbose verbose)
 {
 	switch (visit_kind) {
 
@@ -284,7 +286,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		}
 
 		/* remember, deleting the IKE SA deletes the child */
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" (and %s "PRI_SO")",
+		vlog("initiating delete of connection's %s "PRI_SO" (and %s "PRI_SO")",
 		     c->config->ike_info->parent_sa_name, pri_so((*ike)->sa.st_serialno),
 		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
 		whack_attach(&(*ike)->sa, c->logger);
@@ -304,7 +306,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		}
 
 		state_buf ib;
-		llog(RC_LOG, c->logger, "initiating delete of "PRI_STATE" which has connection's %s "PRI_SO,
+		vlog("initiating delete of "PRI_STATE" which has connection's %s "PRI_SO,
 		     pri_state(&(*ike)->sa, &ib),
 		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
 
@@ -342,7 +344,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 			return;
 		}
 
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
+		vlog("initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
 		whack_attach(&(*ike)->sa, c->logger);

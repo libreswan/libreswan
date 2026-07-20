@@ -579,7 +579,8 @@ static void visit_state(struct connection *c,
 		}
 	}
 	verbose.level++;
-	param->visitor(c, ike, child, visit_kind, param->context);
+	param->visitor(c, ike, child, visit_kind,
+		       param->context, verbose);
 }
 
 /*

@@ -26,6 +26,7 @@ struct connection;
 struct whack_message;
 struct show;
 enum chrono;
+struct verbose;
 
 struct each {
 	/* "terminating", "deleting", ... */
@@ -215,7 +216,8 @@ typedef void (connection_state_visitor)
 	 struct ike_sa **ike,
 	 struct child_sa **child,
 	 enum connection_visit_kind visit_kind,
-	 struct connection_state_visitor_context *context);
+	 struct connection_state_visitor_context *context,
+	 struct verbose verbose);
 
 void visit_connection_states(struct connection *c,
 			     connection_state_visitor *state_visitor,
