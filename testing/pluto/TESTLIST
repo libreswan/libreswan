@@ -1558,6 +1558,8 @@ kvmplutotest	whack-delete-04-ikev1-quick-responder	good	github/1531
 kvmplutotest	whack-delete-04-ikev1-quick-initiator	good	github/1531
 kvmplutotest	whack-delete-05-responder-ikev1		good
 kvmplutotest	whack-delete-05-responder-ikev2		good
+kvmplutotest	whack-delete-06-larval-cuckoo-ikev1	good
+kvmplutotest	whack-delete-06-larval-cuckoo-ikev2	good
 
 kvmplutotest	whack-delete-child-01-async-ikev2	good
 kvmplutotest	whack-delete-ike-01-async-ikev2		good

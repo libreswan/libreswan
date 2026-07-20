@@ -1,0 +1,4 @@
+Delete a larval IKEv1 CUCKOO's connection.
+
+Because IKEv1 exchanges are independent.  Just the child can
+be deleted without messing up the IKE SA.

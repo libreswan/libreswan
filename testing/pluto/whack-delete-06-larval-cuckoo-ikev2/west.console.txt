@@ -30,32 +30,35 @@ west #
 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec up west-cuckoo # sanitize-retransmits
-"west-cuckoo" #3: initiating Child SA using IKE SA #1
-"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.3.0/24===192.0.20.0/24]
-"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
-west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
-up
-west #
- ../../guestbin/ping-once.sh --up 192.0.20.254
 up
 west #
  ipsec trafficstatus
 #2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # stop the CREATE_CHILD_SA making it out
+west #
+ ipsec whack --impair block_outbound:yes
+IMPAIR: recording all outbound messages
+IMPAIR: block all outbound messages: no -> yes
+west #
+ ipsec up --async west-cuckoo # sanitize-retransmits
+"west-cuckoo" #3: initiating Child SA using IKE SA #1
+west #
+ /testing/guestbin/wait-for-pluto.sh '"west-cuckoo" #3: sent CREATE_CHILD_SA request'
+"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.3.0/24===192.0.20.0/24]
+west #
+ # deleting the wedged CUCKOO Child SA deletes the CUCKOLD IKE SA
 west #
  ipsec delete west-cuckoo
 "west-cuckoo": terminating SAs using this connection
 "west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+IMPAIR: "west-cuckold" #1: blocking outbound message 2
 "west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-cuckold" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
-"west-cuckoo" #3: ESP traffic information: in=84B out=84B
+west #
+ # deletes cuckold trying to revive
 west #
  ipsec delete west-cuckold
-west #
- # non-zero counts confirm encrypted traffic flowing
-west #
- ipsec trafficstatus
 west #

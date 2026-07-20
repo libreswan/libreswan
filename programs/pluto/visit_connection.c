@@ -725,6 +725,7 @@ bool visit_connection_principal_child(struct connection *c,
 	 * The Child SA's IKE SA is for another connection's
 	 * (unwitting) IKE SA.
 	 */
+	vexpect(ike == NULL || (*ike) != ike_of_child);
 	vexpect(ike_of_child->sa.st_connection != c);
 	visit_state(c, &ike_of_child, &child,
 		    VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA,

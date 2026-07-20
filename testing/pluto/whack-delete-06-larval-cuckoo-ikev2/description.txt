@@ -1,0 +1,8 @@
+Delete a larval IKEv2 CUCKOO's connection.
+
+The CUCKOLD IKE SA initiates a CREATE_CHILD_SA to create the CUCKOO.
+While the exchange is still outstanding, the CUCKOO's connection is
+deleted.
+
+The CUCKOLD needs to be torn down as anything else will leave the IKE
+SA in an undefined state.
