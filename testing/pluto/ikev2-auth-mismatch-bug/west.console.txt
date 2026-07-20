@@ -1,0 +1,68 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainec/`hostname`.p12
+ ipsec pk12util -w nss-pw -i real/mainec/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -O -n west
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+
+# CONNECTION FAILS, BUT IT SHOULD SUCCEED. this file (west.console.txt) should be updated after the bug is fixed. this is here just to make the test fails, even though it's marked as WIP
+
+"westnet-eastnet-ikev2" #1: private key matching certificate west has type ECDSA but RSA is needed
+"westnet-eastnet-ikev2" #1: encountered fatal error in state IKE_SA_INIT_IR
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #1: deleting IKE SA (processed IKE_SA_INIT response)
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+west #
+ ipsec whack --trafficstatus
+west #
+ echo "done"
+done
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+west #
