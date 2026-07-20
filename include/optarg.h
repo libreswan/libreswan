@@ -157,7 +157,7 @@ void optarg_verbose(const struct logger *logger, lset_t start);
 #define ASYNC_OPTS							\
 	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
 	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
-	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
+	{ SILENT_OPT("async"), no_argument, NULL, OPT_ASYNC }
 
 /*
  * parse --debug and --no-debug options.  The option may be followed
