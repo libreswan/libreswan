@@ -47,12 +47,13 @@ west #
 west #
  ipsec delete west-cuckoo
 "west-cuckoo": terminating SAs using this connection
+"west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "west-cuckold" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec delete west-cuckold
-"west-cuckold": terminating SAs using this connection
-"west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #
