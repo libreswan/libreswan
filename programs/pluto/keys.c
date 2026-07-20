@@ -69,6 +69,15 @@
 
 static struct secret *pluto_secrets = NULL;
 
+static struct secret_pubkey_stuff *checked_private_key(const struct connection *c,
+						       const struct pubkey_type *type,
+						       struct secret_pubkey_stuff *pks,
+						       bool load_needed,
+						       err_t err,
+						       struct logger *logger,
+						       const char *what,
+						       const char *name);
+
 void load_preshared_secrets(struct logger *logger)
 {
 	lsw_load_preshared_secrets(&pluto_secrets, config_setup_secretsfile(), logger);
@@ -653,6 +662,60 @@ const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger
  * indicated by a NULL pointer.
  */
 
+struct secret_pubkey_stuff *checked_private_key(const struct connection *c,
+						const struct pubkey_type *type,
+						struct secret_pubkey_stuff *pks,
+						bool load_needed,
+						err_t err,
+						struct logger *logger,
+						const char *what,
+						const char *name)
+{
+	if (err != NULL) {
+		llog(RC_LOG, logger,
+		     "private key matching %s \"%s\" not found in NSS DB, %s",
+		     what, name, err);
+		return NULL;
+	}
+
+	if (PBAD(logger, pks == NULL)) {
+		return NULL;
+	}
+
+	if (load_needed) {
+		/*
+		 * XXX: the private key that was pre-loaded
+		 * during "whack add" may have been deleted
+		 * because all secrets were thrown away.
+		 *
+		 * The real problem is that the connection
+		 * lacks a counted reference to the private
+		 * key.
+		 */
+		llog(LOG_STREAM/*not-whack-grrr*/, logger,
+		     "reloaded private key matching %s %s '%s'",
+		     c->local->config->leftright, what, name);
+	}
+
+	if (pks->content.type != type) {
+		llog(RC_LOG, logger,
+		     "private key matching %s %s has type %s but %s is needed",
+		     what, name,
+		     pks->content.type->name, type->name);
+		return NULL;
+	}
+
+	/*
+	 * If we don't find the right keytype (RSA, ECDSA, etc) then
+	 * best will end up as NULL.
+	 */
+	PEXPECT(logger, pks->content.type == type);
+	ldbg(logger, "connection %s's %s private key found in NSS DB using %s %s",
+	     c->name, type->name, what, name);
+
+	return pks;
+}
+
 struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 						  const struct pubkey_type *type,
 						  struct logger *logger)
@@ -669,39 +732,12 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		     type->name);
 
 		struct secret_pubkey_stuff *pks = NULL;
-		bool load_needed;
+		bool load_needed = false;
 		err_t err = find_or_load_private_key_by_cert(&pluto_secrets,
 							     &c->local->host.config->cert,
 							     &pks, &load_needed, logger);
-		if (err != NULL) {
-			ldbg(logger, "private key for certificate %s not found in NSS DB",
-			     nickname);
-			return NULL;
-		}
-
-		if (load_needed) {
-			/*
-			 * XXX: the private key that was pre-loaded
-			 * during "whack add" may have been deleted
-			 * because all secrets were thrown away.
-			 *
-			 * The real problem is that the connection
-			 * lacks a counted reference to the private
-			 * key.
-			 */
-			llog(LOG_STREAM/*not-whack-grrr*/, logger,
-				    "reloaded private key matching %s certificate '%s'",
-				    c->local->config->leftright, nickname);
-		}
-
-		/*
-		 * If we don't find the right keytype (RSA, ECDSA,
-		 * etc) then best will end up as NULL
-		 */
-		PEXPECT(logger, pks->content.type == type);
-		ldbg(logger, "connection %s's %s private key found in NSS DB using cert",
-		     c->name, type->name);
-		return pks;
+		return checked_private_key(c, type, pks, load_needed, err,
+					   logger, "certificate", nickname);
 	}
 
 	/* is there a CKAID assigned to this connection? */
@@ -719,47 +755,8 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets,
 							      c->local->host.config->ckaid,
 							      &pks, &load_needed, logger);
-		if (err != NULL) {
-			ckaid_buf ckb;
-			llog(RC_LOG, logger,
-			     "private key matching CKAID '%s' not found: %s",
-			     str_ckaid(c->local->host.config->ckaid, &ckb), err);
-			return NULL;
-		}
-
-		if (load_needed) {
-			/*
-			 * XXX: the private key that was pre-loaded
-			 * during "whack add" may have been deleted
-			 * because all secrets were thrown away.
-			 *
-			 * The real problem is that the connection
-			 * lacks a counted reference to the private
-			 * key.
-			 */
-			ckaid_buf ckb;
-			llog(LOG_STREAM/*not-whack-grr*/, logger,
-			     "reloaded private key matching %s CKAID %s",
-			     c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
-		}
-
-		if (pks->content.type != type) {
-			ckaid_buf ckb;
-			llog(RC_LOG, logger,
-			     "private key matching CKAID %s has type %s but %s is needed",
-			     str_ckaid(c->local->host.config->ckaid, &ckb),
-			     pks->content.type->name,
-			     type->name);
-			return NULL;
-		}
-
-		/*
-		 * If we don't find the right keytype (RSA, ECDSA,
-		 * etc) then best will end up as NULL
-		 */
-		ldbg(logger, "connection %s's %s private key found in NSS DB using CKAID",
-		     c->name, type->name);
-		return pks;
+		return checked_private_key(c, type, pks, load_needed, err,
+					   logger, "CKAID", str_ckaid(c->local->host.config->ckaid, &ckb));
 	}
 
 	ldbg(logger, "looking for connection %s's %s private key",
