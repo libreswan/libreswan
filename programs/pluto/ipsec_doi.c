@@ -115,7 +115,8 @@ struct child_policy capture_child_rekey_policy(struct state *st)
 	return (struct child_policy){0}; /*empty*/
 }
 
-void jam_child_sa_details(struct jambuf *buf, struct state *st)
+void jam_child_sa_details(struct jambuf *buf,
+			  const struct state *st)
 {
 	struct connection *const c = st->st_connection;
 	const char *ini = "{";

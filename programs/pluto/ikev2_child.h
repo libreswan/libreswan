@@ -81,13 +81,16 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 		 NULL);							\
 	})
 
-void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
+void llog_v2_child_sa_established(struct ike_sa *ike,
+				  const struct child_sa *child);
 
 void set_larval_v2_transition(struct child_sa *larval, const struct finite_state *to,
 			      where_t where);
 
-void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa *child);
+void jam_v2_success_child_sa_request_details(struct jambuf *buf,
+					     const struct child_sa *child);
 
-void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *child);
+void jam_v2_success_ts_proposal_details(struct jambuf *buf,
+					const struct child_sa *child);
 
 #endif
