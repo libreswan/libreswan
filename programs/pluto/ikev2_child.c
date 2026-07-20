@@ -684,7 +684,8 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	return v2N_NOTHING_WRONG;
 }
 
-void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa *larval)
+void jam_v2_success_child_sa_request_details(struct jambuf *buf,
+					     const struct child_sa *larval)
 {
 	const struct config *config = larval->sa.st_connection->config;
 	jam_string(buf, "{");
@@ -731,7 +732,8 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 }
 
 /* log TS proposal */
-void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *larval)
+void jam_v2_success_ts_proposal_details(struct jambuf *buf,
+					const struct child_sa *larval)
 {
 	TABLE_FOR_EACH(spd, larval->sa.st_connection->child.spds) {
 		jam_string(buf, " ");
@@ -742,7 +744,8 @@ void jam_v2_success_ts_proposal_details(struct jambuf *buf, struct child_sa *lar
 	}
 }
 
-void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
+void llog_v2_child_sa_established(struct ike_sa *ike UNUSED,
+				  const struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {

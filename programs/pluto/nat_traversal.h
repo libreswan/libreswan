@@ -73,7 +73,7 @@ extern deltatime_t nat_keepalive_period;
 /**
  * NAT-Traversal detected
  */
-bool nat_traversal_detected(struct state *st);
+bool nat_traversal_detected(const struct state *st);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger);
 

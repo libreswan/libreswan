@@ -188,7 +188,7 @@ void detect_nat_common(struct ike_sa *ike,
 
 }
 
-bool nat_traversal_detected(struct state *st)
+bool nat_traversal_detected(const struct state *st)
 {
 	return (st->hidden_variables.st_nated_host ||
 		st->hidden_variables.st_nated_peer);
