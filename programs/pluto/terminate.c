@@ -142,7 +142,8 @@ static void terminate_v1_state(struct connection *c,
 static void terminate_v2_states(struct connection *c,
 				struct ike_sa **ike,
 				struct child_sa **child,
-				enum connection_visit_kind visit_kind)
+				enum connection_visit_kind visit_kind,
+				struct verbose verbose)
 {
 	switch (visit_kind) {
 	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
@@ -185,7 +186,7 @@ static void terminate_v2_states(struct connection *c,
 		 * but when would this be the case?
 		 */
 		whack_attach(&(*ike)->sa, c->logger);
-		terminate_ike_family(ike, REASON_DELETED, HERE);
+		terminate_ike_family(ike, REASON_DELETED, verbose);
 		return;
 
 	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
@@ -236,10 +237,11 @@ static void terminate_connection_states(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct connection_state_visitor_context *context)
+					struct connection_state_visitor_context *context,
+					struct verbose verbose)
 {
 	if (context->count == 0) {
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		vlog("terminating SAs using this connection");
 	}
 	context->count++;
 	switch (c->config->ike_version) {
@@ -248,7 +250,7 @@ static void terminate_connection_states(struct connection *c,
 		return;
 	case IKEv2:
 		/* may need to delete IKE tree */
-		terminate_v2_states(c, ike, child, visit_kind);
+		terminate_v2_states(c, ike, child, visit_kind, verbose);
 		return;
 	}
 	bad_case(c->config->ike_version);
@@ -523,7 +525,8 @@ void terminate_and_delete_connections(struct connection *c,
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
-static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
+static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child,
+			       struct verbose verbose)
 {
 	/*
 	 * With IKEv1, deleting an ISAKMP SA only deletes larval
@@ -531,15 +534,15 @@ static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 	 * wild.
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-		ldbg_routing((*ike)->sa.logger, "    letting established IPsec SA "PRI_SO" go wild",
-			     pri_so(child->sa.st_serialno));
+		vdbg("letting established IPsec SA "PRI_SO" go wild",
+		     pri_so(child->sa.st_serialno));
 	} else {
 		/*
 		 * Attach the IKE SA's whack to the child so that the
 		 * child can also log its demise.
 		 */
-		ldbg_routing((*ike)->sa.logger, "    deleting larval IPsec SA "PRI_SO,
-			     pri_so(child->sa.st_serialno));
+		vdbg("deleting larval IPsec SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
 		whack_attach(&child->sa, (*ike)->sa.logger);
 		delete_child_sa(&child);
 	}
@@ -547,7 +550,7 @@ static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 
 static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 			       enum terminate_reason reason,
-			       where_t where)
+			       struct verbose verbose)
 {
 
 	/*
@@ -567,9 +570,9 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	if (cc->established_child_sa == child->sa.st_serialno) {
 		PEXPECT((*ike)->sa.logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.logger, "    teardown established Child SA "PRI_SO,
-			     pri_so(child->sa.st_serialno));
-		connection_teardown_child(&child, reason, where);
+		vdbg("teardown established Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		connection_teardown_child(&child, reason, verbose.where);
 		return;
 	}
 
@@ -586,9 +589,9 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 
 	if (cc->negotiating_child_sa == child->sa.st_serialno) {
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.logger, "    teardown larval Child SA "PRI_SO,
-			     pri_so(child->sa.st_serialno));
-		connection_teardown_child(&child, reason, where);
+		vdbg("teardown larval Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		connection_teardown_child(&child, reason, verbose.where);
 		return;
 	}
 
@@ -603,19 +606,21 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 		return;
 	}
 
-	ldbg_routing((*ike)->sa.logger, "    delete Child SA "PRI_SO,
-		     pri_so(child->sa.st_serialno));
+	vdbg("delete Child SA "PRI_SO,
+	     pri_so(child->sa.st_serialno));
 	delete_child_sa(&child);
 }
 
 void terminate_ike_family(struct ike_sa **ike,
 			  enum terminate_reason reason,
-			  where_t where)
+			  struct verbose verbose)
 {
-	ldbg_routing((*ike)->sa.logger, "%s()", __func__);
+	vdbg("%s()", __func__);
+	verbose.level++;
 	pstat_sa_failed(&(*ike)->sa, reason);
 
-	ldbg((*ike)->sa.logger, "  IKE SA is no longer viable");
+	vdbg("IKE SA "PRI_SO" is no longer viable",
+	     pri_so((*ike)->sa.st_serialno));
 	(*ike)->sa.st_viable_parent = false;
 
 	/*
@@ -634,18 +639,22 @@ void terminate_ike_family(struct ike_sa **ike,
 
 	struct child_sa *connection_child = child_sa_by_serialno((*ike)->sa.st_connection->negotiating_child_sa);
 	if (connection_child == NULL) {
-		ldbg_routing((*ike)->sa.logger, "  IKE SA's connection has no Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
+		vdbg("IKE SA "PRI_SO"'s connection has no Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
 	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
-		ldbg_routing((*ike)->sa.logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
-			     pri_so(connection_child->sa.st_serialno));
+		vdbg("IKE SA "PRI_SO"' is not the parent of the connection's Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so(connection_child->sa.st_serialno));
 		connection_child = NULL;
 	} else {
-		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
-			     pri_so(connection_child->sa.st_serialno));
+		vdbg("dispatching delete to IKE SA "PRI_SO"'s Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so(connection_child->sa.st_serialno));
 		whack_attach(&connection_child->sa, (*ike)->sa.logger);
 		/* will delete child and its logger */
-		connection_teardown_child(&connection_child, reason, where); /* always dispatches here*/
+		connection_teardown_child(&connection_child, reason,
+					  verbose.where); /* always dispatches here*/
 		PEXPECT((*ike)->sa.logger, connection_child == NULL); /*gone!*/
 		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
 		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
@@ -669,16 +678,16 @@ void terminate_ike_family(struct ike_sa **ike,
 
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
-			terminate_v1_child(ike, child);
+			terminate_v1_child(ike, child, verbose);
 			break;
 		case IKEv2:
-			terminate_v2_child(ike, child, reason, where);
+			terminate_v2_child(ike, child, reason, verbose);
 			break;
 		}
 	}
 
 	/* delete self */
-	connection_teardown_ike(ike, reason, where);
+	connection_teardown_ike(ike, reason, verbose.where);
 }
 
 void connection_delete_v1_state(struct state **st, where_t where)

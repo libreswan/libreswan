@@ -73,7 +73,8 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 
 	if (IS_V1_ISAKMP_SA(st)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		terminate_ike_family(&ike, REASON_TOO_MANY_RETRANSMITS, HERE);
+		terminate_ike_family(&ike, REASON_TOO_MANY_RETRANSMITS,
+				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		return;
 	}
 

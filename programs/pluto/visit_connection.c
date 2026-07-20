@@ -526,6 +526,63 @@ void whack_connection_states(const struct whack_message *wm,
 	visit_connection_roots(&param);
 }
 
+static void jam_owner(struct jambuf *buf,
+		      struct connection *c,
+		      const char *name,
+		      so_serial_t so)
+{
+	name_buf ob;
+	for (enum connection_owner owner = 0;
+	     owner < elemsof(c->routing.owner);
+	     owner++) {
+		if (c->routing.owner[owner] == so) {
+			name = str_enum_short(&connection_owner_stories, owner, &ob);
+		}
+	}
+	jam_string(buf, " ");
+	jam_string(buf, name);
+	jam_string(buf, " ");
+	jam_so(buf, so);
+}
+
+static void visit_state(struct connection *c,
+			struct ike_sa **ike,
+			struct child_sa **child,
+			enum connection_visit_kind visit_kind,
+			struct connection_state_visitor_param *param,
+			struct verbose verbose)
+{
+	VDBG_JAMBUF(buf) {
+		switch (visit_kind) {
+#define C(E) case E: jam_string(buf, #E); break
+			C(NUDGE_CONNECTION_PRINCIPAL_IKE_SA);
+			C(NUDGE_CONNECTION_CROSSED_IKE_SA);
+			C(VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA);
+			C(VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA);
+			C(VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA);
+			C(VISIT_CONNECTION_CHILD_OF_NONE);
+			C(VISIT_CONNECTION_LURKING_IKE_SA);
+			C(VISIT_CONNECTION_LURKING_CHILD_SA);
+			C(VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA);
+			C(FINISH_CONNECTION_PRINCIPAL_IKE_SA);
+			C(VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA);
+#undef C
+		}
+		jam_string(buf, ":");
+		if (ike != NULL && (*ike) != NULL) {
+			jam_owner(buf, c, "IKE SA",
+				  (*ike)->sa.st_serialno);
+		}
+		if (child != NULL && (*child) != NULL) {
+			jam_owner(buf, c, "Child SA",
+				  (*child)->sa.st_serialno);
+		}
+	}
+	verbose.level++;
+	param->visitor(c, ike, child, visit_kind,
+		       param->context, verbose);
+}
+
 /*
  * Give all the connection parents a gentle nudge so that they can do
  * preliminary work before they, and their children, are visited
@@ -565,20 +622,18 @@ struct ike_sa *nudge_connection_established_parents(struct connection *c,
 		}
 
 		if (st->st_serialno == c->established_ike_sa) {
-			vdbg("nudging principal established IKE SA "PRI_SO, pri_so(st->st_serialno));
 			principal_ike_sa = pexpect_ike_sa(st);
-			param->visitor(c, &principal_ike_sa, NULL,
-				       NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
-				       param->context);
+			visit_state(c, &principal_ike_sa, NULL,
+				    NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
+				    param, verbose);
 			vexpect(principal_ike_sa != NULL);
 			continue;
 		}
 
-		vdbg("nudging double-crossed established IKE SA "PRI_SO, pri_so(st->st_serialno));
 		struct ike_sa *parent = pexpect_ike_sa(st);
-		param->visitor(c, &parent, NULL,
-			       NUDGE_CONNECTION_CROSSED_IKE_SA,
-			       param->context);
+		visit_state(c, &parent, NULL,
+			    NUDGE_CONNECTION_CROSSED_IKE_SA,
+			    param, verbose);
 		vexpect(parent != NULL);
 	}
 
@@ -625,20 +680,13 @@ bool visit_connection_principal_child(struct connection *c,
 		return false;
 	}
 
-	const char *child_state =
-		(c->established_child_sa == child->sa.st_serialno ? "established" :
-		 "negotiating");
-
 	if (c->established_ike_sa == child->sa.st_clonedfrom) {
 		/*
 		 * The Child SA and IKE SA share the same parent.
 		 */
-		vdbg("dispatch %s principal Child SA "PRI_SO" with principal established IKE SA "PRI_SO,
-		     child_state, pri_so(child->sa.st_serialno),
-		     pri_so(child->sa.st_clonedfrom));
-		param->visitor(c, ike, &child,
-			       VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA,
-			       param->context);
+		visit_state(c, ike, &child,
+			    VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA,
+			    param, verbose);
 		return true;
 	}
 
@@ -650,11 +698,9 @@ bool visit_connection_principal_child(struct connection *c,
 		 * they keep being deleted (IKEv2 never orphans
 		 * children).
 		 */
-		vdbg("dispatch %s principal Child SA "PRI_SO" with no IKE SA (IKEv1 orphan)",
-		     child_state, pri_so(child->sa.st_serialno));
-		param->visitor(c, NULL, &child,
-			       VISIT_CONNECTION_CHILD_OF_NONE,
-			       param->context);
+		visit_state(c, NULL, &child,
+			    VISIT_CONNECTION_CHILD_OF_NONE,
+			    param, verbose);
 		return true;
 	}
 
@@ -669,12 +715,9 @@ bool visit_connection_principal_child(struct connection *c,
 		 * IKE_OF_CHILD lurking i.e., the IKE SA was double
 		 * CROSSED.
 		 */
-		vdbg("dispatch %s principal Child SA "PRI_SO" with double-crossed established IKE SA "PRI_SO,
-		     child_state ,pri_so(child->sa.st_serialno),
-		     pri_so(ike_of_child->sa.st_serialno));
-		param->visitor(c, &ike_of_child, &child,
-			       VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA,
-			       param->context);
+		visit_state(c, &ike_of_child, &child,
+			    VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA,
+			    param, verbose);
 		return true;
 	}
 
@@ -683,13 +726,9 @@ bool visit_connection_principal_child(struct connection *c,
 	 * (unwitting) IKE SA.
 	 */
 	vexpect(ike_of_child->sa.st_connection != c);
-	state_buf sb;
-	vdbg("dispatch %s principal Child SA "PRI_SO" (cuckoo) with another connection's established IKE SA "PRI_STATE" (cuckold)",
-	     child_state, pri_so(child->sa.st_serialno),
-	     pri_state(&ike_of_child->sa, &sb));
-	param->visitor(c, &ike_of_child, &child,
-		       VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA,
-		       param->context);
+	visit_state(c, &ike_of_child, &child,
+		    VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA,
+		    param, verbose);
 	return true;
 }
 
@@ -806,24 +845,20 @@ void visit_connection_states(struct connection *c,
 		}
 
 		if (IS_PARENT_SA(weed.st)) {
-			vdbg("dispatch lurking IKE SA to "PRI_SO,
-			     pri_so(weed.st->st_serialno));
 			struct ike_sa *lingering_ike = pexpect_ike_sa(weed.st);
-			param->visitor(c, &lingering_ike, NULL,
-				       VISIT_CONNECTION_LURKING_IKE_SA,
-				       param->context);
+			visit_state(c, &lingering_ike, NULL,
+				    VISIT_CONNECTION_LURKING_IKE_SA,
+				    param, verbose);
 			nr_parents++;
 			continue;
 		}
 
-		vdbg("dispatch lurking Child SA to "PRI_SO,
-		     pri_so(weed.st->st_serialno));
-		struct child_sa *lingering_child = pexpect_child_sa(weed.st);
 		/* may not have IKE as parent? */
+		struct child_sa *lingering_child = pexpect_child_sa(weed.st);
 		nr_children++;
-		param->visitor(c, NULL, &lingering_child,
-			       VISIT_CONNECTION_LURKING_CHILD_SA,
-			       param->context);
+		visit_state(c, NULL, &lingering_child,
+			    VISIT_CONNECTION_LURKING_CHILD_SA,
+			    param, verbose);
 	}
 
 	vdbg("weeded %u parents and %u children", nr_parents, nr_children);
@@ -850,12 +885,9 @@ void visit_connection_states(struct connection *c,
 			struct verbose verbose = child_filter.search.verbose;
 
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
-			state_buf sb;
-			vdbg("dispatching to sibling Child SA "PRI_STATE,
-			     pri_state(&child->sa, &sb));
-			param->visitor(c, &ike, &child,
-				       VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA,
-				       param->context);
+			visit_state(c, &ike, &child,
+				    VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA,
+				    param, verbose);
 			nr++;
 		}
 		vdbg("poked %u siblings", nr);
@@ -870,18 +902,15 @@ void visit_connection_states(struct connection *c,
 	 */
 
 	if (ike != NULL && !visited_principal_child) {
-		vdbg("dispatch to IKE SA "PRI_SO" as child skipped",
-		     pri_so(ike->sa.st_serialno));
-		param->visitor(c, &ike, NULL,
-			       VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA,
-			       param->context);
+		visit_state(c, &ike, NULL,
+			    VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA,
+			    param, verbose);
 	}
 
 	if (ike != NULL) {
-		vdbg("dispatch STOP as reached end");
-		param->visitor(c, &ike, NULL,
-			       FINISH_CONNECTION_PRINCIPAL_IKE_SA,
-			       param->context);
+		visit_state(c, &ike, NULL,
+			    FINISH_CONNECTION_PRINCIPAL_IKE_SA,
+			    param, verbose);
 	} else {
 		vdbg("skipping STOP, no IKE");
 	}

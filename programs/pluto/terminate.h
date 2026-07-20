@@ -18,6 +18,7 @@
 
 #include "where.h"
 
+struct verbose;
 struct connection;
 struct logger;
 struct ike_sa;
@@ -60,7 +61,8 @@ void terminate_and_delete_connections(struct connection *,
 				      struct logger *logger,
 				      where_t where);
 
-void terminate_ike_family(struct ike_sa **ike, enum terminate_reason reason, where_t where);
+void terminate_ike_family(struct ike_sa **ike, enum terminate_reason reason,
+			  struct verbose verbose);
 
 void connection_delete_v1_state(struct state **st, where_t where);
 

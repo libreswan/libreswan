@@ -66,7 +66,8 @@ void whack_active_redirect_state(struct connection *c UNUSED,
 				 struct ike_sa **ike_sa,
 				 struct child_sa **child UNUSED,
 				 enum connection_visit_kind visit_kind,
-				 struct connection_state_visitor_context *context)
+				 struct connection_state_visitor_context *context,
+				 struct verbose verbose UNUSED)
 {
 	switch (visit_kind) {
 	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
