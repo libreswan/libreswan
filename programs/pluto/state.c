@@ -1799,7 +1799,8 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
 	}
 
-	terminate_ike_family(ike, REASON_DELETED, where);
+	terminate_ike_family(ike, REASON_DELETED,
+			     VERBOSE(DEBUG_STREAM, (*ike)->sa.logger, NULL));
 }
 
 void show_globalstate_status(struct show *s)
