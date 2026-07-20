@@ -159,12 +159,23 @@ static void terminate_v2_states(struct connection *c,
 		return;
 
 	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
-	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
 	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
 		PEXPECT(c->logger, ike != NULL);
 		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
+	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
+		/*
+		 * The IKE SA's state will become scrambled when the
+		 * Cuckoo is deleted; hence delete the IKE SA.
+		 */
+		PEXPECT(c->logger, ike != NULL);
+		whack_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
+		record_n_send_n_log_v2_delete(*ike, HERE);
+		terminate_ike_family(ike, REASON_DELETED, verbose);
+		return;
+
 	case VISIT_CONNECTION_CHILD_OF_NONE:
 		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
 		whack_attach(&(*child)->sa, c->logger);
