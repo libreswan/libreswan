@@ -1788,9 +1788,11 @@ kvmplutotest	pfkeyv2-esn-ah-freebsd			good
 kvmplutotest	pfkeyv2-ondemand-transport		good
 kvmplutotest	pfkeyv2-ondemand-tunnel			good
 kvmplutotest	host-to-host-transport-freebsd		good	github/2602
+kvmplutotest	host-to-host-transport-linux		good
 kvmplutotest	host-to-host-transport-netbsd		good	github/2602
 kvmplutotest	host-to-host-transport-openbsd		good	github/2602
 kvmplutotest	host-to-host-tunnel-freebsd		good
+kvmplutotest	host-to-host-tunnel-linux		good
 kvmplutotest	host-to-host-tunnel-netbsd		good
 kvmplutotest	host-to-host-tunnel-openbsd		good
 

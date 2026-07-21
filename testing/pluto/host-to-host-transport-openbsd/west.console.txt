@@ -1,0 +1,86 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+pluto(ok)
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"west-east" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_TRANSPORT_MODE)}
+"west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec _kernel state
+@0 esp transport from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-256-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
+		state mature replay 16 flags 0x400<esn>
+	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_hard: alloc 0 bytes 0 add N first 0
+	lifetime_soft: alloc 0 bytes 0 add N first 0
+	address_src: 192.1.2.23
+	address_dst: 192.1.2.45
+	key_auth: bits 288: HASHKEY
+	key_encrypt: bits 288: ENCKEY
+	counter:
+		0 input packets
+		0 output packets
+		0 input bytes
+		0 output bytes
+		0 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 1
+@0 esp transport from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-256-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
+		state mature replay 16 flags 0x400<esn>
+	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_hard: alloc 0 bytes 0 add N first 0
+	lifetime_soft: alloc 0 bytes 0 add N first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 288: HASHKEY
+	key_encrypt: bits 288: ENCKEY
+	counter:
+		0 input packets
+		0 output packets
+		0 input bytes
+		0 output bytes
+		0 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 1
+west #
+ ipsec _kernel policy
+@0 flow esp in from 192.1.2.23 to 192.1.2.45 local 192.1.2.45 peer 192.1.2.23 type require
+@1 flow esp out from 192.1.2.45 to 192.1.2.23 local 192.1.2.45 peer 192.1.2.23 type require
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
+west #
+ ipsec down west-east
+"west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"west-east" #1: sent INFORMATIONAL request to delete IKE SA
+"west-east" #2: ESP traffic information: in=68B out=64B
+"west-east" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec _kernel state
+west #

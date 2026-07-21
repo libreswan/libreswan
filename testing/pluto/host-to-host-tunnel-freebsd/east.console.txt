@@ -1,19 +1,19 @@
 ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-set #
+east #
  ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-set #
+east #
  ../../guestbin/wait-until-pluto-started
-set #
+east #
  ipsec whack --impair suppress_retransmits
-set #
- ipsec add rise-set
-"rise-set": added oriented IKEv2 connection
-set #
+east #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+east #
  echo "initdone"
 initdone
-set #
+east #
