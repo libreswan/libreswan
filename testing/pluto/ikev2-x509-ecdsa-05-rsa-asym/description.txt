@@ -1,4 +1,4 @@
-IKEv2 ECDSA and RSA certificate based authentication
+IKEv2 ECDSA and RSA certificate based (asymmetric) authentication
 
 This tests auth for west using RSA and auth for east using ECDSA.
 
