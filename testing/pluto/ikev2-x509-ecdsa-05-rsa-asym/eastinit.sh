@@ -1,11 +1,8 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainec/`hostname`.p12
-# Tuomo: why doesn't ipsec checknss --settrust work here?
-ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
-#ipsec start
-ipsec pluto --config /etc/ipsec.conf
+/testing/x509/import.sh real/mainca/mainca.p12
+
+ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
-ipsec status | grep "our auth:"
-ipsec whack --impair suppress_retransmits
 echo "initdone"

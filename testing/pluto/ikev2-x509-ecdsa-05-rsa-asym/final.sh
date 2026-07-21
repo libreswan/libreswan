@@ -1,1 +1,2 @@
-ipsec whack --shutdown
+ipsec _kernel state
+ipsec _kernel policy
