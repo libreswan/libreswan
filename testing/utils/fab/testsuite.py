@@ -16,10 +16,10 @@ import os
 import re
 import collections
 
+from fab.datautil import * # Set() et.al.
 from fab import logutil
 from fab import testingdir
 from fab import scripts
-from fab import hosts
 from pathlib import Path
 
 class Test:
@@ -78,8 +78,11 @@ class Test:
         self.guests, self.commands = scripts.commands(self.directory, self.logger)
 
         # remember all the platforms that are required
-        platforms = hosts.Set()
+        platforms = Set()
         for guest in self.guests:
+            # ignore NIC needing linux
+            if guest.host.name in ("nic"):
+                continue;
             platforms.add(guest.platform)
         self.platforms = sorted(platforms)
 
