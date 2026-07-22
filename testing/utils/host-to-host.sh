@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # host-to-host-{transport,tunnel}-{freebsd,linux,netbsd,openbsd}
+# host-to-host-tunnel-forward-{freebsd,linux,netbsd,openbsd}
 
 bindir=$(dirname $0)
 
@@ -32,7 +33,7 @@ for platform in ${platforms} ; do
 	* )     stack="PFKEYv2" ;;
     esac
 
-    for mode in transport tunnel ; do
+    for mode in transport tunnel tunnel-forward ; do
 
 	dir=${basedir}-${mode}-${platform}
 	echo ${dir}
@@ -40,32 +41,50 @@ for platform in ${platforms} ; do
 	mkdir -p ${dir}
 
 	# tunnel is IPv6, transport is IPv4
+	# tunnel-forward is IPv4 with rise/set behind the east=west tunnel
 
 	case ${mode} in
 	    transport )
 		west=${west_internet4}
 		east=${east_internet4}
 		modeline="	type=transport"
-		family="host-to-host"
+		what="host-to-host transport mode"
+		conn=west-east
+		hosts=${platform}east-${platform}west
+		westimpair=
 		;;
 	    tunnel )
 		west=${west_internet6}
 		east=${east_internet6}
 		modeline=
-		family="IPv6 host-to-host"
+		what="IPv6 host-to-host tunnel mode"
+		conn=west-east
+		hosts=${platform}east-${platform}west
+		westimpair=
+		;;
+	    tunnel-forward )
+		west=${west_internet4}
+		east=${east_internet4}
+		modeline="	leftsubnet=${westnet4}.0/24
+	rightsubnet=${eastnet4}.0/24"
+		what="rise-east=TUNNEL=west-set"
+		conn=westnet-eastnet
+		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
+		westimpair="west# ipsec whack --impair suppress_retransmits"
 		;;
 	esac
 
 	# linux disables IPv6 unless swan-prep is told not to
 
 	case ${platform}-${mode} in
-	    linux-transport ) prep="/testing/guestbin/swan-prep" ;;
-	    linux-tunnel )    prep="/testing/guestbin/swan-prep --46" ;;
-	    * )               prep="../../guestbin/prep.sh" ;;
+	    linux-transport )      prep="/testing/guestbin/swan-prep" ;;
+	    linux-tunnel )         prep="/testing/guestbin/swan-prep --46" ;;
+	    linux-tunnel-forward ) prep="/testing/guestbin/swan-prep" ;;
+	    * )                    prep="../../guestbin/prep.sh" ;;
 	esac
 
 	cat <<EOF > ${dir}/description.txt
-${stack} ${family} ${mode} mode on $(echo ${platform} | sed -e 's/linux/Linux/' -e 's/freebsd/FreeBSD/' -e 's/netbsd/NetBSD/' -e 's/openbsd/OpenBSD/')
+${stack} ${what} on $(echo ${platform} | sed -e 's/linux/Linux/' -e 's/freebsd/FreeBSD/' -e 's/netbsd/NetBSD/' -e 's/openbsd/OpenBSD/')
 EOF
 	do_not_modify >> ${dir}/description.txt
 
@@ -77,7 +96,7 @@ config setup
 	plutodebug=all
 	dumpdir=/tmp
 
-conn west-east
+conn ${conn}
 	left=${west}
 	leftid="@west"
 	right=${east}
@@ -95,20 +114,20 @@ EOF
 	case ${platform} in
 	    openbsd )
 		cat <<EOF > ${dir}/final.sh
-ipsec delete west-east
+ipsec delete ${conn}
 ipsecctl -F
 EOF
 		;;
 	    linux )
 		cat <<EOF > ${dir}/final.sh
-ipsec delete west-east
+ipsec delete ${conn}
 ../../guestbin/ip.sh xfrm state flush
 ../../guestbin/ip.sh xfrm policy flush
 EOF
 		;;
 	    * )
 		cat <<EOF > ${dir}/final.sh
-ipsec delete west-east
+ipsec delete ${conn}
 setkey -F
 EOF
 		;;
@@ -117,8 +136,15 @@ EOF
 	touch ${dir}/east.console.txt
 	touch ${dir}/west.console.txt
 
+	case ${mode} in
+	    tunnel-forward )
+		touch ${dir}/rise.console.txt
+		touch ${dir}/set.console.txt
+		;;
+	esac
+
 	rm -f ${dir}/all.*.sh
-	sh=${dir}/all.${platform}east-${platform}west.sh
+	sh=${dir}/all.${hosts}.sh
 	do_not_modify > ${sh}
 	cat <<EOF >> ${sh}
 
@@ -126,20 +152,38 @@ east# ${prep}
 east# ipsec start
 east# ../../guestbin/wait-until-pluto-started
 east# ipsec whack --impair suppress_retransmits
-east# ipsec add west-east
+east# ipsec add ${conn}
 east# echo "initdone"
 
 west# ${prep}
 west# ipsec start
-west# ../../guestbin/wait-until-pluto-started
-west# ipsec add west-east
+west# ../../guestbin/wait-until-pluto-started${westimpair:+
+${westimpair}}
+west# ipsec add ${conn}
 west# echo "initdone"
 
-west# ipsec up west-east
+west# ipsec up ${conn}
 west# ipsec _kernel state
 west# ipsec _kernel policy
+EOF
+
+	case ${mode} in
+	    tunnel-forward )
+		cat <<EOF >> ${sh}
+rise# ../../guestbin/ping-once.sh --up ${set_westnet4}
+set# ../../guestbin/ping-once.sh --up ${rise_eastnet4}
+west# ipsec whack --trafficstatus
+EOF
+		;;
+	    * )
+		cat <<EOF >> ${sh}
 west# ../../guestbin/ping-once.sh --up ${east}
-west# ipsec down west-east
+EOF
+		;;
+	esac
+
+	cat <<EOF >> ${sh}
+west# ipsec down ${conn}
 west# ipsec _kernel state
 EOF
 
