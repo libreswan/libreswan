@@ -211,43 +211,10 @@ def commands(directory, logger):
 
     # *.sh files
     #
-    # Need to match '*.sh' AFTER '*.sh'.
+    # Need to match '*.sh' AFTER 'all.*.sh'.
     guests, commands = _guest_scripts(directory, logger)
     logger.debug(f"{guests} {commands}")
     if guests:
-        return (guests, commands)
-
-    # Match experimental all.console.txt which contains the names of
-    # the guests embeded as prompts as in "GUEST#"
-
-    script = "all.console.txt"
-    all_console_txt = path.join(directory, script)
-    guests = Set()
-    if os.path.exists(all_console_txt):
-        commands = Commands()
-        # read includes '\n';
-        line_nr = 0
-        for line in open(all_console_txt, "r"):
-            line_nr += 1
-            # regex matches both:
-            #   <guestname># command
-            # and
-            #   # command
-            guestname_command = _HOSTNAME_COMMAND_REGEX.match(line)
-            if guestname_command:
-                guestname = guestname_command.group("hostname") # see regex
-                command = guestname_command.group("command")
-                if guestname:
-                    guest = hosts.guest_by_guestname(guestname)
-                    commands.append(Command(guest, command, script, line_nr))
-                    guests.add(guest)
-                elif line:
-                    commands.append(Command(None, f"# {command}", script, line_nr))
-                else:
-                    commands.append(Command(None, "#", script, line_nr))
-
-        guests = Sorted(guests)
-        logger.debug(f"commands {guests} {scripts}:\n{commands}")
         return (guests, commands)
 
     logger.warning(f"no scripts in {directory}")
