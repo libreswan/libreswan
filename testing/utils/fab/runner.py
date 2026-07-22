@@ -139,63 +139,64 @@ class TestDomain:
 
 def _run_command(args, domain, command, all_verbose_txt, timeout):
 
-        # all gets the new-style prompt including the guestname
-        all_verbose_txt.write(domain.guest.name)
-        all_verbose_txt.write("# ")
-        # both get the command
+    # all.*.txt gets the hostname as the prompt
+    all_verbose_txt.write(domain.guest.host.name)
+    all_verbose_txt.write("# ")
+
+    # both get the command
+    for txt in (all_verbose_txt, domain.verbose_txt):
+        txt.write(command)
+        txt.write("\n")
+
+    # The log prefix will contain the DOMAIN name (which includes
+    # the GUEST name).
+    console = domain.console
+    domain.logger.info(f"{domain.guest.host.name}# {command}")
+    console.sendline(command)
+
+    # Catch pexpect.TIMEOUT and pexpect.EOF.  They are turned into
+    # magic status values further down.
+    m = console.expect([console.prompt, pexpect.TIMEOUT, pexpect.EOF],
+                       timeout=timeout)
+
+    # First dump the output
+    output = console.before
+    if output:
+        # All gets a blank line
+        all_verbose_txt.write("\n")
+        ascii = output.decode()
         for txt in (all_verbose_txt, domain.verbose_txt):
-            txt.write(command)
-            txt.write("\n")
+            txt.write(ascii) # convert byte to string
+        if args.log_console_output:
+            for line in ascii.splitlines():
+                domain.logger.info(f"{repr(line)}")
 
-        # The log prefix will contain the DOMAIN name (which includes
-        # the GUEST name).
-        console = domain.console
-        domain.logger.info(f"{domain.guest.host.name}# {command}")
-        console.sendline(command)
-
-        # Catch pexpect.TIMEOUT and pexpect.EOF.  They are turned into
-        # magic status values further down.
-        m = console.expect([console.prompt, pexpect.TIMEOUT, pexpect.EOF],
-                           timeout=timeout)
-
-        # First dump the output
-        output = console.before
-        if output:
-            # All gets a blank line
-            all_verbose_txt.write("\n")
-            ascii = output.decode()
+    # with the output done, handle what matched and determine the
+    # status.
+    match m:
+        case 0:
+            status = console._check_prompt()
+            if status:
+                domain.logger.warning(f"command '{command}' exited with status {status}")
+        case 1:
+            # A timeout while running a test command is a sign
+            # that the command hung.
+            status = post.Issues.TIMEOUT
+            message = f"{post.Issues.TIMEOUT} while running command {command}"
+            domain.logger.warning(f"*** {message} ***")
             for txt in (all_verbose_txt, domain.verbose_txt):
-                txt.write(ascii) # convert byte to string
-            if args.log_console_output:
-                for line in ascii.splitlines():
-                    domain.logger.info(f"{repr(line)}")
+                txt.write(f"{post.LHS} {message} {post.RHS}")
+        case 2:
+            # An EOF while a command is running is a sign that
+            # libvirt crashed.
+            status = post.Issues.EOF
+            message = f"{post.Issues.EOF} while running command {command}"
+            domain.logger.exception(f"*** {message} ***")
+            for txt in (all_verbose_txt, test_domain.verbose_txt):
+                txt.write("%s %s %s" % (post.LHS, message, post.RHS))
 
-        # with the output done, handle what matched and determine the
-        # status.
-        match m:
-            case 0:
-                status = console._check_prompt()
-                if status:
-                    domain.logger.warning(f"command '{command}' exited with status {status}")
-            case 1:
-                # A timeout while running a test command is a sign
-                # that the command hung.
-                status = post.Issues.TIMEOUT
-                message = f"{post.Issues.TIMEOUT} while running command {command}"
-                domain.logger.warning(f"*** {message} ***")
-                for txt in (all_verbose_txt, domain.verbose_txt):
-                    txt.write(f"{post.LHS} {message} {post.RHS}")
-            case 2:
-                # An EOF while a command is running is a sign that
-                # libvirt crashed.
-                status = post.Issues.EOF
-                message = f"{post.Issues.EOF} while running command {command}"
-                domain.logger.exception(f"*** {message} ***")
-                for txt in (all_verbose_txt, test_domain.verbose_txt):
-                    txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-
-        # now return a meaningful error
-        return status
+    # now return a meaningful error
+    return status
 
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
