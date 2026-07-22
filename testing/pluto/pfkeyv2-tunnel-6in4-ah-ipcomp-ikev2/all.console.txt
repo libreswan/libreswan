@@ -1,25 +1,22 @@
-netbsdeast# ../../guestbin/prep.sh
+linuxeast# ../../guestbin/prep.sh
 
-ipsec.conf -> /usr/local/etc/ipsec.conf
-ipsec.secrets -> /usr/local/etc/ipsec.secrets
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 
-netbsdeast# ipsec start
+linuxeast# ipsec start
 
-Redirecting to: /usr/local/etc/rc.d/pluto onestart
-Initializing NSS database
+Redirecting to: systemctl start ipsec.service
 
-Starting pluto.
-
-netbsdeast# ../../guestbin/wait-until-pluto-started
+linuxeast# ../../guestbin/wait-until-pluto-started
 
 
-netbsdeast# ipsec add eastnet-westnet-ikev2
+linuxeast# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdeast# ipsec whack --impair suppress_retransmits
+linuxeast# ipsec whack --impair suppress_retransmits
 
-netbsdeast# echo "initdone"
+linuxeast# echo "initdone"
 
 initdone
 
@@ -88,7 +85,7 @@ netbsdwest# ipsec _kernel state
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 57(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 60(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=3 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
@@ -133,7 +130,7 @@ netbsdwest# ipsec _kernel state
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 121(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 125(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=3 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 

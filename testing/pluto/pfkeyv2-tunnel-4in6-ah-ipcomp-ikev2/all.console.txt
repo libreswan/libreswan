@@ -1,25 +1,22 @@
-netbsdeast# ../../guestbin/prep.sh
+linuxeast# ../../guestbin/prep.sh
 
-ipsec.conf -> /usr/local/etc/ipsec.conf
-ipsec.secrets -> /usr/local/etc/ipsec.secrets
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 
-netbsdeast# ipsec start
+linuxeast# ipsec start
 
-Redirecting to: /usr/local/etc/rc.d/pluto onestart
-Initializing NSS database
+Redirecting to: systemctl start ipsec.service
 
-Starting pluto.
-
-netbsdeast# ../../guestbin/wait-until-pluto-started
+linuxeast# ../../guestbin/wait-until-pluto-started
 
 
-netbsdeast# ipsec add eastnet-westnet-ikev2
+linuxeast# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdeast# ipsec whack --impair suppress_retransmits
+linuxeast# ipsec whack --impair suppress_retransmits
 
-netbsdeast# echo "initdone"
+linuxeast# echo "initdone"
 
 initdone
 
