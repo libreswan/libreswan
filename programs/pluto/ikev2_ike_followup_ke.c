@@ -194,6 +194,21 @@ void generate_ikev2_followup_ke_link(struct child_sa *child)
 		alloc_rnd_chunk(DEFAULT_ADDKE_LINK_SIZE, "followup-ke link");
 }
 
+bool emit_v2N_ADDITIONAL_KEY_EXCHANGE(struct child_sa *child,
+				      struct pbs_out *outs)
+{
+	struct state *st = &child->sa;
+	if (impair.omit_addke_notification.enabled &&
+	    impair.omit_addke_notification.value == st->st_v2_ike_followup_ke.next_exchange) {
+		llog(IMPAIR_STREAM, st->logger,
+		     "omitting ADDITIONAL_KEY_EXCHANGE notification");
+		return true;
+	}
+	return emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
+			     child->sa.st_v2_ike_followup_ke.link,
+			     outs);
+}
+
 /*
  * Initiator: initiate IKE_FOLLOWUP_KE request
  *
@@ -290,9 +305,7 @@ stf_status initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa 
 	}
 
 	/* echo N(ADDITIONAL_KEY_EXCHANGE) from the previous response */
-	if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
-			   larval_ike->sa.st_v2_ike_followup_ke.link,
-			   request.pbs)) {
+	if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_ike, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -465,9 +478,8 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 
 		if (!task->is_last) {
 			generate_ikev2_followup_ke_link(larval_ike);
-			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
-					   larval_ike->sa.st_v2_ike_followup_ke.link,
-					   response.pbs)) {
+			if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_ike,
+							      response.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}

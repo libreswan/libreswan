@@ -30,6 +30,9 @@ void generate_ikev2_followup_ke_link(struct child_sa *child);
 bool extract_ikev2_followup_ke_link(struct child_sa *child,
 				    struct msg_digest *md);
 
+bool emit_v2N_ADDITIONAL_KEY_EXCHANGE(struct child_sa *child,
+				      struct pbs_out *outs);
+
 /*
  * IKE_FOLLOWUP_KE exchange (RFC 9370)
  *

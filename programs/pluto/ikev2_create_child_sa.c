@@ -430,9 +430,8 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		/* send N(ADDITIONAL_KEY_EXCHANGE) if there will be followup-ke exchanges */
 		if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 			generate_ikev2_followup_ke_link(larval_ike);
-			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
-					   larval_ike->sa.st_v2_ike_followup_ke.link,
-					   message.pbs)) {
+			if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_ike,
+							      message.pbs)) {
 				llog_sa(RC_LOG, larval_ike, "outaddke fail");
 				return false;
 			}
