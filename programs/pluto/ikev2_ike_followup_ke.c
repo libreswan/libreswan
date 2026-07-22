@@ -458,11 +458,13 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 			return STF_INTERNAL_ERROR;
 		}
 
-		generate_ikev2_followup_ke_link(&larval_ike->sa);
-		if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
-				   larval_ike->sa.st_v2_ike_followup_ke.link,
-				   response.pbs)) {
-			return STF_INTERNAL_ERROR;
+		if (!task->is_last) {
+			generate_ikev2_followup_ke_link(&larval_ike->sa);
+			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
+					   larval_ike->sa.st_v2_ike_followup_ke.link,
+					   response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
 	}
 
@@ -518,7 +520,8 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!extract_ikev2_followup_ke_link(&larval_ike->sa, md, larval_ike->sa.logger)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa) &&
+	    !extract_ikev2_followup_ke_link(&larval_ike->sa, md, larval_ike->sa.logger)) {
 		return STF_FATAL;
 	}
 
