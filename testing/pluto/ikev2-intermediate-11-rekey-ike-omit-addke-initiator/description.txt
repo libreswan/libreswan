@@ -1,0 +1,2 @@
+trigger an asynchronous IKE SA rekey with additional key exchange but initiator omits ADDITIONAL_KEY_EXCHANGE in IKE_FOLLOWUP_KE
+
