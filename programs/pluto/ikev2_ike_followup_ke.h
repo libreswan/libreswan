@@ -21,15 +21,14 @@
 struct ike_sa;
 struct child_sa;
 
-bool next_is_ikev2_ike_followup_ke_exchange(struct state *st);
+bool next_is_ikev2_ike_followup_ke_exchange(struct child_sa *child);
 
-bool next_ikev2_ike_followup_ke_exchange(struct state *st);
+bool next_ikev2_ike_followup_ke_exchange(struct child_sa *child);
 
-void generate_ikev2_followup_ke_link(struct state *st);
+void generate_ikev2_followup_ke_link(struct child_sa *child);
 
-bool extract_ikev2_followup_ke_link(struct state *st,
-				    struct msg_digest *md,
-				    struct logger *logger);
+bool extract_ikev2_followup_ke_link(struct child_sa *child,
+				    struct msg_digest *md);
 
 /*
  * IKE_FOLLOWUP_KE exchange (RFC 9370)
