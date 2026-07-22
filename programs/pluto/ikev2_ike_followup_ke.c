@@ -102,14 +102,17 @@ void cleanup_IKE_FOLLOWUP_KE_task(struct ikev2_task **task, struct logger *logge
 	pfreeany(*task);
 }
 
-bool next_is_ikev2_ike_followup_ke_exchange(struct state *st)
+bool next_is_ikev2_ike_followup_ke_exchange(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	return st->st_v2_ike_followup_ke.next_exchange < st->st_oakley.ta_addke.len;
 }
 
-bool next_ikev2_ike_followup_ke_exchange(struct state *st)
+bool next_ikev2_ike_followup_ke_exchange(struct child_sa *child)
 {
-	if (!PEXPECT(st->logger, next_is_ikev2_ike_followup_ke_exchange(st))) {
+	struct state *st = &child->sa;
+
+	if (!PEXPECT(st->logger, next_is_ikev2_ike_followup_ke_exchange(child))) {
 		return false;
 	}
 
@@ -118,8 +121,9 @@ bool next_ikev2_ike_followup_ke_exchange(struct state *st)
 	return true;
 }
 
-static struct ikev2_ike_followup_ke_exchange current_ikev2_ike_followup_ke_exchange(struct state *st)
+static struct ikev2_ike_followup_ke_exchange current_ikev2_ike_followup_ke_exchange(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	struct ikev2_ike_followup_ke_exchange exchange = {0};
 
 	unsigned next_exchange = st->st_v2_ike_followup_ke.next_exchange;
@@ -158,12 +162,12 @@ static bool find_v2N_ADDITIONAL_KEY_EXCHANGE_link(struct msg_digest *md,
 	return true;
 }
 
-bool extract_ikev2_followup_ke_link(struct state *st,
-				    struct msg_digest *md,
-				    struct logger *logger)
+bool extract_ikev2_followup_ke_link(struct child_sa *child,
+				    struct msg_digest *md)
 {
+	struct state *st = &child->sa;
 	shunk_t link;
-	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, logger)) {
+	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, st->logger)) {
 		return false;
 	}
 	free_chunk_content(&st->st_v2_ike_followup_ke.link);
@@ -171,19 +175,20 @@ bool extract_ikev2_followup_ke_link(struct state *st,
 	return true;
 }
 
-static bool validate_ikev2_followup_ke_link(struct state *st,
-					    struct msg_digest *md,
-					    struct logger *logger)
+static bool validate_ikev2_followup_ke_link(struct child_sa *child,
+					    struct msg_digest *md)
 {
+	struct state *st = &child->sa;
 	shunk_t link;
-	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, logger)) {
+	if (!find_v2N_ADDITIONAL_KEY_EXCHANGE_link(md, &link, st->logger)) {
 		return false;
 	}
 	return hunk_eq(st->st_v2_ike_followup_ke.link, link);
 }
 
-void generate_ikev2_followup_ke_link(struct state *st)
+void generate_ikev2_followup_ke_link(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	free_chunk_content(&st->st_v2_ike_followup_ke.link);
 	st->st_v2_ike_followup_ke.link =
 		alloc_rnd_chunk(DEFAULT_ADDKE_LINK_SIZE, "followup-ke link");
@@ -213,12 +218,12 @@ static stf_status initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *i
 	}
 
 	/* advance to the next ike intermediate exchange */
-	if (!next_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (!next_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	struct ikev2_task task = {
-		.exchange = current_ikev2_ike_followup_ke_exchange(&larval_ike->sa),
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_ike),
 	};
 
 	submit_ikev2_task(ike, null_md,
@@ -326,21 +331,21 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!PEXPECT(larval_ike->sa.logger, next_ikev2_ike_followup_ke_exchange(&larval_ike->sa))) {
+	if (!PEXPECT(larval_ike->sa.logger, next_ikev2_ike_followup_ke_exchange(larval_ike))) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!validate_ikev2_followup_ke_link(&larval_ike->sa, md, larval_ike->sa.logger)) {
+	if (!validate_ikev2_followup_ke_link(larval_ike, md)) {
 		llog(RC_LOG, larval_ike->sa.logger, "responder IKE_FOLLOWUP_KE link does not match");
 		LDBG_hunk(larval_ike->sa.logger, &larval_ike->sa.st_v2_ike_followup_ke.link);
 		return STF_FATAL;
 	}
 
 	struct ikev2_task task = {
-		.exchange = current_ikev2_ike_followup_ke_exchange(&larval_ike->sa),
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_ike),
 	};
 
-	if (!next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (!next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		task.is_last = true;
 		/* for SKEYSEED */
 		task.ni = clone_hunk_as_chunk(&larval_ike->sa.st_ni, "Ni");
@@ -459,7 +464,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 		}
 
 		if (!task->is_last) {
-			generate_ikev2_followup_ke_link(&larval_ike->sa);
+			generate_ikev2_followup_ke_link(larval_ike);
 			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
 					   larval_ike->sa.st_v2_ike_followup_ke.link,
 					   response.pbs)) {
@@ -520,20 +525,20 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa) &&
-	    !extract_ikev2_followup_ke_link(&larval_ike->sa, md, larval_ike->sa.logger)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike) &&
+	    !extract_ikev2_followup_ke_link(larval_ike, md)) {
 		return STF_FATAL;
 	}
 
 	struct ikev2_task task = {
-		.exchange = current_ikev2_ike_followup_ke_exchange(&larval_ike->sa),
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_ike),
 	};
 
 	/* for ADDKE decapsulate() */
 	task.initiator = larval_ike->sa.st_kem.initiator;
 	larval_ike->sa.st_kem.initiator = NULL;
 
-	if (!next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (!next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		task.is_last = true;
 		/* for SKEYSEED */
 		task.ni = clone_hunk_as_chunk(&larval_ike->sa.st_ni, "Ni");
@@ -655,7 +660,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_continue(struct ike_sa 
 		table_grow(keys, new_ke_secret);
 	}
 
-	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		return next_v2_exchange(ike, md, &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange, HERE);
 	}
 
