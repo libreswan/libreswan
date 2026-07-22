@@ -139,9 +139,10 @@ class TestDomain:
 
 def _run_command(args, domain, command, all_verbose_txt, timeout):
 
-    # all gets the new-style prompt including the guestname
-    all_verbose_txt.write(domain.guest.name)
+    # all.*.txt gets the hostname as the prompt
+    all_verbose_txt.write(domain.guest.host.name)
     all_verbose_txt.write("# ")
+
     # both get the command
     for txt in (all_verbose_txt, domain.verbose_txt):
         txt.write(command)
