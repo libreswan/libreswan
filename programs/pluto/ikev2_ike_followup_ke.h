@@ -39,7 +39,6 @@ bool extract_ikev2_followup_ke_link(struct child_sa *child,
 
 struct ikev2_ike_followup_ke_exchange {
 	const struct ke_desc *kem;
-	enum ikev2_trans_type type;
 };
 
 /* Exchange declaration */
