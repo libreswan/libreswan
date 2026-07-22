@@ -1,46 +1,46 @@
-linuxeast# /testing/guestbin/swan-prep --46
+east# /testing/guestbin/swan-prep --46
 
-linuxeast# ipsec start
+east# ipsec start
 
 Redirecting to: systemctl start ipsec.service
 
-linuxeast# ../../guestbin/wait-until-pluto-started
+east# ../../guestbin/wait-until-pluto-started
 
 
-linuxeast# ipsec add eastnet-westnet-ikev2
+east# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-linuxeast# ipsec whack --impair suppress_retransmits
+east# ipsec whack --impair suppress_retransmits
 
-netbsdwest# ../../guestbin/prep.sh
+west# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-netbsdwest# ipsec start
+west# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-netbsdwest# ../../guestbin/wait-until-pluto-started
+west# ../../guestbin/wait-until-pluto-started
 
 
-netbsdwest# ipsec add eastnet-westnet-ikev2
+west# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdwest# echo "initdone"
+west# echo "initdone"
 
 initdone
 
-netbsdwest# ../../guestbin/ping-once.sh --down -I 2001:db8:0:1::254 2001:db8:0:2::254
+west# ../../guestbin/ping-once.sh --down -I 2001:db8:0:1::254 2001:db8:0:2::254
 
 down
 
-netbsdwest# ipsec up eastnet-westnet-ikev2
+west# ipsec up eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
@@ -50,7 +50,7 @@ netbsdwest# ipsec up eastnet-westnet-ikev2
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 
-netbsdwest# ipsec _kernel policy
+west# ipsec _kernel policy
 
 2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
 	in ipsec
@@ -63,11 +63,11 @@ netbsdwest# ipsec _kernel policy
 	spid=2 seq=0 pid=PID
 	refcnt=0
 
-netbsdwest# ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
+west# ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 
 up
 
-netbsdwest# ipsec _kernel state
+west# ipsec _kernel state
 
 2001:db8:1:2::23 2001:db8:1:2::45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -92,11 +92,11 @@ netbsdwest# ipsec _kernel state
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdwest# ../../guestbin/ping-once.sh --medium --up -I 2001:db8:0:1::254 2001:db8:0:2::254
+west# ../../guestbin/ping-once.sh --medium --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 
 up
 
-netbsdwest# ipsec _kernel state
+west# ipsec _kernel state
 
 2001:db8:1:2::23 2001:db8:1:2::45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -121,5 +121,5 @@ netbsdwest# ipsec _kernel state
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdwest# dmesg | grep ipsec
+west# dmesg | grep ipsec
 

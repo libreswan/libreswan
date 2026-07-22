@@ -1,52 +1,52 @@
-linuxeast# /testing/guestbin/swan-prep --46
+east# /testing/guestbin/swan-prep --46
 
-linuxeast# ipsec start
+east# ipsec start
 
 Redirecting to: systemctl start ipsec.service
 
-linuxeast# ../../guestbin/wait-until-pluto-started
+east# ../../guestbin/wait-until-pluto-started
 
 
-linuxeast# ipsec whack --impair suppress_retransmits
+east# ipsec whack --impair suppress_retransmits
 
-linuxeast# ipsec add eastnet-westnet-ikev2
+east# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-linuxeast# echo "initdone"
+east# echo "initdone"
 
 initdone
 
-netbsdwest# ../../guestbin/prep.sh
+west# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-netbsdwest# ipsec start
+west# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-netbsdwest# ../../guestbin/wait-until-pluto-started
+west# ../../guestbin/wait-until-pluto-started
 
 
-netbsdwest# ipsec add eastnet-westnet-ikev2
+west# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdwest# echo "initdone"
+west# echo "initdone"
 
 initdone
 
-netbsdwest# ipsec route eastnet-westnet-ikev2
+west# ipsec route eastnet-westnet-ikev2
 
-netbsdwest# ipsec _kernel state
+west# ipsec _kernel state
 
 No SAD entries.
 
-netbsdwest# ipsec _kernel policy
+west# ipsec _kernel policy
 
 192.1.2.45[any] 192.1.2.23[any] 255(reserved)
 	out ipsec
@@ -56,15 +56,15 @@ netbsdwest# ipsec _kernel policy
 
 # trigger acquire
 
-netbsdwest# ../../guestbin/ping-once.sh --fire-and-forget 192.1.2.23
+west# ../../guestbin/ping-once.sh --fire-and-forget 192.1.2.23
 
 fired and forgotten
 
-netbsdwest# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 
-netbsdwest# ../../guestbin/ping-once.sh --up 192.1.2.23
+west# ../../guestbin/ping-once.sh --up 192.1.2.23
 
 up
 

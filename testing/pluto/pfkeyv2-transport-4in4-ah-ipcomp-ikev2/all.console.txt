@@ -1,46 +1,46 @@
-linuxeast# /testing/guestbin/swan-prep --46
+east# /testing/guestbin/swan-prep --46
 
-linuxeast# ipsec start
+east# ipsec start
 
 Redirecting to: systemctl start ipsec.service
 
-linuxeast# ../../guestbin/wait-until-pluto-started
+east# ../../guestbin/wait-until-pluto-started
 
 
-linuxeast# ipsec add eastnet-westnet-ikev2
+east# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-linuxeast# ipsec whack --impair suppress_retransmits
+east# ipsec whack --impair suppress_retransmits
 
-linuxeast# echo "initdone"
+east# echo "initdone"
 
 initdone
 
-netbsdwest# ../../guestbin/prep.sh
+west# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-netbsdwest# ipsec start
+west# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-netbsdwest# ../../guestbin/wait-until-pluto-started
+west# ../../guestbin/wait-until-pluto-started
 
 
-netbsdwest# ipsec add eastnet-westnet-ikev2
+west# ipsec add eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdwest# echo "initdone"
+west# echo "initdone"
 
 initdone
 
-netbsdwest# ipsec up eastnet-westnet-ikev2
+west# ipsec up eastnet-westnet-ikev2
 
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -50,7 +50,7 @@ netbsdwest# ipsec up eastnet-westnet-ikev2
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 
-netbsdwest# ipsec _kernel policy
+west# ipsec _kernel policy
 
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
 	in ipsec
@@ -65,11 +65,11 @@ netbsdwest# ipsec _kernel policy
 	spid=2 seq=0 pid=PID
 	refcnt=0
 
-netbsdwest# ../../guestbin/ping-once.sh --up 192.1.2.23
+west# ../../guestbin/ping-once.sh --up 192.1.2.23
 
 up
 
-netbsdwest# ipsec _kernel state
+west# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -110,11 +110,11 @@ netbsdwest# ipsec _kernel state
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdwest# ../../guestbin/ping-once.sh --medium --up 192.1.2.23
+west# ../../guestbin/ping-once.sh --medium --up 192.1.2.23
 
 up
 
-netbsdwest# ipsec _kernel state
+west# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -155,5 +155,5 @@ netbsdwest# ipsec _kernel state
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdwest# dmesg | grep ipsec
+west# dmesg | grep ipsec
 
