@@ -1697,6 +1697,7 @@ kvmplutotest	ikev2-intermediate-05-addke-duplicate				good	github/2370
 kvmplutotest	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
 kvmplutotest	ikev2-intermediate-10-rekey-ike					good
 kvmplutotest	ikev2-intermediate-11-rekey-ike-omit-addke-initiator		good
+kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401
