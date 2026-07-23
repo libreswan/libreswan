@@ -570,11 +570,6 @@ if not args.ipv46:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
 
-if not os.path.isfile("/root/.gdbinit"):
-    fp = open("/root/.gdbinit", "w")
-    fp.write("set auto-load safe-path /")
-    fp.close()
-
 subprocess.getoutput("iptables -F");
 subprocess.getoutput("iptables -X");
 
