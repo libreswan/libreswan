@@ -1791,6 +1791,10 @@ kvmplutotest	host-to-host-transport-freebsd		good	github/2602
 kvmplutotest	host-to-host-transport-linux		good
 kvmplutotest	host-to-host-transport-netbsd		good	github/2602
 kvmplutotest	host-to-host-transport-openbsd		good	github/2602
+kvmplutotest	host-to-host-tunnel-forward-freebsd	good
+kvmplutotest	host-to-host-tunnel-forward-linux	good
+kvmplutotest	host-to-host-tunnel-forward-netbsd	good
+kvmplutotest	host-to-host-tunnel-forward-openbsd	good
 kvmplutotest	host-to-host-tunnel-freebsd		good
 kvmplutotest	host-to-host-tunnel-linux		good
 kvmplutotest	host-to-host-tunnel-netbsd		good
