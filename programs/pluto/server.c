@@ -1134,7 +1134,7 @@ void run_server(const char *conffile, struct logger *logger)
 	 * fork()+exec() to issue the command "ipsec addconn
 	 */
 
-	static const char addconn_path[] = IPSEC_EXECDIR "/addconn";
+	static const char addconn_path[] = IPSEC_LIBEXECDIR "/addconn";
 	if (access(addconn_path, X_OK) < 0) {
 		fatal(PLUTO_EXIT_FAIL, logger, errno, "%s: missing or not executable", addconn_path);
 	}
