@@ -159,18 +159,16 @@ def commands(directory, logger):
     # Match this before '*.sh' so that '*.sh" isn't confused by
     # guestnames.
 
-    logger.debug(f"commands from f{directory}...")
-
     scripts = glob(path.join(directory, "all.*.sh"))
     if scripts:
 
         if len(scripts) > 1:
-            logger.error(f"directory f{directory} contains multiple script files: {' '.join(scripts)}");
+            logger.error(f"multiple script files: {' '.join(scripts)}");
             return (None, None)
 
         script = scripts[0];
         if not path.isfile(script):
-            logger.error(f"directory f{directory} script {script} is not a file?!?")
+            logger.error(f"script {script} is not a file?!?")
             return (None, None)
 
         # figure out the host->guest map
