@@ -45,4 +45,4 @@ s/\t seq-hi 0x0, seq [^,]*, oseq-hi 0x0, oseq .*$/\t seq-hi 0x0, seq 0xXX, oseq-
 # debug details aren't interesting
 s/^debug:.*/debug .../
 s/ reqid [1-9][0-9]\{4,\} mode / reqid REQID mode /g
-s/policy_id [1-9][0-9]*/policy_id REQID/g
+s/policy_id [1-9][0-9]\{4,\}/policy_id REQID/g

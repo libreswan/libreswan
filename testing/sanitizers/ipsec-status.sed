@@ -1,6 +1,6 @@
 s/^secctx-attr-type=.*/secctx-attr-type=XXXX/g
 s/^secctx-attr-value=.*/secctx-attr-type=XXXX/g
-s/reqid: [1-9][0-9]*/reqid: REQID/g
+s/reqid: [1-9][0-9]\{4,\}/reqid: REQID/g
 # Fedora default
 s/\/var\/lib\/unbound/UNBOUND/g
 # Debian default
