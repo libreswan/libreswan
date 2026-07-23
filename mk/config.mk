@@ -118,7 +118,7 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 # should __counted_by__() be used; experimental
-ENABLE_COUNTED_BY ?= false
+ENABLE_COUNTED_BY ?= true
 USERLAND_CFLAGS += -DENABLE_COUNTED_BY=$(ENABLE_COUNTED_BY)
 
 #
