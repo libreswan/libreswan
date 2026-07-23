@@ -450,17 +450,8 @@ match args.userland:
         copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", strict=True, optional=True)
 
 # test specific files
-xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
-pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
-chapfile = "%s/chap-secrets" % testpath
 xauthpasswd = "%s/%s.passwd" % (testpath, hostname)
 
-if os.path.isfile(xl2tpdconf):
-    lsw_cp_file(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf", nsbasepath=nsbasepath)
-if os.path.isfile(pppoptions):
-   lsw_cp_file(pppoptions, "/etc/ppp/options.xl2tpd", nsbasepath=nsbasepath)
-if os.path.isfile(chapfile):
-    lsw_cp_file(chapfile, "/etc/ppp/chap-secrets", nsbasepath=nsbasepath)
 if os.path.isfile(xauthpasswd):
     lsw_cp_file(xauthpasswd, "/etc/ipsec.d/passwd", nsbasepath=nsbasepath)
 
