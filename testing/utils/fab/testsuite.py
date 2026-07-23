@@ -26,9 +26,7 @@ class Test:
 
     def __init__(self, test_directory,
                  saved_test_output_directory=None,
-                 kind="kvmplutotest",
-                 status="good",
-                 logger=None):
+                 kind="kvmplutotest", status="good"):
         # basics
         self.kind = kind
         self.status = status
@@ -45,6 +43,8 @@ class Test:
         # always us the test's TESTINGDIR, that is given
         # testing/pluto/test/, use testing/
         self.testingdir = Path(test_directory).resolve().parent.parent
+
+        self.logger = logutil.getLogger(self.name)
 
         # Construct the test's relative directory path such that it
         # always contains the test directory name (i.e., the test
@@ -75,7 +75,7 @@ class Test:
             self.saved_output_directory = None
 
         # Get an ordered list of {guest_name:,command:} to run.
-        self.guests, self.commands = scripts.commands(self.directory, logger)
+        self.guests, self.commands = scripts.commands(self.directory, self.logger)
 
         # remember all the platforms that are required
         platforms = Set()
@@ -204,8 +204,7 @@ def _load_testlist(logger, log_level, args, directory):
                 continue
 
             test = Test(kind=test_kind, status=test_status,
-                        test_directory=test_directory,
-                        logger=logger)
+                        test_directory=test_directory)
             logger.debug("test directory: %s", test.directory)
             # an OrderedDict which saves insertion order
             tests[test_name] = test
