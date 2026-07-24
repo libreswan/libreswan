@@ -1,5 +1,0 @@
-pluto RSA test in FIPS mode using AES-GCM and IKEv1
-
-East is placed in fips mode, allowing for tests of non-fips proposals by west
-
-This test fakes the kernel being in FIPS mode
