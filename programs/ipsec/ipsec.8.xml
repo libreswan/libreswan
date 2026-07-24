@@ -291,17 +291,20 @@
 	<term><command>ipsec showhostkey</command></term>
 	<term><command>ipsec newhostkey</command></term>
 	<term><command>ipsec ecdsasigkey</command></term>
+	<term><command>ipsec eddsasigkey</command></term>
 	<term><command>ipsec rsasigkey</command></term>
 	<listitem>
 	  <para>
 	    Generate and display raw host keys stored in the
-	    &NSS; database.
+	    &NSS; database. <command>ipsec eddsasigkey</command> is not built
+	    by default.
 	  </para>
 	  <para>
 	    See:
 	    &ipsec-showhostkey.8;,
 	    &ipsec-newhostkey.8;,
 	    &ipsec-ecdsasigkey.8;,
+	    &ipsec-eddsasigkey.8;,
 	    &ipsec-rsasigkey.8;.
 	  </para>
 	</listitem>
