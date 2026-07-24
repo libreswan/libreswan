@@ -280,7 +280,7 @@ static void init_netlink_xfrm_fd(struct logger *logger)
 	addr.nl_family = AF_NETLINK;
 	addr.nl_pid = getpid();
 	addr.nl_pad = 0; /* make coverity happy */
-	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
+	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE | (1 << (XFRMNLGRP_MAPPING - 1));
 	if (bind(netlink_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
 		fatal(PLUTO_EXIT_FAIL, logger, errno,
 		      "failed to bind bcast socket in init_netlink() - perhaps kernel was not compiled with CONFIG_XFRM");
@@ -2491,6 +2491,94 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 		rta = RTA_NEXT(rta, msg_size);
 	}
 }
+
+static void xfrm_mapping_change(struct nlmsghdr *n, struct logger *logger)
+{
+	struct xfrm_user_mapping *um = NLMSG_DATA(n);
+
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*um))) {
+		llog(RC_LOG, logger,
+		     "kernel: XFRM_MSG_MAPPING too short (%zu < %zu), ignored",
+		     (size_t)n->nlmsg_len, sizeof(*um));
+		return;
+	}
+
+	const struct ip_info *afi = aftoinfo(um->id.family);
+	if (afi == NULL) {
+		llog(RC_LOG, logger,
+		     "kernel: XFRM_MSG_MAPPING family %u unknown, ignored",
+		     um->id.family);
+		return;
+	}
+
+	ipsec_spi_t spi       = um->id.spi;
+	ip_address  daddr     = address_from_xfrm(afi, &um->id.daddr);
+	ip_address  old_saddr = address_from_xfrm(afi, &um->old_saddr);
+	ip_address  new_saddr = address_from_xfrm(afi, &um->new_saddr);
+	ip_port     old_sport = ip_nport(um->old_sport);
+	ip_port     new_sport = ip_nport(um->new_sport);
+
+	address_buf ob, nb, db;
+	ldbg(logger, "kernel: received XFRM_MSG_MAPPING spi "PRI_IPSEC_SPI
+	     " proto %u reqid %u daddr %s old-src %s:%u -> new-src %s:%u",
+	     pri_ipsec_spi(spi), um->id.proto, um->reqid,
+	     str_address(&daddr, &db),
+	     str_address(&old_saddr, &ob), hport(old_sport),
+	     str_address(&new_saddr, &nb), hport(new_sport));
+
+	uint8_t protoid;
+	switch (um->id.proto) {
+	case IPPROTO_ESP:
+		protoid = PROTO_IPSEC_ESP;
+		break;
+	case IPPROTO_AH:
+		protoid = PROTO_IPSEC_AH;
+		break;
+	default:
+		llog(RC_LOG, logger,
+		     "kernel: XFRM_MSG_MAPPING proto %u unexpected, ignored",
+		     um->id.proto);
+		return;
+	}
+
+	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, daddr);
+	if (child == NULL) {
+		ldbg(logger, "%s() no child SA for SPI "PRI_IPSEC_SPI", ignored",
+		     __func__, pri_ipsec_spi(spi));
+		return;
+	}
+
+	struct ike_sa *ike = ike_sa_by_serialno(child->sa.st_clonedfrom);
+	if (ike == NULL) {
+		ldbg(logger, "%s() no IKE SA for child "PRI_SO", ignored",
+		     __func__, pri_so(child->sa.st_serialno));
+		return;
+	}
+
+	ike->sa.st_v2_mobike.remote_endpoint =
+		endpoint_from_address_protocol_port(new_saddr,
+						    endpoint_protocol(ike->sa.st_remote_endpoint),
+						    new_sport);
+
+	if (ike->sa.st_v2_addr_change_event != NULL) {
+		/*
+		 * Local address change already pending.  Update st_remote_endpoint
+		 * now so ikev2_addr_change() routes to the correct new destination
+		 * instead of the stale one; no separate mapping change event needed.
+		 */
+		ike->sa.st_remote_endpoint = ike->sa.st_v2_mobike.remote_endpoint;
+		ldbg(ike->sa.logger,
+		     PRI_SO" addr change pending, updated remote endpoint for mapping change",
+		     pri_so(ike->sa.st_serialno));
+	} else if (ike->sa.st_v2_mapping_change_event == NULL) {
+		event_schedule(EVENT_v2_MAPPING_CHANGE, deltatime_from_seconds(0), &ike->sa);
+	} else {
+		ldbg(ike->sa.logger, PRI_SO" MOBIKE mapping change already pending",
+		     pri_so(ike->sa.st_serialno));
+	}
+}
+
+
 static void xfrm_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_expire *ue = NLMSG_DATA(n);
@@ -2728,6 +2816,9 @@ static void netlink_xfrm_message_processor(struct nlm_resp *rsp, struct logger *
 
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp->n, logger);
+		break;
+	case XFRM_MSG_MAPPING:
+		xfrm_mapping_change(&rsp->n, logger);
 		break;
 
 	default:
