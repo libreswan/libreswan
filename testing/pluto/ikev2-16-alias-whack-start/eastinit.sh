@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/east.p12
+/testing/x509/import.sh real/mainca/north.end.cert
 ../../guestbin/ip.sh address show dev eth0 | grep 192.0.22.254 || (../../guestbin/ip.sh address add 192.0.22.254/24 dev eth0)
 ipsec start
 ../../guestbin/wait-until-pluto-started
