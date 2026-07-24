@@ -21,15 +21,17 @@
 struct ike_sa;
 struct child_sa;
 
-bool next_is_ikev2_ike_followup_ke_exchange(struct state *st);
+bool next_is_ikev2_ike_followup_ke_exchange(struct child_sa *child);
 
-bool next_ikev2_ike_followup_ke_exchange(struct state *st);
+bool next_ikev2_ike_followup_ke_exchange(struct child_sa *child);
 
-void generate_ikev2_followup_ke_link(struct state *st);
+void generate_ikev2_followup_ke_link(struct child_sa *child);
 
-bool extract_ikev2_followup_ke_link(struct state *st,
-				    struct msg_digest *md,
-				    struct logger *logger);
+bool extract_ikev2_followup_ke_link(struct child_sa *child,
+				    struct msg_digest *md);
+
+bool emit_v2N_ADDITIONAL_KEY_EXCHANGE(struct child_sa *child,
+				      struct pbs_out *outs);
 
 /*
  * IKE_FOLLOWUP_KE exchange (RFC 9370)
@@ -40,7 +42,6 @@ bool extract_ikev2_followup_ke_link(struct state *st,
 
 struct ikev2_ike_followup_ke_exchange {
 	const struct ke_desc *kem;
-	enum ikev2_trans_type type;
 };
 
 /* Exchange declaration */

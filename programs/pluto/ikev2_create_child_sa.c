@@ -428,11 +428,10 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		}
 
 		/* send N(ADDITIONAL_KEY_EXCHANGE) if there will be followup-ke exchanges */
-		if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
-			generate_ikev2_followup_ke_link(&larval_ike->sa);
-			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
-					   larval_ike->sa.st_v2_ike_followup_ke.link,
-					   message.pbs)) {
+		if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
+			generate_ikev2_followup_ke_link(larval_ike);
+			if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_ike,
+							      message.pbs)) {
 				llog_sa(RC_LOG, larval_ike, "outaddke fail");
 				return false;
 			}
@@ -2004,7 +2003,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	set_larval_v2_transition(larval_ike, &state_v2_REKEY_IKE_FOLLOWUP_KE_R0, HERE);
 	change_v2_state(&larval_ike->sa);
 
-	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2055,8 +2054,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa) &&
-	    !extract_ikev2_followup_ke_link(&larval_ike->sa, response_md, larval_ike->sa.logger)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike) &&
+	    !extract_ikev2_followup_ke_link(larval_ike, response_md)) {
 		return STF_FATAL;
 	}
 
@@ -2182,7 +2181,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	set_larval_v2_transition(larval_ike, &state_v2_REKEY_IKE_FOLLOWUP_KE_I0, HERE);
 	change_v2_state(&larval_ike->sa);
 
-	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
 		larval_ike->sa.st_v2_ike_followup_ke.keys =
 			table_alloc(struct prf_keys, 0);
 
