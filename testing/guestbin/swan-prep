@@ -250,9 +250,6 @@ nsspassword="s3cret"
 parser.add_argument('--nsspw', action='store_true',
                     help='set the security password on the NSS database to '+nsspassword)
 
-parser.add_argument('--fips', '-f', action='store_true',
-                    help='prepare /etc/ipsec.d for running in FIPS mode')
-
 parser.add_argument('--46', '--64', action='store_true',
                     help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv46', default=False)
 parser.add_argument('--verbose', '-v', action='store_true',
@@ -472,14 +469,8 @@ if not os.path.isdir(sysconfigd):
     os.makedirs(sysconfigd)
 
 if args.userland in ("libreswan") and not args.namespace:
-    if args.fips:
-        # the test also requires using a modutil cmd which we cannot run here
-        shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
-    else:
-        lsw_cp_file("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto",
+    lsw_cp_file("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto",
                 nsbasepath=nsbasepath)
-    if os.path.isfile("/etc/system-fips"):
-        wipe_old("/etc/system-fips") # would work? would remove file from real system? AA_201902
 
 # Set up NSS DB
 
@@ -490,18 +481,15 @@ if args.userland in ("libreswan"):
     shell(f"rm -rf {nssdir}/*")
 
     # Determine the NSS password and save
-    if args.nsspw or args.fips:
+    if args.nsspw:
         with open("/run/pluto/nsspw", "w") as f:
             f.write(nsspassword)
             f.write("\n")
         # Store the password in "$NSSDIR/nsspassword" so that pluto
         # can use it to open the the NSS DB
-        if args.nsspw or args.fips:
-            with open(ipsecdir + "/nsspassword", "w") as f:
-                if args.nsspw:
-                    f.write(f"NSS Certificate DB:{nsspassword}\n")
-                if args.fips:
-                    f.write(f"NSS FIPS 140-2 Certificate DB:{nsspassword}\n")
+        with open(ipsecdir + "/nsspassword", "w") as f:
+            if args.nsspw:
+                f.write(f"NSS Certificate DB:{nsspassword}\n")
 
     match args.keys:
         case Keys.HOST:
@@ -526,14 +514,10 @@ if args.userland in ("libreswan"):
     # If needed set a password (this will upgrade any existing
     # database)
 
-    if args.nsspw or args.fips:
+    if args.nsspw:
         with open("/tmp/pw", "w") as f:
             f.write("\n")
         shell(f"/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:{nssdir}", out=True)
-
-    # Switch on fips in the NSS db
-    if args.fips:
-        shell(f"/usr/bin/modutil -dbdir sql:{nssdir} -fips true -force", out=True)
 
     # this section is getting rough. could use a nice refactoring
     if args.keys == Keys.X509:
@@ -554,13 +538,6 @@ if args.userland in ("libreswan"):
         for certname in ("west", "east", "road", "north", "nic"):
             if not hostname in certname:
                 shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
-
-# Don't enable FIPS mode until after NSS DBS are created.  See:
-# https://bugzilla.mozilla.org/show_bug.cgi?id=1531267
-if args.fips:
-    fp = open("/etc/system-fips", "w")
-    fp.close()
-    shell("/testing/guestbin/fipson")
 
 if args.namespace:
     # good idea for namespace. KVM sysctl.conf get copid.

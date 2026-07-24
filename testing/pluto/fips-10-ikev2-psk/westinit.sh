@@ -1,4 +1,5 @@
-../../guestbin/swan-prep --fips --nokeys
+/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/fips.sh on
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

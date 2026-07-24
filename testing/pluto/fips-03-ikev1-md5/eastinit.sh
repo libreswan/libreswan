@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep --fips --nokeys
+/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/fips.sh on
 ipsec checknss
 modutil -dbdir sql:/etc/ipsec.d -fips true -force
 modutil -dbdir sql:/etc/ipsec.d -chkfips true
