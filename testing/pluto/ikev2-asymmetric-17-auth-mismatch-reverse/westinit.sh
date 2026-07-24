@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.p12
+/testing/x509/import.sh real/mainca/east.end.cert
 # remove our cert, we only want/need to CAcert
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
