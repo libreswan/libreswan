@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep --nokeys --fips
+/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/fips.sh on
 
 /testing/x509/import.sh real/mainca/east.p12
 
