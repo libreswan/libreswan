@@ -1,0 +1,76 @@
+<varlistentry id='conn.pubkey'>
+  <term>
+    <option>leftpubkey=</option>
+  </term>
+  <term>
+    <option>rightpubkey=</option>
+  </term>
+  <listitem>
+    <para>
+      The left participant's public key for signature (either RSA, ECDSA or EdDSA)
+      authentication. The <option>leftpubkey</option> is the generic option.
+      The key should be in base-64 encoded RFC 2537 format (with 0s prepended),
+      or one of the following:
+      <variablelist>
+	<varlistentry>
+	  <term>
+	    <option>%none</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      the same as not specifying a value (useful to override a
+	      default)
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>%dnsondemand</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      (the default) the key is to be fetched from DNS at the
+	      time it is needed.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>%dns</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Treated as <option>%dnsondemand</option>.  The identity
+	      used for the left participant must be a specific host,
+	      not <option>%any</option> or another magic value.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>%cert</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      the information required from a certificate defined in
+	      <option>%leftcert</option> and automatically define
+	      leftid for you
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </para>
+    <para>
+      Additionally, one can provide: a DER-encoded public key, or a raw
+      public key generated using <command>ipsec {rsasig,ecdsa,eddsa}key</command>
+      command.
+    </para>
+    <caution>
+      <para>
+	If two connection descriptions specify different public keys
+	for the same <option>leftid</option>, confusion and
+	madness will ensue.
+      </para>
+    </caution>
+  </listitem>
+</varlistentry>
