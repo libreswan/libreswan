@@ -1,14 +1,13 @@
-<varlistentry id='conn.rsasigkey'>
+<varlistentry id='conn.pubkey'>
   <term>
-    <option>leftrsasigkey=</option>
+    <option>left{pub,rsasig,ecdsa,eddsa}key=</option>
   </term>
   <term>
-    <option>rightrsasigkey=</option>
+    <option>right{pub,rsasig,ecdsa,eddsa}key=</option>
   </term>
   <listitem>
     <para>
-      the left participant's public key for RSA signature
-      authentication, in base-64 encoded RFC 2537 format (with 0s
+      The left participant's public key for signature (either RSA, ECDSA or EdDSA) authentication. The <option>leftpubkey</option> is the generic option. The key should be in base-64 encoded RFC 2537 format (with 0s
       prepended), or one of the following:
       <variablelist>
 	<varlistentry>
@@ -75,6 +74,9 @@
 	  </listitem>
 	</varlistentry>
       </variablelist>
+    </para>
+    <para>
+      Additionally, for <option>leftpubkey</option> one can provide DER-encoded public key, and for <option>left{rsasig,ecdsa,eddsa}key</option> raw public key generated using <command>ipsec {rsasig,ecdsa,eddsa}key</command> command.
     </para>
     <caution>
       <para>

@@ -148,7 +148,7 @@
       &conn.narrowing;
       &conn.nic-offload;
       &conn.id;
-      &conn.rsasigkey;
+      &conn.pubkey;
       &conn.cert;
       &conn.ckaid;
       &conn.auth;
