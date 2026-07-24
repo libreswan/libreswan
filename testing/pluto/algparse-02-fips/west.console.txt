@@ -1,5 +1,7 @@
-../../guestbin/swan-prep --fips --nokeys
+/testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
+west #
+ /testing/guestbin/fips.sh on
 Password changed successfully.
 FIPS mode enabled.
 west #
