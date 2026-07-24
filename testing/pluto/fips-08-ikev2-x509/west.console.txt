@@ -1,5 +1,7 @@
-/testing/guestbin/swan-prep --fips --x509
+/testing/guestbin/swan-prep --x509
 Preparing X.509 files
+west #
+ /testing/guestbin/fips.sh on
 Password changed successfully.
 FIPS mode enabled.
 west #
