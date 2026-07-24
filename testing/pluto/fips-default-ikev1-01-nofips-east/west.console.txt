@@ -1,5 +1,7 @@
-/testing/guestbin/swan-prep --fips --hostkeys
+/testing/guestbin/swan-prep --hostkeys
 Creating NSS database containing host keys
+west #
+ /testing/guestbin/fips.sh on
 Password changed successfully.
 FIPS mode enabled.
 west #

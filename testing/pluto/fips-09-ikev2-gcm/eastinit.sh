@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep --fips --hostkeys
+/testing/guestbin/swan-prep --hostkeys
+/testing/guestbin/fips.sh on
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
