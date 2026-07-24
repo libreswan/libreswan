@@ -2673,7 +2673,7 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 			[SHUNT_NONE] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
+			[SHUNT_NONE] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_FAILURE] = {
 			[SHUNT_NONE] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
