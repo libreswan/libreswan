@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/road.p12
+/testing/x509/import.sh real/mainca/east.end.cert
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.2.23/32"  >> /etc/ipsec.d/policies/private
 ipsec start

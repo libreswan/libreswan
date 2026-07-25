@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/road.p12
+/testing/x509/import.sh real/mainca/east.end.cert
 #add address from to be extruded subnet on road.
 ifconfig eth0:1 192.0.1.254/24
 ifconfig eth0:2 192.0.11.254/24
