@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep --x509 --nsspw
+/testing/guestbin/swan-prep --nokeys --nsspw
+/testing/x509/import.sh real/mainca/west.p12
+/testing/x509/import.sh real/mainca/east.end.cert
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
