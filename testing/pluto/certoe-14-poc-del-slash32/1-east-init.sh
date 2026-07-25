@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep  --x509
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/east.p12
+/testing/x509/import.sh real/mainca/road.end.cert
 ../../guestbin/ip-route.sh del default
 ip tuntap add mode tun tun0
 ifconfig tun0 10.13.13.13/24
