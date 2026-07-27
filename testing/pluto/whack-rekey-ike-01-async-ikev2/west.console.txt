@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --46 --nokey
-Creating empty NSS database
+Initializing NSS database
 west #
  ../../guestbin/ip.sh address show eth0 | grep global | sort
     inet 192.0.1.254/24 scope global eth0

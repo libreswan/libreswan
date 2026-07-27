@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --46 --nokey
-Creating empty NSS database
+Initializing NSS database
 west #
  # default is to use WHACK_BASIC_MAGIC
 west #

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokey
-Creating empty NSS database
+Initializing NSS database
 west #
  ipsec start
 Redirecting to: [initsystem]

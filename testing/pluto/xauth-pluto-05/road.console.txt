@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 road #
  ifconfig eth0 192.1.3.194 netmask 255.255.255.0
 road #

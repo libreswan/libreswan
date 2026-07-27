@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  sed "s/seedbits=.*$/seedbits=520/" ipsec.conf > /etc/ipsec.conf
 west #

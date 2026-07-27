@@ -6,7 +6,7 @@ east #
 RTNETLINK answers: No such process
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  ipsec start
 Redirecting to: [initsystem]

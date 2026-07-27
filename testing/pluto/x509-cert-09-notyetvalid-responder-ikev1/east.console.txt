@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  # Import the root CA, and use that to generate a cert+pubkey that's
 east #
