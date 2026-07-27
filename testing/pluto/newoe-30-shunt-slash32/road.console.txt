@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 road #
  cp policy /etc/ipsec.d/policies/road
 road #

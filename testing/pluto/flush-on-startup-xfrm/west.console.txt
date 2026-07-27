@@ -1,5 +1,5 @@
 ../../guestbin/swan-prep --46 --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  # https://www.sobyte.net/post/2022-10/ipsec-ip-xfrm/
 west #

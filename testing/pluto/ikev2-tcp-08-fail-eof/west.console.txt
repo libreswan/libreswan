@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  send() { printf "$@" | ncat east 4500 ; }
 west #

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  ../../guestbin/echo-server.sh -tcp -4 7 -daemon
 listening on IPv4 TCP port 7

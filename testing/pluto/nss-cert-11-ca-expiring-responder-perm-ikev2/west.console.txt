@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  # Generate west's CA and then use that to generate a signed
 west #

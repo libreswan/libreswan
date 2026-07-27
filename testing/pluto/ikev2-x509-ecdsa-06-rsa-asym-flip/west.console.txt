@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh real/mainec/`hostname`.p12
  ipsec pk12util -w nss-pw -i real/mainec/west.p12

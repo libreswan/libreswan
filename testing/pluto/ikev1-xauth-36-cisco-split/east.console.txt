@@ -1,5 +1,5 @@
 ../../guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
     inet 192.0.20.254/24 scope global eth0

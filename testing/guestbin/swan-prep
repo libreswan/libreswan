@@ -480,17 +480,6 @@ if args.userland in ("libreswan"):
     nssdir = "/var/lib/ipsec/nss"
     shell(f"rm -rf {nssdir}/*")
 
-    # Determine the NSS password and save
-    if args.nsspw:
-        with open("/run/pluto/nsspw", "w") as f:
-            f.write(nsspassword)
-            f.write("\n")
-        # Store the password in "$NSSDIR/nsspassword" so that pluto
-        # can use it to open the the NSS DB
-        with open(ipsecdir + "/nsspassword", "w") as f:
-            if args.nsspw:
-                f.write(f"NSS Certificate DB:{nsspassword}\n")
-
     match args.keys:
         case Keys.HOST:
             # This brings in the pre-generated nss *.db files that contain
@@ -503,41 +492,33 @@ if args.userland in ("libreswan"):
                 shutil.copyfile(src, dst)
                 if not args.namespace:
                     os.chown(dst, 0, 0)
-        case Keys.X509:
-            print("Preparing X.509 files")
-            #print("Creating NSS database containing X.509 keys and certificates")
-            shell(f"/usr/bin/certutil -N --empty-password -d sql:{nssdir}")
-        case Keys.NONE:
-            print("Creating empty NSS database")
-            shell(f"/usr/bin/certutil -N --empty-password -d sql:{nssdir}")
 
-    # If needed set a password (this will upgrade any existing
-    # database)
+        case Keys.X509:
+            if not os.path.isfile("/testing/x509/pki/real/mainca/root.p12"):
+                print("\n\n---------------------------------------------------------------------\n"
+                      "WARNING: no root.p12 file, did you run './kvm keys'?\n"
+                      "---------------------------------------------------------------------\n")
+            shell(f"ipsec initnss", out=True)
+            shell(f"/testing/x509/import.sh real/mainca/{hostname}.p12", out=True)
+
+        case Keys.NONE:
+            shell(f"ipsec initnss", out=True)
+
+    # Determine the NSS password and save; assumes above set up the
+    # NSS database.  Assumes machine isn't yet in FIPS mode?
 
     if args.nsspw:
+        with open("/run/pluto/nsspw", "w") as f:
+            f.write(nsspassword)
+            f.write("\n")
+        # Store the password in "$NSSDIR/nsspassword" so that pluto
+        # can use it to open the the NSS DB
+        with open(ipsecdir + "/nsspassword", "w") as f:
+            if args.nsspw:
+                f.write(f"NSS Certificate DB:{nsspassword}\n")
         with open("/tmp/pw", "w") as f:
             f.write("\n")
         shell(f"/usr/bin/certutil -W -f /tmp/pw -@ /run/pluto/nsspw -d sql:{nssdir}", out=True)
-
-    # this section is getting rough. could use a nice refactoring
-    if args.keys == Keys.X509:
-
-        if not os.path.isfile("/testing/x509/pki/real/mainca/root.p12"):
-            print("\n\n---------------------------------------------------------------------\n"
-                  "WARNING: no root.p12 file, did you run './kvm keys'?\n"
-                  "---------------------------------------------------------------------\n")
-
-        pw = "-w /testing/x509/nss-pw"
-
-        # is pw needed? Perahps when FIPS, but has it been set?
-
-        # import then fix trust
-        shell("/testing/x509/import.sh real/mainca/%s.p12" % (hostname))
-
-        # pre-import certs for all other hosts
-        for certname in ("west", "east", "road", "north", "nic"):
-            if not hostname in certname:
-                shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
 
 if args.namespace:
     # good idea for namespace. KVM sysctl.conf get copid.

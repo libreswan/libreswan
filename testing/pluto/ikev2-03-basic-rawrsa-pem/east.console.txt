@@ -1,7 +1,7 @@
 # scrub the nssdb
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  key=east
 east #

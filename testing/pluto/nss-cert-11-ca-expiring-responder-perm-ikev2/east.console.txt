@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  # Generate a sane CA and a sane peer certificate.
 east #

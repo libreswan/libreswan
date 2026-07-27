@@ -1,7 +1,7 @@
 # Do not populate NSS DB, check it is empty
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 road #
  # delete the address 33.222 before re-run. otherwise strongswan may choose 33.222
 road #

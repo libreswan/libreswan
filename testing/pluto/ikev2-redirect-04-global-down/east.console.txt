@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  ../../guestbin/ip-route.sh del 192.0.1.0/24
 east #

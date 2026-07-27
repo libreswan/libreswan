@@ -55,7 +55,7 @@ east #
 + openssl pkcs12 -export -in strongEastCert.pem -inkey strongEastKey.pem -certfile strongCAcert.p12 -name strongEast -export -out strongEast.p12 -passout pass:foobar -passcerts pass:foobar
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  /testing/x509/import.sh strongswan/strong-ED/strongEast.p12
  ipsec pk12util -w nss-pw -i strongswan/strong-ED/strongEast.p12

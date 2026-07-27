@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys --nsspw
-Creating empty NSS database
+Initializing NSS database
 Password changed successfully.
 west #
  ipsec newhostkey

@@ -1,7 +1,7 @@
 # Import WEST's private key and extract its CKAID
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  /testing/x509/import.sh real/mainca/west.end.p12
  ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
@@ -17,7 +17,7 @@ east #
  # Import EAST's private key and extract its CKAID
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  /testing/x509/import.sh real/mainca/east.end.p12
  ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
@@ -37,7 +37,7 @@ east #
  # configure for real
 east #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  /testing/x509/import.sh real/mainca/east.p12
  ipsec pk12util -w nss-pw -i real/mainca/east.p12

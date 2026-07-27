@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh strongswan/strong-ED/strongWest.p12
  ipsec pk12util -w nss-pw -i strongswan/strong-ED/strongWest.p12

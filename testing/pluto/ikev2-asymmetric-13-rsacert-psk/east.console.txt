@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 east #
  /testing/x509/import.sh real/mainca/root.cert
  ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert

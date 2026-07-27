@@ -1,7 +1,7 @@
 ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*\n" ; set ipsec certutil -L -n ${n} ; echo " $@" ; "$@" ; done ; }
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh real/mainca/west.p12
  ipsec pk12util -w nss-pw -i real/mainca/west.p12
@@ -174,7 +174,7 @@ Certificate:
             User
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh otherca/otherwest.p12
  ipsec pk12util -w nss-pw -i otherca/otherwest.p12
@@ -289,7 +289,7 @@ Certificate:
             User
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
  ipsec certutil -A -n west_chain_int_1 -t P,, -i real/mainca/west_chain_int_1.end.cert
@@ -354,7 +354,7 @@ Certificate:
         Object Signing Flags:
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
  ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
@@ -420,7 +420,7 @@ Certificate:
         Object Signing Flags:
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  /testing/x509/import.sh real/mainca/west_chain_endcert.p12
  ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.p12

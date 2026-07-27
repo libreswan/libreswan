@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  ipsec modutil -undefault 'NSS Internal PKCS #11 Module' -mechanisms ECC </dev/null
 WARNING: Performing this operation while the browser is running could cause

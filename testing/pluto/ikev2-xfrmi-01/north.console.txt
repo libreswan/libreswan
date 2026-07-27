@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 north #
  # this route from /etc/sysconfig/network-scripts/route-eth1 interferes
 north #

@@ -22,7 +22,7 @@ west #
  # due to specialness of parent dir in test
 west #
  /testing/guestbin/swan-prep --nokeys
-Creating empty NSS database
+Initializing NSS database
 west #
  rm -rf /var/cache/otheruser
 west #

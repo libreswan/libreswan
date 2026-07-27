@@ -133,6 +133,13 @@ while test $# -gt 0 ; do
 	    done
 	    shift
 	    ;;
+	--x509 )
+	    ipsec initnss
+	    /testing/x509/import.sh real/mainca/$(hostname).p12
+	    ;;
+	--nokeys )
+	    ipsec initnss
+	    ;;
 	* )
 	    echo "option $1 ignored" 1>&2
 	    shift
