@@ -2,6 +2,7 @@
 
 /^\(\|[a-z][a-z]*#\) dig /,/^[a-z][a-z]* #$/ {
 
+  s/; <<>> DiG 9\..* <<>>/; <<>> DiG 9.x <<>>/
   s/ id: [1-9][0-9]*$/ id: DNSID/
   s/Query time: [0-9]* msec/Query time: MS msec/
 
