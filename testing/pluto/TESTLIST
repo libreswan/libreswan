@@ -1847,3 +1847,13 @@ kvmplutotest	ikev2-routes-subnets-singular		good	github/1950
 kvmplutotest       ikev1-policy-03-stats                  good
 
 kvmplutotest	cve-2026-12413-max-payloads		  good
+
+
+#################################################################
+# RFC 9593
+#################################################################
+
+kvmplutotest	ikev2-supported-auth-methods-01                 wip
+kvmplutotest	ikev2-supported-auth-methods-02-intermediate    wip
+kvmplutotest	ikev2-supported-auth-methods-03		            wip
+kvmplutotest	ikev2-supported-auth-methods-03-fail		    wip
