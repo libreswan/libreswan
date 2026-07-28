@@ -170,16 +170,6 @@ def choose_config_file(hostname, testpath, config_path, strict, default=None):
             sys.exit(f"the default {default} for {config_path} is not a file")
         return default
 
-    # pass 3: look in baseconfigs/
-    match args.userland:
-        case "strongswan":
-            paths = []
-            paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
-            paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
-            for path in paths:
-                if os.path.isfile(path):
-                    return path
-
     # dump all the paths?
     return None
 
