@@ -198,15 +198,6 @@ def _run_command(args, domain, command, all_verbose_txt, timeout):
     # now return a meaningful error
     return status
 
-def submit_job_for_domain(executor, jobs, logger, domain, work):
-    job = executor.submit(work, domain)
-    jobs[job] = domain
-    logger.debug("scheduled %s on %s", job, domain)
-
-
-def executor_qsize_hack(executor):
-    return executor._work_queue.qsize()
-
 def _test_domains(logger, test, domain_prefix):
 
     test_domains = Dict()
