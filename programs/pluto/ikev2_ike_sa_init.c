@@ -78,46 +78,6 @@ static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_
 static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_request;
 static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_response;
 
-static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
-{
-	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
-	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_prf != NULL);
-	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_dh != NULL);
-
-	jam_string(buf, "{");
-
-	jam_string(buf, "cipher=");
-	jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
-	if (ike->sa.st_oakley.enckeylen > 0) {
-		/* XXX: also check omit key? */
-		jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
-	}
-
-	jam_string(buf, " ");
-
-	jam_string(buf, "integ=");
-	jam_string(buf, (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none ? "n/a" :
-			 ike->sa.st_oakley.ta_integ->common.fqn));
-
-	jam_string(buf, " ");
-
-	jam_string(buf, "prf=");
-	jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
-
-	jam_string(buf, " ");
-
-	jam_string(buf, "ke=");
-	jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
-
-	FOR_EACH_ITEM(ke, &ike->sa.st_oakley.ta_addke) {
-		jam(buf, " addke%d=",
-		    (ke->type - IKEv2_TRANS_TYPE_ADDKE1) + 1);
-		jam_string(buf, ke->kem->common.fqn);
-	}
-
-	jam_string(buf, "}");
-}
-
 void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 						 const struct msg_digest *md)
 {
@@ -126,7 +86,7 @@ void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		jam_string(buf, "sent IKE_SA_INIT response to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_string(buf, " ");
-		jam_secured(buf, ike);
+		jam_v2_ike_protection(buf, ike);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 	}
@@ -142,7 +102,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
 		jam_string(buf, " ");
 
-		jam_secured(buf, ike);
+		jam_v2_ike_protection(buf, ike);
 
 		jam_string(buf, ", initiating ");
 		enum ikev2_exchange ix =
