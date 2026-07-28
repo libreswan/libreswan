@@ -226,40 +226,8 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 			jam(buf, " established IKE SA");
 		}
 
-		jam_string(buf, " {");
-
-		jam_string(buf, "cipher=");
-		jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
-		if (ike->sa.st_oakley.enckeylen > 0) {
-			/* XXX: also check omit key? */
-			jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
-		}
-
-		/*
-		 * Note: for IKEv2 and AEAD encrypters,
-		 * ike->sa.st_oakley.ta_integ is 'none'!
-		 */
-		jam_string(buf, " integ=");
-		if (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none) {
-			jam_string(buf, "n/a");
-		} else {
-			jam_string(buf, ike->sa.st_oakley.ta_integ->common.fqn);
-		}
-
-		jam_string(buf, " prf=");
-		jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
-
-		jam_string(buf, " ke=");
-		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
-
-		FOR_EACH_ITEM(ke, &ike->sa.st_oakley.ta_addke) {
-			jam(buf, " addke%d=",
-			    (ke->type - IKEv2_TRANS_TYPE_ADDKE1) + 1);
-			jam_string(buf, ke->kem->common.fqn);
-		}
-
-		jam_string(buf, "}");
-
+		jam_string(buf, " ");
+		jam_v2_ike_protection(buf, ike);
 	}
 }
 
