@@ -24,6 +24,8 @@ static const char *const auth_name[] = {
 	S(AUTH_PSK),
 	S(AUTH_RSASIG),
 	S(AUTH_ECDSA),
+	S(AUTH_EDDSA),
+	S(AUTH_MLDSA),
 	S(AUTH_NULL),
 	S(AUTH_EAPONLY),
 #undef R

@@ -107,6 +107,7 @@ static int print_secrets(struct secret *secret,
 	case SECRET_RSA:
 	case SECRET_ECDSA:
 	case SECRET_EDDSA:
+	case SECRET_MLDSA:
 	{
 		const struct secret_pubkey_stuff *stuff = secret_pubkey_stuff(secret);
 		kind = stuff->content.type->name;

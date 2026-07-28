@@ -30,6 +30,7 @@ struct authby {
 	bool rsasig;
 	bool ecdsa;
 	bool eddsa;
+	bool mldsa;
 	bool rsasig_v1_5;
 
 	bool rsasig_sha2_256;
@@ -48,6 +49,7 @@ struct authby {
 		.rsasig = true,				\
 		.ecdsa = true,				\
 		.eddsa = true,				\
+		.mldsa = true,				\
 		.rsasig_v1_5 = true,		\
 		.rsasig_sha2_256 = true,	\
 		.rsasig_sha2_384 = true,	\
@@ -62,6 +64,7 @@ struct authby {
 		.rsasig = true,					\
 		.ecdsa = true,					\
 		.eddsa = true,					\
+		.mldsa = true,					\
 		.rsasig_v1_5 = true,			\
 		.rsasig_sha2_256 = true,		\
 		.rsasig_sha2_384 = true,		\
@@ -117,7 +120,7 @@ enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
 
 typedef struct {
-	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+AUTH_NEVER+AUTH_NULL+"
+	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+MLDSA+AUTH_NEVER+AUTH_NULL+"
 		"RSASIG_v1_5+RSASIG_SHA2_256+RSASIG_SHA2_384+RSASIG_SHA2_512+"
 		"ECDSA_SHA2_256+ECDSA_SHA2_384+ECDSA_SHA2_512") + 1/*canary*/];
 } authby_buf;
