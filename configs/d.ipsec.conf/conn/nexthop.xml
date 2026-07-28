@@ -8,17 +8,16 @@
   <listitem>
     <para>
       next-hop gateway IP address for the left participant's
-      connection to the public network; defaults to <option>%direct</option>
-      (meaning <option>right</option>). If the value is to be overridden
-      by the <option>left=%defaultroute</option> method
-      (see above), an explicit value must <option>not</option> be given.
-      If that method is not being used, but <option>leftnexthop</option> is
-      <option>%defaultroute</option>, the next-hop
-      gateway address of the default-route interface will be used.
-      The magic value <option>%direct</option> signifies
-      a value to be filled in (by automatic keying) with the peer's
-      address.  Relevant only locally, other end need not agree on
-      it.
+      connection to the public network; defaults to
+      <literal>%direct</literal> (meaning &right;).  If the value is
+      to be overridden by the &left;=<literal>%defaultroute</literal>
+      method (see above), an explicit value must not be given.  If
+      that method is not being used, but <option>leftnexthop</option>
+      is <literal>%defaultroute</literal>, the next-hop gateway
+      address of the default-route interface will be used.  The magic
+      value <literal>%direct</literal> signifies a value to be filled
+      in (by automatic keying) with the peer's address.  Relevant only
+      locally, other end need not agree on it.
     </para>
   </listitem>
 </varlistentry>

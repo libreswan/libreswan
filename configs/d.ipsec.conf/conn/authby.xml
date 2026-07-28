@@ -173,7 +173,7 @@
     <para>
       Note that <option>authby</option> cannot be used for asymmetric
       authentication.  Instead, IKEv2 must be enabled and the options
-      <option>leftauth</option> and <option>rightauth</option> used.
+      &leftauth; and &rightauth; used.
     </para>
 
     <para>

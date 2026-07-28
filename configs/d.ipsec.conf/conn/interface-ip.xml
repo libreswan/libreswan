@@ -15,8 +15,8 @@
       <option>ipsec-interface=</option>.
     </para>
     <para>
-      See also <option>leftvti=</option> for configuring IP addresses
-      when using deprecated VTI.
+      See also &leftvti; for configuring IP addresses when using
+      deprecated VTI.
     </para>
   </listitem>
 </varlistentry>

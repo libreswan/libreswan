@@ -9,8 +9,7 @@
       not negotiated and should be configured properly on all
       endpoints. When opening a TCP socket to the remote host in this
       port, a regular ephemeral source port is obtained from the
-      OS. For changing the UDP ports, see
-      <option>leftikeport=</option>
+      OS. For changing the UDP ports, see &leftikeport;.
     </para>
   </listitem>
 </varlistentry>

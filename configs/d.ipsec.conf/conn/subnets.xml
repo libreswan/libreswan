@@ -13,8 +13,8 @@
       If both a <option>leftsubnets=</option> and
       <option>rightsubnets=</option> are defined, all combinations of
       subnet tunnels will be established as separate IPsec tunnels.
-      You cannot use <option>leftsubnet=</option> and
-      <option>leftsubnets=</option> together. For examples see
+      You cannot use &leftsubnet; and <option>leftsubnets</option>
+      together. For examples see
       <option>testing/pluto/multinet-*</option>.  Be aware that when
       using spaces as separator, that the entire option value needs to
       be in double quotes.

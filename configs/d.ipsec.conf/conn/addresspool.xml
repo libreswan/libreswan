@@ -3,7 +3,7 @@
     <option>leftaddresspool=&ip_pool;,...</option>
   </term>
   <term>
-    <option>rightaddresspool=&ip_pool;...</option>
+    <option>rightaddresspool=&ip_pool;,...</option>
   </term>
   <listitem>
     <para>
@@ -12,8 +12,7 @@
       payload server) can assign IP addresses to clients.  At most one
       one IPv4 and one IPv6 pool may be specified.  The
       <option>leftaddresspool=</option> option can not be combined
-      with with either the <option>leftsubnet=</option> or
-      <option>leftsubnets=</option> options.
+      with with either the &leftsubnet; or &leftsubnets; options.
     </para>
     <para>
       A pool is specified using either an address range (for instance,
@@ -36,14 +35,12 @@
     </para>
     <para>
       For IKEv1, when <option>right</option> is configured as a server
-      using <option>rightxauthserver=&yes;</option>, this option
-      specifies the address pool from which IP addresses are taken to
-      assign the <option>left</option> clients during the Mode Config
-      exchange.  Generally, the <option>leftaddresspool=</option>
-      option will be accompanied by
-      <option>leftxauthclient=&yes;</option>,
-      <option>rightxauthserver=&yes;</option> and
-      <option>rightsubnet=0.0.0.0/0</option> option.
+      using &rightxauthserver;=&yes;, this option specifies the
+      address pool from which IP addresses are taken to assign the
+      &left; clients during the Mode Config exchange.  Generally, the
+      <option>leftaddresspool=</option> option will be accompanied by
+      &leftxauthclient;=&yes;, &rightxauthserver;=&yes; and
+      &rightsubnet;=<literal>0.0.0.0/0</literal> option.
     </para>
 
     <para>

@@ -10,7 +10,7 @@
       Specifies the Distinguished Name of the authorized Certificate
       Authority (CA) that signed the certificate of the peer.  When
       unspecified, it defaults to the CA that signed the certificate
-      specified in <option>leftcert</option>.
+      specified in &leftcert;.
     </para>
     <para>
       The special
