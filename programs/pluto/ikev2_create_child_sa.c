@@ -216,6 +216,26 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 	}
 }
 
+static void llog_v2_larval_ike_sa_established(struct ike_sa *ike,
+					      struct child_sa *larval_ike)
+{
+	PEXPECT(larval_ike->sa.logger, larval_ike->sa.st_v2_rekey_pred != SOS_NOBODY);
+	PEXPECT(larval_ike->sa.logger, ike->sa.st_serialno == larval_ike->sa.st_v2_rekey_pred);
+
+	LLOG_JAMBUF(RC_LOG, larval_ike->sa.logger, buf) {
+		switch (larval_ike->sa.st_sa_role) {
+		case SA_INITIATOR: jam_string(buf, "initiator"); break;
+		case SA_RESPONDER: jam_string(buf, "responder"); break;
+		}
+
+		jam_string(buf, " rekeyed IKE SA ");
+		jam_so(buf, larval_ike->sa.st_v2_rekey_pred);
+
+		jam_string(buf, " ");
+		jam_v2_ike_protection(buf, ike);
+	}
+}
+
 void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
@@ -249,7 +269,7 @@ void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 	 * Announce this to the world.
 	 */
 	/* XXX: call transition->llog()? */
-	llog_v2_ike_sa_established(old_ike, new_ike);
+	llog_v2_larval_ike_sa_established(old_ike, new_ike);
 	release_whack(new_ike->sa.logger, HERE);
 }
 

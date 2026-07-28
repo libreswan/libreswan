@@ -211,26 +211,6 @@ void jam_v2_ike_protection(struct jambuf *buf, struct ike_sa *ike)
 	jam_string(buf, "}");
 }
 
-void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
-{
-	LLOG_JAMBUF(RC_LOG, larval->sa.logger, buf) {
-		switch (larval->sa.st_sa_role) {
-		case SA_INITIATOR: jam_string(buf, "initiator"); break;
-		case SA_RESPONDER: jam_string(buf, "responder"); break;
-		}
-		if (larval->sa.st_v2_rekey_pred != SOS_NOBODY) {
-			pexpect(ike->sa.st_serialno == larval->sa.st_v2_rekey_pred);
-			jam(buf, " rekeyed IKE SA "PRI_SO"",
-			    pri_so(larval->sa.st_v2_rekey_pred));
-		} else {
-			jam(buf, " established IKE SA");
-		}
-
-		jam_string(buf, " ");
-		jam_v2_ike_protection(buf, ike);
-	}
-}
-
 void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 {
 	connection_establish_ike(ike, where);
