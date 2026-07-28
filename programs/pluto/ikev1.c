@@ -2055,7 +2055,7 @@ static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
 	jam_child_sa_details(buf, st);
 }
 
-static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
+static void jam_v1_isakmp_protection(struct jambuf *buf, struct state *st)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.ta_prf != NULL);
@@ -2446,7 +2446,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				jam_details = jam_v1_ipsec_details;
 			} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
-				jam_details = jam_v1_isakmp_details;
+				jam_details = jam_v1_isakmp_protection;
 			} else {
 				jam_details = NULL;
 			}

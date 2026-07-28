@@ -78,7 +78,7 @@ static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_
 static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_request;
 static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_response;
 
-static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
+static void jam_v2_ike_protection(struct jambuf *buf, struct ike_sa *ike)
 {
 	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
 	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_prf != NULL);
@@ -126,7 +126,7 @@ void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		jam_string(buf, "sent IKE_SA_INIT response to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_string(buf, " ");
-		jam_secured(buf, ike);
+		jam_v2_ike_protection(buf, ike);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 	}
@@ -142,7 +142,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
 		jam_string(buf, " ");
 
-		jam_secured(buf, ike);
+		jam_v2_ike_protection(buf, ike);
 
 		jam_string(buf, ", initiating ");
 		enum ikev2_exchange ix =
