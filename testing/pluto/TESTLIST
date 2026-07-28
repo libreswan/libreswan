@@ -672,6 +672,10 @@ kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
 
 kvmplutotest	ikev2-x509-eddsa-01					skip
 
+kvmplutotest	ikev2-x509-mldsa-44-01					good
+kvmplutotest	ikev2-x509-mldsa-65-01					good
+kvmplutotest	ikev2-x509-mldsa-87-01					good
+
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
 kvmplutotest	newoe-02-whack-wrong-mode-initiator	good
@@ -1698,6 +1702,13 @@ kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
+
+kvmplutotest	interop-ikev2-strongswan-50-responder-mldsa-65			good
+kvmplutotest	interop-ikev2-strongswan-51-initiator-mldsa-65			good
+kvmplutotest	interop-ikev2-strongswan-52-responder-mldsa-44			good
+kvmplutotest	interop-ikev2-strongswan-53-initiator-mldsa-44			good
+kvmplutotest	interop-ikev2-strongswan-54-responder-mldsa-87			good
+kvmplutotest	interop-ikev2-strongswan-55-initiator-mldsa-87			good
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good
