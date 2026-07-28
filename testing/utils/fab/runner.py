@@ -72,6 +72,18 @@ class Task:
         self.test = test
         self.prefix = "%s (test %d of %d)" % (test.name, test_nr, nr_tests)
 
+class Worker:
+    def __init__(self, domain_prefix, args):
+        self.args = args
+        self.domain_prefix = domain_prefix # /pool/m1. say
+        if domain_prefix.is_dir():
+            self.name_prefix = ""
+        elif domain_prefix.parent.is_dir():
+            self.name_prefix = domain_prefix.name
+        else:
+            raise Exception(f"invalid prefix {domain_prefix}")
+        self.name = (self.name_prefix and self.name_prefix+"runner" or "runner")
+
 class TestDomain:
 
     def __init__(self, test, domain_prefix, guest, logger):
@@ -276,8 +288,9 @@ def _write_guest_prompt(domain, test):
     f.write(test.name)
     f.write("]# ")
 
-def _process_test(domain_prefix, args, result_stats, task, logger):
+def _process_test(worker, task, logger, result_stats):
 
+    args = worker.args
     test = task.test
     old_result = None
 
@@ -295,7 +308,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
         if _skip_test(task, args, result_stats, logger):
             return
 
-        test_domains = _test_domains(logger, test, domain_prefix)
+        test_domains = _test_domains(logger, test, worker.domain_prefix)
 
         # Running the test ...
         #
@@ -538,17 +551,15 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
             result_stats.log_progress(logger.info)
 
 
-def _process_test_queue(domain_prefix, name_prefix,
-                        test_queue, nr_tests,
-                        args, done, result_stats):
+def _process_test_queue(worker, test_queue,
+                        done, result_stats):
     # New (per-thread/process) logger!
-    logger_name = (name_prefix and name_prefix or "kvmrunner")
-    logger = logutil.getLogger(logger_name)
+    logger = logutil.getLogger(worker.name)
 
     logger.info("preparing test domains")
 
     for host in hosts.hosts():
-        domain = virsh.Domain(logger, f"{name_prefix}{host.name}")
+        domain = virsh.Domain(logger, f"{worker.name_prefix}{host.name}")
         domain.destroy()
 
     logger.info("processing test queue")
@@ -556,9 +567,9 @@ def _process_test_queue(domain_prefix, name_prefix,
     try:
         while True:
             task = test_queue.get(block=False)
-            task_logger_name = task.test.name + (name_prefix and " " + name_prefix or "")
+            task_logger_name = task.test.name + (worker.name_prefix and " " + worker.name_prefix or "")
             task_logger = logger.nest(task_logger_name)
-            _process_test(domain_prefix, args, result_stats, task, task_logger)
+            _process_test(worker, task, task_logger, result_stats)
     except queue.Empty:
         None
     finally:
@@ -570,20 +581,15 @@ def _parallel_test_processor(test_queue, nr_tests, args, result_stats, logger):
     done = threading.Semaphore(value=0) # block
     threads = []
     for domain_prefix in args.prefix:
-        if domain_prefix.is_dir():
-            name_prefix = ""
-        elif domain_prefix.parent.is_dir():
-            name_prefix = domain_prefix.name
-        else:
-            raise Exception(f"invalid prefix {domain_prefix}")
-        thread_name = (name_prefix and name_prefix+"runner" or "runner")
-        threads.append(threading.Thread(name=thread_name,
+        worker = Worker(domain_prefix, args)
+        threads.append(threading.Thread(name=worker.name,
                                         target=_process_test_queue,
                                         daemon=True,
-                                        args=(domain_prefix, name_prefix,
-                                              test_queue, nr_tests,
-                                              args, done,
-                                              result_stats)))
+                                        args=(worker,
+                                              test_queue,
+                                              done,
+                                              result_stats,
+                                              )))
         # don't start more threads then needed
         if len(threads) >= nr_tests:
             break
