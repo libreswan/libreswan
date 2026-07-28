@@ -62,4 +62,6 @@ void save_first_inbound_ikev2_packet(const char *why, struct ike_sa *ike,
 void save_first_outbound_ikev2_packet(const char *why, struct ike_sa *ike,
 				      const struct v2_message *message);
 
+void jam_v2_ike_protection(struct jambuf *buf, struct ike_sa *ike);
+
 #endif
