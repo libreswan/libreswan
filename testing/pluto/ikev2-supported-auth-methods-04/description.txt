@@ -1,0 +1,3 @@
+RFC 9593 test. East and West have authby set with all available methods.
+Check if response message could grow so much that the IP fragmentation 
+might take place.

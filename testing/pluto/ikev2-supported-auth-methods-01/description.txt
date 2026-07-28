@@ -1,0 +1,3 @@
+RFC 9593 test. West has authby=rsasig,ecdsa set and east has leftauth=rsasig, 
+rightauth=ecdsa set.
+With send-supported-auth-methods enabled, West should authenticate with rsasig and East with ecdsa.
