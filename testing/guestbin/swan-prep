@@ -432,8 +432,8 @@ match args.userland:
                 shutil.rmtree(dst)
             os.mkdir(dst)
         copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
-        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
-        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
+        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf", optional=True)
+        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets", optional=True)
         copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", strict=True, optional=True)
 
 # test specific files
