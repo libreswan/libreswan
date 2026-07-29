@@ -7,5 +7,4 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ../../guestbin/strongswan-start.sh
-swanctl --load-conns
 echo "initdone"

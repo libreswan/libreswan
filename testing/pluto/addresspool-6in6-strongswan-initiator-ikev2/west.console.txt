@@ -11,6 +11,10 @@ west #
 down
 west #
  ../../guestbin/strongswan-start.sh
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'west'
+successfully loaded 1 connections, 0 unloaded
 west #
  swanctl --load-conns
 loaded connection 'west'

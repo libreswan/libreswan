@@ -1,6 +1,10 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
  ../../guestbin/strongswan-start.sh
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'west'
+successfully loaded 1 connections, 0 unloaded
 west #
  ../../guestbin/ip.sh link set down dev ipsec2 2> /dev/null > /dev/null
 west #
