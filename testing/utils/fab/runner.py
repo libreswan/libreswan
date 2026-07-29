@@ -65,6 +65,11 @@ def add_arguments(parser):
                        help="backup existing <test>/OUTPUT to %(metavar)s/<test>/<date> (default: %(default)s)")
 
 
+class Result:
+    def __init__(self, result, param):
+        self.result = result
+        self.param = param
+
 class Task:
     def __init__(self, test, test_nr, nr_tests):
         self.test_nr = test_nr
@@ -228,7 +233,7 @@ def _backup_directory(args, task):
                         task.test.name,
                         timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
 
-def _ignore_test(task, args, result_stats, logger):
+def _ignore_test(task, args, logger):
 
     test = task.test
     ignored, details = ignore.test(logger, args, task.test)
@@ -247,13 +252,12 @@ def _ignore_test(task, args, result_stats, logger):
             # create BACKUP/<test> then move OUTPUT/ to BACKUP/<test>/<date>
             os.makedirs(os.path.dirname(test_backup_directory), exist_ok=True)
             os.rename(test.output_directory, test_backup_directory)
-        result_stats.add_ignored(test, ignored)
         publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
-        return True
+        return Result("ignored", (test, ignored,))
 
-    return False
+    return None
 
-def _skip_test(task, args, result_stats, logger):
+def _skip_test(task, args, logger):
 
     # For instance, during a test re-run, skip any tests that are
     # passing.
@@ -274,11 +278,10 @@ def _skip_test(task, args, result_stats, logger):
     if skip.result(logger, args, old_result):
         logger.info("%s %s skipped (previously %s) %s",
                     PREFIX, task.prefix, old_result, SUFFIX)
-        result_stats.add_skipped(old_result)
         publish.everything(logger, args, old_result)
-        return True
+        return Result("skipped", (old_result,))
 
-    return False
+    return None
 
 def _write_guest_prompt(domain, test):
     f = domain.verbose_txt
@@ -288,7 +291,7 @@ def _write_guest_prompt(domain, test):
     f.write(test.name)
     f.write("]# ")
 
-def _process_test(worker, task, logger, result_stats):
+def _process_test(worker, task, logger):
 
     args = worker.args
     test = task.test
@@ -300,13 +303,15 @@ def _process_test(worker, task, logger, result_stats):
 
         # Ignore the test completely?  So there's no possible
         # confusion over the test's status remove any existing OUTPUT/
-        if _ignore_test(task, args, result_stats, logger):
-            return
+        ignore = _ignore_test(task, args, logger);
+        if ignore:
+            return ignore
 
         # Skip the test?  Leave any old results so next run skips the
         # same way.
-        if _skip_test(task, args, result_stats, logger):
-            return
+        skip = _skip_test(task, args, logger);
+        if skip:
+            return skip
 
         test_domains = _test_domains(logger, test, worker.domain_prefix)
 
@@ -547,8 +552,7 @@ def _process_test(worker, task, logger, result_stats):
             publish.everything(logger, args, result)
             publish.json_status(logger, args, "finished %s" % task.prefix)
 
-            result_stats.add_result(result, old_result)
-            result_stats.log_progress(logger.info)
+            return Result("result", (result, old_result,))
 
 
 def _process_test_queue(worker, test_queue,
@@ -569,7 +573,15 @@ def _process_test_queue(worker, test_queue,
             task = test_queue.get(block=False)
             task_logger_name = task.test.name + (worker.name_prefix and " " + worker.name_prefix or "")
             task_logger = logger.nest(task_logger_name)
-            _process_test(worker, task, task_logger, result_stats)
+            result = _process_test(worker, task, task_logger)
+            if result:
+                match result.result:
+                    case "ignored": result_stats.add_ignored(*result.param)
+                    case "skipped": result_stats.add_skipped(*result.param)
+                    case "result":
+                        result_stats.add_result(*result.param)
+                        result_stats.log_progress(task_logger.info)
+
     except queue.Empty:
         None
     finally:
