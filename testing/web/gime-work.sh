@@ -144,7 +144,7 @@ for commit in $(git -C ${rutdir} rev-list \
 
     # deal with earliest_commit
 
-    if test "${commit}" == "${earliest_commit}" ; then
+    if test "${commit}" = "${earliest_commit}" ; then
 	if test -z "${resultdir}" ; then
 	    earliest_index=${index}
 	fi

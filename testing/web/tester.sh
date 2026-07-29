@@ -32,7 +32,7 @@ make_kvm_variable() {
 		   --no-print-directory \
 		   print-kvm-variable \
 		   VARIABLE=$2)
-    if test "${v}" == "" ; then
+    if test "${v}" = "" ; then
 	echo $2 not defined 1>&2
 	exit 1
     fi
@@ -44,7 +44,7 @@ make_web_variable() {
 		   --no-print-directory \
 		   print-web-variable \
 		   VARIABLE=$2)
-    if test "${v}" == "" ; then
+    if test "${v}" = "" ; then
 	echo $2 not defined 1>&2
 	exit 1
     fi
