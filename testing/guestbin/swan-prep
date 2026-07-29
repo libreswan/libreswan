@@ -426,7 +426,25 @@ match args.userland:
         # required to write log file in /tmp
         subprocess.getoutput("setenforce 0")
 
-        for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
+        for directory in ("ipsec.d/",
+                          "ipsec.d/aacerts/",
+                          "ipsec.d/ocspcerts/",
+                          "ipsec.d/cacerts/",
+                          "ipsec.d/private/",
+                          "ipsec.d/certs/",
+                          "swanctl/",
+                          "swanctl/x509",
+                          "swanctl/x509ac",
+                          "swanctl/x509ca",
+                          "swanctl/x509ocsp",
+                          "swanctl/x509aa",
+                          "swanctl/x509crl",
+                          "swanctl/pubkey",
+                          "swanctl/private",
+                          "swanctl/rsa",
+                          "swanctl/ecdsa",
+                          "swanctl/pkcs8",
+                          "swanctl/pkcs12"):
             dst = os.path.join("/etc/strongswan", directory)
             if os.path.isdir(dst):
                 shutil.rmtree(dst)

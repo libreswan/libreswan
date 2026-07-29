@@ -3,6 +3,10 @@ east #
  #../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 east #
  ../../guestbin/strongswan-start.sh
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'east'
+successfully loaded 1 connections, 0 unloaded
 east #
  ../../guestbin/ip.sh link set down dev ipsec2 2> /dev/null > /dev/null
 east #

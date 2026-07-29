@@ -17,10 +17,9 @@ west #
 down
 west #
  ../../guestbin/strongswan-start.sh
-west #
- swanctl --load-conns
-no files found matching '/tmp/swanctl/conf.d/ike_sa_default.conf'
-no files found matching '/tmp/swanctl/conf.d/child_sa_default.conf'
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
 loaded connection 'westnet-eastnet-ikev1'
 successfully loaded 1 connections, 0 unloaded
 west #
