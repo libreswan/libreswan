@@ -26,6 +26,12 @@ start_strongswan()
 	seconds=$(expr ${seconds} + 1)
 	sleep 1
     done
+
+    cat <<EOF >/dev/stderr
+strongSwan did not start after ${seconds} seconds.
+EOF
+    exit 1
+
 }
 
 start_charon()
@@ -36,13 +42,20 @@ start_charon()
 
     # wait for it to come ready
     seconds=0
-    while test ${seconds} -lt 10 ; do
+    while true ; do
 	if swanctl --stats > /dev/null 2>&1 ; then
-	    exit 0
+	    break
+	fi
+	if test ${seconds} -ge 10 ; then
+	    echo charon-system did not start after ${seconds} seconds >/dev/stderr
+	    exit 1
 	fi
 	seconds=$(expr ${seconds} + 1)
 	sleep 1
     done
+
+    # mimic systemd
+    swanctl --load-all --noprompt
 }
 
 if test -r /etc/strongswan/ipsec.conf ; then
@@ -51,8 +64,3 @@ else
     start_charon
 fi
 
-cat <<EOF >/dev/stderr
-strongSwan did not start after ${seconds} seconds.
-EOF
-
-exit 1
