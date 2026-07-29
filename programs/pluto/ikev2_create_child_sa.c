@@ -448,7 +448,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		}
 
 		/* send N(ADDITIONAL_KEY_EXCHANGE) if there will be followup-ke exchanges */
-		if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
+		if (larval_ike->sa.st_v2_ike_followup_ke.next_exchange > 0) {
 			generate_ikev2_followup_ke_link(larval_ike);
 			if (!emit_v2N_hunk(v2N_ADDITIONAL_KEY_EXCHANGE,
 					   larval_ike->sa.st_v2_ike_followup_ke.link,
@@ -2025,6 +2025,10 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	change_v2_state(&larval_ike->sa);
 
 	if (next_is_ikev2_ike_followup_ke_exchange(larval_ike)) {
+		if (!PEXPECT(larval_ike->sa.logger, next_ikev2_ike_followup_ke_exchange(larval_ike))) {
+			return STF_INTERNAL_ERROR;
+		}
+
 		if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
 			return STF_INTERNAL_ERROR;
 		}
