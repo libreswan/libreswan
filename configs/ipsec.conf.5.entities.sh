@@ -13,7 +13,7 @@ for x in "$@" ; do
     echo "<!ENTITY ${d}.${s} SYSTEM '$PWD/d.ipsec.conf/$d/$s.xml'>"
 
     # hack for left= and right=
-    if test "${s}" == host ; then
+    if test "${s}" = host ; then
 	entity left ${d}.${s} left
 	entity right ${d}.${s} right
 	continue
