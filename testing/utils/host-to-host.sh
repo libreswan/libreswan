@@ -2,6 +2,7 @@
 
 # host-to-host-{transport,tunnel}-{freebsd,linux,netbsd,openbsd}
 # host-to-host-tunnel-forward-{freebsd,linux,netbsd,openbsd}
+# host-to-host-{transport,tunnel}-ondemand-{freebsd,linux,netbsd,openbsd}
 
 bindir=$(dirname $0)
 
@@ -33,7 +34,7 @@ for platform in ${platforms} ; do
 	* )     stack="PFKEYv2" ;;
     esac
 
-    for mode in transport tunnel tunnel-forward ; do
+    for mode in transport transport-ondemand tunnel tunnel-forward tunnel-ondemand ; do
 
 	dir=${basedir}-${mode}-${platform}
 	echo ${dir}
@@ -42,6 +43,7 @@ for platform in ${platforms} ; do
 
 	# tunnel is IPv6, transport is IPv4
 	# tunnel-forward is IPv4 with rise/set behind the east=west tunnel
+	# *-ondemand traps traffic and waits for an acquire to initiate
 
 	case ${mode} in
 	    transport )
@@ -52,6 +54,19 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
+		initiator=west
+		trigger=
+		;;
+	    transport-ondemand )
+		west=${west_internet4}
+		east=${east_internet4}
+		modeline="	type=transport"
+		what="ondemand host-to-host transport mode"
+		conn=west-east
+		hosts=${platform}east-${platform}west
+		westimpair="west# ipsec whack --impair suppress_retransmits"
+		initiator=west
+		trigger="west# echo 'TRIGGER' | nc -u -w 1 ${east} 7"
 		;;
 	    tunnel )
 		west=${west_internet6}
@@ -61,6 +76,8 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
+		initiator=west
+		trigger=
 		;;
 	    tunnel-forward )
 		west=${west_internet4}
@@ -71,16 +88,29 @@ for platform in ${platforms} ; do
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair="west# ipsec whack --impair suppress_retransmits"
+		initiator=west
+		trigger=
+		;;
+	    tunnel-ondemand )
+		west=${west_internet4}
+		east=${east_internet4}
+		modeline="	leftsubnet=${westnet4}.0/24
+	rightsubnet=${eastnet4}.0/24"
+		what="rise-east=TUNNEL=west-set triggered by an acquire"
+		conn=westnet-eastnet
+		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
+		westimpair=
+		initiator=east
+		trigger="rise# echo 'TRIGGER' | nc -u -w 1 ${set_westnet4} 7"
 		;;
 	esac
 
 	# linux disables IPv6 unless swan-prep is told not to
 
 	case ${platform}-${mode} in
-	    linux-transport )      prep="/testing/guestbin/swan-prep" ;;
-	    linux-tunnel )         prep="/testing/guestbin/swan-prep --46" ;;
-	    linux-tunnel-forward ) prep="/testing/guestbin/swan-prep" ;;
-	    * )                    prep="../../guestbin/prep.sh" ;;
+	    linux-tunnel ) prep="/testing/guestbin/swan-prep --46" ;;
+	    linux-* )      prep="/testing/guestbin/swan-prep" ;;
+	    * )            prep="../../guestbin/prep.sh" ;;
 	esac
 
 	cat <<EOF > ${dir}/description.txt
@@ -137,7 +167,7 @@ EOF
 	touch ${dir}/west.console.txt
 
 	case ${mode} in
-	    tunnel-forward )
+	    tunnel-forward | tunnel-ondemand )
 		touch ${dir}/rise.console.txt
 		touch ${dir}/set.console.txt
 		;;
@@ -162,17 +192,57 @@ ${westimpair}}
 west# ipsec add ${conn}
 west# echo "initdone"
 
+EOF
+
+	case ${mode} in
+	    *-ondemand )
+		cat <<EOF >> ${sh}
+${initiator}# ipsec route ${conn}
+${initiator}# ipsec _kernel state
+${initiator}# ipsec _kernel policy
+
+# trigger acquire using UDP
+${trigger}
+${initiator}# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+EOF
+		;;
+	    * )
+		cat <<EOF >> ${sh}
 west# ipsec up ${conn}
 west# ipsec _kernel state
 west# ipsec _kernel policy
 EOF
+		;;
+	esac
 
 	case ${mode} in
+	    transport-ondemand )
+		cat <<EOF >> ${sh}
+west# ../../guestbin/ping-once.sh --up ${east}
+
+# wait for larval state to clear; hack
+west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+west# ipsec _kernel state
+west# ipsec _kernel policy
+EOF
+		;;
 	    tunnel-forward )
 		cat <<EOF >> ${sh}
 rise# ../../guestbin/ping-once.sh --up ${set_westnet4}
 set# ../../guestbin/ping-once.sh --up ${rise_eastnet4}
 west# ipsec whack --trafficstatus
+EOF
+		;;
+	    tunnel-ondemand )
+		cat <<EOF >> ${sh}
+rise# ../../guestbin/ping-once.sh --up ${set_westnet4}
+set# ../../guestbin/ping-once.sh --up ${rise_eastnet4}
+east# ipsec whack --trafficstatus
+
+# wait for larval state to clear; hack
+east# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+east# ipsec _kernel state
+east# ipsec _kernel policy
 EOF
 		;;
 	    * )
@@ -183,8 +253,8 @@ EOF
 	esac
 
 	cat <<EOF >> ${sh}
-west# ipsec down ${conn}
-west# ipsec _kernel state
+${initiator}# ipsec down ${conn}
+${initiator}# ipsec _kernel state
 EOF
 
     done
