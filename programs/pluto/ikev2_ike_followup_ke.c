@@ -497,12 +497,11 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 
 		emancipate_larval_ike_sa(ike, larval_ike);
 	} else if (task->responder != NULL) {
-		struct prf_keys *keys =
-			ike->sa.st_v2_ike_followup_ke.keys;
 		PK11SymKey *new_ke_secret =
 			kem_responder_shared_key(task->responder);
 		new_ke_secret = symkey_addref(larval_ike->sa.logger, "new_ke_secret", new_ke_secret);
-		table_grow(keys, new_ke_secret);
+		table_grow(larval_ike->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
 	}
 
 	return STF_OK;
@@ -650,12 +649,11 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_continue(struct ike_sa 
 
 		return STF_OK; /* IKE */
 	} else if (task->initiator != NULL) {
-		struct prf_keys *keys =
-			larval_ike->sa.st_v2_ike_followup_ke.keys;
 		PK11SymKey *new_ke_secret =
 			kem_initiator_shared_key(task->initiator);
 		new_ke_secret = symkey_addref(larval_ike->sa.logger, "new_ke_secret", new_ke_secret);
-		table_grow(keys, new_ke_secret);
+		table_grow(larval_ike->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
 	}
 
 	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
