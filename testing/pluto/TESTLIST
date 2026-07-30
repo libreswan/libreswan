@@ -1785,11 +1785,13 @@ kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		good
 kvmplutotest	pfkeyv2-esn-esp-freebsd			good
 kvmplutotest	pfkeyv2-esn-ah-freebsd			good
 
-kvmplutotest	pfkeyv2-ondemand-transport		good
-kvmplutotest	pfkeyv2-ondemand-tunnel			good
 kvmplutotest	host-to-host-transport-freebsd		good	github/2602
 kvmplutotest	host-to-host-transport-linux		good
 kvmplutotest	host-to-host-transport-netbsd		good	github/2602
+kvmplutotest	host-to-host-transport-ondemand-freebsd	good
+kvmplutotest	host-to-host-transport-ondemand-linux	good
+kvmplutotest	host-to-host-transport-ondemand-netbsd	good
+kvmplutotest	host-to-host-transport-ondemand-openbsd	wip	github/2952
 kvmplutotest	host-to-host-transport-openbsd		good	github/2602
 kvmplutotest	host-to-host-tunnel-forward-freebsd	good
 kvmplutotest	host-to-host-tunnel-forward-linux	good
@@ -1798,6 +1800,10 @@ kvmplutotest	host-to-host-tunnel-forward-openbsd	good
 kvmplutotest	host-to-host-tunnel-freebsd		good
 kvmplutotest	host-to-host-tunnel-linux		good
 kvmplutotest	host-to-host-tunnel-netbsd		good
+kvmplutotest	host-to-host-tunnel-ondemand-freebsd	good
+kvmplutotest	host-to-host-tunnel-ondemand-linux	good
+kvmplutotest	host-to-host-tunnel-ondemand-netbsd	good
+kvmplutotest	host-to-host-tunnel-ondemand-openbsd	wip	github/2952
 kvmplutotest	host-to-host-tunnel-openbsd		good
 
 # Racoon interop
