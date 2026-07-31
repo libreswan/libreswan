@@ -5,6 +5,11 @@ east #
  #../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 east #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@west@east'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 east #
  echo "initdone"
 initdone
