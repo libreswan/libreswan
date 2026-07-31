@@ -27,55 +27,57 @@ east #
 "westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=176, maxBytes=2^63B, id='@west'
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=176, outBytes=168, maxBytes=2^63B, id='@west'
 east #
  ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
 east #
  ipsec _kernel state
-@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-256-gcm \
-	authkey 0xHASHKEY \
-	enckey 0xENCKEY
-	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
-		state mature replay 16 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
-	lifetime_hard: alloc 0 bytes 0 add N first 0
-	lifetime_soft: alloc 0 bytes 0 add N first 0
-	address_src: 192.1.2.45
-	address_dst: 192.1.2.23
-	key_auth: bits 288: HASHKEY
-	key_encrypt: bits 288: ENCKEY
-	counter:
-		0 input packets
-		0 output packets
-		0 input bytes
-		0 output bytes
-		0 input bytes, decompressed
-		0 output bytes, uncompressed
-		0 packets dropped on input
-		0 packets dropped on output
-	replay: rpl 1
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-256-gcm \
 	authkey 0xHASHKEY \
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
 		state mature replay 16 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_cur: alloc 0 bytes 168 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
 	key_auth: bits 288: HASHKEY
 	key_encrypt: bits 288: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
 		0 input packets
-		0 output packets
+		2 output packets
 		0 input bytes
-		0 output bytes
+		280 output bytes
 		0 input bytes, decompressed
+		208 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 3
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-256-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
+		state mature replay 16 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 176 add N first N
+	lifetime_hard: alloc 0 bytes 0 add N first 0
+	lifetime_soft: alloc 0 bytes 0 add N first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 288: HASHKEY
+	key_encrypt: bits 288: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		2 input packets
+		0 output packets
+		456 input bytes
+		0 output bytes
+		208 input bytes, decompressed
 		0 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 1
+	replay: rpl 2
 east #
  ipsec _kernel policy
 @0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.23 peer 192.1.2.45 type require
@@ -84,7 +86,7 @@ east #
  ipsec down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet" #2: ESP traffic information: in=168B out=176B
+"westnet-eastnet" #2: ESP traffic information: in=176B out=168B
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 east #
  ipsec _kernel state

@@ -39,19 +39,20 @@ west #
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
 		state mature replay 16 flags 0x400<esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_cur: alloc 0 bytes 68 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
 	key_auth: bits 288: HASHKEY
 	key_encrypt: bits 288: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
-		0 input packets
+		1 input packet
 		0 output packets
-		0 input bytes
+		188 input bytes
 		0 output bytes
-		0 input bytes, decompressed
+		84 input bytes, decompressed
 		0 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
@@ -61,23 +62,24 @@ west #
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
 		state mature replay 16 flags 0x400<esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_cur: alloc 0 bytes 64 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
 	key_auth: bits 288: HASHKEY
 	key_encrypt: bits 288: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
 		0 input packets
-		0 output packets
+		1 output packet
 		0 input bytes
-		0 output bytes
+		120 output bytes
 		0 input bytes, decompressed
-		0 output bytes, uncompressed
+		84 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 1
+	replay: rpl 2
 west #
  ipsec _kernel policy
 @0 flow esp in from 192.1.2.23 to 192.1.2.45 local 192.1.2.45 peer 192.1.2.23 type require
