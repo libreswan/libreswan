@@ -1,6 +1,11 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -21,7 +26,7 @@ parsed IKE_AUTH response 1 [ IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(MOBIKE_SUP) N(A
 authentication of 'east' with pre-shared key successful
 peer supports MOBIKE
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_CBC_128/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
@@ -122,7 +127,7 @@ Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r, rekeying in 3 hours
 westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_MD5_96/PRF_HMAC_MD5/MODP_2048
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o, IPCOMP CPIs: CPI_i CPI_o
 westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA2_512_256, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes

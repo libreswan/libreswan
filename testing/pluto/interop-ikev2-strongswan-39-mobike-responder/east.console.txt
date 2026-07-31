@@ -1,6 +1,12 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@road'
+no authorities found, 0 unloaded
+loaded pool 'pool-subnet-192-0-3-0/24'
+successfully loaded 1 pools, 0 unloaded
+loaded connection 'roadnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 east #
  echo "initdone"
 initdone
