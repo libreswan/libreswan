@@ -1,0 +1,16 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+pluto(ok)
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet
+"westnet-eastnet": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #

@@ -1,0 +1,5 @@
+echo 'TRIGGER' | nc -u -w 1 192.0.1.15 7
+rise #
+ ../../guestbin/ping-once.sh --up 192.0.1.15
+up
+rise #

@@ -1,0 +1,84 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec route west-east
+west #
+ ipsec _kernel state
+No SAD entries.
+west #
+ ipsec _kernel policy
+192.1.2.45[any] 192.1.2.23[any] 255(reserved)
+	out ipsec
+	esp/transport//require
+	spid=1 seq=0 pid=PID
+	refcnt=0
+west #
+ echo 'TRIGGER' | nc -u -w 1 192.1.2.23 7
+west #
+ ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+"west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
+west #
+ ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+west #
+ ipsec _kernel state
+192.1.2.23 192.1.2.45 
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=16 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+192.1.2.45 192.1.2.23 
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=16 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 120(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
+west #
+ ipsec _kernel policy
+192.1.2.23[any] 192.1.2.45[any] 255(reserved)
+	in ipsec
+	esp/transport//require
+	spid=3 seq=1 pid=PID
+	refcnt=0
+192.1.2.45[any] 192.1.2.23[any] 255(reserved)
+	out ipsec
+	esp/transport//require
+	spid=4 seq=0 pid=PID
+	refcnt=0
+west #
+ ipsec down west-east
+"west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"west-east" #1: sent INFORMATIONAL request to delete IKE SA
+"west-east" #2: ESP traffic information: in=84B out=120B
+"west-east" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec _kernel state
+No SAD entries.
+west #
