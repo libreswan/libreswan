@@ -96,6 +96,10 @@
  * Work-around OpenBSD which completely re-defined struct
  * sadb_x_policy: the fields are not the same; the way it is used is
  * not the same.
+ *
+ * SADB_X_ASKPOLICY, which fetches the flow that triggered an
+ * ACQUIRE, does use the rewritten structure, so its extension type
+ * is kept under a new name.
  */
 
 #ifdef __OpenBSD__
@@ -104,6 +108,7 @@
 #   error confused
 #  endif
 #  undef SADB_X_EXT_POLICY
+#  define SADB_X_EXT_OPENBSD_POLICY 25
 # endif
 #endif
 

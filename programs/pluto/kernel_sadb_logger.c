@@ -473,6 +473,18 @@ void llog_sadb_x_replay(struct verbose verbose, const struct sadb_msg *b,
 }
 #endif
 
+#ifdef SADB_X_EXT_OPENBSD_POLICY /* OpenBSD */
+void llog_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_x_policy *m)
+{
+	JAM_HEADER_SADB(sadb_x_policy);
+
+	JAM(u32, sadb_x_policy, seq);
+
+	JAM_FOOTER();
+}
+#endif
+
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 void llog_sadb_x_udpencap(struct verbose verbose, const struct sadb_msg *b,
 			const struct sadb_x_udpencap *m)
@@ -667,6 +679,21 @@ void llog_sadb_ext(struct verbose verbose,
 				     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg)));
 		return;
 	}
+
+#ifdef SADB_X_EXT_OPENBSD_POLICY
+	case SADB_X_EXT_OPENBSD_POLICY:
+	{
+		shunk_t x_policy_cursor;
+		const struct sadb_x_policy *x_policy =
+			get_sadb_x_policy(&ext_cursor, &x_policy_cursor, verbose);
+		if (x_policy == NULL) {
+			return;
+		}
+		llog_sadb_x_policy(verbose, base, x_policy);
+		vexpect(x_policy_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
 
 #ifdef SADB_X_EXT_POLICY
 	case SADB_X_EXT_POLICY:

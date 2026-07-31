@@ -1485,8 +1485,21 @@ static bool pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_name = "%pass(bypass)";
 		break;
 	case SHUNT_DROP:
-		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%drop(deny)";
+		if (policy->kind == SHUNT_KIND_NEGOTIATION) {
+			/*
+			 * DENY is absolute, it would also block this
+			 * negotiation's IKE exchange (the IKE
+			 * socket's BYPASS levels only exempt it from
+			 * IPsec-class flows).  DONTACQ holds the
+			 * traffic without generating further
+			 * ACQUIREs.
+			 */
+			policy_type = SADB_X_FLOW_TYPE_DONTACQ;
+			policy_name = "%hold(dontacq)";
+		} else {
+			policy_type = SADB_X_FLOW_TYPE_DENY;
+			policy_name = "%drop(deny)";
+		}
 		break;
 	case SHUNT_NONE:
 		/* FAILURE=NONE should have been turned into
@@ -1736,6 +1749,80 @@ static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 	return true;
 }
 
+/*
+ * OpenBSD's ACQUIRE only carries the SA's peer (ADDRESS_DST), and
+ * not the flow that triggered it.  The flow needs to be fetched
+ * separately using SADB_X_ASKPOLICY: given the ACQUIRE's sequence
+ * number, the kernel responds with the flow's source/destination
+ * (and their ports) in SADB_X_EXT_{SRC,DST}_FLOW.
+ */
+
+#ifdef SADB_X_ASKPOLICY /* OpenBSD */
+static bool ask_sadb_policy(uint32_t acquire_seq,
+			    ip_address *src_address, ip_port *src_port,
+			    ip_address *dst_address, ip_port *dst_port,
+			    struct verbose verbose)
+{
+	vdbg("%s() seq=%u ...", __func__, acquire_seq);
+	verbose.level++;
+
+	uint8_t reqbuf[SIZEOF_SADB_BASE + sizeof(struct sadb_x_policy)];
+	struct outbuf req;
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_X_ASKPOLICY, SADB_SATYPE_UNSPEC);
+
+	/* OpenBSD's rewritten sadb_x_policy, see lsw-pfkeyv2.h */
+
+	put_sadb_ext(&req, sadb_x_policy, SADB_X_EXT_OPENBSD_POLICY,
+		     .sadb_x_policy_seq = acquire_seq);
+
+	struct inbuf resp;
+	if (!msg_sendrecv(&req, &resp, verbose)) {
+		/* ESRCH when the acquire has expired */
+		return false;
+	}
+
+	while (resp.base_cursor.len > 0) {
+
+		shunk_t ext_cursor;
+		const struct sadb_ext *ext =
+			get_sadb_ext(&resp.base_cursor, &ext_cursor, verbose);
+		if (ext == NULL) {
+			llog_pexpect(verbose.logger, HERE, "bad ext");
+			return false;
+		}
+
+		enum sadb_exttype exttype = ext->sadb_ext_type;
+		switch (exttype) {
+
+		case SADB_X_EXT_SRC_FLOW:
+			if (!parse_sadb_address(verbose, resp.base, &ext_cursor,
+						src_address, src_port)) {
+				return false;
+			}
+			break;
+		case SADB_X_EXT_DST_FLOW:
+			if (!parse_sadb_address(verbose, resp.base, &ext_cursor,
+						dst_address, dst_port)) {
+				return false;
+			}
+			break;
+
+		default:
+			if (verbose.debug) {
+				verbose.level++;
+				llog_sadb_ext(verbose, resp.base, ext, ext_cursor);
+				verbose.level--;
+			}
+			break;
+		}
+	}
+
+	return true;
+}
+#endif
+
 static void parse_sadb_acquire(const struct sadb_msg *msg,
 			       shunk_t msg_cursor,
 			       struct verbose verbose)
@@ -1798,6 +1885,24 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			break;
 		}
 	}
+
+#ifdef SADB_X_ASKPOLICY /* OpenBSD */
+	/*
+	 * No source, ask the kernel for the flow that triggered the
+	 * ACQUIRE.  Both addresses are replaced: for a tunnel it is
+	 * the flow's endpoints, not the SA's, that select the
+	 * connection.
+	 */
+	if (address_is_unset(&src_address)) {
+		if (!ask_sadb_policy(msg->sadb_msg_seq,
+				     &src_address, &src_port,
+				     &dst_address, &dst_port,
+				     verbose)) {
+			vdbg("ask policy failed");
+			return;
+		}
+	}
+#endif
 
 	if (address_is_unset(&src_address) || address_is_unset(&dst_address)) {
 		vdbg("something isn't set");

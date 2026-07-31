@@ -270,6 +270,12 @@ enum sadb_exttype {
 #define SADB_X_EXT_DST_FLOW sadb_x_ext_dst_flow
 #endif
 
+#ifdef SADB_X_EXT_OPENBSD_POLICY /* OpenBSD */
+	sadb_x_ext_openbsd_policy = SADB_X_EXT_OPENBSD_POLICY,
+#undef SADB_X_EXT_OPENBSD_POLICY
+#define SADB_X_EXT_OPENBSD_POLICY sadb_x_ext_openbsd_policy
+#endif
+
 #ifdef SADB_X_EXT_PROTOCOL
 	sadb_x_ext_protocol = SADB_X_EXT_PROTOCOL,
 #undef SADB_X_EXT_PROTOCOL
@@ -580,7 +586,7 @@ void llog_sadb_x_nat_t_port(struct verbose verbose, const struct sadb_msg *b, co
 #ifdef SADB_X_EXT_NAT_T_TYPE
 void llog_sadb_x_nat_t_type(struct verbose verbose, const struct sadb_msg *b, const struct sadb_x_nat_t_type *m);
 #endif
-#ifdef SADB_X_EXT_POLICY
+#if defined(SADB_X_EXT_POLICY) || defined(SADB_X_EXT_OPENBSD_POLICY)
 void llog_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b, const struct sadb_x_policy *m);
 #endif
 #ifdef SADB_X_EXT_SA2
@@ -629,7 +635,7 @@ GET_SADB(sadb_supported);
 #ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_ipsecrequest);
 #endif
-#ifdef SADB_X_EXT_POLICY
+#if defined(SADB_X_EXT_POLICY) || defined(SADB_X_EXT_OPENBSD_POLICY)
 GET_SADB(sadb_x_policy);
 #endif
 GET_SADB(sadb_x_nat_t_type);
