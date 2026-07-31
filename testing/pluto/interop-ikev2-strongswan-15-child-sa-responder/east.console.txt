@@ -5,6 +5,11 @@ east #
  ../../guestbin/ip-route.sh add 192.0.100.0/24 via 192.1.2.23  dev eth1
 east #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2a'
+successfully loaded 1 connections, 0 unloaded
 east #
  echo "initdone"
 initdone

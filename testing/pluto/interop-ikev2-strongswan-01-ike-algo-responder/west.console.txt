@@ -39,7 +39,7 @@ west #
 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=chacha20poly1305-sha2-dh19" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=chacha20poly1305-sha2-dh19" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=chacha20poly1305-sha2-dh19": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "ike=chacha20poly1305-sha2-dh19" #1: sent INFORMATIONAL request to delete IKE SA
@@ -54,7 +54,7 @@ west #
 "ike=aes128-sha2-dh19" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha2-dh19" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha2-dh19" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha2-dh19": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "ike=aes128-sha2-dh19" #3: sent INFORMATIONAL request to delete IKE SA
@@ -69,7 +69,7 @@ west #
 "ike=aes128-sha2-dh20" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha2-dh20" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha2-dh20" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha2-dh20": initiating delete of connection's IKE SA #5 (and Child SA #6)
 "ike=aes128-sha2-dh20" #5: sent INFORMATIONAL request to delete IKE SA
@@ -84,7 +84,7 @@ west #
 "ike=aes128-sha2-dh21" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #8 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha2-dh21" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha2-dh21" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha2-dh21": initiating delete of connection's IKE SA #7 (and Child SA #8)
 "ike=aes128-sha2-dh21" #7: sent INFORMATIONAL request to delete IKE SA
@@ -99,7 +99,7 @@ west #
 "ike=aes128-sha1-dh19" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #10 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha1-dh19" #9: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha1-dh19" #9: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha1-dh19": initiating delete of connection's IKE SA #9 (and Child SA #10)
 "ike=aes128-sha1-dh19" #9: sent INFORMATIONAL request to delete IKE SA
@@ -114,7 +114,7 @@ west #
 "ike=aes128-sha1-dh20" #11: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #12 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha1-dh20" #11: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha1-dh20" #11: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha1-dh20": initiating delete of connection's IKE SA #11 (and Child SA #12)
 "ike=aes128-sha1-dh20" #11: sent INFORMATIONAL request to delete IKE SA
@@ -129,7 +129,7 @@ west #
 "ike=aes128-sha1-dh21" #13: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #14 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-sha1-dh21" #13: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-sha1-dh21" #13: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-sha1-dh21": initiating delete of connection's IKE SA #13 (and Child SA #14)
 "ike=aes128-sha1-dh21" #13: sent INFORMATIONAL request to delete IKE SA
@@ -144,7 +144,7 @@ west #
 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #16 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes_ctr128-sha1-dh21" #15: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes_ctr128-sha1-dh21" #15: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes_ctr128-sha1-dh21": initiating delete of connection's IKE SA #15 (and Child SA #16)
 "ike=aes_ctr128-sha1-dh21" #15: sent INFORMATIONAL request to delete IKE SA
@@ -159,7 +159,7 @@ west #
 "ike=3des-sha2-modp2048" #17: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #18 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=3des-sha2-modp2048" #17: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=3des-sha2-modp2048" #17: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=3des-sha2-modp2048": initiating delete of connection's IKE SA #17 (and Child SA #18)
 "ike=3des-sha2-modp2048" #17: sent INFORMATIONAL request to delete IKE SA
@@ -174,7 +174,7 @@ west #
 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #20 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ike=aes128-aes_xcbc-modp2048" #19: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ike=aes128-aes_xcbc-modp2048" #19: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 up
 "ike=aes128-aes_xcbc-modp2048": initiating delete of connection's IKE SA #19 (and Child SA #20)
 "ike=aes128-aes_xcbc-modp2048" #19: sent INFORMATIONAL request to delete IKE SA
