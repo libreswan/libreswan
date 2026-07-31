@@ -3,6 +3,11 @@ west #
  # strongswan expects the certs in /etc/strongswan/certs for some reason
 west #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'psk'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
