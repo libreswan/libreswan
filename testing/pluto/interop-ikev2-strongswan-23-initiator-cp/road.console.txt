@@ -16,6 +16,11 @@ road #
 renamed 'PATH/sbin/resolvconf' -> 'PATH/sbin/resolvconf.tmp'
 road #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@road'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'roadnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 road #
  test -r PATH/sbin/resolvconf.tmp && mv -v PATH/sbin/resolvconf{.tmp,}
 renamed 'PATH/sbin/resolvconf.tmp' -> 'PATH/sbin/resolvconf'
@@ -47,7 +52,7 @@ installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
 installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.2.1
 IKE_SA roadnet-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA roadnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.1/32 === 0.0.0.0/0
