@@ -192,6 +192,9 @@ const struct sparse_names sadb_exttype_names = {
 #ifdef SADB_X_EXT_POLICY
 		S(SADB_X_EXT_POLICY),
 #endif
+#ifdef SADB_X_EXT_OPENBSD_POLICY
+		S(SADB_X_EXT_OPENBSD_POLICY),
+#endif
 #ifdef SADB_X_EXT_PRAND
 		S(SADB_X_EXT_PRAND),
 #endif

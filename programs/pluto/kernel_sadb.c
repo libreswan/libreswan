@@ -127,7 +127,7 @@ GET_SADB(sadb_x_ipsecrequest, sizeof(uint8_t)); /* XXX: see rfc, screwup */
 #ifdef SADB_X_EXT_NAT_T_TYPE
 GET_SADB(sadb_x_nat_t_type, sizeof(uint64_t));
 #endif
-#ifdef SADB_X_EXT_POLICY
+#if defined(SADB_X_EXT_POLICY) || defined(SADB_X_EXT_OPENBSD_POLICY)
 GET_SADB(sadb_x_policy, sizeof(uint64_t));
 #endif
 #ifdef SADB_X_EXT_SA2
