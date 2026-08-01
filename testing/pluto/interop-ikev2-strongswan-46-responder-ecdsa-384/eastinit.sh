@@ -2,8 +2,7 @@
 
 cp /testing/x509/pki/real/mainec/root.cert /etc/strongswan/ipsec.d/cacerts/mainec.crt
 cp /testing/x509/pki/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
-cp /testing/x509/pki/real/mainec/east.key /etc/strongswan/ipsec.d/private/east.key
-chmod 600 /etc/strongswan/ipsec.d/private/*
+cp /testing/x509/pki/real/mainec/east.key /etc/strongswan/swanctl/ecdsa/east.key
 
 ../../guestbin/strongswan-start.sh
 echo "initdone"

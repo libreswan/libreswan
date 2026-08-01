@@ -4,9 +4,7 @@ east #
 east #
  cp /testing/x509/pki/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 east #
- cp /testing/x509/pki/real/mainec/east.key /etc/strongswan/ipsec.d/private/east.key
-east #
- chmod 600 /etc/strongswan/ipsec.d/private/*
+ cp /testing/x509/pki/real/mainec/east.key /etc/strongswan/swanctl/ecdsa/east.key
 east #
  ../../guestbin/strongswan-start.sh
 east #
