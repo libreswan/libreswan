@@ -2,9 +2,9 @@
 west #
  cp /testing/x509/pki/real/mainec/root.cert /etc/strongswan/ipsec.d/cacerts/mainec.crt
 west #
- cp /testing/x509/pki/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
+ cp /testing/x509/pki/real/mainec/`hostname`.end.cert /etc/strongswan/swanctl/x509/`hostname`.crt
 west #
- cp /testing/x509/pki/real/mainec/`hostname`.key /etc/strongswan/ipsec.d/private/`hostname`.key
+ cp /testing/x509/pki/real/mainec/`hostname`.key /etc/strongswan/swanctl/ecdsa/`hostname`.key
 west #
  chmod 600 /etc/strongswan/ipsec.d/*/*
 west #
