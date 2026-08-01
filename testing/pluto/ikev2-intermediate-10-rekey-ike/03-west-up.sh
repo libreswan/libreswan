@@ -1,7 +1,7 @@
 ipsec up west-cuckold
 ipsec up west-cuckoo
 
-ipsec whack --rekey-ike --name west-cuckold --asynchronous
+ipsec whack --rekey-ike --name west-cuckold
 
 ../../guestbin/wait-for-pluto.sh '#4: initiator rekeyed IKE SA #1'
 

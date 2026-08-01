@@ -86,6 +86,18 @@ struct ikev2_task {
 	const struct prf_desc *prf;
 };
 
+static struct prf_keys *clone_prf_keys(const struct prf_keys *keys,
+				       struct logger *logger)
+{
+	struct prf_keys *keys_ = table_alloc(struct prf_keys, keys->len);
+	unsigned pos = 0;
+
+	TABLE_FOR_EACH(key, keys) {
+		keys_->table[pos++] = symkey_addref(logger, "SK(n)", *key);
+	}
+	return keys_;
+}
+
 void cleanup_IKE_FOLLOWUP_KE_task(struct ikev2_task **task, struct logger *logger)
 {
 	pfree_kem_initiator(&(*task)->initiator, logger);
@@ -347,11 +359,8 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *ike,
 		task.nr = clone_hunk_as_chunk(&larval_ike->sa.st_nr, "Nr");
 		task.d = symkey_addref(larval_ike->sa.logger, "d", ike->sa.st_skey_d_nss);
 		task.dh_shared_secret = symkey_addref(larval_ike->sa.logger, "SK(0)", larval_ike->sa.st_dh_shared_secret);
-		task.keys = clone_thing(*larval_ike->sa.st_v2_ike_followup_ke.keys,
-					"additional_ke_secrets");
-		TABLE_FOR_EACH(key, task.keys) {
-			symkey_addref(larval_ike->sa.logger, "SK(n)", *key);
-		}
+		task.keys = clone_prf_keys(larval_ike->sa.st_v2_ike_followup_ke.keys,
+					   larval_ike->sa.logger);
 		task.prf = larval_ike->sa.st_oakley.ta_prf;
 		/* for KEYMAT */
 		task.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&larval_ike->sa);
@@ -488,12 +497,11 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue(struct ike_sa *
 
 		emancipate_larval_ike_sa(ike, larval_ike);
 	} else if (task->responder != NULL) {
-		struct prf_keys *keys =
-			ike->sa.st_v2_ike_followup_ke.keys;
 		PK11SymKey *new_ke_secret =
 			kem_responder_shared_key(task->responder);
 		new_ke_secret = symkey_addref(larval_ike->sa.logger, "new_ke_secret", new_ke_secret);
-		table_grow(keys, new_ke_secret);
+		table_grow(larval_ike->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
 	}
 
 	return STF_OK;
@@ -537,11 +545,8 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response(struct ike_sa *ike,
 		task.nr = clone_hunk_as_chunk(&larval_ike->sa.st_nr, "Nr");
 		task.d = symkey_addref(larval_ike->sa.logger, "d", ike->sa.st_skey_d_nss);
 		task.dh_shared_secret = symkey_addref(larval_ike->sa.logger, "SK(0)", larval_ike->sa.st_dh_shared_secret);
-		task.keys = clone_thing(*larval_ike->sa.st_v2_ike_followup_ke.keys,
-					"additional_ke_secrets");
-		TABLE_FOR_EACH(key, task.keys) {
-			symkey_addref(larval_ike->sa.logger, "SK(n)", *key);
-		}
+		task.keys = clone_prf_keys(larval_ike->sa.st_v2_ike_followup_ke.keys,
+					   larval_ike->sa.logger);
 		task.prf = larval_ike->sa.st_oakley.ta_prf;
 		/* for KEYMAT */
 		task.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&larval_ike->sa);
@@ -644,12 +649,11 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_continue(struct ike_sa 
 
 		return STF_OK; /* IKE */
 	} else if (task->initiator != NULL) {
-		struct prf_keys *keys =
-			larval_ike->sa.st_v2_ike_followup_ke.keys;
 		PK11SymKey *new_ke_secret =
 			kem_initiator_shared_key(task->initiator);
 		new_ke_secret = symkey_addref(larval_ike->sa.logger, "new_ke_secret", new_ke_secret);
-		table_grow(keys, new_ke_secret);
+		table_grow(larval_ike->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
 	}
 
 	if (next_is_ikev2_ike_followup_ke_exchange(&larval_ike->sa)) {
