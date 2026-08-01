@@ -7,6 +7,12 @@ east #
  cp /testing/x509/pki/real/mainec/east.key /etc/strongswan/swanctl/ecdsa/east.key
 east #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'
+loaded ecdsa key from '/etc/strongswan/swanctl/ecdsa/east.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 east #
  echo "initdone"
 initdone

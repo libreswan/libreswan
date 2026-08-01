@@ -7,6 +7,12 @@ west #
  cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/swanctl/x509/`hostname`.crt
 west #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/west.crt'
+loaded rsa key from '/etc/strongswan/swanctl/rsa/west.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'san'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -15,8 +21,9 @@ west #
 west #
  strongswan up san | grep -v libcurl
 sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 initiating Aggressive Mode IKE_SA san[1] to 192.1.2.23
-generating AGGRESSIVE request 0 [ SA KE No ID CERTREQ V V V V V ]
+generating AGGRESSIVE request 0 [ SA KE No ID CERTREQ CERTREQ V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed AGGRESSIVE response 0 [ SA KE No ID CERT CERTREQ SIG V V V NAT-D NAT-D ]
@@ -39,7 +46,7 @@ certificate status is not available
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA_EMSA_PKCS1_NULL successful
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) successful
 IKE_SA san[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 sending end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org"
 generating AGGRESSIVE request 0 [ CERT NAT-D NAT-D SIG ]

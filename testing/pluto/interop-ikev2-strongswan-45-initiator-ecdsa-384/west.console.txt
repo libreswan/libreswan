@@ -9,6 +9,12 @@ west #
  chmod 600 /etc/strongswan/ipsec.d/*/*
 west #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/west.crt'
+loaded ecdsa key from '/etc/strongswan/swanctl/ecdsa/west.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -61,7 +67,7 @@ crl fetching failed
 certificate status is not available
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with ECDSA_WITH_SHA384_DER successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
