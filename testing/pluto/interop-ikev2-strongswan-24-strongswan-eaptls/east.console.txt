@@ -4,7 +4,7 @@ east #
 east #
  cp /testing/x509/pki/real/mainca/`hostname`.key /etc/strongswan/swanctl/rsa/`hostname`.key
 east #
- cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
+ cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/swanctl/x509/`hostname`.crt
 east #
  ../../guestbin/strongswan-start.sh
 east #

@@ -2,9 +2,9 @@
 
 cp /testing/x509/pki/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 cp /testing/x509/pki/real/mainca/`hostname`.key /etc/strongswan/swanctl/rsa/`hostname`.key
-cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
+cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/swanctl/x509/`hostname`.crt
 # why?
-cp /testing/x509/pki/real/mainca/east.end.cert /etc/strongswan/ipsec.d/certs/east.crt
+cp /testing/x509/pki/real/mainca/east.end.cert /etc/strongswan/swanctl/x509/east.crt
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
