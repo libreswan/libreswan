@@ -27,6 +27,13 @@ west #
 down
 west #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/west.crt'
+loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'
+loaded rsa key from '/etc/strongswan/swanctl/rsa/west.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -39,9 +46,10 @@ received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) CERTREQ ]
 selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/ECP_256
 received cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) with RSA signature successful
 establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(1/5) ]
@@ -72,7 +80,7 @@ crl fetching failed
 certificate status is not available
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA signature successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
