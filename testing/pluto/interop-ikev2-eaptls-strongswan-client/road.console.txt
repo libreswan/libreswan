@@ -7,6 +7,12 @@ road #
  cp /testing/x509/pki/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 road #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/road.crt'
+loaded rsa key from '/etc/strongswan/swanctl/rsa/road.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'rw-eap'
+successfully loaded 1 connections, 0 unloaded
 road #
  echo "initdone"
 initdone
@@ -120,7 +126,7 @@ parsed IKE_AUTH response 11 [ AUTH CPRP(ADDR) SA TSi TSr ]
 authentication of 'east.testing.libreswan.org' with EAP successful
 installing new virtual IP 10.0.10.1
 IKE_SA rw-eap[1] established between 192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
-scheduling reauthentication in XXXs
+scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 10.0.10.1/32 === 192.0.2.0/24
