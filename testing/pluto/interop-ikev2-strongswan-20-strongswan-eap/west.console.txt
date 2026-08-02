@@ -21,6 +21,12 @@ west #
 down
 west #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'
+loaded eap secret 'eap-user1@testing-libreswan-org'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'rw-eap'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -44,7 +50,7 @@ parsed IKE_AUTH response 1 [ EF(2/2) ]
 received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/MD5 ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
-  using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using trusted certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
   reached self-signed root ca with a path length of 0
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
@@ -71,6 +77,7 @@ authentication of 'east.testing.libreswan.org' with EAP successful
 received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXs
 peer supports MOBIKE
 IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
+scheduling rekeying in XXXs
 reauthentication already scheduled in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
