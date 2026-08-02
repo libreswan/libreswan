@@ -36,7 +36,7 @@ EOF
 
 start_charon()
 {
-    /usr/bin/charon-systemd > OUTPUT/$(hostname).charon.log 2>&1 &
+    /usr/libexec/strongswan/charon > OUTPUT/$(hostname).charon.log 2>&1 &
     pid=$!
     echo ${pid} > ${pidfile}
 
