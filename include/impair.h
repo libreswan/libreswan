@@ -213,6 +213,8 @@ struct impair {
 
 	bool mangle_cert_pubkey;
 
+	struct impair_unsigned omit_addke_notification;
+
 	/*
 	 * add more here
 	 */

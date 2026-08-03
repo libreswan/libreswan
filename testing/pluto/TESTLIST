@@ -1693,6 +1693,8 @@ kvmplutotest	ikev2-intermediate-07-fallback-no-intermediate			good
 kvmplutotest	ikev2-intermediate-08-addke-ml-kem-1024 			good
 kvmplutotest	ikev2-intermediate-09-max-size-hybrid				good
 kvmplutotest	ikev2-intermediate-10-rekey-ike					good
+kvmplutotest	ikev2-intermediate-11-rekey-ike-omit-addke-initiator		good
+kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401
