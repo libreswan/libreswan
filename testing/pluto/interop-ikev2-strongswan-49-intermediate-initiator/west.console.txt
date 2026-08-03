@@ -1,21 +1,5 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ../../guestbin/strongswan-start.sh
 loaded ike secret 'ike-@east@west'
 no authorities found, 0 unloaded
@@ -66,6 +50,51 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
+ swanctl --rekey --ike westnet-eastnet-ikev2
+rekey completed successfully
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ strongswan down westnet-eastnet-ikev2
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 3 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 3 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 3 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
+parsed CREATE_CHILD_SA response 3 [ SA N(ADD_KE) No KE ]
+generating IKE_FOLLOWUP_KE request 4 [ KE N(ADD_KE) ]
+splitting IKE message (XXX bytes) into 2 fragments
+generating IKE_FOLLOWUP_KE request 4 [ EF(1/2) ]
+generating IKE_FOLLOWUP_KE request 4 [ EF(2/2) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_FOLLOWUP_KE response 4 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_FOLLOWUP_KE response 4 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_FOLLOWUP_KE response 4 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
+parsed IKE_FOLLOWUP_KE response 4 [ KE ]
+scheduling rekeying in XXXs
+maximum IKE_SA lifetime XXXs
+IKE_SA westnet-eastnet-ikev2[2] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
+deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
+sending DELETE for IKE_SA westnet-eastnet-ikev2[1]
+generating INFORMATIONAL request 5 [ D ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed INFORMATIONAL response 5 [ ]
+IKE_SA deleted
+IKE_SA [1] closed successfully
+west #
  echo done
 done
 west #
@@ -78,7 +107,7 @@ Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2[2]: DELETING, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #

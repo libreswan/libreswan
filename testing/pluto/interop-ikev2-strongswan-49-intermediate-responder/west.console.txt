@@ -1,101 +1,105 @@
 /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add intermediate-fragmentation-no
+"intermediate-fragmentation-no": added oriented IKEv2 connection
+west #
+ ipsec add intermediate-fragmentation-yes
+"intermediate-fragmentation-yes": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes-sha1-modp8192;addke1=ml_kem_768' -- -I 192.0.1.254 192.0.2.254
- ipsec start
-Redirecting to: [initsystem]
- ipsec addconn --name algo ike=aes-sha1-modp8192;addke1=ml_kem_768
-"algo": added oriented IKEv2 connection
- ipsec up algo
-"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
-"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
-"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
-"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
-"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
-"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
- ipsec stop
-Redirecting to: [initsystem]
+ ipsec up intermediate-fragmentation-yes
+"intermediate-fragmentation-yes" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"intermediate-fragmentation-yes" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"intermediate-fragmentation-yes" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
+"intermediate-fragmentation-yes" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"intermediate-fragmentation-yes" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
+"intermediate-fragmentation-yes" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"intermediate-fragmentation-yes" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"intermediate-fragmentation-yes" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"intermediate-fragmentation-yes" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"intermediate-fragmentation-yes" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes-sha1-modp8192;addke1=ml_kem_768' fragmentation=no -- -I 192.0.1.254 192.0.2.254
- ipsec start
-Redirecting to: [initsystem]
- ipsec addconn --name algo ike=aes-sha1-modp8192;addke1=ml_kem_768 fragmentation=no
-"algo": added oriented IKEv2 connection
- ipsec up algo
-"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
-"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
-"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
-"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
-"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
-"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
- ipsec stop
-Redirecting to: [initsystem]
+ /testing/guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- # try with an unencrypted payload; strongSwan and libreswan disagree
+ ipsec trafficstatus
+#2: "intermediate-fragmentation-yes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- # on what to feed into the mac.  See:
+ ipsec whack --rekey-ike --name intermediate-fragmentation-yes
+"intermediate-fragmentation-yes" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
+"intermediate-fragmentation-yes" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
+"intermediate-fragmentation-yes" #3: initiator rekeyed IKE SA #1 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}
+"intermediate-fragmentation-yes" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
- # https://github.com/libreswan/libreswan/issues/2510
+ /testing/guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- ipsec start
-Redirecting to: [initsystem]
+ ipsec trafficstatus
+#2: "intermediate-fragmentation-yes", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/wait-until-pluto-started
+ ipsec down intermediate-fragmentation-yes
+"intermediate-fragmentation-yes": initiating delete of connection's IKE SA #3 (and Child SA #2)
+"intermediate-fragmentation-yes" #3: sent INFORMATIONAL request to delete IKE SA
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 0.5 seconds for response
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 1 second for response
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 2 seconds for response
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 4 seconds for response
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 8 seconds for response
+"intermediate-fragmentation-yes" #3: retransmitting delete IKE SA; will wait 16 seconds for response
+"intermediate-fragmentation-yes" #3: ESTABLISHED_IKE_SA: 30 second timeout exceeded after 6 retransmits.  No response (or no acceptable response) to our IKEv2 message
+"intermediate-fragmentation-yes" #2: ESP traffic information: in=168B out=168B
+"intermediate-fragmentation-yes" #3: deleting IKE SA (established IKE SA)
 west #
- ipsec add intermediate
-"intermediate": added oriented IKEv2 connection
+ ipsec up intermediate-fragmentation-no
+"intermediate-fragmentation-no" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
+"intermediate-fragmentation-no" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"intermediate-fragmentation-no" #4: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
+"intermediate-fragmentation-no" #4: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"intermediate-fragmentation-no" #4: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
+"intermediate-fragmentation-no" #4: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"intermediate-fragmentation-no" #4: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #5 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"intermediate-fragmentation-no" #4: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"intermediate-fragmentation-no" #4: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"intermediate-fragmentation-no" #5: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ipsec whack --impair add_unknown_v2_payload_to:IKE_INTERMEDIATE
+ /testing/guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- ipsec up intermediate
-"intermediate" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"intermediate" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"intermediate" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
-IMPAIR: "intermediate" #1: adding 1 unencrypted unknown payload(s) of type 255 to IKE_INTERMEDIATE message containing 0 payloads
-"intermediate" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
-"intermediate" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
-"intermediate" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
-"intermediate" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
-"intermediate" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-"intermediate" #1: encountered fatal error in state IKE_AUTH_I
-"intermediate" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"intermediate" #1: deleting IKE SA (sent IKE_AUTH request)
+ ipsec trafficstatus
+#5: "intermediate-fragmentation-no", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec whack --rekey-ike --name intermediate-fragmentation-no
+"intermediate-fragmentation-no" #6: initiating rekey to replace IKE SA #4 using IKE SA #4
+"intermediate-fragmentation-no" #6: sent CREATE_CHILD_SA request to rekey IKE SA #4 (using IKE SA #4)
+"intermediate-fragmentation-no" #6: initiator rekeyed IKE SA #4 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP8192 addke1=ML_KEM_768}
+"intermediate-fragmentation-no" #4: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ /testing/guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#5: "intermediate-fragmentation-no", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+west #
+ ipsec down intermediate-fragmentation-no
+"intermediate-fragmentation-no": initiating delete of connection's IKE SA #6 (and Child SA #5)
+"intermediate-fragmentation-no" #6: sent INFORMATIONAL request to delete IKE SA
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 0.5 seconds for response
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 1 second for response
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 2 seconds for response
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 4 seconds for response
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 8 seconds for response
+"intermediate-fragmentation-no" #6: retransmitting delete IKE SA; will wait 16 seconds for response
+"intermediate-fragmentation-no" #6: ESTABLISHED_IKE_SA: 30 second timeout exceeded after 6 retransmits.  No response (or no acceptable response) to our IKEv2 message
+"intermediate-fragmentation-no" #5: ESP traffic information: in=168B out=168B
+"intermediate-fragmentation-no" #6: deleting IKE SA (established IKE SA)
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
