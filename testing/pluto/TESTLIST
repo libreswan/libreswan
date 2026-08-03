@@ -645,7 +645,6 @@ kvmplutotest	ikev2-dont-encap-dscp-01		good
 kvmplutotest	ikev2-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
-kvmplutotest	ikev2-44-switch-initiator-strongswan	wip	github/964
 
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
@@ -1307,7 +1306,6 @@ kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	goo
 kvmplutotest	interop-ikev2-strongswan-48-chacha20poly1305-ikeesp 		good
 
 # Fails on purpose - shows strongswan issue
-kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-no	wip
 
 #################################################################
 # RFC 7427

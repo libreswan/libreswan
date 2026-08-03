@@ -1,5 +1,0 @@
-This is a test case using multiple conns with a shared IKE SA between two
-peers. Then we rekey but with the original initiator now as responder.
-This verifies that we properly use the Original Initiator and Message
-Responder IKE flags in CREATE_CHILD_SA
-
