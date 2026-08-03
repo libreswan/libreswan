@@ -5,6 +5,11 @@ west #
  #../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 west #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -34,39 +39,6 @@ connection 'westnet-eastnet-ikev2' established successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
-west #
- sleep 5
-west #
- strongswan status
-Shunted Connections:
-Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
-Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-west #
- echo "sleep 30 sec to ike to rekey "
-sleep 30 sec to ike to rekey 
-west #
- sleep 30
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-west #
- sleep 5
-west #
- strongswan status
-Shunted Connections:
-Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
-Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  echo "sleep 30 sec to ike to rekey "
 sleep 30 sec to ike to rekey 
@@ -126,7 +98,7 @@ Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[3]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #

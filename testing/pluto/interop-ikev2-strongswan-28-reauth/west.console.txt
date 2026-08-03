@@ -17,6 +17,11 @@ west #
 down
 west #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -45,12 +50,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- echo "sleep 90 sec to ike to rekey "
-sleep 90 sec to ike to rekey 
+ echo "sleep 20+10 so IKE re-authenticates"
+sleep 20+10 so IKE re-authenticates
 west #
- sleep 50
-west #
- sleep 40
+ sleep 30
 west #
  echo done
 done
@@ -103,9 +106,9 @@ Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[3]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
+westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  if test -r /tmp/pluto.log ; then ipsec connectionstatus ; fi
 west #
