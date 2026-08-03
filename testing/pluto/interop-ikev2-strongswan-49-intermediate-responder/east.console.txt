@@ -30,12 +30,13 @@ Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (2 up, 0 connecting):
-westnet-eastnet-ikev2[4]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[4]: IKEv2 SPIs: SPISPI_i SPISPI_r*, rekeying in 3 hours
-westnet-eastnet-ikev2[4]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768
-westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{2}:  AES_GCM_16_256, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
-westnet-eastnet-ikev2{2}:   192.0.2.0/24 === 192.0.1.0/24
+westnet-eastnet-ikev2[5]: DELETING, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev2[5]: IKEv2 SPIs: SPISPI_i SPISPI_r*
+westnet-eastnet-ikev2[5]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768
+westnet-eastnet-ikev2[5]: Tasks active: IKE_DELETE 
+westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{3}:  AES_GCM_16_256, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
+westnet-eastnet-ikev2{3}:   192.0.2.0/24 === 192.0.1.0/24
 westnet-eastnet-ikev2[2]: DELETING, 192.1.2.23[east]...192.1.2.45[west]
 westnet-eastnet-ikev2[2]: IKEv2 SPIs: SPISPI_i SPISPI_r*
 westnet-eastnet-ikev2[2]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768

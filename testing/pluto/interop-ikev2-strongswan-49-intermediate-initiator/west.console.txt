@@ -56,23 +56,13 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
+ swanctl --rekey --ike westnet-eastnet-ikev2
+rekey completed successfully
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
  strongswan down westnet-eastnet-ikev2
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 3 [ EF(1/3) ]
-received fragment #1 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 3 [ EF(2/3) ]
-received fragment #2 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 3 [ EF(3/3) ]
-received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
-parsed CREATE_CHILD_SA response 3 [ SA N(ADD_KE) No KE ]
-generating IKE_FOLLOWUP_KE request 4 [ KE N(ADD_KE) ]
-splitting IKE message (XXX bytes) into 2 fragments
-generating IKE_FOLLOWUP_KE request 4 [ EF(1/2) ]
-generating IKE_FOLLOWUP_KE request 4 [ EF(2/2) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_FOLLOWUP_KE response 4 [ EF(1/3) ]
 received fragment #1 of 3, waiting for complete IKE message
