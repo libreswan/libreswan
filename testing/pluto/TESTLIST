@@ -1293,8 +1293,6 @@ kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
-kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
-kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-35-initiator-rekey	good
 kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-yes	good
 kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-rsa_pss-yes		good

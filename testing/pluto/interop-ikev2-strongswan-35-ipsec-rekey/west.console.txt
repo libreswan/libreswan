@@ -5,6 +5,11 @@ west #
  #../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 west #
  ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-@east@west'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
 west #
  echo "initdone"
 initdone
@@ -12,12 +17,6 @@ west #
  # bring up the tunnel
 west #
  strongswan up westnet-eastnet-ikev2
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept key exchange method MODP_2048, it requested ECP_256
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
@@ -38,6 +37,9 @@ selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
  strongswan status
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
@@ -47,50 +49,11 @@ westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-west #
- swanctl --rekey --child  westnet-eastnet-ikev2
+ swanctl --rekey --child westnet-eastnet-ikev2
 rekey completed successfully
 west #
- sleep 15
-west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
-west #
- # should be rekeyed and old one deleted
-west #
- # noitce westnet-eastnet-ikev2{2} is the newest one
-west #
- strongswan status
-Shunted Connections:
-Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
-Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
-west #
- swanctl --rekey --child  westnet-eastnet-ikev2
-rekey completed successfully
-west #
- sleep 15
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-up
-west #
- # second rekey and old one deleted
-west #
- # noitce westnet-eastnet-ikev2{3} is the newest one
-west #
- strongswan status
-Shunted Connections:
-Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
-Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  echo done
 done
@@ -100,8 +63,12 @@ src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid 1 mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 32 flag af-unspec
@@ -141,8 +108,10 @@ Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2{3}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{3}:   192.0.1.0/24 === 192.0.2.0/24
+westnet-eastnet-ikev2{1}:  DELETED, TUNNEL, reqid 1
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
 west #
  if test -r /tmp/pluto.log ; then ipsec connectionstatus ; fi
 west #

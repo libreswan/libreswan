@@ -17,13 +17,11 @@ src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -50,7 +48,7 @@ east #
 Connection list:
  
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
-"westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45; established IKE SA: #2;
+"westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45; established IKE SA: #1;
 "westnet-eastnet-ikev2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
@@ -69,7 +67,7 @@ Connection list:
 "westnet-eastnet-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet-ikev2":   routing: routed-tunnel; owner: Child SA #5; established IKE SA: #2; established Child SA: #5;
+"westnet-eastnet-ikev2":   routing: routed-tunnel; owner: Child SA #3; established IKE SA: #1; established Child SA: #3;
 "westnet-eastnet-ikev2":   reqid: REQID;
 "westnet-eastnet-ikev2":   conn serial: $1;
 "westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19

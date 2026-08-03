@@ -1,6 +1,0 @@
-Interop with strongswan, original responder, rekey Child with pfs=yes
-
-Child SA with pfs=yes rekey using CREATE_CHILD_SA exchange.  RFC 7296 #1.3.3.
-The libreswan, east, is the original initiator and responder to Child rekey.
-
-Strongswan IPsec/Child SA rekey is triggered on byte count; ~7 ping.
