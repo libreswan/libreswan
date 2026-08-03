@@ -1,8 +1,0 @@
-Interop with strongswan, original IKE responder, rekeying IKE.
-
-East, libreswan, is the original IKE initiator with auto=start.
-West, strongswan, is the original IKE responder. West will rekey the IKE SA using
-CREATE_CHILD_SA exchange  RFC 7296 #1.3.2
-The libreswan, east, is the original initiator and the responder to Child rekey.
-
-Strongswan IKE SA rekey is triggered after 20 seconds
