@@ -53,6 +53,15 @@ west #
  ../../guestbin/wait-for-pluto.sh '#4: initiator rekeyed IKE SA #1'
 "west-cuckold" #4: initiator rekeyed IKE SA #1 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke2=ML_KEM_768 addke4=MODP2048 addke6=ML_KEM_1024}
 west #
+ ipsec whack --rekey-ike --name west-cuckold
+"west-cuckold" #5: initiating rekey to replace IKE SA #4 using IKE SA #4
+"west-cuckold" #5: sent CREATE_CHILD_SA request to rekey IKE SA #4 (using IKE SA #4)
+"west-cuckold" #5: initiator rekeyed IKE SA #4 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke2=ML_KEM_768 addke4=MODP2048 addke6=ML_KEM_1024}
+"west-cuckold" #4: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ../../guestbin/wait-for-pluto.sh '#5: initiator rekeyed IKE SA #4'
+"west-cuckold" #5: initiator rekeyed IKE SA #4 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke2=ML_KEM_768 addke4=MODP2048 addke6=ML_KEM_1024}
+west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 west #
