@@ -5,8 +5,10 @@ v5.4 (unreleased)
   - Fixes http://libreswan.org/security/CVE-2026-12413
   - Fixes http://libreswan.org/security/CVE-2026-50721
   - Fixes http://libreswan.org/security/CVE-2026-50722
+  - add __counted_by__() attribute to buffers [Andrew]
 * IKEv2:
-  - update IKE_INTERMEDIATE code to RFC 9370 [Daiki Ueno, Ruiliio, Andrew]
+  - update IKE_INTERMEDIATE exchange to RFC 9370 [Daiki Ueno, Ruiliio, Andrew]
+  - implement IKE_ADDITIONAL_KE for RFC 9370 [Daiki]
   - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew, Daiki]
     + requires NSS >= 3.118.1
   - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir #2348]
@@ -15,11 +17,14 @@ v5.4 (unreleased)
   - include proposed traffic selectors in initiator logs [Osema Fadhel #2660 #2534]
   - fix triple log of "no proposal chosen" [Shubham Kumar #2740 #1604]
   - clearly log whenmessage is re-assembled [Sabari07 #2716 #2450]
+  - fix crash when deleting larval connection [Ondrej, Ilya Maximets, Andrew, #2647]
 * X.509 and crypto:
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
   - log default crypto policy during startup [Vinayak Sandur #2759 #2753]
 * Kernel:
-  - fix host-to-host on FreeBSD [Amrinder Singh]
+  - fix host-to-host on FreeBSD, NetBSD, OpenBSD [Amrinder Singh]
+  - optimize acquire by adding msgid [Vinayak Sandur]
+  - fix on-demand on FreeBSD, NetBSD, OpenBSD [Amrinder Singh]
   - fix metrics on Linux VTI interfaces [Cleberson Batista, Andrew #2601]
   - include selectors in Linux policy error logs [Amrinder Singh #1544 #2651]
   - include XFRM message name in Linux errors [Anish #2701 #2653]
