@@ -105,9 +105,12 @@ esac
 #
 
 rm -rf /etc/strongswan/*
+
+mkdir -p /etc/strongswan/swanctl/{,x509,x509ac,x509ca,x509ocsp,x509aa,x509crl,pubkey,private,rsa,ecdsa,pkcs8,pkcs12}
+mkdir -p /etc/strongswan/ipsec.d/{,aacerts,ocspcerts,cacerts,private,certs}
+
 copy_to strongswan.conf    /etc/strongswan
 copy_to swanctl.conf       /etc/strongswan/swanctl
-copy_to strongswan.secrets /etc/strongswan/ipsec.secrets
 
 #
 # DNS
