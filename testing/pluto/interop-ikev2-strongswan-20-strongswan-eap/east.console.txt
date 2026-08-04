@@ -7,6 +7,13 @@ east #
  cp /testing/x509/pki/real/mainca/east.end.cert /etc/strongswan/swanctl/x509/east.crt
 east #
  ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'
+loaded rsa key from '/etc/strongswan/swanctl/rsa/east.key'
+loaded eap secret 'eap-user1@testing-libreswan-org'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'rw-eap'
+successfully loaded 1 connections, 0 unloaded
 east #
  echo "initdone"
 initdone
