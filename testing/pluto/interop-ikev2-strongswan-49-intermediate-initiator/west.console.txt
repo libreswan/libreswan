@@ -64,42 +64,26 @@ up
 west #
  strongswan down westnet-eastnet-ikev2
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ EF(1/3) ]
+parsed IKE_FOLLOWUP_KE response 4 [ EF(1/3) ]
 received fragment #1 of 3, waiting for complete IKE message
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ EF(2/3) ]
+parsed IKE_FOLLOWUP_KE response 4 [ EF(2/3) ]
 received fragment #2 of 3, waiting for complete IKE message
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ EF(3/3) ]
+parsed IKE_FOLLOWUP_KE response 4 [ EF(3/3) ]
 received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ SA N(ADD_KE) No KE ]
-generating IKE_FOLLOWUP_KE request 1 [ KE N(ADD_KE) ]
-splitting IKE message (XXX bytes) into 2 fragments
-generating IKE_FOLLOWUP_KE request 1 [ EF(1/2) ]
-generating IKE_FOLLOWUP_KE request 1 [ EF(2/2) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 1 [ EF(1/3) ]
-received fragment #1 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 1 [ EF(2/3) ]
-received fragment #2 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 1 [ EF(3/3) ]
-received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 1 [ KE ]
+parsed IKE_FOLLOWUP_KE response 4 [ KE ]
 scheduling rekeying in XXXs
 maximum IKE_SA lifetime XXXs
-IKE_SA westnet-eastnet-ikev2[3] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
-deleting IKE_SA westnet-eastnet-ikev2[2] between 192.1.2.45[west]...192.1.2.23[east]
-sending DELETE for IKE_SA westnet-eastnet-ikev2[2]
-generating INFORMATIONAL request 2 [ D ]
+IKE_SA westnet-eastnet-ikev2[2] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
+deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
+sending DELETE for IKE_SA westnet-eastnet-ikev2[1]
+generating INFORMATIONAL request 5 [ D ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed INFORMATIONAL response 2 [ ]
+parsed INFORMATIONAL response 5 [ ]
 IKE_SA deleted
-IKE_SA [2] closed successfully
+IKE_SA [1] closed successfully
 west #
  echo done
 done
