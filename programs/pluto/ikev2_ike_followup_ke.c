@@ -80,7 +80,7 @@ struct ikev2_task {
 	chunk_t ni;
 	chunk_t nr;
 	/* for KEYMAT */
-	ike_spis_t ike_spis;
+	ike_spis_t ike_rekey_spis;
 	size_t nr_keymat_bytes;
 	PK11SymKey *keymat;
 	const struct prf_desc *prf;
@@ -383,7 +383,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *ike,
 		task.prf = larval_ike->sa.st_oakley.ta_prf;
 		/* for KEYMAT */
 		task.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&larval_ike->sa);
-		task.ike_spis = larval_ike->sa.st_ike_spis;
+		task.ike_rekey_spis = larval_ike->sa.st_ike_rekey_spis;
 	}
 
 	submit_ikev2_task(ike, md,
@@ -451,7 +451,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_helper(struct ikev2_task
 
 			task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,
 							   task->ni, task->nr,
-							   &task->ike_spis,
+							   &task->ike_rekey_spis,
 							   task->nr_keymat_bytes,
 							   logger);
 			symkey_delref(logger, "skeyseed", &skeyseed);
@@ -577,7 +577,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response(struct ike_sa *ike,
 		task.prf = larval_ike->sa.st_oakley.ta_prf;
 		/* for KEYMAT */
 		task.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&larval_ike->sa);
-		task.ike_spis = larval_ike->sa.st_ike_spis;
+		task.ike_rekey_spis = larval_ike->sa.st_ike_rekey_spis;
 	}
 
 	submit_ikev2_task(ike, md,
@@ -635,7 +635,7 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_helper(struct ikev2_tas
 			     task->prf->common.fqn);
 			task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,
 							   task->ni, task->nr,
-							   &task->ike_spis,
+							   &task->ike_rekey_spis,
 							   task->nr_keymat_bytes,
 							   logger);
 			symkey_delref(logger, "skeyseed", &skeyseed);
