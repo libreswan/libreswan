@@ -341,6 +341,10 @@ static bool crl_update_check(CERTCertDBHandle *handle,
  * CERTS array.
  */
 
+static void add_decoded_cert_1(struct certs **certs,
+			       struct logger *logger,
+			       CERTCertificate *cert);
+
 static void add_decoded_cert(CERTCertDBHandle *handle,
 			     struct certs **certs,
 			     SECItem der_cert,
@@ -376,6 +380,8 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	 * hashing.
 	 *
 	 * NSS's vfrychain.c makes for interesting reading.
+	 *
+	 * XXX: must-delref
 	 */
 	CERTCertificate *cert = CERT_NewTempCertificate(handle, &der_cert,
 							NULL /*nickname*/,
@@ -401,10 +407,22 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	}
 	ldbg(logger, "decoded cert: %s", cert->subjectName);
 
+	add_decoded_cert_1(certs, logger, cert); /* adds ref when needed */
+	CERT_DestroyCertificate(cert); /* local reference */
+}
+
+static void add_decoded_cert_1(struct certs **certs,
+			       struct logger *logger,
+			       CERTCertificate *cert)
+{
 	/*
 	 * Currently only a check for RSA is needed, as the only ECDSA
 	 * key size not allowed in FIPS mode (p192 curve), is not
 	 * implemented by NSS.
+	 *
+	 * XXX: While NSS should be the one making this check, as of
+	 * 2026-08 and version 3.125, NSS allows undersized certs in
+	 * FIPS mode.
 	 *
 	 * See also RSA_secret_sane() and ECDSA_secret_sane()
 	 */
@@ -424,7 +442,6 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 				     key_bit_size, FIPS_MIN_RSA_KEY_SIZE,
 				     cert->subjectName);
 				SECKEY_DestroyPublicKey(pk);
-				CERT_DestroyCertificate(cert);
 				return;
 			}
 		}
@@ -432,14 +449,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	}
 
 	/*
-	 * Append the certificate to the CERTS array.
-	 *
-	 * XXX: Caller doesn't seem to delete the reference to the
-	 * certificate (or at least the imported intermediate
-	 * certificates, for the end certificate things are less clear
-	 * as it escapes to x509.c only to then be leaked)?  Perhaps
-	 * that's the intend?  Over time accumulate a pool of imported
-	 * certificates in NSS's certificate database?
+	 * Add a reference to the certificate to the CERTS array.
 	 */
 	add_cert(certs, cert);
 }

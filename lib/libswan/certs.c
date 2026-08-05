@@ -41,7 +41,7 @@ void add_cert(struct certs **head, CERTCertificate *cert)
 {
 	passert(cert != NULL);
 	struct certs *new = alloc_thing(struct certs, __func__);
-	new->cert = cert;
+	new->cert = CERT_DupCertificate(cert);
 	new->next = *head;
 	*head = new;
 }
