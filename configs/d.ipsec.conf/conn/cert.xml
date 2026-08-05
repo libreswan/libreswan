@@ -7,9 +7,10 @@
   </term>
   <listitem>
     <para>
-      If you are using <option>leftrsasigkey=%cert</option>
-      this defines the certificate nickname of your certificate in the NSS
-      database. This can be on software or hardware security device.
+      If you are using <option>left{pub,rsasig,ecdsa,eddsa}key=%cert</option>/
+      <option>right{pub,rsasig,ecdsa,eddsa}key=%cert</option>, this defines
+      the certificate nickname of your certificate in the NSS database.
+      This can be on software or hardware security device.
     </para>
   </listitem>
 </varlistentry>

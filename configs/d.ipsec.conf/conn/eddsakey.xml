@@ -1,21 +1,21 @@
-<varlistentry id='conn.rsasigkey'>
+<varlistentry id='conn.eddsakey'>
   <term>
-    <option>leftrsasigkey=</option>
+    <option>lefteddsakey=</option>
   </term>
   <term>
-    <option>rightrsasigkey=</option>
+    <option>righteddsakey=</option>
   </term>
   <listitem>
     <para>
-      The left/right participant's public key for RSA signature authentication.
+      The left/right participant's public key for EdDSA signature authentication.
       The argument can be one of the generic arguments listed in
       <option>leftpubkey</option>/<option>rightpubkey</option> option.
       The generic DNS-related arguments can use the mechanism described
-      in either RFC 3110 (previously RFC 2537) or RFC 4025.
+      in RFC 9373. 
     </para>
     <para>
       Additionally, one can provide a raw public key generated using
-      <command>ipsec rsasigkey</command> command.
+      <command>ipsec eddsakey</command> command.
     </para>
     <caution>
       <para>

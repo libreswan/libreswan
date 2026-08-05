@@ -82,7 +82,7 @@
     </para>
 
     <para>
-      The <option>--password</option> option specifies the nss cryptographic module authentication
+      The <option>--nsspw</option> option specifies the nss cryptographic module authentication
       password if the NSS module has been configured to require it.  A password is required by hardware
       tokens and also by the internal software token module when configured to run in FIPS mode.
       If the argument is <emphasis>@@IPSEC_CONFDDIR@@</emphasis><filename>/nsspassword</filename>,
@@ -94,10 +94,10 @@
   <variablelist>
     <varlistentry>
       <term>
-	<command>ipsec ecdsasigkey --verbose 4096</command>
+	<command>ipsec ecdsasigkey --verbose secp521r1</command>
       </term>
       <listitem>
-	<para>generates a 4096-bit signature key  and stores this key in the NSS database.
+	<para>generates a secp521r1-based key and stores this key in the NSS database.
 	The public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
 	&ipsec-showhostkey.8;).
 	</para>
