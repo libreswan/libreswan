@@ -20,7 +20,7 @@
 #include <errno.h>
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
-#include "jambuf.h" 
+#include "jambuf.h"
 #include "lswlog.h"		/* for fatal_errno() */
 
 #include "monotime.h"

@@ -162,7 +162,7 @@ void init_log_limiter(struct logger *logger)
 			      RESET_LOG_LIMITER_FREQUENCY,
 			      logger);
 
-	// loglimit=no disables all rate limiters 
+	/* loglimit=no disables all rate limiters. */
 	if (!config_setup_yn(KYN_LOGLIMIT)) {
 		FOR_EACH_ELEMENT(limiter, log_limiters) {
 			limiter->unlimited = true;

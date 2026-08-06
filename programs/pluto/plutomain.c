@@ -86,7 +86,7 @@
 #include "ddos.h"
 #include "helper.h"
 #include "resolve_helper.h"	/* for init_resolve_helper() */
-#include "kernel_alg.h"	
+#include "kernel_alg.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"

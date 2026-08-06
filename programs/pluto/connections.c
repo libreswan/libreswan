@@ -2413,7 +2413,7 @@ bool is_labeled_child_where(const struct connection *c, where_t where)
 	bad_case(c->local->kind);
 }
 
-bool can_have_sa(const struct connection *c, 
+bool can_have_sa(const struct connection *c,
 		 enum sa_kind sa_kind)
 {
 	if (c == NULL) {
@@ -2460,7 +2460,7 @@ bool can_have_sa(const struct connection *c,
  * addconn was setting XAUTH when either of SERVER or CLIENT was set,
  * but the below only considers SERVER.
  */
- 
+
 bool is_xauth(const struct connection *c)
 {
 	return (c->local->host.config->xauth.server || c->remote->host.config->xauth.server ||

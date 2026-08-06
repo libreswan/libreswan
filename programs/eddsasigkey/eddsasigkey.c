@@ -216,7 +216,7 @@ static void eddsasigkey(SECOidTag curve, struct logger *logger)
 
 		/* inTheToken, isSensitive, passwordCallbackFunction */
 		if (privkey == NULL) {
-			llog_nss_error(ERROR_STREAM, logger, 
+			llog_nss_error(ERROR_STREAM, logger,
 				       "key pair generation failed");
 			shutdown_nss();
 			exit(1);

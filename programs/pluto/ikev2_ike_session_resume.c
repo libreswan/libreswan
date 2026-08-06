@@ -636,7 +636,7 @@ bool skeyseed_v2_sr(struct ike_sa *ike,
  *       HDR, N(TICKET_OPAQUE), Ni   -->
  *
  * Note: this is not called from demux.c, but from ipsecdoi_initiate(),
- *       if initiator possesses ticket. 
+ *       if initiator possesses ticket.
  *
  */
 

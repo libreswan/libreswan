@@ -427,7 +427,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			     str_deltatime(event_delay, &dtb));
 		} else {
 			deltatime_buf dtb;
-			ldbg(st->logger, 
+			ldbg(st->logger,
 			     "deleting incomplete state after %s seconds",
 			     str_deltatime(event_delay, &dtb));
 		}
@@ -467,7 +467,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			     str_deltatime(event_delay, &dtb));
 		} else {
 			deltatime_buf dtb;
-			ldbg(st->logger, 
+			ldbg(st->logger,
 			     "deleting incomplete state after %s seconds",
 			     str_deltatime(event_delay, &dtb));
 		}

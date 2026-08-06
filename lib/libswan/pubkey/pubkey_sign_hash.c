@@ -17,7 +17,7 @@
 #include "secrets.h"
 #include "lswlog.h"
 
-#include "ike_alg_hash.h"		/* impair uses sha1 */ 
+#include "ike_alg_hash.h"		/* impair uses sha1 */
 
 struct hash_signature pubkey_sign_hash(const struct pubkey_signer *signer,
 				       const struct secret_pubkey_stuff *pks,

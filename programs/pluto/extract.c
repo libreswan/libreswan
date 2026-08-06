@@ -1776,11 +1776,11 @@ static diag_t extract_host_end(enum end end,
 
 	if (ike_version == IKEv2) {
 		if (src->we_xauthserver != NULL) {
-			vwarning("IKEv2 connection ignores \"%sxauthserver=%s\"", 
+			vwarning("IKEv2 connection ignores \"%sxauthserver=%s\"",
 				leftright, src->we_xauthserver);
 		}
 		if (src->we_xauthclient != NULL) {
-			vwarning("IKEv2 connection ignores \"%sxauthclient=%s\"", 
+			vwarning("IKEv2 connection ignores \"%sxauthclient=%s\"",
 				leftright, src->we_xauthclient);
 		}
 	}
@@ -2566,7 +2566,7 @@ static deltatime_t extract_lifetime(struct kv kv,
 
 	if (deltatime_cmp(max_lifetime, <, min_lifetime)) {
 		*d = diag("%s%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%% yet less than the maximum allowed %ju",
-			  fips, 
+			  fips,
 			  kv.key, deltasecs(lifetime),
 			  deltasecs(rekeymargin), rekeyfuzz_percent,
 			  deltasecs(min_lifetime));
@@ -3043,7 +3043,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * implies that they can't.
 	 */
 
-	bool narrowing = 
+	bool narrowing =
 		extract_bool(kv(wm, END_ROOF, KWS_NARROWING),
 			     /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
 						  wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :

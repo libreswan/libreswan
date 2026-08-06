@@ -28,11 +28,11 @@
 	 (LHS).rsasig_v1_5 OP			\
 	 (LHS).eddsa OP				\
 	 (LHS).ecdsa OP				\
-	 (LHS).rsasig_sha2_256 OP	\
-	 (LHS).rsasig_sha2_384 OP	\
-	 (LHS).rsasig_sha2_512 OP	\
-	 (LHS).ecdsa_sha2_256 OP	\
-	 (LHS).ecdsa_sha2_384 OP	\
+	 (LHS).rsasig_sha2_256 OP		\
+	 (LHS).rsasig_sha2_384 OP		\
+	 (LHS).rsasig_sha2_512 OP		\
+	 (LHS).ecdsa_sha2_256 OP		\
+	 (LHS).ecdsa_sha2_384 OP		\
 	 (LHS).ecdsa_sha2_512)
 
 #define OP(LHS, OP, RHS)						\
@@ -123,20 +123,20 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return (struct authby) { 
-		.ecdsa = true, 
-		.ecdsa_sha2_256 = true, 
-		.ecdsa_sha2_384 = true, 
-		.ecdsa_sha2_512 = true, 
-	};
+	case AUTH_ECDSA: return (struct authby) {
+			.ecdsa = true,
+			.ecdsa_sha2_256 = true,
+			.ecdsa_sha2_384 = true,
+			.ecdsa_sha2_512 = true,
+		};
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
-	case AUTH_RSASIG: return (struct authby) { 
-		.rsasig = true, 
-		.rsasig_v1_5 = true, 
-		.rsasig_sha2_256 = true, 
-		.rsasig_sha2_384 = true, 
-		.rsasig_sha2_512 = true, 
-	};
+	case AUTH_RSASIG: return (struct authby) {
+			.rsasig = true,
+			.rsasig_v1_5 = true,
+			.rsasig_sha2_256 = true,
+			.rsasig_sha2_384 = true,
+			.rsasig_sha2_512 = true,
+		};
 	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
