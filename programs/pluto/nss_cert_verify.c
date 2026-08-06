@@ -494,18 +494,23 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
 				llog(RC_LOG, logger,
-					    "Wrapped PKCS7 certificate payload could not be decoded");
+					    "wrapped PKCS7 certificate payload could not be decoded");
 				continue;
 			}
-			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
+			/*
+			 * When the content is
+			 * SEC_OID_PKCS7_SIGNED_DATA, the, possibly
+			 * empty, raw cert array is returned; else
+			 * NULL.
+			 */
+			SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
+			if (cert_list == NULL || (*cert_list) == NULL) {
 				llog(RC_LOG, logger,
-					    "Wrapped PKCS7 certificate payload did not contain any certificates");
-				SEC_PKCS7DestroyContentInfo(contents);
-				continue;
-			}
-			for (SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
-			     *cert_list; cert_list++) {
-				add_decoded_cert(handle, &certs, **cert_list, logger);
+				     "wrapped PKCS7 certificate payload did not contain any certificates");
+			} else {
+				for (; *cert_list; cert_list++) {
+					add_decoded_cert(handle, &certs, **cert_list, logger);
+				}
 			}
 			SEC_PKCS7DestroyContentInfo(contents);
 			break;
