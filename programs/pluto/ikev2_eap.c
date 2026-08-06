@@ -880,23 +880,11 @@ void llog_success_process_v2_IKE_AUTH_EAP_request(struct ike_sa *ike,
  * EAP responder transitions, there is no initiator code.
  */
 
-static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
-
-	{ .story      = "process initial IKE_AUTH(EAP) request",
-	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange = &v2_IKE_AUTH_EAP_exchange,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi),
-	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .log_transition_start = true,
-	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
-	  .timeout_event = EVENT_v2_DISCARD, },
+static const struct v2_transition v2_IKE_AUTH_EAP_continue_responder_transition[] = {
 
 	{ .story      = "process continuing IKE_AUTH(EAP) request",
 	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange = &v2_IKE_AUTH_EAP_exchange,
+	  .exchange = &v2_IKE_AUTH_EAP_continue_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(EAP),
@@ -907,7 +895,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	{ .story      = "process final IKE_AUTH(EAP) request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
-	  .exchange = &v2_IKE_AUTH_EAP_exchange,
+	  .exchange = &v2_IKE_AUTH_EAP_continue_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(AUTH),
@@ -917,15 +905,40 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 };
 
-V2_STATE(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response",
-	 CAT_OPEN_IKE_SA, /*secured*/true,
-	 &v2_IKE_AUTH_EAP_exchange);
-
-const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
+const struct v2_exchange v2_IKE_AUTH_EAP_continue_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.name = "IKE_AUTH (EAP)",
 	.secured = true,
 	.transitions.responder = {
-		ARRAY_PTR(v2_IKE_AUTH_EAP_responder_transition),
+		ARRAY_PTR(v2_IKE_AUTH_EAP_continue_responder_transition),
+	},
+};
+
+V2_STATE(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response",
+	 CAT_OPEN_IKE_SA, /*secured*/true,
+	 &v2_IKE_AUTH_EAP_continue_exchange);
+
+static const struct v2_transition v2_IKE_AUTH_EAP_start_responder_transition[] = {
+
+	{ .story      = "process initial IKE_AUTH(EAP) request",
+	  .to = &state_v2_IKE_AUTH_EAP_R,
+	  .exchange = &v2_IKE_AUTH_EAP_start_exchange,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi),
+	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .log_transition_start = true,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+};
+
+const struct v2_exchange v2_IKE_AUTH_EAP_start_exchange = {
+	.type = ISAKMP_v2_IKE_AUTH,
+	.name = "IKE_AUTH (EAP)",
+	.secured = true,
+	.transitions.responder = {
+		ARRAY_PTR(v2_IKE_AUTH_EAP_start_responder_transition),
 	},
 };
