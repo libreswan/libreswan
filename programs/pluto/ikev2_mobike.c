@@ -342,7 +342,9 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 	}
 
 	llog_sa(RC_LOG, ike, "MOBIKE response: updating IPsec SA");
-	if (ret && !update_mobike_endpoints(ike, md)) {
+	/* only update local endpoint when a local address change was in progress */
+	if (ret && endpoint_is_specified(ike->sa.st_v2_mobike.local_endpoint) &&
+	    !update_mobike_endpoints(ike, md)) {
 		/* IPs already updated from md */
 		ldbg(logger, "MOBIKE response: update MOBIKE failed; not updating IPsec SA");
 		return;
@@ -716,5 +718,122 @@ void ikev2_addr_change(struct state *ike_sa)
 	case ROUTE_FATAL:
 		/* already logged */
 		break;
+	}
+}
+
+static bool add_natd_payloads(struct ike_sa *ike,
+			      struct child_sa *unused_child UNUSED,
+			      struct pbs_out *pbs)
+{
+	return ikev2_out_natd(&ike->sa.st_iface_endpoint->local_endpoint,
+			      &ike->sa.st_remote_endpoint,
+			      &ike->sa.st_ike_spis, pbs);
+}
+
+void ikev2_mapping_change(struct state *ike_sa)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL)
+		return;
+
+	if (!mobike_check_established(ike))
+		return;
+
+	if (kernel_ops->migrate_ipsec_sa == NULL) {
+		llog_sa(RC_LOG, ike, "%s does not support MOBIKE",
+			kernel_ops->interface_name);
+		return;
+	}
+
+	struct connection *c = ike->sa.st_connection;
+	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
+	if (child == NULL) {
+		llog_pexpect(ike->sa.logger, HERE,
+			     "IKE SA lost Child SA "PRI_SO,
+			     pri_so(c->established_child_sa));
+		return;
+	}
+
+	ip_address new_dest = endpoint_address(ike->sa.st_v2_mobike.remote_endpoint);
+
+	struct ip_route route;
+	switch (get_route(new_dest, &route, ike->sa.logger)) {
+	case ROUTE_SUCCESS:
+		break;
+	case ROUTE_GATEWAY_FAILED:
+	{
+		address_buf b;
+		ldbg(ike->sa.logger, PRI_SO" no gateway to reach new remote %s",
+		     pri_so(ike->sa.st_serialno), str_address(&new_dest, &b));
+		return;
+	}
+	case ROUTE_SOURCE_FAILED:
+		/* fall through */
+	case ROUTE_FATAL:
+		/* fall through */
+	default:
+	{
+		address_buf b;
+		llog_sa(RC_LOG, ike, "cannot reach new remote %s",
+			str_address_sensitive(&new_dest, &b));
+		return;
+	}
+	}
+
+	ip_endpoint old_endpoint = ike->sa.st_remote_endpoint;
+	ip_endpoint new_endpoint = ike->sa.st_v2_mobike.remote_endpoint;
+	child->sa.st_v2_mobike.remote_endpoint = new_endpoint;
+	/* child->sa.st_remote_endpoint intentionally NOT updated yet —
+	 * kernel_ops_migrate_ipsec_sa() reads it as the old endpoint for the
+	 * kernel SA lookup; st_v2_mobike.remote_endpoint carries the new one.
+	 */
+
+	/*
+	 * If a child SA rekey is in flight, duplicate_state() already copied
+	 * the old remote endpoint into the larval SA.  Update it now so the
+	 * new SA does not inherit a stale destination.
+	 */
+	struct state_filter sf = {
+		.clonedfrom = ike->sa.st_serialno,
+		.search = {
+			.order = OLD2NEW,
+			.verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL),
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
+		struct child_sa *larval = pexpect_child_sa(sf.st);
+		if (larval->sa.st_v2_rekey_pred != SOS_NOBODY &&
+		    endpoint_eq_endpoint(larval->sa.st_remote_endpoint, old_endpoint)) {
+			larval->sa.st_remote_endpoint = new_endpoint;
+			ldbg(ike->sa.logger,
+			     PRI_SO" updated larval child SA "PRI_SO" remote endpoint",
+			     pri_so(ike->sa.st_serialno),
+			     pri_so(larval->sa.st_serialno));
+		}
+	}
+
+	if (!kernel_ops_migrate_ipsec_sa(child)) {
+		llog_sa(RC_LOG, ike, "MOBIKE mapping change: migrate IPsec SA failed");
+		return;
+	}
+
+	child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = new_endpoint;
+
+	c->remote->host.addr = endpoint_address(new_endpoint);
+	c->remote->host.port = endpoint_hport(new_endpoint);
+
+	endpoint_buf eb;
+	llog_sa(RC_LOG, ike, "MOBIKE mapping change: updated remote to %s",
+		str_endpoint_sensitive(&new_endpoint, &eb));
+
+	/* send NAT-D only informational (no UPDATE_SA_ADDRESSES — peer moved, not us) */
+	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_mobike_exchange);
+	if (record_v2_INFORMATIONAL_request("mobike mapping change",
+					    ike->sa.logger, ike, NULL,
+					    add_natd_payloads)) {
+		v2_msgid_finish(ike, NULL, HERE);
+		send_recorded_v2_message(ike,
+			ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	}
 }

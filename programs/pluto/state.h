@@ -669,6 +669,7 @@ struct state {
 #define st_v2_retransmit_event st_events[EVENT_v2_RETRANSMIT]
 #define st_v2_liveness_event st_events[EVENT_v2_LIVENESS]
 #define st_v2_addr_change_event st_events[EVENT_v2_ADDR_CHANGE]
+#define st_v2_mapping_change_event st_events[EVENT_v2_MAPPING_CHANGE]
 #define st_v2_rekey_event st_events[EVENT_v2_REKEY]
 #define st_v2_replace_event st_events[EVENT_v2_REPLACE]
 #define st_v2_expire_event st_events[EVENT_v2_EXPIRE]
