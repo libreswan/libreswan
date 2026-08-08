@@ -17,7 +17,7 @@ include ../mk/dirs.mk
 # this file uses ifeq, so need config early
 include $(top_srcdir)/mk/config.mk
 
-ifneq ($(INITSYSTEM),)
+ifneq ($(strip $(filter-out none,$(INITSYSTEM))),)
 SUBDIRS += $(INITSYSTEM)
 endif
 
