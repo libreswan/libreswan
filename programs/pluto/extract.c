@@ -3250,6 +3250,20 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	config->send_supported_auth_methods = 
+		extract_bool(kv(wm, END_ROOF, KWS_SEND_SUPPORTED_AUTH_METHODS),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (config->send_supported_auth_methods) {
+		if (ike_version < IKEv2) {
+			return diag("send-supported-auth-methods requires IKEv2");
+		}
+	}
+
 	config->sha2_truncbug =
 		extract_bool(kv(wm, END_ROOF, KWS_SHA2_TRUNCBUG),
 			     /*value_when_unset*/YN_NO,

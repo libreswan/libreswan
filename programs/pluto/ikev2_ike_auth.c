@@ -77,6 +77,7 @@
 #include "peer_id.h"
 #include "ddos.h"
 #include "ikev2_nat.h"
+#include "ikev2_supported_auth.h"
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
 static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
@@ -306,6 +307,13 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	if (!emit_local_v2AUTH(ike, auth_sig, request.pbs)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	/* Send the initiator's SUPPORTED_AUTH_METHODS notification */
+	if (ike->sa.st_connection->config->send_supported_auth_methods) {
+		if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (ike->sa.st_connection->config->mobike) {
@@ -772,6 +780,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
+	}
+
+	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
 			return STF_FATAL;
 		}
 	}

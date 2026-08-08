@@ -1,0 +1,2 @@
+RFC 9593 test. West has authby=rsasig,secret and east has authby=ecdsa,secret
+They should both authenticate using PSK.
