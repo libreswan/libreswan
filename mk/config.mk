@@ -98,19 +98,6 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 # is, to say the least, a little weird.  It's "historic".
 include ${LIBRESWANSRCDIR}/mk/defaults/${OSDEP}.mk
 
-# "Final" and "finally" refer to where the files will end up on the
-# running IPsec system, as opposed to where they get installed by our
-# Makefiles.  (The two are different for cross-compiles and the like,
-# where our Makefiles are not the end of the installation process.)
-# Paths with FINAL in their names are the only ones that the installed
-# software itself depends on.  (Very few things should know about the
-# FINAL paths; think twice and consult Tuomo before making something new
-# depend on them.)  All other paths are install targets.
-# See also DESTDIR, below.
-#
-# Note: Variables here are for Makefiles and build system only.
-# IPSEC_ prefixed variables are to be used in source code
-
 # -D... goes in here
 USERLAND_CFLAGS += -pthread
 
@@ -143,7 +130,6 @@ define error_replaced $ VERSION MACRO REPLACEMENT
  endif
 endef
 
-$(eval $(call error_replaced, 4.0, BINDIR, LIBEXECDIR))
 $(eval $(call error_replaced, 4.0, CONFDDIR, IPSEC_CONFDDIR))
 $(eval $(call error_replaced, 4.0, CONFDIR, SYSCONFDIR))
 $(eval $(call error_replaced, 4.0, CONFFILE, IPSEC_CONF))
@@ -180,6 +166,8 @@ $(eval $(call error_replaced, 4.0, USE_NETKEY, USE_XFRM))
 $(eval $(call error_replaced, 4.0, USE_XAUTHPAM, USE_AUTHPAM))
 $(eval $(call error_replaced, 5.0, HAVE_IPTABLES, USE_IPTABLES))
 $(eval $(call error_replaced, 5.0, HAVE_NFTABLES, USE_NFTABLES))
+$(eval $(call error_replaced, 5.4, LIBEXECDIR, IPSEC_LIBEXECDIR))
+$(eval $(call error_replaced, 5.4, IPSEC_EXECDIR, IPSEC_LIBEXECDIR))
 
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
@@ -251,22 +239,42 @@ endif
 
 ### install pathnames
 
+# Note: Variables here are for Makefiles and build system
+# substitutions only.
+#
+# IPSEC_ prefixed variables are generally used in source code and
+# environment variables in scripts.  For instance, while the
+# substitution is for @@SBINDIR@@, it is assigned to the environment
+# variable IPSEC_SBINDIR.
+#
 # DESTDIR can be used to supply a prefix to all install targets.
+#
 # (Note that "final" pathnames, signifying where files will eventually
 # reside rather than where install puts them, are exempt from this.)
-# The prefixing is done in this file, so as to have central control over
-# it; DESTDIR itself should never appear in any other Makefile.
+# The prefixing is done in this file, so as to have central control
+# over it; DESTDIR itself should never appear in any other Makefile.
+
 DESTDIR ?=
 
 # "PREFIX" part of tree, used in building other pathnames.
+
 PREFIX ?= /usr/local
 
-# LIBEXECDIR is where sub-commands get put.  the "ipsec" command will
-# look for them when it is run.
-LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
-TRANSFORMS += -e 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
-TRANSFORMS += -e 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
-USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
+# IPSEC_LIBEXECDIR is where libreswan's sub-commands get put.  the
+# "ipsec" command will look for them in this directory when it is run.
+#
+# It should really be:
+#
+#   LIBEXECDIR?=$(PREFIX)/libexec
+#   IPSEC_LIBEXECDIR?=$(LIBEXECDIR)/ipsec
+#
+# but a SNAFU - LIBEXECDIR=.../ipsec - only fixed in 5.4 means that
+# will need to wait
+
+# IPSEC_LIBEXECDIR ?= $(LIBEXECDIR)/ipsec # later
+IPSEC_LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
+TRANSFORMS += -e 's:@@IPSEC_LIBEXECDIR@@:$(IPSEC_LIBEXECDIR):g'
+USERLAND_CFLAGS += -DIPSEC_LIBEXECDIR=\"$(IPSEC_LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
 SBINDIR ?= $(PREFIX)/sbin

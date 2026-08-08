@@ -12,8 +12,8 @@ TimeoutStopSec=90s
 WatchdogSec=@@SD_WATCHDOGSEC@@
 ExecStartPre=@@SBINDIR@@/ipsec checknss
 ExecStartPre=@@SBINDIR@@/ipsec checknflog
-ExecStart=@@LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --nofork
-ExecStop=@@LIBEXECDIR@@/whack --shutdown
+ExecStart=@@IPSEC_LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --nofork
+ExecStop=@@IPSEC_LIBEXECDIR@@/whack --shutdown
 ExecStopPost=@@SBINDIR@@/ipsec stopnflog
 
 [Install]
