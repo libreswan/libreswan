@@ -34,4 +34,8 @@ ifeq ($(USE_LABELED_IPSEC),true)
 SUBDIRS += getpeercon_server
 endif
 
+ifeq ($(USE_MLDSA),true)
+SUBDIRS += mldsacheck
+endif
+
 include $(top_srcdir)/mk/targets.mk

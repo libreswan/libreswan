@@ -75,6 +75,8 @@ OBJS += pubkey/pubkey_signer_eddsa.o
 OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
 OBJS += pubkey/pubkey_sign_hash.o
+OBJS += pubkey/pubkey_signer_mldsa.o
+OBJS += pubkey/pubkey_type_mldsa.o
 
 OBJS += sparse_names.o
 

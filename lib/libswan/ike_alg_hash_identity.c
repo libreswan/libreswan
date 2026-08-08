@@ -35,6 +35,23 @@ static const uint8_t asn1_eddsa_identity_ed448_blob[1+ASN1_EDDSA_IDENTITY_SIZE] 
 	ASN1_EDDSA_IDENTITY_ED448_BLOB,
 };
 
+#ifdef USE_MLDSA
+static const uint8_t asn1_mldsa_identity_44_blob[1+ASN1_MLDSA_IDENTITY_SIZE] = {
+	ASN1_MLDSA_IDENTITY_SIZE,
+	ASN1_MLDSA_IDENTITY_44_BLOB,
+};
+
+static const uint8_t asn1_mldsa_identity_65_blob[1+ASN1_MLDSA_IDENTITY_SIZE] = {
+	ASN1_MLDSA_IDENTITY_SIZE,
+	ASN1_MLDSA_IDENTITY_65_BLOB,
+};
+
+static const uint8_t asn1_mldsa_identity_87_blob[1+ASN1_MLDSA_IDENTITY_SIZE] = {
+	ASN1_MLDSA_IDENTITY_SIZE,
+	ASN1_MLDSA_IDENTITY_87_BLOB,
+};
+#endif
+
 const struct hash_desc ike_alg_hash_identity = {
 	.common = {
 		.fqn = "IDENTITY",
@@ -51,5 +68,10 @@ const struct hash_desc ike_alg_hash_identity = {
 	.digital_signature_blob = {
 		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB] = ARRAY_AS_HUNK(asn1_eddsa_identity_ed25519_blob),
 		[DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB] = ARRAY_AS_HUNK(asn1_eddsa_identity_ed448_blob),
+#ifdef USE_MLDSA
+		[DIGITAL_SIGNATURE_MLDSA_IDENTITY_44_BLOB] = ARRAY_AS_HUNK(asn1_mldsa_identity_44_blob),
+		[DIGITAL_SIGNATURE_MLDSA_IDENTITY_65_BLOB] = ARRAY_AS_HUNK(asn1_mldsa_identity_65_blob),
+		[DIGITAL_SIGNATURE_MLDSA_IDENTITY_87_BLOB] = ARRAY_AS_HUNK(asn1_mldsa_identity_87_blob),
+#endif
 	},
 };

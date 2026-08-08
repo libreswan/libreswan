@@ -7,14 +7,14 @@ PKI="/usr/libexec/strongswan/pki"
 
 x509dir=$(realpath $(dirname $0))
 cd ${x509dir}
-rm -rf ${x509dir}/strongswan/*
-mkdir -p ${x509dir}/strongswan/
+rm -rf ${x509dir}/pki/strongswan/*
+mkdir -p ${x509dir}/pki/strongswan/
 
 pki()
 {
     local caname=$1 ; shift
-    mkdir ${x509dir}/strongswan/${caname}
-    cd ${x509dir}/strongswan/${caname}
+    mkdir ${x509dir}/pki/strongswan/${caname}
+    cd ${x509dir}/pki/strongswan/${caname}
 
     $PKI "$@" > strongCAkey.der
     $PKI "$@" > strongWestKey.der
@@ -45,3 +45,15 @@ pki strong-EC --gen --type ecdsa --size 384
 #
 
 pki strong-ED --gen --type ed25519
+
+#
+
+pki strong-MLDSA-44 --gen --type mldsa44
+
+#
+
+pki strong-MLDSA-65 --gen --type mldsa65
+
+#
+
+pki strong-MLDSA-87 --gen --type mldsa87
