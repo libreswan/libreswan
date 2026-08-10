@@ -566,4 +566,9 @@ real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digi
 # Cert chain with intermediate BC CA=Y missing
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
 real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
+# Cert for SUPPORTED_AUTH_METHODS tests
+real/mainca        mainca           rsa-east                   1 1 1 / digitalSignature  /
+real/mainca        mainca           rsa-west                  1 1 1 / digitalSignature  /
+real/mainec        mainec           ecdsa-east                1 1 1 / digitalSignature  /
+real/mainec        mainec           ecdsa-west                1 1 1 / digitalSignature  /
 EOF
