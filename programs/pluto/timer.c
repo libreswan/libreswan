@@ -406,7 +406,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			if (child != NULL &&
 			    child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
 			    child->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE) {
-				/* Find and delete all Additional SAs for this connection */
 				struct state_filter sf = {
 					.connection_serialno = child->sa.st_connection->serialno,
 					.search = {
@@ -417,10 +416,9 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				while (next_state(&sf)) {
 					struct child_sa *additional = IS_CHILD_SA(sf.st) ? pexpect_child_sa(sf.st) : NULL;
 					if (additional != NULL &&
-					    additional->sa.st_clonedfrom == child->sa.st_clonedfrom &&
-					    additional->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE) {
+					    additional->sa.st_v2_resource_info.initial_sa == child->sa.st_serialno) {
 						llog(RC_LOG, child->sa.logger,
-							"deleting Additional Child SAs (cpu_id=%u) associated with this Initial SA",
+							"deleting Additional Child SA (cpu_id=%u) associated with this Initial SA",
 							additional->sa.st_v2_resource_info.cpu_id);
 						submit_v2_delete_exchange(ike, additional);
 					}

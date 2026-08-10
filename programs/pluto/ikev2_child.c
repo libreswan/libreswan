@@ -815,7 +815,13 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 
 	llog_v2_child_sa_established(ike, child);
 
-	schedule_v2_replace_event(&child->sa);
+	/*
+	 * Only Initial Child SA (RFC 9611) is scheduled for rekey, Additional Child SA
+	 * are tied to their Initial.
+	 */
+	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+		schedule_v2_replace_event(&child->sa);
+	}
 
 	/*
 	 * start liveness checks if set, making sure we only schedule
@@ -834,8 +840,13 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	     child->sa.st_connection->name);
 	unpend(ike, child->sa.st_connection);
 
-	/* If this is a rekeyed Initial SA... (RFC 9611) */
-	if (child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+	/*
+	 * If this is a rekeyed Initial SA, recreate Additional SAs (RFC 9611).
+	 *
+	 * Note: Only the rekey initiator does this (the responder handles the requests).
+	 */
+	if (child->sa.st_sa_role == SA_INITIATOR &&
+	    child->sa.st_v2_rekey_pred != SOS_NOBODY) {
 		struct child_sa *predecessor = child_sa_by_serialno(child->sa.st_v2_rekey_pred);
 		if (predecessor != NULL &&
 		    predecessor->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
