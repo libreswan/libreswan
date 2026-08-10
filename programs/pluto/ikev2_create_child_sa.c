@@ -588,6 +588,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_additional_child(struct ike_sa *ike,
 	/* Mark as Additional SA (ie. cpu_id != CPU_ID_NONE) */
 	larval_child->sa.st_v2_resource_info.cpu_id = cpu_id;
 	larval_child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+	larval_child->sa.st_v2_resource_info.initial_sa = initial_sa->sa.st_serialno;
 
 	/* Use same policy and proposals as Initial SA */
 	larval_child->sa.st_policy = capture_child_rekey_policy(&initial_sa->sa);
@@ -1028,6 +1029,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			}
 
 			larval_child->sa.st_v2_resource_info.cpu_id = assign_least_loaded_cpu(larval_child->sa.st_connection, count);
+			larval_child->sa.st_v2_resource_info.initial_sa = larval_child->sa.st_connection->established_child_sa;
 
 			ldbg(larval_child->sa.logger,
 			     "assigned Additional Child SA %u to CPU %u",
@@ -1305,13 +1307,46 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	}
 
 	if (!process_v2TS_request_payloads(ike, larval_child, md)) {
-		/* already logged */
-		record_v2N_response(larval_child->sa.logger, ike, md,
-				    v2N_TS_UNACCEPTABLE, empty_shunk/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		delete_child_sa(&larval_child);
-		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
-		return STF_OK; /*IKE*/
+		/* Check if this is an Additional SA request (RFC 9611) */
+		if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL &&
+		    larval_child->sa.st_connection->config->child.clones.nr > 0) {
+			ldbg(ike->sa.logger, "duplicate TS allowed for Additional Child SA");
+		} else {
+			/* already logged */
+			record_v2N_response(larval_child->sa.logger, ike, md,
+					    v2N_TS_UNACCEPTABLE, empty_shunk/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			delete_child_sa(&larval_child);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			return STF_OK; /*IKE*/
+		}
+	}
+
+	/* Handle SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
+	if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL &&
+	    larval_child->sa.st_connection->config->child.clones.nr > 0) {
+		larval_child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+
+		uint32_t count = count_additional_sas(larval_child->sa.st_connection);
+		if (count >= MAX_ADDITIONAL_SAS) {
+			llog_sa(RC_LOG, larval_child,
+				"refusing Additional Child SA %u (limit=%u)",
+				count + 1, MAX_ADDITIONAL_SAS);
+			record_v2N_response(ike->sa.logger, ike, md,
+					   v2N_TS_MAX_QUEUE, empty_shunk,
+					   ENCRYPTED_PAYLOAD);
+			delete_child_sa(&larval_child);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			return STF_OK;
+		}
+
+		larval_child->sa.st_v2_resource_info.cpu_id = assign_least_loaded_cpu(larval_child->sa.st_connection, count);
+		larval_child->sa.st_v2_resource_info.initial_sa = larval_child->sa.st_connection->established_child_sa;
+
+		ldbg(larval_child->sa.logger,
+		     "assigned Additional Child SA %u to CPU %u (initial_sa="PRI_SO")",
+		     count, larval_child->sa.st_v2_resource_info.cpu_id,
+		     pri_so(larval_child->sa.st_v2_resource_info.initial_sa));
 	}
 
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);

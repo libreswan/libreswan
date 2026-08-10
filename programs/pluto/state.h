@@ -475,6 +475,7 @@ struct state {
 	struct {
 		uint32_t cpu_id;                    /* CPU_ID_NONE for Initial SA, or 0..N for Additional SA */
 		enum resource_info_state state;     /* RFC 9611 SA_RESOURCE_INFO negotiation state */
+		so_serial_t initial_sa;             /* serialno of the Initial SA this Additional SA belongs to */
 	} st_v2_resource_info;
 
 	/** end of IKEv2-only things **/

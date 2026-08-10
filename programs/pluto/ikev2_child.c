@@ -584,6 +584,12 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		return false;
 	}
 
+	/* Echo SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
+	if (larval_child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE &&
+	    !emit_v2N(v2N_SA_RESOURCE_INFO, outpbs)) {
+		return false;
+	}
+
 	return true;
 }
 
