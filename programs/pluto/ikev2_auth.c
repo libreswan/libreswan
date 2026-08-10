@@ -27,6 +27,8 @@
 #include "crypt_hash.h"
 #include "crypt_prf.h"
 
+#include <keyhi.h>
+
 #include "defs.h"
 #include "ikev2_auth.h"
 #include "state.h"
@@ -149,6 +151,42 @@ enum auth local_v2_auth(struct ike_sa *ike)
 	return authby;
 }
 
+#ifdef USE_MLDSA
+/*
+ * Select the ML-DSA signer matching the local key's actual FIPS 204
+ * parameter set.
+ *
+ * NSS carries this directly on the public key
+ * (SECKEYPublicKey.u.mldsa.paramSet); reading it there is exact and
+ * future-proof.  Earlier code instead inferred the parameter set from
+ * PK11_SignatureLen(private_key) against the three known maximum
+ * signature lengths (2420/3309/4627 bytes) -- that's a fragile proxy
+ * for the same fact this code already has on hand.
+ */
+static const struct pubkey_signer *select_mldsa_signer(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	const struct secret_pubkey_stuff *pks =
+		get_local_private_key(c, &pubkey_type_mldsa, ike->sa.logger);
+	if (pks != NULL && pks->content.public_key != NULL) {
+		SECKEYPublicKey *pub = pks->content.public_key;
+		PEXPECT(ike->sa.logger, pub->keyType == mldsaKey);
+		switch (pub->u.mldsa.paramSet) {
+		case SEC_OID_ML_DSA_44:
+			return &pubkey_signer_digsig_mldsa_44;
+		case SEC_OID_ML_DSA_65:
+			return &pubkey_signer_digsig_mldsa_65;
+		case SEC_OID_ML_DSA_87:
+			return &pubkey_signer_digsig_mldsa_87;
+		default:
+			break;
+		}
+	}
+	/* fallback to ML-DSA-65 */
+	return &pubkey_signer_digsig_mldsa_65;
+}
+#endif
+
 /*
  * Map the configuration's authby=... onto the IKEv2 AUTH message's
  * auth method.
@@ -259,6 +297,15 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
 		return IKEv2_AUTH_RESERVED;
 
+	case AUTH_MLDSA:
+		pexpect(auth_in_authby(AUTH_MLDSA, c->local->host.config->authby));
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
+		}
+
+		llog(RC_LOG, ike->sa.logger, "ML-DSA only supports Digital Signature authentication");
+		return IKEv2_AUTH_RESERVED;
+
 	case AUTH_EAPONLY:
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
@@ -275,7 +322,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 
 	case AUTH_NEVER:
 	case AUTH_UNSET:
-	case AUTH_MLDSA:
 		break;
 
 	}
@@ -444,6 +490,11 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 						hash_algo, pubkey_signer,
 						signature_payload_name);
 	statetime_stop(&start, "%s()", __func__);
+	if (d == NULL) {
+		llog(RC_LOG, ike->sa.logger,
+		     "authenticated peer using hash algorithm %s and signature algorithm %s",
+		     hash_algo->common.fqn, pubkey_signer->name);
+	}
 	return d;
 }
 
@@ -572,6 +623,11 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
+#ifdef USE_MLDSA
+				{ &pubkey_signer_digsig_mldsa_44, { .mldsa = true, }, },
+				{ &pubkey_signer_digsig_mldsa_65, { .mldsa = true, }, },
+				{ &pubkey_signer_digsig_mldsa_87, { .mldsa = true, }, },
+#endif
 				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
 				{ &pubkey_signer_digsig_ecdsa, { .ecdsa = true, }, },
 				{ &pubkey_signer_digsig_rsassa_pss, { .rsasig = true, }, },
@@ -746,11 +802,21 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			signer_story = "hardwired(EDDSA)";
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
+#ifdef USE_MLDSA
+		case AUTH_MLDSA:
+			signer_story = "from key(MLDSA)";
+			ike->sa.st_v2_digsig.signer = select_mldsa_signer(ike);
+			break;
+#endif
 		default:
 			bad_case(authby);
 		}
 		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
 		     ike->sa.st_v2_digsig.signer->name, signer_story);
+		llog(RC_LOG, ike->sa.logger,
+		     "signing IKE_AUTH response using hash algorithm %s and signature algorithm %s",
+		     ike->sa.st_v2_digsig.hash->common.fqn,
+		     ike->sa.st_v2_digsig.signer->name);
 
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
@@ -874,6 +940,11 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		case AUTH_EDDSA:
 			signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
+#ifdef USE_MLDSA
+		case AUTH_MLDSA:
+			signer = select_mldsa_signer(ike);
+			break;
+#endif
 		default:
 			bad_case(authby);
 		}
@@ -882,6 +953,10 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		     str_enum_long(&auth_names, authby, &ana),
 		     signer->name);
 		ike->sa.st_v2_digsig.signer = signer;
+		llog(RC_LOG, ike->sa.logger,
+		     "signing IKE_AUTH request using hash algorithm %s and signature algorithm %s",
+		     ike->sa.st_v2_digsig.hash->common.fqn,
+		     ike->sa.st_v2_digsig.signer->name);
 
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
@@ -1079,7 +1154,7 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 		return LELEM(AUTH_NULL);
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
+		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA) | LELEM(AUTH_MLDSA);
 	default:
 	{
 		name_buf nb;

@@ -1321,6 +1321,9 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 			} else if (hunk_streq(val, "eddsa")) {
 				authby->eddsa = true;
 				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
+			} else if (hunk_streq(val, "mldsa")) {
+				authby->mldsa = true;
+				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
 			} else if (hunk_streq(val, "ecdsa") ||
 				   hunk_streq(val, "ecdsa-sha2")) {
 				*authby = authby_or(*authby, AUTHBY_ALL_ECDSA_SHA2);
@@ -1867,6 +1870,7 @@ static diag_t extract_host_end(enum end end,
 		supplied.ecdsa_sha2_384 = false;
 		supplied.ecdsa_sha2_512 = false;
 		supplied.eddsa = false;
+		supplied.mldsa = false;
 		struct authby unexpected = authby_and(supplied, exclude);
 		if (authby_is_set(unexpected)) {
 			authby_buf wb, ub;
