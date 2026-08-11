@@ -137,7 +137,7 @@ Connection list:
 "clear":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %group;
 "clear":   my_updown=<disabled>; my_updown-config=noasync,noexec;
 "clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
+"clear":   our auth:never, their auth:never, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear":   sec_label:unset;
@@ -160,7 +160,7 @@ Connection list:
 "clear#192.1.2.254/32":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %any;
 "clear#192.1.2.254/32":   my_updown=<disabled>; my_updown-config=noasync,noexec;
 "clear#192.1.2.254/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
+"clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.2.254/32":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear#192.1.2.254/32":   sec_label:unset;
@@ -184,7 +184,7 @@ Connection list:
 "private":   mycert=east;
 "private":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private":   sec_label:unset;
@@ -209,7 +209,7 @@ Connection list:
 "private#10.1.0.0/24":   mycert=east;
 "private#10.1.0.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private#10.1.0.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private#10.1.0.0/24":   sec_label:unset;
@@ -234,7 +234,7 @@ Connection list:
 "private-or-clear":   mycert=east;
 "private-or-clear":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear":   sec_label:unset;
@@ -259,7 +259,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   mycert=east;
 "private-or-clear#192.1.2.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear#192.1.2.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;

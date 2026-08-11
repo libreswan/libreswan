@@ -80,7 +80,7 @@ west #
 "westnet-eastnet-ikev2b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ikev2b":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2b":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2b":   sec_label:unset;
@@ -103,7 +103,7 @@ west #
 "westnet-eastnet-ikev2c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ikev2c":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2c":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2c":   sec_label:unset;

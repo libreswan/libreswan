@@ -108,7 +108,7 @@ Connection list:
 "v6-transport":   host: oriented; local: 2001:db8:1:2::23; remote: 2001:db8:1:2::45;
 "v6-transport":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "v6-transport":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"v6-transport":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"v6-transport":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "v6-transport":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "v6-transport":   sec_label:unset;

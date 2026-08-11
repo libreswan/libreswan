@@ -30,7 +30,7 @@ west #
 "tfc":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "tfc":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "tfc":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"tfc":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "tfc":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "tfc":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "tfc":   sec_label:unset;

@@ -118,7 +118,7 @@ Connection list:
 "westnet-eastnet-gcm":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-gcm":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-gcm":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-gcm":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-gcm":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-eastnet-gcm":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-gcm":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-gcm":   sec_label:unset;

@@ -70,7 +70,7 @@ Connection list:
 "road-east":   mycert=road;
 "road-east":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-east":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east":   modecfg info: us:client, them:server, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
 "road-east":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east":   sec_label:unset;

@@ -38,7 +38,7 @@ east #
 "nss-cert-ocsp":   mycert=east;
 "nss-cert-ocsp":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-ocsp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-ocsp":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"nss-cert-ocsp":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-ocsp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-ocsp":   sec_label:unset;

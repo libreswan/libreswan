@@ -107,7 +107,7 @@ Connection list:
 "rw-eastnet-ipv6":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "rw-eastnet-ipv6":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "rw-eastnet-ipv6":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"rw-eastnet-ipv6":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"rw-eastnet-ipv6":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "rw-eastnet-ipv6":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "rw-eastnet-ipv6":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "rw-eastnet-ipv6":   sec_label:unset;

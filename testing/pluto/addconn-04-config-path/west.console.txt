@@ -16,7 +16,7 @@ west #
 "tmp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "tmp":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "tmp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"tmp":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"tmp":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "tmp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "tmp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "tmp":   sec_label:unset;
@@ -50,7 +50,7 @@ west #
 "path":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "path":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "path":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"path":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"path":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "path":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "path":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "path":   sec_label:unset;

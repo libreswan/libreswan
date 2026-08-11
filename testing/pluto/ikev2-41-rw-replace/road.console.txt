@@ -136,7 +136,7 @@ Connection list:
 "road-east-x509-ipv4":   mycert=road; peercert=east;
 "road-east-x509-ipv4":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4":   sec_label:unset;
@@ -161,7 +161,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   mycert=road; peercert=east;
 "road-east-x509-ipv4"[1]:   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4"[1]:   sec_label:unset;
@@ -312,7 +312,7 @@ Connection list:
 "road-east-x509-ipv4":   mycert=road; peercert=east;
 "road-east-x509-ipv4":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4":   sec_label:unset;
@@ -337,7 +337,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   mycert=road; peercert=east;
 "road-east-x509-ipv4"[1]:   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4"[1]:   sec_label:unset;

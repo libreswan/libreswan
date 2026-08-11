@@ -48,7 +48,7 @@ north #
 "northnet-eastnets/0x1":   mycert=north; peercert=east;
 "northnet-eastnets/0x1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "northnet-eastnets/0x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"northnet-eastnets/0x1":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"northnet-eastnets/0x1":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "northnet-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-eastnets/0x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "northnet-eastnets/0x1":   sec_label:unset;
@@ -76,7 +76,7 @@ north #
 "northnet-eastnets/0x2":   mycert=north; peercert=east;
 "northnet-eastnets/0x2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "northnet-eastnets/0x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"northnet-eastnets/0x2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"northnet-eastnets/0x2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "northnet-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-eastnets/0x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "northnet-eastnets/0x2":   sec_label:unset;

@@ -159,7 +159,7 @@ Connection list:
 "west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
 "west":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "west":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "west":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "west":   sec_label:unset;

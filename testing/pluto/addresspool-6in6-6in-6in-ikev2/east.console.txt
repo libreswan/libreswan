@@ -13,7 +13,7 @@ east #
 "east":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "east":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "east":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east":   sec_label:unset;
