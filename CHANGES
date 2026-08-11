@@ -11,6 +11,12 @@ v5.4 (unreleased)
   - implement IKE_ADDITIONAL_KE for RFC 9370 [Daiki]
   - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew, Daiki]
     + requires NSS >= 3.118.1
+  - support ML-DSA (FIPS 204) IKE_AUTH authentication [Sahana Prasad]
+    + authby=mldsa; experimental, build with USE_MLDSA=true
+    + requires NSS with ML-DSA sign/verify support (not yet in
+      upstream NSS as of this release; e.g. Fedora's patched nss)
+    + NSS cannot generate ML-DSA keys yet, so certificates/keys must
+      be generated elsewhere and imported (see ipsec pk12util)
   - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir #2348]
   - include DIGSIG algorithm in IKE_AUTH request log [Amrinder Singh #2490 #2627]
   - clarify missing Child SA log during delete [Osema Fadhel #1585 #2695]

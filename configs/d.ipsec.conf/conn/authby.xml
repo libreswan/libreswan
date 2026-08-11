@@ -58,6 +58,34 @@
 
       <varlistentry>
 	<term>
+	  <option>mldsa</option>
+	</term>
+	<listitem>
+	  <para>
+	    ML-DSA (FIPS 204) post-quantum digital signature based
+	    authentication.  The parameter set
+	    (ML-DSA-44, ML-DSA-65, or ML-DSA-87) is determined
+	    automatically from the certificate's public key; there is
+	    no separate <option>authby=</option> value per parameter
+	    set.  Requires an X.509 certificate
+	    (&leftcert;/&rightcert;); there is no raw public key
+	    equivalent of &lefteddsakey;.
+	  </para>
+	  <caution>
+	    <para>
+	      This option is experimental, and requires &Libreswan; to
+	      be built with <option>USE_MLDSA=true</option> and NSS
+	      with ML-DSA sign/verify support.  NSS cannot yet
+	      generate ML-DSA keys; generate the certificate/key
+	      elsewhere and import it into the NSS database (for
+	      example with <command>pk12util</command>).
+	    </para>
+	  </caution>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
 	  <option>rsa</option>
 	</term>
 	<term>
