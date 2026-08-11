@@ -3,6 +3,10 @@ Initializing NSS database
 west #
  /testing/guestbin/fips.sh on
 Password changed successfully.
+Setting system policy to FIPS
+Note: System-wide crypto policies are applied on application start-up.
+It is recommended to restart the system for the change of policies
+to fully take place.
 FIPS mode enabled.
 west #
  ../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0:1
