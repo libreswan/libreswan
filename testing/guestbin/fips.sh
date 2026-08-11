@@ -26,6 +26,8 @@ fips_on()
     mount --bind /run/pluto/fips_enabled ${fips_enabled}
     chcon system_u:object_r:proc_t:s0 ${fips_enabled}
 
+    update-crypto-policies --set FIPS
+
     echo FIPS mode enabled.
 }
 
