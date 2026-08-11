@@ -3,6 +3,10 @@ Initializing NSS database
 east #
  /testing/guestbin/fips.sh on
 Password changed successfully.
+Setting system policy to FIPS
+Note: System-wide crypto policies are applied on application start-up.
+It is recommended to restart the system for the change of policies
+to fully take place.
 FIPS mode enabled.
 east #
  /testing/x509/import.sh real/mainca/east.p12
