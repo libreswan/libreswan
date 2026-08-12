@@ -624,8 +624,7 @@ kvm-keys:
 	$(MAKE) kvm-clean-keys
 	$(MAKE) $(KVM_KEYS)
 
-$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/selfsigned.sh
-$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/generate.sh
+$(KVM_KEYS): $(wildcard $(KVM_TESTINGDIR)/x509/bin/*.sh)
 $(KVM_KEYS): $(KVM_TESTINGDIR)/dnssec/generate-dnssec.sh
 $(KVM_KEYS): | $(KVM_KEYS_DOMAIN)
 $(KVM_KEYS): | $(KVM_HOST_OK)

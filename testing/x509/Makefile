@@ -16,9 +16,9 @@ X509DIR ?= .
 
 .PHONY: all
 all:
-	./generate.sh $(X509DIR)
-	./crl.sh $(X509DIR)
-	./selfsigned.sh $(X509DIR)/selfsigned
+	./bin/pki.sh $(X509DIR)
+	./bin/crl.sh $(X509DIR)
+	./bin/selfsigned.sh $(X509DIR)/selfsigned
 
 .PHONY: clean
 clean:
