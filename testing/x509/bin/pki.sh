@@ -381,44 +381,48 @@ generate_cert()
 
 # generate ca directories
 
-while read subdir ca domain is_ca ku eku param ; do
+while read dirs cas domain is_ca ku eku param ; do
 
-    case "${subdir}" in
+    case "${dirs}" in
 	'#'* ) continue ;;
     esac
 
-    echo creating cert directory: ${subdir} ${ca} ${domain} ${is_ca} ${param} 1>&2
+    for dir in $(eval echo ${dirs}) ; do
+	for ca in $(eval echo ${cas}) ; do
 
-    certdir=${OUTDIR}/${subdir}
-    mkdir -p ${certdir}
+	    echo creating cert directory: ${dir} ${ca} ${domain} ${is_ca} ${param} 1>&2
 
-    # configure NSS
+	    certdir=${OUTDIR}/${dir}/${ca}
+	    mkdir -p ${certdir}
 
-    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
+	    # configure NSS
 
-    # configure root certificate
+	    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
 
-    echo 1           > ${certdir}/serial	# next
-    echo "${param}"  > ${certdir}/param
-    echo "${domain}" > ${certdir}/domain
+	    # configure root certificate
 
-    # generate root certificate
+	    echo 1           > ${certdir}/serial	# next
+	    echo "${param}"  > ${certdir}/param
+	    echo "${domain}" > ${certdir}/domain
 
-    log=${certdir}/root.log
-    if ! generate_root_ca ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
-	cat ${log}
-	exit 1
-    fi
+	    # generate root certificate
 
-    # SUBDIR CA DOMAIN IS_CA KU EKU=/ PARAM...
+	    log=${certdir}/root.log
+	    if ! generate_root_ca ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+
+	done
+    done
+
+    # DIRs CAs DOMAIN IS_CA KU EKU=/ PARAM...
 done <<EOF
-real/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-fake/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-real/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-fake/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-otherca       otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+{real,fake}   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+{real,fake}   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 # broken root CA, can't be used to verify
-bc-n-ca       bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
 
@@ -429,7 +433,7 @@ EOF
 int=-1
 while int=$((int + 1)) ; test ${int} -lt ${NR_INT_CERTS} ; do
 
-    subdir=real/mainca
+    dir=real
     ca=mainca
     cert=$(printf "int-%03d" ${int})
     add_san=1
@@ -440,7 +444,7 @@ while int=$((int + 1)) ; test ${int} -lt ${NR_INT_CERTS} ; do
     eku=/
     param=
 
-    certdir=${OUTDIR}/${subdir}
+    certdir=${OUTDIR}/${dir}/${ca}
 
     log=${certdir}/${cert}.log
     user=${cert}
@@ -486,16 +490,16 @@ done
 : Generate end certs that are needed.
 :
 
-while read subdirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
+while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
 
-    case "${subdirs}" in
+    case "${dirs}" in
 	'#'* ) continue ;;
     esac
 
-    for subdir in $(eval echo ${subdirs}) ; do
+    for dir in $(eval echo ${dirs}) ; do
 	for ca in $(eval echo ${cas}) ; do
 	    for cert in $(eval echo ${certs}) ; do
-		certdir=${OUTDIR}/${subdir}/${ca}
+		certdir=${OUTDIR}/${dir}/${ca}
 		log=${certdir}/${cert}.log
 		user=user-${cert}
 
@@ -524,9 +528,9 @@ real        mainca           semiroad                             1 1 1 / digita
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
 # Embed a comma in the user's email address
 real        mainca           comma,                               1 0 0 / digitalSignature  /
-.           otherca          other{east,west}                     1 1 1 / digitalSignature  /
+other       otherca          other{east,west}                     1 1 1 / digitalSignature  /
 # Use the (broken) CA with BC=n to sign a cert
-.           bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
+broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
 
 
