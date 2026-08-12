@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainca/west.p12
-/testing/x509/import.sh otherca/otherwest.p12
+/testing/x509/import.sh other/otherca/otherwest.p12
 ipsec checknss --settrusts
 ipsec start
 ../../guestbin/wait-until-pluto-started

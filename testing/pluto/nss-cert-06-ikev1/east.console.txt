@@ -9,8 +9,8 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 "mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
- /testing/x509/import.sh otherca/root.cert
- ipsec certutil -A -n otherca -t CT,, -i otherca/root.cert
+ /testing/x509/import.sh other/otherca/root.cert
+ ipsec certutil -A -n otherca -t CT,, -i other/otherca/root.cert
  ipsec certutil -O -n otherca
 "otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
