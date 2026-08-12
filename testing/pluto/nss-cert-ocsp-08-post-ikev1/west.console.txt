@@ -40,7 +40,7 @@ west #
 "nss-cert-ocsp":   mycert=revoked;
 "nss-cert-ocsp":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-ocsp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-ocsp":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nss-cert-ocsp":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-ocsp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-ocsp":   sec_label:unset;

@@ -114,7 +114,7 @@ west #
 "westnet-all":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-all":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-all":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-all":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-all":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-all":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-all":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-all":   sec_label:unset;

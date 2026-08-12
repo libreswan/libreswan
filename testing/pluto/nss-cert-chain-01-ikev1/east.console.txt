@@ -25,7 +25,7 @@ east #
 "nss-cert-chain":   mycert=east_chain_endcert;
 "nss-cert-chain":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-chain":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-chain":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nss-cert-chain":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-chain":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-chain":   sec_label:unset;

@@ -1,0 +1,23 @@
+<varlistentry id='conn.send-supported-auth-methods'>
+  <term>
+    <option>send-supported-auth-methods=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to send the SUPPORTED_AUTH_METHODS notification 
+      to the remote peer. When enabled, the locally supported 
+      authentication methods are announced in IKE_SA_INIT response 
+      and IKE_AUTH request, allowing the peer to pick a compatible 
+      method before sending its AUTH payload.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+    <caution>
+      <para>
+        This option is experimental and implements the SUPPORTED_AUTH_METHODS
+        notification defined in RFC 9593.
+      </para>
+    </caution>
+  </listitem>
+</varlistentry>

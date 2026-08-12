@@ -16,7 +16,7 @@ east #
 "esp=null-none":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "esp=null-none":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "esp=null-none":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "esp=null-none":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "esp=null-none":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "esp=null-none":   sec_label:unset;

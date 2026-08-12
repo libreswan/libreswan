@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ RUN() { echo " $@" 1>&2 ; "$@" ; }
+west #
+ add() { name=$1 ; expr "${name}" : '.*=$' && shift ; RUN ipsec addconn --name ${name} left=192.1.2.45 right=192.1.2.23 "$@" ; }
+west #
+ add send-supported-auth-methods=
+28
+ ipsec addconn --name send-supported-auth-methods= left=192.1.2.45 right=192.1.2.23
+"send-supported-auth-methods=": added oriented IKEv2 connection
+west #
+ add send-supported-auth-methods=yes
+0
+ ipsec addconn --name send-supported-auth-methods=yes left=192.1.2.45 right=192.1.2.23 send-supported-auth-methods=yes
+"send-supported-auth-methods=yes": added oriented IKEv2 connection
+west #
+ add send-supported-auth-methods=no
+0
+ ipsec addconn --name send-supported-auth-methods=no left=192.1.2.45 right=192.1.2.23 send-supported-auth-methods=no
+"send-supported-auth-methods=no": added oriented IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("send-supported-auth-methods[^:]*:\) .* \(send-supported-auth-methods:[^;]*;\).*$/\1 \2/p'
+"send-supported-auth-methods=": send-supported-auth-methods:no;
+"send-supported-auth-methods=no": send-supported-auth-methods:no;
+"send-supported-auth-methods=yes": send-supported-auth-methods:yes;
+west #

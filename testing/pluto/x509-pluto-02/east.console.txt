@@ -23,7 +23,7 @@ east #
 "north-east-x509-pluto-02":   mycert=east;
 "north-east-x509-pluto-02":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "north-east-x509-pluto-02":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"north-east-x509-pluto-02":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"north-east-x509-pluto-02":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "north-east-x509-pluto-02":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "north-east-x509-pluto-02":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "north-east-x509-pluto-02":   sec_label:unset;

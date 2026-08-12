@@ -40,7 +40,7 @@ east #
 "nss-cert-correct":   mycert=east;
 "nss-cert-correct":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-correct":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-correct":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"nss-cert-correct":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-correct":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-correct":   sec_label:unset;
@@ -65,7 +65,7 @@ east #
 "nss-cert-wrong":   mycert=east;
 "nss-cert-wrong":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-wrong":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-wrong":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"nss-cert-wrong":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-wrong":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-wrong":   sec_label:unset;

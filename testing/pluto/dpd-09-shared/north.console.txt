@@ -62,7 +62,7 @@ north #
 "north-a-dpd":   mycert=north; peercert=east;
 "north-a-dpd":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "north-a-dpd":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"north-a-dpd":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"north-a-dpd":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "north-a-dpd":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "north-a-dpd":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "north-a-dpd":   sec_label:unset;

@@ -124,6 +124,7 @@
     <variablelist>
       &conn.auto;
       &conn.authby;
+      &conn.send-supported-auth-methods;
       &conn.ike;
       &conn.sha2-truncbug;
       &conn.ms-dh-downgrade;

@@ -639,6 +639,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			     end->eap == IKE_EAP_TLS ? "tls" : "???"));
 			who = ", their";
 		}
+
+		jam(buf, ", send-supported-auth-methods:%s", bool_str(c->config->host.send_supported_auth_methods));
 		jam_string(buf, ";");
 	}
 

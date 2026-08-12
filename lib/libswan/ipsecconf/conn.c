@@ -112,6 +112,7 @@ static const struct keyword_def config_conn_keyword[] = {
   KWS("accept-redirect-to", LEMPTY, KWS_ACCEPT_REDIRECT_TO),
   KWS("pfs", LEMPTY, KWS_PFS),
   KWS("session-resumption", LEMPTY, KWS_SESSION_RESUMPTION),
+  KWS("send-supported-auth-methods", LEMPTY, KWS_SEND_SUPPORTED_AUTH_METHODS),	/* RFC 9593 Announcing Supported Authentication Methods */
 
   KWS("nat-keepalive", LEMPTY, KWS_NAT_KEEPALIVE),
 

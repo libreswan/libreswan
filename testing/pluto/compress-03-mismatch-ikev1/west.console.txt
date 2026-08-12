@@ -30,7 +30,7 @@ west #
 "westnet-eastnet-compress":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-compress":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-compress":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-compress":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"westnet-eastnet-compress":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-eastnet-compress":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-compress":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-compress":   sec_label:unset;

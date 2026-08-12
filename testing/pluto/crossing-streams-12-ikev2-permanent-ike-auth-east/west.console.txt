@@ -98,7 +98,7 @@ west #
 "east-west":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
 "east-west":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "east-west":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"east-west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"east-west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "east-west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east-west":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "east-west":   sec_label:unset;

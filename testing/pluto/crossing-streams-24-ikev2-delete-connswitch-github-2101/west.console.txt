@@ -32,7 +32,7 @@ Connection list:
 "a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #3;
 "a":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "a":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "a":   sec_label:unset;
@@ -57,7 +57,7 @@ Connection list:
 "b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "b":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "b":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "b":   sec_label:unset;

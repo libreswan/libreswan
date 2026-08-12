@@ -187,6 +187,7 @@ kvmplutotest	addconn-51-config-setup-dns-resolver		good
 kvmplutotest	addconn-52-clones				good
 kvmplutotest	addconn-53-config-setup-ike-socket		good
 kvmplutotest    addconn-54-xauth          good
+kvmplutotest    addconn-55-send-supported-auth-methods          good
 
 #################################################################
 # IKEv2 tests

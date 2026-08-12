@@ -130,7 +130,7 @@ west #
 "TUNNEL-A":   mycert=west;
 "TUNNEL-A":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-A":   sec_label:unset;
@@ -154,7 +154,7 @@ west #
 "TUNNEL-B":   mycert=west;
 "TUNNEL-B":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-B":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-B":   sec_label:unset;
@@ -177,7 +177,7 @@ west #
 "TUNNEL-C":   mycert=west;
 "TUNNEL-C":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-C":   sec_label:unset;
@@ -212,7 +212,7 @@ west #
 "TUNNEL-A":   mycert=west;
 "TUNNEL-A":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-A":   sec_label:unset;
@@ -236,7 +236,7 @@ west #
 "TUNNEL-C":   mycert=west;
 "TUNNEL-C":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "TUNNEL-C":   sec_label:unset;

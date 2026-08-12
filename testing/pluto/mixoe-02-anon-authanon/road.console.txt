@@ -18,10 +18,10 @@ road #
 Total IPsec connections: loaded 10, routed 5, active 0
 road #
  ipsec status | grep "our auth" | grep private
-"clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
-"private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
-"private-or-clear":   our auth:null, their auth:null, our autheap:none, their autheap:none;
-"private-or-clear#192.1.2.23/32":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+"clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private":   our auth:null, their auth:null, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear":   our auth:null, their auth:null, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear#192.1.2.23/32":   our auth:null, their auth:null, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 road #
  echo "initdone"
 initdone

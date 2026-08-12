@@ -40,7 +40,7 @@ east #
 "road-A":   mycert=east;
 "road-A":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"road-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-A":   sec_label:unset;
@@ -64,7 +64,7 @@ east #
 "road-chain-B":   mycert=east;
 "road-chain-B":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-chain-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-chain-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"road-chain-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-chain-B":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-chain-B":   sec_label:unset;

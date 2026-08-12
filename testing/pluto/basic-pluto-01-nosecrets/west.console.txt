@@ -118,7 +118,7 @@ Connection list:
 "nosecrets":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nosecrets":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nosecrets":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nosecrets":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nosecrets":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nosecrets":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nosecrets":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nosecrets":   sec_label:unset;
