@@ -142,10 +142,10 @@ west #
 west #
  # DB, has CA=no
 west #
- ./run.sh bc-n-ca/bc-n-ca-west
+ ./run.sh broken/bc-n-ca/bc-n-ca-west
 begin #
- /testing/x509/import.sh bc-n-ca/bc-n-ca-west.p12
- ipsec pk12util -w nss-pw -i bc-n-ca/bc-n-ca-west.p12
+ /testing/x509/import.sh broken/bc-n-ca/bc-n-ca-west.p12
+ ipsec pk12util -w nss-pw -i broken/bc-n-ca/bc-n-ca-west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n bc-n-ca -t CT,,
  ipsec certutil -O -n bc-n-ca-west
