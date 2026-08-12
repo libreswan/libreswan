@@ -176,8 +176,126 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 west #
- /testing/x509/import.sh otherca/otherwest.p12
- ipsec pk12util -w nss-pw -i otherca/otherwest.p12
+ /testing/x509/import.sh real/mainec/east.p12
+ ipsec pk12util -w nss-pw -i real/mainec/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -O -n east
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ ipsec_cert mainec east
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainec                                                       CT,, 
+*
+*
+* mainec
+*
+*
+ ipsec certutil -L -n mainec
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: X9.62 ECDSA signature with SHA256
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: X9.62 elliptic curve public key
+                Args:
+            EC Public Key:
+                PublicValue:
+                    68
+                Curve: SECG elliptic curve secp384r1 (aka NIST P-384)
+        Signed Extensions:
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Critical: True
+            Data: Is a CA with no maximum path length.
+    Signature Algorithm: X9.62 ECDSA signature with SHA256
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            Netscape Trusted CA
+            Trusted Client CA
+        Email Flags:
+        Object Signing Flags:
+*
+*
+* east
+*
+*
+ ipsec certutil -L -n east
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: X9.62 ECDSA signature with SHA256
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-east@testing.libreswan.org,CN=east.testing.libreswan
+            .org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: X9.62 elliptic curve public key
+                Args:
+            EC Public Key:
+                PublicValue:
+                    32
+                Curve: SECG elliptic curve secp384r1 (aka NIST P-384)
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "east.testing.libreswan.org"
+            RFC822 Name: "east@testing.libreswan.org"
+            IP Address: 192.1.2.23
+            IP Address: 2001:db8:1:2::23
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: X9.62 ECDSA signature with SHA256
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+west #
+ /testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ /testing/x509/import.sh other/otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i other/otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n otherca -t CT,,
  ipsec certutil -O -n otherwest
