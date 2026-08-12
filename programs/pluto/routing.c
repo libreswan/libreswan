@@ -550,8 +550,10 @@ static void set_established_inbound(struct connection *c,
 				    const struct routing_annex *e)
 {
 	struct child_sa *child = (*e->child);
-	c->routing_sa = child->sa.st_serialno;
-	c->negotiating_child_sa = child->sa.st_serialno;
+	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+		c->routing_sa = child->sa.st_serialno;
+		c->negotiating_child_sa = child->sa.st_serialno;
+	}
 	c->routing.state = new_routing;
 }
 
@@ -599,11 +601,11 @@ static void set_established_outbound(struct connection *c,
 		}
 	}
 	c->routing.state = routing;
-	c->routing_sa = child->sa.st_serialno;
-	c->negotiating_child_sa = child->sa.st_serialno;
 
-	/* We want to keep trask of Initial Child SA (RFC 9611) only */
+	/* Only Initial Child SAs own the connection (RFC 9611) */
 	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+		c->routing_sa = child->sa.st_serialno;
+		c->negotiating_child_sa = child->sa.st_serialno;
 		c->established_child_sa = child->sa.st_serialno;
 	}
 }
