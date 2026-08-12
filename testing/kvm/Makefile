@@ -645,8 +645,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 
 .PHONY: kvm-clean-keys
 kvm-clean-keys:
-	: careful output mixed with repo files
-	rm -rf $(KVM_TESTINGDIR)/x509/*/
+	make -C $(KVM_TESTINGDIR)/x509 clean
 	rm -f $(KVM_KEYS)
 	rm -rf $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/*/
 

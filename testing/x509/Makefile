@@ -12,9 +12,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: KVM tests point X509DIR at /tmp/x509: much faster then
-# /testing; avoids a p9fs bug.
-
 X509DIR ?= .
 
 .PHONY: all
@@ -22,3 +19,10 @@ all:
 	./generate.sh $(X509DIR)
 	./crl.sh $(X509DIR)
 	./selfsigned.sh $(X509DIR)/selfsigned
+
+.PHONY: clean
+clean:
+	: careful output mixed with repo files
+	rm -rf $(X509DIR)/pki
+	rm -rf $(X509DIR)/selfsigned
+	rm -rf $(X509DIR)/strongswan
