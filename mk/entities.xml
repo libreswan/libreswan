@@ -95,6 +95,7 @@
 <!ENTITY ipsec-delete.8 '<citerefentry><refentrytitle>ipsec-delete</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-down.8 '<citerefentry><refentrytitle>ipsec-down</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-ecdsasigkey.8 '<citerefentry><refentrytitle>ipsec-ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-eddsasigkey.8 '<citerefentry><refentrytitle>ipsec-eddsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-fetchcrls.8 '<citerefentry><refentrytitle>ipsec-fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-fips.8 '<citerefentry><refentrytitle>ipsec-fips</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ipsec-fipsstatus.8 '<citerefentry><refentrytitle>ipsec-fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
