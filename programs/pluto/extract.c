@@ -3384,6 +3384,21 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
+	enum yna_options ike_sa_init_full_transcript_auth =
+		extract_yna(kv(wm, END_ROOF, KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
+			    /*value_when_unset*/YNA_NO,
+			    /*value_when_never_negotiate*/YNA_NO,
+			    &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (ike_sa_init_full_transcript_auth == YNA_YES &&
+	    ike_version < IKEv2) {
+		return diag("ike-sa-init-full-transcript-auth=yes requires IKEv2");
+	}
+
+	config->ike_sa_init_full_transcript_auth = ike_sa_init_full_transcript_auth;
+
 	config->mobike = mobike;
 	if (mobike) {
 		if (ike_version < IKEv2) {

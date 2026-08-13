@@ -125,6 +125,7 @@ static void help(void)
 		"	[--esn ] [--no-esn] [--decap-dscp[={yes,no}]] [--encap-dscp[={yes,no}]] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
+		"	[--ike-sa-init-full-transcript-auth[={yes,no,auto}]] \\\n"
 		"	[--nm-configured] \\\n"
 #ifdef USE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
@@ -564,6 +565,7 @@ enum opt {
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
+	CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
 	CD_SESSION_RESUMPTION,
 
 	CD_IKE,
@@ -872,6 +874,7 @@ const struct option optarg_options[] = {
 	{ REPLACE_OPT("cisco_unity", "cisco-unity", "3.9"), no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "fake-strongswan\0", optional_argument, NULL, CD_FAKE_STRONGSWAN },
 	{ "mobike\0", optional_argument, NULL, CD_MOBIKE },
+	{ OPT("ike-sa-init-full-transcript-auth", "yes|no|auto"), optional_argument, NULL, CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH },
 
 	{ "dpddelay\0", required_argument, NULL, CD_DPDDELAY },
 	{ "dpdtimeout\0", required_argument, NULL, CD_DPDTIMEOUT },
@@ -1747,6 +1750,11 @@ int main(int argc, char **argv)
 
 		case CD_MOBIKE:		/* --mobike[={yes,no}] */
 			msg.wm_mobike = (optarg == NULL ? "yes" : optarg);
+			continue;
+
+		/* --ike-sa-init-full-transcript-auth[={yes,no,auto}] */
+		case CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH:
+			msg.wm_ike_sa_init_full_transcript_auth = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CDS_PASS:	/* --pass */
