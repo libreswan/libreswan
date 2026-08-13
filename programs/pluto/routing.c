@@ -1888,7 +1888,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(TEARDOWN_IKE, ROUTED_TUNNEL, INSTANCE):
 	case X(TEARDOWN_IKE, ROUTED_TUNNEL, PERMANENT):
-		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version == IKEv1);
+		PEXPECT(c->logger, (*e->ike)->sa.st_ike_version < IKEv2);
 		return true;
 
 	case X(TEARDOWN_CHILD, ROUTED_TUNNEL, INSTANCE):

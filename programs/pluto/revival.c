@@ -144,8 +144,12 @@ static void update_remote_port(struct state *st)
 	}
 
 	struct ike_sa *ike =
-		(st->st_ike_version > IKEv1 ? ike_sa(st, HERE) :
-		 established_isakmp_sa_for_state(st, /*viable-parent*/false));
+		st->st_ike_version >= IKEv2 ? ike_sa(st, HERE) :
+#ifdef USE_IKEv1
+		 established_isakmp_sa_for_state(st, /*viable-parent*/false);
+#else
+		 NULL;
+#endif
 
 	if (ike == NULL) {
 		ldbg(st->logger, "revival: skip %s(), no %s",

@@ -249,6 +249,7 @@ const struct ike_alg *ike_alg_by_sadb_alg_id(const struct ike_alg_type *algorith
 	return lookup_by_id(algorithms, SADB_ALG_ID, id, &b, DBG_CRYPT);
 }
 
+#ifdef USE_IKEv1
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
 						 unsigned id, name_buf *b)
 {
@@ -290,6 +291,7 @@ const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id, na
 {
 	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
+#endif
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id,
 					  struct name_buf *b)
@@ -484,7 +486,9 @@ const struct ike_alg_type ike_alg_hash = {
 	.story = "Hashing Algorithm",
 	.algorithms = &hash_algorithms,
 	.enum_names = {
+#ifdef USE_IKEv1
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
+#endif
 		[IKEv2_ALG_ID] = &ikev2_hash_algorithm_names,
 	},
 	.desc_check = hash_desc_check,
@@ -543,15 +547,18 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->digest_bytes != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->final_symkey != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->final_bytes != NULL);
+#ifdef USE_IKEv1
 		/*
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
 		pexpect_ike_alg(logger, alg, prf->ikev1_oakley_id < 0 ||
 				     prf->hasher != NULL);
+#endif
 		prf->prf_mac_ops->check(prf, logger);
 	}
 
+#ifdef USE_IKEv1
 	if (prf->prf_ikev1_ops != NULL) {
 		pexpect_ike_alg(logger, alg, prf->prf_ikev1_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev1_ops->signature_skeyid != NULL);
@@ -561,6 +568,7 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg, prf->prf_ikev1_ops->skeyid_e != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_ikev1_ops->appendix_b_keymat_e != NULL);
 	}
+#endif
 
 	if (prf->prf_ikev2_ops != NULL) {
 		pexpect_ike_alg(logger, alg, prf->prf_ikev2_ops->backend != NULL);
@@ -597,8 +605,10 @@ const struct ike_alg_type ike_alg_prf = {
 	.story = "Pseudorandom Function (KDF)",
 	.algorithms = &prf_algorithms,
 	.enum_names = {
+#ifdef USE_IKEv1
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 		[IKEv1_IPSEC_ID] = NULL, /* ESP/AH uses IKE PRF */
+#endif
 		[IKEv2_ALG_ID] = &ikev2_trans_type_prf_names,
 	},
 	.desc_check = prf_desc_check,
@@ -642,6 +652,7 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
+#ifdef USE_IKEv1
 	if (integ->ikev1_ipsec_id >= 0) {
 		name_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
@@ -649,6 +660,7 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 						     integ->ikev1_ipsec_id,
 						     &esb));
 	}
+#endif
 	if (integ->prf != NULL) {
 		pexpect_ike_alg(logger, alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		pexpect_ike_alg(logger, alg, integ->integ_output_size <= integ->prf->prf_output_size);
@@ -670,8 +682,10 @@ const struct ike_alg_type ike_alg_integ = {
 	.story = "Integrity Algorithm",
 	.algorithms = &integ_algorithms,
 	.enum_names = {
+#ifdef USE_IKEv1
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
 		[IKEv1_IPSEC_ID] = &auth_alg_names,
+#endif
 		[IKEv2_ALG_ID] = &ikev2_trans_type_integ_names,
 	},
 	.desc_check = integ_desc_check,
@@ -793,7 +807,9 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 */
 	if (encrypt == &ike_alg_encrypt_null) {
 		pexpect_ike_alg(logger, alg, encrypt->keydeflen == 0);
+#ifdef USE_IKEv1
 		pexpect_ike_alg(logger, alg, encrypt->ikev1_ipsec_id == IKEv1_ESP_NULL);
+#endif
 		pexpect_ike_alg(logger, alg, encrypt->ikev2_alg_id == IKEv2_ENCR_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->enc_blocksize == 1);
 		pexpect_ike_alg(logger, alg, encrypt->wire_iv_size == 0);
@@ -835,8 +851,10 @@ const struct ike_alg_type ike_alg_encrypt = {
 	.story = "Encryption Algorithm (cipher)",
 	.algorithms = &encrypt_algorithms,
 	.enum_names = {
+#ifdef USE_IKEv1
 		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
 		[IKEv1_IPSEC_ID] = &esp_transformid_names,
+#endif
 		[IKEv2_ALG_ID] = &ikev2_trans_type_encr_names,
 	},
 	.desc_check = encrypt_desc_check,
@@ -892,8 +910,10 @@ static const struct ke_desc *kem_descriptors[] = {
 static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct ke_desc *ke_alg = ke_desc(alg);
+#ifdef USE_IKEv1
 	/* IKEv1 always supports this */
 	pexpect_ike_alg(logger, alg, ke_alg->ikev1_oakley_id == ke_alg->ikev1_ipsec_id);
+#endif
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, ke_alg->ke_ops != NULL);
 	if (ke_alg->ke_ops != NULL) {
@@ -924,8 +944,10 @@ const struct ike_alg_type ike_alg_ke = {
 	.story = "Key Exchange Method (DH)",
 	.algorithms = &kem_algorithms,
 	.enum_names = {
+#ifdef USE_IKEv1
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_IPSEC_ID] = &oakley_group_names,
+#endif
 		[IKEv2_ALG_ID] = &ikev2_trans_type_ke_names,
 	},
 	.desc_check = kem_desc_check,

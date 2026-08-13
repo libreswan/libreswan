@@ -414,7 +414,10 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	set_child_has_client(cc, remote, true);
 
 	/* rebuild the SPDs */
+#ifdef USE_IKEv1
+	/* PAUL: discard_connection_spds() leads into virtual.c which is ikev1 only ??? */
 	discard_connection_spds(cc);
+#endif
 	PEXPECT(cc->logger, oriented(cc));
 	build_connection_spds_from_proposals(cc);
 

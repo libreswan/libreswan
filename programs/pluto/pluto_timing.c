@@ -166,7 +166,7 @@ statetime_t statetime_backdate(struct state *st, const cputime_t *inception)
 	}
 	passert(inception != NULL);
 	if (st->st_timing.level > 0) {
-		pexpect(st->st_ike_version == IKEv1);
+		pexpect(st->st_ike_version < IKEv2);
 		ldbg(st->logger, "in %s() with non-zero timing level", __func__);
 		st->st_timing.level = 0;
 	}

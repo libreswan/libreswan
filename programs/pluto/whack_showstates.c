@@ -246,8 +246,10 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 					    deltasecs(monotime_diff(now, pst->st_v2_msgid_windows.last_recv)));
 				}
 			}
+#ifdef USE_IKEv1
 		} else if (st->st_ike_version == IKEv1) {
 			jam(buf, " nodpd;");
+#endif
 		}
 
 		if (st->st_offloaded_task != NULL &&

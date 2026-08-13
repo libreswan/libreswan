@@ -65,10 +65,12 @@ void disorient(struct connection *c)
 		iface_device_delref(&c->iface);
 		PASSERT(c->logger, !oriented(c));
 		ipsec_interface_delref(&c->ipsec_interface, c->logger, HERE);
+#ifdef USE_IKEv1
 		/*
 		 * Discard the SPDs and their hashes.
 		 */
 		discard_connection_spds(c);
+#endif
 		/*
 		 * Move to a special disoriented hash.
 		 */

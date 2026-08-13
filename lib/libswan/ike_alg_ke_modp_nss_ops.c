@@ -141,9 +141,11 @@ static void nss_modp_check(const struct ke_desc *kem, struct logger *logger)
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->nss.modp.base != NULL);
 	pexpect_ike_alg(logger, alg, kem->nss.modp.prime != NULL);
+#ifdef USE_IKEv1
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id == kem->ikev1_oakley_id);
+#endif
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->initiator_bytes == kem->bytes);
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);

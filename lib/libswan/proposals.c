@@ -925,6 +925,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 
 	if (first_unique_ke != NULL && second_unique_ke != NULL) {
 		switch (parser->policy->version) {
+#ifdef USE_IKEv1
 		case IKEv1:
 			/*
 			 * IKEv1 only allows one KE algorithm.
@@ -934,6 +935,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       first_unique_ke->fqn,
 				       second_unique_ke->fqn);
 			return false;
+#endif
 		case IKEv2:
 			/*
 			 * IKEv2, only implements one KE algorithm for Child SAs.
@@ -981,7 +983,9 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 
 	bool ok = false;
 	switch (parser->policy->version) {
+#ifdef USE_IKEv1
 	case IKEv1: ok = v1_proposals_parse_str(parser, proposals, shunk1(str), verbose); break;
+#endif
 	case IKEv2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str), verbose); break;
 	default:
 		bad_case(parser->policy->version);
@@ -1679,8 +1683,7 @@ bool parse_proposal(struct proposal_parser *parser,
 					       pri_shunk(tokens.curr.token));
 				return false;
 			}
-
-			if (parser->policy->version == IKEv1 &&
+			if (parser->policy->version < IKEv2 &&
 			    tmp >= transform_type_addke1) {
 				proposal_error(parser, "transform '"PRI_SHUNK"' invalid",
 					       pri_shunk(tokens.curr.token));

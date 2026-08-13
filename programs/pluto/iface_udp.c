@@ -442,6 +442,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	const enum ike_version ike_version = hdr_ike_version(&hdr);
 	struct state *st;
 	switch (ike_version) {
+#ifdef USE_IKEv1
 	case IKEv1:
 		/* might work? */
 		st = state_by_ike_spis(ike_version,
@@ -452,6 +453,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 				       NULL, NULL,
 				       __func__);
 		break;
+#endif
 	case IKEv2:
 	{
 		/*

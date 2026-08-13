@@ -151,6 +151,7 @@ static bool shared_phase1_connection(struct connection *c,
 	return true;
 }
 
+#ifdef USE_IKEv1
 static void delete_ikev1_child(struct connection *c, struct child_sa **child, where_t where)
 {
 	/*
@@ -251,6 +252,7 @@ static void down_ikev1_connection_state(struct connection *c,
 
 	bad_case(visit_kind);
 }
+#endif
 
 static void down_ikev2_connection_state(struct connection *c UNUSED,
 					struct ike_sa **ike,
@@ -364,9 +366,11 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	whack_attach(c, logger);
 
 	switch (c->config->ike_version) {
+#ifdef USE_IKEv1
 	case IKEv1:
 		visit_connection_states(c, down_ikev1_connection_state, NULL, HERE);
 		break;
+#endif
 	case IKEv2:
 		visit_connection_states(c, down_ikev2_connection_state, NULL, HERE);
 		break;

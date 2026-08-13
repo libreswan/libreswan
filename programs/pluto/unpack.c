@@ -88,7 +88,7 @@ bool extract_KE(struct state *st/*ike-or-child*/,
 		return false;
 	}
 
-	unsigned payload_nr = (st->st_ike_version == IKEv1 ? ISAKMP_NEXT_KE :
+	unsigned payload_nr = (st->st_ike_version < IKEv2 ? ISAKMP_NEXT_KE :
 			       ISAKMP_NEXT_v2KE);
 	const struct payload_digest *kd = md->chain[payload_nr];
 	if (kd == NULL) {

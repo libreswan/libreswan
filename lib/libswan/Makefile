@@ -204,10 +204,14 @@ endif
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o
 OBJS += ike_alg_prf_mac_xcbc_ops.o
+ifeq ($(USE_IKEv1),true)
 OBJS += ike_alg_prf_ikev1_mac_ops.o
+endif
 OBJS += ike_alg_prf_ikev2_mac_ops.o
 ifeq ($(USE_NSS_KDF),true)
+ifeq ($(USE_IKEv1),true)
 OBJS += ike_alg_prf_ikev1_nss_ops.o
+endif
 OBJS += ike_alg_prf_ikev2_nss_ops.o
 endif
 OBJS += ike_alg_encrypt_null_ops.o
@@ -502,7 +506,7 @@ enum_names_checklist.o: $(builddir)/enum_names_checklist.c
 
 $(builddir)/enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
-	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
+	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) |grep -v ikev1_ | grep -v v1_  >$@.tmp
 	mv $@.tmp $@
 
 OBJS += enum_enum_names_checklist.o
