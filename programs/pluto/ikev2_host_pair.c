@@ -60,9 +60,9 @@ static bool match_v2_connection(const struct connection *c,
 	}
 
 	/*
-	 * Require all the bits to match (there's actually only one).
+	 * Require at least one of the proposed bits to match.
 	 */
-	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
+	if (!authby_has_any(c->remote->host.config->authby, remote_authby)) {
 		authby_buf ab, cab;
 		vdbg("skipping %s, %s missing required authby %s",
 		     c->name,
