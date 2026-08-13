@@ -202,10 +202,14 @@ endif
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o
 OBJS += ike_alg_prf_mac_xcbc_ops.o
+ifeq ($(USE_IKEv1),true)
 OBJS += ike_alg_prf_ikev1_mac_ops.o
+endif
 OBJS += ike_alg_prf_ikev2_mac_ops.o
 ifeq ($(USE_NSS_KDF),true)
+ifeq ($(USE_IKEv1),true)
 OBJS += ike_alg_prf_ikev1_nss_ops.o
+endif
 OBJS += ike_alg_prf_ikev2_nss_ops.o
 endif
 OBJS += ike_alg_encrypt_null_ops.o

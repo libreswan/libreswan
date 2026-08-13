@@ -166,6 +166,7 @@ void submit_task(struct state *callback_sa,
 	request->task_logger = clone_logger(task_sa->logger, HERE);
 	task_sa->st_offloaded_task = refcnt_addref(request, task_sa->logger, HERE);
 
+#ifdef USE_IKEv1
 	if (callback_sa->st_ike_version == IKEv1) {
 		/*
 		 * IKEv1: schedule a timeout event to cap the suspend
@@ -183,6 +184,7 @@ void submit_task(struct state *callback_sa,
 		delete_v1_event(callback_sa);
 		event_schedule(EVENT_v1_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
 	}
+#endif
 
 	deltatime_t delay = deltatime_from_seconds(0);
 	if (nhelpers() == 0) {
