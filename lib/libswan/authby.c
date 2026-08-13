@@ -92,6 +92,24 @@ bool authby_le(struct authby lhs, struct authby rhs)
 	return REDUCE(le, &&);
 }
 
+bool authby_has_all(struct authby authby, struct authby all)
+{
+	struct authby and = authby_and(authby, all);
+	return authby_eq(and, all); /*all*/
+}
+
+bool authby_has_some(struct authby authby, struct authby some)
+{
+	struct authby and = authby_and(authby, some);
+	return authby_is_set(and); /* at least 1 */
+}
+
+bool authby_has_none(struct authby authby, struct authby none)
+{
+	struct authby and = authby_and(authby, none);
+	return !authby_is_set(and); /*none*/
+}
+
 bool auth_in_authby(enum auth auth, struct authby authby)
 {
 	struct authby auth_bit = authby_from_auth(auth);

@@ -106,6 +106,10 @@ struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
 
+bool authby_has_all(struct authby authby, struct authby all);
+bool authby_has_some(struct authby authby, struct authby some);
+bool authby_has_none(struct authby authby, struct authby none);
+
 bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
 bool authby_eq(struct authby, struct authby);
