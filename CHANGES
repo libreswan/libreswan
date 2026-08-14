@@ -1,6 +1,8 @@
 See also https://libreswan.org/
 
 v5.5 (unreleased)
+* Security
+  - Remove build support for DH2 and DH22 (was already disabled) [Paul]
 
 v5.4 (August 13, 2026)
 * Security
