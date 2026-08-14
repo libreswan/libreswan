@@ -1,5 +1,7 @@
 See also https://libreswan.org/
 
+v5.5 (unreleased)
+
 v5.4 (August 13, 2026)
 * Security
   - add __counted_by__() attribute to buffers [Andrew]
