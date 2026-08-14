@@ -99,7 +99,9 @@ enum config_setup_keyword {
 	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 
+#ifdef USE_IKEv1
 	KBF_IKEv1_POLICY,	/* global ikev1 policy - default drop */
+#endif
 	KSF_PLUTODEBUG,
 	KYN_IPSEC_INTERFACE_MANAGED,
 

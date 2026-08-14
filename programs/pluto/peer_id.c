@@ -178,7 +178,9 @@ static asn1_t get_ca(struct pubkey_list *const *pubkey_db,
 
 struct score {
 	bool initiator_id_matched;
+#ifdef USE_IKEv1
 	int v1_requested_ca_pathlen;
+#endif
 	int initiator_ca_pathlen;
 	int wildcards;
 	struct connection *connection;
@@ -306,6 +308,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 * policy of this connection.
 	 */
 	switch (ike->sa.st_ike_version) {
+#ifdef USE_IKEv1
 	case IKEv1:
 		if (d->config->aggressive) {
 			vdbg("skipping because AGGRESSIVE isn't right");
@@ -339,6 +342,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			}
 		}
 		break;
+#endif
 	case IKEv2:
 		/*
 		 * We need to check if leftauth and
@@ -430,6 +434,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		}
 	}
 
+#ifdef USE_IKEv1
 	/*
 	 * IKEv2 doesn't have v1_requested_ca so can be ignored.
 	 *
@@ -447,6 +452,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 		vdbg("v1_requested_ca_pathlen=%d", score->v1_requested_ca_pathlen);
 	}
+#endif
 
 	/*
 	 * XXX: When there are no certificates at all
@@ -487,7 +493,9 @@ static bool exact_id_match(struct score score)
 		score.initiator_id_matched &&
 		score.wildcards == 0 &&
 		score.initiator_ca_pathlen == 0 &&
+#ifdef USE_IKEv1
 		score.v1_requested_ca_pathlen == 0 &&
+#endif
 		(is_permanent(score.connection) ||
 		 is_instance(score.connection)));
 }
@@ -519,9 +527,11 @@ static bool better_score(struct score best, struct score score, struct logger *l
 		return (score.initiator_ca_pathlen < best.initiator_ca_pathlen);
 	}
 
+#ifdef UE_IKEv1
 	if (score.v1_requested_ca_pathlen != best.v1_requested_ca_pathlen) {
 		return (score.v1_requested_ca_pathlen < best.v1_requested_ca_pathlen);
 	}
+#endif
 
 	/*
 	 * Prefer an existing instance over a template and/or
@@ -695,7 +705,12 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 				vdbg("picking new best %s (wild=%d, initiator_ca_pathlen=%d/our=%d)",
 				     d->name,
 				     score.wildcards, score.initiator_ca_pathlen,
-				     score.v1_requested_ca_pathlen);
+#ifdef USE_IKEv1
+				     score.v1_requested_ca_pathlen
+#else
+				     0
+#endif
+			);
 				best = score;
 			}
 		}

@@ -42,8 +42,12 @@
 
 enum ike_version {
 	/* 0 reserved */
+#ifdef USE_IKEv1
 #define IKE_VERSION_FLOOR 1
 	IKEv1 = 1,
+#else
+#define IKE_VERSION_FLOOR 2
+#endif
 	IKEv2 = 2,
 #define IKE_VERSION_ROOF 3
 };
@@ -697,8 +701,14 @@ extern const struct enum_names perspective_names;
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
 
 #define IS_PARENT_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY) /* IKEv1 or IKEv2 */
-#define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
 
+#ifdef USE_IKEv1
+#define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
+#else
+#define IS_PARENT_SA_ESTABLISHED(ST) IS_IKE_SA_ESTABLISHED(ST)
+#endif
+
+#ifdef USE_IKEv1
 enum ikev1_natt_policy {
 	NATT_BOTH = 1, /* the default */
 	NATT_RFC = 2,
@@ -707,6 +717,7 @@ enum ikev1_natt_policy {
 };
 
 extern const struct sparse_names nat_ikev1_method_option_names;
+#endif
 
 enum nppi_options {
 	NPPI_UNSET = 0,

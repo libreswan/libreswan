@@ -68,7 +68,9 @@
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
+#ifdef USE_IKEv1
 #include "ikev1_states.h"	/* for init_ikev1_states() */
+#endif
 #include "ikev2_states.h"	/* for init_ikev2_states() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "ddns.h"		/* for init_ddns() */
@@ -312,9 +314,11 @@ enum opt {
 	OPT_EXPIRE_SHUNT_INTERVAL,
 	OPT_SEEDDEV,
 	OPT_SEEDBITS,
+#ifdef USE_IKEv1
 	OPT_IKEV1_SECCTX_ATTR_TYPE,
 	OPT_IKEV1_REJECT,
 	OPT_IKEV1_DROP,
+#endif
 
 #ifdef USE_SECCOMP
 	OPT_SECCOMP,
@@ -389,9 +393,11 @@ const struct option optarg_options[] = {
 	{ OPT("seeddev", "<device>"), required_argument, NULL, OPT_SEEDDEV },
 	{ OPT("seedbits", "number"), required_argument, NULL, OPT_SEEDBITS },
 	/* really an attribute type, not a value */
+#ifdef IKEv1
 	{ OPT("ikev1-secctx-attr-type", "<number>"), required_argument, NULL, OPT_IKEV1_SECCTX_ATTR_TYPE },
 	{ OPT("ikev1-reject"), no_argument, NULL, OPT_IKEV1_REJECT },
 	{ OPT("ikev1-drop"), no_argument, NULL, OPT_IKEV1_DROP },
+#endif
 	{ OPT("vendorid", "vendorid>"), required_argument, NULL, OPT_VENDORID },
 	{ OPT("drop-oppo-null"), optional_argument, NULL, OPT_DROP_OPPO_NULL, },
 
@@ -666,6 +672,7 @@ int main(int argc, char **argv)
 			optarg_seedbits(logger);
 			continue;
 
+#ifdef USE_IKEv1
 		case OPT_IKEV1_SECCTX_ATTR_TYPE:	/* --secctx-attr-type */
 			llog(RC_LOG, logger, "--secctx-attr-type not supported");
 			continue;
@@ -677,6 +684,7 @@ int main(int argc, char **argv)
 		case OPT_IKEV1_DROP:	/* --ikev1-drop */
 			update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 			continue;
+#endif
 
 		case OPT_NOFORK:	/* --nofork*/
 			fork_desired = false;
@@ -1307,7 +1315,9 @@ int main(int argc, char **argv)
 		 logger);
 	llog(RC_LOG, logger, "NSS crypto library initialized");
 
-	init_demux(logger);
+#ifdef USE_IKEv1
+	ikev1_init_demux(logger);
+#endif
 
 	if (is_fips_mode()) {
 		/*
@@ -1475,8 +1485,10 @@ int main(int argc, char **argv)
 	deltatime_t keep_alive = config_setup_deltatime(KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
 
+#ifdef USE_IKEv1
 	const char *virtual_private = config_setup_string(KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
+#endif
 
 	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
 	llog(RC_LOG, logger, "IPsec Interface [%s]",
@@ -1609,9 +1621,10 @@ void show_setup_plutomain(struct show *s)
 
 	show_log(s);
 
+#ifdef USE_IKEv1
 	enum global_ikev1_policy ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
-
 	name_buf pb;
+#endif
 	name_buf mb;
 
 	show(s,
@@ -1619,7 +1632,11 @@ void show_setup_plutomain(struct show *s)
 	     config_setup_option(KBF_DDOS_IKE_THRESHOLD),
 	     config_setup_option(KBF_MAX_HALFOPEN_IKE),
 	     str_sparse_long(&ddos_mode_names, config_setup_option(KBF_DDOS_MODE), &mb),
+#ifdef USE_IKEv1
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
+#else
+	     "drop");
+#endif
 
 	/*
 	 * Default global NFLOG group - 0 means no logging

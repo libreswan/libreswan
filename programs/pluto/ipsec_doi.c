@@ -200,7 +200,7 @@ void jam_child_sa_details(struct jambuf *buf,
 	jam_string(buf, ini);
 	ini = " ";
 	jam_string(buf, "DPD=");
-	if (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) {
+	if (st->st_ike_version < IKEv2 && !st->hidden_variables.st_peer_supports_dpd) {
 		jam_string(buf, "unsupported");
 	} else if (dpd_active_locally(st->st_connection)) {
 		jam_string(buf, "active");

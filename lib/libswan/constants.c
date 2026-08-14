@@ -254,7 +254,9 @@ enum_names version_names = {
 static const char *const ike_version_name[] = {
 #define S(E) [E - 0] = #E
 	"<do-not-negotiate>",
+#ifdef USE_IKEv1
 	S(IKEv1),
+#endif
 	S(IKEv2),
 #undef S
 };
@@ -414,6 +416,7 @@ static enum_names payload_names_ikev2copy_main = {
 	&payload_names_ikev1_private_use
 };
 
+#ifdef USE_IKEv1
 enum_names payload_names_ikev1orv2 = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
@@ -421,16 +424,32 @@ enum_names payload_names_ikev1orv2 = {
 	NULL, /* prefix */
 	&payload_names_ikev2copy_main
 };
+#else
+enum_names payload_names_ikev1orv2 = {
+	ISAKMP_NEXT_v2SA,
+	ISAKMP_NEXT_v2SKF,
+        ARRAY_PTR(payload_name_ikev2_main),
+	NULL, /* prefix */
+	&payload_names_ikev2copy_main
+};
+#endif
 
 static enum_names *const payload_type_names_table[] = {
+#ifndef USE_IKEv1
+#define IKEv1 1
 	[IKEv1 - IKEv1] = &ikev1_payload_names,
 	[IKEv2 - IKEv1] = &ikev2_payload_names,
+#endif
 };
 
 enum_enum_names payload_type_names = {
-	IKEv1, IKEv2,
+	IKEv1,
+	IKEv2,
 	ARRAY_PTR(payload_type_names_table)
 };
+#ifndef USE_IKEv1
+#undef IKEv1
+#endif
 
 static const char *const ikev2_last_proposal_names[] = {
 #define S(E) [E - v2_PROPOSAL_LAST] = #E
@@ -462,6 +481,7 @@ enum_names ikev2_last_transform_desc = {
 	NULL
 };
 
+#ifdef USE_IKEv1
 /* Exchange types (note: two discontinuous ranges) */
 static const char *const ikev1_exchange_name[] = {
 #define S(E) [E - ISAKMP_XCHG_NONE] = #E
@@ -513,6 +533,7 @@ enum_names isakmp_xchg_type_names = {
 	NULL, /* prefix */
 	&isakmp_xchg_type_doi_and_v2_names,
 };
+#endif
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const ikev2_exchange_name[] = {
@@ -539,7 +560,9 @@ const struct enum_names ikev2_exchange_names = {
 };
 
 static enum_names *const exchange_type_names_table[] = {
+#ifdef USE_IKEv1
 	[IKEv1 - IKE_VERSION_FLOOR] = &ikev1_exchange_names,
+#endif
 	[IKEv2 - IKE_VERSION_FLOOR] = &ikev2_exchange_names,
 };
 
@@ -897,6 +920,7 @@ enum_names ikev2_cert_type_names = {
 	&ikev2_cert_type_names_2
 };
 
+#ifdef USE_IKEv1
 /*
  * Oakley transform attributes
  * oakley_attr_bit_names does double duty: it is used for enum names
@@ -1090,6 +1114,7 @@ const struct enum_enum_names ikev1_ipsec_attr_value_names = {
 	0, AUTH_ALGORITHM,
 	ARRAY_PTR(ikev1_ipsec_attr_value_name),
 };
+#endif
 
 /* SA Lifetime Type attribute */
 static const char *const sa_lifetime_name[] = {
@@ -1193,6 +1218,7 @@ enum_names auth_alg_names = {
 	&auth_alg_names_stolen_use
 };
 
+#ifdef USE_IKEv1
 /*
  * From https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-xauth-06
  * The draft did not make it to an RFC
@@ -1511,6 +1537,8 @@ enum_names oakley_auth_names = {
 	&oakley_auth_names_private_use
 };
 
+#endif /* USE_IKEv1 */
+
 /*
  * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
@@ -1595,6 +1623,7 @@ enum_names ikev2_auth_method_names = {
 	NULL
 };
 
+#ifdef USE_IKEv1
 /*
  * IKEv1 Oakley Group Description attribute
  */
@@ -1812,6 +1841,7 @@ enum_names v1_notification_names = {
 	"v1N_", /* prefix */
 	&v1_notification_connected_names
 };
+#endif
 
 static const char *const v2_notification_error_name[] = {
 #define S(E) [E - v2N_ERROR_FLOOR] = #E

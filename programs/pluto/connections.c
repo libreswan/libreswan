@@ -75,14 +75,16 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
+#ifdef USE_IKEv1
 #include "ikev1_xauth.h"
+#include "virtual_ip.h"	/* needs connections.h */
+#endif
 #include "addresspool.h"
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
 #include "ikev2.h"
-#include "virtual_ip.h"	/* needs connections.h */
 #include "fips_mode.h"
 #include "crypto.h"
 #include "kernel_xfrm.h"
@@ -240,6 +242,7 @@ bool connection_with_name_exists(const char *name)
 	return false;
 }
 
+#ifdef USE_IKEv1
 /* Delete a connection */
 static void discard_spd_end_content(struct spd_end *e)
 {
@@ -261,7 +264,7 @@ void discard_connection_spds(struct connection *c)
 	}
 	pfreeany(c->child.spds);
 }
-
+#endif
 
 /*
  * delete_connection -- removes a connection by pointer
@@ -465,7 +468,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	if (connection_valid) {
 		connection_db_del(c);
 	}
+#ifdef USE_IKEv1
 	discard_connection_spds(c);
+#endif
 
 	/*
 	 * Freeing .clonedfrom breaks the logger's message.
@@ -525,7 +530,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfreeany(end->child.updown.argv);
 			pfreeany(end->child.selectors);
 			pfreeany(end->child.sourceip);
+#ifdef USE_IKEv1
 			virtual_ip_delref(&end->child.virt);
+#endif
 			pfreeany(end->child.addresspools);
 			FOR_EACH_ELEMENT(pool, end->child.addresspool) {
 				addresspool_delref(pool, logger);
@@ -1063,7 +1070,9 @@ void build_connection_spds_from_proposals(struct connection *c)
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
 					spd_end->client = (*selectors[end]);
+#ifdef USE_IKEv1
 					spd_end->virt = virtual_ip_addref(child_end->virt);
+#endif
 					selector_buf sb;
 					vdbg("%s child spd from selector %s %s.spd.has_client=%s virt=%s",
 					     spd_end->config->leftright,
@@ -1205,6 +1214,7 @@ struct connection *alloc_connection(const char *name,
 	return c;
 }
 
+#ifdef USE_IKEv1
 const struct ike_info ikev1_info = {
 	.version = IKEv1,
 	.version_name = "IKEv1",
@@ -1217,6 +1227,7 @@ const struct ike_info ikev1_info = {
 	.replace_event = EVENT_v1_REPLACE,
 	.retransmit_event = EVENT_v1_RETRANSMIT,
 };
+#endif
 
 const struct ike_info ikev2_info = {
 	.version = IKEv2,
@@ -1523,6 +1534,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(redirect.accept, ACCEPT_REDIRECT_YES);
 
 	CT(ike_frag.allow, IKE_FRAG_ALLOW);
+#ifdef USE_IKEv1
 	CT(ike_frag.v1_force, IKE_FRAG_FORCE);
 
 	/* need to reconstruct */
@@ -1536,6 +1548,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	} else {
 		CS("IKEPAD_NO");
 	}
+#endif
 
 	CT(mobike, MOBIKE);
 	CT(ppk.allow, PPK_ALLOW);
@@ -2165,9 +2178,10 @@ void update_end_selector_where(struct connection *c, enum end lr,
 
 err_t connection_requires_tss(const struct connection *c)
 {
-	if (c->config->ike_version == IKEv1) {
+	if (c->config->ike_version <= IKEv2) {
 		return NULL;
 	}
+
 	FOR_EACH_ELEMENT(end, c->end) {
 		if (len(end->config->child.addresspools) > 1) {
 			return "addresspools";

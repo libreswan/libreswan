@@ -1259,8 +1259,10 @@ enum ikev1_ipsec_attr {
 };
 
 extern const struct enum_names ipsec_attr_names;
+#ifdef USE_IKEv1
 extern const struct enum_names ikev1_ipsec_attr_names;
 extern const struct enum_enum_names ikev1_ipsec_attr_value_names;
+#endif
 
 /*
  * SA Lifetime Type attribute

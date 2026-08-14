@@ -82,9 +82,9 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KBF_DDOS_MODE] = "auto",
 	[KBF_DDOS_IKE_THRESHOLD] = DEFAULT_IKE_SA_DDOS_THRESHOLD,
 	[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA,
-
+#ifdef USE_IKEv1
 	[KBF_IKEv1_POLICY] = "drop",
-
+#endif
 	[KSF_NSSDIR] = IPSEC_NSSDIR,
 	[KSF_SECRETSFILE] = IPSEC_SECRETS,
 	[KSF_DUMPDIR] = IPSEC_RUNDIR,
@@ -453,7 +453,9 @@ bool load_config_setup(const char *file,
 static const struct keyword_def config_setup_keyword[] = {
 #define K(KEYNAME, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, ##__VA_ARGS__ }
 
+#ifdef USE_IKEv1
   K("ikev1-policy",  kt_sparse_name,  KBF_IKEv1_POLICY, .sparse_names = &global_ikev1_policy_names),
+#endif
   K("curl-iface",  kt_string,  KSF_CURLIFACE),
 
   K("myvendorid",  kt_string,  KSF_MYVENDORID),
@@ -531,7 +533,9 @@ static const struct keyword_def config_setup_keyword[] = {
   K("expire-lifetime", kt_seconds,  KBF_EXPIRE_LIFETIME, .validity = NOSUP),
 #undef NOSUP
 
+#ifdef USE_IKEv1
   K("virtual-private",  kt_string,  KSF_VIRTUAL_PRIVATE),
+#endif
   K("seeddev",  kt_string,  KSF_SEEDDEV),
   K("seedbits",  kt_unsigned,  KBF_SEEDBITS),
   K("keep-alive",  kt_seconds,  KBF_KEEP_ALIVE),
@@ -582,8 +586,10 @@ static const struct keyword_def config_setup_keyword[] = {
   O("plutostderrlog"), /* obsolete name, but very common :/ */
   O("virtual_private"), /* obsolete variant, very common */
   O("interfaces"), /* obsoleted but often present keyword */
+#ifdef USE_IKEv1
   O("ikev1-secctx-attr-type"),  /* obsolete: not a value, a type */
   O("secctx-attr-type"),
+#endif
 
 #undef U
 #undef O

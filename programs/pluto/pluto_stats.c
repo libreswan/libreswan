@@ -136,10 +136,12 @@ static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_KIND_ROOF][TERMINAT
 static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_KIND_ROOF];
 
 static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_KIND_ROOF] = {
+#ifdef USE_IKEv1
 	[IKEv1] = {
 		[IKE_SA] = "ikev1.isakmp",
 		[CHILD_SA] = "ikev1.ipsec",
 	},
+#endif
 	[IKEv2] = {
 		[IKE_SA] = "ikev2.ike",
 		[CHILD_SA] = "ikev2.child",
@@ -233,11 +235,13 @@ static void pstat_ike_sa_established(struct state *st)
 			pstats(ikev2_integ, st->st_oakley.ta_integ->ikev2_alg_id);
 		}
 		pstats(ikev2_groups, st->st_oakley.ta_dh->ikev2_alg_id);
+#ifdef USE_IKEv1
 	} else {
 		pstats_ikev1_sa++;
 		pstats(ikev1_encr, st->st_oakley.ta_encrypt->ikev1_oakley_id);
 		pstats(ikev1_integ, st->st_oakley.ta_prf->ikev1_oakley_id);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->ikev1_oakley_id);
+#endif
 	}
 }
 
@@ -253,6 +257,7 @@ static void pstats_sa(bool nat, bool tfc, bool esn)
 		pstats_ipsec_tfc++;
 }
 
+#ifdef USE_IKEv1
 #define pstatsv(TYPE, V2, INDEXv1, INDEXv2)				\
 	{								\
 		if (V2) {						\
@@ -261,6 +266,10 @@ static void pstats_sa(bool nat, bool tfc, bool esn)
 			pstats(ikev1_##TYPE, INDEXv1);			\
 		}							\
 	}
+#else
+#define pstatsv(TYPE, INDEXv2)				\
+		pstats(ikev2_##TYPE, INDEXv2);
+#endif
 
 static void pstat_child_sa_established(struct state *st)
 {
@@ -280,11 +289,17 @@ static void pstat_child_sa_established(struct state *st)
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 
 		pstats_ipsec_esp++;
-		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
+		pstatsv(ipsec_encrypt,
+#ifdef USE_IKEv1
+			       	(st->st_ike_version == IKEv2),
 			st->st_esp.trans_attrs.ta_encrypt->ikev1_ipsec_id,
+#endif
 			st->st_esp.trans_attrs.ta_encrypt->ikev2_alg_id);
-		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
+		pstatsv(ipsec_integ,
+#ifdef USE_IKEv1
+				(st->st_ike_version == IKEv2),
 			st->st_esp.trans_attrs.ta_integ->ikev1_ipsec_id,
+#endif
 			st->st_esp.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(nat, tfc, esn);
 	}
@@ -292,8 +307,11 @@ static void pstat_child_sa_established(struct state *st)
 		/* XXX: .st_esp? */
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		pstats_ipsec_ah++;
-		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
+		pstatsv(ipsec_integ,
+#ifdef USE_IKEv1
+				(st->st_ike_version == IKEv2),
 			st->st_ah.trans_attrs.ta_integ->ikev1_ipsec_id,
+#endif
 			st->st_ah.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(false, false, esn);
 	}
@@ -313,7 +331,7 @@ void pstat_sa_established(struct state *st)
 	 * Check for double billing.  Only care that IKEv2 gets this
 	 * right (IKEv1 is known to be broken).
 	 */
-	pexpect(st->st_ike_version == IKEv1 ||
+	pexpect(st->st_ike_version < IKEv2 ||
 		st->st_pstats.terminate_reason == REASON_UNKNOWN);
 	st->st_pstats.terminate_reason = REASON_COMPLETED;
 
@@ -467,10 +485,11 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show(s, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
 	show(s, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
 
+#ifdef USE_IKEv1
 	IKE_ALG_STATS("ikev1.encr", encrypt, IKEv1_OAKLEY_ID, pstats_ikev1_encr);
 	IKE_ALG_STATS("ikev1.integ", integ, IKEv1_OAKLEY_ID, pstats_ikev1_integ);
 	IKE_ALG_STATS("ikev1.group", ke, IKEv1_OAKLEY_ID, pstats_ikev1_groups);
-
+#endif
 	ENUM_STATS(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, "ikev2.encr", pstats_ikev2_encr);
 	ENUM_STATS(&ikev2_trans_type_integ_names, IKEv2_INTEG_HMAC_MD5_96, "ikev2.integ", pstats_ikev2_integ);
 	IKE_ALG_STATS("ikev2.group", ke, IKEv2_ALG_ID, pstats_ikev2_groups);
@@ -481,13 +500,17 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	IKE_ALG_STATS("ikev2.sent.invalidke.using", ke, IKEv2_ALG_ID, pstats_invalidke_sent_u);
 	IKE_ALG_STATS("ikev2.sent.invalidke.suggesting", ke, IKEv2_ALG_ID, pstats_invalidke_sent_s);
 
+#ifdef USE_IKEv1
 	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_encrypt);
 	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_integ);
+#endif
 	IKE_ALG_STATS("ikev2.ipsec.encr", encrypt, IKEv2_ALG_ID, pstats_ikev2_ipsec_encrypt);
 	IKE_ALG_STATS("ikev2.ipsec.integ", integ, IKEv2_ALG_ID, pstats_ikev2_ipsec_integ);
 
+#ifdef USE_IKEv1
 	ENUM_STATS(&v1_notification_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
 	ENUM_STATS(&v1_notification_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
+#endif
 
 	show_pluto_stat(s, &pstats_stf_status);
 	show_pluto_stat(s, &pstats_ikev2_sent_notifies_e);
@@ -501,11 +524,13 @@ void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s)
 	struct logger *logger = show_logger(s);
 	ldbg(logger, "clearing pluto stats");
 
-	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
+	pstats_ipsec_sa = pstats_ikev2_sa = 0;
+	pstats_ikev2_redirect_failed = pstats_ikev2_redirect_completed=0;
+#ifdef USE_IKEv1
+	pstats_ikev1_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;
 	pstats_ikev1_completed = pstats_ikev2_completed = 0;
-	pstats_ikev2_redirect_failed = pstats_ikev2_redirect_completed=0;
-
+#endif
 	memset(pstats_sa_started, 0, sizeof pstats_sa_started);
 	memset(pstats_sa_finished, 0, sizeof pstats_sa_finished);
 	memset(pstats_sa_established, 0, sizeof pstats_sa_established);
@@ -526,24 +551,26 @@ void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s)
 	memset(pstats_iketcp_stopped, 0, sizeof(pstats_iketcp_stopped));
 	memset(pstats_iketcp_aborted, 0, sizeof(pstats_iketcp_aborted));
 
+#ifdef USE_IKEv1
 	memset(pstats_ikev1_encr, 0, sizeof pstats_ikev1_encr);
-	memset(pstats_ikev2_encr, 0, sizeof pstats_ikev2_encr);
 	memset(pstats_ikev1_integ, 0, sizeof pstats_ikev1_integ);
-	memset(pstats_ikev2_integ, 0, sizeof pstats_ikev2_integ);
 	memset(pstats_ikev1_ipsec_encrypt, 0, sizeof pstats_ikev1_ipsec_encrypt);
-	memset(pstats_ikev2_ipsec_encrypt, 0, sizeof pstats_ikev2_ipsec_encrypt);
 	memset(pstats_ikev1_ipsec_integ, 0, sizeof pstats_ikev1_ipsec_integ);
-	memset(pstats_ikev2_ipsec_integ, 0, sizeof pstats_ikev2_ipsec_integ);
 	memset(pstats_ikev1_groups, 0, sizeof pstats_ikev1_groups);
+	memset(pstats_ikev1_sent_notifies_e, 0, sizeof pstats_ikev1_sent_notifies_e);
+	memset(pstats_ikev1_recv_notifies_e, 0, sizeof pstats_ikev1_recv_notifies_e);
+#endif
+	memset(pstats_ikev2_encr, 0, sizeof pstats_ikev2_encr);
+	memset(pstats_ikev2_integ, 0, sizeof pstats_ikev2_integ);
+	memset(pstats_ikev2_ipsec_encrypt, 0, sizeof pstats_ikev2_ipsec_encrypt);
+	memset(pstats_ikev2_ipsec_integ, 0, sizeof pstats_ikev2_ipsec_integ);
 	memset(pstats_ikev2_groups, 0, sizeof pstats_ikev2_groups);
 	memset(pstats_invalidke_sent_s, 0, sizeof pstats_invalidke_sent_s);
 	memset(pstats_invalidke_recv_s, 0, sizeof pstats_invalidke_recv_s);
 	memset(pstats_invalidke_sent_u, 0, sizeof pstats_invalidke_sent_u);
 	memset(pstats_invalidke_recv_u, 0, sizeof pstats_invalidke_recv_u);
-	memset(pstats_ikev1_sent_notifies_e, 0, sizeof pstats_ikev1_sent_notifies_e);
 	clear_pluto_stat(&pstats_ikev2_sent_notifies_e);
 	clear_pluto_stat(&pstats_ikev2_recv_notifies_e);
 	clear_pluto_stat(&pstats_ikev2_sent_notifies_s);
 	clear_pluto_stat(&pstats_ikev2_recv_notifies_s);
-	memset(pstats_ikev1_recv_notifies_e, 0, sizeof pstats_ikev1_recv_notifies_e);
 }

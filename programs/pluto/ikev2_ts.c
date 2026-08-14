@@ -327,7 +327,10 @@ static void scribble_selectors_on_spd(struct connection *c,
 	unsigned nr_spds = 0;
 	for (unsigned pass = 1; pass <= 2; pass++) {
 		if (pass == 2) {
+#ifdef USE_IKEv1
+			/* PAUL: this leads only to ikev1 virtual.c code */
 			discard_connection_spds(c);
+#endif
 			alloc_connection_spds(c, nr_spds, verbose);
 		}
 		nr_spds = 0;

@@ -269,12 +269,12 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		ikev2_addr_change(st);
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_v1_RETRANSMIT:
 		ldbg(st->logger, "IKEv%d retransmit event", st->st_ike_version);
-#ifdef USE_IKEv1
 		event_v1_retransmit(st, now);
-#endif
 		break;
+#endif
 
 	case EVENT_v2_RETRANSMIT:
 		ldbg(st->logger, "IKEv%d retransmit event", st->st_ike_version);
@@ -310,7 +310,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v1_REPLACE:
 		event_v1_replace(st, now);
 		break;
-#endif
 
 	case EVENT_v1_EXPIRE:
 	{
@@ -337,6 +336,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		connection_delete_v1_state(&st, HERE);
 		break;
 	}
+#endif
 
 	case EVENT_v2_EXPIRE:
 	{
@@ -410,6 +410,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 	}
 
+#ifdef USE_IKEv1
 	case EVENT_v1_DISCARD:
 		/*
 		 * The state failed to complete within a reasonable
@@ -449,6 +450,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 */
 		connection_delete_v1_state(&st, HERE);
 		break;
+#endif
 
 	case EVENT_v2_DISCARD:
 		/*
@@ -514,15 +516,11 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v1_DPD:
 		event_v1_dpd(st);
 		break;
-#endif
 
-#ifdef USE_IKEv1
 	case EVENT_v1_DPD_TIMEOUT:
 		event_v1_dpd_timeout(st);
 		break;
-#endif
 
-#ifdef USE_IKEv1
 #ifdef USE_PAM_AUTH
 	case EVENT_v1_PAM_TIMEOUT:
 	{
@@ -541,7 +539,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 	}
 #endif
-#endif
+
 	case EVENT_v1_CRYPTO_TIMEOUT:
 		whack_attach(st, logger);
 		ldbg(st->logger, "event crypto_failed on state "PRI_SO", aborting",
@@ -564,6 +562,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		event_v1_nat_keepalive(st);
 		whack_detach(st, logger);
 		break;
+#endif
 	case EVENT_v2_NAT_KEEPALIVE:
 		whack_attach(st, logger);
 		event_v2_nat_keepalive(pexpect_ike_sa(st));
