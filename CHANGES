@@ -2,15 +2,14 @@ See also https://libreswan.org/
 
 v5.4 (unreleased)
 * Security
-  - Fixes http://libreswan.org/security/CVE-2026-12413
-  - Fixes http://libreswan.org/security/CVE-2026-50721
-  - Fixes http://libreswan.org/security/CVE-2026-50722
   - add __counted_by__() attribute to buffers [Andrew]
 * IKEv2:
   - update IKE_INTERMEDIATE exchange to RFC 9370 [Daiki Ueno, Ruiliio, Andrew]
   - implement IKE_ADDITIONAL_KE for RFC 9370 [Daiki]
   - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew, Daiki]
     + requires NSS >= 3.118.1
+  - support for IKE_FOLLOWUP_KE for RFC 9370 [Daiki #2958 #2918]
+  - support for RFC 9593 SUPPORTED_AUTH_METHODS [Osema Fadhel]
   - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir #2348]
   - include DIGSIG algorithm in IKE_AUTH request log [Amrinder Singh #2490 #2627]
   - clarify missing Child SA log during delete [Osema Fadhel #1585 #2695]
