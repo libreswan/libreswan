@@ -126,14 +126,6 @@ src 192.0.2.0/24 dst 198.18.66.253/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 198.18.66.253/32 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 198.18.66.254/32 dst 192.0.20.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.0.20.0/24 dst 198.18.66.254/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -141,5 +133,13 @@ src 192.0.20.0/24 dst 198.18.66.254/32
 src 192.0.20.0/24 dst 198.18.66.254/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 198.18.66.253/32 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 198.18.66.254/32 dst 192.0.20.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 west #

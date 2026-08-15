@@ -53,8 +53,8 @@ up
 north #
  strongswan status
 Shunted Connections:
-Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
+Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.3.33[north]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
@@ -77,17 +77,17 @@ src 192.1.2.23 dst 192.1.3.33
 	dir in
 north #
  ipsec _kernel policy
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir fwd priority PRIORITY ptype main
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir in priority PRIORITY ptype main
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir out priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir in priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir out priority PRIORITY ptype main
 src 192.0.2.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
@@ -118,8 +118,8 @@ north #
 north #
  strongswan status
 Shunted Connections:
-Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
+Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.3.34[north]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
@@ -146,17 +146,17 @@ src 192.1.2.23 dst 192.1.3.34
 	dir in
 north #
  ipsec _kernel policy
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir fwd priority PRIORITY ptype main
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir in priority PRIORITY ptype main
-src 198.18.66.0/24 dst 198.18.66.0/24
+src 192.1.3.0/24 dst 192.1.3.0/24
 	dir out priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir in priority PRIORITY ptype main
-src 192.1.3.0/24 dst 192.1.3.0/24
+src 198.18.66.0/24 dst 198.18.66.0/24
 	dir out priority PRIORITY ptype main
 src 192.0.2.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
@@ -175,8 +175,8 @@ north #
 north #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
-Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
+Bypass LAN 198.18.66.0/24:  198.18.66.0/24 === 198.18.66.0/24 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.3.34[north]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o

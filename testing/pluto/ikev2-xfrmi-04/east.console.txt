@@ -50,7 +50,7 @@ east #
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev ipsec1 scope link
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-198.18.66.0/24 dev ipsec1 scope link
 192.0.22.0/24 dev eth0 proto kernel scope link src 192.0.22.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+198.18.66.0/24 dev ipsec1 scope link
 east #
