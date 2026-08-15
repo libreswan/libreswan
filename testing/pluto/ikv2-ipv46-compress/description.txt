@@ -1,0 +1,10 @@
+IKEv2 IPv4-in-IPv6 tunnel with compression (IPCOMP).
+
+The tunnel endpoints are IPv6 while the protected subnets are IPv4.
+
+The outbound outer ESP SA (transport mode, IPv6) was missing the
+XFRM_STATE_AF_UNSPEC flag, which is required for cross-address-family IPsec.
+Without it the kernel rejects the SA for IPv4 inner traffic, preventing
+policy installation and tunnel bring-up.
+
+
