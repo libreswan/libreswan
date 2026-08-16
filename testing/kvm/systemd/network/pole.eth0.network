@@ -1,0 +1,12 @@
+[Match]
+Name=eth0
+MACAddress=12:50:4F:4C:45:01
+
+[Network]
+Address=198.18.66.90/24
+Gateway=198.18.66.254
+Address=2001:db8:66::90/64
+Gateway=2001:db8:66::254
+IPForward=yes
+IPv6DuplicateAddressDetection=0
+IPv6AcceptRouterAdvertisements=false
