@@ -3,17 +3,22 @@ nic# : make certain NIC is running
 east# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
 east# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-west# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
-west# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
+nic# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+nic# ifconfig eth2 | grep -e 'inet ' -e 'inet6 .*2001:'
+
+north# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+north# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
 rise# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
 rise# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
+road# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+
 set# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
 set# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-north# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
-north# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
+west# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+west# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 # east to west_internet4 nic_internet4 nic_nicnet4 north_nicnet4
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_internet4
 east# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_internet4

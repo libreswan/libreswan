@@ -3,17 +3,22 @@ nic# : make certain NIC is running
 east# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
 east# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-west# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
-west# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+nic# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+nic# ifconfig eth2 | grep -e 'inet ' -e 'inet6 .*2001:'
+
+north# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+north# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
 rise# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
 rise# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
+road# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+
 set# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
 set# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-north# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
-north# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+west# ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+west# ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
 # east to west_internet4 nic_internet4 nic_nicnet4 north_nicnet4
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_internet4
 east# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_internet4
