@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --hostkeys
-../../guestbin/wait-until-alive -I 192.0.3.254 192.0.2.254
+../../guestbin/wait-until-alive -I 198.18.66.254 192.0.2.254
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

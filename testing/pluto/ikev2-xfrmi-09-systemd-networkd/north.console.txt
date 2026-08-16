@@ -32,10 +32,10 @@ north #
 "north" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-"north" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP} [192.0.3.0/24===192.0.2.0/24]
+"north" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP} [198.18.66.0/24===192.0.2.0/24]
 "north" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"north" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+"north" #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  sleep  2 # why?
 north #
@@ -69,7 +69,7 @@ north #
  ../../guestbin/ip-route.sh
 default via 192.1.3.254 dev eth1
 192.0.2.0/24 dev ipsec2 scope link
-192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+198.18.66.0/24 dev eth0 proto kernel scope link src 198.18.66.254
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
 north #
  ../../guestbin/ip-route.sh show table 50
@@ -80,14 +80,14 @@ north #
 north #
  ../../guestbin/tcpdump.sh --stop -i ipsec2
 reading from file OUTPUT/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
-IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
-IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
-IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
-IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
-IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 198.18.66.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 198.18.66.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 198.18.66.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 198.18.66.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 198.18.66.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 198.18.66.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 198.18.66.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 198.18.66.254: ICMP echo reply, id XXXX, seq 1, length 64
 north #
  # rm the test specific systemd-networkd file for next test
 north #

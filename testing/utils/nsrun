@@ -2658,8 +2658,8 @@ class NS_GuestNetwork():
 
             eth0 = NS_IF(hostname, self.tcsum, '0')
             eth0.macaddress = "12:00:00:de:cd:49"
-            eth0.ipv4 = "192.0.3.254/24"
-            eth0.ipv6 = "2001:db8:0:3::254/64"
+            eth0.ipv4 = "198.18.66.254/24"
+            eth0.ipv6 = "2001:db8:66::254/64"
             if eth0_bridge:
                 eth0.br = "brswan03-" + self.tcsum
             self.eth.append(eth0)
@@ -2691,8 +2691,8 @@ class NS_GuestNetwork():
             eth2.ipv4 = "192.1.3.254/24"
             eth2.ipv6 = "2001:db8:1:3::254/64"
             eth2.br = "brswan13-" + self.tcsum
-            eth2.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
-                           'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
+            eth2.routes = ['route add 198.18.66.0/24 via 192.1.3.33',
+                           'route add 2001:db8:66::/64 via 2001:db8:1:3::33']
             self.eth.append(eth2)
 
         else:

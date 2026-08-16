@@ -35,8 +35,8 @@ westnet6=2001:db8:0:1::
 
 # NORTH's private network
 
-northnet4=192.0.3.
-northnet6=2001:db8:0:3::
+northnet4=198.18.66.
+northnet6=2001:db8:66::
 
 # BETWEEN SET-RISE
 

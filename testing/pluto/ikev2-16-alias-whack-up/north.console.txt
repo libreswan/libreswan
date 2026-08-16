@@ -34,16 +34,16 @@ north #
 "northnet-eastnets/0x2": queue Child SA; waiting on IKE SA "northnet-eastnets/0x1" #1 negotiating with 192.1.2.23
 "northnet-eastnets/0x1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "northnet-eastnets/0x1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-"northnet-eastnets/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.0.3.0/24===192.0.2.0/24]
+"northnet-eastnets/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [198.18.66.0/24===192.0.2.0/24]
 "northnet-eastnets/0x1" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr} reassembled from N fragments
 "northnet-eastnets/0x1" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"northnet-eastnets/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+"northnet-eastnets/0x1" #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 "northnet-eastnets/0x2" #3: initiating Child SA using IKE SA #1
-"northnet-eastnets/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.3.0/24===192.0.22.0/24]
-"northnet-eastnets/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+"northnet-eastnets/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.22.0/24]
+"northnet-eastnets/0x2" #3: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 north #
  ipsec auto --status | grep northnet-eastnets
-"northnet-eastnets/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
+"northnet-eastnets/0x1": 198.18.66.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "northnet-eastnets/0x1":   host: oriented; local: 192.1.3.33; nexthop: 192.1.3.254; remote: 192.1.2.23; established IKE SA: #1;
 "northnet-eastnets/0x1":   mycert=north; peercert=east;
 "northnet-eastnets/0x1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -71,7 +71,7 @@ north #
 "northnet-eastnets/0x1":   aliases: northnet-eastnets
 "northnet-eastnets/0x1":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "northnet-eastnets/0x1":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
-"northnet-eastnets/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
+"northnet-eastnets/0x2": 198.18.66.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "northnet-eastnets/0x2":   host: oriented; local: 192.1.3.33; nexthop: 192.1.3.254; remote: 192.1.2.23;
 "northnet-eastnets/0x2":   mycert=north; peercert=east;
 "northnet-eastnets/0x2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -104,10 +104,10 @@ north #
 #3: "northnet-eastnets/0x2":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "northnet-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.22.254
 up
 north #
  ipsec whack --trafficstatus

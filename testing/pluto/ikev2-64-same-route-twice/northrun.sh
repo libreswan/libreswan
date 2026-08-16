@@ -1,6 +1,6 @@
 ipsec auto --up north-east
 ipsec auto --up north-west
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.1.254
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.1.254
 ../../guestbin/ping-once.sh --up -I 192.0.33.254 192.0.1.254 
 ipsec whack --trafficstatus
 # should be 4

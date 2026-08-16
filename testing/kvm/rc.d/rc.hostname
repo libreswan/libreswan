@@ -53,8 +53,8 @@ case ${hostname} in
 	forwarding=true
 	;;
     north)
-	ipv4_eth0=192.0.3.254/24
-	ipv6_eth0=2001:db8:0:3::254/64
+	ipv4_eth0=198.18.66.254/24
+	ipv6_eth0=2001:db8:66::254/64
 	ipv4_eth1=192.1.3.33/24
 	ipv6_eth1=2001:db8:1.3::33/64
 	dhcp_ethN=2

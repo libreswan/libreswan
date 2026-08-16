@@ -2,7 +2,7 @@ ipsec auto --up road-eastnet
 # note this end should be 192.1.3.209
 ipsec _kernel state
 ipsec _kernel policy
-../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
+../../guestbin/ping-once.sh --up -I 198.18.66.10 192.0.2.254
 ipsec whack --trafficstatus
 sleep 5
 # remove this end ip next one will take over
@@ -19,10 +19,10 @@ sleep 5
 ../../guestbin/ip-route.sh show scope global | grep 192.1.33.254 || ip route add default via 192.1.33.254
 # let libreswan detect change and do a MOBIKE update
 sleep 10
-../../guestbin/ping-once.sh --up -I 192.0.3.10 192.1.2.23
+../../guestbin/ping-once.sh --up -I 198.18.66.10 192.1.2.23
 ../../guestbin/ip-addr-show.sh
 ../../guestbin/ip-route.sh
 # MOBIKE ping should work
 # note this end should be 192.1.3.209
-../../guestbin/ping-once.sh --up -I 192.0.3.10 192.1.2.23
+../../guestbin/ping-once.sh --up -I 198.18.66.10 192.1.2.23
 echo done

@@ -23,7 +23,7 @@ north #
 "northnet-eastnet-nat" #2: sent Quick Mode request
 "northnet-eastnet-nat" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
  ipsec whack --trafficstatus
@@ -59,15 +59,15 @@ src 192.1.2.23 dst 192.1.3.33
 	dir in
 north #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
+src 198.18.66.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel

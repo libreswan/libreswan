@@ -11,10 +11,10 @@ IPv6AcceptRouterAdvertisements=false
 
 [Route]
 Gateway=192.1.3.33
-Destination=192.0.3.0/24
+Destination=198.18.66.0/24
 GatewayOnlink=yes
 
 [Route]
-Destination=2001:db8:0:3::/64
+Destination=2001:db8:66::/64
 Gateway=2001:db8:1:3::33
 
