@@ -125,4 +125,8 @@ EOF
 
     connectivity road north_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
 
+    # pole's default is north
+
+    connectivity pole north_northnet4 north_nicnet4 nic_nicnet4 east_internet4 west_internet4
+
 done
