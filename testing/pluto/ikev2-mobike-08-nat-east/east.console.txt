@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec add east
+"east": added oriented IKEv2 connection
+east #
+ ipsec _kernel state | grep "dport 4[0-9][0-9][0-9][0-9]"
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+east #
+ ../../guestbin/wait-for-pluto.sh --match 'MOBIKE mapping change: updated remote to'
+"east"[1] 192.1.2.254 #1: MOBIKE mapping change: updated remote to 192.1.2.254:EPHEM
+east #
+ ipsec _kernel state | grep "dport 5[0-9][0-9][0-9][0-9]"
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+east #
+ ipsec trafficstatus
+#2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='E=user-road@testing.libreswan.org, CN=road.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA', lease=100.64.0.1/32
+east #
+ ../../guestbin/xfrmcheck.sh
+east #
