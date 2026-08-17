@@ -40,7 +40,7 @@ libnss3-tools
 libpam0g-dev
 libsystemd-dev
 libunbound-dev
-linux-headers-${kv}
+linux-headers-generic
 make
 net-tools
 nftables
