@@ -179,8 +179,16 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 		JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
 		JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
 	}
-	JAM_AUTHBY(ecdsa, ECDSA);
-	if (!authby_le(AUTHBY_ALL_ECDSA_SHA2, authby)) {
+	/*
+	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
+	 * short-hand ECDSA.  This matches auth=ecdsa which will set
+	 * all the bits below.
+	 */
+	if (authby_has_all(authby, AUTHBY_ALL_ECDSA_SHA2)) {
+		pexpect(authby.ecdsa);
+		s += jam_string(buf, sep); sep = "+";
+		s += jam_string(buf, "ECDSA");
+	} else {
 		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
 		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
 		JAM_AUTHBY(ecdsa_sha2_512, ECDSA_SHA2_512);
