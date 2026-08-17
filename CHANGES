@@ -13,7 +13,6 @@ v5.4 (August 13, 2026)
   - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew, Daiki]
     + requires NSS >= 3.118.1
   - support for IKE_FOLLOWUP_KE for RFC 9370 [Daiki #2958 #2918]
-  - support for RFC 9593 SUPPORTED_AUTH_METHODS [Osema Fadhel]
   - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir #2348]
   - include DIGSIG algorithm in IKE_AUTH request log [Amrinder Singh #2490 #2627]
   - clarify missing Child SA log during delete [Osema Fadhel #1585 #2695]
