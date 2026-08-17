@@ -1,6 +1,6 @@
 ifconfig vtnet0 | grep -e 'inet ' -e 'inet6 .*2001:'
-	inet 192.0.3.254 netmask 0xffffff00 broadcast 192.0.3.255
-	inet6 2001:db8:0:3::254 prefixlen 64
+	inet 198.18.66.254 netmask 0xffffff00 broadcast 198.18.66.255
+	inet6 2001:db8:66::254 prefixlen 64
 north #
  ifconfig vtnet1 | grep -e 'inet ' -e 'inet6 .*2001:'
 	inet 192.1.3.33 netmask 0xffffff00 broadcast 192.1.3.255

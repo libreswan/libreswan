@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 bindir=$(dirname $0)
 
@@ -83,12 +83,20 @@ EOF
 
     # bring up all the networks
 
-    for host in east west rise set north ; do
-	echo "" >> ${sh}
-	cat <<EOF >> ${sh}
-${host}# ifconfig ${eth}0 | grep -e 'inet ' -e 'inet6 .*2001:'
-${host}# ifconfig ${eth}1 | grep -e 'inet ' -e 'inet6 .*2001:'
+    for host in ${hosts} ; do
+	declare -n host_eth=${host}_eth
+	echo >> ${sh}
+	for iface in "${host_eth[@]}" ; do
+	    declare -a if=(${iface})
+	    n=$(expr ${if[0]} : 'eth\([0-9]*\)')
+	    case ${host} in
+		nic ) ethN=eth${n} ;;
+		* ) ethN=${eth}${n} ;;
+	    esac
+	    cat <<EOF >> ${sh}
+${host}# ifconfig ${ethN} | grep -e 'inet ' -e 'inet6 .*2001:'
 EOF
+	done
     done
 
     # connectivity
@@ -116,5 +124,9 @@ EOF
     # roads's default is nic
 
     connectivity road north_nicnet4 nic_nicnet4 nic_internet4 east_internet4 west_internet4
+
+    # pole's default is north
+
+    connectivity pole north_northnet4 north_nicnet4 nic_nicnet4 east_internet4 west_internet4
 
 done

@@ -144,7 +144,7 @@ elif [ "${guest}" = "east" ]; then
 	breth0=brswan02-${tcsm} #northnet bridge
 	route1='route add 192.0.1.0/24 via 192.1.2.45 '
 elif [ "${guest}" = "north" ]; then
-	eth0ip="192.0.3.254/24"
+	eth0ip="198.18.66.254/24"
 	eth1ip="192.1.3.33/24"
 	gw="192.1.3.254"
 	breth1=brswan13-${tcsm} #north/road-nic bridge
@@ -165,7 +165,7 @@ elif [ "${guest}" = "nic" ]; then
 	breth1=brswan13-${tcsm} #north/road-nic bridge
 	route1='route add 192.0.1.0/24 via 192.1.2.45 '
 	route2='route add 192.0.2.0/24 via 192.1.2.23 '
-	# route2='route add 192.0.3.0/24 via 192.1.3.33 ' missing kvm. first add there fix test ref output
+	# route2='route add 198.18.66.0/24 via 192.1.3.33 ' missing kvm. first add there fix test ref output
 	routedef=''
 fi
 

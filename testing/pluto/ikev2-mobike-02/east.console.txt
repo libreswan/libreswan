@@ -31,13 +31,13 @@ src 192.1.2.23 dst 192.1.8.22
 	dir out
 east #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.8.22
-src 192.0.3.0/24 dst 192.0.2.0/24
+src 198.18.66.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.8.22 dst 192.1.2.23
-src 192.0.3.0/24 dst 192.0.2.0/24
+src 198.18.66.0/24 dst 192.0.2.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.8.22 dst 192.1.2.23
 east #

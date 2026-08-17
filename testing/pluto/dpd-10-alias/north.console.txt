@@ -36,10 +36,10 @@ initiating all connections with alias "north-dpd"
 north #
  ipsec auto --status | grep northnet-eastnets
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.22.254
 up
 north #
  ipsec whack --trafficstatus
@@ -57,7 +57,7 @@ north #
  sleep 20
 north #
  ipsec status | grep north-dpd
-"north-dpd/0x1": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
+"north-dpd/0x1": 198.18.66.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "north-dpd/0x1":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23;
 "north-dpd/0x1":   mycert=north; peercert=east;
 "north-dpd/0x1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -80,7 +80,7 @@ north #
 "north-dpd/0x1":   routing: unrouted;
 "north-dpd/0x1":   conn serial: $1;
 "north-dpd/0x1":   aliases: north-dpd
-"north-dpd/0x2": 192.0.3.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; prospective erouted; eroute owner: #0
+"north-dpd/0x2": 198.18.66.0/24===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.22.0/24; prospective erouted; eroute owner: #0
 "north-dpd/0x2":     oriented; my_ip=unset; their_ip=unset;
 "north-dpd/0x2":   mycert=north; peercert=east;
 "north-dpd/0x2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -109,10 +109,10 @@ north #
 north #
  ../../guestbin/ip-route.sh del unreachable 192.1.2.23
 north #
- ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --forget -I 198.18.66.254 192.0.2.254
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
  # state number should be higher than the previous one

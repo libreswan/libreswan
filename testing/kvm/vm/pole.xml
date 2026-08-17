@@ -1,0 +1,77 @@
+<!--
+    ./kvm transmogrify will transmogrify and then load this .xml file using
+    sudo virsh define east.xmk
+-->
+
+<domain type='kvm'>
+  <name>@@DOMAIN_PREFIX@@@@DOMAIN_HOSTNAME@@</name>
+  <memory unit='MiB'>@@DOMAIN_MEMORY@@</memory>
+  <vcpu>1</vcpu>
+  <os>
+    <type arch='x86_64'>hvm</type>
+    <!--linux?--> <kernel>@@KVM_POOLDIR@@/@@KVM_PREFIX@@@@DOMAIN_PLATFORM@@.vmlinuz</kernel>
+    <!--linux?--> <initrd>@@KVM_POOLDIR@@/@@KVM_PREFIX@@@@DOMAIN_PLATFORM@@.initramfs</initrd>
+    <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@DOMAIN_HOSTNAME@@</cmdline>
+    <!--bsd?--> <boot dev='hd'/>
+  </os>
+  <!--override default of mode=host-model -->
+  <cpu mode='host-passthrough'/>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
+      <source file='@@KVM_LOCALDIR@@/@@KVM_PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+      <transient shareBacking='yes'/>
+    </disk>
+    <!--
+	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
+	Debian uses p9fs.  Hence keep these mount points.  Include
+	/source as it is needed when debugging; and /pool as it is
+	used when installing packages.
+    -->
+    <filesystem type='mount' accessmode='squash'>
+      <source dir='@@KVM_TESTINGDIR@@'/>
+      <target dir='testing'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='squash'>
+      <source dir='@@KVM_SOURCEDIR@@'/>
+      <target dir='source'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='squash'>
+      <source dir='@@KVM_POOLDIR@@'/>
+      <target dir='pool'/>
+    </filesystem>
+    <!-- eth0: NORTHNET -->
+    <interface type='bridge'>
+      <mac address='12:50:4F:4C:45:01'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_0_3'/>
+      <model type='virtio'/>
+    </interface>
+    <!-- eth1: dhcp -->
+    <!--bsd?--> <interface type='bridge'>
+      <!--bsd?--> <source bridge='swandefault'/>
+      <!--bsd?--> <model type='virtio'/>
+    <!--bsd?--> </interface>
+    <!-- serial console -->
+    <console type='pty'/>
+    <!-- memory -->
+    <memballoon model='virtio'/>
+    <!-- randomness -->
+    <rng model='virtio'>
+      <backend model='random'>/dev/urandom</backend>
+    </rng>
+  </devices>
+  <!-- used by p9fs -->
+  <seclabel type='static' model='dac' relabel='yes'>
+    <label>@@KVM_UID@@:@@KVM_GID@@</label>
+    <imagelabel>@@KVM_UID@@:@@KVM_GID@@</imagelabel>
+  </seclabel>
+</domain>

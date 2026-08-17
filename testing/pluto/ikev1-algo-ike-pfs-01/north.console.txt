@@ -1,8 +1,8 @@
 /testing/guestbin/swan-prep --hostkeys
 Creating NSS database containing host keys
 north #
- ../../guestbin/wait-until-alive -I 192.0.3.254 192.0.2.254
-destination -I 192.0.3.254 192.0.2.254 is alive
+ ../../guestbin/wait-until-alive -I 198.18.66.254 192.0.2.254
+destination -I 198.18.66.254 192.0.2.254 is alive
 north #
  ipsec start
 Redirecting to: [initsystem]
@@ -25,11 +25,11 @@ north #
 "northnet-eastnet-nonat" #1: Peer ID is FQDN: '@east'
 "northnet-eastnet-nonat" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit raw RSA with SHA1 signature
 "northnet-eastnet-nonat" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"northnet-eastnet-nonat" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.2.0/24}
+"northnet-eastnet-nonat" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 198.18.66.0/24===192.0.2.0/24}
 "northnet-eastnet-nonat" #2: sent Quick Mode request
 "northnet-eastnet-nonat" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
  ipsec whack --trafficstatus
@@ -59,15 +59,15 @@ src 192.1.2.23 dst 192.1.3.33
 	dir in
 north #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
+src 198.18.66.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
