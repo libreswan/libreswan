@@ -1,12 +1,26 @@
 #!/bin/sh
 
-set -ex
-
 PKI="/usr/libexec/strongswan/pki"
 #PKI="/usr/local/strongswan/bin/pki"
 
-x509dir=$(realpath $(dirname $0))
-cd ${x509dir}
+if test $# -lt 2 ; then
+    echo "usage: $0 <ca-name> <strongswan-pki-gen-parameters>" 1>&2
+    exit 1
+fi
+
+if test ! -r description.txt ; then
+    echo "$0 should be run from within a test directory" 1>&2
+    exit 1
+fi
+
+if test ! -d OUTPUT ; then
+    echo "OUTPUT/ directory missing" 1>&2
+    exit 1
+fi
+
+set -ex
+
+x509dir=OUTPUT
 rm -rf ${x509dir}/strongswan/*
 mkdir -p ${x509dir}/strongswan/
 
@@ -16,9 +30,13 @@ pki()
     mkdir ${x509dir}/strongswan/${caname}
     cd ${x509dir}/strongswan/${caname}
 
-    $PKI "$@" > strongCAkey.der
-    $PKI "$@" > strongWestKey.der
-    $PKI "$@" > strongEastKey.der
+    # no -o option, use dd-of to make dest clear
+    :  strongCAkey.der
+    $PKI --gen "$@" > strongCAkey.der
+    : strongWestKey.der
+    $PKI --gen "$@" > strongWestKey.der
+    : strongEastKey.der
+    $PKI --gen "$@" > strongEastKey.der
 
     $PKI --self --in strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongSwan ${caname} CA" --ca > strongCAcert.der
     $PKI --pub --in strongWestKey.der | $PKI --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongWest" --flag serverAuth --san west.testing.libreswan.org > strongWestCert.der
@@ -40,8 +58,4 @@ pki()
 
 #
 
-pki strong-EC --gen --type ecdsa --size 384
-
-#
-
-pki strong-ED --gen --type ed25519
+pki "$@"
