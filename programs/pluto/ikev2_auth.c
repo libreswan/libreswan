@@ -144,6 +144,16 @@ enum auth local_v2_auth(struct ike_sa *ike)
 	}
 
 	const struct connection *c = ike->sa.st_connection;
+
+	if (authby_is_set(ike->sa.st_v2_peer_authby)) {
+		struct authby negotiated_authby = authby_and(ike->sa.st_v2_peer_authby, 
+				c->local->host.config->authby);
+		name_buf eb;
+		ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: selecting negotiated authby=%s", 
+				str_enum_long(&auth_names, auth_from_authby(negotiated_authby), &eb));
+		return auth_from_authby(negotiated_authby);
+	}
+
 	enum auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);
 	return authby;

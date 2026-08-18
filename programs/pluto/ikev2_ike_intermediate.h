@@ -35,6 +35,7 @@ struct ikev2_ike_intermediate_exchange {
 		enum ikev2_trans_type type;
 	} addke;
 	bool ppk;
+	bool supported_auth_methods;
 };
 
 struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(struct ike_sa *ike);

@@ -67,6 +67,7 @@
 #include "ikev2_notification.h"
 #include "ipsecconf/setup.h"
 #include "ikev2_ke.h"
+#include "ikev2_supported_auth.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -874,6 +875,18 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		}
 	}
 
+	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
+	if (c->config->host.send_supported_auth_methods) {
+		if (ike->sa.st_v2_ike_intermediate.enabled) {
+			if (!emit_v2N(v2N_SUPPORTED_AUTH_METHODS, response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+			ike->sa.st_supported_auth_methods_intermediate = true;
+		} else if (!emit_v2N_SUPPORTED_AUTH_METHODS(ike, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	/* Send NAT-T Notify payloads */
 	if (!ikev2_out_nat_v2n(response.pbs, &ike->sa, &ike->sa.st_ike_spis.responder)) {
 		return STF_INTERNAL_ERROR;
@@ -1148,6 +1161,21 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			return STF_FATAL;
 		}
 		ike->sa.st_seen_hashnotify = true;
+	}
+
+	/* 
+	 * If we received an empty notification, we expect the responder to send
+	 * the full notification in the intermediate exchange, otherwise
+	 * we process the notification.
+	 */
+	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (pbs_left(&md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs) == 0) {
+			ike->sa.st_supported_auth_methods_intermediate = true;
+		} else {
+			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+				return STF_FATAL;
+			}
+		}
 	}
 
 	/*
