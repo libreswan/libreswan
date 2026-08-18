@@ -40,8 +40,4 @@ pki()
 
 #
 
-pki strong-EC --gen --type ecdsa --size 384
-
-#
-
 pki strong-ED --gen --type ed25519
