@@ -22,6 +22,10 @@ OBJS += authbycheck.o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
+USERLAND_LDFLAGS += $(NSS_UTIL_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_LDFLAGS)
+USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
+
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
