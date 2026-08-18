@@ -1,6 +1,6 @@
 /* test jambuf_t, for libreswan
  *
- * Copyright (C) 2019 Andrew Cagney
+ * Copyright (C) 2019-2026 Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -61,21 +61,20 @@ int main(int argc, char *argv[])
 		PRINT("authby_from_auth(%u)", auth);
 		struct authby authby = authby_from_auth(auth);
 
-		bool set = (auth != AUTH_EAPONLY);
+		bool authby_set = (auth != AUTH_EAPONLY);
+		if (authby_is_set(authby) != authby_set) {
+			FAIL("authby_is_set(%u*) == %u", auth, authby_set);
+		}
+		if (auth_in_authby(auth, authby) != authby_set) {
+			FAIL("auth_in_authby(%u, %u*) == %u", auth, auth, authby_set);
+		}
 
-		if (authby_is_set(authby) != set) {
-			FAIL("authby_is_set(%u) == %u", auth, set);
+		struct authby not_authby = authby_not(authby);
+		if (!authby_is_set(not_authby)) {
+			FAIL("authby_is_set(not(%u*)) == %u", auth, false);
 		}
-		if (auth_in_authby(auth, authby) != set) {
-			FAIL("auth_in_authby(%u, %u) == %u", auth, auth, set);
-		}
-
-		struct authby notby = authby_not(authby);
-		if (!authby_is_set(notby)) {
-			FAIL("authby_is_set(not(%u)) == %u", auth, false);
-		}
-		if (auth_in_authby(auth, notby)) {
-			FAIL("auth_in_authby(%u, not(%u)) == %u", auth, auth, false);
+		if (auth_in_authby(auth, not_authby)) {
+			FAIL("auth_in_authby(%u, not(%u*)) == %u", auth, auth, false);
 		}
 
 		authby_buf ab;
@@ -102,53 +101,89 @@ int main(int argc, char *argv[])
 
 			struct authby altby = authby_from_auth(alt);
 
-			PRINT("authby_and(%u,%u)", auth, alt);
-			struct authby andby = authby_and(authby, altby);
-			bool and = (auth == alt);
-			if (authby_is_set(andby) != and) {
-				FAIL("authby_is_set(and(%u,%u)) == %u", auth, alt, and);
+			PRINT("authby_eq(%u,%u)", auth, alt);
+			bool eq = (auth == alt);
+			if (!(authby_eq(authby, altby) == eq)) {
+				FAIL("authby_eq(%u*,%u*) == %u", auth, alt, eq);
 			}
-			if (auth_in_authby(auth, andby) != and) {
-				FAIL("auth_in_authby(%u, and(%u,%u)) == %u", auth, alt, auth, and);
+
+			PRINT("authby_and(%u,%u)", auth, alt);
+			if (!(authby_is_set(authby_and(authby, altby)) == eq)) {
+				FAIL("authby_is_set(and(%u*,%u*)) == %u", auth, alt, eq);
+			}
+			if (!(auth_in_authby(auth, authby_and(authby, altby)) == eq)) {
+				FAIL("auth_in_authby(%u, and(%u*,%u*)) == %u", auth, auth, alt, eq);
 			}
 
 			PRINT("authby_or(%u,%u)", auth, alt);
-			struct authby orby = authby_or(authby, altby);
-			if (!authby_is_set(orby)) {
-				FAIL("authby_is_set(or(%u,%u))", auth, alt);
+			if (!authby_is_set(authby_or(authby, altby))) {
+				FAIL("authby_is_set(or(%u*,%u*))", auth, alt);
 			}
-			if (!auth_in_authby(auth, orby)) {
-				FAIL("auth_in_authby(%u, or(%u,%u))", auth, alt, auth);
-			}
-			if (authby_le(orby, authby) != and) {
-				FAIL("orby: authby: authby_le(or(%u,%u), %u) == %u", auth, alt, auth, and);
-			}
-			if (authby_le(orby, altby) != and) {
-				FAIL("orby:altby: authby_le(or(%u,%u), %u) == %u", auth, alt, alt, and);
-			}
-			if (!authby_le(altby, orby)) {
-				FAIL("altby:orby: authby_le(or(%u,%u), %u)", auth, alt, alt);
-			}
-			if (!authby_le(authby, orby)) {
-				FAIL("authby:orby: authby_le(or(%u,%u), %u)", auth, alt, alt);
+			if (!auth_in_authby(auth, authby_or(authby, altby))) {
+				FAIL("auth_in_authby(%u, or(%u*,%u*))", auth, auth, alt);
 			}
 
 			PRINT("authby_xor(%u,%u)", auth, alt);
-			struct authby xorby = authby_xor(authby, altby);
 			bool xor = (auth != alt);
-			if (authby_is_set(xorby) != xor) {
+			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (auth_in_authby(auth, xorby) != (xor && set)) {
-				FAIL("auth_in_authby(%u, xor(%u,%u)) == %u", auth, alt, auth, xor && set);
+			if (!(auth_in_authby(auth, authby_xor(authby, altby)) == (xor && authby_set))) {
+				FAIL("auth_in_authby(%u, xor(%u,%u)) == %u", auth, alt, auth, xor && authby_set);
 			}
 
-			PRINT("authby_eq(%u,%u)", auth, alt);
-			bool eqby = authby_eq(authby, altby);
-			bool eq = (auth == alt);
-			if (eqby != eq) {
-				FAIL("authby_eq(%u,%u) == %u", auth, alt, eq);
+			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
+				FAIL("orby: authby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, auth, eq);
 			}
+			if (!(authby_le(authby_or(authby, altby), altby) == eq)) {
+				FAIL("orby:altby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, alt, eq);
+			}
+
+			if (!authby_le(authby, authby_or(authby, altby))) {
+				FAIL("authby:orby: authby_le(%u*, or(%u*,%u*))", auth, auth, alt);
+			}
+			if (!authby_le(altby, authby_or(authby, altby))) {
+				FAIL("altby:orby: authby_le(%u*, or(%u*,%u*))", alt, auth, alt);
+			}
+
+			/**/
+
+			if (!(authby_has_all(authby_or(authby, altby), authby) == true)) {
+				FAIL("authby_has_all(or(%u*,%u*), %u*) == %u", auth, alt, auth, true);
+			}
+			if (!(authby_has_all(authby, authby_or(authby, altby)) == eq)) {
+				FAIL("authby_has_all(%u*, or(%u*,%u*)) == %u", auth, auth, alt, eq);
+			}
+
+			if (!(authby_has_all(authby_xor(authby, altby), authby) == !eq)) {
+				FAIL("authby_has_all(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
+			}
+			if (!(authby_has_all(authby, authby_xor(authby, altby)) == eq)) {
+				FAIL("authby_has_all(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, eq);
+			}
+
+			/**/
+
+			if (!(authby_has_some(authby_or(authby, altby), authby) == true)) {
+				FAIL("authby_has_some(or(%u*,%u*), %u*) == %u", auth, alt, auth, true);
+			}
+			if (!(authby_has_some(authby, authby_or(authby, altby)) == true)) {
+				FAIL("authby_has_some(%u*, or(%u*,%u*)) == %u", auth, auth, alt, true);
+			}
+
+			if (!(authby_has_some(authby_xor(authby, altby), authby) == !eq)) {
+				FAIL("authby_has_some(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
+			}
+			if (!(authby_has_some(authby, authby_xor(authby, altby)) == !eq)) {
+				FAIL("authby_has_some(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, !eq);
+			}
+
+			/**/
+
+			if (!(authby_has_none(authby, altby) == !eq)) {
+				FAIL("authby_has_none(%u*,%u*) == %u", auth, alt, false);
+			}
+
 		}
 	}
 
