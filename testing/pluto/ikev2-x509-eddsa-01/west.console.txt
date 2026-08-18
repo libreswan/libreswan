@@ -1,8 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 west #
- /testing/x509/import.sh strongswan/strong-ED/strongWest.p12
- ipsec pk12util -w nss-pw -i strongswan/strong-ED/strongWest.p12
+ /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
+ ipsec pk12util -w nss-pw -i /testing/ikev2-x509-eddsa-01/OUTPUT/strongswan/strong-ED/strongWest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongWest
