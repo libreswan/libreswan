@@ -230,14 +230,17 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * key.
 		 *
 		 * XXX: this _should_ be looking at the ECDSA key.
+		 *
+		 * XXX: this _should_ be looking at IKE's dynamic
+		 * authby which _should_ be looking at the ECDSA key.
 		 */
-		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_512) {
+		if (c->local->host.config->authby.ecdsa_sha2_512) {
 			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
 		}
-		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_384) {
+		if (c->local->host.config->authby.ecdsa_sha2_384) {
 			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
 		}
-		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_256) {
+		if (c->local->host.config->authby.ecdsa_sha2_256) {
 			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
 		}
 
