@@ -27,6 +27,8 @@
 #include "authby.h"
 #include "auth.h"
 
+#include "ike_alg_hash.h"
+
 unsigned fails;
 
 #define PRINTF(FILE, FMT, ...)				\
@@ -202,6 +204,33 @@ int main(int argc, char *argv[])
 			FAIL("auth_in_authby(%u, AUTHBY_ALL) failed", auth);
 		}
 	}
+
+	do { /* hack so FAIL() works */
+		struct authby authby_sha2_256 =
+			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha2_256);
+		if (authby_sha2_256.rsasig_v1_5 ||
+		    !authby_sha2_256.ecdsa_sha2_256 ||
+		    !authby_sha2_256.rsasig_sha2_256 ||
+		    authby_sha2_256.eddsa) {
+			FAIL("authby_and_hash(sha2_256)");
+		}
+		struct authby authby_sha1 =
+			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
+		if (!authby_sha1.rsasig_v1_5 ||
+		    authby_has_some(authby_sha1, AUTHBY_ALL_ECDSA_SHA2) ||
+		    authby_has_some(authby_sha1, AUTHBY_ALL_RSASIG_SHA2) ||
+		    authby_sha1.eddsa) {
+			FAIL("authby_and_hash(sha1");
+		}
+		struct authby authby_identity =
+			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_identity);
+		if (!authby_identity.eddsa ||
+		    authby_identity.rsasig_v1_5 ||
+		    authby_has_some(authby_identity, AUTHBY_ALL_ECDSA_SHA2) ||
+		    authby_has_some(authby_identity, AUTHBY_ALL_RSASIG_SHA2)) {
+			FAIL("authby_and_hash(identity)");
+		}
+	} while (false);
 
 	if (report_leaks(logger)) {
 		fails++;

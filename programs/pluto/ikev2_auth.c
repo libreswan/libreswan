@@ -403,33 +403,47 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	struct connection *c = ike->sa.st_connection;
 
+	/*
+	 * Strip authby of all auth methods that don't use
+	 * HASH_ALGORITHM.  EDDSA, say, uses the IDENTITY HASH.
+	 *
+	 * The result should be, at most, one bit.
+	 */
+	struct authby hash_authby = authby_and_hash(authby, hash_algo);
+
+	authby_buf ab;
+	authby_buf hb;
+	lset_buf lb;
+	ldbg(ike->sa.logger,
+	     "verifying authby %s (%s with hash %s) signer %s and allowed hashes %s",
+	     str_authby(hash_authby, &hb),
+	     str_authby(authby, &ab),
+	     hash_algo->common.fqn,
+	     pubkey_signer->name,
+	     str_lset_short(&ikev2_hash_algorithm_names, "+", c->config->sighash_policy, &lb));
+
 	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
 	/*
-	 * The field c->config->sighash_policy contains values
-	 * intended for Digital Signature method.  Since that method
-	 * never allows SHA1, that bit is never set in in
-	 * .sighash_policy.
-	 *
-	 * Hence the hack to allow PKCS#1 1.5 RSA + SHA1 which can
-	 * only be for legacy RSA_DIGITAL_SIGNATURE.
-	 *
-	 * XXX: suspect adding that bit and then using .sighash_policy
-	 * to determine if SHA1 is allowed at all would be cleaner.
+	 * Per above, there should be at most one authby bit set.
 	 */
-
-	lset_t hash_bit = LELEM(hash_algo->ikev2_alg_id);
-	if (authby.rsasig_v1_5 && hash_algo == &ike_alg_hash_sha1) {
-		pexpect(!(c->config->sighash_policy & hash_bit));
-		ldbg(ike->sa.logger, "skipping sighash check as PKCS#1 1.5 RSA + SHA1");
-	} else if (!(c->config->sighash_policy & hash_bit)) {
+	unsigned count = authby_count(hash_authby);
+	if (pbad(count > 1)) {
+		authby_buf ab;
+		return diag("INTERNAL ERROR: too many authby bits set in %s",
+			    str_authby(hash_authby, &ab));
+	}
+	if (count == 0) {
 		return diag("authentication failed: peer authentication requires hash algorithm %s",
 			    hash_algo->common.fqn);
 	}
 
-	if (!authby_le(authby, c->remote->host.config->authby)) {
+	/*
+	 * Does the configuration include the HASH_AUTHBY bit?
+	 */
+	if (!authby_has_all(c->remote->host.config->authby, hash_authby)) {
 		authby_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
 			    str_authby(authby, &pb));
@@ -482,7 +496,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
@@ -490,14 +504,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
 							  &pubkey_signer_raw_ecdsa/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
@@ -559,9 +573,21 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 		shunk_t signature = pbs_in_left(signature_pbs);
 
+		/*
+		 * XXX: should this loop be inverted?
+		 *
+		 * Find a matching DIGSIG blob, and then check that
+		 * there's an allowed hash algorithm for that blob IN
+		 * the configured AUTHBY.
+		 */
+
 		ldbg(ike->sa.logger, "digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
+			/*
+			 * Does the HASH as proposed by the peer,
+			 * appear in the local configured list?
+			 */
 			if ((ike->sa.st_connection->config->sighash_policy &
 			     LELEM((*hash)->ikev2_alg_id)) == LEMPTY) {
 				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
@@ -582,8 +608,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				struct authby authby;
 			} signers[] = {
 				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
-				{ &pubkey_signer_digsig_ecdsa, { .ecdsa = true, }, },
-				{ &pubkey_signer_digsig_rsassa_pss, { .rsasig = true, }, },
+				{ &pubkey_signer_digsig_ecdsa, AUTHBY_ALL_ECDSA_SHA2, },
+				{ &pubkey_signer_digsig_rsassa_pss, AUTHBY_ALL_RSASIG_SHA2, },
 				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
 			};
 
