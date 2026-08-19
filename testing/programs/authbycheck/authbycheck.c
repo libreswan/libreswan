@@ -166,18 +166,18 @@ int main(int argc, char *argv[])
 
 			/**/
 
-			if (!(authby_has_some(authby_or(authby, altby), authby) == true)) {
-				FAIL("authby_has_some(or(%u*,%u*), %u*) == %u", auth, alt, auth, true);
+			if (!(authby_has_any(authby_or(authby, altby), authby) == true)) {
+				FAIL("authby_has_any(or(%u*,%u*), %u*) == %u", auth, alt, auth, true);
 			}
-			if (!(authby_has_some(authby, authby_or(authby, altby)) == true)) {
-				FAIL("authby_has_some(%u*, or(%u*,%u*)) == %u", auth, auth, alt, true);
+			if (!(authby_has_any(authby, authby_or(authby, altby)) == true)) {
+				FAIL("authby_has_any(%u*, or(%u*,%u*)) == %u", auth, auth, alt, true);
 			}
 
-			if (!(authby_has_some(authby_xor(authby, altby), authby) == !eq)) {
-				FAIL("authby_has_some(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
+			if (!(authby_has_any(authby_xor(authby, altby), authby) == !eq)) {
+				FAIL("authby_has_any(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
 			}
-			if (!(authby_has_some(authby, authby_xor(authby, altby)) == !eq)) {
-				FAIL("authby_has_some(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, !eq);
+			if (!(authby_has_any(authby, authby_xor(authby, altby)) == !eq)) {
+				FAIL("authby_has_any(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, !eq);
 			}
 
 			/**/
@@ -217,8 +217,8 @@ int main(int argc, char *argv[])
 		struct authby authby_sha1 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
 		if (!authby_sha1.rsasig_v1_5 ||
-		    authby_has_some(authby_sha1, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_some(authby_sha1, AUTHBY_ALL_RSASIG_SHA2) ||
+		    authby_has_any(authby_sha1, AUTHBY_ALL_ECDSA_SHA2) ||
+		    authby_has_any(authby_sha1, AUTHBY_ALL_RSASIG_SHA2) ||
 		    authby_sha1.eddsa) {
 			FAIL("authby_and_hash(sha1");
 		}
@@ -226,8 +226,8 @@ int main(int argc, char *argv[])
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_identity);
 		if (!authby_identity.eddsa ||
 		    authby_identity.rsasig_v1_5 ||
-		    authby_has_some(authby_identity, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_some(authby_identity, AUTHBY_ALL_RSASIG_SHA2)) {
+		    authby_has_any(authby_identity, AUTHBY_ALL_ECDSA_SHA2) ||
+		    authby_has_any(authby_identity, AUTHBY_ALL_RSASIG_SHA2)) {
 			FAIL("authby_and_hash(identity)");
 		}
 	} while (false);

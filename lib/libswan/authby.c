@@ -105,16 +105,16 @@ bool authby_has_all(struct authby authby, struct authby all)
 	return authby_eq(and, all); /*all*/
 }
 
-bool authby_has_some(struct authby authby, struct authby some)
+bool authby_has_any(struct authby authby, struct authby some)
 {
 	struct authby and = authby_and(authby, some);
-	return authby_is_set(and); /* at least 1 */
+	return authby_count(and) > 0; /* at least 1 */
 }
 
 bool authby_has_none(struct authby authby, struct authby none)
 {
 	struct authby and = authby_and(authby, none);
-	return !authby_is_set(and); /*none*/
+	return authby_count(and) == 0; /*none*/
 }
 
 struct authby authby_and_hash(struct authby authby,
