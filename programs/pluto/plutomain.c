@@ -1586,7 +1586,7 @@ void show_setup_plutomain(struct show *s)
 
 	show(s, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
-		IPSEC_EXECDIR);
+		IPSEC_LIBEXECDIR);
 
 	show(s, "pluto_version=%s, pluto_vendorid=%s",
 	     libreswan_version,
