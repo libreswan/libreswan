@@ -1554,6 +1554,12 @@ int main(int argc, char **argv)
 	else
 		llog(RC_LOG, logger, "kernel: MIGRATE SA supported by kernel");
 
+	msg = kernel_ops->pcpu_ipsec_sa_is_enabled(logger);
+	if (msg != NULL)
+		llog(RC_LOG, logger, "kernel: per-CPU ipsec SA error: %s", msg);
+	else
+		llog(RC_LOG, logger, "kernel: per-CPU SA supported by kernel (RFC 9611)");
+
 	run_server(conffile, logger);
 }
 

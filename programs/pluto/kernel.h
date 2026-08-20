@@ -201,6 +201,8 @@ struct kernel_state {
 	uint32_t tfcpad;
 
 	const struct config_iptfs *iptfs;	/* non-NULL when enabled */
+
+	uint32_t cpu_id; /* CPU ID or CPU_ID_NONE (RFC 9611) */
 };
 
 struct kernel_ops {
@@ -306,6 +308,7 @@ struct kernel_ops {
 	bool (*iptfs_ipsec_sa)(struct child_sa *child);
 	err_t (*directional_ipsec_sa_is_enabled)(struct logger *);
 	bool (*directional_ipsec_sa)(struct child_sa *child);
+	err_t (*pcpu_ipsec_sa_is_enabled)(struct logger *);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, const struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
