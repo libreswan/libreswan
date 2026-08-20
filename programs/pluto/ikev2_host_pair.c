@@ -383,9 +383,12 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 * How to authenticate (prove the identity of) the remote
 	 * peer; in order of decreasing preference.  NEVER matches
 	 * things like BLOCK and CLEAR.
+	 *
+	 * Inner code looks for connections configured to do any of
+	 * the authbys.
 	 */
 	static const struct authby remote_authbys[] = {
-		{ .ecdsa = true, },
+		AUTHBY_ALL_ECDSA_SHA2,
 		{ .eddsa = true, },
 		{ .rsasig = true, },
 		{ .rsasig_v1_5 = true, },
