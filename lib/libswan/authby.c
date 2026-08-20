@@ -126,9 +126,14 @@ struct authby authby_and_hash(struct authby authby,
 			.rsasig_v1_5 = authby.rsasig_v1_5,
 		};
 	}
+	/*
+	 * Allow PKCS#1 RSA v1.5 with SHA2; even though it doesn't
+	 * have an explicit bit.
+	 */
 #define AND_HASH(HASH)						\
 	if (hash == &ike_alg_hash_##HASH) {			\
 		return (struct authby) {			\
+			.rsasig_v1_5 = authby.rsasig_v1_5,	\
 			.rsasig_##HASH = authby.rsasig_##HASH,	\
 			.ecdsa_##HASH = authby.ecdsa_##HASH,	\
 		};						\
