@@ -105,16 +105,16 @@ bool authby_has_all(struct authby authby, struct authby all)
 	return authby_eq(and, all); /*all*/
 }
 
-bool authby_has_some(struct authby authby, struct authby some)
+bool authby_has_any(struct authby authby, struct authby some)
 {
 	struct authby and = authby_and(authby, some);
-	return authby_is_set(and); /* at least 1 */
+	return authby_count(and) > 0; /* at least 1 */
 }
 
 bool authby_has_none(struct authby authby, struct authby none)
 {
 	struct authby and = authby_and(authby, none);
-	return !authby_is_set(and); /*none*/
+	return authby_count(and) == 0; /*none*/
 }
 
 struct authby authby_and_hash(struct authby authby,
@@ -162,7 +162,7 @@ bool digital_signature_in_authby(struct authby authby)
 enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
-		authby.ecdsa ? AUTH_ECDSA :
+		authby_has_any(authby, AUTHBY_ALL_ECDSA_SHA2) ? AUTH_ECDSA :
 		authby.eddsa ? AUTH_EDDSA :
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
@@ -178,12 +178,7 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return (struct authby) {
-			.ecdsa = true,
-			.ecdsa_sha2_256 = true,
-			.ecdsa_sha2_384 = true,
-			.ecdsa_sha2_512 = true,
-		};
+	case AUTH_ECDSA: return AUTHBY_ALL_ECDSA_SHA2;
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) {
 			.rsasig = true,
