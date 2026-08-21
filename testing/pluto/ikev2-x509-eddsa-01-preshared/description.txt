@@ -1,0 +1,4 @@
+IKEv2 EDDSA certificate based authentication with preshared certs
+
+{left,right}sendcert=no so ends are forced to use the preshared
+certificates.

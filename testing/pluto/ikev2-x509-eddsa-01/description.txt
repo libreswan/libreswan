@@ -1,4 +1,0 @@
-IKEv2 EDDSA certificate based authentication
-
-Test for leaks as well
-
