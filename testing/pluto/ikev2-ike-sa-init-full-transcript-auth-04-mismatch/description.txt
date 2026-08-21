@@ -1,0 +1,1 @@
+West has ike-sa-init-full-transcript-auth=yes, east has =no.

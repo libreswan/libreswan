@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec showstates | grep full-transcript-auth
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+east #
