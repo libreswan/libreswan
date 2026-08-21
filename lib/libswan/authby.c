@@ -29,7 +29,6 @@
 	 (TYPE)(LHS).rsasig OP			\
 	 (TYPE)(LHS).rsasig_v1_5 OP		\
 	 (TYPE)(LHS).eddsa OP			\
-	 (TYPE)(LHS).ecdsa OP			\
 	 (TYPE)(LHS).rsasig_sha2_256 OP		\
 	 (TYPE)(LHS).rsasig_sha2_384 OP		\
 	 (TYPE)(LHS).rsasig_sha2_512 OP		\
@@ -45,7 +44,6 @@
 			.psk = (LHS).psk OP (RHS).psk,			\
 			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
 			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
-			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
 			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
 			.rsasig_sha2_256 = (LHS).rsasig_sha2_256 OP (RHS).rsasig_sha2_256, \
 			.rsasig_sha2_384 = (LHS).rsasig_sha2_384 OP (RHS).rsasig_sha2_384, \
@@ -222,7 +220,6 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	 * all the bits below.
 	 */
 	if (authby_has_all(authby, AUTHBY_ALL_ECDSA_SHA2)) {
-		pexpect(authby.ecdsa);
 		s += jam_string(buf, sep); sep = "+";
 		s += jam_string(buf, "ECDSA");
 	} else {
