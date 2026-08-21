@@ -1,6 +1,4 @@
-# use strongswan config to generate keys in OUTPUT/strongswan
-east #
- /testing/guestbin/swan-prep --userland strongswan
+/testing/guestbin/swan-prep --userland strongswan
 east #
  /testing/x509/bin/strongswan.sh strong-ED --type ed25519
 + x509dir=OUTPUT
@@ -32,34 +30,32 @@ east #
 + openssl pkcs12 -export -in strongWestCert.pem -inkey strongWestKey.pem -certfile strongCAcert.p12 -name strongWest -export -out strongWest.p12 -passout pass:foobar -passcerts pass:foobar
 + openssl pkcs12 -export -in strongEastCert.pem -inkey strongEastKey.pem -certfile strongCAcert.p12 -name strongEast -export -out strongEast.p12 -passout pass:foobar -passcerts pass:foobar
 east #
- # now config for pluto; importing key
-east #
  /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 east #
- # writes to OUTPUT/strongswan
-east #
  /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
- ipsec pk12util -w nss-pw -i /testing/ikev2-x509-eddsa-01/OUTPUT/strongswan/strong-ED/strongEast.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongEast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongEast
 "strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
   "strongEast" [CN=strongEast,O=strongSwan,C=CH]
 east #
+ /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongWest.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n strong-ED -t CT,,
+ ipsec certutil -O -n strongWest
+"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
+  "strongWest" [CN=strongWest,O=strongSwan,C=CH]
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added oriented IKEv2 connection
+ ipsec add eddsa
+"eddsa": added oriented IKEv2 connection
 east #
  ipsec whack --impair suppress-retransmits
-east #
- echo "initdone"
-initdone
-east #
- ipsec whack --shutdown
-Pluto is shutting down
 east #

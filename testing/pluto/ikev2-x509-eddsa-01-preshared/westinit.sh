@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 
-/testing/x509/import.sh strongswan/strong-ED/strongWest.p12
+/testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
