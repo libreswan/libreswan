@@ -1328,15 +1328,12 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
-				authby->ecdsa = true;
 				authby->ecdsa_sha2_256 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
-				authby->ecdsa = true;
 				authby->ecdsa_sha2_384 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
-				authby->ecdsa = true;
 				authby->ecdsa_sha2_512 = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
@@ -1862,7 +1859,6 @@ static diag_t extract_host_end(enum end end,
 		supplied.rsasig_sha2_256 = false;
 		supplied.rsasig_sha2_384 = false;
 		supplied.rsasig_sha2_512 = false;
-		supplied.ecdsa = false;
 		supplied.ecdsa_sha2_256 = false;
 		supplied.ecdsa_sha2_384 = false;
 		supplied.ecdsa_sha2_512 = false;

@@ -29,7 +29,6 @@ struct authby {
 	bool null;
 	bool never;
 	bool rsasig;
-	bool ecdsa;
 	bool eddsa;
 	bool rsasig_v1_5;
 
@@ -47,7 +46,6 @@ struct authby {
 		.null = true,			\
 		.never = true,			\
 		.rsasig = true,			\
-		.ecdsa = true,			\
 		.eddsa = true,			\
 		.rsasig_v1_5 = true,		\
 		.rsasig_sha2_256 = true,	\
@@ -61,7 +59,6 @@ struct authby {
 #define AUTHBY_DIGITAL_SIGNATURE (struct authby)	\
 	{						\
 		.rsasig = true,				\
-		.ecdsa = true,				\
 		.eddsa = true,				\
 		.rsasig_v1_5 = true,			\
 		.rsasig_sha2_256 = true,		\
@@ -77,7 +74,6 @@ struct authby {
 	{						\
 		.rsasig = true,				\
 		.rsasig_v1_5 = true,			\
-		.ecdsa = true,				\
 		.rsasig_sha2_256 = true,		\
 		.rsasig_sha2_384 = true,		\
 		.rsasig_sha2_512 = true,		\
@@ -96,7 +92,6 @@ struct authby {
 
 #define AUTHBY_ALL_ECDSA_SHA2 (struct authby)		\
 	{						\
-		.ecdsa = true,				\
 		.ecdsa_sha2_256 = true,			\
 		.ecdsa_sha2_384 = true,			\
 		.ecdsa_sha2_512 = true,			\

@@ -214,7 +214,7 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 			}
 		} else if (length == THREE_OCTET_ANNOUNCEMENT_LENGTH) {
 			uint8_t cert_link;
-			
+
 			d = pbs_in_thing(&input_pbs, cert_link, "SUPPORTED_AUTH_METHODS Cert Link");
 			if (d != NULL) {
 				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -228,15 +228,12 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 				peer.ecdsa_sha2_256 = true;
-				peer.ecdsa = true;
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 				peer.ecdsa_sha2_384 = true;
-				peer.ecdsa = true;
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 				peer.ecdsa_sha2_512 = true;
-				peer.ecdsa = true;
 				break;
 			default:
 				ldbg(ike->sa.logger,
@@ -316,10 +313,6 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 	if (authby_is_set(authby_and(peer, AUTHBY_ALL_RSASIG_SHA2))) {
 		peer.rsasig = true;
-	}
-
-	if (authby_is_set(authby_and(peer, AUTHBY_ALL_ECDSA_SHA2))) {
-		peer.ecdsa = true;
 	}
 
 	ike->sa.st_v2_peer_authby = peer;
