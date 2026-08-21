@@ -1537,6 +1537,18 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		CS("IKEPAD_NO");
 	}
 
+	/* only show when not the default (no) */
+	switch (c->config->ike_sa_init_full_transcript_auth) {
+	case YNA_YES:
+		CS("IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_YES");
+		break;
+	case YNA_AUTO:
+		CS("IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_AUTO");
+		break;
+	default:
+		break;
+	}
+
 	CT(mobike, MOBIKE);
 	CT(ppk.allow, PPK_ALLOW);
 	CT(ppk.insist, PPK_INSIST);

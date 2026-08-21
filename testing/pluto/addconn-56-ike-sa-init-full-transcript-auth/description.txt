@@ -1,0 +1,2 @@
+test that ike-sa-init-full-transcript-auth= reaches pluto
+(only for ikev2)

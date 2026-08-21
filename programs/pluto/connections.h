@@ -369,6 +369,7 @@ struct config {
 					 * ephemeral */
 
 	bool mobike;			/* Allow MOBIKE */
+	enum yna_options ike_sa_init_full_transcript_auth;
 	bool intermediate;		/* allow Intermediate Exchange */
 	bool sha2_truncbug;		/* workaround old Linux kernel (android 4.x) */
 	bool share_lease;		/* Allow further connections of IKE SA to use lease IP */
