@@ -672,7 +672,7 @@ kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				good
 kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
 
 kvmplutotest	ikev2-x509-eddsa-01-preshared		skip
-kvmplutotest	ikev2-x509-eddsa-01-sendcerts		skip
+kvmplutotest	ikev2-x509-eddsa-02-sendcerts		skip
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
