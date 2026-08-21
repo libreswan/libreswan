@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep
+east #
+ # not starting pluto yet.
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east-west
+"east-west": added oriented IKEv2 connection
+east #
+ ipsec auto --up east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"east-west" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 with shared-key-mac and FQDN '@east'; Child SA #2 {ESP <0xESPESP} [192.0.2.0/24===192.0.1.0/24]
+"east-west" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
+"east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+east #
+ # now wait a bit for west to figure out things
+east #
+ sleep 10
+east #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.254 192.0.1.254
+up
+east #
+ ipsec whack --showstates
+#1: "east-west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "east-west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#2: "east-west" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+east #
+ ipsec traffic
+#2: "east-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+east #
+ # to avoid shutdown logs confusing things, hard kill pluto
+east #
+ kill -9 `cat /run/pluto/pluto.pid`
+east #
