@@ -1,0 +1,7 @@
+IKEv2, east is not yet up and west initiates. It exponentially backs off.
+east then boots and initiates and establishes tunnel.
+west now does a cleanup of its first initiator state, knowing its responder
+state already etablishished the desired tunnel. it should delete the partial
+IKE SA state and NOT take down the other IKE's Child SA state. Revival should
+also not get triggered before the deleted incomplete IKE SA is not the latest
+IKE SA anymore

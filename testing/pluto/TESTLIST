@@ -1749,6 +1749,7 @@ kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
 kvmplutotest	crossing-streams-23-conswitch-ike-sa-init-ikev2	good	github/1989
 
 kvmplutotest	crossing-streams-24-ikev2-delete-connswitch-github-2101	good	github/2101
+kvmplutotest	crossing-streams-bootup-01	wip	github/3002
 
 # uses the kernel-pfkeyv2.c code
 
