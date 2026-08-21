@@ -22,6 +22,7 @@
 
 enum auth;
 struct jambuf;
+struct hash_desc;
 
 struct authby {
 	bool psk;
@@ -106,8 +107,21 @@ struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
 
+bool authby_has_all(struct authby authby, struct authby all);
+bool authby_has_any(struct authby authby, struct authby some);
+bool authby_has_none(struct authby authby, struct authby none);
+
+/*
+ * Mask out all but HASH algorithms.
+ *
+ * As a special case, sha1 allows the RSA 1.5 bit.
+ */
+
+struct authby authby_and_hash(struct authby authby, const struct hash_desc *hash);
+
 bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
+unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);

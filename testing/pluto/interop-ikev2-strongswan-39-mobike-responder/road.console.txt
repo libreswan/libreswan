@@ -39,14 +39,14 @@ road #
 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP} [0.0.0.0/0===192.0.2.0/24]
 "road-eastnet"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr,N(MOBIKE_SUPPORTED),N(ADDITIONAL_IP4_ADDRESS)}
 "road-eastnet"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.1
-"road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.1/32===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+"road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 198.18.66.1
+"road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.1/32===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.3.1/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=198.18.66.1/32
 road #
  # note this end should be 192.1.3.209
 road #
@@ -71,15 +71,15 @@ src 192.1.2.23 dst 192.1.3.209
 	dir in
 road #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.1/32
+src 192.0.2.0/24 dst 198.18.66.1/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.1/32
+src 192.0.2.0/24 dst 198.18.66.1/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.3.1/32 dst 192.0.2.0/24
+src 198.18.66.1/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
@@ -113,13 +113,13 @@ road #
  # note this end should be 192.1.33.222
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.3.1/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=198.18.66.1/32
 road #
- ../../guestbin/ping-once.sh --up -I 192.0.3.1 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.1 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=192.0.3.1/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=198.18.66.1/32
 road #
  echo done
 done
@@ -145,21 +145,21 @@ src 192.1.33.222 dst 192.1.2.23
 	dir out
 road #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.1/32
+src 192.0.2.0/24 dst 198.18.66.1/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.33.222
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.1/32
+src 192.0.2.0/24 dst 198.18.66.1/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.33.222
 		proto esp reqid REQID mode tunnel
-src 192.0.3.1/32 dst 192.0.2.0/24
+src 198.18.66.1/32 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.33.222 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=192.0.3.1/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east', lease=198.18.66.1/32
 road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 road #

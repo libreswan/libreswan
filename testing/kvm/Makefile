@@ -1345,6 +1345,7 @@ $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
 kvm-transmogrify-%: kvm-uninstall-%
 	: $@
 	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
+	$(MAKE) $(KVM_$($*)_TEST_XML)
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
 kvm-uninstall-%: kvm-undefine-test-domains

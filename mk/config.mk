@@ -136,6 +136,8 @@ endef
 $(eval $(call error_removed, 4.0, USE_KLIPS))
 $(eval $(call error_removed, 5.1, USE_NSS_AVA_COPY))
 $(eval $(call error_removed, 5.4, HAVE_BROKEN_POPEN))
+$(eval $(call error_removed, 5.5, USE_DH2))
+$(eval $(call error_removed, 5.5, USE_DH22))
 
 define error_replaced $ VERSION MACRO REPLACEMENT
  ifdef $2
@@ -847,16 +849,6 @@ endif
 USE_CHACHA ?= true
 ifeq ($(USE_CHACHA),true)
 USERLAND_CFLAGS += -DUSE_CHACHA
-endif
-
-USE_DH2 ?= $(ALL_ALGS)
-ifeq ($(USE_DH2),true)
-USERLAND_CFLAGS += -DUSE_DH2
-endif
-
-USE_DH22 ?= $(ALL_ALGS)
-ifeq ($(USE_DH22),true)
-USERLAND_CFLAGS += -DUSE_DH22
 endif
 
 USE_DH23 ?= $(ALL_ALGS)

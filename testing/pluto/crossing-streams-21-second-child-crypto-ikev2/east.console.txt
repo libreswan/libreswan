@@ -21,9 +21,9 @@ east #
  # Ping from east, but first make certain that the tunnels are up
 east #
  ../../guestbin/wait-for-pluto.sh '#4: initiator established Child SA using #1'
-"cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+"cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===198.18.66.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 east #
- ../../guestbin/ping-once.sh --up -I 192.0.20.254 192.0.3.254
+ ../../guestbin/ping-once.sh --up -I 192.0.20.254 198.18.66.254
 up
 east #
  # non-zero counts confirm encrypted traffic flowing
@@ -91,28 +91,28 @@ src 192.1.2.45 dst 192.1.2.23
 	dir in
 east #
  ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.3.0/24
+src 192.0.2.0/24 dst 198.18.66.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.20.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.20.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.20.0/24 dst 192.0.3.0/24
+src 192.0.20.0/24 dst 198.18.66.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 198.18.66.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 198.18.66.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 198.18.66.0/24 dst 192.0.20.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 198.18.66.0/24 dst 192.0.20.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 east #

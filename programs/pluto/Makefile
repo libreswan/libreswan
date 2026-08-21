@@ -71,6 +71,7 @@ OBJS += ikev2_certreq.o
 OBJS += ikev2_notification.o
 OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
+OBJS += ikev2_supported_auth.o
 
 OBJS += ikev2_peer_id.o
 OBJS += peer_id.o

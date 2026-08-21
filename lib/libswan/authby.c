@@ -16,24 +16,26 @@
 #include "authby.h"
 #include "auth.h"
 
+#include "ike_alg_hash.h"
+
 #include "constants.h"		/* for enum keyword_auth */
 #include "jambuf.h"
 #include "lswlog.h"		/* for bad_case() */
 
-#define REDUCE(LHS, OP)				\
-	((LHS).null OP				\
-	 (LHS).never OP				\
-	 (LHS).psk OP				\
-	 (LHS).rsasig OP			\
-	 (LHS).rsasig_v1_5 OP			\
-	 (LHS).eddsa OP				\
-	 (LHS).ecdsa OP				\
-	 (LHS).rsasig_sha2_256 OP		\
-	 (LHS).rsasig_sha2_384 OP		\
-	 (LHS).rsasig_sha2_512 OP		\
-	 (LHS).ecdsa_sha2_256 OP		\
-	 (LHS).ecdsa_sha2_384 OP		\
-	 (LHS).ecdsa_sha2_512)
+#define REDUCE(TYPE, LHS, OP)			\
+	((TYPE)(LHS).null OP			\
+	 (TYPE)(LHS).never OP			\
+	 (TYPE)(LHS).psk OP			\
+	 (TYPE)(LHS).rsasig OP			\
+	 (TYPE)(LHS).rsasig_v1_5 OP		\
+	 (TYPE)(LHS).eddsa OP			\
+	 (TYPE)(LHS).ecdsa OP			\
+	 (TYPE)(LHS).rsasig_sha2_256 OP		\
+	 (TYPE)(LHS).rsasig_sha2_384 OP		\
+	 (TYPE)(LHS).rsasig_sha2_512 OP		\
+	 (TYPE)(LHS).ecdsa_sha2_256 OP		\
+	 (TYPE)(LHS).ecdsa_sha2_384 OP		\
+	 (TYPE)(LHS).ecdsa_sha2_512)
 
 #define OP(LHS, OP, RHS)						\
 	({								\
@@ -57,7 +59,12 @@
 
 bool authby_is_set(struct authby authby)
 {
-	return REDUCE(authby, ||);
+	return authby_count(authby) > 0;
+}
+
+unsigned authby_count(struct authby authby)
+{
+	return REDUCE(unsigned, authby, +);
 }
 
 struct authby authby_xor(struct authby lhs, struct authby rhs)
@@ -83,13 +90,66 @@ struct authby authby_or(struct authby lhs, struct authby rhs)
 bool authby_eq(struct authby lhs, struct authby rhs)
 {
 	struct authby eq = OP(lhs, ==, rhs);
-	return REDUCE(eq, &&);
+	return REDUCE(bool, eq, &&);
 }
 
 bool authby_le(struct authby lhs, struct authby rhs)
 {
 	struct authby le = OP(lhs, <=, rhs);
-	return REDUCE(le, &&);
+	return REDUCE(bool, le, &&);
+}
+
+bool authby_has_all(struct authby authby, struct authby all)
+{
+	struct authby and = authby_and(authby, all);
+	return authby_eq(and, all); /*all*/
+}
+
+bool authby_has_any(struct authby authby, struct authby some)
+{
+	struct authby and = authby_and(authby, some);
+	return authby_count(and) > 0; /* at least 1 */
+}
+
+bool authby_has_none(struct authby authby, struct authby none)
+{
+	struct authby and = authby_and(authby, none);
+	return authby_count(and) == 0; /*none*/
+}
+
+struct authby authby_and_hash(struct authby authby,
+			      const struct hash_desc *hash)
+{
+	if (hash == &ike_alg_hash_sha1) {
+		/* sha1 is only allowed with rsasig_v1.5 */
+		return (struct authby) {
+			.rsasig_v1_5 = authby.rsasig_v1_5,
+		};
+	}
+	/*
+	 * Allow PKCS#1 RSA v1.5 with SHA2; even though it doesn't
+	 * have an explicit bit.
+	 */
+#define AND_HASH(HASH)						\
+	if (hash == &ike_alg_hash_##HASH) {			\
+		return (struct authby) {			\
+			.rsasig_v1_5 = authby.rsasig_v1_5,	\
+			.rsasig_##HASH = authby.rsasig_##HASH,	\
+			.ecdsa_##HASH = authby.ecdsa_##HASH,	\
+		};						\
+	}
+	AND_HASH(sha2_256);
+	AND_HASH(sha2_384);
+	AND_HASH(sha2_512);
+#undef AND_HASH
+	if (hash == &ike_alg_hash_identity) {
+		/* only allow algs that don't need a hash */
+		authby = authby_and(authby, authby_not(AUTHBY_ALL_ECDSA_SHA2));
+		authby = authby_and(authby, authby_not(AUTHBY_ALL_RSASIG_SHA2));
+		authby.rsasig_v1_5 = false;
+		return authby;
+	}
+	return (struct authby) {0};
 }
 
 bool auth_in_authby(enum auth auth, struct authby authby)
@@ -107,7 +167,7 @@ bool digital_signature_in_authby(struct authby authby)
 enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
-		authby.ecdsa ? AUTH_ECDSA :
+		authby_has_any(authby, AUTHBY_ALL_ECDSA_SHA2) ? AUTH_ECDSA :
 		authby.eddsa ? AUTH_EDDSA :
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
@@ -123,12 +183,7 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return (struct authby) {
-			.ecdsa = true,
-			.ecdsa_sha2_256 = true,
-			.ecdsa_sha2_384 = true,
-			.ecdsa_sha2_512 = true,
-		};
+	case AUTH_ECDSA: return AUTHBY_ALL_ECDSA_SHA2;
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) {
 			.rsasig = true,
@@ -161,8 +216,16 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 		JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
 		JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
 	}
-	JAM_AUTHBY(ecdsa, ECDSA);
-	if (!authby_le(AUTHBY_ALL_ECDSA_SHA2, authby)) {
+	/*
+	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
+	 * short-hand ECDSA.  This matches auth=ecdsa which will set
+	 * all the bits below.
+	 */
+	if (authby_has_all(authby, AUTHBY_ALL_ECDSA_SHA2)) {
+		pexpect(authby.ecdsa);
+		s += jam_string(buf, sep); sep = "+";
+		s += jam_string(buf, "ECDSA");
+	} else {
 		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
 		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
 		JAM_AUTHBY(ecdsa_sha2_512, ECDSA_SHA2_512);

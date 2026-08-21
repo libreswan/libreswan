@@ -9,5 +9,5 @@
 ../../guestbin/wait-for-pluto.sh --match '#1: dropping negotiation'
 ../../guestbin/wait-for-pluto.sh --match '"a" #4: initiator established Child SA using #2'
 
-../../guestbin/ping-once.sh --up -I 192.0.3.253 192.0.2.254
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.20.254
+../../guestbin/ping-once.sh --up -I 198.18.66.253 192.0.2.254
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.20.254

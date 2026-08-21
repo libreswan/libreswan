@@ -163,11 +163,7 @@ static void test_esp(struct logger *logger)
 	esp(true, "aes_gcm_a-128-null");
 #endif
 #ifdef USE_3DES
-# ifdef USE_DH2
-	esp(true, "3des-sha1;modp1024");
-# else
 	esp(false, "3des-sha1;modp1024");
-# endif
 # ifdef USE_SHA1
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");

@@ -20,19 +20,19 @@ north #
 "westnet-northnet" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 "westnet-northnet" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "westnet-northnet" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-"westnet-northnet" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP} [192.0.3.0/24===192.1.4.0/24]
+"westnet-northnet" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP} [198.18.66.0/24===192.1.4.0/24]
 "westnet-northnet" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
 "westnet-northnet" #2: command "route" output: westnet-northnet routed: setting eastnet-northnet passive
-"westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
+"westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -70,15 +70,15 @@ north #
 "eastnet-northnet" #4: command "route" output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
-"eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
+"eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [198.18.66.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -95,10 +95,10 @@ north #
  ipsec whack --trafficstatus
 #4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -136,15 +136,15 @@ north #
 "westnet-northnet" #6: command "route" output: westnet-northnet routed: setting eastnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#6: initiator established Child SA using #5'
-"westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
+"westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [198.18.66.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -161,10 +161,10 @@ north #
  ipsec whack --trafficstatus
 #6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -199,10 +199,10 @@ north #
 north #
  ipsec whack --trafficstatus
 north #
- ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --down -I 198.18.66.254 192.1.4.23
 down
 north #
- ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --down -I 198.18.66.254 192.1.4.45
 down
 north #
  ipsec whack --trafficstatus
@@ -256,15 +256,15 @@ north #
 "eastnet-northnet" #10: command "route" output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#10: initiator established Child SA using #9'
-"eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
+"eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [198.18.66.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus
@@ -281,10 +281,10 @@ north #
  ipsec whack --trafficstatus
 #10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
 up
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 up
 north #
  ipsec whack --trafficstatus

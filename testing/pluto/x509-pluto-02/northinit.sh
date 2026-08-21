@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainca/north.p12
 /testing/x509/import.sh real/mainca/east.end.cert
-../../guestbin/wait-until-alive -I 192.0.3.254 192.0.2.254
+../../guestbin/wait-until-alive -I 198.18.66.254 192.0.2.254
 
 # ensure that clear text does not get through
 iptables -I INPUT -i eth1 -s 192.0.2.0/24 -j DROP

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 north #
- ../../guestbin/wait-until-alive -I 192.0.3.254 192.0.2.254
-destination -I 192.0.3.254 192.0.2.254 is alive
+ ../../guestbin/wait-until-alive -I 198.18.66.254 192.0.2.254
+destination -I 198.18.66.254 192.0.2.254 is alive
 north #
  ipsec start
 Redirecting to: [initsystem]

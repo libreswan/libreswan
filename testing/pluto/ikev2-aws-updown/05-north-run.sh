@@ -2,8 +2,8 @@ ipsec whack --impair revival
 ipsec up westnet-northnet # sanitize-retransmits
 
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # block west ...
@@ -26,8 +26,8 @@ iptables -I OUTPUT -d 192.1.2.45 -j DROP
 ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
 
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # unblock west; nothing should change
@@ -36,8 +36,8 @@ iptables -D INPUT -s 192.1.2.45 -j DROP
 iptables -D OUTPUT -d 192.1.2.45 -j DROP
 sleep 10 # let the liveness flow
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # block east ...
@@ -60,8 +60,8 @@ iptables -I OUTPUT -d 192.1.2.23 -j DROP
 ../../guestbin/wait-for-pluto.sh --match '#6: initiator established Child SA using #5'
 
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # unblock east; nothing should change
@@ -70,8 +70,8 @@ iptables -D INPUT -s 192.1.2.23 -j DROP
 iptables -D OUTPUT -d 192.1.2.23 -j DROP
 sleep 10 # let the liveness flow
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # block both
@@ -90,8 +90,8 @@ iptables -I OUTPUT -d 192.1.2.23 -j DROP
 ../../guestbin/wait-for-pluto.sh --match '#5: deleting IKE SA'
 
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --down -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --down -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # ... east #7 tries to establish and fails ...
@@ -122,8 +122,8 @@ iptables -D OUTPUT -d 192.1.2.23 -j DROP
 ../../guestbin/wait-for-pluto.sh --match '#10: initiator established Child SA using #9'
 
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus
 
 # unblock west; nothing should change
@@ -132,6 +132,6 @@ iptables -D INPUT -s 192.1.2.45 -j DROP
 iptables -D OUTPUT -d 192.1.2.45 -j DROP
 sleep 10 # let the liveness flow
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.23
+../../guestbin/ping-once.sh --up -I 198.18.66.254 192.1.4.45
 ipsec whack --trafficstatus

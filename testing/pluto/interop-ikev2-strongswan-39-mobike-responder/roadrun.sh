@@ -16,6 +16,6 @@ sleep 10
 # both ends updated MOBIKE ping should work
 # note this end should be 192.1.33.222
 ipsec whack --trafficstatus
-../../guestbin/ping-once.sh --up -I 192.0.3.1 192.0.2.254
+../../guestbin/ping-once.sh --up -I 198.18.66.1 192.0.2.254
 ipsec whack --trafficstatus
 echo done

@@ -1,0 +1,45 @@
+/testing/guestbin/swan-prep --x509
+Initializing NSS database
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ /testing/x509/import.sh real/mainca/rsa-`hostname`.p12
+ ipsec pk12util -w nss-pw -i real/mainca/rsa-east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n rsa-east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "rsa-east" [E=rsa-east@testing.libreswan.org,CN=rsa-east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ /testing/x509/import.sh real/mainec/ecdsa-`hostname`.p12
+ ipsec pk12util -w nss-pw -i real/mainec/ecdsa-east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -O -n ecdsa-east
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "ecdsa-east" [E=ecdsa-east@testing.libreswan.org,CN=ecdsa-east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainca                                                       CT,, 
+rsa-east                                                     u,u,u
+ecdsa-east                                                   u,u,u
+mainec                                                       CT,, 
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #

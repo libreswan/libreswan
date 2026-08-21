@@ -37,27 +37,6 @@
 /* magic signifier */
 const struct ke_desc unset_group;
 
-#ifdef USE_DH2
-const struct ke_desc ike_alg_ke_modp1024 = {
-	.common = {
-		.type = IKE_ALG_KEM,
-		.fqn = "MODP1024",
-		.names = "modp1024,dh2",
-		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP1024,
-			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP1024,
-			[IKEv2_ALG_ID] = IKEv2_KEM_MODP1024,
-		},
-	},
-	.nss.modp.base = MODP_GENERATOR,
-	.nss.modp.prime = MODP1024_MODULUS,
-	.bytes = BYTES_FOR_BITS(1024),
-	.initiator_bytes = BYTES_FOR_BITS(1024),
-	.responder_bytes = BYTES_FOR_BITS(1024),
-	.kem_ops = &ike_alg_ke_modp_nss_ops,
-};
-#endif
-
 const struct ke_desc ike_alg_ke_modp1536 = {
 	.common = {
 		.type = &ike_alg_ke,
@@ -236,28 +215,6 @@ const struct ke_desc ike_alg_ke_secp521r1 = {
 	.nss.ecp.includes_ec_point_form_uncompressed = true,
 	.ke_ops = &ike_alg_ke_ecp_nss_ops,
 };
-
-#ifdef USE_DH22
-const struct ke_desc ike_alg_ke_dh22 = {
-	.common = {
-		.type = &ike_alg_ke,
-		.fqn = "DH22",
-		.names = "dh22",
-		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH22,
-			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_DH22,
-			[IKEv2_ALG_ID] = IKEv2_KE_DH22,
-		},
-		.fips.approved = false, /* SP 800-56A rev 3 */
-	},
-	.nss.modp.base = MODP_GENERATOR_DH22,
-	.nss.modp.prime = MODP1024_MODULUS_DH22,
-	.bytes = BYTES_FOR_BITS(1024),
-	.initiator_bytes = BYTES_FOR_BITS(1024),
-	.responder_bytes = BYTES_FOR_BITS(1024),
-	.ke_ops = &ike_alg_ke_modp_nss_ops,
-};
-#endif
 
 #ifdef USE_DH23
 const struct ke_desc ike_alg_ke_dh23 = {

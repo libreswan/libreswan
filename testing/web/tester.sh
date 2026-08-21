@@ -172,6 +172,20 @@ fi
 
 STATUS "selected ${commit}"
 
+# revert back to ${commit}
+#
+# Discard everything back to the commit to be tested, making that
+# HEAD.  This could have side effects such as switching branches, take
+# care.  If the hash is for HEAD then this is a no-op.
+#
+# Do this before creating ${subdir} so that subdir's name is built
+# using information from ${commit} and not HEAD - they could have
+# different tags.
+
+STATUS "checking out ${commit}"
+
+git -C ${rutdir} reset --hard ${commit}
+
 # Use ${subdir} to create the results directory.
 #
 # Get this done ASAP so that status can start tracking it.  Once
@@ -204,16 +218,6 @@ RUN make -C ${bindir} web-resultsdir \
     WEB_SUBDIR=${subdir} \
     WEB_RESULTSDIR=${resultsdir} \
     WEB_SUMMARYDIR=${summarydir}
-
-# revert back to ${commit}
-#
-# Discard everything back to the commit to be tested, making that
-# HEAD.  This could have side effects such as switching branches, take
-# care.  If the hash is for HEAD then this is a no-op.
-
-STATUS "checking out ${commit}"
-
-git -C ${rutdir} reset --hard ${commit}
 
 # Build platforms[] and platform_status[].
 #

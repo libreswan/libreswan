@@ -1,6 +1,6 @@
 ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
-          inet addr:192.0.3.254  Bcast:0.0.0.0  Mask:255.255.255.0
-          inet6 addr: 2001:db8:0:3::254/64 Scope:Global
+          inet addr:198.18.66.254  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:66::254/64 Scope:Global
 north #
  ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
           inet addr:192.1.3.33  Bcast:0.0.0.0  Mask:255.255.255.0

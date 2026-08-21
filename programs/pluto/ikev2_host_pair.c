@@ -60,9 +60,9 @@ static bool match_v2_connection(const struct connection *c,
 	}
 
 	/*
-	 * Require all the bits to match (there's actually only one).
+	 * Require at least one of the proposed bits to match.
 	 */
-	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
+	if (!authby_has_any(c->remote->host.config->authby, remote_authby)) {
 		authby_buf ab, cab;
 		vdbg("skipping %s, %s missing required authby %s",
 		     c->name,
@@ -383,9 +383,12 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 * How to authenticate (prove the identity of) the remote
 	 * peer; in order of decreasing preference.  NEVER matches
 	 * things like BLOCK and CLEAR.
+	 *
+	 * Inner code looks for connections configured to do any of
+	 * the authbys.
 	 */
 	static const struct authby remote_authbys[] = {
-		{ .ecdsa = true, },
+		AUTHBY_ALL_ECDSA_SHA2,
 		{ .eddsa = true, },
 		{ .rsasig = true, },
 		{ .rsasig_v1_5 = true, },

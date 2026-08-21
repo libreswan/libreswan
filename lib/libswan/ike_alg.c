@@ -849,9 +849,6 @@ const struct ike_alg_type ike_alg_encrypt = {
 
 static const struct ke_desc *kem_descriptors[] = {
 	&ike_alg_ke_none,
-#ifdef USE_DH2
-	&ike_alg_ke_modp1024,
-#endif
 	&ike_alg_ke_modp1536,
 	&ike_alg_ke_modp2048,
 	&ike_alg_ke_modp3072,
@@ -861,9 +858,6 @@ static const struct ke_desc *kem_descriptors[] = {
 	&ike_alg_ke_secp256r1,
 	&ike_alg_ke_secp384r1,
 	&ike_alg_ke_secp521r1,
-#ifdef USE_DH22
-	&ike_alg_ke_dh22,
-#endif
 #ifdef USE_DH23
 	&ike_alg_ke_dh23,
 #endif

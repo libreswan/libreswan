@@ -1,5 +1,5 @@
 strongswan up road-east
-../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
+../../guestbin/ping-once.sh --up -I 198.18.66.10 192.0.2.254
 strongswan status
 # note this end should be 192.1.3.209
 ipsec _kernel state
@@ -16,6 +16,6 @@ sleep 10
 strongswan status
 ipsec _kernel state
 ipsec _kernel policy
-../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
+../../guestbin/ping-once.sh --up -I 198.18.66.10 192.0.2.254
 grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
 echo done

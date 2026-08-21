@@ -13,7 +13,7 @@ initdone
 north #
  # one ping to trigger IKE
 north #
- ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --forget -I 198.18.66.254 192.0.2.254
 fired and forgotten
 north #
  ../../guestbin/wait-for.sh --match north-east -- ipsec whack --trafficstatus
@@ -21,7 +21,7 @@ north #
 north #
  # success
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 198.18.66.254 192.0.2.254
 up
 north #
  ipsec whack --trafficstatus

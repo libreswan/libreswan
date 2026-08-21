@@ -15,9 +15,6 @@
  * for more details.
  */
 
-#ifdef USE_DH2
-extern const struct ke_desc ike_alg_ke_modp1024;
-#endif
 extern const struct ke_desc ike_alg_ke_modp1536;
 extern const struct ke_desc ike_alg_ke_modp2048;
 extern const struct ke_desc ike_alg_ke_modp3072;
@@ -28,9 +25,6 @@ extern const struct ke_desc ike_alg_ke_secp256r1;
 extern const struct ke_desc ike_alg_ke_secp384r1;
 extern const struct ke_desc ike_alg_ke_secp521r1;
 
-#ifdef USE_DH22
-extern const struct ke_desc ike_alg_ke_dh22;
-#endif
 #ifdef USE_DH23
 extern const struct ke_desc ike_alg_ke_dh23;
 #endif

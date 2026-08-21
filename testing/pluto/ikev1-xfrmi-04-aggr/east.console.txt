@@ -1,8 +1,8 @@
 ../../guestbin/ip-route.sh get to 192.0.1.254 | grep eth1 && ip route del 192.0.1.0/24 via 192.1.2.45 dev eth1 2>/dev/null
 192.0.1.254 via 192.1.2.45 dev eth1 src 192.1.2.23 uid 0
 east #
- ../../guestbin/ip-route.sh get to 192.0.3.254 | grep eth1 && ip route del 192.0.3.0/24 via 192.1.2.254 dev eth1 2>/dev/null
-192.0.3.254 via 192.1.2.254 dev eth1 src 192.1.2.23 uid 0
+ ../../guestbin/ip-route.sh get to 198.18.66.254 | grep eth1 && ip route del 198.18.66.0/24 via 192.1.2.254 dev eth1 2>/dev/null
+198.18.66.254 via 192.1.2.254 dev eth1 src 192.1.2.23 uid 0
 east #
  #new subnet
 east #
@@ -56,7 +56,7 @@ east #
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev ipsec1 scope link
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.0.3.0/24 dev ipsec1 scope link
 192.0.22.0/24 dev eth0 proto kernel scope link src 192.0.22.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+198.18.66.0/24 dev ipsec1 scope link
 east #

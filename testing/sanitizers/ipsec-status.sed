@@ -10,6 +10,7 @@ s/\/usr/PATH/g
 s/used [0-9]*s ago/used XXs ago/g
 s/RSA Key A[wQ][^ ]* /RSA Key AwXXXXXXX /g
 s/ECDSA Key [^ ]* /ECDSA Key BXXXXXXXX /g
+s/EDDSA Key [^ ]* /EDDSA Key XXXXXXXXX /g
 
 # Try not to sanitize {esp,ah,comp}.0@
 # For some reason IPv6 uses ':' and not '.'

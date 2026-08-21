@@ -1,0 +1,65 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongEast.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n strong-ED -t CT,,
+ ipsec certutil -O -n strongEast
+"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
+  "strongEast" [CN=strongEast,O=strongSwan,C=CH]
+west #
+ /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongWest.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n strong-ED -t CT,,
+ ipsec certutil -O -n strongWest
+"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
+  "strongWest" [CN=strongWest,O=strongSwan,C=CH]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add eddsa
+"eddsa": added oriented IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec up eddsa
+"eddsa" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"eddsa" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"eddsa" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"eddsa" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature EDDSA with IDENTITY and DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"eddsa" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"eddsa" #1: identity hash, skipping hash calculation
+"eddsa" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'C=CH, O=strongSwan, CN=strongEast' and P-255 EDDSA with IDENTITY digital signature issued by 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+"eddsa" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "eddsa", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CH, O=strongSwan, CN=strongEast'
+west #
+ ipsec listpubkeys
+ 
+List of Public Keys:
+ 
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongEast'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       FQDN '@east.testing.libreswan.org'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       FQDN '@west.testing.libreswan.org'
+       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+west #
+ ipsec delete westnet-eastnet-ikev2
+no connection or alias named "westnet-eastnet-ikev2"
+west #

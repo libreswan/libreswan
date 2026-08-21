@@ -82,8 +82,8 @@ for platform in ${platforms} ; do
 	    tunnel-forward )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	leftsubnet=${westnet4}.0/24
-	rightsubnet=${eastnet4}.0/24"
+		modeline="	leftsubnet=${westnet4}0/24
+	rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
@@ -94,8 +94,8 @@ for platform in ${platforms} ; do
 	    tunnel-ondemand )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	leftsubnet=${westnet4}.0/24
-	rightsubnet=${eastnet4}.0/24"
+		modeline="	leftsubnet=${westnet4}0/24
+	rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set triggered by an acquire"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west

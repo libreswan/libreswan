@@ -1,0 +1,4 @@
+RFC 9593 test. West has authby=rsasig,secret and east has authby=ecdsa,secret
+East sends the SUPPORTED_AUTH_METHODS notification, West authenticates using PSK.
+West does not send the SUPPORTED_AUTH_METHODS notification, East will authenticate using ecdsa and
+the authentication will fail.
