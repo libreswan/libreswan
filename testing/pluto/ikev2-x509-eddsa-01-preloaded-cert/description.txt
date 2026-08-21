@@ -1,7 +1,8 @@
-IKEv2 EDDSA certificate based authentication with preshared certs
+IKEv2 EDDSA certificate based authentication with preloaded certs
 
 {left,right}sendcert=no so ends are forced to use the preshared
-certificates.
+certificates.  Which, in turn, avoids the need to verify the cert
+using the CA.
 
 This test requires the patch from
 https://bugzilla.mozilla.org/show_bug.cgi?id=1993638
