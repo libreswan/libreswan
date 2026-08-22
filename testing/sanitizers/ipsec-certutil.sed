@@ -11,6 +11,12 @@
     b ipsec-certutil-strip
   }
 
+  /^ *[0-9a-f][0-9a-f]$/ {
+    N
+    s/.*\n//
+    b ipsec-certutil-strip
+  }
+
   /^$/ {
     N
     s/.*\n//

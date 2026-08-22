@@ -212,7 +212,6 @@ Certificate:
                 Args:
             EC Public Key:
                 PublicValue:
-                    68
                 Curve: SECG elliptic curve secp384r1 (aka NIST P-384)
         Signed Extensions:
             Name: Authority Information Access
@@ -261,7 +260,6 @@ Certificate:
                 Args:
             EC Public Key:
                 PublicValue:
-                    32
                 Curve: SECG elliptic curve secp384r1 (aka NIST P-384)
         Signed Extensions:
             Name: Certificate Subject Alt Name
