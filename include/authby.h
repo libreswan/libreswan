@@ -138,6 +138,7 @@ bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);
 bool authby_has_any_ikev2_digsig(struct authby);
+lset_t authby_sighash_policy(struct authby);
 
 enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);

@@ -305,3 +305,22 @@ const char *str_authby(struct authby authby, authby_buf *buf)
 	jam_authby(&jambuf, authby);
 	return buf->buf;
 }
+
+lset_t authby_sighash_policy(struct authby authby)
+{
+	lset_t sighash_policy = LEMPTY;
+	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_256))) {
+		sighash_policy |= POL_SIGHASH_SHA2_256;
+	}
+	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_384))) {
+		sighash_policy |= POL_SIGHASH_SHA2_384;
+	}
+	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_512))) {
+		sighash_policy |= POL_SIGHASH_SHA2_512;
+	}
+	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_identity))) {
+		sighash_policy |= POL_SIGHASH_IDENTITY;
+	}
+
+	return sighash_policy;
+}

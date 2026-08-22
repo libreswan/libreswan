@@ -34,6 +34,7 @@
 
 #include "extract.h"
 
+#include "ike_alg_hash.h"
 #include "whack.h"
 #include "flags.h"
 #include "verbose.h"
@@ -1240,7 +1241,7 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	return NULL;
 }
 
-static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
+static diag_t extract_authby(struct authby *authby,
 			     enum ike_version ike_version,
 			     const struct whack_message *wm)
 {
@@ -1258,7 +1259,6 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 	 * to avoid confusion with sha3_256
 	 */
 	(*authby) = (struct authby) {0};
-	(*sighash_policy) = LEMPTY;
 
 	if (is_never_negotiate_wm(wm)) {
 		(*authby) = authby_from_auth(AUTH_NEVER);
@@ -1290,9 +1290,6 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 				*authby = authby_or(*authby, (struct authby) {
 						AUTHBY_RSASIG_RAW,
 					});
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "rsasig") ||
 				   hunk_streq(val, "rsa")) {
 				*authby = authby_or(*authby, (struct authby) {
@@ -1300,9 +1297,6 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 						AUTHBY_RSASIG_V1_5,
 						AUTHBY_RSASIG_SHA2,
 					});
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "never")) {
 				authby->never = true;
 			} else if (ike_version == IKEv1) {
@@ -1319,41 +1313,28 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 				*authby = authby_or(*authby, (struct authby) {
 						AUTHBY_RSASIG_SHA2,
 					});
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "rsa-sha2_256")) {
 				authby->rsasig = true;
 				authby->rsasig_sha2_256 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 			} else if (hunk_streq(val, "rsa-sha2_384")) {
 				authby->rsasig = true;
 				authby->rsasig_sha2_384 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 			} else if (hunk_streq(val, "rsa-sha2_512")) {
 				authby->rsasig = true;
 				authby->rsasig_sha2_512 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "eddsa")) {
 				authby->eddsa = true;
-				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
 			} else if (hunk_streq(val, "ecdsa") ||
 				   hunk_streq(val, "ecdsa-sha2")) {
 				*authby = authby_or(*authby, (struct authby) {
 						AUTHBY_ECDSA_SHA2,
 					});
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
 				authby->ecdsa_sha2_256 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
 				authby->ecdsa_sha2_384 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
 				authby->ecdsa_sha2_512 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
 				return diag("authby=ecdsa cannot use sha1, only sha2");
 			} else {
@@ -1363,7 +1344,6 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 		return NULL;
 	}
 
-	(*sighash_policy) = POL_SIGHASH_DEFAULTS;
 	(*authby) = (ike_version == IKEv1 ? AUTHBY_ALL_IKEv1_DEFAULTS :
 		     AUTHBY_ALL_IKEv2_DEFAULTS);
 	return NULL;
@@ -2987,8 +2967,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Turn the .authby string into struct authby bit struct.
 	 */
 	struct authby whack_authby = {0};
-	lset_t sighash_policy = LEMPTY;
-	d = extract_authby(&whack_authby, &sighash_policy, ike_version, wm);
+	d = extract_authby(&whack_authby, ike_version, wm);
 	if (d != NULL) {
 		return d;
 	}
@@ -3710,7 +3689,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		bad_sparse(verbose.logger, &tcp_option_names, iketcp);
 	}
 
-
 	/* authentication (proof of identity) */
 
 	if (is_never_negotiate_wm(wm)) {
@@ -3718,7 +3696,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} else if (c->config->ike_version == IKEv1) {
 		vdbg("ignore sighash, IKEv1");
 	} else {
-		config->sighash_policy = sighash_policy;
+		config->sighash_policy = authby_sighash_policy(whack_authby);
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
