@@ -1284,10 +1284,22 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 			/* Supported for IKEv1 and IKEv2 */
 			if (hunk_streq(val, "secret")) {
 				authby->psk = true;
+			} else if (ike_version == IKEv1 &&
+				   (hunk_streq(val, "rsasig") ||
+				    hunk_streq(val, "rsa"))) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_RAW,
+					});
+				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
+				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
+				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "rsasig") ||
 				   hunk_streq(val, "rsa")) {
-				authby->rsasig_v1_5 = true;
-				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_RAW,
+						AUTHBY_RSASIG_V1_5,
+						AUTHBY_RSASIG_SHA2,
+					});
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
@@ -1300,9 +1312,13 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 			} else if (hunk_streq(val, "null")) {
 				authby->null = true;
 			} else if (hunk_streq(val, "rsa-sha1")) {
-				authby->rsasig_v1_5 = true;
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_V1_5,
+					});
 			} else if (hunk_streq(val, "rsa-sha2")) {
-				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2,
+					});
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
@@ -1323,7 +1339,9 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
 			} else if (hunk_streq(val, "ecdsa") ||
 				   hunk_streq(val, "ecdsa-sha2")) {
-				*authby = authby_or(*authby, AUTHBY_ALL_ECDSA_SHA2);
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2,
+					});
 				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
