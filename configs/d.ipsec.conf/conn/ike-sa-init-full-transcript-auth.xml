@@ -1,0 +1,34 @@
+<varlistentry id='conn.ike-sa-init-full-transcript-auth'>
+  <term>
+    <option>ike-sa-init-full-transcript-auth=&yna_option;</option>
+  </term>
+  <listitem>
+    <caution>
+      <para>
+      This feature is in progress. Contrary to the
+      description below the default is currently &no;, and the
+      extension is not yet negotiated.
+      </para>
+    </caution>
+    <para>
+      Whether to negotiate the IKEv2 downgrade-prevention extension
+      (draft-ietf-ipsecme-ikev2-downgrade-prevention).  Normally each
+      peer authenticates only the IKE_SA_INIT message it sent; this
+      extension additionally authenticates the message it received, so
+      that tampering with either IKE_SA_INIT message causes the
+      IKE_AUTH exchange to fail.  IKEv2 only.
+    </para>
+    <para>
+      &auto;, the default, proposes the extension and uses it when the
+      peer also supports it, otherwise falling back to standard IKEv2.
+      &yes; additionally requires it: the connection fails if the peer
+      does not agree.  &no; neither proposes nor accepts it.
+    </para>
+    <para>
+      Protection applies only when both peers support the extension and
+      at least one uncompromised authentication key is used; in
+      particular it does not apply when both peers authenticate with the
+      same pre-shared key.
+    </para>
+  </listitem>
+</varlistentry>
