@@ -1850,43 +1850,38 @@ static diag_t extract_host_end(enum end end,
 			return diag("%sauth= is not supported by IKEv1", leftright);
 		}
 		/*
-		 * From AUTHBY, which has multiple authentication bits
-		 * set, select the best possible AUTH.  Since
-		 * extract_authby(IKEv1) rejects ecdsa et.al. auth
-		 * should not end up with ECDSA et.al.
+		 * Determine the AUTH from AUTHBY; and then reverse
+		 * that process to determine the real AUTHBY.
+		 *
+		 * XXX: Need to strip out IKEv2 bits.
+		 *
+		 * XXX: AUTHBY_ALL_RSASIG_V1_5 contains the
+		 * AUTHBY_RSASIG_RAW bit - which is what is actually
+		 * needed.
 		 */
 		auth = auth_from_authby(whack_authby);
-		/*
-		 * Now use AUTH to generate AUTHBY with a single bit
-		 * set (when RSA, both the rsasig and rsasig_v1_5 bits
-		 * are set, so scrub the latter as it isn't supported
-		 * by IKEv1).
-		 */
 		authby = authby_from_auth(auth);
-		authby.rsasig_v1_5 = false; /* not supported */
-		authby.rsasig_sha2_256 = false; /* not supported */
-		authby.rsasig_sha2_384 = false; /* not supported */
-		authby.rsasig_sha2_512 = false; /* not supported */
+		struct authby authby_ikev1_mask = authby_not((struct authby) {
+				AUTHBY_IKEv2_ONLY,
+			});
+		authby = authby_and(authby, authby_ikev1_mask);
 		/*
-		 * Now compare the rebuilt AUTH with the original
-		 * WHACK_AUTH, looking for auth bits that disappeared.
+		 * Now compare the rebuilt AUTHBY with the original
+		 * WHACK_AUTHBY, looking for auth bits that
+		 * disappeared.
+		 *
+		 * XXX: Is this breaking backward compatiblity?
 		 */
 		struct authby exclude = authby_not(authby);
-		struct authby supplied = whack_authby;
-		supplied.rsasig_v1_5 = false;
-		supplied.rsasig_sha2_256 = false;
-		supplied.rsasig_sha2_384 = false;
-		supplied.rsasig_sha2_512 = false;
-		supplied.ecdsa_sha2_256 = false;
-		supplied.ecdsa_sha2_384 = false;
-		supplied.ecdsa_sha2_512 = false;
-		supplied.eddsa = false;
-		struct authby unexpected = authby_and(supplied, exclude);
+		vexpect(!authby_is_set(authby_and(whack_authby, (struct authby) {
+						AUTHBY_IKEv2_ONLY,
+					})));
+		struct authby unexpected = authby_and(whack_authby, exclude);
 		if (authby_is_set(unexpected)) {
 			authby_buf wb, ub;
 			return diag("additional %s in authby=%s is not supported by IKEv1",
 				    str_authby(unexpected, &ub),
-				    str_authby(supplied, &wb));
+				    str_authby(whack_authby, &wb));
 		}
 	}
 
@@ -1918,11 +1913,13 @@ static diag_t extract_host_end(enum end end,
 		authby = authby_and(authby, authby_mask);
 		if (!authby_is_set(authby)) {
 			name_buf ab;
-			authby_buf pb;
-			return diag("%sauth=%s expects authby=%s",
+			authby_buf abm;
+			authby_buf abb;
+			return diag("%sauth=%s(%s) expects authby=%s",
 				    leftright,
 				    str_enum_short(&auth_names, auth, &ab),
-				    str_authby(authby_mask, &pb));
+				    str_authby(authby, &abb),
+				    str_authby(authby_mask, &abm));
 		}
 	}
 
