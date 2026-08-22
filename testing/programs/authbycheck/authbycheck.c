@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 		struct authby authby_sha2_256 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha2_256);
 		/* XXX: legacy RSA is allowed with SHA2 */
-		if (!authby_sha2_256.rsasig_v1_5 ||
+		if (!authby_sha2_256.rsasig_v1_5_sha2_256 ||
 		    !authby_sha2_256.ecdsa_sha2_256 ||
 		    !authby_sha2_256.rsasig_sha2_256 ||
 		    authby_has_any(authby_sha2_256, (struct authby) {
@@ -222,9 +222,10 @@ int main(int argc, char *argv[])
 		struct authby authby_sha1 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
 		if (!authby_has_all(authby_sha1, (struct authby) {
-					AUTHBY_RSASIG_V1_5,
+					AUTHBY_RSASIG_V1_5_SHA1,
 				}) ||
 		    authby_has_any(authby_sha1, (struct authby) {
+				    AUTHBY_RSASIG_V1_5_SHA2,
 				    AUTHBY_ECDSA_SHA2,
 				    AUTHBY_RSASIG_SHA2,
 				    AUTHBY_EDDSA,

@@ -1313,7 +1313,7 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 				authby->null = true;
 			} else if (hunk_streq(val, "rsa-sha1")) {
 				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_RSASIG_V1_5,
+						AUTHBY_RSASIG_V1_5_SHA1,
 					});
 			} else if (hunk_streq(val, "rsa-sha2")) {
 				*authby = authby_or(*authby, (struct authby) {

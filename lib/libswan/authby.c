@@ -33,7 +33,8 @@
 	 (TYPE)(LHS).psk OP			\
 	 (TYPE)(LHS).eddsa OP			\
 	 (TYPE)(LHS).rsasig OP			\
-	 (TYPE)(LHS).rsasig_v1_5 OP		\
+	 (TYPE)(LHS).rsasig_v1_5_sha1 OP		\
+	 REDUCE_SHA2(TYPE, LHS, OP, rsasig_v1_5) OP \
 	 REDUCE_SHA2(TYPE, LHS, OP, rsasig) OP	\
 	 REDUCE_SHA2(TYPE, LHS, OP, ecdsa))
 
@@ -49,7 +50,8 @@
 		.psk = (LHS).psk OP (RHS).psk,			\
 		.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
 		.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
-		.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
+		.rsasig_v1_5_sha1 = (LHS).rsasig_v1_5_sha1 OP (RHS).rsasig_v1_5_sha1, \
+		OP_SHA2(LHS, OP, RHS, rsasig_v1_5),		\
 		OP_SHA2(LHS, OP, RHS, rsasig),			\
 		OP_SHA2(LHS, OP, RHS, ecdsa),			\
 	}
@@ -120,7 +122,7 @@ struct authby authby_and_hash(struct authby authby,
 	if (hash == &ike_alg_hash_sha1) {
 		/* sha1 is only allowed with rsasig_v1.5 */
 		return (struct authby) {
-			.rsasig_v1_5 = authby.rsasig_v1_5,
+			.rsasig_v1_5_sha1 = authby.rsasig_v1_5_sha1,
 		};
 	}
 	/*
@@ -130,7 +132,7 @@ struct authby authby_and_hash(struct authby authby,
 #define AND_HASH(HASH)						\
 	if (hash == &ike_alg_hash_##HASH) {			\
 		return (struct authby) {			\
-			.rsasig_v1_5 = authby.rsasig_v1_5,	\
+			.rsasig_v1_5_##HASH = authby.rsasig_v1_5_##HASH, \
 			.rsasig_##HASH = authby.rsasig_##HASH,	\
 			.ecdsa_##HASH = authby.ecdsa_##HASH,	\
 		};						\
@@ -199,11 +201,9 @@ struct authby authby_from_auth(enum auth auth)
 		};
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) {
-			.rsasig = true,
-			.rsasig_v1_5 = true,
-			.rsasig_sha2_256 = true,
-			.rsasig_sha2_384 = true,
-			.rsasig_sha2_512 = true,
+			AUTHBY_RSASIG_RAW,
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
 		};
 	case AUTH_EAPONLY: return (struct authby) {0};
 	}
@@ -267,6 +267,11 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 					AUTHBY_RSASIG_V1_5,
 				})) {
 			JAM_STRING(RSASIG_v1_5);
+		} else {
+			JAM_AUTHBY(rsasig_v1_5_sha1, RSASIG_v1_5_SHA1);
+			JAM_AUTHBY(rsasig_v1_5_sha2_256, RSASIG_V1_5_SHA2_256);
+			JAM_AUTHBY(rsasig_v1_5_sha2_384, RSASIG_V1_5_SHA2_384);
+			JAM_AUTHBY(rsasig_v1_5_sha2_512, RSASIG_V1_5_SHA2_512);
 		}
 	}
 	/*
