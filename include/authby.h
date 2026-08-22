@@ -28,73 +28,88 @@ struct authby {
 	bool psk;
 	bool null;
 	bool never;
-	bool rsasig;
+
 	bool eddsa;
+#define AUTHBY_EDDSA				\
+	.eddsa = true
+
+	/* XXX: should be IKEv1 only */
+	bool rsasig;
+#define AUTHBY_RSASIG_RAW			\
+	.rsasig = true
+
 	bool rsasig_v1_5;
+#define AUTHBY_RSASIG_V1_5			\
+	.rsasig_v1_5 = true
 
 	bool rsasig_sha2_256;
 	bool rsasig_sha2_384;
 	bool rsasig_sha2_512;
+#define AUTHBY_RSASIG_SHA2			\
+	.rsasig_sha2_256 = true,		\
+	.rsasig_sha2_384 = true,		\
+	.rsasig_sha2_512 = true
+
+#define AUTHBY_RSASIG				\
+	AUTHBY_RSASIG_RAW,			\
+	AUTHBY_RSASIG_V1_5,			\
+	AUTHBY_RSASIG_SHA2
+
 	bool ecdsa_sha2_256;
 	bool ecdsa_sha2_384;
 	bool ecdsa_sha2_512;
+#define AUTHBY_ECDSA_SHA2			\
+	.ecdsa_sha2_256 = true,			\
+	.ecdsa_sha2_384 = true,			\
+	.ecdsa_sha2_512 = true
+
 };
 
-#define AUTHBY_ALL (struct authby)		\
-	{					\
+#define AUTHBY_ALL				\
+	(struct authby) {			\
 		.psk = true,			\
 		.null = true,			\
 		.never = true,			\
-		.rsasig = true,			\
-		.eddsa = true,			\
-		.rsasig_v1_5 = true,		\
-		.rsasig_sha2_256 = true,	\
-		.rsasig_sha2_384 = true,	\
-		.rsasig_sha2_512 = true,	\
-		.ecdsa_sha2_256= true,		\
-		.ecdsa_sha2_384= true,		\
-		.ecdsa_sha2_512= true,		\
+		AUTHBY_EDDSA,			\
+		AUTHBY_RSASIG_RAW,		\
+		AUTHBY_RSASIG_V1_5,		\
+		AUTHBY_RSASIG_SHA2,		\
+		AUTHBY_ECDSA_SHA2,		\
  	}
 
 #define AUTHBY_DIGITAL_SIGNATURE (struct authby)	\
 	{						\
-		.rsasig = true,				\
-		.eddsa = true,				\
-		.rsasig_v1_5 = true,			\
-		.rsasig_sha2_256 = true,		\
-		.rsasig_sha2_384 = true,		\
-		.rsasig_sha2_512 = true,		\
-		.ecdsa_sha2_256 = true,			\
-		.ecdsa_sha2_384 = true,			\
-		.ecdsa_sha2_512 = true,			\
+		AUTHBY_EDDSA,			\
+		AUTHBY_RSASIG_RAW,		\
+		AUTHBY_RSASIG_V1_5,		\
+		AUTHBY_RSASIG_SHA2,		\
+		AUTHBY_ECDSA_SHA2,		\
 	}
 
 #define AUTHBY_IKEv1_DEFAULTS (struct authby) { .rsasig = true, }
 #define AUTHBY_IKEv2_DEFAULTS (struct authby)		\
 	{						\
-		.rsasig = true,				\
-		.rsasig_v1_5 = true,			\
-		.rsasig_sha2_256 = true,		\
-		.rsasig_sha2_384 = true,		\
-		.rsasig_sha2_512 = true,		\
-		.ecdsa_sha2_256 = true,			\
-		.ecdsa_sha2_384 = true,			\
-		.ecdsa_sha2_512 = true,			\
+		AUTHBY_RSASIG_RAW,		\
+		AUTHBY_RSASIG_V1_5,		\
+		AUTHBY_RSASIG_SHA2,		\
+		AUTHBY_ECDSA_SHA2,		\
 	}
+
+#define AUTHBY_IKEv2_ONLY			\
+	AUTHBY_RSASIG_V1_5,			\
+	AUTHBY_RSASIG_SHA2,			\
+	AUTHBY_ECDSA_SHA2,			\
+	AUTHBY_EDDSA
 
 #define AUTHBY_ALL_RSASIG_SHA2 (struct authby)		\
 	{						\
-		.rsasig = true,				\
-		.rsasig_sha2_256 = true,		\
-		.rsasig_sha2_384 = true,		\
-		.rsasig_sha2_512 = true,		\
+		AUTHBY_RSASIG_RAW,		\
+		AUTHBY_RSASIG_SHA2,		\
 	}
 
 #define AUTHBY_ALL_ECDSA_SHA2 (struct authby)		\
 	{						\
-		.ecdsa_sha2_256 = true,			\
-		.ecdsa_sha2_384 = true,			\
-		.ecdsa_sha2_512 = true,			\
+		AUTHBY_ECDSA_SHA2,		\
 	}
 
 struct authby authby_xor(struct authby lhs, struct authby rhs);
