@@ -36,7 +36,7 @@ west #
 192.1.2.23
 west #
  dig +short @192.1.2.254 -p 5353 chaos version.server txt
-"NSD 4.14.2"
+"NSD 4.14.3"
 west #
  echo done
 done
