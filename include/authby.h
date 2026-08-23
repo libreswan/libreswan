@@ -102,12 +102,6 @@ struct authby {
 	AUTHBY_ECDSA_SHA2,			\
 	AUTHBY_EDDSA
 
-#define AUTHBY_ALL_RSASIG_SHA2 (struct authby)		\
-	{						\
-		AUTHBY_RSASIG_RAW,		\
-		AUTHBY_RSASIG_SHA2,		\
-	}
-
 struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
