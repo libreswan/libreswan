@@ -1346,8 +1346,8 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 	}
 
 	(*sighash_policy) = POL_SIGHASH_DEFAULTS;
-	(*authby) = (ike_version == IKEv1 ? AUTHBY_IKEv1_DEFAULTS :
-		     AUTHBY_IKEv2_DEFAULTS);
+	(*authby) = (ike_version == IKEv1 ? AUTHBY_ALL_IKEv1_DEFAULTS :
+		     AUTHBY_ALL_IKEv2_DEFAULTS);
 	return NULL;
 }
 
