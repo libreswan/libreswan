@@ -194,7 +194,8 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->host.config->authby.rsasig_v1_5) {
+		if (authby_has_any(c->local->host.config->authby,
+				   (struct authby) { AUTHBY_RSASIG_V1_5, })) {
 			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
 		}
 
@@ -491,7 +492,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_RSASIG_V1_5, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
@@ -499,7 +500,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
@@ -507,14 +508,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
 							  &pubkey_signer_raw_ecdsa/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
@@ -610,10 +611,10 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
-				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
-				{ &pubkey_signer_digsig_ecdsa, AUTHBY_ALL_ECDSA_SHA2, },
-				{ &pubkey_signer_digsig_rsassa_pss, AUTHBY_ALL_RSASIG_SHA2, },
-				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
+				{ &pubkey_signer_digsig_eddsa_ed25519, (struct authby) { AUTHBY_EDDSA, }, },
+				{ &pubkey_signer_digsig_ecdsa, (struct authby) { AUTHBY_ECDSA_SHA2, }, },
+				{ &pubkey_signer_digsig_rsassa_pss, (struct authby) { AUTHBY_RSASIG_SHA2, }, },
+				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, (struct authby) { AUTHBY_RSASIG_V1_5, }, },
 			};
 
 			FOR_EACH_ELEMENT(s, signers) {

@@ -22,38 +22,37 @@
 #include "jambuf.h"
 #include "lswlog.h"		/* for bad_case() */
 
+#define REDUCE_SHA2(TYPE, LHS, OP, AUTH)	\
+	(TYPE)(LHS).AUTH##_sha2_256 OP		\
+	(TYPE)(LHS).AUTH##_sha2_384 OP		\
+	(TYPE)(LHS).AUTH##_sha2_512
+
 #define REDUCE(TYPE, LHS, OP)			\
 	((TYPE)(LHS).null OP			\
 	 (TYPE)(LHS).never OP			\
 	 (TYPE)(LHS).psk OP			\
+	 (TYPE)(LHS).eddsa OP			\
 	 (TYPE)(LHS).rsasig OP			\
 	 (TYPE)(LHS).rsasig_v1_5 OP		\
-	 (TYPE)(LHS).eddsa OP			\
-	 (TYPE)(LHS).rsasig_sha2_256 OP		\
-	 (TYPE)(LHS).rsasig_sha2_384 OP		\
-	 (TYPE)(LHS).rsasig_sha2_512 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_256 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_384 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_512)
+	 REDUCE_SHA2(TYPE, LHS, OP, rsasig) OP	\
+	 REDUCE_SHA2(TYPE, LHS, OP, ecdsa))
 
-#define OP(LHS, OP, RHS)						\
-	({								\
-		struct authby tmp_ = {					\
-			.null = (LHS).null OP (RHS).null,		\
-			.never = (LHS).never OP (RHS).never,		\
-			.psk = (LHS).psk OP (RHS).psk,			\
-			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
-			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
-			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
-			.rsasig_sha2_256 = (LHS).rsasig_sha2_256 OP (RHS).rsasig_sha2_256, \
-			.rsasig_sha2_384 = (LHS).rsasig_sha2_384 OP (RHS).rsasig_sha2_384, \
-			.rsasig_sha2_512 = (LHS).rsasig_sha2_512 OP (RHS).rsasig_sha2_512, \
-			.ecdsa_sha2_256 = (LHS).ecdsa_sha2_256 OP (RHS).ecdsa_sha2_256, \
-			.ecdsa_sha2_384 = (LHS).ecdsa_sha2_384 OP (RHS).ecdsa_sha2_384, \
-			.ecdsa_sha2_512 = (LHS).ecdsa_sha2_512 OP (RHS).ecdsa_sha2_512, \
-		};							\
-		tmp_;							\
-	})
+#define OP_SHA2(LHS, OP, RHS, AUTH)				\
+	.AUTH##_sha2_256 = (LHS).AUTH##_sha2_256 OP (RHS).AUTH##_sha2_256, \
+	.AUTH##_sha2_384 = (LHS).AUTH##_sha2_384 OP (RHS).AUTH##_sha2_384, \
+	.AUTH##_sha2_512 = (LHS).AUTH##_sha2_512 OP (RHS).AUTH##_sha2_512
+
+#define OP(LHS, OP, RHS)					\
+	(struct authby) {					\
+		.null = (LHS).null OP (RHS).null,		\
+		.never = (LHS).never OP (RHS).never,		\
+		.psk = (LHS).psk OP (RHS).psk,			\
+		.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
+		.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
+		.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
+		OP_SHA2(LHS, OP, RHS, rsasig),			\
+		OP_SHA2(LHS, OP, RHS, ecdsa),			\
+	}
 
 bool authby_is_set(struct authby authby)
 {
@@ -142,10 +141,9 @@ struct authby authby_and_hash(struct authby authby,
 #undef AND_HASH
 	if (hash == &ike_alg_hash_identity) {
 		/* only allow algs that don't need a hash */
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_ECDSA_SHA2));
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_RSASIG_SHA2));
-		authby.rsasig_v1_5 = false;
-		return authby;
+		return (struct authby) {
+			.eddsa = authby.eddsa,
+		};
 	}
 	return (struct authby) {0};
 }
@@ -164,10 +162,23 @@ bool digital_signature_in_authby(struct authby authby)
 
 enum auth auth_from_authby(struct authby authby)
 {
-	return (authby.rsasig ? AUTH_RSASIG :
-		authby_has_any(authby, AUTHBY_ALL_ECDSA_SHA2) ? AUTH_ECDSA :
-		authby.eddsa ? AUTH_EDDSA :
-		authby.rsasig_v1_5 ? AUTH_RSASIG :
+	/*
+	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
+	 * v1.5 RSA.  It's just how it has always been.
+	 */
+	return (authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_SHA2,
+			}) ? AUTH_RSASIG :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			}) ? AUTH_ECDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_EDDSA,
+			}) ? AUTH_EDDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+			}) ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
 		authby.never ? AUTH_NEVER :
