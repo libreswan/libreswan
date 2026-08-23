@@ -163,10 +163,23 @@ bool digital_signature_in_authby(struct authby authby)
 
 enum auth auth_from_authby(struct authby authby)
 {
-	return (authby.rsasig ? AUTH_RSASIG :
-		authby_has_any(authby, AUTHBY_ALL_ECDSA_SHA2) ? AUTH_ECDSA :
-		authby.eddsa ? AUTH_EDDSA :
-		authby.rsasig_v1_5 ? AUTH_RSASIG :
+	/*
+	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
+	 * v1.5 RSA.  It's just how it has always been.
+	 */
+	return (authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_SHA2,
+			}) ? AUTH_RSASIG :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			}) ? AUTH_ECDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_EDDSA,
+			}) ? AUTH_EDDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+			}) ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
 		authby.never ? AUTH_NEVER :
