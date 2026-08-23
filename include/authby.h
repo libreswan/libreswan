@@ -77,15 +77,6 @@ struct authby {
 		AUTHBY_ECDSA_SHA2,		\
  	}
 
-#define AUTHBY_DIGITAL_SIGNATURE (struct authby)	\
-	{						\
-		AUTHBY_EDDSA,			\
-		AUTHBY_RSASIG_RAW,		\
-		AUTHBY_RSASIG_V1_5,		\
-		AUTHBY_RSASIG_SHA2,		\
-		AUTHBY_ECDSA_SHA2,		\
-	}
-
 #define AUTHBY_ALL_IKEv1_DEFAULTS		\
 	(struct authby) {			\
 		AUTHBY_RSASIG_RAW,		\
@@ -98,6 +89,12 @@ struct authby {
 		AUTHBY_RSASIG_SHA2,		\
 		AUTHBY_ECDSA_SHA2,		\
 	}
+
+#define AUTHBY_IKEv2_DIGSIG			\
+	AUTHBY_EDDSA,				\
+	AUTHBY_RSASIG_V1_5,			\
+	AUTHBY_RSASIG_SHA2,			\
+	AUTHBY_ECDSA_SHA2
 
 #define AUTHBY_IKEv2_ONLY			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -134,7 +131,7 @@ unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);
-bool digital_signature_in_authby(struct authby);
+bool authby_has_any_ikev2_digsig(struct authby);
 
 enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
