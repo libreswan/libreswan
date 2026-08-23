@@ -192,7 +192,9 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return AUTHBY_ALL_ECDSA_SHA2;
+	case AUTH_ECDSA: return (struct authby) {
+			AUTHBY_ECDSA_SHA2,
+		};
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) {
 			.rsasig = true,

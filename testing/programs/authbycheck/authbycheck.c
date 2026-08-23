@@ -212,23 +212,33 @@ int main(int argc, char *argv[])
 		if (!authby_sha2_256.rsasig_v1_5 ||
 		    !authby_sha2_256.ecdsa_sha2_256 ||
 		    !authby_sha2_256.rsasig_sha2_256 ||
-		    authby_sha2_256.eddsa) {
+		    authby_has_any(authby_sha2_256, (struct authby) {
+				    AUTHBY_EDDSA,
+			    })) {
 			FAIL("authby_and_hash(sha2_256)");
 		}
 		struct authby authby_sha1 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
-		if (!authby_sha1.rsasig_v1_5 ||
-		    authby_has_any(authby_sha1, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_any(authby_sha1, AUTHBY_ALL_RSASIG_SHA2) ||
-		    authby_sha1.eddsa) {
+		if (!authby_has_all(authby_sha1, (struct authby) {
+					AUTHBY_RSASIG_V1_5,
+				}) ||
+		    authby_has_any(authby_sha1, (struct authby) {
+				    AUTHBY_ECDSA_SHA2,
+				    AUTHBY_RSASIG_SHA2,
+				    AUTHBY_EDDSA,
+			    })) {
 			FAIL("authby_and_hash(sha1");
 		}
 		struct authby authby_identity =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_identity);
-		if (!authby_identity.eddsa ||
-		    authby_identity.rsasig_v1_5 ||
-		    authby_has_any(authby_identity, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_any(authby_identity, AUTHBY_ALL_RSASIG_SHA2)) {
+		if (!authby_has_all(authby_identity, (struct authby) {
+					AUTHBY_EDDSA,
+				}) ||
+		    authby_has_any(authby_identity, (struct authby) {
+				    AUTHBY_RSASIG_V1_5,
+				    AUTHBY_ECDSA_SHA2,
+				    AUTHBY_RSASIG_SHA2,
+			    })) {
 			FAIL("authby_and_hash(identity)");
 		}
 	} while (false);
