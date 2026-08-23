@@ -141,10 +141,9 @@ struct authby authby_and_hash(struct authby authby,
 #undef AND_HASH
 	if (hash == &ike_alg_hash_identity) {
 		/* only allow algs that don't need a hash */
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_ECDSA_SHA2));
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_RSASIG_SHA2));
-		authby.rsasig_v1_5 = false;
-		return authby;
+		return (struct authby) {
+			.eddsa = authby.eddsa,
+		};
 	}
 	return (struct authby) {0};
 }
