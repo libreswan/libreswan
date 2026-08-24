@@ -42,7 +42,7 @@ west #
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
-"westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_SHA2_256+RSASIG_SHA2_384+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 west #
  echo "initdone"

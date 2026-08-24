@@ -208,31 +208,72 @@ struct authby authby_from_auth(enum auth auth)
 
 size_t jam_authby(struct jambuf *buf, struct authby authby)
 {
+#define JAM_STRING(N)					\
+	{						\
+		s += jam_string(buf, sep);		\
+		s += jam_string(buf, #N);		\
+		sep = "+";				\
+	}
 #define JAM_AUTHBY(F, N)				\
 	{						\
 		if (authby.F) {				\
-			s += jam_string(buf, sep);	\
-			s += jam_string(buf, #N);	\
-			sep = "+";			\
+			JAM_STRING(N);			\
 		}					\
 	}
 	size_t s = 0;
 	const char *sep = "";
 	JAM_AUTHBY(psk, PSK);
-	JAM_AUTHBY(rsasig, RSASIG);
-	if (!authby_le(AUTHBY_ALL_RSASIG_SHA2, authby)) {
-		JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
-		JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
-		JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+	if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			})) {
+		/* legacy */
+		JAM_STRING(RSASIG);
+	} else if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			}) &&
+		!authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			})) {
+		/* IKEv1 */
+		JAM_STRING(RSASIG);
+	} else if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			}) &&
+		!authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			})) {
+		/* IKEv2 */
+		JAM_STRING(RSASIG);
+	} else {
+		JAM_AUTHBY(rsasig, RSASIG);
+		if (authby_has_all(authby, (struct authby) {
+					AUTHBY_RSASIG_SHA2,
+				})) {
+			JAM_STRING(RSASIG_SHA2);
+		} else {
+			JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
+			JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
+			JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+		}
+		if (authby_has_all(authby, (struct authby) {
+					AUTHBY_RSASIG_V1_5,
+				})) {
+			JAM_STRING(RSASIG_v1_5);
+		}
 	}
 	/*
 	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
 	 * short-hand ECDSA.  This matches auth=ecdsa which will set
 	 * all the bits below.
 	 */
-	if (authby_has_all(authby, AUTHBY_ALL_ECDSA_SHA2)) {
-		s += jam_string(buf, sep); sep = "+";
-		s += jam_string(buf, "ECDSA");
+	if (authby_has_all(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			})) {
+		JAM_STRING(ECDSA);
 	} else {
 		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
 		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
@@ -241,7 +282,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
-	JAM_AUTHBY(rsasig_v1_5, RSASIG_v1_5);
+#undef JAM_STRING
 #undef JAM_AUTHBY
 	if (s == 0) {
 		s += jam_string(buf, "none");

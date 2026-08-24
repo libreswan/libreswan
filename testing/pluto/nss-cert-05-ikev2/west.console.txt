@@ -43,7 +43,7 @@ west #
 "nss-cert":   mycert=otherwest;
 "nss-cert":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"nss-cert":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert":   sec_label:unset;
@@ -52,7 +52,7 @@ west #
 "nss-cert":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"nss-cert":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "nss-cert":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

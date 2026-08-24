@@ -184,7 +184,7 @@ Connection list:
 "private":   mycert=west;
 "private":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private":   sec_label:unset;
@@ -193,7 +193,7 @@ Connection list:
 "private":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"private":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
+"private":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
 "private":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "private":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -209,7 +209,7 @@ Connection list:
 "private#10.1.0.0/24":   mycert=west;
 "private#10.1.0.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private#10.1.0.0/24":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private#10.1.0.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private#10.1.0.0/24":   sec_label:unset;
@@ -218,7 +218,7 @@ Connection list:
 "private#10.1.0.0/24":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private#10.1.0.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private#10.1.0.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"private#10.1.0.0/24":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
+"private#10.1.0.0/24":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
 "private#10.1.0.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "private#10.1.0.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private#10.1.0.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -234,7 +234,7 @@ Connection list:
 "private-or-clear":   mycert=west;
 "private-or-clear":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear":   sec_label:unset;
@@ -243,7 +243,7 @@ Connection list:
 "private-or-clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"private-or-clear":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
+"private-or-clear":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
 "private-or-clear":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "private-or-clear":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -259,7 +259,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   mycert=west;
 "private-or-clear#192.1.2.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear#192.1.2.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;
@@ -268,7 +268,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear#192.1.2.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"private-or-clear#192.1.2.0/24":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failurePASS;
+"private-or-clear#192.1.2.0/24":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failurePASS;
 "private-or-clear#192.1.2.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "private-or-clear#192.1.2.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

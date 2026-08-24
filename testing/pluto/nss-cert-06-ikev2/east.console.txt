@@ -40,7 +40,7 @@ east #
 "nss-cert-correct":   mycert=east;
 "nss-cert-correct":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-correct":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-correct":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"nss-cert-correct":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-correct":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-correct":   sec_label:unset;
@@ -49,7 +49,7 @@ east #
 "nss-cert-correct":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-correct":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"nss-cert-correct":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-correct":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "nss-cert-correct":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert-correct":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert-correct":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -65,7 +65,7 @@ east #
 "nss-cert-wrong":   mycert=east;
 "nss-cert-wrong":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "nss-cert-wrong":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"nss-cert-wrong":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"nss-cert-wrong":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-wrong":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-wrong":   sec_label:unset;
@@ -74,7 +74,7 @@ east #
 "nss-cert-wrong":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-wrong":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"nss-cert-wrong":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-wrong":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "nss-cert-wrong":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert-wrong":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert-wrong":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

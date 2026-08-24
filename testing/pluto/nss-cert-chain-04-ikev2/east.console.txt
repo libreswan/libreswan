@@ -40,7 +40,7 @@ east #
 "road-A":   mycert=east;
 "road-A":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-A":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"road-A":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-A":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-A":   sec_label:unset;
@@ -49,7 +49,7 @@ east #
 "road-A":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-A":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road-A":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ALLOW_NO_SAN+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-A":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+ALLOW_NO_SAN+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-A":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -65,7 +65,7 @@ east #
 "road-chain-B":   mycert=east;
 "road-chain-B":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-chain-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-chain-B":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"road-chain-B":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-chain-B":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-chain-B":   sec_label:unset;
@@ -74,7 +74,7 @@ east #
 "road-chain-B":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-chain-B":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road-chain-B":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ALLOW_NO_SAN+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-chain-B":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+ALLOW_NO_SAN+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-chain-B":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-chain-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
