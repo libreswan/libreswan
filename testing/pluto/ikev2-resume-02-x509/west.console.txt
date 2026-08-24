@@ -26,7 +26,7 @@ west #
  ipsec whack --impair suppress-retransmits --impair send-no-delete --impair revival
 west #
  ipsec connectionstatus | grep -i -e resume -e ticket
-"west-east":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RESUME;
+"west-east":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RESUME;
 "west-east":   session resume ticket: none
 west #
  echo "initdone"

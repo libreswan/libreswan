@@ -20,12 +20,12 @@ west #
 "whack--ikev2-default": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | grep "policy:" | grep rsasig | grep TUNNEL
-"parser---rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"whack----rsasig":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+"parser---rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"whack----rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec connectionstatus | grep "policy:" | grep defaults | grep TUNNEL
-"parser-defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"whack--defaults":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+"parser-defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"whack--defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec connectionstatus | grep "hash-policy:" | grep rsasig
 "parser---rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;

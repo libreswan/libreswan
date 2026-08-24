@@ -14,7 +14,7 @@ west #
 "order-test":   leftupdown=ipsec _updown; leftupdown-config=noasync,noexec;
 "order-test":   rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
 "order-test":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"order-test":   our auth:rsasig(RSASIG+ECDSA), their auth:rsasig(RSASIG+ECDSA), our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "order-test":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "order-test":   sec_label:unset;
@@ -22,7 +22,7 @@ west #
 "order-test":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "order-test":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "order-test":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"order-test":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "order-test":   conn_prio: 128,128,0; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

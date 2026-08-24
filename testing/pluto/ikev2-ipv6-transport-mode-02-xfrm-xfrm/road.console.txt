@@ -28,7 +28,7 @@ road #
 "v6-transport":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: 2001:db8:1:2::23;
 "v6-transport":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "v6-transport":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"v6-transport":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"v6-transport":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "v6-transport":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "v6-transport":   sec_label:unset;
@@ -36,7 +36,7 @@ road #
 "v6-transport":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "v6-transport":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"v6-transport":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"v6-transport":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "v6-transport":   conn_prio: 128,128,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

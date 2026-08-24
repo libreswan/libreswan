@@ -36,7 +36,7 @@ west #
 "westnet-eastnet-6in4":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-6in4":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "westnet-eastnet-6in4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-6in4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"westnet-eastnet-6in4":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-6in4":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-6in4":   sec_label:unset;
@@ -44,7 +44,7 @@ west #
 "westnet-eastnet-6in4":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-6in4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-6in4":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet-6in4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-6in4":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-6in4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "westnet-eastnet-6in4":   conn_prio: 64,64,0; interface: ipsec1@NONE; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

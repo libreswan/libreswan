@@ -56,13 +56,13 @@ west #
 "rsa-sha2_512": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
  ipsec status |grep policy: | grep -v modecfg
-"default-implicit-authby":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"default-implicit-authby":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "default-implicit-authby":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"default-specified-authby":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"default-specified-authby":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "default-specified-authby":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"ecdsa,rsa":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"ecdsa,rsa":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "ecdsa-sha2":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ecdsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
@@ -74,11 +74,11 @@ west #
 "ecdsa-sha2_512":   v2-auth-hash-policy: SHA2_512;
 "eddsa":   policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "eddsa":   v2-auth-hash-policy: IDENTITY;
-"eddsa,rsa":   policy: IKEv2+RSASIG+EDDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"eddsa,rsa":   policy: IKEv2+RSASIG+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "eddsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512+IDENTITY;
 "rsa-sha1":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha1":   v2-auth-hash-policy: none;
-"rsa-sha2":   policy: IKEv2+RSASIG_SHA2_256+RSASIG_SHA2_384+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"rsa-sha2":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "rsa-sha2_256":   policy: IKEv2+RSASIG+RSASIG_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2_256":   v2-auth-hash-policy: SHA2_256;

@@ -158,7 +158,7 @@ Connection list:
 "road-east-x509-ipv4":   mycert=road; peercert=east;
 "road-east-x509-ipv4":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"road-east-x509-ipv4":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4":   sec_label:unset;
@@ -167,7 +167,7 @@ Connection list:
 "road-east-x509-ipv4":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-east-x509-ipv4":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east-x509-ipv4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-east-x509-ipv4":   conn_prio: 0,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -183,7 +183,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   mycert=road; peercert=east;
 "road-east-x509-ipv4"[1]:   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east-x509-ipv4"[1]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"road-east-x509-ipv4"[1]:   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-east-x509-ipv4"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-x509-ipv4"[1]:   sec_label:unset;
@@ -192,7 +192,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-east-x509-ipv4"[1]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east-x509-ipv4"[1]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-east-x509-ipv4"[1]:   conn_prio: 32,0,1; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;

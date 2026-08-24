@@ -79,7 +79,7 @@ Connection list:
 "road-east":   mycert=road;
 "road-east":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "road-east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"road-east":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"road-east":   our auth:rsasig(RSASIG), their auth:RSASIG+ECDSA, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "road-east":   modecfg info: us:client, them:server, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
 "road-east":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east":   sec_label:unset;
@@ -88,7 +88,7 @@ Connection list:
 "road-east":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "road-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "road-east":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road-east":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+MODECFG_PULL+ACCEPT_REDIRECT_YES+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"road-east":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+MODECFG_PULL+ACCEPT_REDIRECT_YES+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-east":   conn_prio: 32,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
