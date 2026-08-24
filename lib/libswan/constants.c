@@ -1909,6 +1909,7 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_SA_RESOURCE_INFO),
 	S(v2N_USE_PPK_INT),
 	S(v2N_PPK_IDENTITY_KEY),
+	S(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
 #undef S
 };
 
