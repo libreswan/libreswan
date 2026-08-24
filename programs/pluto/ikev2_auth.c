@@ -417,14 +417,12 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	authby_buf ab;
 	authby_buf hb;
-	lset_buf lb;
 	ldbg(ike->sa.logger,
-	     "verifying authby %s (%s with hash %s) signer %s and allowed hashes %s",
+	     "verifying authby %s (%s) signer %s and allowed hashes %s",
 	     str_authby(hash_authby, &hb),
 	     str_authby(authby, &ab),
 	     hash_algo->common.fqn,
-	     pubkey_signer->name,
-	     str_lset_short(&ikev2_hash_algorithm_names, "+", c->config->sighash_policy, &lb));
+	     pubkey_signer->name);
 
 	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
