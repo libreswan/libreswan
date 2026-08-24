@@ -76,7 +76,7 @@ west #
 "eddsa":   v2-auth-hash-policy: IDENTITY;
 "eddsa,rsa":   policy: IKEv2+RSASIG+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "eddsa,rsa":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512+IDENTITY;
-"rsa-sha1":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"rsa-sha1":   policy: IKEv2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha1":   v2-auth-hash-policy: none;
 "rsa-sha2":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
