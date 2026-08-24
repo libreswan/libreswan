@@ -270,7 +270,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
 {
 	struct authby authby = ike->sa.st_connection->remote->host.config->authby;
-	return (digital_signature_in_authby(authby) &&
+	return (authby_has_any_ikev2_digsig(authby) &&
 		!remote_has_preloaded_pubkey(ike));
 }
 
@@ -280,7 +280,7 @@ bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 
 	const struct connection *c = ike->sa.st_connection;
 
-	if (!digital_signature_in_authby(c->remote->host.config->authby)) {
+	if (!authby_has_any_ikev2_digsig(c->remote->host.config->authby)) {
 		ldbg(ike->sa.logger, "IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
 		return false;
 	}

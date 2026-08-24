@@ -314,10 +314,6 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 		}
 	}
 
-	if (authby_is_set(authby_and(peer, AUTHBY_ALL_RSASIG_SHA2))) {
-		peer.rsasig = true;
-	}
-
 	ike->sa.st_v2_peer_authby = peer;
 
 	return true;

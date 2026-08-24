@@ -567,7 +567,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (!digital_signature_in_authby(authby_from_auth(that_auth))) {
+		if (!authby_has_any_ikev2_digsig(authby_from_auth(that_auth))) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    str_enum_short(&auth_names, that_auth, &an));
