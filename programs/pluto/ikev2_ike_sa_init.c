@@ -116,7 +116,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 static bool negotiate_hash_algo_from_notification(struct pbs_in pbs,
 						  struct ike_sa *ike)
 {
-	lset_t sighash_policy = ike->sa.st_connection->config->sighash_policy;
+	const struct authby local_authby = ike->sa.st_connection->local->config->host.authby;
 
 	while (pbs_left(&pbs) > 0) {
 
@@ -129,22 +129,22 @@ static bool negotiate_hash_algo_from_notification(struct pbs_in pbs,
 			pfree_diag(&d);
 			return false;
 		}
-		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
 
+		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
 		name_buf b;
 		const struct hash_desc *hash = ikev2_hash_desc(h_value, &b);
 		if (hash == NULL) {
-			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %s", b.buf);
+			llog(RC_LOG, ike->sa.logger, "received and ignored unknown hash algorithm %s", b.buf);
 			continue;
 		}
 
-		lset_t hash_bit = LELEM(h_value);
-		if (!(sighash_policy & hash_bit)) {
+		if (!authby_has_hash(local_authby, hash)) {
 			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
 			continue;
 		}
 
 		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s", hash->common.fqn);
+		lset_t hash_bit = LELEM(h_value);
 		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
 	}
 	return true;
