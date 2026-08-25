@@ -293,7 +293,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 	{
 		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
-			if (c->config->sighash_policy == LEMPTY) {
+			if (c->local->config->host.authby.rsasig_v1_5_sha1) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */
 				if (!ikev2_calculate_hash(ike, id_hash, NULL, no_ppk_auth,
 							  &ike_alg_hash_sha1,
