@@ -481,6 +481,7 @@ total.ikev2.sent.notifies.status.SUPPORTED_AUTH_METHODS=0
 total.ikev2.sent.notifies.status.SA_RESOURCE_INFO=0
 total.ikev2.sent.notifies.status.USE_PPK_INT=0
 total.ikev2.sent.notifies.status.PPK_IDENTITY_KEY=0
+total.ikev2.sent.notifies.status.IKE_SA_INIT_FULL_TRANSCRIPT_AUTH=0
 total.ikev2.sent.notifies.status.other=0
 total.ikev2.recv.notifies.status.INITIAL_CONTACT=0
 total.ikev2.recv.notifies.status.SET_WINDOW_SIZE=0
@@ -545,5 +546,6 @@ total.ikev2.recv.notifies.status.SUPPORTED_AUTH_METHODS=0
 total.ikev2.recv.notifies.status.SA_RESOURCE_INFO=0
 total.ikev2.recv.notifies.status.USE_PPK_INT=0
 total.ikev2.recv.notifies.status.PPK_IDENTITY_KEY=0
+total.ikev2.recv.notifies.status.IKE_SA_INIT_FULL_TRANSCRIPT_AUTH=0
 total.ikev2.recv.notifies.status.other=0
 west #
