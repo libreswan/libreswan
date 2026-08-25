@@ -234,7 +234,8 @@ enum event_type {
 	EVENT_v2_RETRANSMIT,
 	EVENT_v2_NAT_KEEPALIVE,
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
-#define EVENT_v2_ROOF (EVENT_v2_ADDR_CHANGE+1)
+	EVENT_v2_MAPPING_CHANGE,	/* XFRM mapping change: peer src = new outbound dst */
+#define EVENT_v2_ROOF (EVENT_v2_MAPPING_CHANGE+1)
 
 	EVENT_RETAIN,			/* don't change the previous event */
 };
