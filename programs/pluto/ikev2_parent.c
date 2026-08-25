@@ -133,44 +133,6 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	return true;
 }
 
-bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
-					   struct ike_sa *ike)
-{
-	lset_t sighash_policy = ike->sa.st_connection->config->sighash_policy;
-
-	struct pbs_in pbs = *payload_pbs;
-	while (pbs_left(&pbs) > 0) {
-
-		uint16_t nh_value;
-		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
-		diag_t d = pbs_in_thing(&pbs, nh_value,
-					"hash algorithm identifier (network ordered)");
-		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return false;
-		}
-		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
-
-		name_buf b;
-		const struct hash_desc *hash = ikev2_hash_desc(h_value, &b);
-		if (hash == NULL) {
-			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %s", b.buf);
-			continue;
-		}
-
-		lset_t hash_bit = LELEM(h_value);
-		if (!(sighash_policy & hash_bit)) {
-			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
-			continue;
-		}
-
-		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s", hash->common.fqn);
-		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
-	}
-	return true;
-}
-
 void jam_v2_ike_protection(struct jambuf *buf, struct ike_sa *ike)
 {
 	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
