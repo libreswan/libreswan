@@ -38,9 +38,17 @@ struct authby {
 #define AUTHBY_RSASIG_RAW			\
 	.rsasig = true
 
-	bool rsasig_v1_5;
-#define AUTHBY_RSASIG_V1_5			\
-	.rsasig_v1_5 = true
+	bool rsasig_v1_5_sha1;
+#define AUTHBY_RSASIG_V1_5_SHA1			\
+	.rsasig_v1_5_sha1 = true
+
+	bool rsasig_v1_5_sha2_256;
+	bool rsasig_v1_5_sha2_384;
+	bool rsasig_v1_5_sha2_512;
+#define AUTHBY_RSASIG_V1_5_SHA2			\
+	.rsasig_v1_5_sha2_256 = true,		\
+	.rsasig_v1_5_sha2_384 = true,		\
+	.rsasig_v1_5_sha2_512 = true
 
 	bool rsasig_sha2_256;
 	bool rsasig_sha2_384;
@@ -64,6 +72,10 @@ struct authby {
 	.ecdsa_sha2_512 = true
 
 };
+
+#define AUTHBY_RSASIG_V1_5			\
+	AUTHBY_RSASIG_V1_5_SHA1,		\
+	AUTHBY_RSASIG_V1_5_SHA2
 
 #define AUTHBY_ALL				\
 	(struct authby) {			\
@@ -126,6 +138,7 @@ bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);
 bool authby_has_any_ikev2_digsig(struct authby);
+lset_t authby_sighash_policy(struct authby);
 
 enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
