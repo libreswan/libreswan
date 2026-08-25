@@ -150,6 +150,12 @@ struct authby authby_and_hash(struct authby authby,
 	return (struct authby) {0};
 }
 
+bool authby_has_hash(struct authby authby,
+		     const struct hash_desc *hash)
+{
+	return authby_is_set(authby_and_hash(authby, hash));
+}
+
 bool auth_in_authby(enum auth auth, struct authby authby)
 {
 	struct authby auth_bit = authby_from_auth(auth);
@@ -309,16 +315,16 @@ const char *str_authby(struct authby authby, authby_buf *buf)
 lset_t authby_sighash_policy(struct authby authby)
 {
 	lset_t sighash_policy = LEMPTY;
-	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_256))) {
+	if (authby_has_hash(authby, &ike_alg_hash_sha2_256)) {
 		sighash_policy |= POL_SIGHASH_SHA2_256;
 	}
-	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_384))) {
+	if (authby_has_hash(authby, &ike_alg_hash_sha2_384)) {
 		sighash_policy |= POL_SIGHASH_SHA2_384;
 	}
-	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_sha2_512))) {
+	if (authby_has_hash(authby, &ike_alg_hash_sha2_512)) {
 		sighash_policy |= POL_SIGHASH_SHA2_512;
 	}
-	if (authby_is_set(authby_and_hash(authby, &ike_alg_hash_identity))) {
+	if (authby_has_hash(authby, &ike_alg_hash_identity)) {
 		sighash_policy |= POL_SIGHASH_IDENTITY;
 	}
 

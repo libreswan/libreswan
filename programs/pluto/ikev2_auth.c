@@ -587,11 +587,11 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			/*
-			 * Does the HASH as proposed by the peer,
-			 * appear in the local configured list?
+			 * The peer (remote) end has sent us a
+			 * proof-of-identity using HASH; does the
+			 * peer's (remote's) config allow this?
 			 */
-			if ((ike->sa.st_connection->config->sighash_policy &
-			     LELEM((*hash)->ikev2_alg_id)) == LEMPTY) {
+			if (!authby_has_hash(ike->sa.st_connection->remote->config->host.authby, *hash)) {
 				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
 				     (*hash)->common.fqn);
 				continue;

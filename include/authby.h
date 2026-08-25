@@ -130,6 +130,7 @@ bool authby_has_none(struct authby authby, struct authby none);
  */
 
 struct authby authby_and_hash(struct authby authby, const struct hash_desc *hash);
+bool authby_has_hash(struct authby authby, const struct hash_desc *hash);
 
 bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
