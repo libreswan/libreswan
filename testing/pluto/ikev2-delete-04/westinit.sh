@@ -2,6 +2,6 @@
 # confirm that the network is alive
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add west-east-delete1
-ipsec auto --status | grep west-east
+ipsec add west-east-delete1
+ipsec connectionstatus west-east
 echo "initdone"

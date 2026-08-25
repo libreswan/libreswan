@@ -8,10 +8,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east-delete1
+ ipsec add west-east-delete1
 "west-east-delete1": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep west-east
+ ipsec connectionstatus west-east
 "west-east-delete1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "west-east-delete1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "west-east-delete1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -39,7 +39,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-east-delete1
+ ipsec up west-east-delete1
 "west-east-delete1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east-delete1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-east-delete1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -76,7 +76,7 @@ west #
 #3: "west-east-delete1":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #3: "west-east-delete1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
