@@ -11,7 +11,7 @@ west #
  ipsec add west-east-delete1
 "west-east-delete1": added oriented IKEv2 connection
 west #
- ipsec connectionstatus west-east
+ ipsec connectionstatus west-east-delete1
 "west-east-delete1": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "west-east-delete1":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "west-east-delete1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -39,7 +39,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up west-east-delete1
+ ipsec up west-east-delete1 # sanitize-retransmits
 "west-east-delete1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east-delete1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-east-delete1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

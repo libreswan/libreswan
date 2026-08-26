@@ -3,5 +3,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add west-east-delete1
-ipsec connectionstatus west-east
+ipsec connectionstatus west-east-delete1
 echo "initdone"
