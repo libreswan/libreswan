@@ -30,13 +30,13 @@ west #
 192.1.2.23
 west #
  dig +short @192.1.2.254 chaos version.server txt
-"unbound 1.25.1"
+"unbound 1.26.0"
 west #
  dig +short @192.1.2.254 -p 5353 east.testing.libreswan.org
 192.1.2.23
 west #
  dig +short @192.1.2.254 -p 5353 chaos version.server txt
-"NSD 4.14.3"
+"NSD 4.15.0"
 west #
  echo done
 done
