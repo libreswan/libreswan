@@ -34,28 +34,20 @@ east #
 Initializing NSS database
 east #
  /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongEast.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-02-sendcerts/OUTPUT/strongswan/strong-ED/strongEast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongEast
 "strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
   "strongEast" [CN=strongEast,O=strongSwan,C=CH]
 east #
- /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongWest.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-ED -t CT,,
- ipsec certutil -O -n strongWest
-"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
-  "strongWest" [CN=strongWest,O=strongSwan,C=CH]
-east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec add eddsa
-"eddsa": added oriented IKEv2 connection
+ ipsec add eddsa-east
+"eddsa-east": added oriented IKEv2 connection
 east #
  ipsec whack --impair suppress-retransmits
 east #

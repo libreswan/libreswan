@@ -2,7 +2,7 @@
 Initializing NSS database
 west #
  /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongEast.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preloaded-cert/OUTPUT/strongswan/strong-ED/strongEast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongEast
@@ -10,7 +10,7 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
   "strongEast" [CN=strongEast,O=strongSwan,C=CH]
 west #
  /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preshared/OUTPUT/strongswan/strong-ED/strongWest.p12
+ ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preloaded-cert/OUTPUT/strongswan/strong-ED/strongWest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongWest
