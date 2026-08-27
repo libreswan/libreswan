@@ -8,10 +8,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-rsasigkey-east-rsasigkey
+ ipsec add west-rsasigkey-east-rsasigkey
 "west-rsasigkey-east-rsasigkey": added oriented IKEv2 connection
 east #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface lo 127.0.0.1:UDP/4500 (NAT)
