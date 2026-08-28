@@ -435,7 +435,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * NULL_AUTH in separate chunk. This is only done on the
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if (authby_has_any_ikev2_digsig(pc->local->host.config->authby) &&
+	if (authby_has_pubkey(pc->local->host.config->authby) &&
 	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
@@ -846,7 +846,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	struct authby initiator_authby = c->remote->host.config->authby;
 	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
 	bool remote_can_authby_null = initiator_authby.null;
-	bool remote_can_authby_digsig = authby_has_any_ikev2_digsig(initiator_authby);
+	bool remote_can_authby_pubkey = authby_has_pubkey(initiator_authby);
 
 	if (!ike->sa.st_ppk_ike_auth_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -879,7 +879,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		}
 		ldbg(ike->sa.logger, "NO_PPK_AUTH verified");
 	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
-		   remote_can_authby_null && !remote_can_authby_digsig) {
+		   remote_can_authby_null &&
+		   !remote_can_authby_pubkey) {
+
 		/*
 		 * If received NULL_AUTH in Notify payload and we only
 		 * allow NULL Authentication, proceed with verifying
