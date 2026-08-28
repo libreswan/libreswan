@@ -330,3 +330,16 @@ lset_t authby_sighash_policy(struct authby authby)
 
 	return sighash_policy;
 }
+
+bool authby_has_pubkey(struct authby authby)
+{
+	return authby_has_any(authby, (struct authby) {
+			AUTHBY_RSASIG_RAW,
+#ifdef USE_EDDSA
+			AUTHBY_EDDSA,
+#endif
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
+			AUTHBY_ECDSA_SHA2,
+		});
+}
