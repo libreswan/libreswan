@@ -163,7 +163,7 @@ bool auth_in_authby(enum auth auth, struct authby authby)
 	return authby_is_set(authby_and(auth_bit, authby));
 }
 
-bool authby_has_any_ikev2_digsig(struct authby authby)
+bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
 {
 	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
 }

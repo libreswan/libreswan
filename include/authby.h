@@ -108,6 +108,7 @@ struct authby {
  */
 
 struct authby supported_ikev2_digsig_auth_payloads(void);
+bool authby_has_supported_ikev2_digsig_payload(struct authby);
 
 #define AUTHBY_IKEv2_ONLY			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -139,7 +140,6 @@ unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);
-bool authby_has_any_ikev2_digsig(struct authby);
 lset_t authby_sighash_policy(struct authby);
 
 /*
