@@ -165,7 +165,7 @@ enum auth local_v2_auth(struct ike_sa *ike)
  */
 
 enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum auth authby)
+					   enum auth auth)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -177,25 +177,21 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		return impair.force_v2_auth_method.value;
 	}
 
-	switch (authby) {
-	case AUTH_RSASIG:
-		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(authby_has_auth(c->local->host.config->authby, AUTH_RSASIG));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
+	/* mask authby with the new "Digital Signature" hashes */
+	struct authby digsig_auth_payload =
+		authby_and(c->local->host.config->authby,
+			   ike->sa.st_v2_digsig.peer_pubkey_mask);
+	if (authby_has_auth(digsig_auth_payload, auth)) {
+		return IKEv2_AUTH_DIGITAL_SIGNATURE;
+	}
 
+	switch (auth) {
+	case AUTH_RSASIG:
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (authby_has_any(c->local->host.config->authby,
-				   (struct authby) { AUTHBY_RSASIG_V1_5, })) {
+		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
 			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
 		}
 
@@ -213,17 +209,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 
 	case AUTH_ECDSA:
 		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(authby_has_auth(c->local->host.config->authby, AUTH_ECDSA));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
-
-		/*
 		 * If there are HASH algorithms, prute force pick the
 		 * first and use that.  Note that this doesn't check
 		 * that the ECDSA key matches the Pnnn.  Instead, like
@@ -238,9 +223,11 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		if (c->local->host.config->authby.ecdsa_sha2_512) {
 			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
 		}
+
 		if (c->local->host.config->authby.ecdsa_sha2_384) {
 			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
 		}
+
 		if (c->local->host.config->authby.ecdsa_sha2_256) {
 			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
 		}
@@ -259,17 +246,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		return IKEv2_AUTH_RESERVED;
 
 	case AUTH_EDDSA:
-		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(authby_has_auth(c->local->host.config->authby, AUTH_EDDSA));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
-
 		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
 		return IKEv2_AUTH_RESERVED;
 
@@ -292,7 +268,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		break;
 
 	}
-	bad_case(authby);
+	bad_case(auth);
 }
 
 /*
@@ -304,13 +280,18 @@ static const struct hash_desc *negotiated_hash_map[] = {
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_256,
 	&ike_alg_hash_identity,
+	&ike_alg_hash_sha1,
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
 	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
+	struct authby digsig_authby =
+		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
+					   ike->sa.st_v2_digsig.peer_pubkey_mask),
+				local_v2_auth(ike));
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->ikev2_alg_id)) {
+		if (authby_has_hash(digsig_authby, (*hash))) {
 			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
 			     (*hash)->common.fqn);
 			return (*hash);
@@ -318,7 +299,7 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
 		     (*hash)->common.fqn);
 	}
-	ldbg(ike->sa.logger, "DigSig: no compatible DigSig hash algo");
+	ldbg(ike->sa.logger, "digsig: no compatible DigSig hash algo");
 	return NULL;
 }
 
