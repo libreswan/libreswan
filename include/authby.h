@@ -102,11 +102,13 @@ struct authby {
 		AUTHBY_ECDSA_SHA2,		\
 	}
 
-#define AUTHBY_IKEv2_DIGSIG			\
-	AUTHBY_EDDSA,				\
-	AUTHBY_RSASIG_V1_5,			\
-	AUTHBY_RSASIG_SHA2,			\
-	AUTHBY_ECDSA_SHA2
+/*
+ * Returns all the authentication methods that are supported using RFC
+ * 7427's new "Digital Signature" AUTH payload.
+ */
+
+struct authby supported_ikev2_digsig_auth_payloads(void);
+bool authby_has_supported_ikev2_digsig_payload(struct authby);
 
 #define AUTHBY_IKEv2_ONLY			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -138,8 +140,14 @@ unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
 bool auth_in_authby(enum auth, struct authby);
-bool authby_has_any_ikev2_digsig(struct authby);
 lset_t authby_sighash_policy(struct authby);
+
+/*
+ * Do the authentication methods include pubkey (digital signature)
+ * algorithms.  This is not the same has a pubkey method that works
+ * with RFC 7427 (Digital Signature AUTH payload).
+ */
+bool authby_has_pubkey(struct authby);
 
 enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
