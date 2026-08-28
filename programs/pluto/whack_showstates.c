@@ -188,6 +188,10 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			jam(buf, "(tcp)");
 		}
 		jam(buf, " %s;", st->st_state->story);
+		
+		if (!IS_CHILD_SA(st) && st->st_v2_full_transcript_auth) {
+			jam_string(buf, " full-transcript-auth;");
+		}
 
 		/*
 		 * Hunt and peck for events (needs fixing).
