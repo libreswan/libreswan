@@ -156,11 +156,14 @@ bool authby_has_hash(struct authby authby,
 	return authby_is_set(authby_and_hash(authby, hash));
 }
 
-bool auth_in_authby(enum auth auth, struct authby authby)
+struct authby authby_and_auth(struct authby authby, enum auth auth)
 {
-	struct authby auth_bit = authby_from_auth(auth);
-	/* auth bit must be set */
-	return authby_is_set(authby_and(auth_bit, authby));
+	return authby_and(authby, authby_from_auth(auth));
+}
+
+bool authby_has_auth(struct authby authby, enum auth auth)
+{
+	return authby_is_set(authby_and_auth(authby, auth));
 }
 
 bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
