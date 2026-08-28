@@ -334,6 +334,7 @@ struct state {
 
 	struct {
 		lset_t negotiated_hashes;		/* from IKE_SA_INIT */
+		struct authby peer_pubkey_mask;
 		const struct hash_desc *hash;
 		const struct pubkey_signer *signer;
 	} st_v2_digsig;

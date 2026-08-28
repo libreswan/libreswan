@@ -138,6 +138,17 @@ static bool negotiate_hash_algo_from_notification(struct pbs_in pbs,
 			continue;
 		}
 
+		struct authby peer_pubkey_mask =
+			authby_and_hash(supported_ikev2_digsig_auth_payloads(), hash);
+		if (!authby_is_set(peer_pubkey_mask)) {
+			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable pubkey hash algorithm %s", hash->common.fqn);
+			continue;
+		}
+
+		ike->sa.st_v2_digsig.peer_pubkey_mask =
+			authby_or(ike->sa.st_v2_digsig.peer_pubkey_mask,
+				  peer_pubkey_mask);
+
 		if (!authby_has_hash(local_authby, hash)) {
 			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
 			continue;
