@@ -191,9 +191,7 @@ int main(int argc, char *argv[])
 
 	for (enum auth auth = DIGITAL_SIGNATURE_AUTH_FLOOR;
 	     auth < DIGITAL_SIGNATURE_AUTH_ROOF; auth++) {
-		if (!auth_in_authby(auth, (struct authby) {
-					AUTHBY_IKEv2_DIGSIG,
-				})) {
+		if (!auth_in_authby(auth, supported_ikev2_digsig_auth_payloads())) {
 			FAIL("auth_in_authby(%u, AUTHBY_DIGITAL_SIGNATURE) failed", auth);
 		}
 	}

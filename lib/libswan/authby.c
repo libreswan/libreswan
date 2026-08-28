@@ -165,9 +165,7 @@ bool auth_in_authby(enum auth auth, struct authby authby)
 
 bool authby_has_any_ikev2_digsig(struct authby authby)
 {
-	return authby_has_any(authby, (struct authby) {
-			AUTHBY_IKEv2_DIGSIG,
-		});
+	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
 }
 
 enum auth auth_from_authby(struct authby authby)
@@ -329,6 +327,18 @@ lset_t authby_sighash_policy(struct authby authby)
 	}
 
 	return sighash_policy;
+}
+
+struct authby supported_ikev2_digsig_auth_payloads(void)
+{
+	return (struct authby) {
+#ifdef USE_EDDSA
+		AUTHBY_EDDSA,
+#endif
+		AUTHBY_RSASIG_V1_5,
+		AUTHBY_RSASIG_SHA2,
+		AUTHBY_ECDSA_SHA2,
+	};
 }
 
 bool authby_has_pubkey(struct authby authby)

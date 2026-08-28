@@ -102,11 +102,12 @@ struct authby {
 		AUTHBY_ECDSA_SHA2,		\
 	}
 
-#define AUTHBY_IKEv2_DIGSIG			\
-	AUTHBY_EDDSA,				\
-	AUTHBY_RSASIG_V1_5,			\
-	AUTHBY_RSASIG_SHA2,			\
-	AUTHBY_ECDSA_SHA2
+/*
+ * Returns all the authentication methods that are supported using RFC
+ * 7427's new "Digital Signature" AUTH payload.
+ */
+
+struct authby supported_ikev2_digsig_auth_payloads(void);
 
 #define AUTHBY_IKEv2_ONLY			\
 	AUTHBY_RSASIG_V1_5,			\
