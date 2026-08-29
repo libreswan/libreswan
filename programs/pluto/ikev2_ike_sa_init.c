@@ -113,11 +113,16 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	}
 }
 
-static bool negotiate_hash_algo_from_notification(struct pbs_in pbs,
-						  struct ike_sa *ike)
+static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
+					       const struct msg_digest *md)
 {
-	const struct authby local_authby = ike->sa.st_connection->local->config->host.authby;
+	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] == NULL) {
+		/* nothing to save */
+		return true;
+	}
 
+	struct pbs_in pbs = md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs;
+	ike->sa.st_seen_hashnotify = true;
 	while (pbs_left(&pbs) > 0) {
 
 		uint16_t nh_value;
@@ -145,18 +150,12 @@ static bool negotiate_hash_algo_from_notification(struct pbs_in pbs,
 			continue;
 		}
 
+		authby_buf ab;
+		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s; adding %s",
+		     hash->common.fqn, str_authby(peer_pubkey_mask, &ab));
 		ike->sa.st_v2_digsig.peer_pubkey_mask =
 			authby_or(ike->sa.st_v2_digsig.peer_pubkey_mask,
 				  peer_pubkey_mask);
-
-		if (!authby_has_hash(local_authby, hash)) {
-			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
-			continue;
-		}
-
-		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s", hash->common.fqn);
-		lset_t hash_bit = LELEM(h_value);
-		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
 	}
 	return true;
 }
@@ -787,21 +786,18 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		/* should this check that a port is available? */
 	}
 
-	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (!negotiate_hash_algo_from_notification(md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_INVALID_SYNTAX, empty_shunk,
-					    UNENCRYPTED_PAYLOAD);
-			/*
-			 * STF_FATAL will send the recorded
-			 * message and then kill the IKE SA.
-			 * Should it instead zombify the IKE
-			 * SA so that retransmits get a
-			 * response?
-			 */
-			return STF_FATAL;
-		}
-		ike->sa.st_seen_hashnotify = true;
+	if (!save_v2N_SIGNATURE_HASH_ALGORITHMS(ike, md)) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
+		/*
+		 * STF_FATAL will send the recorded
+		 * message and then kill the IKE SA.
+		 * Should it instead zombify the IKE
+		 * SA so that retransmits get a
+		 * response?
+		 */
+		return STF_FATAL;
 	}
 
 	/* calculate the nonce and the KE */
@@ -1246,14 +1242,11 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (!negotiate_hash_algo_from_notification(md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			return STF_FATAL;
-		}
-		ike->sa.st_seen_hashnotify = true;
+	if (!save_v2N_SIGNATURE_HASH_ALGORITHMS(ike, md)) {
+		return STF_FATAL;
 	}
 
-	/* 
+	/*
 	 * If we received an empty notification, we expect the responder to send
 	 * the full notification in the intermediate exchange, otherwise
 	 * we process the notification.

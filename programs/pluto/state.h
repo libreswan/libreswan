@@ -315,25 +315,22 @@ struct state {
 	struct resume_session *st_v2_resume_session;
 
 	/*
-	 * Digital Signature authentication.
+	 * New "Digital Signature" AUTH payload.
 	 *
-	 * During IKE_SA_INIT, the acceptable hash algorithms are
-	 * saved in NEGOTIATED_HASHES.
+	 * During IKE_SA_INIT, supported pubkey algorithms using
+	 * hashes from the peer's SIGNATURE_HASH_ALGORITHMS
+	 * notification are accumulated in .peer_pubkey_mask.
 	 *
-	 * The IKE_AUTH initiator uses NEGOTIATED_HASHES + POLICY to
-	 * select HASH+SIGNER which is then used sign it's
-	 * proof-of-identity.
+	 * Then, during IKE_AUTH, these are compared against the
+	 * current connection to determine if the new "DIgital
+	 * Signature" AUTH payload can be used.
 	 *
-	 * The IKE_AUTH responder saves the HASH+SIGNER used by the
-	 * initiator, it then uses that + POLICY to update HASH+SIGNER,
-	 * to sign it's proof-of-identity.
-	 *
-	 * Because things can be asymmetric, the initiator values are
-	 * just hints to the responder.
+	 * On the responder .hash contains the algorithm used by the
+	 * initiator for their AUTH, and a preference is given to
+	 * using that same algorithm.
 	 */
 
 	struct {
-		lset_t negotiated_hashes;		/* from IKE_SA_INIT */
 		struct authby peer_pubkey_mask;
 		const struct hash_desc *hash;
 		const struct pubkey_signer *signer;
