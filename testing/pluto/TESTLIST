@@ -188,6 +188,7 @@ kvmplutotest	addconn-52-clones				good
 kvmplutotest	addconn-53-config-setup-ike-socket		good
 kvmplutotest    addconn-54-xauth          good
 kvmplutotest    addconn-55-send-supported-auth-methods          good
+kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
 
 #################################################################
 # IKEv2 tests
@@ -279,6 +280,10 @@ kvmplutotest	ikev2-70-src-address-selection		good
 kvmplutotest	ikev2-71-cp-resolve-name		good
 kvmplutotest 	ikev2-72-cp-resolve-both		good
 
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-03-fallback    good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-04-mismatch    good
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
