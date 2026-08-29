@@ -139,7 +139,9 @@ bool authby_is_set(struct authby authby);
 unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
-bool auth_in_authby(enum auth, struct authby);
+struct authby authby_and_auth(struct authby, enum auth);
+bool authby_has_auth(struct authby, enum auth);
+
 lset_t authby_sighash_policy(struct authby);
 
 /*

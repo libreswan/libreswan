@@ -67,16 +67,16 @@ int main(int argc, char *argv[])
 		if (authby_is_set(authby) != authby_set) {
 			FAIL("authby_is_set(%u*) == %u", auth, authby_set);
 		}
-		if (auth_in_authby(auth, authby) != authby_set) {
-			FAIL("auth_in_authby(%u, %u*) == %u", auth, auth, authby_set);
+		if (authby_has_auth(authby, auth) != authby_set) {
+			FAIL("authby_has_auth(%u, %u*) == %u", auth, auth, authby_set);
 		}
 
 		struct authby not_authby = authby_not(authby);
 		if (!authby_is_set(not_authby)) {
 			FAIL("authby_is_set(not(%u*)) == %u", auth, false);
 		}
-		if (auth_in_authby(auth, not_authby)) {
-			FAIL("auth_in_authby(%u, not(%u*)) == %u", auth, auth, false);
+		if (authby_has_auth(not_authby, auth)) {
+			FAIL("authby_has_auth(not(%u*), %u) == %u", auth, auth, false);
 		}
 
 		authby_buf ab;
@@ -113,16 +113,16 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_and(authby, altby)) == eq)) {
 				FAIL("authby_is_set(and(%u*,%u*)) == %u", auth, alt, eq);
 			}
-			if (!(auth_in_authby(auth, authby_and(authby, altby)) == eq)) {
-				FAIL("auth_in_authby(%u, and(%u*,%u*)) == %u", auth, auth, alt, eq);
+			if (!(authby_has_auth(authby_and(authby, altby), auth) == eq)) {
+				FAIL("authby_has_auth(and(%u*,%u*), %u) == %u", auth, alt, auth, eq);
 			}
 
 			PRINT("authby_or(%u,%u)", auth, alt);
 			if (!authby_is_set(authby_or(authby, altby))) {
-				FAIL("authby_is_set(or(%u*,%u*))", auth, alt);
+				FAIL("authby_is_set(or(%u*, %u*))", auth, alt);
 			}
-			if (!auth_in_authby(auth, authby_or(authby, altby))) {
-				FAIL("auth_in_authby(%u, or(%u*,%u*))", auth, auth, alt);
+			if (!authby_has_auth(authby_or(authby, altby), auth)) {
+				FAIL("authby_has_auth(or(%u*,%u*), %u)", auth, alt, auth);
 			}
 
 			PRINT("authby_xor(%u,%u)", auth, alt);
@@ -130,8 +130,8 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (!(auth_in_authby(auth, authby_xor(authby, altby)) == (xor && authby_set))) {
-				FAIL("auth_in_authby(%u, xor(%u,%u)) == %u", auth, alt, auth, xor && authby_set);
+			if (!(authby_has_auth(authby_xor(authby, altby), auth) == (xor && authby_set))) {
+				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor && authby_set);
 			}
 
 			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 
 	for (enum auth auth = DIGITAL_SIGNATURE_AUTH_FLOOR;
 	     auth < DIGITAL_SIGNATURE_AUTH_ROOF; auth++) {
-		if (!auth_in_authby(auth, supported_ikev2_digsig_auth_payloads())) {
+		if (!authby_has_auth(supported_ikev2_digsig_auth_payloads(), auth)) {
 			FAIL("auth_in_authby(%u, AUTHBY_DIGITAL_SIGNATURE) failed", auth);
 		}
 	}
@@ -200,8 +200,8 @@ int main(int argc, char *argv[])
 		if (auth == AUTH_EAPONLY) {
 			continue;
 		}
-		if (!auth_in_authby(auth, AUTHBY_ALL)) {
-			FAIL("auth_in_authby(%u, AUTHBY_ALL) failed", auth);
+		if (!authby_has_auth(AUTHBY_ALL, auth)) {
+			FAIL("authby_has_auth(AUTHBY_ALL, %u) failed", auth);
 		}
 	}
 
