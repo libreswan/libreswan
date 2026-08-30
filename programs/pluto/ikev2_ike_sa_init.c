@@ -555,19 +555,19 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/*
-	 * Send the initiator's SIGNATURE_HASH_ALGORITHMS notification
-	 * based on the remote's .authby.
+	 * Send the initiator's SIGNATURE_HASH_ALGORITHMS notification.
 	 *
-	 * The initiator would like the responder to prove their
-	 * identity using one of these hashes (plus a signature).
-	 * Since the initiator can't switch connections the decision is
-	 * final.
+	 * If either end has an algorithm requiring DIGSIG, signal to
+	 * the responder that the new Digital Signature AUTH payload
+	 * can be used.
 	 */
-	if (authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby) &&
-	    (c->config->sighash_policy != LEMPTY)) {
+	if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+	    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
 			return false;
 		}
+	} else {
+		ldbg(ike->sa.logger, "neither end has authby=SIGSIG, skipping SIGNATURE_HASH_ALGORITHMS notify");
 	}
 
 	/* Send NAT-T Notify payloads */
