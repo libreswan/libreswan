@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # host-to-host-{transport,tunnel}-{freebsd,linux,netbsd,openbsd}
 # host-to-host-tunnel-forward-{freebsd,linux,netbsd,openbsd}
@@ -208,7 +208,7 @@ EOF
 		;;
 	    * )
 		cat <<EOF >> ${sh}
-west# ipsec up ${conn}
+west# ipsec up ${conn} # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
 EOF
