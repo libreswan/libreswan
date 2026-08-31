@@ -950,11 +950,10 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/*
 	 * Send the responder's SIGNATURE_HASH_ALGORITHMS notification
-	 * unconditionally:
+	 * almost unconditionally:
 	 *
-	 * + the connection is tentative, remote .authby could be
-	 *   wrong (for instance, IKE_AUTH may trigger a switch from
-	 *   host-host:PSK -> host-any:RSA).
+	 * + if initiator sent SIGNATURE_HASH_ALGORITHM this end needs
+	 *   to acknowlege it (even if the response is empty).
 	 *
 	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
 	 *   information
@@ -970,7 +969,9 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (c->config->sighash_policy != LEMPTY) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
+		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy,
+							response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
