@@ -400,8 +400,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 {
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
-	if (impair.omit_v2_notification.enabled &&
-	    impair.omit_v2_notification.value == ntype) {
+	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_OMIT) {
 		name_buf eb;
 		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -415,21 +414,27 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 		return false;
 	}
 
+	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_EMPTY) {
+		name_buf eb;
+		llog(IMPAIR_STREAM, outs->logger, "emitting empty %s notification",
+		     str_enum_short(&v2_notification_names, ntype, &eb));
+	} else {
 #define H(POLICY, ID)							\
-	if (sighash_policy & POLICY) {					\
-		uint16_t hash_id = htons(ID);				\
-		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		if (!pbs_out_thing(&n_pbs, hash_id,			\
-				 "hash algorithm identifier "#ID)) {	\
-			/* already logged */				\
-			return false;					\
-		}							\
-	}
-	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
-	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
-	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
-	H(POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY);
+		if (sighash_policy & POLICY) {				\
+			uint16_t hash_id = htons(ID);			\
+			passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
+			if (!pbs_out_thing(&n_pbs, hash_id,		\
+					   "hash algorithm identifier "#ID)) { \
+				/* already logged */			\
+				return false;				\
+			}						\
+		}
+		H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
+		H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
+		H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
+		H(POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY);
 #undef H
+	}
 
 	close_pbs_out(&n_pbs);
 	return true;
