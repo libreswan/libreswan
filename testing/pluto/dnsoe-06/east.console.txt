@@ -24,7 +24,7 @@ TIMESTAMP, 2192 RSA Key AQXXXX (loaded private key), until --- -- --:--:-- ---- 
 east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 6' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 6' -- ipsec status
 Total IPsec connections: loaded 6, routed 0, active 0
 east #
  echo "initdone"
@@ -48,5 +48,5 @@ east #
 east #
  # NO ipsec tunnel should be up
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 east #

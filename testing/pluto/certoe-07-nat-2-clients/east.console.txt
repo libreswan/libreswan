@@ -28,7 +28,7 @@ east #
 east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec status
 Total IPsec connections: loaded 10, routed 5, active 0
 east #
  echo "initdone"
@@ -41,7 +41,7 @@ up
 east #
  # jacob two two for east?
 east #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
+ hostname | grep nic > /dev/null || ipsec trafficstatus
 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.2/32
 east #

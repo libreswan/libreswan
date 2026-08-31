@@ -7,9 +7,6 @@
 nic #
  # A tunnel should have established with non-zero byte counters
 nic #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-nic #
- hostname | grep nic > /dev/null || grep "^[^|].* established Child SA" /tmp/pluto.log
-nic #
- hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" OUTPUT/*pluto.log
+ ipsec trafficstatus
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 nic #

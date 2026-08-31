@@ -20,7 +20,7 @@ List of Public Keys:
 east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
 Total IPsec connections: loaded 6, routed 0, active 0
 east #
  echo "initdone"
@@ -28,7 +28,7 @@ initdone
 east #
  # A tunnel should have established with non-zero byte counters
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "clear-or-private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
