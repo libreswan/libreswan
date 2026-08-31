@@ -1,5 +1,5 @@
 # confirm tunnel is up
-ipsec whack --trafficstatus
+ipsec trafficstatus
 # killing service ipsec
 ipsec whack --impair send_no_delete
 ipsec stop

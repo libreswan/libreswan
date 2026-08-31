@@ -1,6 +1,9 @@
 # trigger ping, this will be lost
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
-../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_SA_INIT request'
+../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_AUTH request'
+../../guestbin/wait-for-pluto.sh --match '#1: initiator established IKE SA'
+../../guestbin/wait-for-pluto.sh --match '#2: initiator established Child SA using #1'
 
 # ping should succeed through tunnel
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
@@ -11,5 +14,5 @@
 #    TRAP: 192.1.3.209/32->192.1.2.23/24
 ipsec _kernel policy
 ipsec _kernel state
-ipsec whack --trafficstatus
-ipsec whack --shuntstatus
+ipsec trafficstatus
+ipsec shuntstatus
