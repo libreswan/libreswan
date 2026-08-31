@@ -9,7 +9,7 @@ west #
  ipsec add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
- ipsec whack --impair suppress_retransmits --impair revival
+ ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
@@ -20,7 +20,6 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection has ike-sa-init-full-transcript-auth=yes but peer does not support it
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state IKE_SA_INIT_I
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --trafficstatus
