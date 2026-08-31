@@ -400,6 +400,9 @@ struct impairment impairments[] = {
 
 	U(omit_addke_notification, "omit an ADDITIONAL_KEY_EXCHANGE notification in the IKE_FOLLOWUP_KE exchange for addkeN"),
 
+	V(emit_v2N_SIGNATURE_HASH_ALGORITHMS, "mangle said notification",
+	  .how_sparse_names = &impair_emit_names),
+
 #undef U
 #undef B
 #undef V

@@ -215,6 +215,8 @@ struct impair {
 
 	struct impair_unsigned omit_addke_notification;
 
+	enum impair_emit emit_v2N_SIGNATURE_HASH_ALGORITHMS;
+
 	/*
 	 * add more here
 	 */
