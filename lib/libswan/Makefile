@@ -76,8 +76,6 @@ OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
 OBJS += pubkey/pubkey_sign_hash.o
 
-OBJS += sparse_names.o
-
 OBJS += ttobool.o
 
 OBJS += binaryscale-iec-60027-2.o
@@ -263,8 +261,6 @@ OBJS += ikev1_prf.o
 endif
 OBJS += ikev2_prf.o
 
-OBJS += names.o
-OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o
 OBJS += ipseckey_algorithm_type_names.o
 OBJS += ipseckey_algorithm_config_names.o
@@ -282,6 +278,16 @@ OBJS += seccomp_mode_names.o
 
 $(builddir)/%/:
 	mkdir -p $@
+
+#
+# {enum,sparse}name stuff
+#
+
+$(OBJS): | $(builddir)/names/
+
+OBJS += names/sparse_names.o
+OBJS += names/enum_names.o
+OBJS += names/names.o
 
 #
 # optarg stuff
