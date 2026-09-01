@@ -408,6 +408,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		if (pk == NULL) {
 			llog_nss_error(RC_LOG, logger,
 				       "extracting certificate public key using CERT_ExtractPublicKey() failed");
+			CERT_DestroyCertificate(cert);
  			return;
  		}
 
