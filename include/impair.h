@@ -49,6 +49,24 @@ enum impair_emit {
 #define IMPAIR_EMIT_ROOF (IMPAIR_EMIT_DUPLICATE+1) /* >= ROOF -> <number> */
 };
 
+enum impair_payload_flag {
+	IMPAIR_PAYLOAD_EMIT_NEVER,
+	IMPAIR_PAYLOAD_EMIT_ALWAYS,
+	IMPAIR_PAYLOAD_EMIT_EMPTY,
+	IMPAIR_PAYLOAD_EMIT_DUPLICATE,
+	IMPAIR_PAYLOAD_IGNORE,
+#define IMPAIR_PAYLOAD_ROOF (IMPAIR_PAYLOAD_IGNORE+1)
+};
+
+struct impair_payload {
+#define impair_payload_emit_never flags[IMPAIR_PAYLOAD_EMIT_NEVER]
+#define impair_payload_emit_always flags[IMPAIR_PAYLOAD_EMIT_ALWAYS]
+#define impair_payload_emit_empty flags[IMPAIR_PAYLOAD_EMIT_EMPTY]
+#define impair_payload_emit_duplicate flags[IMPAIR_PAYLOAD_EMIT_DUPLICATE]
+#define impair_payload_ignore flags[IMPAIR_PAYLOAD_IGNORE]
+	bool flags[IMPAIR_PAYLOAD_ROOF];
+};
+
 /*
  * Meddle with a specific exchange.
  */
@@ -216,7 +234,7 @@ struct impair {
 
 	struct impair_unsigned omit_addke_notification;
 
-	enum impair_emit emit_v2N_SIGNATURE_HASH_ALGORITHMS;
+	struct impair_payload v2N_SIGNATURE_HASH_ALGORITHMS;
 
 	/*
 	 * add more here
@@ -256,6 +274,8 @@ enum impair_action {
 	CALL_IMPAIR_MESSAGE_DRIP,
 	CALL_IMPAIR_MESSAGE_DUPLICATE,
 	CALL_IMPAIR_MESSAGE_REPLAY,
+
+	IMPAIR_FLAGS,
 
 #if 0
 	CALL_IMPAIR_CORRUPT_INBOUND,

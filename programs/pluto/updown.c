@@ -661,4 +661,3 @@ void jam_updown_status(struct jambuf *buf, const char *prefix,
 			&updown_config_names);
 	jam_string(buf, ";");
 }
-
