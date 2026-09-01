@@ -1730,3 +1730,5 @@ kvmplutotest	ikev2-resume-04-instance		good	github/1951
 
 kvmplutotest	ikev2-routes-subnets-plural		good	github/1950
 kvmplutotest	ikev2-routes-subnets-singular		good	github/1950
+
+kvmplutotest    cve-2026-77205-fips-cert-leak		  good
