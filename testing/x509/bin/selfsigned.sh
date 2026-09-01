@@ -1,5 +1,9 @@
 #!/bin/sh
 
+CERTUTIL=${certutil:-${CERTUTIL}}
+PK12UTIL=${pk12util:-${PK12UTIL}}
+CRLUTIL=${crlutil:-${CRLUTIL}}
+
 if test $# -ne 1 ; then
     cat <<EOF
 usage: $0 <destdir>

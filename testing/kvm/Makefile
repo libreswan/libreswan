@@ -631,7 +631,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: generate the keys using $(KVM_KEYS_DOMAIN)
 	:
-	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /testing/x509
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /source/testing/x509
 	:
 	: Also regenerate the DNSSEC keys
 	:
