@@ -1,45 +1,13 @@
-/testing/guestbin/swan-prep --userland strongswan
-east #
- /testing/x509/bin/strongswan.sh strong-ED --type ed25519
-+ x509dir=OUTPUT
-+ rm -rf 'OUTPUT/strongswan/*'
-+ mkdir -p OUTPUT/strongswan/
-+ pki strong-ED --type ed25519
-+ local caname=strong-ED
-+ shift
-+ mkdir OUTPUT/strongswan/strong-ED
-+ cd OUTPUT/strongswan/strong-ED
-+ : strongCAkey.der
-+ PATH/libexec/strongswan/pki --gen --type ed25519
-+ : strongWestKey.der
-+ PATH/libexec/strongswan/pki --gen --type ed25519
-+ : strongEastKey.der
-+ PATH/libexec/strongswan/pki --gen --type ed25519
-+ PATH/libexec/strongswan/pki --self --in strongCAkey.der --dn 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA' --ca
-+ PATH/libexec/strongswan/pki --pub --in strongWestKey.der
-+ PATH/libexec/strongswan/pki --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn 'C=CH, O=strongSwan, CN=strongWest' --flag serverAuth --san west.testing.libreswan.org
-+ PATH/libexec/strongswan/pki --pub --in strongEastKey.der
-+ PATH/libexec/strongswan/pki --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn 'C=CH, O=strongSwan, CN=strongEast' --flag serverAuth --san east.testing.libreswan.org
-+ openssl x509 -inform der -outform pem -in strongCAcert.der -out strongCAcert.pem
-+ openssl x509 -inform der -outform pem -in strongWestCert.der -out strongWestCert.pem
-+ openssl x509 -inform der -outform pem -in strongEastCert.der -out strongEastCert.pem
-+ openssl pkey -inform der -outform pem -in strongCAkey.der -out strongCAkey.pem
-+ openssl pkey -inform der -outform pem -in strongWestKey.der -out strongWestKey.pem
-+ openssl pkey -inform der -outform pem -in strongEastKey.der -out strongEastKey.pem
-+ openssl pkcs12 -export -in strongCAcert.pem -inkey strongCAkey.pem -name strong-ED -out strongCAcert.p12 -passout pass:foobar
-+ openssl pkcs12 -export -in strongWestCert.pem -inkey strongWestKey.pem -certfile strongCAcert.p12 -name strongWest -export -out strongWest.p12 -passout pass:foobar -passcerts pass:foobar
-+ openssl pkcs12 -export -in strongEastCert.pem -inkey strongEastKey.pem -certfile strongCAcert.p12 -name strongEast -export -out strongEast.p12 -passout pass:foobar -passcerts pass:foobar
-east #
- /testing/guestbin/swan-prep --nokeys
+/testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 east #
- /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-02-sendcerts/OUTPUT/strongswan/strong-ED/strongEast.p12
+ /testing/x509/import.sh real/mained/east.p12
+ ipsec pk12util -w nss-pw -i real/mained/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-ED -t CT,,
- ipsec certutil -O -n strongEast
-"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
-  "strongEast" [CN=strongEast,O=strongSwan,C=CH]
+ ipsec certutil -M -n mained -t CT,,
+ ipsec certutil -O -n east
+"mained" [E=testing@libreswan.org,CN=Libreswan test CA for mained,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ipsec start
 Redirecting to: [initsystem]

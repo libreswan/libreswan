@@ -1,21 +1,21 @@
 /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 west #
- /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preloaded-cert/OUTPUT/strongswan/strong-ED/strongEast.p12
+ /testing/x509/import.sh real/mained/east.p12
+ ipsec pk12util -w nss-pw -i real/mained/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-ED -t CT,,
- ipsec certutil -O -n strongEast
-"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
-  "strongEast" [CN=strongEast,O=strongSwan,C=CH]
+ ipsec certutil -M -n mained -t CT,,
+ ipsec certutil -O -n east
+"mained" [E=testing@libreswan.org,CN=Libreswan test CA for mained,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
- /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
- ipsec pk12util -w nss-pw -i /testing/pluto/ikev2-x509-eddsa-01-preloaded-cert/OUTPUT/strongswan/strong-ED/strongWest.p12
+ /testing/x509/import.sh real/mained/west.p12
+ ipsec pk12util -w nss-pw -i real/mained/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-ED -t CT,,
- ipsec certutil -O -n strongWest
-"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
-  "strongWest" [CN=strongWest,O=strongSwan,C=CH]
+ ipsec certutil -M -n mained -t CT,,
+ ipsec certutil -O -n west
+"mained" [E=testing@libreswan.org,CN=Libreswan test CA for mained,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -31,34 +31,58 @@ west #
 "eddsa" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eddsa" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eddsa" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-"eddsa" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature EDDSA with IDENTITY and DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"eddsa" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature EDDSA with IDENTITY and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "eddsa" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "eddsa" #1: identity hash, skipping hash calculation
-"eddsa" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'C=CH, O=strongSwan, CN=strongEast' and P-255 EDDSA with IDENTITY digital signature issued by 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+"eddsa" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and P-255 EDDSA with IDENTITY digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
 "eddsa" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec trafficstatus
-#2: "eddsa", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CH, O=strongSwan, CN=strongEast'
+#2: "eddsa", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec listpubkeys
  
 List of Public Keys:
  
 TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
-       DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongEast'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+       DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       USER_FQDN 'user-east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
 TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
        FQDN '@east.testing.libreswan.org'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
 TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
-       DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+       USER_FQDN 'east@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       IPV4_ADDR '192.1.2.23'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       IPV6_ADDR '2001:db8:1:2::23'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       USER_FQDN 'user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
 TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
        FQDN '@west.testing.libreswan.org'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan strong-ED CA'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       USER_FQDN 'west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       IPV4_ADDR '192.1.2.45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
+TIMESTAMP,  255 EDDSA Key XXXXXXXXX (has private key), until TIMESTAMP ok
+       IPV6_ADDR '2001:db8:1:2::45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mained, E=testing@libreswan.org'
 west #
  ipsec delete westnet-eastnet-ikev2
 no connection or alias named "westnet-eastnet-ikev2"
