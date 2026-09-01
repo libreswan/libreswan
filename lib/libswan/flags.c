@@ -75,3 +75,13 @@ void jam_ro_flags_human(struct jambuf *buf,
 		jam_name_human(buf, names, u);
 	}
 }
+
+bool ro_flags_set(struct ro_flags flags)
+{
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (flags.flag[u]) {
+			return true;
+		}
+	}
+	return false;
+}

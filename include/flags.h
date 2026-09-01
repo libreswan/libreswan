@@ -67,4 +67,7 @@ void jam_ro_flags_human(struct jambuf *buf,
 #define jam_flags_human(BUF, FLAG, NAMES)				\
 	jam_ro_flags_human(BUF, (struct ro_flags) FLAGS(FLAG), NAMES)
 
+bool ro_flags_set(struct ro_flags flags);
+#define flags_set(FLAG) ro_flags_set((struct ro_flags) FLAGS(FLAG))
+
 #endif
