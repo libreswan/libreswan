@@ -49,6 +49,7 @@ static const struct sparse_names impair_emit_names = {
 			.value = IMPAIR_EMIT_##E,	\
 			.help = H,			\
 		}
+		S(FORCE, "force content to be emitted"),
 		S(OMIT, "do not emit content"),
 		S(EMPTY, "emit zero length content"),
 		S(DUPLICATE, "emit content twice"),

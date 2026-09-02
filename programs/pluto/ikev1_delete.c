@@ -130,6 +130,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 
 		switch (impair.v1_isakmp_delete_payload) {
 		case IMPAIR_EMIT_NO:
+		case IMPAIR_EMIT_FORCE:
 		{
 			struct pbs_out del_pbs;
 			passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
@@ -172,6 +173,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 
 			switch (impair.v1_ipsec_delete_payload) {
 			case IMPAIR_EMIT_NO:
+			case IMPAIR_EMIT_FORCE:
 			{
 				struct pbs_out del_pbs;
 				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
