@@ -1679,7 +1679,7 @@ typedef enum {
  * IKEv2, while similar, is different.  Let's not re-use and confuse.
  */
 
-typedef enum v2_notification {
+typedef enum ikev2_notification {
 
 	/*
 	 * Unofficial!  Must be zero to match default C initial value.
@@ -1820,6 +1820,9 @@ typedef enum v2_notification {
 	v2N_NULL_AUTH = 40960,
 
 } v2_notification_t;
+
+extern const struct enum_names v2_notification_names;
+extern const struct names ikev2_notification_names;
 
 /* RFC 8784 created registry */
 enum ikev2_ppk_id_type {

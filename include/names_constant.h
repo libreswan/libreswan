@@ -64,7 +64,6 @@ extern enum_names ikev2_trans_type_prf_names;
 extern enum_names ikev2_trans_type_integ_names;
 extern enum_names ikev2_trans_attr_descs;
 extern enum_names ikev2_cert_type_names;
-extern enum_names v2_notification_names;
 extern enum_names ikev2_ts_type_names;
 extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
