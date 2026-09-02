@@ -1545,32 +1545,6 @@ enum_names ikev2_cp_type_names = {
 	NULL
 };
 
-/* ikev2 auth methods */
-
-static const char *const ikev2_auth_method_name[] = {
-#define S(E) [E - IKEv2_AUTH_RESERVED] = #E
-	S(IKEv2_AUTH_RESERVED),
-	S(IKEv2_AUTH_RSA_DIGITAL_SIGNATURE),
-	S(IKEv2_AUTH_SHARED_KEY_MAC),
-	S(IKEv2_AUTH_DSS_DIGITAL_SIGNATURE),
-	/* 4 - 8 unassigned */
-	S(IKEv2_AUTH_ECDSA_SHA2_256_P256),
-	S(IKEv2_AUTH_ECDSA_SHA2_384_P384),
-	S(IKEv2_AUTH_ECDSA_SHA2_512_P521),
-	S(IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD), /* 12 - RFC 6467 */
-	S(IKEv2_AUTH_NULL),
-	S(IKEv2_AUTH_DIGITAL_SIGNATURE), /* 14 - RFC 7427 */
-#undef S
-};
-
-enum_names ikev2_auth_method_names = {
-	IKEv2_AUTH_RESERVED,
-	IKEv2_AUTH_DIGITAL_SIGNATURE,
-	ARRAY_PTR(ikev2_auth_method_name),
-	"IKEv2_AUTH_", /* prefix */
-	NULL
-};
-
 /*
  * IKEv1 Oakley Group Description attribute
  */

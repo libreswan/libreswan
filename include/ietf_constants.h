@@ -1591,6 +1591,9 @@ enum ikev2_auth_method {
 	/* 201 - 255 private use */
 };
 
+extern const struct enum_names ikev2_auth_method_names;
+extern const struct names ikev2_auth_method_nom;
+
 /*
  * Notify messages -- error types
  * See RFC2408 ISAKMP 3.14.1

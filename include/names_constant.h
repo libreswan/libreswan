@@ -54,7 +54,7 @@ extern enum_names oakley_auth_names;
 extern enum_names v1_notification_names;
 
 /* IKEv2 */
-extern enum_names ikev2_auth_method_names;
+
 extern enum_names ikev2_hash_algorithm_names;
 extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
