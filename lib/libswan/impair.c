@@ -331,7 +331,7 @@ struct impairment impairments[] = {
 	 */
 
 	A("trigger", GLOBAL_EVENT_HANDLER, 0, "trigger the global event", "EVENT",
-	  .how_enum_names = &global_timer_names),
+	  .how_enum_names = &global_timer_enum_names),
 
 	/*
 	 * Trigger state event.

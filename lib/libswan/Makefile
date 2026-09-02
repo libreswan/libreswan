@@ -289,6 +289,7 @@ OBJS += names/sparse_names.o
 OBJS += names/enum_names.o
 OBJS += names/names.o
 
+OBJS += names/global_timer_names.o
 OBJS += names/ikev2_auth_method_names.o
 OBJS += names/ikev2_exchange_names.o
 OBJS += names/ikev2_notification_names.o

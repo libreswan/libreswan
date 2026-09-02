@@ -2320,27 +2320,6 @@ const struct enum_names eaptls_flag_names = {
 };
 
 /*
- * enum global_timers
- */
-
-static const char *global_timer_name[] = {
-#define S(E) [E - EVENT_REINIT_SECRET] = #E
-	S(EVENT_REINIT_SECRET),
-	S(EVENT_SHUNT_SCAN),
-	S(EVENT_SD_WATCHDOG),
-	S(EVENT_CHECK_CRLS),
-	S(EVENT_FREE_ROOT_CERTS),
-	S(EVENT_RESET_LOG_LIMITER),
-#undef S
-};
-const struct enum_names global_timer_names = {
-	GLOBAL_TIMER_FLOOR, GLOBAL_TIMER_ROOF-1,
-	ARRAY_PTR(global_timer_name),
-	"EVENT_",
-	NULL,
-};
-
-/*
  * enum event_type
  */
 

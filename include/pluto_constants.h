@@ -161,8 +161,6 @@ enum natt_method {
  * timers).
  */
 
-extern const struct enum_names global_timer_names;
-
 enum global_timer {
 #define GLOBAL_TIMER_FLOOR 0
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
@@ -178,6 +176,9 @@ enum global_timer {
 
 #define GLOBAL_TIMER_ROOF (EVENT_RESET_LOG_LIMITER+1)
 };
+
+extern const struct enum_names global_timer_enum_names;
+extern const struct names global_timer_names;
 
 /*
  * Connection based events.
