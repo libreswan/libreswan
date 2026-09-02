@@ -21,7 +21,7 @@
 
 diag_t ttoflags_raw(const char *value,
 		    struct rw_flags flags,
-		    const struct enum_names *names)
+		    const struct names *names)
 {
 	shunk_t cursor = shunk1(value);
 	while (true) {
@@ -37,7 +37,7 @@ diag_t ttoflags_raw(const char *value,
 		shunk_t arg = elem;
 		/* excludes --no-... no-... */
 		bool no = (hunk_streat(&arg, "no-") || hunk_streat(&arg, "no"));
-		int ix = enum_byname(names, arg);
+		int ix = index_byname(names, arg);
 		if (ix < 0) {
 			return diag("\""PRI_SHUNK"\" unrecognized", pri_shunk(arg));
 		}
@@ -51,20 +51,20 @@ diag_t ttoflags_raw(const char *value,
 
 void jam_raw_flags(struct jambuf *buf,
 		   struct ro_flags flags,
-		   const struct enum_names *names)
+		   const struct names *names)
 {
 	const char *sep = "";
 	for (unsigned u = 0; u < flags.len; u++) {
 		if (flags.flag[u]) {
 			jam_string(buf, sep); sep = ",";
-			jam_enum_short(buf, names, u);
+			jam_name_short(buf, names, u);
 		}
 	}
 }
 
 void jam_raw_flags_human(struct jambuf *buf,
 			 struct ro_flags flags,
-			 const struct enum_names *names)
+			 const struct names *names)
 {
 	const char *sep = "";
 	for (unsigned u = 0; u < flags.len; u++) {
@@ -72,6 +72,6 @@ void jam_raw_flags_human(struct jambuf *buf,
 		if (!flags.flag[u]) {
 			jam_string(buf, "no");
 		}
-		jam_enum_human(buf, names, u);
+		jam_name_human(buf, names, u);
 	}
 }

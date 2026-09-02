@@ -22,7 +22,7 @@
 #include "lswcdefs.h"
 #include "diag.h"
 
-struct enum_names;
+struct names;
 struct jambuf;
 
 struct ro_flags {
@@ -44,20 +44,20 @@ struct rw_flags {
 
 diag_t ttoflags_raw(const char *value,
 		    struct rw_flags flags,
-		    const struct enum_names *names);
+		    const struct names *names);
 
 #define jam_flags(BUF, FLAGS, NAMES)				\
 	jam_raw_flags(BUF, RO_FLAGS(FLAGS), NAMES)
 
 void jam_raw_flags(struct jambuf *buf,
 		   struct ro_flags flags,
-		   const struct enum_names *names);
+		   const struct names *names);
 
 #define jam_flags_human(BUF, FLAGS, NAMES)				\
 	jam_raw_flags_human(BUF, RO_FLAGS(FLAGS), NAMES)
 
 void jam_raw_flags_human(struct jambuf *buf,
 			 struct ro_flags flags,
-			 const struct enum_names *names);
+			 const struct names *names);
 
 #endif

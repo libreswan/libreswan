@@ -23,7 +23,7 @@
 
 #include "constants.h"		/* for strcaseeq() */
 #include "sparse_names.h"
-
+#include "passert.h"
 #include "jambuf.h"
 
 /* look up enum names in a sparse_names */
@@ -182,4 +182,62 @@ size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *na
 		i = ii;
 	}
 	return s;
+}
+
+int sparse_byname(const struct sparse_names *names, shunk_t string)
+{
+	const struct sparse_name *sparse = sparse_lookup_by_name(names, string);
+	if (sparse == NULL) {
+		return -1;
+	}
+
+	return sparse->value;
+}
+
+size_t jam_sparse_human(struct jambuf *buf,
+			const struct sparse_names *sn,
+			unsigned long val)
+{
+	const char *name = find_sparse(sn, val, /*shorten?*/true);
+	if (name != NULL) {
+		return jam_string_human(buf, name);
+	}
+
+	return jam_bad(buf, sn->prefix, val);
+}
+
+long next_sparse(const struct sparse_names *names, long l)
+{
+	if (l < -1) {
+		llog_passert(&global_logger, HERE, "%ld should be >= -1", l);
+	}
+
+	unsigned long e;
+
+	/*
+	 * Advance L by 1 giving a starting candidate.
+	 */
+	if (l < 0) {
+		e = 0;
+	} else {
+		e = l+1;
+	}
+
+	unsigned long n = e;
+	for (const struct sparse_name *sn = names->list; sn->name != NULL; sn++) {
+		if (sn->value == e) {
+			return e;
+		}
+		if (sn->value > e) {
+			if (n == e || n < sn->value) {
+				n = sn->value;
+			}
+		}
+	}
+
+	if (n > e) {
+		return n;
+	}
+
+	return -1;
 }
