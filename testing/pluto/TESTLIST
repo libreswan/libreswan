@@ -554,8 +554,10 @@ kvmplutotest	ikev2-x509-37-fakeeast-westecca		good
 
 # PKCS7 payload containing the certificates
 
-kvmplutotest	x509-pkcs7-01-ikev1			good
-kvmplutotest	x509-pkcs7-01-ikev2			good
+kvmplutotest	x509-pkcs7-01-ikev1				good
+kvmplutotest	x509-pkcs7-01-ikev2				good
+kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev1	good
+kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev2	good
 
 #
 
