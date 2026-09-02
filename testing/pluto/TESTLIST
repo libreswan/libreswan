@@ -489,7 +489,6 @@ kvmplutotest	ikev1-x509-11-san-dns-match		good
 kvmplutotest	ikev1-x509-12-san-dn-match		good
 kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
 kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
-kvmplutotest	ikev1-x509-15-pkcs7			good
 kvmplutotest	ikev1-x509-16-mismatch-ignore		good
 kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
@@ -526,7 +525,6 @@ kvmplutotest	ikev2-x509-18-multicert-rightid		good
 kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
 kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
 
-kvmplutotest	ikev2-x509-22-pkcs7			good
 kvmplutotest	ikev2-x509-23-no-ca			good
 kvmplutotest	ikev2-x509-24-fakewest			good
 kvmplutotest	ikev2-x509-25-missing-ca		good
@@ -553,6 +551,13 @@ kvmplutotest	ikev2-x509-36-leftrightauth		good
 kvmplutotest	ikev2-x509-37-fakeeast-westrsa		good
 kvmplutotest	ikev2-x509-37-fakeeast-westnoca		good
 kvmplutotest	ikev2-x509-37-fakeeast-westecca		good
+
+# PKCS7 payload containing the certificates
+
+kvmplutotest	x509-pkcs7-01-ikev1			good
+kvmplutotest	x509-pkcs7-01-ikev2			good
+
+#
 
 kvmplutotest	ikev2-auth-null-01			good
 kvmplutotest	ikev2-auth-mismatch-bug			wip	github/2931
