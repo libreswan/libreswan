@@ -16,6 +16,7 @@
 #include "updown.h"
 #include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
+#include "names.h"
 
 static const char *updown_story[] = {
 #define C(E,V) [E-UPDOWN_FLOOR] = V
@@ -56,9 +57,13 @@ static const char *updown_config_name[] = {
 #undef C
 };
 
-const struct enum_names updown_config_names = {
+static const struct enum_names updown_config_enum_names = {
 	0, UPDOWN_CONFIG_ROOF-1,
 	ARRAY_PTR(updown_config_name),
 	"UPDOWN_CONFIG_",
 	NULL,
+};
+
+const struct names updown_config_names = {
+	.enum_names = &updown_config_enum_names,
 };

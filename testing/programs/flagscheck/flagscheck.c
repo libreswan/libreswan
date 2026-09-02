@@ -36,11 +36,15 @@ static const char *const test_flag_name[TEST_FLAG_ROOF] = {
 #undef S
 };
 
-static const struct enum_names test_flag_names = {
+static const struct enum_names test_flag_enum_names = {
 	0, TEST_FLAG_ROOF-1,
 	ARRAY_PTR(test_flag_name),
 	"TEST_FLAG_",
 	NULL,
+};
+
+static const struct names test_flag_names = {
+	.enum_names = &test_flag_enum_names,
 };
 
 struct test_flags {

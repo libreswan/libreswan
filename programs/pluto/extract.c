@@ -557,7 +557,7 @@ static char *extract_string(struct kv kv,
 
 static diag_t extract_flags(struct kv kv,
 			    struct rw_flags flags,
-			    const struct enum_names *names,
+			    const struct names *names,
 			    struct verbose verbose)
 {
 	if (never_negotiate_string_option(kv, verbose)) {
