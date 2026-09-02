@@ -565,14 +565,24 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * If either end has an algorithm requiring DIGSIG, signal to
 	 * the responder that the new Digital Signature AUTH payload
 	 * can be used.
+	 *
+	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
+	 * should be controled by a global config parameter.
 	 */
-	if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
-	    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_FORCE) {
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
+		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
+			return false;
+		}
+	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
 			return false;
 		}
 	} else {
-		ldbg(ike->sa.logger, "neither end has authby=SIGSIG, skipping SIGNATURE_HASH_ALGORITHMS notify");
+		ldbg(ike->sa.logger, "neither end has auth methods that can use SIGNATURE_HASH_ALGORITHMS notify");
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -944,11 +954,23 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 *
 	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
 	 *   information
+	 *
+	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
+	 * should be controled by a global config parameter.
 	 */
-	if (c->config->sighash_policy != LEMPTY) {
+	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_FORCE) {
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
+		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	} else if (c->config->sighash_policy != LEMPTY) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
+	} else {
+		ldbg(ike->sa.logger, "config has no .sighash_policy");
 	}
 
 	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
