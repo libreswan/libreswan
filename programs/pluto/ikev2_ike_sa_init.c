@@ -569,16 +569,16 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
 	 * should be controled by a global config parameter.
 	 */
+	lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
 	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_FORCE) {
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
-		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
 			return false;
 		}
 	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
 		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
 			return false;
 		}
 	} else {
