@@ -843,6 +843,9 @@ enum ikev2_exchange {
 	/* 240-255 Private Use */
 };
 
+extern const struct enum_names ikev2_exchange_names;
+extern const struct names ikev2_exchange_nom;
+
 /*
  * ISAKMP header flag bits
  */

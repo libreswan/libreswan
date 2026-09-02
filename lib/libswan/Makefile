@@ -289,6 +289,8 @@ OBJS += names/sparse_names.o
 OBJS += names/enum_names.o
 OBJS += names/names.o
 
+OBJS += names/ikev2_exchange_names.o
+
 #
 # optarg stuff
 #

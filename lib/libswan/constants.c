@@ -514,30 +514,6 @@ enum_names isakmp_xchg_type_names = {
 	&isakmp_xchg_type_doi_and_v2_names,
 };
 
-/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
-static const char *const ikev2_exchange_name[] = {
-#define S(E) [E - IKEv2_EXCHANGE_FLOOR] = #E
-	S(ISAKMP_v2_IKE_SA_INIT),
-	S(ISAKMP_v2_IKE_AUTH),
-	S(ISAKMP_v2_CREATE_CHILD_SA),
-	S(ISAKMP_v2_INFORMATIONAL),
-	S(ISAKMP_v2_IKE_SESSION_RESUME),
-	S(ISAKMP_v2_GSA_AUTH),
-	S(ISAKMP_v2_GSA_REGISTRATION),
-	S(ISAKMP_v2_GSA_REKEY),
-	S(ISAKMP_v2_IKE_INTERMEDIATE),
-	S(ISAKMP_v2_IKE_FOLLOWUP_KE),
-#undef S
-};
-
-const struct enum_names ikev2_exchange_names = {
-	IKEv2_EXCHANGE_FLOOR,
-	IKEv2_EXCHANGE_ROOF-1,
-	ARRAY_PTR(ikev2_exchange_name),
-	"ISAKMP_v2_", /* prefix */
-	NULL,
-};
-
 static enum_names *const exchange_type_names_table[] = {
 	[IKEv1 - IKE_VERSION_FLOOR] = &ikev1_exchange_names,
 	[IKEv2 - IKE_VERSION_FLOOR] = &ikev2_exchange_names,

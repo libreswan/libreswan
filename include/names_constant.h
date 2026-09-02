@@ -40,7 +40,6 @@ extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
-extern enum_names ikev2_exchange_names;
 extern enum_names isakmp_xchg_type_names;
 extern enum_enum_names exchange_type_names;
 extern enum_names ikev1_protocol_names;
