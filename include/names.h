@@ -26,6 +26,11 @@ struct enum_enum_names;
 struct sparse_names;
 struct sparse_sparse_names;
 
+struct names {
+	const struct sparse_names *sparse_names;
+	const struct enum_names *enum_names;
+};
+
 /*
  * Printing names:
  *
@@ -78,11 +83,17 @@ typedef struct name_buf {
  * becomes "first-value".
  */
 
+const char *str_name_long(const struct names *en, unsigned long val, name_buf *b);
+const char *str_name_short(const struct names *en, unsigned long val, name_buf *b);
+
 const char *str_enum_long(const struct enum_names *en, unsigned long val, name_buf *b);
 const char *str_enum_short(const struct enum_names *en, unsigned long val, name_buf *b);
 
 const char *str_sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *buf);
 const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *buf);
+
+size_t jam_name_long(struct jambuf *, const struct names *en, unsigned long val);
+size_t jam_name_short(struct jambuf *, const struct names *en, unsigned long val);
 
 size_t jam_enum_long(struct jambuf *, const struct enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, const struct enum_names *en, unsigned long val);
@@ -91,8 +102,11 @@ size_t jam_sparse_long(struct jambuf *buf, const struct sparse_names *sd, unsign
 size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
 
 /* drop prefix + transform [_A-Z]->[-a-z] */
+size_t jam_name_human(struct jambuf *, const struct names *en, unsigned long val);
+size_t jam_sparse_human(struct jambuf *, const struct sparse_names *en, unsigned long val);
 size_t jam_enum_human(struct jambuf *, const struct enum_names *en, unsigned long val);
 
+size_t jam_names_quoted(struct jambuf *buf, const struct names *names);
 size_t jam_enum_names_quoted(struct jambuf *buf, const struct enum_names *names);
 size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *names);
 
@@ -111,6 +125,9 @@ size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *na
  * oh-so-slightly faster it prefered when the result is debug-logged.
  */
 
+bool name_long(const struct names *en, unsigned long val, name_buf *b);
+bool name_short(const struct names *en, unsigned long val, name_buf *b);
+
 bool enum_long(const struct enum_names *en, unsigned long val, name_buf *b);
 bool enum_short(const struct enum_names *en, unsigned long val, name_buf *b);
 
@@ -123,12 +140,17 @@ bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b)
  * start with -1 -- we hope more immune to rounding
  * ??? how are integers subject to rounding?
  */
+extern long next_name(const struct names *en, long last);
+extern long next_sparse(const struct sparse_names *en, long last);
 extern long next_enum(const struct enum_names *en, long last);
 
 /*
  * Search ED for an enum matching STRING.  Return -1 if no match is
  * found.
  */
+
+extern int index_byname(const struct names *ed, shunk_t string);
+extern int sparse_byname(const struct sparse_names *ed, shunk_t string);
 extern int enum_byname(const struct enum_names *ed, shunk_t string);
 
 /*
