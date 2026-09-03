@@ -104,7 +104,8 @@ kvmplutotest	basic-pluto-01-nokey		good
 # add connection parser and semantic checker tests
 #################################################################
 
-kvmplutotest	connalias-01-conflict				good	github/1620
+kvmplutotest	connalias-01-conflict-ikev1			good	github/1620
+kvmplutotest	connalias-01-conflict-ikev2			good	github/1620
 kvmplutotest	connalias-02-twoconn-ikev1			good
 kvmplutotest	connalias-02-twoconn-ikev2			good
 

@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 # connalias
-ipsec auto --add franklin
+ipsec add franklin
 echo "initdone"

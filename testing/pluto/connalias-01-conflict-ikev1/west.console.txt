@@ -1,0 +1,86 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add westnet-eastnet-alias
+"westnet-eastnet-alias": added oriented IKEv1 connection
+west #
+ ipsec add westnet-eastnet-second
+"westnet-eastnet-second": added oriented IKEv1 connection
+west #
+ ipsec connectionstatus westnet-eastnet
+no connection or alias named "westnet-eastnet"
+west #
+ echo "initdone"
+initdone
+west #
+ # use the connalias
+west #
+ ipsec up franklin
+initiating all connections with alias "franklin"
+"westnet-eastnet-alias" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet-alias" #1: sent Main Mode request
+"westnet-eastnet-second": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-alias" #1 negotiating with 192.1.2.23
+initiating 2 connections
+"westnet-eastnet-alias" #1: sent Main Mode I2
+"westnet-eastnet-alias" #1: sent Main Mode I3
+"westnet-eastnet-alias" #1: Peer ID is FQDN: '@east'
+"westnet-eastnet-alias" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit raw RSA with SHA1 signature
+"westnet-eastnet-alias" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet-alias" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet-second" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet-alias" #2: sent Quick Mode request
+"westnet-eastnet-second" #3: sent Quick Mode request
+"westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; in use by negotiating Child SA "westnet-eastnet-second" #3 with routing unrouted-bare-negotiation
+"westnet-eastnet-alias" #2: state transition failed: failed
+"westnet-eastnet-alias" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "westnet-eastnet-alias" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+ERROR: "westnet-eastnet-alias" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow 192.0.2.0/24===192.0.1.0/24: No such file or directory (errno 2)
+"westnet-eastnet-alias" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "westnet-eastnet-alias" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+"westnet-eastnet-second" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec trafficstatus
+#3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #
+ ipsec _kernel state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+west #
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #
