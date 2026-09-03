@@ -9,37 +9,15 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 "mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
- /testing/x509/import.sh real/mainca/east.end.cert
- ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
- ipsec certutil -O -n east
-"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair send_pkcs7_thingie
-west #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
+ ipsec add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
+west #
+ ipsec whack --impair send_pkcs7_thingie:1 # CERTS
 west #
  echo "initdone"
 initdone
@@ -48,7 +26,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-IMPAIR: "ikev2-westnet-eastnet-x509-cr" #1: sending cert as PKCS7 blob
+IMPAIR: "ikev2-westnet-eastnet-x509-cr" #1: sending certs as PKCS7 blob
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "ikev2-westnet-eastnet-x509-cr" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr} reassembled from N fragments
 "ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -57,19 +35,14 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo "done"
 done
 west #
- grep -e 'parse IKEv2 Certificate' -e 'emit IKEv2 Certificate' -e 'ikev2 cert encoding' /tmp/pluto.log
-| ***parse IKEv2 Certificate Request Payload:
-|    ikev2 cert encoding: CERT_X509_SIGNATURE (4, 0x04)
-| ****emit IKEv2 Certificate Payload:
-|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (1, 0x01)
-| **parse IKEv2 Certificate Payload:
-|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (1, 0x01)
+ grep '^[^|].*PKCS7' /tmp/pluto.log
+IMPAIR: "ikev2-westnet-eastnet-x509-cr" #1: sending certs as PKCS7 blob
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23

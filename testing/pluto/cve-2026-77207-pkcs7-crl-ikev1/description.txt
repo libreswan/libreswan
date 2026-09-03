@@ -1,0 +1,2 @@
+A test without CA. certs are loaded on both ends and sent using PKCS7
+
