@@ -42,6 +42,7 @@ enum impair_ddos_cookie {
 
 enum impair_emit {
 	IMPAIR_EMIT_NO = 0,
+	IMPAIR_EMIT_FORCE,
 	IMPAIR_EMIT_OMIT,
 	IMPAIR_EMIT_EMPTY,
 	IMPAIR_EMIT_DUPLICATE,
