@@ -564,7 +564,7 @@ static diag_t extract_flags(struct kv kv,
 		return NULL;
 	}
 
-	diag_t d = ttoflags_raw(kv.value, flags, names);
+	diag_t d = tto_rw_flags(kv.value, flags, names);
 	if (d != NULL) {
 		return diag_diag(&d, PRI_KV" invalid, ", pri_kv(kv));
 	}
@@ -632,7 +632,7 @@ static diag_t extract_updown(const struct whack_message *wm,
 	 */
 
 	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
-			  RW_FLAGS(child_config->updown.updown_config),
+			  (struct rw_flags) FLAGS(child_config->updown.updown_config),
 			  &updown_config_names,
 			  verbose);
 	if (d != NULL) {

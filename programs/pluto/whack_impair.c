@@ -65,6 +65,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 {
 	switch (impairment_action) {
 	case CALL_IMPAIR_UPDATE:
+	case IMPAIR_FLAGS:
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT_HANDLER:

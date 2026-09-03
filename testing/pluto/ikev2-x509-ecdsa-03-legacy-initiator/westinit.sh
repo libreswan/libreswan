@@ -7,5 +7,5 @@ ipsec start
 ipsec add westnet-eastnet-ikev2
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
-ipsec whack --impair emit_v2N_SIGNATURE_HASH_ALGORITHMS:omit
+ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
 echo "initdone"

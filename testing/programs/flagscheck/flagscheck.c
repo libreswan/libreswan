@@ -54,7 +54,6 @@ struct test_flags {
 	bool test_flags[TEST_FLAG_ROOF];
 };
 
-
 int main(int argc, char *argv[])
 {
 	leak_detective = true;

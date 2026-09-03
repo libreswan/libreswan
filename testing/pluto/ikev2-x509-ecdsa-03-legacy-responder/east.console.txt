@@ -21,7 +21,7 @@ east #
 east #
  ipsec whack --impair force_v2_auth_method:ecdsa_sha2_384_p384
 east #
- ipsec whack --impair emit_v2N_SIGNATURE_HASH_ALGORITHMS:omit
+ ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
 east #
  echo "initdone"
 initdone

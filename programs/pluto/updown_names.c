@@ -15,6 +15,7 @@
 
 #include "updown.h"
 #include "lswcdefs.h"		/* for ARRAY_PTR() */
+#include "names.h"
 #include "enum_names.h"
 #include "names.h"
 

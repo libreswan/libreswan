@@ -19,7 +19,7 @@
 #include "shunk.h"
 #include "names.h"
 
-diag_t ttoflags_raw(const char *value,
+diag_t tto_rw_flags(const char *value,
 		    struct rw_flags flags,
 		    const struct names *names)
 {
@@ -49,9 +49,9 @@ diag_t ttoflags_raw(const char *value,
 	return NULL;
 }
 
-void jam_raw_flags(struct jambuf *buf,
-		   struct ro_flags flags,
-		   const struct names *names)
+void jam_ro_flags(struct jambuf *buf,
+		  struct ro_flags flags,
+		  const struct names *names)
 {
 	const char *sep = "";
 	for (unsigned u = 0; u < flags.len; u++) {
@@ -62,9 +62,9 @@ void jam_raw_flags(struct jambuf *buf,
 	}
 }
 
-void jam_raw_flags_human(struct jambuf *buf,
-			 struct ro_flags flags,
-			 const struct names *names)
+void jam_ro_flags_human(struct jambuf *buf,
+			struct ro_flags flags,
+			const struct names *names)
 {
 	const char *sep = "";
 	for (unsigned u = 0; u < flags.len; u++) {
@@ -74,4 +74,14 @@ void jam_raw_flags_human(struct jambuf *buf,
 		}
 		jam_name_human(buf, names, u);
 	}
+}
+
+bool ro_flags_set(struct ro_flags flags)
+{
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (flags.flag[u]) {
+			return true;
+		}
+	}
+	return false;
 }

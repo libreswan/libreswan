@@ -121,6 +121,11 @@ static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
 		return true;
 	}
 
+	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_ignore) {
+		llog(IMPAIR_STREAM, ike->sa.logger, "ignoring SIGNATURE_HASH_ALGORITHMS");
+		return true;
+	}
+
 	struct pbs_in pbs = md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs;
 	ike->sa.st_seen_hashnotify = true;
 	while (pbs_left(&pbs) > 0) {
@@ -400,7 +405,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 {
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
-	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_OMIT) {
+	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_never) {
 		name_buf eb;
 		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -414,7 +419,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 		return false;
 	}
 
-	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_EMPTY) {
+	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_empty) {
 		name_buf eb;
 		llog(IMPAIR_STREAM, outs->logger, "emitting empty %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -570,7 +575,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * should be controled by a global config parameter.
 	 */
 	lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
-	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_FORCE) {
+	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
@@ -938,7 +943,6 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-
 	if (c->config->ike_sa_init_full_transcript_auth != YNA_NO) {
 		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, response.pbs))
 			return STF_INTERNAL_ERROR;
@@ -958,7 +962,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
 	 * should be controled by a global config parameter.
 	 */
-	if (impair.emit_v2N_SIGNATURE_HASH_ALGORITHMS == IMPAIR_EMIT_FORCE) {
+	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
 		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
