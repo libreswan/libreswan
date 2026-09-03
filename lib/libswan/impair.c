@@ -109,14 +109,14 @@ struct impairment {
 	/*
 	 * (else)
 	 *
-	 * When .how_enum_names is non-NULL, HOW is the unbiased enum
+	 * When .how_names is non-NULL, HOW is the unbiased enum
 	 * name's value.
 	 *
 	 * And when .unsigned_help is also non-NULL, HOW can also be
 	 * an unsigned value which is passed unchanged.  Zero is
 	 * allowed.
 	 */
-	const struct enum_names *how_enum_names;
+	const struct names *how_names;
 	/*
 	 * (else)
 	 *
@@ -180,7 +180,7 @@ struct impairment impairments[] = {
 		.enabled = &impair.VALUE.enabled,		\
 		.unsigned_help = "<unsigned>",			\
 	}
-#define E(VALUE, ENUM_NAMES, HELP, ...)				\
+#define E(VALUE, NAMES, HELP, ...)				\
 	{							\
 		.what = #VALUE,					\
 		.action = CALL_IMPAIR_UPDATE,			\
@@ -188,7 +188,7 @@ struct impairment impairments[] = {
 		.enabled = &impair.VALUE.enabled,		\
 		.value = &impair.VALUE.value,			\
 		.sizeof_value = sizeof(impair.VALUE.value),	\
-		.how_enum_names = &ENUM_NAMES,			\
+		.how_names = &NAMES,				\
 		##__VA_ARGS__,					\
 	}
 
@@ -305,24 +305,24 @@ struct impairment impairments[] = {
 	 * Mangle payloads.
 	 */
 
-	E(add_unknown_v2_payload_to, ikev2_exchange_names,
+	E(add_unknown_v2_payload_to, ikev2_exchange_nom,
 	  "add an unknown payload to the (unencrypted) part of the exchange"),
-	E(add_unknown_v2_payload_to_sk, ikev2_exchange_names,
+	E(add_unknown_v2_payload_to_sk, ikev2_exchange_nom,
 	  "add an unknonwn payload to the encrypted part of the exchange"),
 	B(unknown_v2_payload_critical, "mark the unknown payload as critical"),
 	U(pad_with_unknown_v2_payloads, "pad the exchange with unknown payloads: 0=MAX+1, 1=MAX, 2=MAX-1, ..."),
 
-	E(add_v2_notification, v2_notification_names, "add a notification to the message",
+	E(add_v2_notification, ikev2_notification_names, "add a notification to the message",
 	  .unsigned_help = "notification"),
-	E(ignore_v2_notification, v2_notification_names, "ignore a notification in the message",
+	E(ignore_v2_notification, ikev2_notification_names, "ignore a notification in the message",
 	  .unsigned_help = "notification"),
-	E(omit_v2_notification, v2_notification_names, "omit a notification in the message",
+	E(omit_v2_notification, ikev2_notification_names, "omit a notification in the message",
 	  .unsigned_help = "notification"),
 
 	B(ignore_soft_expire, "ignore kernel soft expire events"),
 	B(ignore_hard_expire, "ignore kernel hard expire events"),
 
-	E(force_v2_auth_method, ikev2_auth_method_names,
+	E(force_v2_auth_method, ikev2_auth_method_nom,
 	  "force the use of the specified IKEv2 AUTH method"),
 
 	B(omit_v2_ike_auth_child, "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
@@ -332,7 +332,7 @@ struct impairment impairments[] = {
 	 */
 
 	A("trigger", GLOBAL_EVENT_HANDLER, 0, "trigger the global event", "EVENT",
-	  .how_enum_names = &global_timer_names),
+	  .how_names = &global_timer_names),
 
 	/*
 	 * Trigger state event.
@@ -428,10 +428,10 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			}
 		}
 	}
-	if (cr->how_enum_names != NULL) {
+	if (cr->how_names != NULL) {
 		bool first = true;
-		for (long e = next_enum(cr->how_enum_names, -1); e >= 0;
-		     e = next_enum(cr->how_enum_names, e)) {
+		for (long e = next_name(cr->how_names, -1); e >= 0;
+		     e = next_name(cr->how_names, e)) {
 			if (first) {
 				fprintf(file, "%s    ", prefix);
 				first = false;
@@ -439,7 +439,7 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 				fprintf(file, ", ");
 			}
 			name_buf eb;
-			fprintf(file, "%s", str_enum_short(cr->how_enum_names, e, &eb));
+			fprintf(file, "%s", str_name_short(cr->how_names, e, &eb));
 		}
 		fprintf(file, "\n");
 	}
@@ -586,8 +586,8 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 
-	if (impairment->how_enum_names != NULL) {
-		long e = enum_byname(impairment->how_enum_names, how);
+	if (impairment->how_names != NULL) {
+		long e = index_byname(impairment->how_names, how);
 		if (e >= 0) {
 			*whack_impair = (struct whack_impairment) {
 				.what = ci,
@@ -617,7 +617,7 @@ enum impair_status parse_impair(const char *optarg,
 	 * value.
 	 */
 
-	if (impairment->how_enum_names == NULL &&
+	if (impairment->how_names == NULL &&
 	    impairment->how_sparse_names == NULL &&
 	    impairment->unsigned_help == NULL) {
 		if (how.len == 0 || hunk_strcaseeq(how, "yes")) {
@@ -718,9 +718,9 @@ static void jam_impairment_value(struct jambuf *buf,
 		} else {
 			jam(buf, "?%ju?", value);
 		}
-	} else if (impairment->how_enum_names != NULL) {
+	} else if (impairment->how_names != NULL) {
 		name_buf sname;
-		if (enum_short(impairment->how_enum_names, value, &sname)) {
+		if (name_short(impairment->how_names, value, &sname)) {
 			jam_string(buf, sname.buf);
 		} else {
 			jam(buf, "%ju", value);

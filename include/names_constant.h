@@ -40,7 +40,6 @@ extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
-extern enum_names ikev2_exchange_names;
 extern enum_names isakmp_xchg_type_names;
 extern enum_enum_names exchange_type_names;
 extern enum_names ikev1_protocol_names;
@@ -55,7 +54,7 @@ extern enum_names oakley_auth_names;
 extern enum_names v1_notification_names;
 
 /* IKEv2 */
-extern enum_names ikev2_auth_method_names;
+
 extern enum_names ikev2_hash_algorithm_names;
 extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
@@ -65,7 +64,6 @@ extern enum_names ikev2_trans_type_prf_names;
 extern enum_names ikev2_trans_type_integ_names;
 extern enum_names ikev2_trans_attr_descs;
 extern enum_names ikev2_cert_type_names;
-extern enum_names v2_notification_names;
 extern enum_names ikev2_ts_type_names;
 extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;

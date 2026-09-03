@@ -115,7 +115,7 @@ void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 	enum { SOURCE, DESTINATION, };
 
 	struct detection {
-		const enum v2_notification n;
+		const enum ikev2_notification n;
 		const ip_endpoint endpoint;
 		const struct payload_digest *pd;
 		bool matched;
@@ -140,7 +140,7 @@ void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 		if (d->pd == NULL) {
 			name_buf nb;
 			ldbg(ike->sa.logger, "NAT: missing %s payload, NAT ignored",
-			     str_enum_short(&v2_notification_names, d->n, &nb));
+			     str_name_short(&ikev2_notification_names, d->n, &nb));
 			return;
 		}
 	}

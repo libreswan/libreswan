@@ -1504,11 +1504,11 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 	 * notification's value.
 	 */
 
-	enum v2_notification error =
+	enum ikev2_notification error =
 		(md->v2N_error == NULL ? v2N_NOTHING_WRONG :
 		 md->v2N_error->payload.v2n.isan_type);
 
-	enum v2_notification status =
+	enum ikev2_notification status =
 		(md->v2N_error != NULL ? v2N_NOTHING_WRONG :
 		 md->chain[ISAKMP_NEXT_v2N] == NULL ? v2N_NOTHING_WRONG :
 		 md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type);
@@ -1544,13 +1544,13 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 				name_buf nb;
 				llog(RC_LOG, ike->sa.logger,
 				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s%s",
-				     str_enum_short(&v2_notification_names, error, &nb),
+				     str_name_short(&ikev2_notification_names, error, &nb),
 				     multiple_notifications);
 			} else {
 				name_buf nb;
 				llog(RC_LOG, ike->sa.logger,
 				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s for "PRI_SO"%s",
-				     str_enum_short(&v2_notification_names, error, &nb),
+				     str_name_short(&ikev2_notification_names, error, &nb),
 				     pri_so(child->sa.st_serialno),
 				     multiple_notifications);
 			}
@@ -1561,7 +1561,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			name_buf nb;
 			llog(RC_LOG, ike->sa.logger,
 			     "IKE SA authentication request rejected by peer: %s%s",
-			     str_enum_short(&v2_notification_names, error, &nb),
+			     str_name_short(&ikev2_notification_names, error, &nb),
 			     multiple_notifications);
 			break;
 		}
@@ -1574,7 +1574,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		name_buf nb;
 		llog_sa(RC_LOG, ike,
 			"IKE SA authentication failed, incomplete IKE_AUTH response contains the status notification %s%s",
-			str_enum_short(&v2_notification_names, status, &nb),
+			str_name_short(&ikev2_notification_names, status, &nb),
 			multiple_notifications);
 	} else {
  		llog(RC_LOG, ike->sa.logger,

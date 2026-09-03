@@ -1054,7 +1054,7 @@ west #
          jam_enum_short 2: ON OK
          jam_enum_human 2: on OK
          match ON [short]: OK
-  global_timer_names: [0..6)
+  global_timer_enum_names: [0..6)
     0 -> EVENT_REINIT_SECRET
          jam_enum 0: EVENT_REINIT_SECRET OK
          match EVENT_REINIT_SECRET: OK

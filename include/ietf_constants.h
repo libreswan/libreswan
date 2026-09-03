@@ -843,6 +843,9 @@ enum ikev2_exchange {
 	/* 240-255 Private Use */
 };
 
+extern const struct enum_names ikev2_exchange_names;
+extern const struct names ikev2_exchange_nom;
+
 /*
  * ISAKMP header flag bits
  */
@@ -1588,6 +1591,9 @@ enum ikev2_auth_method {
 	/* 201 - 255 private use */
 };
 
+extern const struct enum_names ikev2_auth_method_names;
+extern const struct names ikev2_auth_method_nom;
+
 /*
  * Notify messages -- error types
  * See RFC2408 ISAKMP 3.14.1
@@ -1676,7 +1682,7 @@ typedef enum {
  * IKEv2, while similar, is different.  Let's not re-use and confuse.
  */
 
-typedef enum v2_notification {
+typedef enum ikev2_notification {
 
 	/*
 	 * Unofficial!  Must be zero to match default C initial value.
@@ -1817,6 +1823,9 @@ typedef enum v2_notification {
 	v2N_NULL_AUTH = 40960,
 
 } v2_notification_t;
+
+extern const struct enum_names v2_notification_names;
+extern const struct names ikev2_notification_names;
 
 /* RFC 8784 created registry */
 enum ikev2_ppk_id_type {
