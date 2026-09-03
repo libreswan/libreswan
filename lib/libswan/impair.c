@@ -919,13 +919,39 @@ static void process_impair_flags(const struct impairment *impairment,
 	}
 }
 
+static void impair_update_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	const struct whack_impairment wc = {0}; /* i.e., none */
+	process_impair_update(impairment, &wc, logger);
+}
+
+static void impair_flags_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	for (unsigned value = 0; value < impairment->flags.len; value++) {
+		struct whack_impairment wc = {
+			.value = value,
+		};
+		process_impair_flags(impairment, &wc, logger);
+	}
+}
+
 static void process_impair_none(struct logger *logger)
 {
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
 		if (impairment_enabled(impairment)) {
-			struct whack_impairment wc = {0}; /* i.e., none */
-			process_impair_update(impairment, &wc, logger);
+			switch (impairment->action) {
+			case CALL_IMPAIR_UPDATE:
+				impair_update_none(impairment, logger);
+				break;
+			case IMPAIR_FLAGS:
+				impair_flags_none(impairment, logger);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }
