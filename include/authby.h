@@ -96,7 +96,6 @@ struct authby {
 
 #define AUTHBY_ALL_IKEv2_DEFAULTS		\
 	(struct authby) {			\
-		AUTHBY_RSASIG_RAW,		\
 		AUTHBY_RSASIG_V1_5,		\
 		AUTHBY_RSASIG_SHA2,		\
 		AUTHBY_ECDSA_SHA2,		\
