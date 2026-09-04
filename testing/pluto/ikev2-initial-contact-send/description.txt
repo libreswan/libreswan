@@ -1,2 +1,0 @@
-West has initial-contact enabled. It will send the first time.
-When rekeying/re-authenticating it should not send INITIAL_CONTACT.

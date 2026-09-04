@@ -1,1 +1,0 @@
-IKEv2 host-to-host with NAT and CP.

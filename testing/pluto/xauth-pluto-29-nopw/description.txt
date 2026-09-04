@@ -1,3 +1,0 @@
-This test has the road warrior connect using an empty password
-
-Tries accounts use3 and nopw.

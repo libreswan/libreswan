@@ -1,4 +1,0 @@
-Roadwarrior with IKEv2 using RSA and AUTH NULL OE. The initiator, road, initiates AUTH NULL OE towards east
-and fail to establish.  road install a shunt, pass, and it ping the east. That ping packet cause an acqurire on east and AUTH NULL OE is initiated.
-
-The result is east - road auth null is established.

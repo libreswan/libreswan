@@ -1,2 +1,0 @@
-basic OE test, using road and east triggered by packet using NETKEY on road.
-east has rekey=no. road has short ikelifetime and it will replace the IKE SA

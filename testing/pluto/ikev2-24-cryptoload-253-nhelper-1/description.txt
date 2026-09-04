@@ -1,3 +1,0 @@
-road - east test with 253 IP addresses and 253 connections on road.
-east has nhelpers=1 and road has 300
-

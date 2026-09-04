@@ -1,5 +1,0 @@
-liveness with a missing %trap on dpdactin=restart on road
-
-road doing a restart causes a brief leak that needs to be
-fixed. this test case does not yet show that leak.
-
