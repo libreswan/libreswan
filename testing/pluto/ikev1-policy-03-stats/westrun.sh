@@ -1,9 +1,9 @@
-ipsec whack --impair timeout_on_retransmit --impair revival
+ipsec whack --impair revival
 # should fail
-ipsec auto --up ikev1
+ipsec up ikev1 # suppress-retransmits
 # should work normal
-ipsec auto --up ikev2
+ipsec up ikev2 # suppress-retransmits
 # should mangle
 ipsec whack --impair major_version_bump
-ipsec auto --up ikev2
+ipsec up ikev2
 echo done

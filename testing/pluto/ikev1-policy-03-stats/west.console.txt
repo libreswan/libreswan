@@ -6,35 +6,35 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add ikev1
+ ipsec add ikev1
 "ikev1": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair timeout_on_retransmit --impair revival
+ ipsec whack --impair revival
 west #
  # should fail
 west #
- ipsec auto --up ikev1
+ ipsec up ikev1 # suppress-retransmits
 "ikev1" #1: initiating IKEv1 Main Mode connection
 "ikev1" #1: sent Main Mode request
 "ikev1" #1: ignoring unsecured informational payload INVALID_MAJOR_VERSION, length=12
-IMPAIR: "ikev1" #1: retransmit so timing out SA (may retry)
+"ikev1" #1: STATE_MAIN_I1: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 "ikev1" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "ikev1" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "ikev1" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  # should work normal
 west #
- ipsec auto --up ikev2
+ ipsec up ikev2 # suppress-retransmits
 no connection or alias named "ikev2"
 west #
  # should mangle
 west #
  ipsec whack --impair major_version_bump
 west #
- ipsec auto --up ikev2
+ ipsec up ikev2
 no connection or alias named "ikev2"
 west #
  echo done
