@@ -296,6 +296,7 @@ struct whack_config_conn {
 struct whack_impairment {
 	unsigned what;
 	uintmax_t value;
+	uintmax_t annex;
 	bool enable;
 };
 

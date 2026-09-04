@@ -153,6 +153,10 @@ struct impairment {
 	size_t sizeof_value;
 	bool *enabled;		/* possibly NULL enabled bit */
 
+	/* both possibly NULL */
+	const struct names *annex_names;
+	unsigned *annex;
+
 	/* IMPAIR_FLAGS */
 	struct rw_flags flags;
 
@@ -190,6 +194,7 @@ struct impairment impairments[] = {
 		.action = IMPAIR_FLAGS,				\
 		.help = HELP,					\
 		.enabled = &impair.VALUE.enabled,		\
+		.annex = &impair.VALUE.annex,			\
 		.flags.len = elemsof(impair.VALUE.flags),	\
 		.flags.flag = impair.VALUE.flags,		\
 		.value_names = &impair_payload_names,		\
@@ -561,6 +566,7 @@ enum impair_status parse_impair(const char *optarg,
 	shunk_t cursor = shunk1(optarg);
 	shunk_t what = shunk_token(&cursor, NULL, ":=");
 	shunk_t value = shunk_token(&cursor, NULL, ":=");
+	shunk_t annex = shunk_token(&cursor, NULL, ":=");
 
 	/*
 	 * look for both WHAT and for compatibility with the old
@@ -613,6 +619,29 @@ enum impair_status parse_impair(const char *optarg,
 	 * Assume everything from now on is enabled.
 	 */
 	impair->enable = true;
+
+	/*
+	 * Try to decode the annex, allow either a name or an
+	 * unsigned.
+	 */
+	if (annex.len > 0) {
+		long annex_name = -1;
+		if (impairment->annex_names != NULL) {
+			annex_name = index_byname(impairment->annex_names, annex);
+			if (annex_name >= 0) {
+				impair->annex = annex_name;
+			}
+		}
+		if (annex_name < 0) {
+			err_t err = shunk_to_uintmax(annex, NULL, 0/*base*/, &impair->annex);
+			if (err != NULL) {
+				llog(ERROR_STREAM, logger,
+				     "impair option '"PRI_SHUNK"' has invalid annex '"PRI_SHUNK"': %s",
+				     pri_shunk(what), pri_shunk(annex), err);
+				return IMPAIR_ERROR;
+			}
+		}
+	}
 
 	/*
 	 * For WHAT:VALUE, lookup the keyword VALUE.
@@ -846,6 +875,10 @@ static void process_impair_update(const struct impairment *impairment,
 		/* new value */
 		jam_string(buf, " -> ");
 		jam_impairment_value(buf, impairment);
+		if (impairment->annex != NULL) {
+			jam(buf, " (%u->%ju)", (*impairment->annex), wc->annex);
+			(*impairment->annex) = wc->annex;
+		}
 	}
 }
 
@@ -869,6 +902,10 @@ static void process_impair_flags(const struct impairment *impairment,
 		/* new value */
 		jam_string(buf, " -> ");
 		jam_impairment_value(buf, impairment);
+		if (impairment->annex != NULL) {
+			jam(buf, " (%u->%ju)", (*impairment->annex), wc->annex);
+			(*impairment->annex) = wc->annex;
+		}
 	}
 	if (impairment->enabled != NULL) {
 		(*impairment->enabled) = ro_flags_set(RO_FLAGS(impairment->flags));
