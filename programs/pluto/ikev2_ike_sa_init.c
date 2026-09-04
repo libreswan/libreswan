@@ -973,7 +973,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
-	} else if (c->config->sighash_policy != LEMPTY) {
+	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
