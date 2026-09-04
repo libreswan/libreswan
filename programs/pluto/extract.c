@@ -3689,16 +3689,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		bad_sparse(verbose.logger, &tcp_option_names, iketcp);
 	}
 
-	/* authentication (proof of identity) */
-
-	if (is_never_negotiate_wm(wm)) {
-		vdbg("ignore sighash, never negotiate");
-	} else if (c->config->ike_version == IKEv1) {
-		vdbg("ignore sighash, IKEv1");
-	} else {
-		config->sighash_policy = authby_sighash_policy(whack_authby);
-	}
-
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->wm_connalias, "connection alias");
 

@@ -302,8 +302,6 @@ struct config {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 
-	lset_t sighash_policy;
-
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	enum xauthby xauthby;

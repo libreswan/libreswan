@@ -979,7 +979,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
-		ldbg(ike->sa.logger, "config has no .sighash_policy");
+		ldbg(ike->sa.logger, "config has no v2N_SIGNATURE_HASH_ALGORITHMS");
 	}
 
 	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
