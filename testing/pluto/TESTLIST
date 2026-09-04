@@ -1177,6 +1177,7 @@ kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		good	github/1228
 kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
 kvmplutotest	interop-ikev2-strongswan-24-strongswan-eaptls		good
 kvmplutotest	interop-ikev2-eaptls-strongswan-client			good	github/2036-at-least
+kvmplutotest	eaptls-01-CVE-2026-77206-unexpected-eap-packet		good
 
 # IKEv2 Selinux / secure labeling tests
 kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
