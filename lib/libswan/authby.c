@@ -73,7 +73,8 @@ struct authby authby_xor(struct authby lhs, struct authby rhs)
 
 struct authby authby_not(struct authby lhs)
 {
-	return authby_xor(lhs, AUTHBY_ALL);
+	const struct authby empty = {0};
+	return OP(lhs, ==, empty);
 }
 
 struct authby authby_and(struct authby lhs, struct authby rhs)
