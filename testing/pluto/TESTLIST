@@ -191,6 +191,13 @@ kvmplutotest	addconn-53-config-setup-ike-socket		good
 kvmplutotest    addconn-54-xauth          good
 kvmplutotest    addconn-55-send-supported-auth-methods          good
 kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
+kvmplutotest	addconn-57-autoall-reconcile			good
+kvmplutotest	addconn-58-autoall-reconcile-noop		good
+kvmplutotest	addconn-59-autoall-reconcile-modified		good
+kvmplutotest	addconn-60-autoall-reconcile-disabled		good
+kvmplutotest	addconn-61-autoall-reconcile-dns		good
+kvmplutotest	addconn-62-autoall-reconcile-defaultroute	good
+kvmplutotest	addconn-63-autoall-reconcile-interface		good
 
 #################################################################
 # IKEv2 tests

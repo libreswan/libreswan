@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep
+west #
+ ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
+/etc/hosts /tmp/hosts.west.addconn-61-autoall-reconcile-dns /etc/hosts
+west #
+ echo "192.1.2.23 peer.libreswan.org" >> /etc/hosts
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"named"
+west #
+ # the name still resolves to the same address; both conns are left alone
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"named": unchanged
+west #
+ # point the name somewhere else; rewrite in place, /etc/hosts is bind mounted
+west #
+ grep -v peer.libreswan.org /etc/hosts > /tmp/hosts.next
+west #
+ echo "5.6.7.9 peer.libreswan.org" >> /tmp/hosts.next
+west #
+ cat /tmp/hosts.next > /etc/hosts
+west #
+ # only the conn using the name is rebuilt
+west #
+ ipsec add --autoall
+"alpha": unchanged
+"named": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=peer.libreswan.org match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):.*/\1/p' | sort -u
+"alpha"
+"named"
+west #

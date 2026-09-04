@@ -21,6 +21,7 @@
 
 #include "extract.h"
 #include "helper.h"
+#include "ipsecconf/interfaces.h"
 #include "connections.h"
 #include "connection_db.h"
 #include "log.h"
@@ -31,6 +32,7 @@ static void resolve_finish(struct connection *c,
 			   struct host_addrs *resolved,
 			   resolve_helper_callback *callback,
 			   bool background,
+			   bool probe,
 			   struct verbose verbose);
 
 static helper_fn resolve_helper;
@@ -45,6 +47,7 @@ struct help_request {
 	struct host_addrs resolved_host_addrs;
 	resolve_helper_callback *callback;
 	bool background;
+	bool probe;
 };
 
 void discard_resolve_help_request_content(void *pointer, const struct logger *owner, where_t where)
@@ -53,13 +56,13 @@ void discard_resolve_help_request_content(void *pointer, const struct logger *ow
 	connection_delref_where(&request->connection, owner, where);
 }
 
-void request_resolve_help(struct connection *c,
-			  resolve_helper_callback *callback,
-			  bool background,
-			  struct logger *logger)
+static void request_resolve(struct connection *c,
+			    resolve_helper_callback *callback,
+			    bool background,
+			    bool probe,
+			    struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-	vexpect(!oriented(c));
 	struct host_addrs raw_addrs = host_addrs_from_connection_config(c);
 	if (host_addrs_need_dns(&raw_addrs, verbose)) {
 		struct help_request *request = alloc_help_request("resolve helper",
@@ -69,11 +72,29 @@ void request_resolve_help(struct connection *c,
 		request->extracted_host_addrs = raw_addrs;
 		request->callback = callback;
 		request->background = background;
+		request->probe = probe;
 		request_help(request, resolve_helper, logger);
 		return;
 	}
 
-	resolve_finish(c, &raw_addrs, callback, background, verbose);
+	resolve_finish(c, &raw_addrs, callback, background, probe, verbose);
+}
+
+void request_resolve_help(struct connection *c,
+			  resolve_helper_callback *callback,
+			  bool background,
+			  struct logger *logger)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vexpect(!oriented(c));
+	request_resolve(c, callback, background, /*probe*/false, logger);
+}
+
+void request_resolve_probe(struct connection *c,
+			   resolve_helper_callback *callback,
+			   struct logger *logger)
+{
+	request_resolve(c, callback, /*background*/false, /*probe*/true, logger);
 }
 
 helper_cb *resolve_helper(struct help_request *request,
@@ -119,15 +140,57 @@ void resolve_continue(struct help_request *request,
 		       &request->resolved_host_addrs,
 		       request->callback,
 		       request->background,
+		       request->probe,
 		       verbose);
+}
+
+static void probe_iface(struct route_addrs *end,
+			const struct ip_info *afi,
+			struct verbose verbose)
+{
+	switch (end->host.type) {
+
+	case KH_IFACE:
+		if (vbad(end->host.value == NULL)) {
+			return;
+		}
+		end->host.addr = unset_address;
+		if (!starter_iface_find(end->host.value + 1,
+					afi, &end->host.addr,
+					/*nexthop*/NULL)) {
+			vdbg("%s%s is not up",
+			     end->leftright, end->host.value);
+		}
+		return;
+
+	case KH_IPHOSTNAME:
+	case KH_DEFAULTROUTE:
+	case KH_IPADDR:
+	case KH_ANY:
+	case KH_OPPO:
+	case KH_OPPOGROUP:
+	case KH_GROUP:
+	case KH_DIRECT:
+	case KH_NOTSET:
+		return;
+	}
+
+	bad_case(end->host.type);
 }
 
 void resolve_finish(struct connection *c,
 		    struct host_addrs *resolved,
 		    resolve_helper_callback *callback,
 		    bool background,
+		    bool probe,
 		    struct verbose verbose)
 {
+	if (probe) {
+		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+			probe_iface(&resolved->end[lr], resolved->afi, verbose);
+		}
+	}
+
 	/*
 	 * Even when need DNS, try to resolve routes.  Connection can
 	 * still orient provided one of the addresses is known.
@@ -143,7 +206,9 @@ void resolve_finish(struct connection *c,
 			      resolved->afi,
 			      verbose);
 
-	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
+	if (!probe) {
+		build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
+	}
 
 	callback(c, resolved, background, verbose);
 }
