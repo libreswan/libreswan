@@ -60,6 +60,7 @@ enum impair_payload_flag {
 
 struct impair_payload {
 	bool enabled;
+	unsigned annex;
 #define impair_payload_emit_never flags[IMPAIR_PAYLOAD_EMIT_NEVER]
 #define impair_payload_emit_always flags[IMPAIR_PAYLOAD_EMIT_ALWAYS]
 #define impair_payload_emit_empty flags[IMPAIR_PAYLOAD_EMIT_EMPTY]
@@ -94,6 +95,7 @@ enum impair_v2_transform {
 struct impair_unsigned {
 	bool enabled;
 	unsigned value;
+	unsigned annex;
 };
 
 /*
