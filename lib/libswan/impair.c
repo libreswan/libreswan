@@ -401,6 +401,8 @@ struct impairment impairments[] = {
 
 	U(omit_addke_notification, "omit an ADDITIONAL_KEY_EXCHANGE notification in the IKE_FOLLOWUP_KE exchange for addkeN"),
 
+	B(empty_ike_auth_auth, "emit an IKE_AUTH message containing only an empty AUTH payload"),
+
 #undef U
 #undef B
 #undef V

@@ -215,6 +215,8 @@ struct impair {
 
 	struct impair_unsigned omit_addke_notification;
 
+	bool empty_ike_auth_auth;
+
 	/*
 	 * add more here
 	 */
