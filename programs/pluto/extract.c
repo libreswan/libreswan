@@ -1265,87 +1265,123 @@ static diag_t extract_authby(struct authby *authby,
 		return NULL;
 	}
 
-	if (wm->wm_authby != NULL) {
-
-		shunk_t curseby = shunk1(wm->wm_authby);
-		while (true) {
-
-			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
-			if (val.ptr == NULL) {
-				break;
-			}
-#if 0
-			if (val.len == 0) {
-				/* ignore empty fields? */
-				continue;
-			}
-#endif
-
-			/* Supported for IKEv1 and IKEv2 */
-			if (hunk_streq(val, "secret")) {
-				authby->psk = true;
-			} else if (ike_version == IKEv1 &&
-				   (hunk_streq(val, "rsasig") ||
-				    hunk_streq(val, "rsa"))) {
-				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_RSASIG_RAW,
-					});
-			} else if (hunk_streq(val, "rsasig") ||
-				   hunk_streq(val, "rsa")) {
-				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_RSASIG_RAW,
-						AUTHBY_RSASIG_V1_5,
-						AUTHBY_RSASIG_SHA2,
-					});
-			} else if (hunk_streq(val, "never")) {
-				authby->never = true;
-			} else if (ike_version == IKEv1) {
-				return diag("authby="PRI_SHUNK" is not valid for IKEv1",
-					    pri_shunk(val));
-				/* everything else is only supported for IKEv2 */
-			} else if (hunk_streq(val, "null")) {
-				authby->null = true;
-			} else if (hunk_streq(val, "rsa-sha1")) {
-				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_RSASIG_V1_5_SHA1,
-					});
-			} else if (hunk_streq(val, "rsa-sha2")) {
-				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_RSASIG_SHA2,
-					});
-			} else if (hunk_streq(val, "rsa-sha2_256")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_256 = true;
-			} else if (hunk_streq(val, "rsa-sha2_384")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_384 = true;
-			} else if (hunk_streq(val, "rsa-sha2_512")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_512 = true;
-			} else if (hunk_streq(val, "eddsa")) {
-				authby->eddsa = true;
-			} else if (hunk_streq(val, "ecdsa") ||
-				   hunk_streq(val, "ecdsa-sha2")) {
-				*authby = authby_or(*authby, (struct authby) {
-						AUTHBY_ECDSA_SHA2,
-					});
-			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
-				authby->ecdsa_sha2_256 = true;
-			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
-				authby->ecdsa_sha2_384 = true;
-			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
-				authby->ecdsa_sha2_512 = true;
-			} else if (hunk_streq(val, "ecdsa-sha1")) {
-				return diag("authby=ecdsa cannot use sha1, only sha2");
-			} else {
-				return diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
-			}
-		}
+	if (wm->wm_authby == NULL) {
+		(*authby) = (ike_version == IKEv1 ? AUTHBY_ALL_IKEv1_DEFAULTS :
+			     AUTHBY_ALL_IKEv2_DEFAULTS);
 		return NULL;
 	}
 
-	(*authby) = (ike_version == IKEv1 ? AUTHBY_ALL_IKEv1_DEFAULTS :
-		     AUTHBY_ALL_IKEv2_DEFAULTS);
+	shunk_t curseby = shunk1(wm->wm_authby);
+	while (true) {
+
+		shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
+		if (val.ptr == NULL) {
+			break;
+		}
+#if 0
+		if (val.len == 0) {
+			/* ignore empty fields? */
+			continue;
+		}
+#endif
+
+		/* Supported for IKEv1 and IKEv2 */
+		switch (ike_version) {
+		case IKEv1:
+			if (hunk_streq(val, "secret")) {
+				authby->psk = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsasig") ||
+			    hunk_streq(val, "rsa")) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_RAW,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "never")) {
+				authby->never = true;
+				continue;
+			}
+			return diag("authby="PRI_SHUNK" is not valid for IKEv1",
+				    pri_shunk(val));
+		case IKEv2:
+			if (hunk_streq(val, "secret")) {
+				authby->psk = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsasig") ||
+			    hunk_streq(val, "rsa")) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_V1_5,
+						AUTHBY_RSASIG_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "never")) {
+				authby->never = true;
+				continue;
+			}
+			if (hunk_streq(val, "null")) {
+				authby->null = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha1")) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_V1_5_SHA1,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2")) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_256")) {
+				authby->rsasig_sha2_256 = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_384")) {
+				authby->rsasig_sha2_384 = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_512")) {
+				authby->rsasig_sha2_512 = true;
+				continue;
+			}
+			if (hunk_streq(val, "eddsa")) {
+				authby->eddsa = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa") ||
+			    hunk_streq(val, "ecdsa-sha2")) {
+				*authby = authby_or(*authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_256")) {
+				authby->ecdsa_sha2_256 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_384")) {
+				authby->ecdsa_sha2_384 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_512")) {
+				authby->ecdsa_sha2_512 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha1")) {
+				return diag("authby=ecdsa cannot use sha1, only sha2");
+				continue;
+			}
+			return diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
+		}
+		bad_case(ike_version);
+	}
+
 	return NULL;
 }
 
