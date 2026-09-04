@@ -59,7 +59,7 @@ kvmplutotest	check-03-vendoridcheck		good
 kvmplutotest	check-04-pki			good
 kvmplutotest	check-05-checksec		good
 kvmplutotest	check-06-dnssec			good
-kvmplutotest	check-07-testlist		wip
+kvmplutotest	check-07-testlist		good
 
 # per-os sniff tests
 
