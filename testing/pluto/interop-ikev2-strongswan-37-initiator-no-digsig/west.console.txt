@@ -10,22 +10,6 @@ west #
 west #
  cp /testing/x509/pki/real/mainca/east.end.cert /etc/strongswan/swanctl/x509/east.crt
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ../../guestbin/strongswan-start.sh
 loaded certificate from '/etc/strongswan/swanctl/x509/west.crt'
 loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'

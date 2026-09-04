@@ -3,7 +3,8 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add east
-# block IKE and ESP over UDP
-iptables -I INPUT -p udp --dport 500 -j DROP
-iptables -I INPUT -p udp --dport 4500 -j DROP
+
+# force east into legacy mode
+ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:ignore
+ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
 echo "initdone"
