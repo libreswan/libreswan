@@ -1,3 +1,7 @@
 initiator supports old and new style. Responder only old style RSA-SHA1
 
+The responder is impaired so that ignores inbound and never sends
+outbound v2N_SIGNATURE_HASH_ALGORITHM; causing both ends to fall back
+to old-style RSA.
+
 connection should establish

@@ -31,6 +31,7 @@
 
 #include "ikev2_ike_sa_init.h"
 
+#include "ike_alg_hash.h"
 #include "demux.h"
 #include "log.h"
 #include "state.h"
@@ -400,9 +401,25 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	return record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
-static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
-					       struct pbs_out *outs)
+static bool emit_hash(struct pbs_out *pbs,
+		      const struct authby supported_authby,
+		      const struct hash_desc *hash)
 {
+	if (authby_has_hash(supported_authby, hash)) {
+		uint8_t hash_id[RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE];
+		hton_thing(hash->ikev2_alg_id, hash_id);
+		if (!pbs_out_thing(pbs, hash_id,
+				   "hash algorithm identifier")) {
+			/* already logged */
+			return false;
+		}
+	}
+	return true;
+}
+
+static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
+{
+	const struct authby supported_authby = supported_ikev2_digsig_auth_payloads();
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
 	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_never) {
@@ -413,7 +430,6 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	}
 
 	struct pbs_out n_pbs;
-
 	if (!open_v2N_output_pbs(outs, ntype, &n_pbs)) {
 		llog(RC_LOG, outs->logger, "error initializing notify payload for notify message");
 		return false;
@@ -424,21 +440,12 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 		llog(IMPAIR_STREAM, outs->logger, "emitting empty %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 	} else {
-#define H(POLICY, ID)							\
-		if (sighash_policy & POLICY) {				\
-			uint16_t hash_id = htons(ID);			\
-			passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-			if (!pbs_out_thing(&n_pbs, hash_id,		\
-					   "hash algorithm identifier "#ID)) { \
-				/* already logged */			\
-				return false;				\
-			}						\
+		if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
+		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
+		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
+		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
+			return false;
 		}
-		H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
-		H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
-		H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
-		H(POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY);
-#undef H
 	}
 
 	close_pbs_out(&n_pbs);
@@ -574,16 +581,15 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
 	 * should be controled by a global config parameter.
 	 */
-	lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
 	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
 			return false;
 		}
 	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
 		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, request.pbs)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
 			return false;
 		}
 	} else {
@@ -950,11 +956,10 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/*
 	 * Send the responder's SIGNATURE_HASH_ALGORITHMS notification
-	 * unconditionally:
+	 * almost unconditionally:
 	 *
-	 * + the connection is tentative, remote .authby could be
-	 *   wrong (for instance, IKE_AUTH may trigger a switch from
-	 *   host-host:PSK -> host-any:RSA).
+	 * + if initiator sent SIGNATURE_HASH_ALGORITHM this end needs
+	 *   to acknowlege it (even if the response is empty).
 	 *
 	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
 	 *   information
@@ -965,12 +970,12 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
-		lset_t sighash_policy = authby_sighash_policy(supported_ikev2_digsig_auth_payloads());
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(sighash_policy, response.pbs)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
-	} else if (c->config->sighash_policy != LEMPTY) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
+	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	} else {

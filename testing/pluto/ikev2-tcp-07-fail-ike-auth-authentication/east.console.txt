@@ -17,11 +17,11 @@ east #
  ipsec add east
 "east": added oriented IKEv2 connection
 east #
- # block IKE and ESP over UDP
+ # force east into legacy mode
 east #
- iptables -I INPUT -p udp --dport 500 -j DROP
+ ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:ignore
 east #
- iptables -I INPUT -p udp --dport 4500 -j DROP
+ ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
 east #
  echo "initdone"
 initdone
