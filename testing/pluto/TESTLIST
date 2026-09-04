@@ -1862,3 +1862,4 @@ kvmplutotest       ikev1-policy-03-stats                  good
 
 kvmplutotest	cve-2026-12413-max-payloads		  good
 kvmplutotest    cve-2026-77205-fips-cert-leak		  good
+kvmplutotest	cve-2026-77206-unexpected-eap-packet	  good
