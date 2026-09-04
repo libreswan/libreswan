@@ -184,14 +184,15 @@ struct impairment impairments[] = {
 		.sizeof_value = sizeof(impair.VALUE),	\
 		##__VA_ARGS__,				\
 	}
-#define F(VALUE, NAMES, HELP, ...)				\
+#define P(VALUE, HELP, ...)					\
 	{							\
 		.what = #VALUE,					\
 		.action = IMPAIR_FLAGS,				\
 		.help = HELP,					\
+		.enabled = &impair.VALUE.enabled,		\
 		.flags.len = elemsof(impair.VALUE.flags),	\
 		.flags.flag = impair.VALUE.flags,		\
-		.how_names = NAMES,				\
+		.how_names = &impair_payload_names,		\
 		##__VA_ARGS__,					\
 	}
 #define B(VALUE, HELP)					\
@@ -433,11 +434,10 @@ struct impairment impairments[] = {
 
 	U(omit_addke_notification, "omit an ADDITIONAL_KEY_EXCHANGE notification in the IKE_FOLLOWUP_KE exchange for addkeN"),
 
-	F(v2N_SIGNATURE_HASH_ALGORITHMS, &impair_payload_names,
-	  "mangle said notification payload"),
+	P(v2N_SIGNATURE_HASH_ALGORITHMS, "mangle said notification payload"),
 
 #undef U
-#undef F
+#undef P
 #undef B
 #undef V
 #undef A
@@ -763,10 +763,8 @@ static bool impairment_enabled(const struct impairment *impairment)
 		}
 		return false;
 	case IMPAIR_FLAGS:
-		if (ro_flags_set(RO_FLAGS(impairment->flags))) {
-			return true;
-		}
-		return false;
+		pexpect(ro_flags_set(RO_FLAGS(impairment->flags)) == (*impairment->enabled));
+		return (*impairment->enabled);
 	default:
 		return false;
 	}
@@ -915,7 +913,25 @@ static void process_impair_flags(const struct impairment *impairment,
 		/* new value */
 		jam_string(buf, " -> ");
 		jam_impairment_value(buf, impairment);
+	}
+	(*impairment->enabled) = ro_flags_set(RO_FLAGS(impairment->flags));
+}
 
+static void impair_update_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	const struct whack_impairment wc = {0}; /* i.e., none */
+	process_impair_update(impairment, &wc, logger);
+}
+
+static void impair_flags_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	for (unsigned value = 0; value < impairment->flags.len; value++) {
+		struct whack_impairment wc = {
+			.value = value,
+		};
+		process_impair_flags(impairment, &wc, logger);
 	}
 }
 
@@ -924,8 +940,16 @@ static void process_impair_none(struct logger *logger)
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
 		if (impairment_enabled(impairment)) {
-			struct whack_impairment wc = {0}; /* i.e., none */
-			process_impair_update(impairment, &wc, logger);
+			switch (impairment->action) {
+			case CALL_IMPAIR_UPDATE:
+				impair_update_none(impairment, logger);
+				break;
+			case IMPAIR_FLAGS:
+				impair_flags_none(impairment, logger);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }
