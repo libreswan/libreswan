@@ -1429,7 +1429,7 @@ V2_STATE(IKE_SA_INIT_R, "sent IKE_SA_INIT response",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_exchange,
 	 &v2_IKE_INTERMEDIATE_exchange,
-	 &v2_IKE_AUTH_EAP_exchange);
+	 &v2_IKE_AUTH_EAP_start_exchange);
 
 V2_EXCHANGE(IKE_SA_INIT, "",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
