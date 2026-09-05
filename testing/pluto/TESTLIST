@@ -286,6 +286,8 @@ kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
 kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
 kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-03-fallback    good
 kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-04-mismatch    good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-05-x509        good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-06-tamper      good
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
