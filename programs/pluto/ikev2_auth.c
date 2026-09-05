@@ -48,6 +48,95 @@ struct v2AUTH_blobs {
 	struct hash_hunks hunks;
 };
 
+static const uint8_t v2AUTH_zero_prefix[8] = {0};
+/*
+ * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Authentication
+ * in IKEv2":
+ * https://www.ietf.org/archive/id/draft-ietf-ipsecme-ikev2-downgrade-prevention-08.html#name-authentication-in-ikev2
+ *
+ * When the extension has not been negotiated:
+ *
+ *   InitiatorSignedOctets = RealMessage1 | NonceRData | MACedIDForI
+ *   GenIKEHDR = [ four octets 0 if using port 4500 ] | RealIKEHDR
+ *   RealIKEHDR =  SPIi | SPIr |  . . . | Length
+ *   RealMessage1 = RealIKEHDR | RestOfMessage1
+ *   NonceRPayload = PayloadHeader | NonceRData
+ *   InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload
+ *   RestOfInitIDPayload = IDType | RESERVED | InitIDData
+ *   MACedIDForI = prf(SK_pi, RestOfInitIDPayload)
+ *
+ *   ResponderSignedOctets = RealMessage2 | NonceIData | MACedIDForR
+ *   GenIKEHDR = [ four octets 0 if using port 4500 ] | RealIKEHDR
+ *   RealIKEHDR =  SPIi | SPIr |  . . . | Length
+ *   RealMessage2 = RealIKEHDR | RestOfMessage2
+ *   NonceIPayload = PayloadHeader | NonceIData
+ *   ResponderIDPayload = PayloadHeader | RestOfRespIDPayload
+ *   RestOfRespIDPayload = IDType | RESERVED | RespIDData
+ *   MACedIDForR = prf(SK_pr, RestOfRespIDPayload)
+ *
+ *   In particular, the initiator, but not the responder,
+ *   authenticates the IKE_SA_INIT request (RealMessage1) and the
+ *   responder, but not the initiator, authenticates the IKE_SA_INIT
+ *   response (RealMessage2).  Thus, each side authenticates only the
+ *   initial message it has sent and not the initial message it has
+ *   received.
+ *
+ *   For the authentication calculations defined above, RealMessage1
+ *   and RealMessage2 are the final accepted IKE_SA_INIT request and
+ *   response.  If one or more prior IKE_SA_INIT exchanges were
+ *   rejected and then restarted, for example due to COOKIE or
+ *   INVALID_KE_PAYLOAD, those messages of the rejected exchanges are
+ *   not included in the authenticated transcript.
+ *
+ * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Protocol
+ * Details":
+ * https://www.ietf.org/archive/id/draft-ietf-ipsecme-ikev2-downgrade-prevention-08.html#name-protocol-details
+ *
+ * When a peer sent and received the IKE_SA_INIT_FULL_TRANSCRIPT_AUTH
+ * notification, so both messages are covered, the received one first:
+ *
+ *   InitiatorSignedOctets = ZeroPrefix | RealMessage2
+ *                           | RealMessage1 | NonceRData | MACedIDForI
+ *   ResponderSignedOctets = ZeroPrefix | RealMessage1
+ *                           | RealMessage2 | NonceIData | MACedIDForR
+ *
+ *   ZeroPrefix is 8 octets of zero.  ZeroPrefix serves a role of a
+ *   domain separator making the new authentication blocks of data
+ *   always different from authentication blocks of data defined in
+ *   Section 2.15 of IKEv2 [RFC7296], because in both RealMessage1 and
+ *   RealMessage2 the first 8 octets constitute IKE Initiator's SPI
+ *   that can never be zero.
+ */
+void extract_v2AUTH_transcript(const struct ike_sa *ike,
+			       enum perspective from_the_perspective_of,
+			       struct v2AUTH_transcript *transcript)
+{
+	struct ro_hunk *me = ike->sa.st_firstpacket_me;
+	struct ro_hunk *peer = ike->sa.st_firstpacket_peer;
+
+	struct ro_hunk *sent =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? me :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? peer :
+		 NULL);
+	struct ro_hunk *received =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? peer :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? me :
+		 NULL);
+
+	*transcript = (struct v2AUTH_transcript) {0};
+	if (ike->sa.st_v2_full_transcript_auth) {
+		transcript->zero_prefix = THING_AS_SHUNK(v2AUTH_zero_prefix);
+		transcript->message[0] = received;
+		transcript->message[1] = sent;
+	} else {
+		transcript->message[0] = sent;
+	}
+
+	ldbg(ike->sa.logger, "v2AUTH transcript: %s",
+	     (ike->sa.st_v2_full_transcript_auth ? "ZeroPrefix | received | sent" :
+	      "sent"));
+}
+
 static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
 				 enum perspective from_the_perspective_of,
@@ -59,9 +148,19 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	enum sa_role role;
 	struct hash_hunk *blob = blobs->blob;
 
-	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
-		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
-		   (struct hash_hunk) {0});
+	struct v2AUTH_transcript transcript;
+	extract_v2AUTH_transcript(ike, from_the_perspective_of, &transcript);
+	if (transcript.zero_prefix.len > 0) {
+		*blob++ = (struct hash_hunk) { "zero-prefix", HUNK_REF(&transcript.zero_prefix), };
+	}
+	for (unsigned m = 0; m < elemsof(transcript.message); m++) {
+		if (transcript.message[m] != NULL) {
+			*blob++ = (struct hash_hunk) {
+				(m == 0 ? "first-packet" : "second-packet"),
+				HUNK_REF(transcript.message[m]),
+			};
+		}
+	}
 
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
@@ -784,7 +883,6 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -915,7 +1013,6 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
