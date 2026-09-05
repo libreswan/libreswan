@@ -1,0 +1,3 @@
+Both west and east have ike-sa-init-full-transcript-auth=auto, but the
+IKE_SA_INIT_FULL_TRANSCRIPT_AUTH notification is stripped from the
+IKE_SA_INIT request.
