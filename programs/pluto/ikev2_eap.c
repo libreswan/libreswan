@@ -812,7 +812,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 					/*accumulated EAP hash*/&msk,
 					ike, local_authby,
 					&ike->sa.st_v2_id_payload.mac,
-					ike->sa.st_firstpacket_me,
 					&signed_octets);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));

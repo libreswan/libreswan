@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec showstates | grep full-transcript-auth
+east #
+ grep 'v2AUTH transcript' /tmp/pluto.log | sort -u
+| v2AUTH transcript: sent
+east #
+ grep 'authentication failed' /tmp/pluto.log | sort -u
+| authentication failed: PSK AUTH mismatch
+"westnet-eastnet-ipv4-psk-ikev2" #1: authentication failed: computed hash does not match hash received from peer FQDN '@west'
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+east #
