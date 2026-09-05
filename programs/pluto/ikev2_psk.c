@@ -53,13 +53,30 @@
 #include "fips_mode.h"
 #include "ikev2_prf.h"
 #include "ikev2_psk.h"
+#include "ikev2_auth.h"
+
+static chunk_t clone_v2AUTH_transcript(const struct ike_sa *ike,
+				       enum perspective perspective)
+{
+	struct v2AUTH_transcript transcript;
+	extract_v2AUTH_transcript(ike, perspective, &transcript);
+
+	chunk_t octets = empty_chunk;
+	append_chunk_hunk("ZeroPrefix", &octets, transcript.zero_prefix);
+	for (unsigned m = 0; m < elemsof(transcript.message); m++) {
+		if (transcript.message[m] != NULL) {
+			shunk_t message = { HUNK_REF(transcript.message[m]) };
+			append_chunk_hunk("RealMessage", &octets, message);
+		}
+	}
+	return octets;
+}
 
 diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
 				   enum auth authby,
 				   const struct crypt_mac *idhash,
-				   struct ro_hunk *firstpacket,
 				   struct crypt_mac *sighash)
 {
 	struct logger *logger = ike->sa.logger;
@@ -190,9 +207,11 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
 		 */
+		chunk_t message = clone_v2AUTH_transcript(ike, perspective);
 		(*sighash) = ikev2_psk_resume(prf, SK_px,
-					      HUNK_AS_SHUNK(firstpacket),
+					      HUNK_AS_SHUNK(&message),
 					      logger);
+		free_chunk_content(&message);
 		PASSERT(logger, sighash->len > 0);
 		return NULL;
 	}
@@ -258,8 +277,10 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		pss = symkey_addref(logger, "SK_px", SK_px);
 	}
 
+	chunk_t firstpacket = clone_v2AUTH_transcript(ike, perspective);
+
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", &firstpacket);
 		LDBG_log_hunk(logger, "%s:", nonce, nonce_name);
 		LDBG_log_hunk(logger, "idhash:", idhash);
 		LDBG_log_hunk(logger, "IntAuth:", &intermediate_auth);
@@ -275,10 +296,11 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	 */
 	passert(idhash->len == prf->prf_output_size);
 	*sighash = ikev2_psk_auth(prf, pss,
-				  HUNK_AS_SHUNK(firstpacket),
+				  HUNK_AS_SHUNK(&firstpacket),
 				  *nonce, idhash,
 				  intermediate_auth, ike->sa.logger);
 	symkey_delref(logger, "pss", &pss);
+	free_chunk_content(&firstpacket);
 	free_chunk_content(&intermediate_auth);
 	return NULL;
 }
@@ -294,7 +316,6 @@ bool ikev2_create_psk_auth(enum auth authby,
 	struct crypt_mac signed_octets = empty_mac;
 	diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, NULL,
 					       ike, authby, idhash,
-					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -342,7 +363,6 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 	struct crypt_mac calc_hash = empty_mac;
 	diag_t d = ikev2_calculate_psk_sighash(REMOTE_PERSPECTIVE, auth_sig,
 					       ike, authby, idhash,
-					       ike->sa.st_firstpacket_peer,
 					       &calc_hash);
 	if (d != NULL) {
 		return d;

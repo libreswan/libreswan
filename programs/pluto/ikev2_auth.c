@@ -48,6 +48,38 @@ struct v2AUTH_blobs {
 	struct hash_hunks hunks;
 };
 
+static const uint8_t v2AUTH_zero_prefix[8] = {0};
+
+void extract_v2AUTH_transcript(const struct ike_sa *ike,
+			       enum perspective from_the_perspective_of,
+			       struct v2AUTH_transcript *transcript)
+{
+	struct ro_hunk *me = ike->sa.st_firstpacket_me;
+	struct ro_hunk *peer = ike->sa.st_firstpacket_peer;
+
+	struct ro_hunk *sent =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? me :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? peer :
+		 NULL);
+	struct ro_hunk *received =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? peer :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? me :
+		 NULL);
+
+	*transcript = (struct v2AUTH_transcript) {0};
+	if (ike->sa.st_v2_full_transcript_auth) {
+		transcript->zero_prefix = THING_AS_SHUNK(v2AUTH_zero_prefix);
+		transcript->message[0] = received;
+		transcript->message[1] = sent;
+	} else {
+		transcript->message[0] = sent;
+	}
+
+	ldbg(ike->sa.logger, "v2AUTH transcript: %s",
+	     (ike->sa.st_v2_full_transcript_auth ? "ZeroPrefix | received | sent" :
+	      "sent"));
+}
+
 static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
 				 enum perspective from_the_perspective_of,
@@ -59,9 +91,19 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	enum sa_role role;
 	struct hash_hunk *blob = blobs->blob;
 
-	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
-		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
-		   (struct hash_hunk) {0});
+	struct v2AUTH_transcript transcript;
+	extract_v2AUTH_transcript(ike, from_the_perspective_of, &transcript);
+	if (transcript.zero_prefix.len > 0) {
+		*blob++ = (struct hash_hunk) { "zero-prefix", HUNK_REF(&transcript.zero_prefix), };
+	}
+	for (unsigned m = 0; m < elemsof(transcript.message); m++) {
+		if (transcript.message[m] != NULL) {
+			*blob++ = (struct hash_hunk) {
+				(m == 0 ? "first-packet" : "second-packet"),
+				HUNK_REF(transcript.message[m]),
+			};
+		}
+	}
 
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
@@ -784,7 +826,6 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -915,7 +956,6 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
