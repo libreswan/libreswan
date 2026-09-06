@@ -111,7 +111,7 @@ local-clean-base:
 distclean:
 	: generated test keys
 	: careful output mixed with repo files
-	rm -rf testing/x509/*/
+	$(MAKE) -C testing/x509 clean
 	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
