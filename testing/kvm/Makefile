@@ -635,7 +635,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: Also regenerate the DNSSEC keys
 	:
-	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) /testing/dnssec/generate-dnssec.sh
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /source/testing/dnssec
 	:
 	: All done.
 	:
@@ -645,8 +645,9 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 .PHONY: kvm-clean-keys
 kvm-clean-keys:
 	make -C $(KVM_TESTINGDIR)/x509 clean
+	make -C $(KVM_TESTINGDIR)/dnssec clean
 	rm -f $(KVM_KEYS)
-	rm -rf $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/*/
+
 
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-ok
