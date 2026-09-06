@@ -151,6 +151,19 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>eaponly</option>
+	</term>
+	<listitem>
+	  <para>
+	    Only use EAP authentication (omit the regular AUTH
+	    payload).
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>

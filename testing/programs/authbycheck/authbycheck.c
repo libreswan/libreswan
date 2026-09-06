@@ -63,12 +63,11 @@ int main(int argc, char *argv[])
 		PRINT("authby_from_auth(%u)", auth);
 		struct authby authby = authby_from_auth(auth);
 
-		bool authby_set = (auth != AUTH_EAPONLY);
-		if (authby_is_set(authby) != authby_set) {
-			FAIL("authby_is_set(%u*) == %u", auth, authby_set);
+		if (!authby_is_set(authby)) {
+			FAIL("authby_is_set(%u*)", auth);
 		}
-		if (authby_has_auth(authby, auth) != authby_set) {
-			FAIL("authby_has_auth(%u, %u*) == %u", auth, auth, authby_set);
+		if (!authby_has_auth(authby, auth)) {
+			FAIL("authby_has_auth(%u, %u*)", auth, auth);
 		}
 
 		struct authby not_authby = authby_not(authby);
@@ -81,25 +80,11 @@ int main(int argc, char *argv[])
 
 		authby_buf ab;
 		str_authby(authby, &ab);
-		if (auth == AUTH_EAPONLY) {
-			if (!streq(ab.buf, "none")) {
-				FAIL("str_authby(%u) == none", auth);
-			}
-		} else {
-			if (streq(ab.buf, "none")) {
-				FAIL("str_authby(%u) != none", auth);
-			}
-		}
-
-		if (auth == AUTH_EAPONLY) {
-			continue;
+		if (streq(ab.buf, "none")) {
+			FAIL("str_authby(%u) != none", auth);
 		}
 
 		for (enum auth alt = AUTH_FLOOR; alt < AUTH_ROOF; alt++) {
-
-			if (alt == AUTH_EAPONLY) {
-				continue;
-			}
 
 			struct authby altby = authby_from_auth(alt);
 
@@ -130,8 +115,8 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (!(authby_has_auth(authby_xor(authby, altby), auth) == (xor && authby_set))) {
-				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor && authby_set);
+			if (!(authby_has_auth(authby_xor(authby, altby), auth) == xor)) {
+				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor);
 			}
 
 			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
@@ -197,9 +182,6 @@ int main(int argc, char *argv[])
 	}
 
 	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
-		if (auth == AUTH_EAPONLY) {
-			continue;
-		}
 		if (!authby_has_auth(AUTHBY_ALL, auth)) {
 			FAIL("authby_has_auth(AUTHBY_ALL, %u) failed", auth);
 		}

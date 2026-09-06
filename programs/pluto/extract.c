@@ -1306,6 +1306,10 @@ static diag_t extract_authby(struct authby *authby,
 			return diag("authby="PRI_SHUNK" is not valid for IKEv1",
 				    pri_shunk(val));
 		case IKEv2:
+			if (hunk_streq(val, "eaponly")) {
+				authby->authby_eaponly = true;
+				continue;
+			}
 			if (hunk_streq(val, "secret")) {
 				authby->psk = true;
 				continue;
