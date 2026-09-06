@@ -8,6 +8,8 @@ v5.4.1 (Unreleased, 2026)
     http://libreswan.org/security/CVE-2026-77206
   - fix CVE-2026-77207 - NPE - empty-pkcs7-payload
     http://libreswan.org/security/CVE-2026-77207
+* Building
+  - fix NetBSD 11.0
 
 v5.4 (August 13, 2026)
 * Security
