@@ -31,9 +31,10 @@
 	((TYPE)(LHS).null OP			\
 	 (TYPE)(LHS).never OP			\
 	 (TYPE)(LHS).psk OP			\
+	 (TYPE)(LHS).authby_eaponly OP		\
 	 (TYPE)(LHS).eddsa OP			\
 	 (TYPE)(LHS).rsasig OP			\
-	 (TYPE)(LHS).rsasig_v1_5_sha1 OP		\
+	 (TYPE)(LHS).rsasig_v1_5_sha1 OP	\
 	 REDUCE_SHA2(TYPE, LHS, OP, rsasig_v1_5) OP \
 	 REDUCE_SHA2(TYPE, LHS, OP, rsasig) OP	\
 	 REDUCE_SHA2(TYPE, LHS, OP, ecdsa))
@@ -48,6 +49,7 @@
 		.null = (LHS).null OP (RHS).null,		\
 		.never = (LHS).never OP (RHS).never,		\
 		.psk = (LHS).psk OP (RHS).psk,			\
+		.authby_eaponly = (LHS).authby_eaponly OP (RHS).authby_eaponly,	\
 		.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
 		.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
 		.rsasig_v1_5_sha1 = (LHS).rsasig_v1_5_sha1 OP (RHS).rsasig_v1_5_sha1, \
@@ -194,6 +196,7 @@ enum auth auth_from_authby(struct authby authby)
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
 		authby.never ? AUTH_NEVER :
+		authby.authby_eaponly ? AUTH_EAPONLY :
 		AUTH_UNSET);
 }
 
@@ -213,7 +216,9 @@ struct authby authby_from_auth(enum auth auth)
 			AUTHBY_RSASIG_V1_5,
 			AUTHBY_RSASIG_SHA2,
 		};
-	case AUTH_EAPONLY: return (struct authby) {0};
+	case AUTH_EAPONLY: return (struct authby) {
+			.authby_eaponly = true,
+		};
 	}
 	bad_case(auth);
 }
@@ -299,6 +304,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
+	JAM_AUTHBY(authby_eaponly, EAPONLY);
 #undef JAM_STRING
 #undef JAM_AUTHBY
 	if (s == 0) {

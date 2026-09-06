@@ -24,7 +24,19 @@ enum auth;
 struct jambuf;
 struct hash_desc;
 
+enum authby_kind {
+	AUTHBY_KIND_EAPONLY,
+#define AUTHBY_KIND_ROOF (AUTHBY_KIND_EAPONLY+1)
+};
+
 struct authby {
+	/*
+	 * XXX: add new authby flags to this array so there's less to
+	 * move over down the track.
+	 */
+	bool flag[AUTHBY_KIND_ROOF];
+#define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+
 	bool psk;
 	bool null;
 	bool never;
@@ -91,6 +103,7 @@ struct authby {
 	.psk = true,				\
 	.null = true,				\
 	.never = true,				\
+	.authby_eaponly = true,			\
 	AUTHBY_EDDSA,				\
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2,			\
