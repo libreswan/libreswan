@@ -112,10 +112,7 @@ distclean:
 	: generated test keys
 	: careful output mixed with repo files
 	$(MAKE) -C testing/x509 clean
-	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
-	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
-	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
-	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
+	$(MAKE) -C testing/dnssec clean
 	: test results
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf BACKUP
