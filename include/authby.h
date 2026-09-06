@@ -79,17 +79,7 @@ struct authby {
 
 /* all algs IKEv1 and IKEv2 allow */
 
-#define AUTHBY_ALL				\
-	(struct authby) {			\
-		.psk = true,			\
-		.null = true,			\
-		.never = true,			\
-		AUTHBY_EDDSA,			\
-		AUTHBY_RSASIG_RAW,		\
-		AUTHBY_RSASIG_V1_5,		\
-		AUTHBY_RSASIG_SHA2,		\
-		AUTHBY_ECDSA_SHA2,		\
- 	}
+#define AUTHBY_ALL authby_not((struct authby) {0})
 
 #define AUTHBY_IKEv1				\
 	.psk = true,				\
