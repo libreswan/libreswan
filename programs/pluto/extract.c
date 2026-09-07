@@ -1842,7 +1842,8 @@ static diag_t extract_host_end(enum end end,
 	}
 
 	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
-		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
+		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
+			    leftright, leftright);
 	}
 
 	/*
