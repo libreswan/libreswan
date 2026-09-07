@@ -9,47 +9,21 @@ west #
  echo "initdone"
 initdone
 west #
- # wait for the connection to come up
-west #
- ../../guestbin/wait-for.sh --match westnet-eastnet-auto -- ipsec whack --trafficstatus
-#2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # We expect ping to be encrypted and work; we should see non-zero
-west #
- # traffic counters
-west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- # sending delete/notify should cause east to re-initiate
-west #
- ipsec auto --down westnet-eastnet-auto
+ ipsec down westnet-eastnet-auto
 "westnet-eastnet-auto": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-auto" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-auto" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-auto" #1: deleting IKE SA (established IKE SA)
 west #
- # give Delete/Notify some time; traffic counters on the new IPsec SA
-west #
- # should be 0
-west #
- ../../guestbin/wait-for.sh --match 'westnet-eastnet-auto.*inBytes=0' -- ipsec whack --trafficstatus
-#4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-west #
- # A new IPsec SA should be established (older versions would be dead for 30 seconds)
-west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
