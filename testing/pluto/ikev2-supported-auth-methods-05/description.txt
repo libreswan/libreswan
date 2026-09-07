@@ -1,0 +1,7 @@
+RFC 9593 test. West has authby=secret and east has authby=ecdsa.
+West upon receiving the SUPPORTED_AUTH_METHODS notification from east,
+since they have no methods in common, the negotiated authby results empty.
+West should fall back to its locally configured authby=secret and
+authenticate using PSK.
+The connection then fails cleanly: east rejects west's AUTH
+because east's policy requires ECDSA from the peer.

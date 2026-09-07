@@ -1874,3 +1874,4 @@ kvmplutotest	ikev2-supported-auth-methods-02-intermediate    good
 kvmplutotest	ikev2-supported-auth-methods-03		            good
 kvmplutotest	ikev2-supported-auth-methods-03-fail		    good
 kvmplutotest	ikev2-supported-auth-methods-04		            wip
+kvmplutotest	ikev2-supported-auth-methods-05		            good
