@@ -1820,16 +1820,9 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	enum eap_options autheap =
-		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
-				    /*value_when_unset*/IKE_EAP_NONE,
-				    &eap_option_names,
-				    &d, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
-	host_config->eap = autheap;
+	/*
+	 * Determine the authentication from auth= and authby=.
+	 */
 
 	enum auth auth =
 		extract_enum_name(kv(wm, end, KWS_AUTH),
@@ -1839,22 +1832,6 @@ static diag_t extract_host_end(enum end end,
 				  &d, verbose);
 	if (d != NULL) {
 		return d;
-	}
-
-	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
-		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
-			    leftright, leftright);
-	}
-
-	/*
-	 * Determine the authentication from auth= and authby=.
-	 */
-
-	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
-		/* AUTH_UNSET is updated below */
-		name_buf ab;
-		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&auth_names, auth, &ab));
 	}
 
 	struct authby authby = whack_authby;
@@ -1953,6 +1930,35 @@ static diag_t extract_host_end(enum end end,
 	     str_authby(whack_authby, &wabb));
 	host_config->auth = auth;
 	host_config->authby = authby;
+
+	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
+		/* AUTH_UNSET is updated below */
+		name_buf ab;
+		return diag("%sauth=%s option is invalid for type=passthrough connection",
+			    leftright, str_enum_short(&auth_names, auth, &ab));
+	}
+
+	/*
+	 * Get eapauth, crosscheck with AUTH
+	 */
+
+	host_config->eap =
+		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
+				    /*value_when_unset*/IKE_EAP_NONE,
+				    &eap_option_names,
+				    &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (host_config->eap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
+		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
+			    leftright, leftright);
+	}
+
+	/*
+	 * IDs.
+	 */
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
