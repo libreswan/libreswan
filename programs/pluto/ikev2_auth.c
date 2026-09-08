@@ -1076,8 +1076,8 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
  * matched?
  */
 
-lset_t proposed_v2AUTH(struct ike_sa *ike,
-		       struct msg_digest *md)
+struct authby proposed_v2AUTH(struct ike_sa *ike,
+			      struct msg_digest *md)
 {
 	enum ikev2_auth_method atype =
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
@@ -1087,24 +1087,42 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 
 	switch (atype) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG);
+		return (struct authby) {
+			AUTHBY_RSASIG_V1_5_SHA1,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return (struct authby) {
+			.authby_ecdsa_sha2_256 = true,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return (struct authby) {
+			.authby_ecdsa_sha2_384 = true,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return LELEM(AUTH_ECDSA);
+		return (struct authby) {
+			.authby_ecdsa_sha2_512 = true,
+		};
 	case IKEv2_AUTH_SHARED_KEY_MAC:
-		return LELEM(AUTH_PSK);
+		return (struct authby) {
+			.authby_psk = true,
+		};
 	case IKEv2_AUTH_NULL:
-		return LELEM(AUTH_NULL);
+		return (struct authby) {
+			.authby_null = true,
+		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
+		return (struct authby) {
+			AUTHBY_RSASIG,
+			AUTHBY_ECDSA,
+			AUTHBY_EDDSA,
+		};
 	default:
 	{
 		name_buf nb;
 		llog(RC_LOG, ike->sa.logger, "auth method %s unrecognized",
 		     str_enum_short(&ikev2_auth_method_names,
 				    atype, &nb));
-		return LEMPTY;
+		return (struct authby) {0};
 	}
 	}
 }
