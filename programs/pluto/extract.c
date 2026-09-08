@@ -1883,31 +1883,12 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	struct authby authby_mask = {0};
 	switch (auth) {
 	case AUTH_RSASIG:
 	case AUTH_ECDSA:
 	case AUTH_EDDSA:
-		authby_mask = authby_from_auth(auth);
-		break;
-	case AUTH_PSK:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .psk = true, };
-		break;
-	case AUTH_NULL:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .null = true, };
-		break;
-	case AUTH_UNSET:
-		auth = auth_from_authby(authby);
-		break;
-	case AUTH_EAPONLY:
-		break;
-	case AUTH_NEVER:
-		break;
-	}
-
-	if (authby_is_set(authby_mask)) {
+	{
+		struct authby authby_mask = authby_from_auth(auth);
 		authby = authby_and(authby, authby_mask);
 		if (!authby_is_set(authby)) {
 			name_buf ab;
@@ -1919,6 +1900,26 @@ static diag_t extract_host_end(enum end end,
 				    str_authby(authby, &abb),
 				    str_authby(authby_mask, &abm));
 		}
+		break;
+	}
+	case AUTH_PSK:
+	case AUTH_EAPONLY:
+	case AUTH_NULL:
+		/*
+		 * Force only bit (not on by default).
+		 *
+		 * XXX: this is broken; "auth=eaponly authby=rsasig"
+		 * should get a warning, or even an error; but instead
+		 * it is grouped in with "auth=eapony authby=#unset",
+		 * and ignored.
+		 */
+		authby = authby_from_auth(auth);
+		break;
+	case AUTH_UNSET:
+		auth = auth_from_authby(authby);
+		break;
+	case AUTH_NEVER:
+		break;
 	}
 
 	name_buf eab;
