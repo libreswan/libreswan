@@ -1906,17 +1906,30 @@ static diag_t extract_host_end(enum end end,
 		case AUTH_EAPONLY:
 		case AUTH_NULL:
 		case AUTH_NEVER:
+		{
+			if (wm->wm_authby == NULL) {
+				authby = authby_from_whack_auth;
+				break;
+			}
+
 			/*
-			 * XXX: Broken.
+			 * Warn when AUTH masks out some of the AUTHBY
+			 * bits.
 			 *
-			 * Assuming authby is unset, set AUTHBY
-			 * according to to WHACK_AUTH.
-			 *
-			 * Bad assumption.  For instance, auth=eaponly
-			 * authby=rsasig,psk overrides authby.
+			 * XXX: Originally the conflict was ignored.
 			 */
 			authby = authby_from_whack_auth;
+			struct authby conflicts =
+				authby_and(whack_authby, authby_not(authby));
+			if (authby_is_set(conflicts)) {
+				name_buf ab;
+				authby_buf cb;
+				vwarning("%sauth=%s overrides authby=%s",
+					 leftright, str_enum_short(&auth_names, whack_auth, &ab),
+					 str_authby(conflicts, &cb));
+			}
 			break;
+		}
 
 		case AUTH_RSASIG:
 		case AUTH_ECDSA:
