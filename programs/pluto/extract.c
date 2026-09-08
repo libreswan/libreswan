@@ -1820,16 +1820,9 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	enum eap_options autheap =
-		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
-				    /*value_when_unset*/IKE_EAP_NONE,
-				    &eap_option_names,
-				    &d, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
-	host_config->eap = autheap;
+	/*
+	 * Determine the authentication from auth= and authby=.
+	 */
 
 	enum auth auth =
 		extract_enum_name(kv(wm, end, KWS_AUTH),
@@ -1839,21 +1832,6 @@ static diag_t extract_host_end(enum end end,
 				  &d, verbose);
 	if (d != NULL) {
 		return d;
-	}
-
-	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
-		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
-	}
-
-	/*
-	 * Determine the authentication from auth= and authby=.
-	 */
-
-	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
-		/* AUTH_UNSET is updated below */
-		name_buf ab;
-		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&auth_names, auth, &ab));
 	}
 
 	struct authby authby = whack_authby;
@@ -1905,31 +1883,12 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	struct authby authby_mask = {0};
 	switch (auth) {
 	case AUTH_RSASIG:
 	case AUTH_ECDSA:
 	case AUTH_EDDSA:
-		authby_mask = authby_from_auth(auth);
-		break;
-	case AUTH_PSK:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .psk = true, };
-		break;
-	case AUTH_NULL:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .null = true, };
-		break;
-	case AUTH_UNSET:
-		auth = auth_from_authby(authby);
-		break;
-	case AUTH_EAPONLY:
-		break;
-	case AUTH_NEVER:
-		break;
-	}
-
-	if (authby_is_set(authby_mask)) {
+	{
+		struct authby authby_mask = authby_from_auth(auth);
 		authby = authby_and(authby, authby_mask);
 		if (!authby_is_set(authby)) {
 			name_buf ab;
@@ -1941,6 +1900,26 @@ static diag_t extract_host_end(enum end end,
 				    str_authby(authby, &abb),
 				    str_authby(authby_mask, &abm));
 		}
+		break;
+	}
+	case AUTH_PSK:
+	case AUTH_EAPONLY:
+	case AUTH_NULL:
+		/*
+		 * Force only bit (not on by default).
+		 *
+		 * XXX: this is broken; "auth=eaponly authby=rsasig"
+		 * should get a warning, or even an error; but instead
+		 * it is grouped in with "auth=eapony authby=#unset",
+		 * and ignored.
+		 */
+		authby = authby_from_auth(auth);
+		break;
+	case AUTH_UNSET:
+		auth = auth_from_authby(authby);
+		break;
+	case AUTH_NEVER:
+		break;
 	}
 
 	name_buf eab;
@@ -1952,6 +1931,35 @@ static diag_t extract_host_end(enum end end,
 	     str_authby(whack_authby, &wabb));
 	host_config->auth = auth;
 	host_config->authby = authby;
+
+	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
+		/* AUTH_UNSET is updated below */
+		name_buf ab;
+		return diag("%sauth=%s option is invalid for type=passthrough connection",
+			    leftright, str_enum_short(&auth_names, auth, &ab));
+	}
+
+	/*
+	 * Get eapauth, crosscheck with AUTH
+	 */
+
+	host_config->eap =
+		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
+				    /*value_when_unset*/IKE_EAP_NONE,
+				    &eap_option_names,
+				    &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (host_config->eap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
+		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
+			    leftright, leftright);
+	}
+
+	/*
+	 * IDs.
+	 */
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {

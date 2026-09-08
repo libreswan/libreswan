@@ -12,115 +12,137 @@ west #
 west #
  add() ( name=$1 ; shift ; set -x ; ipsec addconn --name ${name} "$@" ; )
 west #
- authby() ( name=$1 ; shift ; add ${name} authby=${name} "$@" ; )
+ authby() ( name=$1 ; shift ; add authby=${name} authby=${name} "$@" ; )
+west #
+ leftauth() ( name=$1 ; shift ; add leftauth=${name} leftauth=${name} "$@" ; )
 west #
  add defaults
 + ipsec addconn --name defaults
 "defaults": added oriented IKEv2 connection
 west #
  authby null
-+ ipsec addconn --name null authby=null
-"null": added oriented IKEv2 connection
++ ipsec addconn --name authby=null authby=null
+"authby=null": added oriented IKEv2 connection
 west #
  authby secret
-+ ipsec addconn --name secret authby=secret
-"secret": added oriented IKEv2 connection
++ ipsec addconn --name authby=secret authby=secret
+"authby=secret": added oriented IKEv2 connection
 west #
  authby never # fail
-+ ipsec addconn --name never authby=never
-"never": failed to add connection: connection with authby=never must specify shunt type via type=
++ ipsec addconn --name authby=never authby=never
+"authby=never": failed to add connection: connection with authby=never must specify shunt type via type=
 west #
  authby never type=drop
-+ ipsec addconn --name never authby=never type=drop
-warning: "never": "keyexchange=ikev2" ignored for never-negotiate ("type=drop") connection
-"never": added oriented drop connection
++ ipsec addconn --name authby=never authby=never type=drop
+warning: "authby=never": "keyexchange=ikev2" ignored for never-negotiate ("type=drop") connection
+"authby=never": added oriented drop connection
 west #
- authby eaponly # fail
-+ ipsec addconn --name eaponly authby=eaponly
-"eaponly": added oriented IKEv2 connection
+ authby eaponly # fails
++ ipsec addconn --name authby=eaponly authby=eaponly
+"authby=eaponly": failed to add connection: leftauth can only be 'eaponly' when leftautheap is not 'none'
 west #
- authby eaponly leftautheap=tls
-+ ipsec addconn --name eaponly authby=eaponly leftautheap=tls
-"eaponly": added oriented IKEv2 connection
+ authby eaponly leftautheap=tls rightautheap=tls # should probably fail
++ ipsec addconn --name authby=eaponly authby=eaponly leftautheap=tls rightautheap=tls
+"authby=eaponly": added oriented IKEv2 connection
+west #
+ leftauth eaponly leftautheap=tls
++ ipsec addconn --name leftauth=eaponly leftauth=eaponly leftautheap=tls
+"leftauth=eaponly": added oriented IKEv2 connection
 west #
  authby eddsa
-+ ipsec addconn --name eddsa authby=eddsa
-"eddsa": added oriented IKEv2 connection
++ ipsec addconn --name authby=eddsa authby=eddsa
+"authby=eddsa": added oriented IKEv2 connection
 west #
  authby ecdsa
-+ ipsec addconn --name ecdsa authby=ecdsa
-"ecdsa": added oriented IKEv2 connection
++ ipsec addconn --name authby=ecdsa authby=ecdsa
+"authby=ecdsa": added oriented IKEv2 connection
 west #
  authby ecdsa-sha2
-+ ipsec addconn --name ecdsa-sha2 authby=ecdsa-sha2
-"ecdsa-sha2": added oriented IKEv2 connection
++ ipsec addconn --name authby=ecdsa-sha2 authby=ecdsa-sha2
+"authby=ecdsa-sha2": added oriented IKEv2 connection
 west #
  authby ecdsa-sha2_256
-+ ipsec addconn --name ecdsa-sha2_256 authby=ecdsa-sha2_256
-"ecdsa-sha2_256": added oriented IKEv2 connection
++ ipsec addconn --name authby=ecdsa-sha2_256 authby=ecdsa-sha2_256
+"authby=ecdsa-sha2_256": added oriented IKEv2 connection
 west #
  authby ecdsa-sha2_384
-+ ipsec addconn --name ecdsa-sha2_384 authby=ecdsa-sha2_384
-"ecdsa-sha2_384": added oriented IKEv2 connection
++ ipsec addconn --name authby=ecdsa-sha2_384 authby=ecdsa-sha2_384
+"authby=ecdsa-sha2_384": added oriented IKEv2 connection
 west #
  authby ecdsa-sha2_512
-+ ipsec addconn --name ecdsa-sha2_512 authby=ecdsa-sha2_512
-"ecdsa-sha2_512": added oriented IKEv2 connection
++ ipsec addconn --name authby=ecdsa-sha2_512 authby=ecdsa-sha2_512
+"authby=ecdsa-sha2_512": added oriented IKEv2 connection
+west #
+ authby ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512 # merges
++ ipsec addconn --name authby=ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512 authby=ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512
+"authby=ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512": added oriented IKEv2 connection
 west #
  authby rsa
-+ ipsec addconn --name rsa authby=rsa
-"rsa": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa authby=rsa
+"authby=rsa": added oriented IKEv2 connection
 west #
  authby rsasig
-+ ipsec addconn --name rsasig authby=rsasig
-"rsasig": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsasig authby=rsasig
+"authby=rsasig": added oriented IKEv2 connection
 west #
  authby rsa-sha1
-+ ipsec addconn --name rsa-sha1 authby=rsa-sha1
-"rsa-sha1": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa-sha1 authby=rsa-sha1
+"authby=rsa-sha1": added oriented IKEv2 connection
 west #
  authby rsa-sha2
-+ ipsec addconn --name rsa-sha2 authby=rsa-sha2
-"rsa-sha2": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa-sha2 authby=rsa-sha2
+"authby=rsa-sha2": added oriented IKEv2 connection
 west #
  authby rsa-sha2_256
-+ ipsec addconn --name rsa-sha2_256 authby=rsa-sha2_256
-"rsa-sha2_256": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa-sha2_256 authby=rsa-sha2_256
+"authby=rsa-sha2_256": added oriented IKEv2 connection
 west #
  authby rsa-sha2_384
-+ ipsec addconn --name rsa-sha2_384 authby=rsa-sha2_384
-"rsa-sha2_384": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa-sha2_384 authby=rsa-sha2_384
+"authby=rsa-sha2_384": added oriented IKEv2 connection
 west #
  authby rsa-sha2_512
-+ ipsec addconn --name rsa-sha2_512 authby=rsa-sha2_512
-"rsa-sha2_512": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa-sha2_512 authby=rsa-sha2_512
+"authby=rsa-sha2_512": added oriented IKEv2 connection
+west #
+ authby rsa-sha1,rsa-sha2
++ ipsec addconn --name authby=rsa-sha1,rsa-sha2 authby=rsa-sha1,rsa-sha2
+"authby=rsa-sha1,rsa-sha2": added oriented IKEv2 connection
+west #
+ authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
++ ipsec addconn --name authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512 authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
+"authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512": added oriented IKEv2 connection
 west #
  # these pass but should fail
 west #
  authby rsa,secret
-+ ipsec addconn --name rsa,secret authby=rsa,secret
-"rsa,secret": added oriented IKEv2 connection
++ ipsec addconn --name authby=rsa,secret authby=rsa,secret
+"authby=rsa,secret": added oriented IKEv2 connection
 west #
  ipsec status | grep ' policy: '
+"authby=eaponly":   policy: IKEv2+EAPONLY+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa-sha2":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa-sha2_256":   policy: IKEv2+ECDSA_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa-sha2_384":   policy: IKEv2+ECDSA_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=ecdsa-sha2_512":   policy: IKEv2+ECDSA_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=eddsa":   policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=never":   policy: IKEv2+AUTH_NEVER+DROP+NEVER_NEGOTIATE;
+"authby=null":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa,secret":   policy: IKEv2+PSK+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha1":   policy: IKEv2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha1,rsa-sha2":   policy: IKEv2+RSASIG_SHA2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha2":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha2_256":   policy: IKEv2+RSASIG_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha2_384":   policy: IKEv2+RSASIG_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsa-sha2_512":   policy: IKEv2+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"authby=secret":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"eaponly":   policy: IKEv2+EAPONLY+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa-sha2":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa-sha2_256":   policy: IKEv2+ECDSA_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa-sha2_384":   policy: IKEv2+ECDSA_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"ecdsa-sha2_512":   policy: IKEv2+ECDSA_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"eddsa":   policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"never":   policy: IKEv2+AUTH_NEVER+DROP+NEVER_NEGOTIATE;
-"null":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa,secret":   policy: IKEv2+PSK+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa-sha1":   policy: IKEv2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa-sha2":   policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa-sha2_256":   policy: IKEv2+RSASIG_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa-sha2_384":   policy: IKEv2+RSASIG_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsa-sha2_512":   policy: IKEv2+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"secret":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"leftauth=eaponly":   policy: IKEv2+EAPONLY+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 west #
  # these should fail to load
 west #
