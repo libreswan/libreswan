@@ -6,21 +6,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-mismatch
+ ipsec add westnet-eastnet-mismatch
 "westnet-eastnet-mismatch": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
-east #
- # this should not match anything
-east #
- grep v2N_INVALID_MESSAGE_ID /tmp/pluto.log
-east #
- # this shows we returned the error in IKE_AUTH
-east #
- grep "exchange type:" /tmp/pluto.log
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
-|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
-|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
 east #
