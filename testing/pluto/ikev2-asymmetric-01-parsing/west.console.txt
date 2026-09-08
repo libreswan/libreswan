@@ -241,7 +241,7 @@ Showing policies of all loaded connections
 west #
  ipsec connectionstatus -E 'policy: |our auth:'
 "test-default":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
-"test-default":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"test-default":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "test-default":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "test-v1-rsasig":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "test-v1-rsasig":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -251,7 +251,7 @@ west #
 "test1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "test1":   v2-auth-hash-policy: none;
 "test10":   our auth:eaponly, their auth:eaponly, our autheap:tls, their autheap:tls;
-"test10":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"test10":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "test10":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "test11":   our auth:eaponly, their auth:rsasig, our autheap:tls, their autheap:none, send-supported-auth-methods:no;
 "test11":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

@@ -13,4 +13,4 @@ east #
 east #
  ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
 "westnet-eastnet-auto" #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
-east # 
+east #
