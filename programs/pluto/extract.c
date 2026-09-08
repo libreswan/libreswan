@@ -1823,8 +1823,7 @@ static diag_t extract_host_end(enum end end,
 	/*
 	 * Determine the authentication from auth= and authby=.
 	 */
-
-	enum auth auth =
+	enum auth whack_auth =
 		extract_enum_name(kv(wm, end, KWS_AUTH),
 				  /*value_when_unset*/AUTH_UNSET,
 				  /*value_when_never_negotiate*/AUTH_UNSET,
@@ -1834,106 +1833,151 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	struct authby authby = whack_authby;
-
-	/*
-	 * IKEv1 only allows symetric authentication using authby=
-	 * ({left,right}auth= can be asymetric).
-	 *
-	 * Convert authby= into auth=.
-	 */
-	if (ike_version == IKEv1) {
-		/* override auth= using above authby= from whack */
-		if (auth != AUTH_UNSET) {
+	struct authby authby; /*tbd*/
+	switch (ike_version) {
+	case IKEv1:
+	{
+		/*
+		 * IKEv1 only allows symetric authentication using
+		 * authby=.  Only IKEv2 allows the asymetric leftauth=
+		 * and rightauth=.
+		 */
+		if (src->we_auth != NULL) {
 			return diag("%sauth= is not supported by IKEv1", leftright);
 		}
+
 		/*
-		 * Determine the AUTH from AUTHBY; and then reverse
-		 * that process to determine the real AUTHBY.
-		 *
-		 * XXX: Need to strip out IKEv2 bits.
-		 *
-		 * XXX: AUTHBY_ALL_RSASIG_V1_5 contains the
-		 * AUTHBY_RSASIG_RAW bit - which is what is actually
-		 * needed.
+		 * Reject AUTHBY from whack when it contains something
+		 * specific to IKEv2.
 		 */
-		auth = auth_from_authby(whack_authby);
-		authby = authby_from_auth(auth);
-		struct authby authby_ikev1_mask = authby_not((struct authby) {
+		struct authby ikev2_authby = authby_and(whack_authby, (struct authby) {
 				AUTHBY_IKEv2_ONLY,
 			});
-		authby = authby_and(authby, authby_ikev1_mask);
-		/*
-		 * Now compare the rebuilt AUTHBY with the original
-		 * WHACK_AUTHBY, looking for auth bits that
-		 * disappeared.
-		 *
-		 * XXX: Is this breaking backward compatiblity?
-		 */
-		struct authby exclude = authby_not(authby);
-		vexpect(!authby_is_set(authby_and(whack_authby, (struct authby) {
-						AUTHBY_IKEv2_ONLY,
-					})));
-		struct authby unexpected = authby_and(whack_authby, exclude);
-		if (authby_is_set(unexpected)) {
-			authby_buf wb, ub;
-			return diag("additional %s in authby=%s is not supported by IKEv1",
-				    str_authby(unexpected, &ub),
-				    str_authby(whack_authby, &wb));
+		if (authby_is_set(ikev2_authby)) {
+			authby_buf ab;
+			return diag("authby=%s is not supported by IKEv1",
+				    str_authby(ikev2_authby, &ab));
 		}
-	}
 
-	switch (auth) {
-	case AUTH_RSASIG:
-	case AUTH_ECDSA:
-	case AUTH_EDDSA:
+		/*
+		 * Mask the authby down to a single method.
+		 */
+		struct authby expected_authby =
+			authby_and(authby_from_auth(auth_from_authby(whack_authby)),
+				   (struct authby) {
+					   AUTHBY_IKEv1,
+				   });
+		authby = authby_and(whack_authby, expected_authby);
+
+		/*
+		 * Now check to see if that excluded anything?
+		 */
+		struct authby extra_authby =
+			authby_and(whack_authby, authby_not(authby));
+		if (authby_is_set(extra_authby)) {
+			authby_buf aa;
+			authby_buf ae;
+			return diag("additional %s in authby=%s is not supported by IKEv1",
+				    str_authby(extra_authby, &ae),
+				    str_authby(whack_authby, &aa));
+
+		}
+
+		break;
+	}
+	case IKEv2:
 	{
-		struct authby authby_mask = authby_from_auth(auth);
-		authby = authby_and(authby, authby_mask);
-		if (!authby_is_set(authby)) {
-			name_buf ab;
-			authby_buf abm;
-			authby_buf abb;
-			return diag("%sauth=%s(%s) expects authby=%s",
-				    leftright,
-				    str_enum_short(&auth_names, auth, &ab),
-				    str_authby(authby, &abb),
-				    str_authby(authby_mask, &abm));
+		if (is_never_negotiate_wm(wm)) {
+			authby = authby_from_auth(AUTH_NEVER);
+			break;
+		}
+
+		/*
+		 * Convert auth= to equivalent IKEv2 only authby bits.
+		 */
+		struct authby authby_from_whack_auth =
+			authby_and(authby_from_auth(whack_auth),
+				  (struct authby) {
+					  AUTHBY_IKEv2,
+				  });
+
+		switch (whack_auth) {
+		case AUTH_PSK:
+		case AUTH_EAPONLY:
+		case AUTH_NULL:
+		case AUTH_NEVER:
+			/*
+			 * XXX: Broken.
+			 *
+			 * Assuming authby is unset, set AUTHBY
+			 * according to to WHACK_AUTH.
+			 *
+			 * Bad assumption.  For instance, auth=eaponly
+			 * authby=rsasig,psk overrides authby.
+			 */
+			authby = authby_from_whack_auth;
+			break;
+
+		case AUTH_RSASIG:
+		case AUTH_ECDSA:
+		case AUTH_EDDSA:
+		{
+			if (wm->wm_authby == NULL) {
+				authby = authby_from_whack_auth;
+				break;
+			}
+
+			authby = authby_and(whack_authby, authby_from_whack_auth);
+			if (!authby_is_set(authby)) {
+				name_buf ab;
+				authby_buf abm;
+				authby_buf abb;
+				return diag("%sauth=%s(%s) expects authby=%s",
+					    leftright,
+					    str_enum_short(&auth_names, whack_auth, &ab),
+					    str_authby(authby, &abb),
+					    str_authby(authby_from_whack_auth, &abm));
+			}
+
+			/* now check for conflicts */
+			struct authby conflicts = authby_and(whack_authby,
+							     authby_not(authby_from_whack_auth));
+			if (authby_is_set(conflicts)) {
+				name_buf ab;
+				authby_buf abm;
+				return diag("%sauth=%s conflicts with authby=%s",
+					    leftright,
+					    str_enum_short(&auth_names, whack_auth, &ab),
+					    str_authby(conflicts, &abm));
+			}
+			break;
+		}
+		case AUTH_UNSET:
+			authby = whack_authby;
+			break;
+		default:
+			bad_case(ike_version);
 		}
 		break;
 	}
-	case AUTH_PSK:
-	case AUTH_EAPONLY:
-	case AUTH_NULL:
-		/*
-		 * Force only bit (not on by default).
-		 *
-		 * XXX: this is broken; "auth=eaponly authby=rsasig"
-		 * should get a warning, or even an error; but instead
-		 * it is grouped in with "auth=eapony authby=#unset",
-		 * and ignored.
-		 */
-		authby = authby_from_auth(auth);
-		break;
-	case AUTH_UNSET:
-		auth = auth_from_authby(authby);
-		break;
-	case AUTH_NEVER:
-		break;
+	default:
+		bad_case(ike_version);
 	}
 
 	name_buf eab;
-	authby_buf wabb;
-	authby_buf eabb;
-	vdbg("fake %sauth=%s %sauthby=%s from whack authby %s",
-	     src->leftright, str_enum_short(&auth_names, auth, &eab),
-	     src->leftright, str_authby(authby, &eabb),
-	     str_authby(whack_authby, &wabb));
-	host_config->auth = auth;
+	authby_buf eaby;
+	name_buf wab;
+	authby_buf waby;
+	enum auth auth = host_config->auth = auth_from_authby(authby);
 	host_config->authby = authby;
+	vexpect(auth != AUTH_UNSET);
+	vdbg("fake %sauth=%s %sauthby=%s from whack auth=%s and whack authby=%s",
+	     src->leftright, str_enum_short(&auth_names, auth, &eab),
+	     src->leftright, str_authby(host_config->authby, &eaby),
+	     str_enum_short(&auth_names, whack_auth, &wab),
+	     str_authby(whack_authby, &waby));
 
-	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
-		/* AUTH_UNSET is updated below */
+	if (is_never_negotiate_wm(wm) && auth != AUTH_NEVER) {
 		name_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
 			    leftright, str_enum_short(&auth_names, auth, &ab));
