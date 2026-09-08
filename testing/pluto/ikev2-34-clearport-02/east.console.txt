@@ -6,13 +6,13 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv2 connection
 east #
- ipsec auto --add pass-7
+ ipsec add pass-7
 "pass-7": added oriented passthrough connection
 east #
- ipsec auto --route pass-7
+ ipsec route pass-7
 east #
  echo "initdone"
 initdone

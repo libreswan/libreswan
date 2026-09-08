@@ -1,6 +1,6 @@
-ipsec auto --up west-east
+ipsec up west-east # sanitize-retransmits
 # poke a hole to port 7, those packets will be allowed cleartext
-ipsec auto --route pass-7
+ipsec route pass-7
 ipsec _kernel policy
 # send packet over the clear exception - should return connection refused
 echo 'test' | nc -w 5 192.1.2.23 7
