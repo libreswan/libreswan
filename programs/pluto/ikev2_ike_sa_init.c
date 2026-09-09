@@ -1583,3 +1583,5 @@ V2_EXCHANGE(IKE_SA_INIT, "",
 	    /*secured*/false,
 	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_I0);
+
+enum yna_options ikev2_signature_hash_algorithms;
