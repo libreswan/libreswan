@@ -781,7 +781,12 @@ void test_ike_alg(struct logger *logger);
 
 /*
  * Iterate over all enabled algorithms.
+ *
+ * LAST points into a table of pointers; hence the strange tripple
+ * dereference.
  */
+
+const struct hash_desc **next_hash_desc(const struct hash_desc **last);
 const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
 const struct prf_desc **next_prf_desc(const struct prf_desc **last);
 const struct integ_desc **next_integ_desc(const struct integ_desc **last);
