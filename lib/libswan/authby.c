@@ -16,6 +16,7 @@
 #include "authby.h"
 #include "auth.h"
 
+#include "ike_alg.h"
 #include "ike_alg_hash.h"
 
 #include "constants.h"		/* for enum keyword_auth */
@@ -337,6 +338,37 @@ lset_t authby_sighash_policy(struct authby authby)
 	}
 
 	return sighash_policy;
+}
+
+void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
+{
+	const char *sep = NULL;
+	for (const struct hash_desc **hashp = next_hash_desc(NULL);
+	     hashp != NULL;
+	     hashp = next_hash_desc(hashp)) {
+		const struct hash_desc *hash = (*hashp);
+
+		if (!authby_has_hash(authby, hash)) {
+			continue;
+		}
+
+		/*
+		 * XXX: libreswan does not speak of its support for
+		 * the SHA1 hash algorithms.
+		 */
+		if (hash == &ike_alg_hash_sha1) {
+			continue;
+		}
+
+		if (sep != NULL) {
+			jam_string(buf, sep);
+		}
+		sep = "+";
+		jam_string(buf, hash->common.fqn);
+	}
+	if (sep == NULL) {
+		jam_string(buf, "none");
+	}
 }
 
 struct authby supported_ikev2_digsig_auth_payloads(void)
