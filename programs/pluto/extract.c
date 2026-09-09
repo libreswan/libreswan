@@ -102,6 +102,22 @@ static struct kv kv(const struct whack_message *wm,
 		    enum end end,
 		    enum config_conn_keyword key)
 {
+	/*
+	 * Default to the non-ended value when the ended value is
+	 * missing.
+	 */
+	switch (end) {
+	case LEFT_END:
+	case RIGHT_END:
+	{
+		const char *value = wm->conn[end].value[key];
+		if (value != NULL) {
+			return kvs(wm, end, key, value);
+		}
+		end = END_ROOF;
+		break;
+	}
+	}
 	return kvs(wm, end, key, wm->conn[end].value[key]);
 }
 
