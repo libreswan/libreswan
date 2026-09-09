@@ -575,13 +575,15 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * that can be matched?
 	 */
 
-	lset_t proposed_initiator_auths;
+	struct authby proposed_initiator_auths;
 	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
 		/*
 		 * Can only be EAP.  Is EAPONLY right? EAP can be
 		 * combined with some other method?
 		 */
-		proposed_initiator_auths = LELEM(AUTH_EAPONLY);
+		proposed_initiator_auths = (struct authby) {
+			.authby_eaponly = true,
+		};
 	} else if (ike->sa.st_v2_resume_session) {
 		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
 		name_buf rn, an;
@@ -589,12 +591,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
 		     str_enum_short(&auth_names, auth, &rn));
-		proposed_initiator_auths = LELEM(auth);
+		proposed_initiator_auths = authby_from_auth(auth);
 	} else {
 		proposed_initiator_auths = proposed_v2AUTH(ike, md);
 	}
 
-	if (proposed_initiator_auths == LEMPTY) {
+	if (!authby_is_set(proposed_initiator_auths)) {
 		/* already logged */
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -669,7 +671,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * We might be surprised!  Which is why C is only captured
 	 * _after_ this operation.
 	 */
-       if (!LHAS(proposed_initiator_auths, AUTH_NULL)) {
+       if (!proposed_initiator_auths.null) {
 	       refine_host_connection_of_state_on_responder(ike, proposed_initiator_auths,
 							    &initiator_id,
 							    &responder_id);

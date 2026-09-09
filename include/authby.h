@@ -37,39 +37,56 @@ struct authby {
 	bool flag[AUTHBY_KIND_ROOF];
 #define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
 
-	bool psk;
-	bool null;
-	bool never;
+	bool psk;	/* flag[AUTHBY_KIND_PSK] */
+#define authby_psk psk
 
-	bool eddsa;
+	bool null;	/* flag[AUTHBY_KIND_NULL] */
+#define authby_null null
+
+	bool never;	/* flag[AUTHBY_KIND_NEVER] */
+#define authby_never never
+
+	bool eddsa;	/* flag[AUTHBY_KIND_EDDSA] */
+#define authby_eddsa eddsa
 #define AUTHBY_EDDSA				\
-	.eddsa = true
+	.authby_eddsa = true
 
 	/* XXX: should be IKEv1 only */
-	bool rsasig;
+	bool rsasig;	/* flag[AUTHBY_KIND_RSASIG_RAW] */
+#define authby_rsasig_raw rsasig
 #define AUTHBY_RSASIG_RAW			\
-	.rsasig = true
+	.authby_rsasig_raw = true
 
 	bool rsasig_v1_5_sha1;
+#define authby_rsasig_v1_5_sha1 rsasig_v1_5_sha1
 #define AUTHBY_RSASIG_V1_5_SHA1			\
 	.rsasig_v1_5_sha1 = true
 
 	bool rsasig_v1_5_sha2_256;
 	bool rsasig_v1_5_sha2_384;
 	bool rsasig_v1_5_sha2_512;
+#define authby_rsasig_v1_5_sha2_256 rsasig_v1_5_sha2_256
+#define authby_rsasig_v1_5_sha2_384 rsasig_v1_5_sha2_384
+#define authby_rsasig_v1_5_sha2_512 rsasig_v1_5_sha2_512
 #define AUTHBY_RSASIG_V1_5_SHA2			\
-	.rsasig_v1_5_sha2_256 = true,		\
-	.rsasig_v1_5_sha2_384 = true,		\
-	.rsasig_v1_5_sha2_512 = true
+	.authby_rsasig_v1_5_sha2_256 = true,		\
+	.authby_rsasig_v1_5_sha2_384 = true,		\
+	.authby_rsasig_v1_5_sha2_512 = true
+
+#define AUTHBY_RSASIG_V1_5			\
+	AUTHBY_RSASIG_V1_5_SHA1,		\
+	AUTHBY_RSASIG_V1_5_SHA2
 
 	bool rsasig_sha2_256;
 	bool rsasig_sha2_384;
 	bool rsasig_sha2_512;
+#define authby_rsasig_sha2_256 rsasig_sha2_256
+#define authby_rsasig_sha2_384 rsasig_sha2_384
+#define authby_rsasig_sha2_512 rsasig_sha2_512
 #define AUTHBY_RSASIG_SHA2			\
-	.rsasig_sha2_256 = true,		\
-	.rsasig_sha2_384 = true,		\
-	.rsasig_sha2_512 = true
-
+	.authby_rsasig_sha2_256 = true,		\
+	.authby_rsasig_sha2_384 = true,		\
+	.authby_rsasig_sha2_512 = true
 #define AUTHBY_RSASIG				\
 	AUTHBY_RSASIG_RAW,			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -78,16 +95,17 @@ struct authby {
 	bool ecdsa_sha2_256;
 	bool ecdsa_sha2_384;
 	bool ecdsa_sha2_512;
+#define authby_ecdsa_sha2_256 ecdsa_sha2_256
+#define authby_ecdsa_sha2_384 ecdsa_sha2_384
+#define authby_ecdsa_sha2_512 ecdsa_sha2_512
 #define AUTHBY_ECDSA_SHA2			\
-	.ecdsa_sha2_256 = true,			\
-	.ecdsa_sha2_384 = true,			\
-	.ecdsa_sha2_512 = true
+	.authby_ecdsa_sha2_256 = true,		\
+	.authby_ecdsa_sha2_384 = true,		\
+	.authby_ecdsa_sha2_512 = true
+#define AUTHBY_ECDSA				\
+	AUTHBY_ECDSA_SHA2
 
 };
-
-#define AUTHBY_RSASIG_V1_5			\
-	AUTHBY_RSASIG_V1_5_SHA1,		\
-	AUTHBY_RSASIG_V1_5_SHA2
 
 /* all algs IKEv1 and IKEv2 allow */
 

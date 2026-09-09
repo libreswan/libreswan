@@ -87,7 +87,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike);
 struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike, const char *why,
 				   const struct msg_digest *md);
 
-lset_t proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
+struct authby proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
 
 struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
                struct ike_sa *ike,
