@@ -842,10 +842,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_string(buf, ":  ");
 			/* policy */
 			jam_string(buf, " v2-auth-hash-policy: ");
-			lset_t local_hash_policy =
-				authby_sighash_policy(c->local->config->host.authby);
-			jam_lset_short(buf, &ikev2_hash_algorithm_names, "+",
-				       local_hash_policy);
+			jam_authby_sighash_policy(buf, c->local->config->host.authby);
 			jam_string(buf, ";");
 		}
 	}
