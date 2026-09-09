@@ -1274,11 +1274,6 @@ static struct authby extract_authby(struct kv kv,
 		return authby_from_auth(AUTH_NEVER);
 	}
 
-	if (kv.value == NULL) {
-		return (ike_version == IKEv1 ? AUTHBY_ALL_IKEv1_DEFAULTS :
-			AUTHBY_ALL_IKEv2_DEFAULTS);
-	}
-
 	struct authby authby = {0};
 	shunk_t curseby = shunk1(kv.value);
 	while (true) {
@@ -1857,6 +1852,11 @@ static diag_t extract_host_end(enum end end,
 			return diag("%sauth= is not supported by IKEv1", leftright);
 		}
 
+		if (!authby_is_set(whack_authby)) {
+			authby = AUTHBY_ALL_IKEv1_DEFAULTS;
+			break;
+		}
+
 		/*
 		 * Reject AUTHBY from whack when it contains something
 		 * specific to IKEv2.
@@ -1946,7 +1946,7 @@ static diag_t extract_host_end(enum end end,
 		case AUTH_ECDSA:
 		case AUTH_EDDSA:
 		{
-			if (wm->wm_authby == NULL) {
+			if (!authby_is_set(whack_authby)) {
 				authby = authby_from_whack_auth;
 				break;
 			}
@@ -1977,6 +1977,11 @@ static diag_t extract_host_end(enum end end,
 			break;
 		}
 		case AUTH_UNSET:
+			if (!authby_is_set(whack_authby)) {
+				authby = AUTHBY_ALL_IKEv2_DEFAULTS;
+				break;
+			}
+
 			authby = whack_authby;
 			break;
 		default:
