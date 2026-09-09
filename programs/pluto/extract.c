@@ -83,9 +83,10 @@ struct kv {
 #define PRI_KV "\"%s%s=%s\""
 #define pri_kv(KV) (KV).leftright, (KV).key, ((KV).value == NULL ? "" : (KV).value)
 
-static struct kv kv(const struct whack_message *wm,
-		    enum end end,
-		    enum config_conn_keyword key)
+static struct kv kvs(const struct whack_message *wm,
+		     enum end end,
+		     enum config_conn_keyword key,
+		     const char *value)
 {
 	return (struct kv) {
 		.wm = wm,
@@ -93,8 +94,15 @@ static struct kv kv(const struct whack_message *wm,
 			      end == RIGHT_END ? "right" :
 			      ""),
 		.key = config_conn_keywords.item[key].keyname,
-		.value = wm->conn[end].value[key],
+		.value = value,
 	};
+}
+
+static struct kv kv(const struct whack_message *wm,
+		    enum end end,
+		    enum config_conn_keyword key)
+{
+	return kvs(wm, end, key, wm->conn[end].value[key]);
 }
 
 static bool is_never_negotiate_type(enum type_options type)
@@ -131,8 +139,8 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 	return is_never_negotiate_type(sparse->value & ~NAME_FLAGS);
 }
 
-static void llog_never_negotiate_option(struct kv nn_kv,
-					struct verbose verbose)
+static void vlog_never_negotiate_option(struct verbose verbose,
+					struct kv nn_kv)
 {
 	if (nn_kv.value == NULL) {
 		/* nothing to ignore */
@@ -151,7 +159,7 @@ static bool never_negotiate_string_option(struct kv kv,
 					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(kv.wm)) {
-		llog_never_negotiate_option(kv, verbose);
+		vlog_never_negotiate_option(verbose, kv);
 		return true;
 	}
 
