@@ -1,10 +1,14 @@
 # these should load properly
 
-add() ( name=$1 ; shift ; set -x ; ipsec addconn --name ${name} "$@" ; )
-authby() ( name=$1 ; shift ; add authby=${name} authby=${name} "$@" ; )
-leftauth() ( name=$1 ; shift ; add leftauth=${name} leftauth=${name} "$@" ; )
+RUN()      { echo " $@" ; "$@" ; }
+policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | grep -e '  policy:' -e '-policy:' ; }
+add()      ( name=$1 ; shift ; RUN ipsec addconn --name ${name} "$@" ; )
+del()      { name=$1 ; shift ; ipsec delete ${name} ; }
+conn()     { name=$1 ; shift ; add ${name} "$@" ; policy ${name} ; del ${name} ; }
+authby()   { name=$1 ; shift ; conn authby-${name}   authby=${name} "$@" ; }
+leftauth() { name=$1 ; shift ; conn leftauth-${name} leftauth=${name} "$@" ; }
 
-add defaults
+conn defaults
 
 authby null
 authby secret
@@ -35,11 +39,19 @@ authby rsa-sha2_512
 authby rsa-sha1,rsa-sha2
 authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
 
-# these pass but should fail
+# these are weird sub bits
 
-authby rsa,secret
+leftauth rsasig authby=rsa-sha2_256,rsa-sha2_512 #=> rsa-sha2_256,rsa-sha2_512
 
-ipsec status | grep ' policy: '
+# these should get a warning
+
+authby rsa,psk #=> rsa; warning: psk; FAILS TO LOAD AS PSK IS NOT VALID
+authby rsa,secret #=> rsa; warning: psk; POLICY SHOWS PSK
+authby rsa-sha2_256,rsa-sha2_512,secret #=> rsa-sha2_256,rsa-sha2_512; warning: psk
+
+leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
+leftauth secret authby=rsa #=> psk; warning: rsa
+leftauth secret authby=rsa,secret #=> psk; warning: rsa; warning: rsa
 
 # these should fail to load
 
