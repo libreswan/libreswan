@@ -321,25 +321,6 @@ const char *str_authby(struct authby authby, authby_buf *buf)
 	return buf->buf;
 }
 
-lset_t authby_sighash_policy(struct authby authby)
-{
-	lset_t sighash_policy = LEMPTY;
-	if (authby_has_hash(authby, &ike_alg_hash_sha2_256)) {
-		sighash_policy |= POL_SIGHASH_SHA2_256;
-	}
-	if (authby_has_hash(authby, &ike_alg_hash_sha2_384)) {
-		sighash_policy |= POL_SIGHASH_SHA2_384;
-	}
-	if (authby_has_hash(authby, &ike_alg_hash_sha2_512)) {
-		sighash_policy |= POL_SIGHASH_SHA2_512;
-	}
-	if (authby_has_hash(authby, &ike_alg_hash_identity)) {
-		sighash_policy |= POL_SIGHASH_IDENTITY;
-	}
-
-	return sighash_policy;
-}
-
 void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
 {
 	const char *sep = NULL;
