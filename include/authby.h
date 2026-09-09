@@ -178,8 +178,6 @@ bool authby_eq(struct authby, struct authby);
 struct authby authby_and_auth(struct authby, enum auth);
 bool authby_has_auth(struct authby, enum auth);
 
-lset_t authby_sighash_policy(struct authby);
-
 /*
  * Do the authentication methods include pubkey (digital signature)
  * algorithms.  This is not the same has a pubkey method that works
