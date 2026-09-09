@@ -115,6 +115,12 @@ static const struct ike_alg **next_alg(const struct ike_alg_type *type,
 	return last;
 }
 
+const struct hash_desc **next_hash_desc(const struct hash_desc **last)
+{
+	return (const struct hash_desc**)next_alg(&ike_alg_hash,
+						  (const struct ike_alg**)last);
+}
+
 const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last)
 {
 	return (const struct encrypt_desc**)next_alg(&ike_alg_encrypt,

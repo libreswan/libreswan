@@ -199,5 +199,6 @@ typedef struct {
 const char *str_authby(struct authby authby, authby_buf *buf);
 
 size_t jam_authby(struct jambuf *buf, struct authby authby);
+void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby);
 
 #endif
