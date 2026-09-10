@@ -731,7 +731,12 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 V2_STATE(IKE_INTERMEDIATE_R,
 	 "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	 CAT_OPEN_IKE_SA, /*secured*/true,
-	 &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_exchange, &v2_IKE_AUTH_EAP_exchange);
+	 &v2_IKE_INTERMEDIATE_exchange,
+	 &v2_IKE_AUTH_exchange,
+#if 0
+	 &v2_IKE_AUTH_EAP_exchange,
+#endif
+	);
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",

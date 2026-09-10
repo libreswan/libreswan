@@ -1441,7 +1441,12 @@ V2_STATE(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE, /*secured*/fals
 V2_STATE(IKE_SA_INIT_R,
 	 "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
-	 &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
+	 &v2_IKE_AUTH_exchange,
+	 &v2_IKE_INTERMEDIATE_exchange,
+#if 0
+	 &v2_IKE_AUTH_EAP_exchange,
+#endif
+	);
 
 V2_EXCHANGE(IKE_SA_INIT, "initiate IKE SA",
 	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
