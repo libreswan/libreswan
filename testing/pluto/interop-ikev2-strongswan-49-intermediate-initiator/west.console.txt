@@ -10,42 +10,12 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev2
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) N(IKE_INT_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(IKE_INT_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
-selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768
-generating IKE_INTERMEDIATE request 1 [ KE ]
-splitting IKE message (XXX bytes) into 2 fragments
-generating IKE_INTERMEDIATE request 1 [ EF(1/2) ]
-generating IKE_INTERMEDIATE request 1 [ EF(2/2) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_INTERMEDIATE response 1 [ EF(1/3) ]
-received fragment #1 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_INTERMEDIATE response 1 [ EF(2/3) ]
-received fragment #2 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_INTERMEDIATE response 1 [ EF(3/3) ]
-received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
-parsed IKE_INTERMEDIATE response 1 [ KE ]
-authentication of 'west' (myself) with pre-shared key
-establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 2 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 2 [ IDr AUTH SA TSi TSr ]
-authentication of 'east' with pre-shared key successful
-IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
-scheduling rekeying in XXXs
-maximum IKE_SA lifetime XXXs
-selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
-CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-connection 'westnet-eastnet-ikev2' established successfully
+ swanctl --initiate --child westnet-eastnet-ikev2 --loglevel 0
+[IKE] initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+[IKE] establishing CHILD_SA westnet-eastnet-ikev2{1}
+[IKE] IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+initiate completed successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -62,28 +32,11 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- strongswan down westnet-eastnet-ikev2
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 4 [ EF(1/3) ]
-received fragment #1 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 4 [ EF(2/3) ]
-received fragment #2 of 3, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 4 [ EF(3/3) ]
-received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
-parsed IKE_FOLLOWUP_KE response 4 [ KE ]
-scheduling rekeying in XXXs
-maximum IKE_SA lifetime XXXs
-IKE_SA westnet-eastnet-ikev2[2] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
-deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
-sending DELETE for IKE_SA westnet-eastnet-ikev2[1]
-generating INFORMATIONAL request 5 [ D ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed INFORMATIONAL response 5 [ ]
-IKE_SA deleted
-IKE_SA [1] closed successfully
+ swanctl --terminate --ike westnet-eastnet-ikev2 --loglevel 0
+[IKE] IKE_SA westnet-eastnet-ikev2[2] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] IKE_SA deleted
+terminate completed successfully
 west #
  echo done
 done
