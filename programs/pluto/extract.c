@@ -4510,20 +4510,20 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->nat_keepalive = nat_keepalive;
 		config->ikev1_natt = nat_ikev1_method;
 
-		config->send_initial_contact =
+		config->host.send_initial_contact =
 			extract_bool(kv(wm, END_ROOF, KWS_INITIAL_CONTACT),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
-		config->send_vid_fake_strongswan =
+		config->host.send_vid_fake_strongswan =
 			extract_bool(kv(wm, END_ROOF, KWS_FAKE_STRONGSWAN),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
-		config->send_vendorid =
+		config->host.send_vendorid =
 			extract_bool(kv(wm, END_ROOF, KWS_SEND_VENDORID),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
 
-		config->send_ca =
+		config->host.send_ca =
 			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
 					  /*value_when_unset*/CA_SEND_ALL,
 					  /*value_when_never_negotiate*/CA_SEND_ALL,

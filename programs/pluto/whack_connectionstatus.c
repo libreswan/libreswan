@@ -811,9 +811,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " initial-contact:%s;", bool_str(c->config->send_initial_contact));
-		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
-		jam(buf, " send-vendorid:%s;", bool_str(c->config->send_vendorid));
+		jam(buf, " initial-contact:%s;",
+		    bool_str(c->config->host.send_initial_contact));
+		jam(buf, " fake-strongswan:%s;",
+		    bool_str(c->config->host.send_vid_fake_strongswan));
+		jam(buf, " send-vendorid:%s;",
+		    bool_str(c->config->host.send_vendorid));
 		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->child.send.esp_tfc_padding_not_supported));
 	}
 
@@ -955,7 +958,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
 		jam_string(buf, " sendca: ");
-		jam_enum_human(buf, &send_ca_policy_names, c->config->send_ca);
+		jam_enum_human(buf, &send_ca_policy_names, c->config->host.send_ca);
 		jam_string(buf, ";");
 		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {

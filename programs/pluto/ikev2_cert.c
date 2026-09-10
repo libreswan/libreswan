@@ -49,8 +49,8 @@
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 {
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
-	bool send_authcerts = c->config->send_ca != CA_SEND_NONE;
-	bool send_full_chain = send_authcerts && c->config->send_ca == CA_SEND_ALL;
+	bool send_authcerts = c->config->host.send_ca != CA_SEND_NONE;
+	bool send_full_chain = send_authcerts && c->config->host.send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
 		llog(IMPAIR_STREAM, outpbs->logger, "sending cert as PKCS7 blob");
@@ -77,7 +77,8 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 
 	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
-	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca,
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
+				       c->config->host.send_ca,
 				       outpbs->logger);
 
 	const struct ikev2_cert certhdr = {
