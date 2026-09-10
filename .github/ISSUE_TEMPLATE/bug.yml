@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        _Please remember that this is a volunteer project._<br>
+        _Please remember that this is a volunteer project._ <br>
         _If you have an urgent problem that cannot wait, consider one
         of the [commercial
         support](https://github.com/libreswan/libreswan/wiki/Support)
@@ -16,7 +16,7 @@ body:
     attributes:
       label: Please Tell Us About Your System Configuration
       description: |
-        - please start by filling in as many "Fields" (on the right) as possible
+        - in the "Fields" section, fill in as much as possible
         - for connection problems, please describe the topology <br> i.e., which machines are involved, and what they are running (`uname -a`)
         - for build problems, please include `/etc/os-release` (when available).
         - if possible, include `ipsec.conf` (wrapped in markdown's tripple backticks)
