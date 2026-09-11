@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
+ ipsec add west
 "west": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -22,7 +22,7 @@ west #
 west #
  # bring up west and then immediately re-key
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -34,7 +34,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec whack --rekey-child --name west --async
@@ -45,7 +45,7 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: ESP traffic information:'
 "west" #2: ESP traffic information: in=84B out=84B
 west #
- ipsec auto --down west
+ ipsec down west # sanitize-retransmits
 "west": initiating delete of connection's IKE SA #1 (and Child SA #3)
 "west" #1: sent INFORMATIONAL request to delete IKE SA
 "west" #3: ESP traffic information: in=0B out=0B
@@ -53,7 +53,7 @@ west #
 west #
  # protoid=none
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #4: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #4: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -65,7 +65,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #5: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:0 --impair emitting
@@ -75,11 +75,11 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#6: CREATE_CHILD_SA failed'
 "west" #6: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
- ipsec auto --down west
+ ipsec down west # sanitize-retransmits
 west #
  # protoid=IKE
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -91,7 +91,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #8: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:1 --impair emitting
@@ -101,11 +101,11 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#9: CREATE_CHILD_SA failed'
 "west" #9: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
- ipsec auto --down west
+ ipsec down west # sanitize-retransmits
 west #
  # protoid=unknown
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -117,7 +117,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #11: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec whack --impair v2n_rekey_sa_protoid:4 --impair emitting
@@ -127,7 +127,7 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#12: CREATE_CHILD_SA failed'
 "west" #12: CREATE_CHILD_SA failed with error notification INVALID_SYNTAX
 west #
- ipsec auto --down west
+ ipsec down west # sanitize-retransmits
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 west #
