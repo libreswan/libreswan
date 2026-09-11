@@ -1270,9 +1270,6 @@ static struct authby extract_authby(struct kv kv,
 	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
 	 * to avoid confusion with sha3_256
 	 */
-	if (is_never_negotiate_wm(kv.wm)) {
-		return authby_from_auth(AUTH_NEVER);
-	}
 
 	struct authby authby = {0};
 	shunk_t curseby = shunk1(kv.value);
@@ -1827,17 +1824,24 @@ static diag_t extract_host_end(enum end end,
 	}
 
 	/*
-	 * Determine the authentication from auth= and authby=.
+	 * Get {left,right}auth=;  preserve UNSET, authby=....
+	 *
+	 * With unset auth= seems to imply that, for IKEv2, multiple
+	 * authentication algorithms are allowed.
 	 */
 	enum auth whack_auth =
 		extract_enum_name(kv(wm, end, KWS_AUTH),
 				  /*value_when_unset*/AUTH_UNSET,
-				  /*value_when_never_negotiate*/AUTH_UNSET,
+				  /*value_when_never_negotiate*/AUTH_NEVER,
 				  &auth_names,
 				  &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
+
+	/*
+	 * Determine the authentication from auth= and authby=.
+	 */
 
 	struct authby authby; /*tbd*/
 	switch (ike_version) {
@@ -1898,11 +1902,6 @@ static diag_t extract_host_end(enum end end,
 	}
 	case IKEv2:
 	{
-		if (is_never_negotiate_wm(wm)) {
-			authby = authby_from_auth(AUTH_NEVER);
-			break;
-		}
-
 		/*
 		 * Convert auth= to equivalent IKEv2 only authby bits.
 		 */
@@ -1918,7 +1917,7 @@ static diag_t extract_host_end(enum end end,
 		case AUTH_NULL:
 		case AUTH_NEVER:
 		{
-			if (wm->wm_authby == NULL) {
+			if (!authby_is_set(whack_authby)) {
 				authby = authby_from_whack_auth;
 				break;
 			}
@@ -1982,6 +1981,16 @@ static diag_t extract_host_end(enum end end,
 				break;
 			}
 
+			if (whack_authby.never) {
+				/* since whack_auth is not AUTH_NEVER */
+				vexpect(!is_never_negotiate_wm(wm));
+				return diag("connection with authby=never must specify shunt type via type=");
+			}
+
+			/*
+			 * XXX: this can contain multiple
+			 * authentication methods!
+			 */
 			authby = whack_authby;
 			break;
 		default:
@@ -2000,17 +2009,11 @@ static diag_t extract_host_end(enum end end,
 	enum auth auth = host_config->auth = auth_from_authby(authby);
 	host_config->authby = authby;
 	vexpect(auth != AUTH_UNSET);
-	vdbg("fake %sauth=%s %sauthby=%s from whack auth=%s and whack authby=%s",
+	vdbg("fake %sauth=%s %s authby=%s from whack auth=%s and whack authby=%s",
 	     src->leftright, str_enum_short(&auth_names, auth, &eab),
 	     src->leftright, str_authby(host_config->authby, &eaby),
 	     str_enum_short(&auth_names, whack_auth, &wab),
 	     str_authby(whack_authby, &waby));
-
-	if (is_never_negotiate_wm(wm) && auth != AUTH_NEVER) {
-		name_buf ab;
-		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&auth_names, auth, &ab));
-	}
 
 	/*
 	 * Get eapauth, crosscheck with AUTH
@@ -3287,18 +3290,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (whack_authby.never) {
-		if (!is_never_negotiate_wm(wm)) {
-			return diag("connection with authby=never must specify shunt type via type=");
-		}
-	} else if (authby_is_set(whack_authby) &&
-		   is_never_negotiate_wm(wm)) {
-		/* can't be .never and can't be empty */
-		authby_buf ab;
-		return diag("type=%s never-negotiate connection cannot have authby=%s authentication",
-			    wm->wm_type, str_authby(whack_authby, &ab));
-	}
-
 	if (ike_version == IKEv1) {
 #ifdef USE_IKEv1
 		/* avoid using global */
@@ -3329,20 +3320,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		return diag("opportunistic connection MUST have IKEv2");
 	}
 	config->opportunistic = is_opportunistic_wm(host_addrs);
-
-#if 0
-	if (is_opportunistic_wm(host_addr)) {
-		if (whack_authby.psk) {
-			return diag("PSK is not supported for opportunism");
-		}
-		if (!authby_has_digsig(whack_authby)) {
-			return diag("only Digital Signatures are supported for opportunism");
-		}
-		if (!pfs) {
-			return diag("PFS required for opportunism");
-		}
-	}
-#endif
 
 	config->session_resumption =
 		extract_bool(kv(wm, END_ROOF, KWS_SESSION_RESUMPTION),
