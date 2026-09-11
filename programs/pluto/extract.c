@@ -1418,7 +1418,6 @@ static diag_t extract_host_end(enum end end,
 			       const struct route_addr *host_addr,
 			       const struct route_addr *const host_addrs[END_ROOF],
 			       enum ike_version ike_version,
-			       struct authby whack_authby,
 			       bool *same_ca,
 			       struct verbose verbose/*connection "..."*/)
 {
@@ -1855,6 +1854,13 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
+	struct kv whack_authby_kv = kv(wm, end, KWS_AUTHBY);
+	struct authby whack_authby = extract_authby(whack_authby_kv,
+						    ike_version, &d);
+	if (d != NULL) {
+		return d;
+	}
+
 	/*
 	 * Determine the authentication from auth= and authby=.
 	 */
@@ -1950,9 +1956,12 @@ static diag_t extract_host_end(enum end end,
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf cb;
-				vwarning("%sauth=%s overrides authby=%s",
-					 leftright, str_enum_short(&auth_names, whack_auth, &ab),
-					 str_authby(conflicts, &cb));
+				struct kv kv = whack_authby_kv;
+				kv.value = str_authby(conflicts, &cb);
+				vwarning("%sauth=%s overrides "PRI_KV,
+					 leftright,
+					 str_enum_short(&auth_names, whack_auth, &ab),
+					 pri_kv(kv));
 			}
 			break;
 		}
@@ -1984,10 +1993,12 @@ static diag_t extract_host_end(enum end end,
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf abm;
-				return diag("%sauth=%s conflicts with authby=%s",
+				struct kv kv = whack_authby_kv;
+				kv.value = str_authby(conflicts, &abm);
+				return diag("%sauth=%s conflicts with "PRI_KV,
 					    leftright,
 					    str_enum_short(&auth_names, whack_auth, &ab),
-					    str_authby(conflicts, &abm));
+					    pri_kv(kv));
 			}
 			break;
 		}
@@ -3103,12 +3114,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		[RIGHT_END] = &config->end[RIGHT_END].host.host,
 	};
 
-	struct authby whack_authby = extract_authby(kv(wm, END_ROOF, KWS_AUTHBY),
-						    ike_version, &d);
-	if (d != NULL) {
-		return d;
-	}
-
 	/*
 	 * Unpack and verify the ends.
 	 */
@@ -3127,7 +3132,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				     whack_ends[that],
 				     host_addrs[this],
 				     host_addrs,
-				     ike_version, whack_authby,
+				     ike_version,
 				     &same_ca[this],
 				     verbose);
 		if (d != NULL) {
