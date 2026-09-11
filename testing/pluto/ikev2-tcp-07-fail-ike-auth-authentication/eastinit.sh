@@ -5,6 +5,4 @@ ipsec start
 ipsec add east
 
 # force east into legacy mode
-ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:ignore
-ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
 echo "initdone"

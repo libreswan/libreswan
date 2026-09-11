@@ -19,10 +19,6 @@ east #
 east #
  # force east into legacy mode
 east #
- ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:ignore
-east #
- ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
-east #
  echo "initdone"
 initdone
 east #
