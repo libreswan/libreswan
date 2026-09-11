@@ -169,6 +169,8 @@ static void help(void)
 		"rekey: whack (--rekey-ike | --rekey-child) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"\n"
+		"liveness: whack --liveness --name <connection_name> [--asynchronous]\n"
+		"\n"
 		"active redirect: whack [--name <connection_name>] \\\n"
 		"	--redirect-to <ip-address(es)> \n"
 		"\n"
@@ -399,6 +401,7 @@ enum opt {
 	OPT_DELETE_CHILD,
 	OPT_DOWN_IKE,
 	OPT_DOWN_CHILD,
+	OPT_LIVENESS,
 
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
@@ -767,6 +770,7 @@ const struct option optarg_options[] = {
 	{ "delete-child\0", no_argument, NULL, OPT_DELETE_CHILD },
 	{ "down-ike\0", no_argument, NULL, OPT_DOWN_IKE },
 	{ "down-child\0", no_argument, NULL, OPT_DOWN_CHILD },
+	{ "liveness\0", no_argument, NULL, OPT_LIVENESS },
 
 	{ "suspend\0", no_argument, NULL, OPT_SUSPEND, },
 
@@ -1219,6 +1223,10 @@ int main(int argc, char **argv)
 			continue;
 		case OPT_DOWN_CHILD: /* --down-child */
 			whack_command(&msg, WHACK_DOWN_CHILD);
+			continue;
+
+		case OPT_LIVENESS: /* --liveness */
+			whack_command(&msg, WHACK_LIVENESS);
 			continue;
 
 		case OPT_SUSPEND: /* --suspend */
@@ -2267,6 +2275,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETE_CHILD] ||
 	    seen[OPT_DOWN_IKE] ||
 	    seen[OPT_DOWN_CHILD] ||
+	    seen[OPT_LIVENESS] ||
 	    seen[OPT_SUSPEND] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {

@@ -102,6 +102,7 @@ enum whack_command {
 			   (OP) == WHACK_DELETE_CHILD ? "delete-child" : \
 			   (OP) == WHACK_DOWN_IKE ? "down-ike" :	\
 			   (OP) == WHACK_DOWN_CHILD ? "down-child" :	\
+			   (OP) == WHACK_LIVENESS ? "liveness" :	\
 			   "???")
 #define whack_sa_kind(OP) ((OP) == WHACK_REKEY_IKE ? IKE_SA :		\
 			   (OP) == WHACK_REKEY_CHILD ? CHILD_SA :	\
@@ -109,6 +110,7 @@ enum whack_command {
 			   (OP) == WHACK_DELETE_CHILD ? CHILD_SA :	\
 			   (OP) == WHACK_DOWN_IKE ? IKE_SA :		\
 			   (OP) == WHACK_DOWN_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_LIVENESS ? IKE_SA :		\
 			   0)
 	WHACK_REKEY_IKE,
 	WHACK_REKEY_CHILD,
@@ -116,6 +118,7 @@ enum whack_command {
 	WHACK_DELETE_CHILD,
 	WHACK_DOWN_IKE,
 	WHACK_DOWN_CHILD,
+	WHACK_LIVENESS,
 	/**/
 	WHACK_DDOS,
 	WHACK_LIST,

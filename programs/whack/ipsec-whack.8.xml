@@ -360,6 +360,7 @@
         <arg choice="plain">--delete-child</arg>
         <arg choice="plain">--down-ike</arg>
         <arg choice="plain">--down-child</arg>
+        <arg choice="plain">--liveness</arg>
       </group>
       <arg choice="plain">--name <replaceable>connection</replaceable></arg>
       &opt_async;
@@ -1211,6 +1212,21 @@
             <para>
 	      Initiate a rekey of the connection's established IKE or
 	      Child SA.
+	    </para>
+          </listitem>
+	</varlistentry>
+
+	<varlistentry>
+          <term>
+	    <option>--liveness</option>
+	    <option>--name <replaceable>connection</replaceable></option>
+	    <option>--asynchronous</option>
+	  </term>
+          <listitem>
+            <para>
+	      Initiate an on-demand DPD/liveness probe (an empty
+	      INFORMATIONAL exchange) on the connection's established
+	      IKE SA.  IKEv2 only.
 	    </para>
           </listitem>
 	</varlistentry>

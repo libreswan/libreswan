@@ -29,6 +29,7 @@
 #include "show.h"
 #include "visit_connection.h"
 #include "ikev2_delete.h"
+#include "ikev2_liveness.h"
 
 static unsigned whack_connection_sa(const struct whack_message *m,
 				    struct show *s,
@@ -108,6 +109,14 @@ static unsigned whack_connection_sa(const struct whack_message *m,
 	case WHACK_DOWN_CHILD:
 		del_policy(c, policy.up);
 		submit_v2_delete_exchange(ike_sa(st, HERE), pexpect_child_sa(st));
+		return true; /* the connection counts */
+	case WHACK_LIVENESS:
+		if (c->config->ike_version != IKEv2) {
+			llog(RC_LOG, st->logger,
+			     "liveness: only supported by IKEv2");
+			return 0; /* the connection doesn't count */
+		}
+		submit_v2_liveness_exchange(pexpect_ike_sa(st), st->st_serialno);
 		return true; /* the connection counts */
 	default:
 		bad_case(m->whack_command);
