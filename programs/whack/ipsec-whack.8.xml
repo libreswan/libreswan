@@ -1465,8 +1465,7 @@
           <listitem>
             <para>
 	      Specifies the value of the RSA public key. It is a
-	      sequence of bytes as described in RFC 2537 "RSA/MD5 KEYs
-	      and SIGs in the Domain Name System (DNS)".  It is
+	      sequence of bytes as described in &rfc2537;.  It is
 	      base-64 encoded with the prefix 0s prepended.
 	    </para>
           </listitem>
@@ -1847,7 +1846,7 @@
 	  </term>
           <listitem>
             <para>
-	      IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing
+	      &rfc7296; Section 2.9 Traffic Selector narrowing
 	      options.  See <option>narrowing</option> in
 	      &ipsec.conf.5;.
 	    </para>
@@ -2244,8 +2243,8 @@
           <listitem>
             <para>
 	      Set the delay (in seconds) between Dead Peer Detection
-	      (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that
-	      are sent for this connection (default 30 seconds).
+	      &rfc3706; keepalives (R_U_THERE, R_U_THERE_ACK) that are
+	      sent for this connection (default 30 seconds).
 	    </para>
           </listitem>
 	</varlistentry>
@@ -2273,10 +2272,10 @@
             <para>
 	      In some cases, for example when ESP packets are filtered
 	      or when a broken IPsec peer does not properly recognise
-	      NAT, it can be useful to force RFC-3948 encapsulation
+	      NAT, it can be useful to force &rfc3948; encapsulation
 	      using this option. It causes pluto lie and tell the
-	      remote peer that RFC-3948 encapsulation (ESP in UDP port
-	      4500 packets) is required.
+	      remote peer that &rfc3948; encapsulation (ESP in UDP
+	      port 4500 packets) is required.
 	    </para>
           </listitem>
 	</varlistentry>

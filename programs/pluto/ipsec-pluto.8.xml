@@ -465,7 +465,8 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      Pluto supports RFC 3947 NAT-Traversal.  The allowed range behind the NAT routers is submitted using the
+	      Pluto supports &rfc3947;.  The allowed range behind the
+	      NAT routers is submitted using the
 	      <option>--virtual-private</option> option.
 	    </para>
 	    <para>

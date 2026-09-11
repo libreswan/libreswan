@@ -215,13 +215,13 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      Print the selected public key in a format suitable for use
-	      as opportunistic-encryption DNS IPSECKEY record format
-	      (RFC 4025). A gateway can be specified with the
-	      <option>--gateway</option>, which currently supports IPv4
-	      and IPv6 addresses. For the host name, the value returned
-	      by <emphasis>gethostname</emphasis> is used, with a
-	      <emphasis>.</emphasis> appended.
+	      Print the selected public key in a format suitable for
+	      use as opportunistic-encryption DNS IPSECKEY record
+	      format defined by &rfc4025;.  A gateway can be specified
+	      with the <option>--gateway</option>, which currently
+	      supports IPv4 and IPv6 addresses. For the host name, the
+	      value returned by <emphasis>gethostname</emphasis> is
+	      used, with a <emphasis>.</emphasis> appended.
 	    </para>
 	    <para>
 	      For example, <option>--ipseckey --gateway

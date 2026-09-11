@@ -250,6 +250,18 @@
 <!ENTITY opt_async '<group choice="plain"><arg choice="opt">--bg[={yes,no}</arg><arg choice="opt">--asynchronous[={yes,no}]</arg></group>'>
 <!ENTITY nss_opts '<arg choice="opt">--nssdir <replaceable>directory</replaceable></arg> <arg choice="opt">--nsspw <replaceable>password</replaceable></arg> <arg choice="opt">--seeddev <replaceable>device</replaceable></arg> <arg choice="opt">--seedbits <replaceable>bits</replaceable></arg>'>
 
+<!-- well known RFCs -->
+
+<!ENTITY rfc2409 '<ulink url="https://www.rfc-editor.org/info/rfc2409">RFC 2409: The Internet Key Exchange (IKEv1)</ulink>'>
+<!ENTITY rfc2537 '<ulink url="https://www.rfc-editor.org/info/rfc2537">RFC 2537: RSA/MD5 KEYs and SIGs in the Domain Name System (DNS)</ulink>'>
+<!ENTITY rfc3706 '<ulink url="https://www.rfc-editor.org/info/rfc3706">RFC 3706: A Traffic-Based Method of Detecting Dead Internet Key Exchange (IKEv1) Peers</ulink>'>
+<!ENTITY rfc3947 '<ulink url="https://www.rfc-editor.org/info/rfc3947">RFC 3947: Negotiation of NAT-Traversal in the IKE (IKEv1)</ulink>'>
+<!ENTITY rfc3948 '<ulink url="https://www.rfc-editor.org/info/rfc3948">RFC 3948: UDP Encapsulation of IPsec ESP Packets</ulink>'>
+<!ENTITY rfc4025 '<ulink url="https://www.rfc-editor.org/info/rfc4025">RFC 4025: A Method for Storing IPsec Keying Material in DNS</ulink>'>
+<!ENTITY rfc7296 '<ulink url="https://www.rfc-editor.org/info/rfc7296">RFC 7296: Internet Key Exchange Protocol Version 2 (IKEv2)</ulink>'>
+<!ENTITY rfc7427 '<ulink url="https://www.rfc-editor.org/info/rfc7427">RFC 7427: Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)</ulink>'>
+<!ENTITY rfc9395 '<ulink url="https://www.rfc-editor.org/info/rfc9395">RFC 9395: Deprecation of the Internet Key Exchange Version 1 (IKEv1) Protocol and Obsoleted Algorithms</ulink>'>
+
 <!-- people -->
 
 <!-- to make up an authors list

@@ -54,19 +54,23 @@
     </para>
 
     <para>
-      &Libreswan; implements IKE version 1 (RFC 2409)
-      and IKE version 2 (RFC 7296). IKEv1 is considered Deprecated (RFC 9395) and
-      it is strongly recommended to migrate all existing IKEv1 configurations to
-      IKEv2.  Currently, to enable IKEv1 at all, the <emphasis>ipsec.conf</emphasis>
-      section <emphasis>config setup</emphasis> must contain the line
-      <emphasis>ikev1-policy=yes</emphasis>. The default is to not accept IKEv1 packets.
-      Each connection configuration needs to specify to use IKEv1 as well using the
-      keyword <emphasis>keyexchange=ikev1</emphasis>. Finally, libreswan must have
-      been compiled with <emphasis>USE_IKEv1=true</emphasis>. While this is the
-      currently the default, it is expected to change in the near future. Unless the
-      peer does not support IKEv2, IKEv1 SHOULD NOT be used. Peers that do not support
-      IKEv2 at this point are likely running on "end of life" software or hardware.
-      The IKEv1 code is in maintenance mode and no new features will be considered.
+      &Libreswan; supports &rfc2409; and &rfc7296;.  IKEv1 is
+      considered Deprecated (&rfc9395;) and it is strongly recommended
+      to migrate all existing IKEv1 configurations to IKEv2.
+      Currently, to enable IKEv1 at all, the
+      <emphasis>ipsec.conf</emphasis> section <emphasis>config
+      setup</emphasis> must contain the line
+      <emphasis>ikev1-policy=yes</emphasis>. The default is to not
+      accept IKEv1 packets.  Each connection configuration needs to
+      specify to use IKEv1 as well using the keyword
+      <emphasis>keyexchange=ikev1</emphasis>. Finally, libreswan must
+      have been compiled with
+      <emphasis>USE_IKEv1=true</emphasis>. While this is the currently
+      the default, it is expected to change in the near future. Unless
+      the peer does not support IKEv2, IKEv1 SHOULD NOT be used. Peers
+      that do not support IKEv2 at this point are likely running on
+      "end of life" software or hardware.  The IKEv1 code is in
+      maintenance mode and no new features will be considered.
     </para>
 
     <refsect2 id="ike_overview">
@@ -676,8 +680,8 @@
       </para>
 
       <para>
-	Pluto supports RFC 3947 NAT-Traversal.  The allowed range
-	behind the NAT routers is submitted using the
+	Pluto supports &rfc3947;.  The allowed range behind the NAT
+	routers is submitted using the
 	<option>--virtual-private</option> option. See &ipsec.conf.5;
 	for the syntax.  The option <option>--force-keepalive</option>
 	forces the sending of the <emphasis>keep-alive
