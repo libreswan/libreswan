@@ -174,7 +174,7 @@
       <command>addconn</command> constructs a connection description
       by parsing the remainder of the command line as &ipsec.conf.5;
       conn section key-values.  The resulting connection is then
-      loaded into <command>pluto</command>.
+      loaded into &pluto;.
     </para>
 
     <para>

@@ -30,13 +30,15 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis>ipsec portexcludes</emphasis> manages the exclusion list
-      for port excludes in portexcludes.conf (found in the policies directory). It is
-      usually run via the system service startup job. An administrator can run it
-      manually as well. The portexcludes command deletes all passthrough conns that have
-      a name that matches portexcludes-* before re-adding the rules read from its
-      configuration file. The option <option>--clear</option> only removes the active
-      passthrough connections providing a port hole.
+      <command>ipsec portexcludes</command> manages the exclusion list
+      for port excludes in portexcludes.conf (found in the policies
+      directory). It is usually run via the system service startup
+      job. An administrator can run it manually as well. The
+      portexcludes command deletes all passthrough conns that have a
+      name that matches portexcludes-* before re-adding the rules read
+      from its configuration file. The option <option>--clear</option>
+      only removes the active passthrough connections providing a port
+      hole.
     </para>
 
     <para>

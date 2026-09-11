@@ -68,12 +68,12 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <command>pluto</command> is &Libreswan;'s Internet Key Exchange
+      &pluto; is &Libreswan;'s Internet Key Exchange
       (IKE) daemon.
     </para>
 
     <para>
-      <command>pluto</command> is not normally run directly.  Instead
+      &pluto; is not normally run directly.  Instead
       the daemon is controlled the hosts &init.8; system (such as
       &systemd.8; or &rc.8;) or the command <command>ipsec</command>
       (see &ipsec.8;).
@@ -87,7 +87,7 @@
     <para>
       For information on how to configure
       &Libreswan; and the
-      <command>pluto</command> daemon see &ipsec.conf.5;.
+      &pluto; daemon see &ipsec.conf.5;.
     </para>
 
     <refsect2>
@@ -124,21 +124,21 @@
       <title>Starting pluto</title>
 
       <para>
-	When starting, <command>pluto</command> attempts to create a
+	When starting, &pluto; attempts to create a
 	lockfile with the name
 	<filename>@@RUNDIR@@/pluto.pid</filename>.  If the lockfile
-	cannot be created, <command>pluto</command> exits - this
-	prevents multiple <command>pluto</command>s from competing.
+	cannot be created, &pluto; exits - this
+	prevents multiple &pluto;s from competing.
 	Any "leftover" lockfile must be manually removed before
-	<command>pluto</command> will run.  <command>pluto</command>
+	&pluto; will run.  &pluto;
 	then writes its <replaceable>PID</replaceable> into this file
-	so that scripts can find it.  <command>pluto</command> then
+	so that scripts can find it.  &pluto; then
 	forks and the parent exits (this is the conventional "daemon
 	fork").
       </para>
 
       <para>
-	The following options alter how <command>pluto</command> starts:
+	The following options alter how &pluto; starts:
       </para>
 
       <variablelist>
@@ -176,7 +176,7 @@
 		  <listitem>
 		    <para>
 		      the socket through which <command>whack</command>
-		      communicates with <command>pluto</command>
+		      communicates with &pluto;
 		    </para>
 		  </listitem>
 		</varlistentry>
@@ -187,7 +187,7 @@
 		  <listitem>
 		    <para>
 		      the lockfile to prevent multiple
-		      <command>pluto</command> instances
+		      &pluto; instances
 		    </para>
 		  </listitem>
 		</varlistentry>
@@ -236,7 +236,7 @@
 	    </para>
 	    <para>
 	      Often combined with <option>--nofork</option> debugging
-	      <command>pluto</command>.
+	      &pluto;.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -255,7 +255,7 @@
 	      (<option>--logfile=</option>), any
 	      <property>logfile=</property> setting from the
 	      configuration file is cleared, causing
-	      <command>pluto</command> to fall back to
+	      &pluto; to fall back to
 	      <option>--stderrlog</option> or &syslog.3;.
 	    </para>
 	    <para>
@@ -348,7 +348,7 @@
 	      <replaceable>filename</replaceable> will be loaded.
 	    </para>
 	    <para>
-	      Normally, <command>pluto</command> is started using
+	      Normally, &pluto; is started using
 	      <command>ipsec start</command>, and that passes the
 	      parameter <option>--config
 	      <filename>@@IPSEC_CONF@@</filename></option> so that the
@@ -409,7 +409,7 @@
 	  <listitem>
 	    <para>
 	      the directory to write a core file should
-	      <command>pluto</command> abort
+	      &pluto; abort
 	    </para>
 	    <para>
 	      Default is <filename>@@RUNDIR@@</filename>.
@@ -543,13 +543,13 @@
 	    </para>
 	    <para>
 	      Pluto can also use helper children to off-load
-	      cryptographic operations. This behavior can be fine tuned
-	      using the <option>--nhelpers</option>. Pluto will start
-	      <emphasis>(n-1)</emphasis> of them, where
-	      <emphasis>n</emphasis> is the number of CPU's you have
+	      cryptographic operations. This behavior can be fine
+	      tuned using the <option>--nhelpers</option>. Pluto will
+	      start <emphasis>(N-1)</emphasis> of them, where
+	      <emphasis>N</emphasis> is the number of CPU's you have
 	      (including hypherthreaded CPU's). A value of
-	      <emphasis>0</emphasis> forces pluto to do all operations
-	      in the main process. A value of <emphasis>-1</emphasis>
+	      <literal>0</literal> forces pluto to do all operations
+	      in the main process. A value of <literal>-1</literal>
 	      tells pluto to perform the above calculation. Any other
 	      value forces the number to that amount.
 	    </para>
@@ -662,7 +662,7 @@
           <listitem>
             <para>
 	      List the debugging classes recognised by
-	      <command>pluto</command>.
+	      &pluto;.
 	    </para>
           </listitem>
 	</varlistentry>
@@ -712,13 +712,13 @@
     <title>SIGNALS</title>
 
     <para>
-      <command>pluto</command> responds to <constant>SIGHUP</constant>
+      &pluto; responds to <constant>SIGHUP</constant>
       by issuing a suggestion that <command>ipsec listen</command>
       might have been intended.
     </para>
 
     <para>
-      <command>pluto</command> exits when it receives
+      &pluto; exits when it receives
       <constant>SIGTERM</constant>.
     </para>
   </refsect1>
@@ -727,7 +727,7 @@
     <title>EXIT STATUS</title>
 
     <para>
-      <command>pluto</command> normally forks a daemon process, so the
+      &pluto; normally forks a daemon process, so the
       exit status is a very preliminary result.
     </para>
 
@@ -772,7 +772,7 @@
     <title>ENVIRONMENT</title>
 
     <para>
-      <command>pluto</command> does not use any environment variables.
+      &pluto; does not use any environment variables.
     </para>
   </refsect1>
 

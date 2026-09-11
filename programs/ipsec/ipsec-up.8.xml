@@ -28,7 +28,7 @@
     <title>DESCRIPTION</title>
     <para>
       <command>ipsec up <replaceable>connection</replaceable>
-      </command> operation asks <command>pluto</command> to establish
+      </command> operation asks &pluto; to establish
       a connection specified in internal database.
     </para>
     <para>

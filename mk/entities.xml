@@ -150,13 +150,17 @@
 
 <!ENTITY ah '<literal>ah</literal>'>
 <!ENTITY all '<literal>all</literal>'>
+<!ENTITY always '<literal>always</literal>'>
 <!ENTITY alwaysok '<literal>alwaysok</literal>'>
+<!ENTITY any '<literal>&#37;any</literal>'>
+<!ENTITY any6 '<literal>&#37;any6</literal>'>
 <!ENTITY async '<literal>async</literal>'>
 <!ENTITY auto '<literal>auto</literal>'>
 <!ENTITY both '<literal>both</literal>'>
 <!ENTITY busy '<literal>busy</literal>'>
 <!ENTITY cisco '<literal>cisco</literal>'>
 <!ENTITY crypto '<literal>crypto</literal>'>
+<!ENTITY direct '<literal>&#37;direct</literal>'>
 <!ENTITY drafts '<literal>drafts</literal>'>
 <!ENTITY drop '<literal>drop</literal>'>
 <!ENTITY either '<literal>either</literal>'>
@@ -165,10 +169,12 @@
 <!ENTITY fallback '<literal>fallback</literal>'>
 <!ENTITY file '<literal>file</literal>'>
 <!ENTITY force '<literal>force</literal>'>
+<!ENTITY forced '<literal>forced</literal>'>
 <!ENTITY get '<literal>get</literal>'>
 <!ENTITY hard '<literal>hard</literal>'>
 <!ENTITY hold '<literal>hold</literal>'>
 <!ENTITY ietf '<literal>ietf</literal>'>
+<!ENTITY ifasked '<literal>ifasked</literal>'>
 <!ENTITY ikev1 '<literal>ikev1</literal>'>
 <!ENTITY ikev2 '<literal>ikev2</literal>'>
 <!ENTITY insist '<literal>insist</literal>'>
@@ -176,6 +182,7 @@
 <!ENTITY never '<literal>never</literal>'>
 <!ENTITY no '<literal>no</literal>'>
 <!ENTITY none '<literal>none</literal>'>
+<!ENTITY opportunistic '<literal>&#37;opportunistic</literal>'>
 <!ENTITY packet '<literal>packet</literal>'>
 <!ENTITY pam '<literal>pam</literal>'>
 <!ENTITY pass '<literal>pass</literal>'>
@@ -252,6 +259,7 @@
 
 <!-- well known RFCs -->
 
+<!ENTITY rfc2313 '<ulink url="https://www.rfc-editor.org/info/rfc2313">RFC 2313: PKCS #1: RSA Encryption Version 1.5</ulink>'>
 <!ENTITY rfc2409 '<ulink url="https://www.rfc-editor.org/info/rfc2409">RFC 2409: The Internet Key Exchange (IKEv1)</ulink>'>
 <!ENTITY rfc2537 '<ulink url="https://www.rfc-editor.org/info/rfc2537">RFC 2537: RSA/MD5 KEYs and SIGs in the Domain Name System (DNS)</ulink>'>
 <!ENTITY rfc3706 '<ulink url="https://www.rfc-editor.org/info/rfc3706">RFC 3706: A Traffic-Based Method of Detecting Dead Internet Key Exchange (IKEv1) Peers</ulink>'>

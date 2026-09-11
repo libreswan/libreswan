@@ -57,7 +57,7 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <emphasis>Showhostkey</emphasis> outputs (on standard
+      <command>ipsec showhostkey</command> outputs (on standard
       output) a public key suitable for this host, in the format
       specified, using the host key information stored in the NSS
       database.
@@ -196,10 +196,10 @@
 	    <para>
 	      Print the selected public key in
 	      &ipsec.conf.5;
-	      format, as a <emphasis>leftrsasigkey</emphasis>
-	      or <emphasis>rightrsasigkey</emphasis> parameter
-	      respectively.  For example, <option>--left</option> might
-	      give (with the key data trimmed down for clarity):
+	      format, as a <option>leftrsasigkey</option> or
+	      <option>rightrsasigkey</option> parameter respectively.
+	      For example, <option>--left</option> might give (with
+	      the key data trimmed down for clarity):
 	    </para>
 	    <para>
 	      <simplelist columns='1'>
@@ -220,7 +220,7 @@
 	      format defined by &rfc4025;.  A gateway can be specified
 	      with the <option>--gateway</option>, which currently
 	      supports IPv4 and IPv6 addresses. For the host name, the
-	      value returned by <emphasis>gethostname</emphasis> is
+	      value returned by <command>gethostname</command> is
 	      used, with a <emphasis>.</emphasis> appended.
 	    </para>
 	    <para>
@@ -273,7 +273,7 @@
       A complaint about &ldquo;no pubkey line found&rdquo; indicates
       that the host has a key but it was generated with an old version
       of FreeS/WAN and does not contain the information that
-      <emphasis>showhostkey</emphasis> needs.
+      <command>showhostkey</command> needs.
     </para>
   </refsect1>
 
@@ -308,10 +308,10 @@
     <title>BUGS</title>
     <para>
       Arguably, rather than just reporting the no-IN-KEY-line-found
-      problem, <command>showhostkey</command> should be
-      smart enough to run the existing key through <emphasis>rsasigkey</emphasis>
-      with the <option>--oldkey</option> option, to generate a suitable output
-      line.
+      problem, <command>ipsec showhostkey</command> should be smart
+      enough to run the existing key through <command>ipsec
+      rsasigkey</command> with the <option>--oldkey</option> option,
+      to generate a suitable output line.
     </para>
   </refsect1>
 

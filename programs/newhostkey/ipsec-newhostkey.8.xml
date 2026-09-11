@@ -122,10 +122,10 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      The <option>--keytype</option> option specifies the type of key,
-	      which can either be <emphasis>rsa</emphasis> (RSA)
-	      or <emphasis>ecdsa</emphasis> (ECDSA);
-	      if omitted the current default is <emphasis>rsa</emphasis>.
+	      The <option>--keytype</option> option specifies the type
+	      of key, which can either be <option>rsa</option> (RSA)
+	      or <option>ecdsa</option> (ECDSA); if omitted the
+	      current default is <option>rsa</option>.
 	    </para>
 	  </listitem>
 	</varlistentry>

@@ -31,22 +31,25 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>eddsasigkey</command>
-      generates an EDDSA public/private key pair, suitable for digital signatures, on a named curve specified with
-      <emphasis>curvename</emphasis>. Currently it only accepts <emphasis>ed25519</emphasis>.
+      <command>ipsec eddsasigkey</command> generates an EDDSA
+      public/private key pair, suitable for digital signatures, on a
+      named curve specified with <replaceable>curvename</replaceable>.
+      Currently it only accepts <emphasis>ed25519</emphasis>.
     </para>
 
     <para>
-      The public exponent is forced to the value <emphasis>3</emphasis>, which has important
-      speed advantages for signature checking. Beware that the resulting keys
-      have known weaknesses as encryption keys
-      <emphasis>and should not be used for that purpose</emphasis>.
+      The public exponent is forced to the value <literal>3</literal>,
+      which has important speed advantages for signature
+      checking. Beware that the resulting keys have known weaknesses
+      as encryption keys <emphasis>and should not be used for that
+      purpose</emphasis>.
     </para>
 
     <para>
-      The <option>--verbose</option> option makes <emphasis>eddsasigkey</emphasis>
-      give a running commentary on standard error. By default, it works in
-      silence until it is ready to generate output.
+      The <option>--verbose</option> option makes <command>ipsec
+      eddsasigkey</command> give a running commentary on standard
+      error. By default, it works in silence until it is ready to
+      generate output.
     </para>
 
     <para>
@@ -81,11 +84,14 @@
     </para>
 
     <para>
-      The <option>--nsspw</option> option specifies the nss cryptographic module authentication
-      password if the NSS module has been configured to require it.  A password is required by hardware
-      tokens and also by the internal software token module when configured to run in FIPS mode.
-      If the argument is <emphasis>@@IPSEC_CONFDDIR@@</emphasis><filename>/nsspassword</filename>,
-      the password comes from that file; otherwise argument is the password.
+      The <option>--nsspw</option> option specifies the nss
+      cryptographic module authentication password if the NSS module
+      has been configured to require it.  A password is required by
+      hardware tokens and also by the internal software token module
+      when configured to run in FIPS mode.  If the argument is
+      <filename>@@IPSEC_CONFDDIR@@/nsspassword</filename>, the
+      password comes from that file; otherwise argument is the
+      password.
     </para>
   </refsect1>
 
@@ -119,7 +125,7 @@
       &rngd.8;,
       &ipsec-showhostkey.8;,
       <emphasis>Applied Cryptography, 2nd. ed., by Bruce Schneier, Wiley 1996</emphasis>,
-      <emphasis>RFCs 2537, 2313</emphasis>,
+      &rfc2537;, &rfc2313;,
       <emphasis>GNU  MP, the GNU multiple precision arithmetic library, edition 2.0.2, by Torbj Granlund</emphasis>
     </para>
   </refsect1>

@@ -84,11 +84,14 @@
     </para>
 
     <para>
-      The <option>--password</option> option specifies the nss cryptographic module authentication
-      password if the NSS module has been configured to require it.  A password is required by hardware
-      tokens and also by the internal software token module when configured to run in FIPS mode.
-      If the argument is <emphasis>@@IPSEC_CONFDDIR@@</emphasis><filename>/nsspassword</filename>,
-      the password comes from that file; otherwise argument is the password.
+      The <option>--password</option> option specifies the nss
+      cryptographic module authentication password if the NSS module
+      has been configured to require it.  A password is required by
+      hardware tokens and also by the internal software token module
+      when configured to run in FIPS mode.  If the argument is
+      <filename>@@IPSEC_CONFDDIR@@/nsspassword</filename>, the
+      password comes from that file; otherwise argument is the
+      password.
     </para>
 
     <para>
@@ -127,7 +130,7 @@
       &rngd.8;,
       &ipsec-showhostkey.8;,
       <emphasis>Applied Cryptography, 2nd. ed., by Bruce Schneier, Wiley 1996</emphasis>,
-      <emphasis>RFCs 2537, 2313</emphasis>,
+      &rfc2537;, &rfc2313;,
       <emphasis>GNU  MP, the GNU multiple precision arithmetic library, edition 2.0.2, by Torbj Granlund</emphasis>
     </para>
   </refsect1>
