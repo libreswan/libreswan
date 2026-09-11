@@ -59,25 +59,6 @@ static const struct sparse_names impair_emit_names = {
 	},
 };
 
-static const char *impair_payload_name[] = {
-#define S(E) [E] = #E
-	S(IMPAIR_PAYLOAD_EMIT_NEVER),
-	S(IMPAIR_PAYLOAD_EMIT_EMPTY),
-	S(IMPAIR_PAYLOAD_EMIT_DUPLICATE),
-	S(IMPAIR_PAYLOAD_IGNORE),
-#undef S
-};
-
-static const struct enum_names impair_payload_enum_names = {
-	0, IMPAIR_PAYLOAD_ROOF-1,
-	ARRAY_PTR(impair_payload_name),
-	.en_prefix = "IMPAIR_PAYLOAD_",
-};
-
-static const struct names impair_payload_names = {
-	.enum_names = &impair_payload_enum_names,
-};
-
 static const struct sparse_names impair_v1_exchange_names = {
 	.list = {
 #define S(E, H) {						\
@@ -438,8 +419,6 @@ struct impairment impairments[] = {
 	B(mangle_cert_pubkey, "mangle the pubkey part of the certificate payload (currently assumes RSA)"),
 
 	U(omit_addke_notification, "omit an ADDITIONAL_KEY_EXCHANGE notification in the IKE_FOLLOWUP_KE exchange for addkeN"),
-
-	P(v2N_SIGNATURE_HASH_ALGORITHMS, "mangle said notification payload"),
 
 #undef U
 #undef P

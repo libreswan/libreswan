@@ -293,6 +293,7 @@ OBJS += names/global_timer_names.o
 OBJS += names/ikev2_auth_method_names.o
 OBJS += names/ikev2_exchange_names.o
 OBJS += names/ikev2_notification_names.o
+OBJS += names/impair_payload_names.o
 
 #
 # optarg stuff
