@@ -47,7 +47,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2
-warning: "westnet-eastnet-ikev2": rightauth=secret overrides authby=RSASIG
+warning: "westnet-eastnet-ikev2": rightauth=secret overrides "authby=RSASIG"
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg

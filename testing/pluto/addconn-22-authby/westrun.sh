@@ -59,6 +59,12 @@ leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
 leftauth secret authby=rsa #=> psk; warning: rsa
 leftauth secret authby=rsa,secret #=> psk; warning: rsa; warning: rsa
 
+authby rsa leftauthby=secret
+authby rsa leftauthby=secret rightauthby=eddsa # override allowed
+leftauth rsasig authby=secret leftauthby=rsa
+leftauth secret leftauthby=rsasig
+leftauth secret leftauthby=secret authby=rsasig
+
 # these should fail to load
 
 add ikev1-rsa-sha2 authby=rsa-sha2 keyexchange=ikev1
