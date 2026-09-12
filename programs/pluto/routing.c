@@ -1748,6 +1748,17 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(c, RT_UNROUTED);
 		return true;
 
+	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, INSTANCE):
+		/*
+		 * An instance (e.g. server-side revival) where child
+		 * negotiation failed.  Instances don't revive; clean
+		 * up and go to unrouted.
+		 */
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
+						 logger, e->where, "deleting");
+		PEXPECT(logger, c->routing.state == RT_UNROUTED);
+		return true;
+
 	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, a permanent connection fails during
