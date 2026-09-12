@@ -122,8 +122,8 @@ static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
 		return true;
 	}
 
-	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_ignore) {
-		llog(IMPAIR_STREAM, ike->sa.logger, "ignoring SIGNATURE_HASH_ALGORITHMS");
+	if (ikev2_signature_hash_algorithms == YNA_NO) {
+		llog(RC_LOG, ike->sa.logger, "ignoring SIGNATURE_HASH_ALGORITHMS notification");
 		return true;
 	}
 
@@ -422,30 +422,17 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
 	const struct authby supported_authby = supported_ikev2_digsig_auth_payloads();
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
-	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_never) {
-		name_buf eb;
-		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
-		     str_enum_short(&v2_notification_names, ntype, &eb));
-		return true;
-	}
-
 	struct pbs_out n_pbs;
 	if (!open_v2N_output_pbs(outs, ntype, &n_pbs)) {
 		llog(RC_LOG, outs->logger, "error initializing notify payload for notify message");
 		return false;
 	}
 
-	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_empty) {
-		name_buf eb;
-		llog(IMPAIR_STREAM, outs->logger, "emitting empty %s notification",
-		     str_enum_short(&v2_notification_names, ntype, &eb));
-	} else {
-		if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
-		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
-		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
-		    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
-			return false;
-		}
+	if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
+		return false;
 	}
 
 	close_pbs_out(&n_pbs);
@@ -572,28 +559,32 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/*
-	 * Send the initiator's SIGNATURE_HASH_ALGORITHMS notification.
-	 *
-	 * If either end has an algorithm requiring DIGSIG, signal to
-	 * the responder that the new Digital Signature AUTH payload
-	 * can be used.
-	 *
-	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
-	 * should be controled by a global config parameter.
+	 * Always? send the initiator's SIGNATURE_HASH_ALGORITHMS
+	 * notification.
 	 */
-	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
-		llog(IMPAIR_STREAM, ike->sa.logger,
-		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
+	switch (ikev2_signature_hash_algorithms) {
+	case YNA_YES:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? YES");
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
 			return false;
 		}
-	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
-		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
-			return false;
+		break;
+	case YNA_NO:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
+		break;
+	case YNA_AUTO:
+		if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
+			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
+				return false;
+			}
+			break;
 		}
-	} else {
-		ldbg(ike->sa.logger, "neither end has auth methods that can use SIGNATURE_HASH_ALGORITHMS notify");
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? NO");
+		break;
+	case YNA_UNSET:
+		bad_case(ikev2_signature_hash_algorithms);
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -955,31 +946,32 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/*
-	 * Send the responder's SIGNATURE_HASH_ALGORITHMS notification
-	 * almost unconditionally:
-	 *
-	 * + if initiator sent SIGNATURE_HASH_ALGORITHM this end needs
-	 *   to acknowlege it (even if the response is empty).
-	 *
-	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
-	 *   information
-	 *
-	 * XXX: this is broken, sending SIGNATURE_HASH_ALGORITHMS
-	 * should be controled by a global config parameter.
+	 * Always? send the responder's SIGNATURE_HASH_ALGORITHMS
+	 * notification.
 	 */
-	if (impair.v2N_SIGNATURE_HASH_ALGORITHMS.impair_payload_emit_always) {
-		llog(IMPAIR_STREAM, ike->sa.logger,
-		     "forcing emit of supported SIGNATURE_HASH_ALGORITHMS");
+	switch (ikev2_signature_hash_algorithms) {
+	case YNA_YES:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? YES");
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
-	} else if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
-		   authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
-			return STF_INTERNAL_ERROR;
+		break;
+	case YNA_NO:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
+		break;
+	case YNA_AUTO:
+		if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
+			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+			break;
 		}
-	} else {
-		ldbg(ike->sa.logger, "config has no v2N_SIGNATURE_HASH_ALGORITHMS");
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? NO");
+		break;
+	case YNA_UNSET:
+		bad_case(ikev2_signature_hash_algorithms);
 	}
 
 	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
@@ -1583,3 +1575,5 @@ V2_EXCHANGE(IKE_SA_INIT, "",
 	    /*secured*/false,
 	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_I0);
+
+enum yna_options ikev2_signature_hash_algorithms;

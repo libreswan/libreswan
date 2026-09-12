@@ -6,6 +6,4 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add westnet-eastnet-ikev2
-ipsec whack --impair v2n_SIGNATURE_HASH_ALGORITHMS:emit_never
-ipsec whack --impair v2n_SIGNATURE_HASH_ALGORITHMS:ignore
 echo "initdone"

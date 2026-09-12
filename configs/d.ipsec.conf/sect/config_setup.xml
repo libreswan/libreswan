@@ -81,6 +81,7 @@
       &setup.syslog;
       &setup.uniqueids;
       &setup.virtual-private;
+      &setup.signature-hash-algorithms;
     </variablelist>
   </para>
 </refsect2>

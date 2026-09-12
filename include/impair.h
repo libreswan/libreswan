@@ -58,6 +58,8 @@ enum impair_payload_flag {
 #define IMPAIR_PAYLOAD_ROOF (IMPAIR_PAYLOAD_IGNORE+1)
 };
 
+extern const struct names impair_payload_names;
+
 struct impair_payload {
 	bool enabled;
 	unsigned annex;
@@ -236,8 +238,6 @@ struct impair {
 	bool mangle_cert_pubkey;
 
 	struct impair_unsigned omit_addke_notification;
-
-	struct impair_payload v2N_SIGNATURE_HASH_ALGORITHMS;
 
 	/*
 	 * add more here

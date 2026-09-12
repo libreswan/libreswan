@@ -23,12 +23,6 @@ east #
  ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 east #
- # stop both ends
-east #
- ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:ignore
-east #
- ipsec whack --impair v2N_SIGNATURE_HASH_ALGORITHMS:emit_never
-east #
  echo "initdone"
 initdone
 east #
