@@ -155,6 +155,7 @@ struct resume_session {
 	char initiator_id[256];
 	char responder_id[256];
 	enum auth auth_method;
+	bool full_transcript_auth;
 };
 
 enum auth resume_session_auth(const struct resume_session *session)
@@ -345,6 +346,7 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
 	ticket->secured.state.resume.auth_method = ike->sa.st_connection->local->config->host.auth;
+	ticket->secured.state.resume.full_transcript_auth = ike->sa.st_v2_full_transcript_auth;
 
 	if (!cipher_context_op_aead(key->encrypt,
 				    THING_AS_CHUNK(ticket->iv),
@@ -527,6 +529,7 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 
 	/* save what is needed */
 	ike->sa.st_v2_resume_session = clone_thing(ticket.secured.state.resume, __func__);
+	ike->sa.st_v2_full_transcript_auth = ike->sa.st_v2_resume_session->full_transcript_auth;
 
 	return true;
 }
@@ -663,6 +666,7 @@ struct ike_sa *initiate_v2_IKE_SESSION_RESUME_request(struct connection *c,
 	}
 
 	ike->sa.st_v2_resume_session = clone_thing(c->session->resume, __func__);
+	ike->sa.st_v2_full_transcript_auth = ike->sa.st_v2_resume_session->full_transcript_auth;
 
 	if (has_child_policy(policy)) {
 		struct connection *cc;
@@ -1042,6 +1046,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	set_resume_session(&c->session->resume,
 			   /*initiator*/c->local,
 			   /*responder*/c->remote);
+	c->session->resume.full_transcript_auth = ike->sa.st_v2_full_transcript_auth;
 
 	c->session->sk_d_old = symkey_addref(ike->sa.logger,
 					     "session.sk_d_old",
