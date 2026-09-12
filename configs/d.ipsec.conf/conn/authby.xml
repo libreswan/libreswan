@@ -2,6 +2,12 @@
   <term>
     <option>authby=</option>
   </term>
+  <term>
+    <option>leftauthby=</option>
+  </term>
+  <term>
+    <option>rightauthby=</option>
+  </term>
   <listitem>
 
     <para>
