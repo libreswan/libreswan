@@ -92,7 +92,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   KWS("auto", LEMPTY, KWS_AUTO),
   KWS("hostaddrfamily", LEMPTY, KWS_HOSTADDRFAMILY),
-  KWS("authby", LEMPTY, KWS_AUTHBY),
+  KWS("authby", kv_both, KWS_AUTHBY),
   KWS("keyexchange", LEMPTY, KWS_KEYEXCHANGE),
   KWS("ikev2", LEMPTY, KWS_IKEv2),
   KWS("ppk", LEMPTY, KWS_PPK),

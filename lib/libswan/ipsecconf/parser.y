@@ -239,13 +239,12 @@ void parser_error(struct parser *parser, int error, const char *s, ...)
 
 static const char *leftright(const struct ipsec_conf_keyval *keyval)
 {
-	if (keyval->left && !keyval->right) {
-		return "left";
+	switch (keyval->end) {
+	case LEFT_END: return "left";
+	case RIGHT_END: return "right";
+	default:
+		return "";
 	}
-	if (!keyval->left && keyval->right) {
-		return "right";
-	}
-	return "";
 }
 
 /*
@@ -523,8 +522,7 @@ void add_parser_key_value(struct parser *parser,
 		if (kv->keyval.key != key->key) {
 			continue;
 		}
-		if ((kv->keyval.left != key->left) &&
-		    (kv->keyval.right != key->right)) {
+		if (kv->keyval.end != key->end) {
 			continue;
 		}
 		if (key->key->validity & kv_duplicateok) {
@@ -651,13 +649,17 @@ diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
  * Look for one of the tokens, and set the value up right.
  */
 
-static bool parse_leftright(shunk_t s,
-			    const struct keyword_def *k,
-			    const char *leftright)
+static enum end parse_leftright(shunk_t s,
+				const struct keyword_def *k)
 {
 	/* gobble up "left|right" */
-	if (!hunk_strcaseeat(&s, leftright)) {
-		return false;
+	enum end end;
+	if (hunk_strcaseeat(&s, "left")) {
+		end = LEFT_END;
+	} else if (hunk_strcaseeat(&s, "right")) {
+		end = RIGHT_END;
+	} else {
+		return END_ROOF;
 	}
 
 	/* if present and kw non-empty, gobble up "-" */
@@ -667,11 +669,11 @@ static bool parse_leftright(shunk_t s,
 
 	/* keyword matches? */
 	if (!hunk_strcaseeq(s, k->keyname)) {
-		return false;
+		return END_ROOF;
 	}
 
 	/* success */
-	return true;
+	return end;
 }
 
 /* type is really "token" type, which is actually int */
@@ -685,8 +687,7 @@ static enum key_lookup parser_find_key(shunk_t skey, enum end default_end,
 				       struct ipsec_conf_keyval *key,
 				       struct parser *parser)
 {
-	bool left = false;
-	bool right = false;
+	enum end end = END_ROOF;
 
 	zero(key);
 
@@ -723,8 +724,7 @@ static enum key_lookup parser_find_key(shunk_t skey, enum end default_end,
 			 *
 			 */
 			if (k->validity & kv_both) {
-				left = true;
-				right = true;
+				end = END_ROOF;
 				found = k;
 				break;
 			}
@@ -733,34 +733,26 @@ static enum key_lookup parser_find_key(shunk_t skey, enum end default_end,
 			 * For instance --auth=... --to ...
 			 */
 			if (k->validity & kv_leftright) {
-				if (default_end == LEFT_END) {
-					left = true;
-					found = k;
-					break;
-				}
-				if (default_end == RIGHT_END) {
-					right = true;
-					found = k;
-					break;
+				if (default_end == END_ROOF) {
+					parser_error(parser, 0,
+						     "keyword \"%s\" requires \"left\" or \"right\" prefix",
+						     k->keyname);
+					return KEY_INVALID;
 				}
 
-				parser_error(parser, 0,
-					     "keyword \"%s\" requires \"left\" or \"right\" prefix",
-					     k->keyname);
-				return KEY_INVALID;
+				end = default_end;
+				found = k;
+				break;
 			}
+
+			end = END_ROOF;
 			found = k;
 			break;
 		}
 
-		if (k->validity & kv_leftright) {
-			left = parse_leftright(skey, k, "left");
-			if (left) {
-				found = k;
-				break;
-			}
-			right = parse_leftright(skey, k, "right");
-			if (right) {
+		if (k->validity & (kv_leftright|kv_both)) {
+			end = parse_leftright(skey, k);
+			if (end != END_ROOF) {
 				found = k;
 				break;
 			}
@@ -790,8 +782,7 @@ static enum key_lookup parser_find_key(shunk_t skey, enum end default_end,
 
 	/* else, set up llval.k to point, and return KEYWORD */
 	key->key = found;
-	key->left = left;
-	key->right = right;
+	key->end = end;
 	key->val = NULL; /* later */
 	key->sal = scanner_sal(parser);
 	return KEY_FOUND;
