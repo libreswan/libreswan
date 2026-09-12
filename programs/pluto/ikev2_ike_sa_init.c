@@ -960,7 +960,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
 		break;
 	case YNA_AUTO:
-		if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		if (ike->sa.st_seen_hashnotify ||
+		    authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
 		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
 			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
 			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
