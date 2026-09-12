@@ -1,10 +1,16 @@
 # these should load properly
 
 RUN()      { echo " $@" ; "$@" ; }
-policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | grep -e '  policy:' -e '-policy:' ; }
+
+policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.*  \(policy:.*\)/ \1/p' ; }
+hash_policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(v2-auth-hash-policy:.*\)/ \1/p' ; }
+our_auth()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(our auth:[^,]*\).*/ \1/p' ; }
+their_auth()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(their auth:[^,]*\).*/ \1/p' ; }
+policies() { policy $1 ; hash_policy $1 ; our_auth $1 ; their_auth $1 ; }
+
 add()      ( name=$1 ; shift ; RUN ipsec addconn --name ${name} "$@" ; )
 del()      { name=$1 ; shift ; ipsec delete ${name} ; }
-conn()     { name=$1 ; shift ; add ${name} "$@" ; policy ${name} ; del ${name} ; }
+conn()     { name=$1 ; shift ; add ${name} "$@" ; policies ${name} ; del ${name} ; }
 authby()   { name=$1 ; shift ; conn authby-${name}   authby=${name} "$@" ; }
 leftauth() { name=$1 ; shift ; conn leftauth-${name} leftauth=${name} "$@" ; }
 
