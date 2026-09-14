@@ -22,7 +22,7 @@ test "${IPSEC_INIT_SCRIPT_DEBUG}" && set -v -x
 
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-@@IPSEC_CONF@@}"
-IPSEC_EXECDIR="${IPSEC_EXECDIR:-@@IPSEC_EXECDIR@@}"
+IPSEC_LIBEXECDIR="${IPSEC_LIBEXECDIR:-@@IPSEC_LIBEXECDIR@@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
 IPSEC_CONFDDIR="${IPSEC_CONFDDIR:-@@IPSEC_CONFDDIR@@}"
 IPSEC_RUNDIR="${IPSEC_RUNDIR:-@@RUNDIR@@}"
@@ -36,7 +36,7 @@ CRLDIR="${IPSEC_CONFDDIR}/crls"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
 NSS_BINDIR="${NSS_BINDIR:-@@NSS_BINDIR@@}"
 
-export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
+export IPSEC_LIBEXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
 # standardize PATH, and export it for everything else's benefit;
 # should config.mk generate this?
@@ -82,7 +82,7 @@ ipsec_command() {
 	    ;;
     esac
 
-    ${dry_run} "${IPSEC_EXECDIR}/${command}" ${verbose} "${@}"
+    ${dry_run} "${IPSEC_LIBEXECDIR}/${command}" ${verbose} "${@}"
     exit $?
 }
 
@@ -143,7 +143,7 @@ ipsec_redirect() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
+    ${dry_run} "${IPSEC_LIBEXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
     exit $?
 }
 
@@ -373,7 +373,7 @@ ipsec_whack() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
+    ${dry_run} "${IPSEC_LIBEXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
     exit $?
 }
 
@@ -446,7 +446,7 @@ ipsec_help() {
 	trafficstatus \
 	unroute \
 	up \
-	$(ls "${IPSEC_EXECDIR}" | grep -E -v -i "${DONTMENTION}")
+	$(ls "${IPSEC_LIBEXECDIR}" | grep -E -v -i "${DONTMENTION}")
     do
 	if [ -z "${GOTTWO}" ]; then
 	    # first of two entries
@@ -559,7 +559,7 @@ ipsec_stopnflog() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_LIBEXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
 
     if [ -z "${NFGROUP}" ]; then
 	exit 0
@@ -661,7 +661,7 @@ ipsec_checknflog() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_LIBEXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
 
     firewall_cmd
 
@@ -699,7 +699,7 @@ ipsec_sniff() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_LIBEXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
 
     tcpdump -n -i nflog:${NFGROUP}
     exit 0
@@ -963,7 +963,7 @@ ipsec_setup() {
 	esac
 	shift
     done
-    ${dry_run} "${IPSEC_EXECDIR}/setup" ${cmd}
+    ${dry_run} "${IPSEC_LIBEXECDIR}/setup" ${cmd}
     exit $?
 }
 
@@ -1074,7 +1074,7 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	letsencrypt)
 	    shift
-	    exec ${dry_run} "${IPSEC_EXECDIR}/letsencrypt" "${@}"
+	    exec ${dry_run} "${IPSEC_LIBEXECDIR}/letsencrypt" "${@}"
 	    # exec failed?
 	    exit $?
 	    ;;
@@ -1087,7 +1087,7 @@ while [ ${#} -gt 0 ]; do
 	    exit 0
 	    ;;
 	directory|--directory)
-	    printf "%s\n" "${IPSEC_EXECDIR}"
+	    printf "%s\n" "${IPSEC_LIBEXECDIR}"
 	    exit 0
 	    ;;
 	stopnflog|--stopnflog)
@@ -1142,8 +1142,8 @@ while [ ${#} -gt 0 ]; do
 	*)
 	    cmd="${1}"
 	    shift
-	    if [ -x "${IPSEC_EXECDIR}/${cmd}" ]; then
-		exec ${dry_run} "${IPSEC_EXECDIR}/${cmd}" "${@}"
+	    if [ -x "${IPSEC_LIBEXECDIR}/${cmd}" ]; then
+		exec ${dry_run} "${IPSEC_LIBEXECDIR}/${cmd}" "${@}"
 		# exec failed?
 		exit $?
 	    fi
