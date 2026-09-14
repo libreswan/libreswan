@@ -21,6 +21,7 @@
 struct show;
 enum rc_type;
 struct logger;
+struct connection;
 
 /*
  * Try to deal with the separator (i.e., don't output duplicate blank
@@ -32,6 +33,14 @@ struct show *alloc_show(struct logger *logger);
 void free_show(struct show **s);
 /* underlying global logger formed by alloc_show() */
 struct logger *show_logger(struct show *s);
+
+/*
+ * While set, output lines describe connection C: when C has an open
+ * conlogfile, the log copy of each line (written with debug=base) goes
+ * to that file instead of the global log.  Whack output is unchanged.
+ * Pass NULL to clear.
+ */
+void show_set_connection(struct show *s, const struct connection *c);
 
 /*
  * output primitives: access the internal jambuf; show the contents of

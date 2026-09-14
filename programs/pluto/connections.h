@@ -851,9 +851,9 @@ struct connection {
 	struct ipsec_interface *ipsec_interface;
 	struct ipsec_interface_address *ipsec_interface_address;
 
-	char *log_file_name;			/* name of log file */
-	FILE *log_file;				/* possibly open FILE */
-	bool log_file_err;			/* only bitch once */
+	char *conlogfile_name;			/* name of log file */
+	FILE *conlogfile_fp;			/* possibly open FILE */
+	bool conlogfile_err;			/* only bitch once */
 
 	struct child {
 		/*
@@ -984,6 +984,12 @@ extern bool same_peer_ids(const struct connection *c,
 diag_t add_connection(const struct whack_message *wm,
 		      const struct host_addrs *extracted_host_addrs,
 		      const struct logger *logger);
+
+/* per-connection log file (conlogfile=) */
+void open_connection_log(struct connection *c);
+void update_existing_connection_log(const char *name, const char *new_name);
+void reopen_connection_logs(struct logger *logger);
+void whack_conlogfile(const struct whack_message *wm, struct show *s);
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
 						      const struct host_addrs *resolved,

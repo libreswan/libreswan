@@ -383,6 +383,14 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 		 * duplicate connection is rejected.
 		 */
 		if (connection_with_name_exists(wm->name)) {
+			/*
+			 * conlogfile= is the one parameter that can
+			 * be changed on a loaded connection.
+			 */
+			if (wm->wm_conlogfile != NULL) {
+				update_existing_connection_log(wm->name,
+							       wm->wm_conlogfile);
+			}
 			show_rc(RC_DUPNAME, s,
 				"attempt to redefine connection \"%s\"", wm->name);
 			return;

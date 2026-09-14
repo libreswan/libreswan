@@ -111,6 +111,7 @@
 #include "extract.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
+static void close_connection_log(struct connection *c);
 
 void vdbg_connection(const struct connection *c,
 		     struct verbose verbose, where_t where,
@@ -466,6 +467,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		connection_db_del(c);
 	}
 	discard_connection_spds(c);
+
+	close_connection_log(c);
 
 	/*
 	 * Freeing .clonedfrom breaks the logger's message.
@@ -1279,6 +1282,157 @@ diag_t add_connection(const struct whack_message *wm,
 	}
 
 	return NULL;
+}
+
+void open_connection_log(struct connection *c)
+{
+	if (c->conlogfile_name == NULL) {
+		return;
+	}
+	c->conlogfile_fp = fopen(c->conlogfile_name, "a");
+	if (c->conlogfile_fp == NULL) {
+		llog_errno(WARNING_STREAM, c->logger, errno,
+			   "cannot open per-connection conlogfile '%s': ",
+			   c->conlogfile_name);
+		return;
+	}
+	setvbuf(c->conlogfile_fp, NULL, _IOLBF, 0);
+}
+
+static void close_connection_log(struct connection *c)
+{
+	if (c->conlogfile_fp != NULL) {
+		fclose(c->conlogfile_fp);
+		c->conlogfile_fp = NULL;
+	}
+	pfreeany(c->conlogfile_name);
+	c->conlogfile_err = false;
+}
+
+static void update_connection_log(struct connection *c, const char *new_name)
+{
+	if (new_name != NULL && new_name[0] == '\0') {
+		new_name = NULL;
+	}
+
+	if (c->conlogfile_name == NULL && new_name == NULL) {
+		return;	/* unchanged */
+	}
+	if (c->conlogfile_name != NULL && new_name != NULL &&
+	    streq(c->conlogfile_name, new_name)) {
+		return;	/* unchanged */
+	}
+
+	/* logged while the old destination is still active */
+	llog(RC_LOG, c->logger, "conlogfile changed to %s",
+	     new_name != NULL ? new_name : "global log");
+
+	close_connection_log(c);
+	c->conlogfile_name = clone_str(new_name, "conlogfile_name");
+	open_connection_log(c);
+
+	/* and again so the new destination sees it too */
+	if (c->conlogfile_fp != NULL) {
+		llog(RC_LOG, c->logger, "conlogfile changed to %s", new_name);
+	}
+}
+
+static void reopen_connection_log(struct connection *c)
+{
+	if (c->conlogfile_name == NULL) {
+		return;
+	}
+	FILE *f = (c->conlogfile_fp != NULL
+		   ? freopen(c->conlogfile_name, "a", c->conlogfile_fp)
+		   : fopen(c->conlogfile_name, "a"));
+	if (f == NULL) {
+		/* on freopen() failure the old stream is already closed */
+		c->conlogfile_fp = NULL;
+		if (!c->conlogfile_err) {
+			llog_errno(WARNING_STREAM, c->logger, errno,
+				   "cannot reopen per-connection conlogfile '%s': ",
+				   c->conlogfile_name);
+			c->conlogfile_err = true;
+		}
+		return;
+	}
+	c->conlogfile_fp = f;
+	setvbuf(c->conlogfile_fp, NULL, _IOLBF, 0);
+	c->conlogfile_err = false;
+}
+
+void reopen_connection_logs(struct logger *logger)
+{
+	struct connection_filter cq = {
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = logger,
+			.where = HERE,
+		},
+	};
+	while (next_connection(&cq)) {
+		reopen_connection_log(cq.c);
+	}
+}
+
+static struct connection *root_connection_by_name(const char *name,
+						  struct logger *logger)
+{
+	struct connection_filter cq = {
+		.base_name = name,
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = logger,
+			.where = HERE,
+		},
+	};
+	while (next_connection(&cq)) {
+		if (cq.c->clonedfrom == NULL) {
+			return cq.c;
+		}
+	}
+	return NULL;
+}
+
+void update_existing_connection_log(const char *name, const char *new_name)
+{
+	struct connection *c = root_connection_by_name(name, &global_logger);
+	if (c != NULL) {
+		update_connection_log(c, new_name);
+	}
+}
+
+/*
+ * whack --name <conn> --conlogfile <path>: change the log file of an
+ * existing connection; "" reverts to the global log.  Never adds a
+ * connection.
+ */
+
+void whack_conlogfile(const struct whack_message *wm, struct show *s)
+{
+	if (wm->name == NULL) {
+		show_rc(RC_FATAL, s,
+			"received command to change conlogfile, but did not receive the connection name - ignored");
+		return;
+	}
+
+	struct connection *c = root_connection_by_name(wm->name, show_logger(s));
+	if (c == NULL) {
+		show_rc(RC_UNKNOWN_NAME, s,
+			"no connection named \"%s\"", wm->name);
+		return;
+	}
+
+	update_connection_log(c, wm->whack.conlogfile.path);
+
+	if (c->conlogfile_name == NULL) {
+		show(s, "\"%s\": conlogfile: global log", c->name);
+	} else if (c->conlogfile_fp == NULL) {
+		show_rc(RC_FATAL, s, "\"%s\": conlogfile: cannot open '%s'",
+			c->name, c->conlogfile_name);
+	} else {
+		show(s, "\"%s\": conlogfile: %s", c->name, c->conlogfile_name);
+	}
 }
 
 static connection_priority_t max_prefix_len(struct connection_end *end)

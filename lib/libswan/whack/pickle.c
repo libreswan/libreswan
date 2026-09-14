@@ -463,6 +463,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_COMMAND_PUBKEY(WHACK_ACQUIRE, &wm->whack.acquire.pubkey) &&
 		PICKLE_COMMAND_STRING(WHACK_GLOBAL_REDIRECT, &wm->whack.global_redirect.to) &&
 		PICKLE_COMMAND_STRING(WHACK_ACTIVE_REDIRECT, &wm->whack.active_redirect.to) &&
+		PICKLE_COMMAND_STRING(WHACK_CONLOGFILE, &wm->whack.conlogfile.path) &&
 		PICKLE_COMMAND_PUBKEY(WHACK_PUBKEY, &wm->whack.pubkey) &&
 		pickle->conn(wp, logger) &&
 		true);

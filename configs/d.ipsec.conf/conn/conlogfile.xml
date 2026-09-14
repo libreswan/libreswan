@@ -1,0 +1,33 @@
+<varlistentry id='conn.conlogfile'>
+  <term>
+    <option>conlogfile=</option>
+  </term>
+  <listitem>
+    <para>
+      Per-connection log file path.  When set, all log messages for
+      this connection (and its states) are written exclusively to the
+      specified file instead of the global log destination (syslog or
+      pluto's global log file).  The file is opened in append mode
+      when the connection is loaded and closed when it is deleted.
+      Child connections (instances and group instances) do not
+      inherit this setting.
+    </para>
+    <para>
+      The log file of a loaded connection can be changed at runtime,
+      without deleting and re-adding it, with
+      <command>ipsec whack --name <replaceable>conn</replaceable>
+      --conlogfile <replaceable>path</replaceable></command> (an
+      empty <replaceable>path</replaceable> returns the connection to
+      the global log).  This never adds a connection and does not
+      affect its IKE or IPsec SAs; all of them switch to the new file
+      immediately.  The change lasts until pluto restarts or the
+      connection is added again from the configuration.
+    </para>
+    <para>
+      After log rotation, send SIGHUP to pluto (or use the
+      <option>postrotate</option> directive in logrotate) to make
+      pluto reopen both the global log file and all per-connection
+      log files.
+    </para>
+  </listitem>
+</varlistentry>

@@ -990,6 +990,7 @@ void show_debug_status(struct show *s)
 static void huphandler_cb(struct verbose verbose)
 {
 	reopen_log(verbose.logger);
+	reopen_connection_logs(verbose.logger);
 }
 
 static void termhandler_cb(struct verbose verbose)

@@ -214,6 +214,7 @@
       &conn.vti-interface;
       &conn.vti-routing;
       &conn.vti-shared;
+      &conn.conlogfile;
       &conn.ipsec-interface;
       &conn.interface-ip;
       &conn.priority;

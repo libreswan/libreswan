@@ -451,6 +451,9 @@ static void jam_dn_or_any(struct jambuf *buf, chunk_t dn)
 
 static void show_connection_status(struct show *s, const struct connection *c)
 {
+	/* lines below describe C; log them to its conlogfile */
+	show_set_connection(s, c);
+
 	/* Show topology. */
 	show_connection_clients(s, c, show_connection_client);
 
@@ -914,6 +917,17 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 	}
 
+	if (c->conlogfile_name != NULL) {
+		SHOW_JAMBUF(s, buf) {
+			jam_string(buf, c->name);
+			jam_string(buf, ":  ");
+			jam_string(buf, " conlogfile: ");
+			jam_string(buf, c->conlogfile_name);
+			jam_string(buf, (c->conlogfile_fp != NULL ? " (open)" : " (error)"));
+			jam_string(buf, ";");
+		}
+	}
+
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
@@ -1086,6 +1100,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 	show_ike_alg_connection(s, c);
 	show_kernel_alg_connection(s, c);
+
+	show_set_connection(s, NULL);
 }
 
 void show_connection_statuses(struct show *s)

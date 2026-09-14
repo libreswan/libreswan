@@ -417,6 +417,7 @@ void show_states(struct show *s, const monotime_t now)
 		int i;
 		for (i = 0; array[i] != NULL; i++) {
 			struct state *st = array[i];
+			show_set_connection(s, st->st_connection);
 			show_state(s, st, now);
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				/* print out SPIs if SAs are established */
@@ -427,7 +428,7 @@ void show_states(struct show *s, const monotime_t now)
 				struct ike_sa *ike = pexpect_ike_sa(st);
 				show_pending_child_details(s, ike);
 			}
-
+			show_set_connection(s, NULL);
 		}
 		pfree(array);
 	}

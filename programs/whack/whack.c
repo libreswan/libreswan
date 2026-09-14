@@ -153,6 +153,7 @@ static void help(void)
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
 		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
+		"	[--conlogfile <path>] \\\n"
 		"       [--pass | --drop]\\\n"
 		"	[--failnone | --failpass | --faildrop]\\\n"
 		"	[--negopass | --negodrop]\\\n"
@@ -183,6 +184,8 @@ static void help(void)
 		"	[--oppoproto <protocol>] [--opporeqid <reqid>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
+		"\n"
+		"conlogfile: whack --name <connection_name> --conlogfile <path>|\"\"\n"
 		"\n"
 		"delete: whack --deleteid --name <id>\n"
 		"\n"
@@ -406,6 +409,8 @@ enum opt {
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
 	OPT_GLOBAL_REDIRECT_TO,
+
+	OPT_CONLOGFILE,		/* either runtime change or for connection */
 
 	OPT_DDOS_MODE,
 	OPT_DDOS_BUSY,
@@ -713,6 +718,8 @@ const struct option optarg_options[] = {
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
 	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT },
 	{ "global-redirect-to\0", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO },
+
+	{ OPT("conlogfile", "<path>"), required_argument, NULL, OPT_CONLOGFILE },
 
 	{ OPT("ddos-mode", "{busy,unlimited,auto}"), required_argument, NULL, OPT_DDOS_MODE },
 	{ REPLACE_OPT("ddos-busy", "ddos-mode", "5.3"), no_argument, NULL, OPT_DDOS_BUSY },
@@ -1031,6 +1038,7 @@ int main(int argc, char **argv)
 	enum yne_options esn = YNE_UNSET;
 	/* --redirect-to or --global-redirect-to */
 	const char *redirect_to = NULL;
+	const char *conlogfile = NULL;
 
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_WHACK);
@@ -1284,6 +1292,12 @@ int main(int argc, char **argv)
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to <ip> */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
 			redirect_to = optarg;
+			continue;
+
+		case OPT_CONLOGFILE:	/* --conlogfile <path> */
+			/* either runtime change or add */
+			/* .whack_command deciphered below */
+			conlogfile = optarg;
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -2243,6 +2257,27 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * Does --conlogfile have a matching command?  When it doesn't
+	 * it must be a runtime change of an existing connection's
+	 * log file (--conlogfile "" reverts to the global log).
+	 *
+	 * --to sets WHACK_ADD.
+	 */
+	if (conlogfile != NULL) {
+		switch (msg.whack_command) {
+		case 0:
+			whack_command(&msg, WHACK_CONLOGFILE);
+			msg.whack.conlogfile.path = conlogfile;
+			break;
+		case WHACK_ADD:
+			msg.wm_conlogfile = conlogfile;
+			break;
+		default:
+			diagw("unexpected --conlogfile");
+		}
+	}
+
 	if (pubkey.id != NULL) {
 		switch (msg.whack_command) {
 		case WHACK_ACQUIRE:
@@ -2277,6 +2312,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DOWN_CHILD] ||
 	    seen[OPT_LIVENESS] ||
 	    seen[OPT_SUSPEND] ||
+	    msg.whack_command == WHACK_CONLOGFILE ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");

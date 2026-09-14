@@ -462,6 +462,11 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.name = "active-redirect",
 			.op = whack_active_redirect,
 		},
+		[WHACK_CONLOGFILE] = {
+			.name = "conlogfile",
+			.op = whack_conlogfile,
+			.jam = jam_whack_name,
+		},
 		/**/
 		[WHACK_LISTEN] = {
 			.name = "listen",

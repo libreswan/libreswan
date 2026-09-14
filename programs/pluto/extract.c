@@ -5014,6 +5014,16 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Per-connection log file; empty string means "no
+	 * per-connection log file".  Open it now so that the
+	 * connection's lifecycle, starting with "added", goes there.
+	 */
+	if (wm->wm_conlogfile != NULL && wm->wm_conlogfile[0] != '\0') {
+		c->conlogfile_name = clone_str(wm->wm_conlogfile, "conlogfile_name");
+		open_connection_log(c);
+	}
+
+	/*
 	 * Is spd.reqid necessary for all c?  CK_INSTANCE or
 	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
 	 */

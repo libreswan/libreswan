@@ -121,6 +121,8 @@ enum config_conn_keyword {
 	KWS_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KWS_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 
+	KWS_CONLOGFILE,		/* per-connection log file path */
+
 	KWS_DPDDELAY,
 	KWS_DPDTIMEOUT,
 

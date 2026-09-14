@@ -48,6 +48,11 @@ struct show {
 	 */
 	struct logger *logger;
 	/*
+	 * Connection the current output describes (or NULL); selects
+	 * the conlogfile for the log copy.
+	 */
+	const struct connection *connection;
+	/*
 	 * Should the next output be preceded by a blank line?
 	 */
 	enum separation { NO_SEPARATOR = 1, HAD_OUTPUT, SEPARATE_NEXT_OUTPUT, } separator;
@@ -127,6 +132,11 @@ struct logger *show_logger(struct show *s)
 	return s->logger;
 }
 
+void show_set_connection(struct show *s, const struct connection *c)
+{
+	s->connection = c;
+}
+
 void show_to_logger(struct show *s)
 {
 	switch (s->separator) {
@@ -139,7 +149,12 @@ void show_to_logger(struct show *s)
 	default:
 		bad_case(s->separator);
 	}
-	logjam_to_logger(&s->logjam);
+	if (s->connection != NULL) {
+		jambuf_to_connection_logger(&s->logjam.barf.jambuf, s->logger,
+					    s->logjam.barf.stream, s->connection);
+	} else {
+		logjam_to_logger(&s->logjam);
+	}
 	s->separator = HAD_OUTPUT;
 }
 

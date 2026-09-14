@@ -47,6 +47,10 @@ void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
 void reopen_log(struct logger *logger);	/* after logrotate */
 
+/* send BUF to LOGGER, with the log copy going to C's conlogfile */
+void jambuf_to_connection_logger(struct jambuf *buf, const struct logger *logger,
+				 enum stream stream, const struct connection *c);
+
 extern bool whack_prompt_for(struct ike_sa *ike,
 			     const char *prompt,
 			     bool echo,

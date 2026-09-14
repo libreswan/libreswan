@@ -132,6 +132,8 @@ enum whack_command {
 	WHACK_ACTIVE_REDIRECT,
 	WHACK_GLOBAL_REDIRECT,
 	/**/
+	WHACK_CONLOGFILE,
+	/**/
 	WHACK_LISTEN,
 	WHACK_UNLISTEN,
 	/**/
@@ -285,6 +287,13 @@ struct whack_active_redirect {
 	const char *to;
 };
 
+struct whack_conlogfile {
+#if 0
+	const char *connection;
+#endif
+	const char *path;	/* NULL or "" means global log */
+};
+
 /*
  */
 
@@ -381,6 +390,7 @@ struct whack_message {
 		struct whack_initiate initiate;
 		struct whack_global_redirect global_redirect;
 		struct whack_active_redirect active_redirect;
+		struct whack_conlogfile conlogfile;
 		struct whack_impair impair;
 		struct whack_debug debug;
 		struct whack_pubkey pubkey;
@@ -576,6 +586,9 @@ struct whack_message {
 #define wm_vti_routing conn[END_ROOF].value[KWS_VTI_ROUTING]
 	/* use remote %any and skip cleanup on down? */
 #define wm_vti_shared conn[END_ROOF].value[KWS_VTI_SHARED]
+
+	/* per-connection log file path */
+#define wm_conlogfile conn[END_ROOF].value[KWS_CONLOGFILE]
 
 #define wm_iptfs                conn[END_ROOF].value[KWS_IPTFS]
 #define wm_iptfs_fragmentation  conn[END_ROOF].value[KWS_IPTFS_FRAGMENTATION]

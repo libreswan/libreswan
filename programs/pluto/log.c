@@ -47,7 +47,7 @@
 
 static refcnt_discard_content_fn discard_logger_content;
 static struct fd *logger_fd(const struct logger *logger);
-static void log_raw(int severity, const char *prefix, struct jambuf *buf);
+static void log_raw(int severity, const char *prefix, struct jambuf *buf, FILE *conn_file);
 
 static struct log_param {
 	bool log_to_stderr;
@@ -182,7 +182,7 @@ static void shunk_to_whack(shunk_t message, const struct fd *whackfd, enum rc_ty
 			jam(buf, "whack error: ");
 			jam_errno(buf, (-(int)s));
 			/* not whack */
-			log_raw(LOG_WARNING, "", buf);
+			log_raw(LOG_WARNING, "", buf, NULL);
 		}
 	}
 }
@@ -251,18 +251,44 @@ void whack_rc(enum rc_type rc, const struct logger *logger)
 	}
 }
 
-static void log_raw(int severity, const char *prefix, struct jambuf *buf)
+/*
+ * When LOGGER belongs to a connection (or a state of a connection)
+ * with an open conlogfile, return that file.
+ */
+
+static FILE *connection_log_file(const struct logger *logger)
 {
+	/* .object is only valid on the main thread */
+	if (logger == NULL || !in_main_thread()) {
+		return NULL;
+	}
+	if (logger->object_vec == &logger_connection_vec) {
+		const struct connection *c = logger->object;
+		return (c != NULL ? c->conlogfile_fp : NULL);
+	}
+	if (logger->object_vec == &logger_state_vec) {
+		const struct state *st = logger->object;
+		if (st != NULL && st->st_connection != NULL) {
+			return st->st_connection->conlogfile_fp;
+		}
+	}
+	return NULL;
+}
+
+static void log_raw(int severity, const char *prefix, struct jambuf *buf, FILE *conn_file)
+{
+	/* exclusive: when set, CONN_FILE replaces the global log */
+	FILE *log_file = (conn_file != NULL ? conn_file : pluto_log_file);
 	/* assume there's a logging prefix; normally there is */
 	struct realtm t = local_realtime(realnow());
-	if (pluto_log_file != NULL) {
+	if (log_file != NULL) {
 		if (log_param.log_with_timestamp) {
 			char now[34] = "";
 			strftime(now, sizeof(now), "%b %e %T", &t.tm);
-			fprintf(pluto_log_file, "%s.%06ld: %s%s\n",
+			fprintf(log_file, "%s.%06ld: %s%s\n",
 				now, t.microsec, prefix, buf->array);
 		} else {
-			fprintf(pluto_log_file, "%s%s\n", prefix, buf->array);
+			fprintf(log_file, "%s%s\n", prefix, buf->array);
 		}
 	} else {
 		syslog(severity, "%s%s", prefix, buf->array);
@@ -416,39 +442,40 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 	abort(); /* not passert as goes recursive */
 }
 
-void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream)
+static void jambuf_to_logger_file(struct jambuf *buf, const struct logger *logger,
+				  enum stream stream, FILE *conn_file)
 {
 	switch (stream) {
 	case DEBUG_STREAM:
-		log_raw(LOG_DEBUG, "", buf);
+		log_raw(LOG_DEBUG, "", buf, conn_file);
 		return;
 	case ALL_STREAMS:
-		log_raw(DEFAULT_LOGLEVEL, "", buf);
+		log_raw(DEFAULT_LOGLEVEL, "", buf, conn_file);
 		log_whacks(0, logger, buf);
 		return;
 	case LOG_STREAM:
-		log_raw(DEFAULT_LOGLEVEL, "", buf);
+		log_raw(DEFAULT_LOGLEVEL, "", buf, conn_file);
 		return;
 	case PRINTF_STREAM:
 	case WHACK_STREAM:
 		if (LDBGP(DBG_BASE, logger)) {
-			log_raw(LOG_DEBUG, "|] ", buf);
+			log_raw(LOG_DEBUG, "|] ", buf, conn_file);
 		}
 		log_whacks(0, logger, buf);
 		return;
 	case IMPAIR_STREAM:
 	case WARNING_STREAM:
-		log_raw(LOG_WARNING, "", buf);
+		log_raw(LOG_WARNING, "", buf, conn_file);
 		log_whacks(0, logger, buf);
 		return;
 	case ERROR_STREAM:
 	case FATAL_STREAM:
-		log_raw(LOG_ERR, "", buf);
+		log_raw(LOG_ERR, "", buf, conn_file);
 		log_whacks(0, logger, buf);
 		return;
 	case PEXPECT_STREAM:
 	case PASSERT_STREAM:
-		log_raw(LOG_ERR, "", buf);
+		log_raw(LOG_ERR, "", buf, conn_file);
 		/*
 		 * Include RC in error code so message is forced onto
 		 * console.
@@ -464,6 +491,27 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 		return;
 	}
 	abort(); /* not bad_case(stream) as recursive */
+}
+
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream)
+{
+	jambuf_to_logger_file(buf, logger, stream, connection_log_file(logger));
+}
+
+/*
+ * Like jambuf_to_logger() but the log copy goes to connection C's
+ * conlogfile (when open) instead of the file implied by LOGGER.  Used
+ * by "ipsec status" et.al. where LOGGER is the global whack logger
+ * but the line describes a specific connection or state.
+ */
+
+void jambuf_to_connection_logger(struct jambuf *buf, const struct logger *logger,
+				 enum stream stream, const struct connection *c)
+{
+	FILE *conn_file = (c != NULL && c->conlogfile_fp != NULL
+			   ? c->conlogfile_fp
+			   : connection_log_file(logger));
+	jambuf_to_logger_file(buf, logger, stream, conn_file);
 }
 
 const struct logger_object_vec logger_global_vec = {

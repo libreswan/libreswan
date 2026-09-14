@@ -172,6 +172,8 @@ static const struct keyword_def config_conn_keyword[] = {
   KWS("vti-routing", LEMPTY, KWS_VTI_ROUTING),
   KWS("vti-shared", LEMPTY, KWS_VTI_SHARED),
 
+  KWS("conlogfile", LEMPTY, KWS_CONLOGFILE),
+
   KWS("ipsec-interface", LEMPTY, KWS_IPSEC_INTERFACE),
 
   KWS("clones", LEMPTY, KWS_CLONES),
