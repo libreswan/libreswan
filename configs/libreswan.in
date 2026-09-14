@@ -1,5 +1,7 @@
 @@LOGDIR@@/pluto.log {
     missingok
     notifempty
-    copytruncate
+    postrotate
+        kill -HUP $(cat @IPSEC_RUNDIR@/pluto.pid 2>/dev/null) 2>/dev/null || true
+    endscript
 }

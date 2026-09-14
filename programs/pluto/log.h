@@ -45,6 +45,7 @@ struct logger *init_log(const char *progname);
 void switch_log(struct logger **logger);
 void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
+void reopen_log(struct logger *logger);	/* after logrotate */
 
 extern bool whack_prompt_for(struct ike_sa *ike,
 			     const char *prompt,

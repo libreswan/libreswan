@@ -989,7 +989,7 @@ void show_debug_status(struct show *s)
 
 static void huphandler_cb(struct verbose verbose)
 {
-	vlog("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	reopen_log(verbose.logger);
 }
 
 static void termhandler_cb(struct verbose verbose)

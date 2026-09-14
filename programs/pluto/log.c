@@ -29,6 +29,7 @@
 #include <string.h>
 #include <errno.h>
 #include <syslog.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "defs.h"
@@ -283,6 +284,40 @@ void close_log(void)
 	} else {
 		closelog();
 	}
+}
+
+void reopen_log(struct logger *logger)
+{
+	/* only a real log file can be rotated */
+	if (log_param.log_to_file == NULL ||
+	    pluto_log_file == NULL ||
+	    pluto_log_file == stderr) {
+		return;
+	}
+
+	int fd = open(log_param.log_to_file, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0666);
+	if (fd < 0) {
+		llog_errno(WARNING_STREAM, logger, errno,
+			   "reopen_log: cannot reopen '%s'; continuing with old file: ",
+			   log_param.log_to_file);
+		return;
+	}
+
+	flockfile(pluto_log_file);
+	fflush(pluto_log_file);
+	int rc = dup2(fd, fileno(pluto_log_file));
+	int saved_errno = errno;
+	funlockfile(pluto_log_file);
+	close(fd);
+
+	if (rc < 0) {
+		llog_errno(WARNING_STREAM, logger, saved_errno,
+			   "reopen_log: dup2() failed for '%s'; continuing with old file: ",
+			   log_param.log_to_file);
+		return;
+	}
+	llog(RC_LOG, logger, "log file '%s' reopened after rotation",
+	     log_param.log_to_file);
 }
 
 void show_log(struct show *s)
