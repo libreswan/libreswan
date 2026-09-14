@@ -40,20 +40,23 @@
 	 REDUCE_SHA2(TYPE, LHS, OP, rsasig) OP	\
 	 REDUCE_SHA2(TYPE, LHS, OP, ecdsa))
 
+#define OP4(LHS, OP, RHS, AUTH)					\
+	.AUTH = (LHS).AUTH OP (RHS).AUTH
+
 #define OP_SHA2(LHS, OP, RHS, AUTH)				\
-	.AUTH##_sha2_256 = (LHS).AUTH##_sha2_256 OP (RHS).AUTH##_sha2_256, \
-	.AUTH##_sha2_384 = (LHS).AUTH##_sha2_384 OP (RHS).AUTH##_sha2_384, \
-	.AUTH##_sha2_512 = (LHS).AUTH##_sha2_512 OP (RHS).AUTH##_sha2_512
+	OP4(LHS, OP, RHS, AUTH##_sha2_256),			\
+	OP4(LHS, OP, RHS, AUTH##_sha2_384),			\
+	OP4(LHS, OP, RHS, AUTH##_sha2_512)
 
 #define OP(LHS, OP, RHS)					\
 	(struct authby) {					\
-		.null = (LHS).null OP (RHS).null,		\
-		.never = (LHS).never OP (RHS).never,		\
-		.psk = (LHS).psk OP (RHS).psk,			\
-		.authby_eaponly = (LHS).authby_eaponly OP (RHS).authby_eaponly,	\
-		.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
-		.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
-		.rsasig_v1_5_sha1 = (LHS).rsasig_v1_5_sha1 OP (RHS).rsasig_v1_5_sha1, \
+		OP4(LHS, OP, RHS, null),			\
+		OP4(LHS, OP, RHS, never),			\
+		OP4(LHS, OP, RHS, psk),				\
+		OP4(LHS, OP, RHS, authby_eaponly),		\
+		OP4(LHS, OP, RHS, rsasig),			\
+		OP4(LHS, OP, RHS, eddsa),			\
+		OP4(LHS, OP, RHS, rsasig_v1_5_sha1),		\
 		OP_SHA2(LHS, OP, RHS, rsasig_v1_5),		\
 		OP_SHA2(LHS, OP, RHS, rsasig),			\
 		OP_SHA2(LHS, OP, RHS, ecdsa),			\
