@@ -27,7 +27,7 @@ static const struct logger_object_vec logger_global_vec = {
 };
 
 const struct where global_where = {
-	.line = 0, .file = "<global>", .func = "<global>",
+	.sal = "<global>", .func = "<global>",
 };
 
 /*const*/struct logger global_logger = {
