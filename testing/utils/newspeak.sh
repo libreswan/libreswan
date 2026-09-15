@@ -16,11 +16,20 @@ fi
 for d in "$@" ; do
     for f in  $d/*.sh $d/*.txt ; do
 	echo $f
-	sed -i -e 's/ipsec auto --/ipsec /' $f
-	sed -i -e 's/ipsec whack --trafficstatus/ipsec trafficstatus/' $f
-	sed -i -e 's/ipsec whack --shuntstatus/ipsec shuntstatus/' $f
-	# this is a common idiom from code predating connectionstatus
-	sed -i -e 's/ipsec status *| *grep /ipsec connectionstatus /' $f
+	# drop the auto/whack prefix
+	sed -i \
+	    -e 's/ipsec auto --/ipsec /' \
+	    -e 's/ipsec whack --trafficstatus/ipsec trafficstatus/' \
+	    -e 's/ipsec whack --shuntstatus/ipsec shuntstatus/' \
+	    $f
+	# this is a common idiom from scripts that predate
+	# connectionstatus
+	sed -i -e 's/ipsec status *| *grep \([-a-z0-9]*\)$/ipsec connectionstatus $1/' $f
+	# migrate some strongswan commands
+	sed -i \
+	    -e 's/strongswan up \([-a-z0-9]*\)$/swanctl --initiate --child \1 --loglevel 0/' \
+	    -e 's/strongswan down \([-a-z0-9]*\)$/swanctl --terminate --ike \1 --loglevel 0/' \
+	    $f
     done
     for f in $d/*.conf ; do
 	case $f in
