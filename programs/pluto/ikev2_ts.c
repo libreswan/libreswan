@@ -205,6 +205,50 @@ static void jam_traffic_selector_proposals(struct jambuf *buf, struct child_sa *
 	jam_string(buf, "}");
 }
 
+static void vexpect_selector_eq(const char *what,
+				ip_selector l, ip_selector r,
+				struct verbose verbose)
+{
+	if (!selector_eq_selector(l, r)) {
+		selector_buf lb, rb;
+		vlog_pexpect(verbose.where, "%s: %s, %s", what,
+			     str_selector(&l, &lb),
+			     str_selector(&r, &rb));
+	}
+}
+
+static void vexpect_proposed(const char *what,
+			     struct connection_end *e,
+			     struct verbose verbose)
+{
+	if (!(e->child.selectors.proposed == e->child.selectors.assigned ||
+	      e->child.selectors.proposed == e->config->child.selectors)) {
+		vlog_pexpect(verbose.where,
+			     "%s: proposed %p, assigned %p, configed %p",
+			     what,
+			     e->child.selectors.proposed,
+			     e->child.selectors.assigned,
+			     e->config->child.selectors);
+	}
+}
+
+
+static void vexpect_proposed_selectors(const struct connection *c,
+				       struct verbose verbose)
+{
+	vexpect_proposed("remote", c->remote, verbose);
+	vexpect_proposed("local", c->local, verbose);
+
+	vexpect_selector_eq("local spd == proposed->table[0]",
+			    c->child.spds->table->local->client,
+			    c->local->child.selectors.proposed->table[0],
+			    verbose);
+	vexpect_selector_eq("remote spd == proposed->table[0]",
+			    c->child.spds->table->remote->client,
+			    c->remote->child.selectors.proposed->table[0],
+			    verbose);
+}
+
 PRINTF_LIKE(3)
 static void llog_ts(struct child_sa *child,
 		    const struct traffic_selector_payloads *tsps,
@@ -1795,14 +1839,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
-			vexpect(t->remote->child.selectors.proposed == t->remote->child.selectors.assigned ||
-				t->remote->child.selectors.proposed == t->remote->config->child.selectors);
-			vexpect(t->local->child.selectors.proposed == t->local->child.selectors.assigned ||
-				t->local->child.selectors.proposed == t->local->config->child.selectors);
-			vexpect(selector_eq_selector(t->child.spds->table->remote->client,
-						     t->remote->child.selectors.proposed->table[0]));
-			vexpect(selector_eq_selector(t->child.spds->table->local->client,
-						     t->local->child.selectors.proposed->table[0]));
+			vexpect_proposed_selectors(t, verbose);
 			vexpect(!is_labeled(t));
 			struct child_selector_ends ends = {
 				.i.selectors = t->remote->child.selectors.proposed,
@@ -1859,14 +1896,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	/* initiator so don't cross streams */
-	vexpect(c->remote->child.selectors.proposed == c->remote->child.selectors.assigned ||
-		c->remote->child.selectors.proposed == c->remote->config->child.selectors);
-	vexpect(c->local->child.selectors.proposed == c->local->child.selectors.assigned ||
-		c->local->child.selectors.proposed == c->local->config->child.selectors);
-	vexpect(selector_eq_selector(c->child.spds->table->remote->client,
-				     c->remote->child.selectors.proposed->table[0]));
-	vexpect(selector_eq_selector(c->child.spds->table->local->client,
-				     c->local->child.selectors.proposed->table[0]));
+	vexpect_proposed_selectors(c, verbose);
 
 	/* the return needs to match what was proposed */
 	const struct child_selector_ends ends = {
