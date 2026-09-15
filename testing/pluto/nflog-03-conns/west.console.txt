@@ -20,11 +20,11 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-nflog
-"westnet-eastnet-nflog": added oriented IKEv1 connection
+ ipsec add westnet-eastnet-nflog
+"westnet-eastnet-nflog": added oriented IKEv2 connection
 west #
- ipsec auto --add west-east-nflog
-"west-east-nflog": added oriented IKEv1 connection
+ ipsec add west-east-nflog
+"west-east-nflog": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -43,17 +43,14 @@ table ip filter {
 	}
 }
 west #
- ipsec auto --up westnet-eastnet-nflog
-"westnet-eastnet-nflog" #1: initiating IKEv1 Main Mode connection
-"westnet-eastnet-nflog" #1: sent Main Mode request
-"westnet-eastnet-nflog" #1: sent Main Mode I2
-"westnet-eastnet-nflog" #1: sent Main Mode I3
-"westnet-eastnet-nflog" #1: Peer ID is FQDN: '@east'
-"westnet-eastnet-nflog" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit raw RSA with SHA1 signature
-"westnet-eastnet-nflog" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-nflog" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
-"westnet-eastnet-nflog" #2: sent Quick Mode request
-"westnet-eastnet-nflog" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+ ipsec up westnet-eastnet-nflog # sanitize-retransmits
+"westnet-eastnet-nflog" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-nflog" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-nflog" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"westnet-eastnet-nflog" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-nflog" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"westnet-eastnet-nflog" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
+"westnet-eastnet-nflog" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  nft list ruleset
 table ip filter {
@@ -79,10 +76,10 @@ table inet ipsec-log {
 	}
 }
 west #
- ipsec auto --up west-east-nflog
-"west-east-nflog" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
-"west-east-nflog" #3: sent Quick Mode request
-"west-east-nflog" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+ ipsec up west-east-nflog # sanitize-retransmits
+"west-east-nflog" #3: initiating Child SA using IKE SA #1
+"west-east-nflog" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"west-east-nflog" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  nft list ruleset
 table ip filter {
@@ -127,10 +124,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec auto --down westnet-eastnet-nflog
-"westnet-eastnet-nflog": initiating delete of connection's IPsec SA #2 using ISAKMP SA #1
-"westnet-eastnet-nflog": note: connection's ISAKMP SA #1 will remain up: in-use by "west-east-nflog" #3
-"westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+ ipsec down westnet-eastnet-nflog # sanitize-retransmits
+"westnet-eastnet-nflog": initiating delete of connection's Child SA #2 using IKE SA #1
+"westnet-eastnet-nflog": note: connection's IKE SA #1 will remain up: in-use by "west-east-nflog" #3
+"westnet-eastnet-nflog" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #
  nft list ruleset
@@ -157,11 +154,11 @@ table inet ipsec-log {
 	}
 }
 west #
- ipsec auto --down west-east-nflog
-"west-east-nflog": initiating delete of connection's IPsec SA #3 and ISAKMP SA #1
-"west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-nflog" #1
+ ipsec down west-east-nflog # sanitize-retransmits
+"west-east-nflog": initiating delete of "westnet-eastnet-nflog" #1 which has connection's Child SA #3
+"westnet-eastnet-nflog" #1: sent INFORMATIONAL request to delete IKE SA
 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
-"westnet-eastnet-nflog" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"westnet-eastnet-nflog" #1: deleting IKE SA (established IKE SA)
 west #
  nft list ruleset
 table ip filter {
