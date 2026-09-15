@@ -331,6 +331,10 @@ struct state {
 	 */
 
 	struct {
+		enum ikev2_auth_method method;
+	} st_v2_local_auth;
+
+	struct {
 		struct authby peer_pubkey_mask;
 		const struct hash_desc *hash;
 		const struct pubkey_signer *signer;

@@ -1599,10 +1599,9 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		/* AUTH payload (proof-of-identity) */
 		jam_string(buf, " with ");
-		enum auth authby = local_v2_auth(ike);
-		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
-		if (auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
+		jam_enum_human(buf, &ikev2_auth_method_names,
+			       ike->sa.st_v2_local_auth.method);
+		if (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
 		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.signer != NULL) &&
 		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.hash != NULL)) {
 			jam_string(buf, " ");
