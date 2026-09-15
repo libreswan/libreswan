@@ -330,7 +330,7 @@ struct state {
 	 * using that same algorithm.
 	 */
 
-	struct {
+	struct local_v2AUTH {
 		enum ikev2_auth_method method;
 	} st_v2_local_auth;
 

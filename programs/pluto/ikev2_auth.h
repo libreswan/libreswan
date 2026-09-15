@@ -21,6 +21,7 @@
 #include "chunk.h"
 
 #include "pluto_constants.h"	/* for stf_status; */
+#include "ietf_constants.h"	/* for enum ikev2_auth_method */
 
 struct state;
 struct connection;
@@ -62,7 +63,7 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
  * The local end's proof-of-identity sent to the remote peer.
  */
 
-enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike);
+struct local_v2AUTH local_v2AUTH_method(struct ike_sa *ike);
 
 bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
