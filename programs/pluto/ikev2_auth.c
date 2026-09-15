@@ -532,6 +532,9 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		/* saved during signing */
 		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
 		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
+		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_alg);
+		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+
 		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
 			return false;
@@ -860,6 +863,8 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
 	if (!submit_v2_auth_signature(ike, md,
 				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
 				      signer, cb, HERE)) {
@@ -1021,6 +1026,9 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct pubkey_signer *signer,
 						       v2_auth_signature_cb *cb)
 {
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+
 	if (!submit_v2_auth_signature(ike, md,
 				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
 				      signer, cb, HERE)) {
