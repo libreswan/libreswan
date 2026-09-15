@@ -231,7 +231,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
-enum auth local_v2_auth(struct ike_sa *ike)
+static enum auth local_v2_auth(struct ike_sa *ike)
 {
 	if (ike->sa.st_v2_resume_session != NULL) {
 		return AUTH_PSK;
@@ -268,9 +268,10 @@ enum auth local_v2_auth(struct ike_sa *ike)
  * auth method.
  */
 
-enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum auth auth)
+enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike)
 {
+	enum auth auth = (ike->sa.st_eap != NULL ? AUTH_PSK :
+			  local_v2_auth(ike));
 	struct connection *c = ike->sa.st_connection;
 
 	if (impair.force_v2_auth_method.enabled) {
@@ -784,7 +785,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	struct logger *logger = ike->sa.logger;
 
 	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
 
@@ -942,7 +943,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
