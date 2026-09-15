@@ -65,7 +65,7 @@ enum updown_configs {
 #define updown_config_async updown_config[UPDOWN_CONFIG_ASYNC]
 #define updown_config_exec updown_config[UPDOWN_CONFIG_EXEC]
 
-extern const struct enum_names updown_config_names;
+extern const struct names updown_config_names;
 
 bool updown_connection_spd(enum updown updown_verb,
 			   const struct connection *c,

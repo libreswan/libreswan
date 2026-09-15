@@ -277,19 +277,14 @@ static bool translate_conn(struct starter_conn *conn,
 
 	const struct keyval_entry *kw;
 	TAILQ_FOREACH(kw, &sl->keyvals, next) {
-		if ((kw->keyval.key->validity & kv_leftright) ||
-		    (kw->keyval.key->validity & kv_both)) {
-			if (kw->keyval.left) {
-				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
-							  kw, &conn->end[LEFT_END],
-							  logger);
-			}
-			if (kw->keyval.right) {
-				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
-							  kw, &conn->end[RIGHT_END],
-							  logger);
-			}
-		} else {
+		switch (kw->keyval.end) {
+		case LEFT_END:
+		case RIGHT_END:
+			ok &= translate_leftright(conn, cfgp, sl, assigned_value,
+						  kw, &conn->end[kw->keyval.end],
+						  logger);
+			break;
+		default: /*END_ROOF*/
 			ok &= translate_field(conn, cfgp, sl, assigned_value, kw,
 					      /*leftright*/"",
 					      conn->values,

@@ -36,7 +36,8 @@
 
 struct task {
 	/* in */
-	struct ro_hunk *firstpacket;
+	shunk_t zero_prefix;
+	struct ro_hunk *message[2];
 	chunk_t nonce;
 	chunk_t ia1;
 	chunk_t ia2;
@@ -75,9 +76,8 @@ static void pack_task(struct ike_sa *ike,
 		 ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 		 0);
 
-	struct ro_hunk *firstpacket = (from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_firstpacket_me :
-				       from_the_perspective_of == REMOTE_PERSPECTIVE ? ike->sa.st_firstpacket_peer :
-				       NULL);
+	struct v2AUTH_transcript transcript;
+	extract_v2AUTH_transcript(ike, from_the_perspective_of, &transcript);
 
 	chunk_t nonce = (role == SA_INITIATOR ? ike->sa.st_nr :
 			 role == SA_RESPONDER ? ike->sa.st_ni :
@@ -89,7 +89,11 @@ static void pack_task(struct ike_sa *ike,
 		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
 		       empty_chunk);
 
-	task->firstpacket = ro_hunk_addref(firstpacket, ike->sa.logger);
+	task->zero_prefix = transcript.zero_prefix;
+	for (unsigned m = 0; m < elemsof(task->message); m++) {
+		task->message[m] =
+			ro_hunk_addref(transcript.message[m], ike->sa.logger);
+	}
 	/* on initiator, we need to hash responders nonce */
 	task->nonce = clone_hunk_as_chunk(&nonce, "nonce");
 	task->idhash = (*idhash);
@@ -145,7 +149,10 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 	logtime_t start = logtime_start(logger);
 
 	const struct hash_hunk octets[] = {
-		{ "first packet", HUNK_REF(task->firstpacket), },
+		/* optional zero prefix and second packet, len can be 0 */
+		{ "zero prefix", HUNK_REF(&task->zero_prefix), },
+		{ "first packet", HUNK_REF(task->message[0]), },
+		{ "second packet", HUNK_REF(task->message[1]), },
 		{ "nonce", HUNK_REF(&task->nonce), },
 		{ "idhash", HUNK_REF(&task->idhash), },
 		/* optional intermediate, len can be 0 */
@@ -185,7 +192,9 @@ static stf_status v2_auth_signature_completed(struct state *st,
 
 static void v2_auth_signature_cleanup(struct task **task, struct logger *logger)
 {
-	ro_hunk_delref(&(*task)->firstpacket, logger);
+	for (unsigned m = 0; m < elemsof((*task)->message); m++) {
+		ro_hunk_delref(&(*task)->message[m], logger);
+	}
 	free_chunk_content(&(*task)->nonce);
 	free_chunk_content(&(*task)->ia1);
 	free_chunk_content(&(*task)->ia2);

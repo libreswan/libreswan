@@ -12,13 +12,20 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+include ../../mk/dirs.mk
+include $(top_srcdir)/mk/config.mk
+
 X509DIR ?= .
+
+overrides += CERTUTIL=$(CERTUTIL)
+overrides += PK12UTIL=$(PK12UTIL)
+overrides += CRLUTIL=$(CRLUTIL)
 
 .PHONY: all
 all:
-	./bin/pki.sh $(X509DIR)
-	./bin/crl.sh $(X509DIR)
-	./bin/selfsigned.sh $(X509DIR)/selfsigned
+	$(overrides) ./bin/pki.sh $(X509DIR)
+	$(overrides) ./bin/crl.sh $(X509DIR)
+	$(overrides) ./bin/selfsigned.sh $(X509DIR)/selfsigned
 
 .PHONY: clean
 clean:

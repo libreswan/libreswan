@@ -1,4 +1,4 @@
-ipsec auto --up road
+ipsec up road # sanitize-retransmits
 ping6 -n -q -w 4 -c 2 192.0.2.254
 ipsec trafficstatus 
 ../../guestbin/ip-addr-show.sh

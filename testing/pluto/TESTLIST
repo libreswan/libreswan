@@ -59,6 +59,7 @@ kvmplutotest	check-03-vendoridcheck		good
 kvmplutotest	check-04-pki			good
 kvmplutotest	check-05-checksec		good
 kvmplutotest	check-06-dnssec			good
+kvmplutotest	check-07-testlist		good
 
 # per-os sniff tests
 
@@ -104,7 +105,8 @@ kvmplutotest	basic-pluto-01-nokey		good
 # add connection parser and semantic checker tests
 #################################################################
 
-kvmplutotest	connalias-01-conflict				good	github/1620
+kvmplutotest	connalias-01-conflict-ikev1			good	github/1620
+kvmplutotest	connalias-01-conflict-ikev2			good	github/1620
 kvmplutotest	connalias-02-twoconn-ikev1			good
 kvmplutotest	connalias-02-twoconn-ikev2			good
 
@@ -154,7 +156,7 @@ kvmplutotest	addconn-19-include-missing			good
 kvmplutotest	addconn-19-include-no-match			good
 kvmplutotest	addconn-20-conn-default				good
 kvmplutotest	addconn-21-config-setup-listen			good
-kvmplutotest	addconn-22-authby-hash-algo			good
+kvmplutotest	addconn-22-authby				good
 kvmplutotest	addconn-23-fedora-crypto-policies		good
 kvmplutotest	addconn-24-conn-default-rsasigkey		good	github:833
 kvmplutotest	addconn-25-missing-cert				good
@@ -188,6 +190,8 @@ kvmplutotest	addconn-52-clones				good
 kvmplutotest	addconn-53-config-setup-ike-socket		good
 kvmplutotest    addconn-54-xauth          good
 kvmplutotest    addconn-55-send-supported-auth-methods          good
+kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
+kvmplutotest	addconn-57-signature-hash-algorithms		good
 
 #################################################################
 # IKEv2 tests
@@ -279,6 +283,12 @@ kvmplutotest	ikev2-70-src-address-selection		good
 kvmplutotest	ikev2-71-cp-resolve-name		good
 kvmplutotest 	ikev2-72-cp-resolve-both		good
 
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-03-fallback    good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-04-mismatch    good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-05-x509        good
+kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-06-tamper      good
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
@@ -298,14 +308,18 @@ kvmplutotest	ikev2-ondemand-04-timeout-instance		good	github/1095
 kvmplutotest	ikev2-ondemand-04-timeout-permanent-tunnel	good	github/1095
 kvmplutotest	ikev2-ondemand-04-timeout-permanent-transport	good	github/1095
 
-kvmplutotest	ikev2-24-cryptoload			wip
+kvmplutotest	cryptoload-01-nhelpers3-overload-ikev1		good
+kvmplutotest	cryptoload-01-nhelpers3-overload-ikev2		good
+kvmplutotest	cryptoload-03-nhelpers0-hostkeys-ikev1		good
+kvmplutotest	cryptoload-03-nhelpers0-hostkeys-ikev2		good
+kvmplutotest	cryptoload-04-nhelpers0-x509-ikev2		good
+kvmplutotest	cryptoload-05-nhelpers0-psk-ikev2		good
+kvmplutotest	cryptoload-06-nhelpers0-child-pfs-ikev2		good
+
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			good
 kvmplutotest	ikev2-28-rw-server-rekey 		good
 kvmplutotest	ikev2-29-no-rekey			good
-
-kvmplutotest	ikev1-cryptoload-01			good
-kvmplutotest	ikev1-cryptoload-00			good
 
 kvmplutotest	ikev2-ddns-01-hosts-ready		good
 kvmplutotest	ikev2-ddns-01-hosts-delayed		good
@@ -314,10 +328,6 @@ kvmplutotest	ikev2-ddns-02-dns-delayed		good
 kvmplutotest	ikev2-ddns-03-manual-delayed		good
 kvmplutotest	ikev2-ddns-04-revival-hosts		good
 kvmplutotest	ikev2-ddns-04-revival-dns		good
-
-kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
-kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
-kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
@@ -543,8 +553,6 @@ kvmplutotest	ikev2-x509-36-leftrightauth		good
 kvmplutotest	ikev2-x509-37-fakeeast-westrsa		good
 kvmplutotest	ikev2-x509-37-fakeeast-westnoca		good
 kvmplutotest	ikev2-x509-37-fakeeast-westecca		good
-
-kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good
 kvmplutotest	ikev2-auth-mismatch-bug			wip	github/2931
@@ -848,6 +856,7 @@ kvmplutotest	ikev2-liveness-09-revival			good
 kvmplutotest	ikev2-liveness-10				wip
 kvmplutotest	ikev2-liveness-11-silent			good
 kvmplutotest	ikev2-liveness-12-clear-rw-restart		wip	github/253;dpdaction
+kvmplutotest	ikev2-liveness-13-whack				good
 kvmplutotest	ikev2-child-00-dh-hang		wip
 kvmplutotest	ikev2-child-01-pfs-no-downgrade-no	good
 kvmplutotest	ikev2-child-02-pfs-yes-downgrade-yes	good
@@ -855,7 +864,6 @@ kvmplutotest	ikev2-child-03-dh-none-pfs-no		good
 kvmplutotest	ikev2-child-04-dh-none-pfs-yes		good
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
-kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
 kvmplutotest	ikev2-child-ipsec-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
 kvmplutotest	ikev2-child-ipsec-timer		wip
@@ -1749,7 +1757,7 @@ kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
 kvmplutotest	crossing-streams-23-conswitch-ike-sa-init-ikev2	good	github/1989
 
 kvmplutotest	crossing-streams-24-ikev2-delete-connswitch-github-2101	good	github/2101
-kvmplutotest	crossing-streams-bootup-01	wip	github/3002
+kvmplutotest	crossing-streams-bootup-01	good	github/3002
 
 # uses the kernel-pfkeyv2.c code
 
@@ -1874,3 +1882,4 @@ kvmplutotest	ikev2-supported-auth-methods-02-intermediate    good
 kvmplutotest	ikev2-supported-auth-methods-03		            good
 kvmplutotest	ikev2-supported-auth-methods-03-fail		    good
 kvmplutotest	ikev2-supported-auth-methods-04		            wip
+kvmplutotest	ikev2-supported-auth-methods-05		            good

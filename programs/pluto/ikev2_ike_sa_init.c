@@ -31,6 +31,7 @@
 
 #include "ikev2_ike_sa_init.h"
 
+#include "ike_alg_hash.h"
 #include "demux.h"
 #include "log.h"
 #include "state.h"
@@ -111,6 +112,58 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
+}
+
+static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
+					       const struct msg_digest *md)
+{
+	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] == NULL) {
+		/* nothing to save */
+		return true;
+	}
+
+	if (ikev2_signature_hash_algorithms == YNA_NO) {
+		llog(RC_LOG, ike->sa.logger, "ignoring SIGNATURE_HASH_ALGORITHMS notification");
+		return true;
+	}
+
+	struct pbs_in pbs = md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs;
+	ike->sa.st_seen_hashnotify = true;
+	while (pbs_left(&pbs) > 0) {
+
+		uint16_t nh_value;
+		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
+		diag_t d = pbs_in_thing(&pbs, nh_value,
+					"hash algorithm identifier (network ordered)");
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
+			return false;
+		}
+
+		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
+		name_buf b;
+		const struct hash_desc *hash = ikev2_hash_desc(h_value, &b);
+		if (hash == NULL) {
+			llog(RC_LOG, ike->sa.logger, "received and ignored unknown hash algorithm %s", b.buf);
+			continue;
+		}
+
+		struct authby peer_pubkey_mask =
+			authby_and_hash(supported_ikev2_digsig_auth_payloads(), hash);
+		if (!authby_is_set(peer_pubkey_mask)) {
+			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable pubkey hash algorithm %s", hash->common.fqn);
+			continue;
+		}
+
+		authby_buf ab;
+		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s; adding %s",
+		     hash->common.fqn, str_authby(peer_pubkey_mask, &ab));
+		ike->sa.st_v2_digsig.peer_pubkey_mask =
+			authby_or(ike->sa.st_v2_digsig.peer_pubkey_mask,
+				  peer_pubkey_mask);
+	}
+	return true;
 }
 
 bool calc_v2_new_ike_keymat(struct ike_sa *ike,
@@ -348,41 +401,39 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	return record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
-static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
-					       struct pbs_out *outs)
+static bool emit_hash(struct pbs_out *pbs,
+		      const struct authby supported_authby,
+		      const struct hash_desc *hash)
 {
+	if (authby_has_hash(supported_authby, hash)) {
+		uint8_t hash_id[RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE];
+		hton_thing(hash->ikev2_alg_id, hash_id);
+		if (!pbs_out_thing(pbs, hash_id,
+				   "hash algorithm identifier")) {
+			/* already logged */
+			return false;
+		}
+	}
+	return true;
+}
+
+static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
+{
+	const struct authby supported_authby = supported_ikev2_digsig_auth_payloads();
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
-	if (impair.omit_v2_notification.enabled &&
-	    impair.omit_v2_notification.value == ntype) {
-		name_buf eb;
-		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
-		     str_enum_short(&v2_notification_names, ntype, &eb));
-		return true;
-	}
-
 	struct pbs_out n_pbs;
-
 	if (!open_v2N_output_pbs(outs, ntype, &n_pbs)) {
 		llog(RC_LOG, outs->logger, "error initializing notify payload for notify message");
 		return false;
 	}
 
-#define H(POLICY, ID)							\
-	if (sighash_policy & POLICY) {					\
-		uint16_t hash_id = htons(ID);				\
-		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		if (!pbs_out_thing(&n_pbs, hash_id,			\
-				 "hash algorithm identifier "#ID)) {	\
-			/* already logged */				\
-			return false;					\
-		}							\
+	if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
+	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
+		return false;
 	}
-	H(POL_SIGHASH_SHA2_256, IKEv2_HASH_ALGORITHM_SHA2_256);
-	H(POL_SIGHASH_SHA2_384, IKEv2_HASH_ALGORITHM_SHA2_384);
-	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
-	H(POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY);
-#undef H
 
 	close_pbs_out(&n_pbs);
 	return true;
@@ -485,6 +536,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		}
 	}
 
+	/* Send IKE_SA_INIT_FULL_TRANSCRIPT_AUTH Notify payload */
+	if (c->config->ike_sa_init_full_transcript_auth != YNA_NO) {
+		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, request.pbs))
+			return false;
+	}
+
 	/* first check if this IKE_SA_INIT came from redirect
 	 * instruction.
 	 * - if yes, send the v2N_REDIRECTED_FROM
@@ -502,19 +559,32 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/*
-	 * Send the initiator's SIGNATURE_HASH_ALGORITHMS notification
-	 * based on the remote's .authby.
-	 *
-	 * The initiator would like the responder to prove their
-	 * identity using one of these hashes (plus a signature).
-	 * Since the initiator can't switch connections the decision is
-	 * final.
+	 * Always? send the initiator's SIGNATURE_HASH_ALGORITHMS
+	 * notification.
 	 */
-	if (digital_signature_in_authby(c->remote->host.config->authby) &&
-	    (c->config->sighash_policy != LEMPTY)) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
+	switch (ikev2_signature_hash_algorithms) {
+	case YNA_YES:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? YES");
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
 			return false;
 		}
+		break;
+	case YNA_NO:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
+		break;
+	case YNA_AUTO:
+		if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
+			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
+				return false;
+			}
+			break;
+		}
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? NO");
+		break;
+	case YNA_UNSET:
+		bad_case(ikev2_signature_hash_algorithms);
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -522,12 +592,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		return false;
 
 	/* From here on, only payloads left are Vendor IDs */
-	if (c->config->send_vendorid) {
+	if (c->config->host.send_vendorid) {
 		if (!emit_v2V(request.pbs, config_setup_vendorid()))
 			return false;
 	}
 
-	if (c->config->send_vid_fake_strongswan) {
+	if (c->config->host.send_vid_fake_strongswan) {
 		if (!emit_v2VID(request.pbs, VID_STRONGSWAN))
 			return false;
 	}
@@ -694,6 +764,21 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
 					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
 
+	ike->sa.st_v2_full_transcript_auth =
+		accept_v2_notification(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
+				       ike->sa.logger, md,
+				       c->config->ike_sa_init_full_transcript_auth != YNA_NO);
+
+	if (c->config->ike_sa_init_full_transcript_auth == YNA_YES &&
+	    !ike->sa.st_v2_full_transcript_auth) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
+		llog_sa(RC_LOG, ike,
+			"connection has ike-sa-init-full-transcript-auth=yes but peer does not support it");
+		return STF_FATAL;
+	}
+
 	/*
 	 * Responder: check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP.
@@ -718,21 +803,18 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		/* should this check that a port is available? */
 	}
 
-	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_INVALID_SYNTAX, empty_shunk,
-					    UNENCRYPTED_PAYLOAD);
-			/*
-			 * STF_FATAL will send the recorded
-			 * message and then kill the IKE SA.
-			 * Should it instead zombify the IKE
-			 * SA so that retransmits get a
-			 * response?
-			 */
-			return STF_FATAL;
-		}
-		ike->sa.st_seen_hashnotify = true;
+	if (!save_v2N_SIGNATURE_HASH_ALGORITHMS(ike, md)) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
+		/*
+		 * STF_FATAL will send the recorded
+		 * message and then kill the IKE SA.
+		 * Should it instead zombify the IKE
+		 * SA so that retransmits get a
+		 * response?
+		 */
+		return STF_FATAL;
 	}
 
 	/* calculate the nonce and the KE */
@@ -858,21 +940,39 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 	}
 
+	if (c->config->ike_sa_init_full_transcript_auth != YNA_NO) {
+		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, response.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
 	/*
-	 * Send the responder's SIGNATURE_HASH_ALGORITHMS notification
-	 * unconditionally:
-	 *
-	 * + the connection is tentative, remote .authby could be
-	 *   wrong (for instance, IKE_AUTH may trigger a switch from
-	 *   host-host:PSK -> host-any:RSA).
-	 *
-	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
-	 *   information
+	 * Always? send the responder's SIGNATURE_HASH_ALGORITHMS
+	 * notification.
 	 */
-	if (c->config->sighash_policy != LEMPTY) {
-		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
+	switch (ikev2_signature_hash_algorithms) {
+	case YNA_YES:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? YES");
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
+		break;
+	case YNA_NO:
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
+		break;
+	case YNA_AUTO:
+		if (ike->sa.st_seen_hashnotify ||
+		    authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
+			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+			break;
+		}
+		ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? NO");
+		break;
+	case YNA_UNSET:
+		bad_case(ikev2_signature_hash_algorithms);
 	}
 
 	/* Send the responder's SUPPORTED_AUTH_METHODS notification */
@@ -910,12 +1010,12 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		emit_v2CERTREQ(ike, response.pbs);
 	}
 
-	if (c->config->send_vendorid) {
+	if (c->config->host.send_vendorid) {
 		if (!emit_v2V(response.pbs, config_setup_vendorid()))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (c->config->send_vid_fake_strongswan) {
+	if (c->config->host.send_vid_fake_strongswan) {
 		if (!emit_v2VID(response.pbs, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1119,6 +1219,21 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		(impair.childless_ikev2_supported ? false :
 		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
+	ike->sa.st_v2_full_transcript_auth =
+		(c->config->ike_sa_init_full_transcript_auth != YNA_NO &&
+		 md->pd[PD_v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH] != NULL);
+	if (ike->sa.st_v2_full_transcript_auth) {
+		ldbg(ike->sa.logger,
+		     "responder accepted our proposed IKE_SA_INIT_FULL_TRANSCRIPT_AUTH notification");
+	}
+
+	if (c->config->ike_sa_init_full_transcript_auth == YNA_YES &&
+	    !ike->sa.st_v2_full_transcript_auth) {
+		llog_sa(RC_LOG, ike,
+			"connection has ike-sa-init-full-transcript-auth=yes but peer does not support it");
+		return STF_FATAL;
+	}
+
 	ike->sa.st_v2_ike_fragmentation_enabled =
 		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
 				       ike->sa.logger, md, c->config->ike_frag.allow);
@@ -1156,14 +1271,11 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			return STF_FATAL;
-		}
-		ike->sa.st_seen_hashnotify = true;
+	if (!save_v2N_SIGNATURE_HASH_ALGORITHMS(ike, md)) {
+		return STF_FATAL;
 	}
 
-	/* 
+	/*
 	 * If we received an empty notification, we expect the responder to send
 	 * the full notification in the intermediate exchange, otherwise
 	 * we process the notification.
@@ -1464,3 +1576,5 @@ V2_EXCHANGE(IKE_SA_INIT, "",
 	    /*secured*/false,
 	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_I0);
+
+enum yna_options ikev2_signature_hash_algorithms;

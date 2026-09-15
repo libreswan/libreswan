@@ -48,6 +48,95 @@ struct v2AUTH_blobs {
 	struct hash_hunks hunks;
 };
 
+static const uint8_t v2AUTH_zero_prefix[8] = {0};
+/*
+ * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Authentication
+ * in IKEv2":
+ * https://www.ietf.org/archive/id/draft-ietf-ipsecme-ikev2-downgrade-prevention-08.html#name-authentication-in-ikev2
+ *
+ * When the extension has not been negotiated:
+ *
+ *   InitiatorSignedOctets = RealMessage1 | NonceRData | MACedIDForI
+ *   GenIKEHDR = [ four octets 0 if using port 4500 ] | RealIKEHDR
+ *   RealIKEHDR =  SPIi | SPIr |  . . . | Length
+ *   RealMessage1 = RealIKEHDR | RestOfMessage1
+ *   NonceRPayload = PayloadHeader | NonceRData
+ *   InitiatorIDPayload = PayloadHeader | RestOfInitIDPayload
+ *   RestOfInitIDPayload = IDType | RESERVED | InitIDData
+ *   MACedIDForI = prf(SK_pi, RestOfInitIDPayload)
+ *
+ *   ResponderSignedOctets = RealMessage2 | NonceIData | MACedIDForR
+ *   GenIKEHDR = [ four octets 0 if using port 4500 ] | RealIKEHDR
+ *   RealIKEHDR =  SPIi | SPIr |  . . . | Length
+ *   RealMessage2 = RealIKEHDR | RestOfMessage2
+ *   NonceIPayload = PayloadHeader | NonceIData
+ *   ResponderIDPayload = PayloadHeader | RestOfRespIDPayload
+ *   RestOfRespIDPayload = IDType | RESERVED | RespIDData
+ *   MACedIDForR = prf(SK_pr, RestOfRespIDPayload)
+ *
+ *   In particular, the initiator, but not the responder,
+ *   authenticates the IKE_SA_INIT request (RealMessage1) and the
+ *   responder, but not the initiator, authenticates the IKE_SA_INIT
+ *   response (RealMessage2).  Thus, each side authenticates only the
+ *   initial message it has sent and not the initial message it has
+ *   received.
+ *
+ *   For the authentication calculations defined above, RealMessage1
+ *   and RealMessage2 are the final accepted IKE_SA_INIT request and
+ *   response.  If one or more prior IKE_SA_INIT exchanges were
+ *   rejected and then restarted, for example due to COOKIE or
+ *   INVALID_KE_PAYLOAD, those messages of the rejected exchanges are
+ *   not included in the authenticated transcript.
+ *
+ * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Protocol
+ * Details":
+ * https://www.ietf.org/archive/id/draft-ietf-ipsecme-ikev2-downgrade-prevention-08.html#name-protocol-details
+ *
+ * When a peer sent and received the IKE_SA_INIT_FULL_TRANSCRIPT_AUTH
+ * notification, so both messages are covered, the received one first:
+ *
+ *   InitiatorSignedOctets = ZeroPrefix | RealMessage2
+ *                           | RealMessage1 | NonceRData | MACedIDForI
+ *   ResponderSignedOctets = ZeroPrefix | RealMessage1
+ *                           | RealMessage2 | NonceIData | MACedIDForR
+ *
+ *   ZeroPrefix is 8 octets of zero.  ZeroPrefix serves a role of a
+ *   domain separator making the new authentication blocks of data
+ *   always different from authentication blocks of data defined in
+ *   Section 2.15 of IKEv2 [RFC7296], because in both RealMessage1 and
+ *   RealMessage2 the first 8 octets constitute IKE Initiator's SPI
+ *   that can never be zero.
+ */
+void extract_v2AUTH_transcript(const struct ike_sa *ike,
+			       enum perspective from_the_perspective_of,
+			       struct v2AUTH_transcript *transcript)
+{
+	struct ro_hunk *me = ike->sa.st_firstpacket_me;
+	struct ro_hunk *peer = ike->sa.st_firstpacket_peer;
+
+	struct ro_hunk *sent =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? me :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? peer :
+		 NULL);
+	struct ro_hunk *received =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? peer :
+		 from_the_perspective_of == REMOTE_PERSPECTIVE ? me :
+		 NULL);
+
+	*transcript = (struct v2AUTH_transcript) {0};
+	if (ike->sa.st_v2_full_transcript_auth) {
+		transcript->zero_prefix = THING_AS_SHUNK(v2AUTH_zero_prefix);
+		transcript->message[0] = received;
+		transcript->message[1] = sent;
+	} else {
+		transcript->message[0] = sent;
+	}
+
+	ldbg(ike->sa.logger, "v2AUTH transcript: %s",
+	     (ike->sa.st_v2_full_transcript_auth ? "ZeroPrefix | received | sent" :
+	      "sent"));
+}
+
 static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
 				 enum perspective from_the_perspective_of,
@@ -59,9 +148,19 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	enum sa_role role;
 	struct hash_hunk *blob = blobs->blob;
 
-	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
-		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
-		   (struct hash_hunk) {0});
+	struct v2AUTH_transcript transcript;
+	extract_v2AUTH_transcript(ike, from_the_perspective_of, &transcript);
+	if (transcript.zero_prefix.len > 0) {
+		*blob++ = (struct hash_hunk) { "zero-prefix", HUNK_REF(&transcript.zero_prefix), };
+	}
+	for (unsigned m = 0; m < elemsof(transcript.message); m++) {
+		if (transcript.message[m] != NULL) {
+			*blob++ = (struct hash_hunk) {
+				(m == 0 ? "first-packet" : "second-packet"),
+				HUNK_REF(transcript.message[m]),
+			};
+		}
+	}
 
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
@@ -148,12 +247,17 @@ enum auth local_v2_auth(struct ike_sa *ike)
 	if (authby_is_set(ike->sa.st_v2_peer_authby)) {
 		struct authby negotiated_authby = authby_and(ike->sa.st_v2_peer_authby, 
 				c->local->host.config->authby);
-		name_buf eb;
-		ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: selecting negotiated authby=%s", 
-				str_enum_long(&auth_names, auth_from_authby(negotiated_authby), &eb));
-		return auth_from_authby(negotiated_authby);
+		
+		if (authby_is_set(negotiated_authby)) {
+			name_buf eb;
+			ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: selecting negotiated authby=%s",
+					str_enum_long(&auth_names, auth_from_authby(negotiated_authby), &eb));
+			return auth_from_authby(negotiated_authby);
+		}
+		name_buf lcb;
+		ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: no negotiated authby, falling back to local config: %s",
+			str_enum_short(&auth_names, c->local->host.config->auth, &lcb));
 	}
-
 	enum auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);
 	return authby;
@@ -165,7 +269,7 @@ enum auth local_v2_auth(struct ike_sa *ike)
  */
 
 enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum auth authby)
+					   enum auth auth)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -177,24 +281,21 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		return impair.force_v2_auth_method.value;
 	}
 
-	switch (authby) {
-	case AUTH_RSASIG:
-		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(auth_in_authby(AUTH_RSASIG, c->local->host.config->authby));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
+	/* mask authby with the new "Digital Signature" hashes */
+	struct authby digsig_auth_payload =
+		authby_and(c->local->host.config->authby,
+			   ike->sa.st_v2_digsig.peer_pubkey_mask);
+	if (authby_has_auth(digsig_auth_payload, auth)) {
+		return IKEv2_AUTH_DIGITAL_SIGNATURE;
+	}
 
+	switch (auth) {
+	case AUTH_RSASIG:
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->host.config->authby.rsasig_v1_5) {
+		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
 			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
 		}
 
@@ -212,17 +313,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 
 	case AUTH_ECDSA:
 		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(auth_in_authby(AUTH_ECDSA, c->local->host.config->authby));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
-
-		/*
 		 * If there are HASH algorithms, prute force pick the
 		 * first and use that.  Note that this doesn't check
 		 * that the ECDSA key matches the Pnnn.  Instead, like
@@ -237,9 +327,11 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		if (c->local->host.config->authby.ecdsa_sha2_512) {
 			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
 		}
+
 		if (c->local->host.config->authby.ecdsa_sha2_384) {
 			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
 		}
+
 		if (c->local->host.config->authby.ecdsa_sha2_256) {
 			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
 		}
@@ -258,17 +350,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		return IKEv2_AUTH_RESERVED;
 
 	case AUTH_EDDSA:
-		/*
-		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
-		 * indicating a preference for Digital Signature
-		 * Method, and local policy was ok with the
-		 * suggestion.
-		 */
-		pexpect(auth_in_authby(AUTH_EDDSA, c->local->host.config->authby));
-		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGITAL_SIGNATURE;
-		}
-
 		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
 		return IKEv2_AUTH_RESERVED;
 
@@ -291,7 +372,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		break;
 
 	}
-	bad_case(authby);
+	bad_case(auth);
 }
 
 /*
@@ -303,13 +384,18 @@ static const struct hash_desc *negotiated_hash_map[] = {
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_256,
 	&ike_alg_hash_identity,
+	&ike_alg_hash_sha1,
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
 	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
+	struct authby digsig_authby =
+		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
+					   ike->sa.st_v2_digsig.peer_pubkey_mask),
+				local_v2_auth(ike));
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->ikev2_alg_id)) {
+		if (authby_has_hash(digsig_authby, (*hash))) {
 			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
 			     (*hash)->common.fqn);
 			return (*hash);
@@ -317,7 +403,7 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
 		     (*hash)->common.fqn);
 	}
-	ldbg(ike->sa.logger, "DigSig: no compatible DigSig hash algo");
+	ldbg(ike->sa.logger, "digsig: no compatible DigSig hash algo");
 	return NULL;
 }
 
@@ -325,12 +411,9 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outs)
 {
-	/* EAP only does PSK?!? */
-	enum auth authby = (ike->sa.st_eap != NULL ? AUTH_PSK : local_v2_auth(ike));
-	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
-		.isaa_auth_method = local_auth_method,
+		.isaa_auth_method = ike->sa.st_v2_local_auth.method,
 	};
 
 	struct pbs_out auth_pbs;
@@ -338,7 +421,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		return false;
 	}
 
-	switch (local_auth_method) {
+	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
@@ -416,14 +499,12 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	authby_buf ab;
 	authby_buf hb;
-	lset_buf lb;
 	ldbg(ike->sa.logger,
-	     "verifying authby %s (%s with hash %s) signer %s and allowed hashes %s",
+	     "verifying authby %s (%s) signer %s and allowed hashes %s",
 	     str_authby(hash_authby, &hb),
 	     str_authby(authby, &ab),
 	     hash_algo->common.fqn,
-	     pubkey_signer->name,
-	     str_lset_short(&ikev2_hash_algorithm_names, "+", c->config->sighash_policy, &lb));
+	     pubkey_signer->name);
 
 	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
@@ -491,7 +572,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_RSASIG_V1_5, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
@@ -499,7 +580,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
@@ -507,14 +588,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
 							  &pubkey_signer_raw_ecdsa/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return verify_v2AUTH_and_log_using_pubkey(AUTHBY_ALL_ECDSA_SHA2,
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
@@ -566,7 +647,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (!digital_signature_in_authby(authby_from_auth(that_auth))) {
+		if (!authby_has_supported_ikev2_digsig_payload(authby_from_auth(that_auth))) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    str_enum_short(&auth_names, that_auth, &an));
@@ -588,11 +669,11 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			/*
-			 * Does the HASH as proposed by the peer,
-			 * appear in the local configured list?
+			 * The peer (remote) end has sent us a
+			 * proof-of-identity using HASH; does the
+			 * peer's (remote's) config allow this?
 			 */
-			if ((ike->sa.st_connection->config->sighash_policy &
-			     LELEM((*hash)->ikev2_alg_id)) == LEMPTY) {
+			if (!authby_has_hash(ike->sa.st_connection->remote->config->host.authby, *hash)) {
 				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
 				     (*hash)->common.fqn);
 				continue;
@@ -610,10 +691,10 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
-				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
-				{ &pubkey_signer_digsig_ecdsa, AUTHBY_ALL_ECDSA_SHA2, },
-				{ &pubkey_signer_digsig_rsassa_pss, AUTHBY_ALL_RSASIG_SHA2, },
-				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
+				{ &pubkey_signer_digsig_eddsa_ed25519, (struct authby) { AUTHBY_EDDSA, }, },
+				{ &pubkey_signer_digsig_ecdsa, (struct authby) { AUTHBY_ECDSA_SHA2, }, },
+				{ &pubkey_signer_digsig_rsassa_pss, (struct authby) { AUTHBY_RSASIG_SHA2, }, },
+				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, (struct authby) { AUTHBY_RSASIG_V1_5, }, },
 			};
 
 			FOR_EACH_ELEMENT(s, signers) {
@@ -703,8 +784,9 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	struct logger *logger = ike->sa.logger;
 
 	enum auth authby = local_v2_auth(ike);
-	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-	switch (auth_method) {
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+
+	switch (ike->sa.st_v2_local_auth.method) {
 
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
@@ -804,7 +886,6 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -833,7 +914,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names, ike->sa.st_v2_local_auth.method, &eb));
 		return STF_FATAL;
 	}
 	}
@@ -861,8 +942,9 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	enum auth authby = local_v2_auth(ike);
-	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-	switch (auth_method) {
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+
+	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
@@ -935,7 +1017,6 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						       /*accumulated EAP hash*/NULL,
 						       ike, authby,
 						       &ike->sa.st_v2_id_payload.mac,
-						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -961,7 +1042,8 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names,
+				      ike->sa.st_v2_local_auth.method, &eb));
 		return STF_FATAL;
 	}
 	}
@@ -1096,8 +1178,8 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
  * matched?
  */
 
-lset_t proposed_v2AUTH(struct ike_sa *ike,
-		       struct msg_digest *md)
+struct authby proposed_v2AUTH(struct ike_sa *ike,
+			      struct msg_digest *md)
 {
 	enum ikev2_auth_method atype =
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
@@ -1107,24 +1189,42 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 
 	switch (atype) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG);
+		return (struct authby) {
+			AUTHBY_RSASIG_V1_5_SHA1,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return (struct authby) {
+			.authby_ecdsa_sha2_256 = true,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return (struct authby) {
+			.authby_ecdsa_sha2_384 = true,
+		};
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return LELEM(AUTH_ECDSA);
+		return (struct authby) {
+			.authby_ecdsa_sha2_512 = true,
+		};
 	case IKEv2_AUTH_SHARED_KEY_MAC:
-		return LELEM(AUTH_PSK);
+		return (struct authby) {
+			.authby_psk = true,
+		};
 	case IKEv2_AUTH_NULL:
-		return LELEM(AUTH_NULL);
+		return (struct authby) {
+			.authby_null = true,
+		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
+		return (struct authby) {
+			AUTHBY_RSASIG,
+			AUTHBY_ECDSA,
+			AUTHBY_EDDSA,
+		};
 	default:
 	{
 		name_buf nb;
 		llog(RC_LOG, ike->sa.logger, "auth method %s unrecognized",
 		     str_enum_short(&ikev2_auth_method_names,
 				    atype, &nb));
-		return LEMPTY;
+		return (struct authby) {0};
 	}
 	}
 }

@@ -102,6 +102,7 @@ enum whack_command {
 			   (OP) == WHACK_DELETE_CHILD ? "delete-child" : \
 			   (OP) == WHACK_DOWN_IKE ? "down-ike" :	\
 			   (OP) == WHACK_DOWN_CHILD ? "down-child" :	\
+			   (OP) == WHACK_LIVENESS ? "liveness" :	\
 			   "???")
 #define whack_sa_kind(OP) ((OP) == WHACK_REKEY_IKE ? IKE_SA :		\
 			   (OP) == WHACK_REKEY_CHILD ? CHILD_SA :	\
@@ -109,6 +110,7 @@ enum whack_command {
 			   (OP) == WHACK_DELETE_CHILD ? CHILD_SA :	\
 			   (OP) == WHACK_DOWN_IKE ? IKE_SA :		\
 			   (OP) == WHACK_DOWN_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_LIVENESS ? IKE_SA :		\
 			   0)
 	WHACK_REKEY_IKE,
 	WHACK_REKEY_CHILD,
@@ -116,6 +118,7 @@ enum whack_command {
 	WHACK_DELETE_CHILD,
 	WHACK_DOWN_IKE,
 	WHACK_DOWN_CHILD,
+	WHACK_LIVENESS,
 	/**/
 	WHACK_DDOS,
 	WHACK_LIST,
@@ -296,6 +299,7 @@ struct whack_config_conn {
 struct whack_impairment {
 	unsigned what;
 	uintmax_t value;
+	uintmax_t annex;
 	bool enable;
 };
 
@@ -496,6 +500,7 @@ struct whack_message {
 #define wm_compress conn[END_ROOF].value[KWS_COMPRESS]
 
 #define wm_mobike conn[END_ROOF].value[KWS_MOBIKE]		/* allow MOBIKE */
+#define wm_ike_sa_init_full_transcript_auth conn[END_ROOF].value[KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH]
 #define wm_intermediate conn[END_ROOF].value[KWS_INTERMEDIATE]	/* allow Intermediate Exchange */
 #define wm_sha2_truncbug conn[END_ROOF].value[KWS_SHA2_TRUNCBUG]	/* allow Intermediate Exchange */
 #define wm_share_lease conn[END_ROOF].value[KWS_SHARE_LEASE]	/* allow further connections to use lease IP */

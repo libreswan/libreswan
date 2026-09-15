@@ -342,6 +342,7 @@ void append_str(char **sentence, const char *sep, const char *word)
 {
 	if (*sentence == NULL) {
 		(*sentence) = clone_str(word, __func__);
+		return;
 	}
 
 	char *ns = alloc_printf("%s%s%s", (*sentence), sep, word);

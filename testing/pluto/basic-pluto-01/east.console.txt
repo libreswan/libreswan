@@ -6,10 +6,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet
+ ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv1 connection
 east #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface lo 127.0.0.1:UDP/4500 (NAT)
@@ -35,6 +35,7 @@ ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nfl
 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
+signature-hash-algorithms=auto,
 global-redirect=no, global-redirect-to=<unset>
 debug ...
  

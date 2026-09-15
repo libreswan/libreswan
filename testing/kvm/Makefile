@@ -631,11 +631,11 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: generate the keys using $(KVM_KEYS_DOMAIN)
 	:
-	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /testing/x509
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /source/testing/x509
 	:
 	: Also regenerate the DNSSEC keys
 	:
-	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) /testing/dnssec/generate-dnssec.sh
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) make -C /source/testing/dnssec
 	:
 	: All done.
 	:
@@ -645,8 +645,9 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 .PHONY: kvm-clean-keys
 kvm-clean-keys:
 	make -C $(KVM_TESTINGDIR)/x509 clean
+	make -C $(KVM_TESTINGDIR)/dnssec clean
 	rm -f $(KVM_KEYS)
-	rm -rf $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/*/
+
 
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-ok
@@ -1016,14 +1017,14 @@ $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 #
 # - use what ever libvirt supports
 
-KVM_FREEBSD_RELEASE ?= 14.4
+KVM_FREEBSD_RELEASE ?= 14.5
 KVM_FREEBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' freebsd' | sort -V | tail -1))
 
 KVM_FREEBSD_URL ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/$(KVM_FREEBSD_RELEASE)
 
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/FreeBSD-$(KVM_FREEBSD_RELEASE)-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO_HASH ?= SHA256
-KVM_FREEBSD_ISO_CKSUM ?= ade3d84e77fc601d1207ced8d6dd8952c3fb7685afa3cf6b6b44d76ed94b2d8e
+KVM_FREEBSD_ISO_CKSUM ?= a7f360c8dbd4727a8d3213ac85f6eb9b51ee4ed2577a2c31aaebbcae3d921d56
 KVM_FREEBSD_ISO_URL ?= $(KVM_FREEBSD_URL)/$(notdir $(KVM_FREEBSD_ISO))
 
 $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
@@ -1108,20 +1109,20 @@ $(KVM_LINUX_BASE_DOMAIN).ks: | $(KVM_LINUX_KICKSTART_FILE)
 # - use what ever version libvirt supports
 
 KVM_NETBSD_MACHINE = amd64
-KVM_NETBSD_RELEASE ?= NetBSD-10.1
+KVM_NETBSD_RELEASE ?= NetBSD-11.0
 KVM_NETBSD_URL ?= https://cdn.netbsd.org/pub/NetBSD/$(KVM_NETBSD_RELEASE)
 KVM_NETBSD_OSINFO  ?= $(strip $(shell osinfo-query -f short-id os | grep ' netbsd' | sort -V | tail -1))
 
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(KVM_NETBSD_RELEASE)-$(KVM_NETBSD_MACHINE).iso
 KVM_NETBSD_INSTALL_ISO_HASH = SHA512
-KVM_NETBSD_INSTALL_ISO_CKSUM ?= 7a5e5071307e1795885ffc6e1b8aac465082c21c8b79f4c9b4103ef44e4f2da45477299d213ae0093f6534dc99dc2bbf78f41e9dd556c72a02516068bf43fe49
+KVM_NETBSD_INSTALL_ISO_CKSUM ?= 2b8f15ea6f4012ef962ffd054bead5dcb1c2233ebdf6d41d23be066b2a9e19978378b0f7f588ed6ab9cde8a5ec618ea560e800fe762309aa28bc36b6480e2734
 
 KVM_NETBSD_INSTALL_ISO_URL ?= $(KVM_NETBSD_URL)/images/$(notdir $(KVM_NETBSD_INSTALL_ISO))
 
 # give downloaded ISO a unique name
 KVM_NETBSD_BOOT_ISO ?= $(KVM_POOLDIR)/$(KVM_NETBSD_RELEASE)-$(KVM_NETBSD_MACHINE)-boot-com.iso
 KVM_NETBSD_BOOT_ISO_HASH = SHA512
-KVM_NETBSD_BOOT_ISO_CKSUM ?= 63341588599eb1e30c744cebdb30699fac159d777672c8948fb841aba99ca83d9eb40592ed21118884af13481e8dbed26583e0d87f548ee400efbb1d7c17c71f
+KVM_NETBSD_BOOT_ISO_CKSUM ?= c58fad26f762fb95516fefc8fbfa3f4c99e7f20887344a37d91a577961019a074e8183067d54b68fe6c34d6ba45f304546fc0fd9f87b8dd598d2d55cb973da42
 
 KVM_NETBSD_BOOT_ISO_URL ?= $(KVM_NETBSD_URL)/$(KVM_NETBSD_MACHINE)/installation/cdrom/boot-com.iso
 

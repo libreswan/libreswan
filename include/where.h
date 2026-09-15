@@ -34,21 +34,28 @@
 
 typedef const struct where {
 	const char *func;
-	const char *file;
-	long line;
+	const char *sal; /*source and line */
 } *where_t;
+
+/*
+ * Just the source and line.
+ */
+
+/* credit to https://www.decompile.com/cpp/faq/file_and_line_error_string.htm */
+#define HERE_STRINGIFY(STRING) #STRING
+#define HERE_TOSTRING(STRING) HERE_STRINGIFY(STRING)
+#define HERE_SAL "+"HERE_TOSTRING(__LINE__)" "HERE_FILENAME
 
 #define HERE						\
 	({						\
 		static const struct where here = {	\
 			.func = __func__,		\
-			.file = HERE_FILENAME,		\
-			.line = __LINE__,		\
+			.sal = HERE_SAL,		\
 		};					\
 		&here;					\
 	})
-#define PRI_WHERE "(%s() +%lu %s)"
-#define pri_where(SC) (SC)->func, (SC)->line, (SC)->file
+#define PRI_WHERE "(%s() %s)"
+#define pri_where(SC) (SC)->func, (SC)->sal
 #define jam_where(BUF, WHERE) jam(BUF, PRI_WHERE, pri_where(WHERE))
 
 #endif

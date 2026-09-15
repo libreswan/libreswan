@@ -74,7 +74,7 @@
 	<term><command>ipsec listen</command></term>
 	<listitem>
 	  <para>
-	    Used to control the <command>pluto</command> daemon using
+	    Used to control the &pluto; daemon using
 	    the host init system. Supported init systems are sysv,
 	    systemd, upstart and openrc.
 	  </para>
@@ -264,7 +264,7 @@
 	<listitem>
 	  <para>
 	    Low-level utility for manipulating &Libreswan;'s daemon
-	    <command>pluto</command>.
+	    &pluto;.
 	  </para>
 	  <para>
 	    See

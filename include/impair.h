@@ -42,10 +42,33 @@ enum impair_ddos_cookie {
 
 enum impair_emit {
 	IMPAIR_EMIT_NO = 0,
+	IMPAIR_EMIT_FORCE,
 	IMPAIR_EMIT_OMIT,
 	IMPAIR_EMIT_EMPTY,
 	IMPAIR_EMIT_DUPLICATE,
 #define IMPAIR_EMIT_ROOF (IMPAIR_EMIT_DUPLICATE+1) /* >= ROOF -> <number> */
+};
+
+enum impair_payload_flag {
+	IMPAIR_PAYLOAD_EMIT_NEVER,
+	IMPAIR_PAYLOAD_EMIT_ALWAYS,
+	IMPAIR_PAYLOAD_EMIT_EMPTY,
+	IMPAIR_PAYLOAD_EMIT_DUPLICATE,
+	IMPAIR_PAYLOAD_IGNORE,
+#define IMPAIR_PAYLOAD_ROOF (IMPAIR_PAYLOAD_IGNORE+1)
+};
+
+extern const struct names impair_payload_names;
+
+struct impair_payload {
+	bool enabled;
+	unsigned annex;
+#define impair_payload_emit_never flags[IMPAIR_PAYLOAD_EMIT_NEVER]
+#define impair_payload_emit_always flags[IMPAIR_PAYLOAD_EMIT_ALWAYS]
+#define impair_payload_emit_empty flags[IMPAIR_PAYLOAD_EMIT_EMPTY]
+#define impair_payload_emit_duplicate flags[IMPAIR_PAYLOAD_EMIT_DUPLICATE]
+#define impair_payload_ignore flags[IMPAIR_PAYLOAD_IGNORE]
+	bool flags[IMPAIR_PAYLOAD_ROOF];
 };
 
 /*
@@ -74,6 +97,7 @@ enum impair_v2_transform {
 struct impair_unsigned {
 	bool enabled;
 	unsigned value;
+	unsigned annex;
 };
 
 /*
@@ -253,6 +277,8 @@ enum impair_action {
 	CALL_IMPAIR_MESSAGE_DRIP,
 	CALL_IMPAIR_MESSAGE_DUPLICATE,
 	CALL_IMPAIR_MESSAGE_REPLAY,
+
+	IMPAIR_FLAGS,
 
 #if 0
 	CALL_IMPAIR_CORRUPT_INBOUND,

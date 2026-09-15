@@ -18,8 +18,16 @@ for d in "$@" ; do
 	echo $f
 	sed -i -e 's/ipsec auto --/ipsec /' $f
 	sed -i -e 's/ipsec whack --trafficstatus/ipsec trafficstatus/' $f
+	sed -i -e 's/ipsec whack --shuntstatus/ipsec shuntstatus/' $f
 	# this is a common idiom from code predating connectionstatus
 	sed -i -e 's/ipsec status *| *grep /ipsec connectionstatus /' $f
+    done
+    for f in $d/*.conf ; do
+	case $f in
+	    *swan* ) continue ;;
+	esac
+	echo $f
+	sed -i -e '/nexthop=/d' $f
     done
 done
 

@@ -24,6 +24,7 @@
 #include "impair.h"
 #include "lswlog.h"
 #include "whack.h"
+#include "flags.h"
 
 static const struct sparse_names impair_ddos_cookie_names = {
 	.roof = IMPAIR_DDOS_COOKIE_ROOF,
@@ -49,6 +50,7 @@ static const struct sparse_names impair_emit_names = {
 			.value = IMPAIR_EMIT_##E,	\
 			.help = H,			\
 		}
+		S(FORCE, "force content to be emitted"),
 		S(OMIT, "do not emit content"),
 		S(EMPTY, "emit zero length content"),
 		S(DUPLICATE, "emit content twice"),
@@ -96,7 +98,7 @@ struct impairment {
 	const char *what;
 	const char *help;
 	/*
-	 * When .how_sparse_names is non-NULL, HOW is the unbiased
+	 * When .value_sparse_names is non-NULL, HOW is the unbiased
 	 * value of the keyword.  It's assumed that any keyword with
 	 * the value 0 disables the impairment.
 	 *
@@ -104,18 +106,18 @@ struct impairment {
 	 * an unsigned number encoded as .keywords .nr_keywords +
 	 * UNSIGNED.
 	 */
-	const struct sparse_names *how_sparse_names;
+	const struct sparse_names *value_sparse_names;
 	/*
 	 * (else)
 	 *
-	 * When .how_enum_names is non-NULL, HOW is the unbiased enum
+	 * When .value_names is non-NULL, HOW is the unbiased enum
 	 * name's value.
 	 *
 	 * And when .unsigned_help is also non-NULL, HOW can also be
 	 * an unsigned value which is passed unchanged.  Zero is
 	 * allowed.
 	 */
-	const struct enum_names *how_enum_names;
+	const struct names *value_names;
 	/*
 	 * (else)
 	 *
@@ -126,13 +128,19 @@ struct impairment {
 	 * by an event.
 	 */
 	const char *unsigned_help;
-	/*
-	 * Location of the value to update, and, optionally, the bit
-	 * to set/clear.
-	 */
+
+	/* CALL_IMPAIR_UPDATE */
 	void *value;
 	size_t sizeof_value;
 	bool *enabled;		/* possibly NULL enabled bit */
+
+	/* both possibly NULL */
+	const struct names *annex_names;
+	unsigned *annex;
+
+	/* IMPAIR_FLAGS */
+	struct rw_flags flags;
+
 	/*
 	 * Operations.
 	 */
@@ -161,6 +169,18 @@ struct impairment impairments[] = {
 		.sizeof_value = sizeof(impair.VALUE),	\
 		##__VA_ARGS__,				\
 	}
+#define P(VALUE, HELP, ...)					\
+	{							\
+		.what = #VALUE,					\
+		.action = IMPAIR_FLAGS,				\
+		.help = HELP,					\
+		.enabled = &impair.VALUE.enabled,		\
+		.annex = &impair.VALUE.annex,			\
+		.flags.len = elemsof(impair.VALUE.flags),	\
+		.flags.flag = impair.VALUE.flags,		\
+		.value_names = &impair_payload_names,		\
+		##__VA_ARGS__,					\
+	}
 #define B(VALUE, HELP)					\
 	{						\
 		.what = #VALUE,				\
@@ -179,7 +199,7 @@ struct impairment impairments[] = {
 		.enabled = &impair.VALUE.enabled,		\
 		.unsigned_help = "<unsigned>",			\
 	}
-#define E(VALUE, ENUM_NAMES, HELP, ...)				\
+#define E(VALUE, NAMES, HELP, ...)				\
 	{							\
 		.what = #VALUE,					\
 		.action = CALL_IMPAIR_UPDATE,			\
@@ -187,7 +207,7 @@ struct impairment impairments[] = {
 		.enabled = &impair.VALUE.enabled,		\
 		.value = &impair.VALUE.value,			\
 		.sizeof_value = sizeof(impair.VALUE.value),	\
-		.how_enum_names = &ENUM_NAMES,			\
+		.value_names = &NAMES,				\
 		##__VA_ARGS__,					\
 	}
 
@@ -197,7 +217,7 @@ struct impairment impairments[] = {
 	B(bust_mi2, "make MI2 really large"),
 	B(bust_mr2, "make MR2 really large"),
 	V(child_key_length_attribute, "corrupt the outgoing CHILD proposal's key length attribute",
-	  .how_sparse_names = &impair_emit_names,
+	  .value_sparse_names = &impair_emit_names,
 	  .unsigned_help = "emit <unsigned> as the key length"),
 	B(corrupt_encrypted, "corrupts the encrypted packet so that the decryption fails"),
 	B(drop_i2, "drop second initiator packet"),
@@ -205,7 +225,7 @@ struct impairment impairments[] = {
 	B(emitting, "disable correctness-checks when emitting a payload (let anything out)"),
 	B(force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
 	V(ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
-	  .how_sparse_names = &impair_emit_names,
+	  .value_sparse_names = &impair_emit_names,
 	  .unsigned_help = "emit <unsigned> as the key length"),
 
 	U(ike_initiator_spi, "corrupt the IKE initiator SPI setting it to the <unsigned> value"),
@@ -216,9 +236,9 @@ struct impairment impairments[] = {
 	B(ikev1_del_with_notify, "causes pluto to send IKE Delete with additional bogus Notify payload"),
 
 	V(v2_proposal_integ, "integrity in proposals",
-	  .how_sparse_names = &impair_v2_transform_names),
+	  .value_sparse_names = &impair_v2_transform_names),
 	V(v2_proposal_dh, "dh in proposals",
-	  .how_sparse_names = &impair_v2_transform_names),
+	  .value_sparse_names = &impair_v2_transform_names),
 
 #define ADD_TRANSFORM(SA) "add a transform to the first "SA" proposal; <unsigned> is <TRANS_TYPE:8><TRANS_TYPE_ID:16>; use "IKEv2_TRANS_TYPE_IMPAIR_ROOF_STRING" for TRANS_TYPE_ROOF"
 	U(ikev2_add_ike_transform, ADD_TRANSFORM("IKE SA")),
@@ -227,7 +247,7 @@ struct impairment impairments[] = {
 
 	B(jacob_two_two, "cause pluto to send all messages twice."),
 	V(ke_payload, "corrupt the outgoing KE payload",
-	  .how_sparse_names = &impair_emit_names,
+	  .value_sparse_names = &impair_emit_names,
 	  .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
 	U(log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
 	B(major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
@@ -241,7 +261,7 @@ struct impairment impairments[] = {
 	B(replay_encrypted, "replay encrypted packets"),
 	B(revival, "disable code that revives a connection that is supposed to stay up"),
 	V(ddos_cookie, "mangle the DDOS cookie in the IKE_SA_INIT request",
-	  .how_sparse_names = &impair_ddos_cookie_names),
+	  .value_sparse_names = &impair_ddos_cookie_names),
 	B(send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
 	B(send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
 	B(send_key_size_check, "causes pluto to omit checking configured ESP key sizes for testing"),
@@ -260,9 +280,9 @@ struct impairment impairments[] = {
 
 	B(v1_hash_check, "disable check of incoming IKEv1 hash payload"),
 	V(v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
-	  .how_sparse_names = &impair_v1_exchange_names),
+	  .value_sparse_names = &impair_v1_exchange_names),
 	V(v1_hash_payload, "corrupt the emitted HASH payload",
-	  .how_sparse_names = &impair_emit_names,
+	  .value_sparse_names = &impair_emit_names,
 	  .unsigned_help = "emit the hash payload filled with <unsigned> bytes"),
 
 	B(tcp_use_blocking_write, "use a blocking write when sending TCP encapsulated IKE messages"),
@@ -304,24 +324,24 @@ struct impairment impairments[] = {
 	 * Mangle payloads.
 	 */
 
-	E(add_unknown_v2_payload_to, ikev2_exchange_names,
+	E(add_unknown_v2_payload_to, ikev2_exchange_nom,
 	  "add an unknown payload to the (unencrypted) part of the exchange"),
-	E(add_unknown_v2_payload_to_sk, ikev2_exchange_names,
+	E(add_unknown_v2_payload_to_sk, ikev2_exchange_nom,
 	  "add an unknonwn payload to the encrypted part of the exchange"),
 	B(unknown_v2_payload_critical, "mark the unknown payload as critical"),
 	U(pad_with_unknown_v2_payloads, "pad the exchange with unknown payloads: 0=MAX+1, 1=MAX, 2=MAX-1, ..."),
 
-	E(add_v2_notification, v2_notification_names, "add a notification to the message",
+	E(add_v2_notification, ikev2_notification_names, "add a notification to the message",
 	  .unsigned_help = "notification"),
-	E(ignore_v2_notification, v2_notification_names, "ignore a notification in the message",
+	E(ignore_v2_notification, ikev2_notification_names, "ignore a notification in the message",
 	  .unsigned_help = "notification"),
-	E(omit_v2_notification, v2_notification_names, "omit a notification in the message",
+	E(omit_v2_notification, ikev2_notification_names, "omit a notification in the message",
 	  .unsigned_help = "notification"),
 
 	B(ignore_soft_expire, "ignore kernel soft expire events"),
 	B(ignore_hard_expire, "ignore kernel hard expire events"),
 
-	E(force_v2_auth_method, ikev2_auth_method_names,
+	E(force_v2_auth_method, ikev2_auth_method_nom,
 	  "force the use of the specified IKEv2 AUTH method"),
 
 	B(omit_v2_ike_auth_child, "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
@@ -331,7 +351,7 @@ struct impairment impairments[] = {
 	 */
 
 	A("trigger", GLOBAL_EVENT_HANDLER, 0, "trigger the global event", "EVENT",
-	  .how_enum_names = &global_timer_names),
+	  .value_names = &global_timer_names),
 
 	/*
 	 * Trigger state event.
@@ -376,10 +396,10 @@ struct impairment impairments[] = {
 	U(v1_emit_quick_id, "number of IDc[ir]s to emit (there should be 2)"),
 
 	V(v1_isakmp_delete_payload, "corrupt outgoing ISAKMP delete payload",
-	  .how_sparse_names = &impair_emit_names),
+	  .value_sparse_names = &impair_emit_names),
 
 	V(v1_ipsec_delete_payload, "corrupt outgoing IPsec delete payload",
-	  .how_sparse_names = &impair_emit_names),
+	  .value_sparse_names = &impair_emit_names),
 
 	U(v2_delete_protoid, "corrupt the IKEv2 Delete protocol ID"),
 	U(v2n_rekey_sa_protoid, "corrupt the IKEv2 REKEY CHILD notify protocol ID"),
@@ -401,6 +421,7 @@ struct impairment impairments[] = {
 	U(omit_addke_notification, "omit an ADDITIONAL_KEY_EXCHANGE notification in the IKE_FOLLOWUP_KE exchange for addkeN"),
 
 #undef U
+#undef P
 #undef B
 #undef V
 #undef A
@@ -411,8 +432,8 @@ struct impairment impairments[] = {
 static void help(const char *prefix, const struct impairment *cr, FILE *file)
 {
 	fprintf(file, "%s%s: %s\n", prefix, cr->what, cr->help);
-	if (cr->how_sparse_names != NULL) {
-		for (const struct sparse_name *sn = cr->how_sparse_names->list;
+	if (cr->value_sparse_names != NULL) {
+		for (const struct sparse_name *sn = cr->value_sparse_names->list;
 		     sn->name != NULL; sn++) {
 			/* skip 0, always no */
 			if (sn->value == 0) {
@@ -424,10 +445,10 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			}
 		}
 	}
-	if (cr->how_enum_names != NULL) {
+	if (cr->value_names != NULL) {
 		bool first = true;
-		for (long e = next_enum(cr->how_enum_names, -1); e >= 0;
-		     e = next_enum(cr->how_enum_names, e)) {
+		for (long e = next_name(cr->value_names, -1); e >= 0;
+		     e = next_name(cr->value_names, e)) {
 			if (first) {
 				fprintf(file, "%s    ", prefix);
 				first = false;
@@ -435,7 +456,22 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 				fprintf(file, ", ");
 			}
 			name_buf eb;
-			fprintf(file, "%s", str_enum_short(cr->how_enum_names, e, &eb));
+			fprintf(file, "%s", str_name_short(cr->value_names, e, &eb));
+		}
+		fprintf(file, "\n");
+	}
+	if (cr->value_names != NULL) {
+		bool first = true;
+		for (long e = next_name(cr->value_names, -1); e >= 0;
+		     e = next_name(cr->value_names, e)) {
+			if (first) {
+				fprintf(file, "%s    ", prefix);
+				first = false;
+			} else {
+				fprintf(file, ", ");
+			}
+			name_buf eb;
+			fprintf(file, "%s", str_name_short(cr->value_names, e, &eb));
 		}
 		fprintf(file, "\n");
 	}
@@ -484,33 +520,32 @@ static bool bias_uintmax(const struct impairment *impairment,
 #define IMPAIR_LIST (elemsof(impairments) + 1)
 
 enum impair_status parse_impair(const char *optarg,
-				struct whack_impairment *whack_impair,
+				struct whack_impairment *impair,
 				bool enable /* --impair ... vs --no-impair ...*/,
 				struct logger *logger)
 {
+	zero(impair);
+
 	if (streq(optarg, "help")) {
 		help_impair("", stdout);
 		return IMPAIR_HELP;
 	}
 
 	if (enable && streq(optarg, "none")) {
-		*whack_impair = (struct whack_impairment) {
-			.what = IMPAIR_NONE,
-		};
+		impair->what = IMPAIR_NONE;
 		return IMPAIR_OK;
 	}
 
 	if (enable && streq(optarg, "list")) {
-		*whack_impair = (struct whack_impairment) {
-			.what = IMPAIR_LIST,
-		};
+		impair->what = IMPAIR_LIST;
 		return IMPAIR_OK;
 	}
 
-	/* Break OPTARG into WHAT[=BIASED_VALUE] */
-	shunk_t arg = shunk1(optarg);
-	shunk_t what = shunk_token(&arg, NULL, ":=");
-	shunk_t how = arg;
+	/* Break OPTARG into WHAT[:VALUE[:ANNEX]] */
+	shunk_t cursor = shunk1(optarg);
+	shunk_t what = shunk_token(&cursor, NULL, ":=");
+	shunk_t value = shunk_token(&cursor, NULL, ":=");
+	shunk_t annex = shunk_token(&cursor, NULL, ":=");
 
 	/*
 	 * look for both WHAT and for compatibility with the old
@@ -518,26 +553,25 @@ enum impair_status parse_impair(const char *optarg,
 	 */
 
 	bool what_no = hunk_strcaseeat(&what, "no-");
-	unsigned ci = 1;
 	const struct impairment *impairment = NULL;
-	for (ci = 1/*skip 0*/; ci < elemsof(impairments); ci++) {
-		if (hunk_strheq(what, impairments[ci].what)) {
-			impairment = &impairments[ci];
+	for (impair->what = 1/*skip 0*/; impair->what < elemsof(impairments); impair->what++) {
+		if (hunk_strheq(what, impairments[impair->what].what)) {
+			impairment = &impairments[impair->what];
 			break;
 		}
 	}
 	if (impairment == NULL) {
 		llog(ERROR_STREAM, logger,
-			    "unrecognized impair option '"PRI_SHUNK"'\n",
-			    pri_shunk(what));
+		     "unrecognized impair option '"PRI_SHUNK"'\n",
+		     pri_shunk(what));
 		return IMPAIR_ERROR;
 	}
 
 	/*
-	 * no matter how negated, "help" always works
+	 * No matter how negated, "WHAT:help" always works
 	 */
-	if (hunk_strcaseeq(how, "help") ||
-	    hunk_strcaseeq(how, "?")) {
+	if (hunk_strcaseeq(value, "help") ||
+	    hunk_strcaseeq(value, "?")) {
 		help("", impairment, stdout);
 		return IMPAIR_HELP;
 	}
@@ -546,66 +580,68 @@ enum impair_status parse_impair(const char *optarg,
 	 * Reject overly negative or conflicting combinations.  For
 	 * instance: --no-impair no-foo:bar.
 	 */
-	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
+	if ((!enable + what_no + (value.ptr != NULL)) > 1) {
 		llog(ERROR_STREAM, logger,
-			    "overly negative --%simpair %s",
-			    enable ? "" : "no-", optarg);
+		     "overly negative --%simpair %s",
+		     enable ? "" : "no-", optarg);
 		return IMPAIR_ERROR;
 	}
 
 	/*
 	 * Always recognize "no".
 	 */
-	if (!enable || what_no || hunk_strcaseeq(how, "no")) {
-		*whack_impair = (struct whack_impairment) {
-			.what = ci,
-			.value = 0,
-			.enable = false,
-		};
+	if (!enable || what_no || hunk_strcaseeq(value, "no")) {
 		return IMPAIR_OK;
 	}
 
 	/*
-	 * For WHAT:HOW, lookup the keyword HOW.
+	 * Assume everything from now on is enabled.
+	 */
+	impair->enable = true;
+
+	/*
+	 * Try to decode the annex, allow either a name or an
+	 * unsigned.
+	 */
+	if (annex.len > 0) {
+		long annex_name = -1;
+		if (impairment->annex_names != NULL) {
+			annex_name = index_byname(impairment->annex_names, annex);
+			if (annex_name >= 0) {
+				impair->annex = annex_name;
+			}
+		}
+		if (annex_name < 0) {
+			err_t err = shunk_to_uintmax(annex, NULL, 0/*base*/, &impair->annex);
+			if (err != NULL) {
+				llog(ERROR_STREAM, logger,
+				     "impair option '"PRI_SHUNK"' has invalid annex '"PRI_SHUNK"': %s",
+				     pri_shunk(what), pri_shunk(annex), err);
+				return IMPAIR_ERROR;
+			}
+		}
+	}
+
+	/*
+	 * For WHAT:VALUE, lookup the keyword VALUE.
 	 */
 
-	if (impairment->how_sparse_names != NULL) {
+	if (impairment->value_sparse_names != NULL) {
 		/* try the keyword. */
-		const struct sparse_name *sn = sparse_lookup_by_name(impairment->how_sparse_names, how);
+		const struct sparse_name *sn =
+			sparse_lookup_by_name(impairment->value_sparse_names, value);
 		if (sn != NULL) {
-			*whack_impair = (struct whack_impairment) {
-				.what = ci,
-				.value = sn->value, /* unbiased */
-				.enable = true,
-			};
+			impair->value = sn->value; /* unbaised */
 			return IMPAIR_OK;
 		}
 	}
 
-	if (impairment->how_enum_names != NULL) {
-		long e = enum_byname(impairment->how_enum_names, how);
-		if (e >= 0) {
-			*whack_impair = (struct whack_impairment) {
-				.what = ci,
-				.value = e, /* unbiased */
-				.enable = true,
-			};
+	if (impairment->value_names != NULL) {
+		long impair_value = index_byname(impairment->value_names, value);
+		if (impair_value >= 0) {
+			impair->value = impair_value; /*unbiased */
 			return IMPAIR_OK;
 		}
-	}
-
-	/*
-	 * "no" always works.
-	 */
-
-	if (hunk_strcaseeq(how, "no")) {
-		/* --impair WHAT:no */
-		*whack_impair = (struct whack_impairment) {
-			.what = ci,
-			.value = 0,
-			.enable = false,
-		};
-		return IMPAIR_OK;
 	}
 
 	/*
@@ -613,16 +649,12 @@ enum impair_status parse_impair(const char *optarg,
 	 * value.
 	 */
 
-	if (impairment->how_enum_names == NULL &&
-	    impairment->how_sparse_names == NULL &&
+	if (impairment->value_names == NULL &&
+	    impairment->value_sparse_names == NULL &&
 	    impairment->unsigned_help == NULL) {
-		if (how.len == 0 || hunk_strcaseeq(how, "yes")) {
+		if (value.len == 0 || hunk_strcaseeq(value, "yes")) {
 			/* --impair WHAT:yes or --impair WHAT */
-			*whack_impair = (struct whack_impairment) {
-				.what = ci,
-				.value = true,
-				.enable = true,
-			};
+			impair->value = true;
 			return IMPAIR_OK;
 		}
 	}
@@ -633,17 +665,17 @@ enum impair_status parse_impair(const char *optarg,
 
 	if (impairment->unsigned_help != NULL) {
 
-		uintmax_t value;
-		err_t err = shunk_to_uintmax(how, NULL, 0/*base*/, &value);
+		uintmax_t impair_value;
+		err_t err = shunk_to_uintmax(value, NULL, 0/*base*/, &impair_value);
 		if (err != NULL) {
 			llog(ERROR_STREAM, logger,
 			     "impair option '"PRI_SHUNK"' has invalid parameter '"PRI_SHUNK"': %s",
-			     pri_shunk(what), pri_shunk(how), err);
+			     pri_shunk(what), pri_shunk(value), err);
 			return IMPAIR_ERROR;
 		}
 
-		uintmax_t bias = (impairment->how_sparse_names != NULL ? impairment->how_sparse_names->roof : 0);
-		if (!bias_uintmax(impairment, bias, &value, logger)) {
+		uintmax_t bias = (impairment->value_sparse_names != NULL ? impairment->value_sparse_names->roof : 0);
+		if (!bias_uintmax(impairment, bias, &impair_value, logger)) {
 			/* already logged */
 			return IMPAIR_ERROR;
 		}
@@ -651,19 +683,16 @@ enum impair_status parse_impair(const char *optarg,
 		/*
 		 * When .enabled, 0 is valid so pass it along.
 		 */
-		*whack_impair = (struct whack_impairment) {
-			.what = ci, /*i.e., index*/
-			.value = value,
-			.enable = (impairment->enabled != NULL ? true : value > 0),
-		};
+		impair->value = impair_value;
+		impair->enable = (impairment->enabled != NULL ? true : impair_value > 0);
 		return IMPAIR_OK;
 	}
 
 	/* error */
 
 	llog(ERROR_STREAM, logger,
-		    "impair option '"PRI_SHUNK"' has unrecognized parameter '"PRI_SHUNK"'",
-		    pri_shunk(what), pri_shunk(how));
+	     "impair option '"PRI_SHUNK"' has unrecognized value '"PRI_SHUNK"'",
+	     pri_shunk(what), pri_shunk(value));
 	return IMPAIR_ERROR;
 }
 
@@ -687,57 +716,74 @@ static uintmax_t value_of(const struct impairment *impairment)
 
 static bool impairment_enabled(const struct impairment *impairment)
 {
-	if (impairment->action != CALL_IMPAIR_UPDATE) {
+	switch (impairment->action) {
+	case CALL_IMPAIR_UPDATE:
+		/* flip logic */
+		if (impairment->enabled != NULL && *impairment->enabled) {
+			return true;
+		}
+		if (value_of(impairment) != 0) {
+			return true;
+		}
+		return false;
+	case IMPAIR_FLAGS:
+		pexpect(ro_flags_set(RO_FLAGS(impairment->flags)) == (*impairment->enabled));
+		return (*impairment->enabled);
+	default:
 		return false;
 	}
-	/* flip logic */
-	if (impairment->enabled != NULL && *impairment->enabled) {
-		return true;
-	}
-	if (value_of(impairment) != 0) {
-		return true;
-	}
-	return false;
 }
 
 static void jam_impairment_value(struct jambuf *buf,
 				 const struct impairment *impairment)
 {
-	uintmax_t value = value_of(impairment);
-	if (impairment->how_sparse_names != NULL) {
-		name_buf nb;
-		if (sparse_short(impairment->how_sparse_names, value, &nb)) {
-			jam_string(buf, nb.buf);
-		} else if (value >= impairment->how_sparse_names->roof) {
-			/*unbias*/
-			jam(buf, "%ju", value - impairment->how_sparse_names->roof);
-		} else {
+	switch (impairment->action) {
+	case CALL_IMPAIR_UPDATE:
+	{
+		uintmax_t value = value_of(impairment);
+		if (impairment->value_sparse_names != NULL) {
+			name_buf nb;
+			if (sparse_short(impairment->value_sparse_names, value, &nb)) {
+				jam_string(buf, nb.buf);
+			} else if (value >= impairment->value_sparse_names->roof) {
+				/*unbias*/
+				jam(buf, "%ju", value - impairment->value_sparse_names->roof);
+			} else {
+				jam(buf, "?%ju?", value);
+			}
+		} else if (impairment->value_names != NULL) {
+			name_buf sname;
+			if (name_short(impairment->value_names, value, &sname)) {
+				jam_string(buf, sname.buf);
+			} else {
+				jam(buf, "%ju", value);
+			}
+		} else if (impairment->unsigned_help != NULL &&
+			   impairment->enabled != NULL) {
+			if (*impairment->enabled) {
+				jam(buf, "%ju", value);
+			} else {
+				jam_string(buf, "no");
+			}
+		} else if (impairment->unsigned_help != NULL) {
+			/* should have .enabled */
 			jam(buf, "?%ju?", value);
-		}
-	} else if (impairment->how_enum_names != NULL) {
-		name_buf sname;
-		if (enum_short(impairment->how_enum_names, value, &sname)) {
-			jam_string(buf, sname.buf);
 		} else {
-			jam(buf, "%ju", value);
+			switch (value) {
+			case 0: jam(buf, "no"); break;
+			case 1: jam(buf, "yes"); break;
+			default: jam(buf, "?%ju?", value);
+			}
 		}
-	} else if (impairment->unsigned_help != NULL &&
-		   impairment->enabled != NULL) {
-		if (*impairment->enabled) {
-			jam(buf, "%ju", value);
-		} else {
-			jam_string(buf, "no");
-		}
-	} else if (impairment->unsigned_help != NULL) {
-		/* should have .enabled */
-		jam(buf, "?%ju?", value);
-	} else {
-		switch (value) {
-		case 0: jam(buf, "no"); break;
-		case 1: jam(buf, "yes"); break;
-		default: jam(buf, "?%ju?", value);
-		}
+		break;
 	}
+	case IMPAIR_FLAGS:
+		jam_ro_flags(buf, RO_FLAGS(impairment->flags), impairment->value_names);
+		break;
+	default:
+		return;
+	}
+
 }
 
 static void jam_impairment(struct jambuf *buf,
@@ -808,6 +854,58 @@ static void process_impair_update(const struct impairment *impairment,
 		/* new value */
 		jam_string(buf, " -> ");
 		jam_impairment_value(buf, impairment);
+		if (impairment->annex != NULL) {
+			jam(buf, " (%u->%ju)", (*impairment->annex), wc->annex);
+			(*impairment->annex) = wc->annex;
+		}
+	}
+}
+
+static void process_impair_flags(const struct impairment *impairment,
+				 const struct whack_impairment *wc,
+				 struct logger *logger)
+{
+	LLOG_JAMBUF(LOG_STREAM/*not-whack*/, logger, buf) {
+		/*
+		 * XXX: lower case "impair:" for updates; upper case
+		 * "IMPAIR:" for actions.
+		 */
+		jam_string(buf, "impair: ");
+		jam_string(buf, impairment->what);
+		jam_string(buf, ": ");
+		/* old value */
+		jam_impairment_value(buf, impairment);
+		/* update */
+		PASSERT(logger, wc->value < impairment->flags.len);
+		impairment->flags.flag[wc->value] = wc->enable;
+		/* new value */
+		jam_string(buf, " -> ");
+		jam_impairment_value(buf, impairment);
+		if (impairment->annex != NULL) {
+			jam(buf, " (%u->%ju)", (*impairment->annex), wc->annex);
+			(*impairment->annex) = wc->annex;
+		}
+	}
+	if (impairment->enabled != NULL) {
+		(*impairment->enabled) = ro_flags_set(RO_FLAGS(impairment->flags));
+	}
+}
+
+static void impair_update_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	const struct whack_impairment wc = {0}; /* i.e., none */
+	process_impair_update(impairment, &wc, logger);
+}
+
+static void impair_flags_none(const struct impairment *impairment,
+			      struct logger *logger)
+{
+	for (unsigned value = 0; value < impairment->flags.len; value++) {
+		struct whack_impairment wc = {
+			.value = value,
+		};
+		process_impair_flags(impairment, &wc, logger);
 	}
 }
 
@@ -816,8 +914,16 @@ static void process_impair_none(struct logger *logger)
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
 		if (impairment_enabled(impairment)) {
-			struct whack_impairment wc = {0}; /* i.e., none */
-			process_impair_update(impairment, &wc, logger);
+			switch (impairment->action) {
+			case CALL_IMPAIR_UPDATE:
+				impair_update_none(impairment, logger);
+				break;
+			case IMPAIR_FLAGS:
+				impair_flags_none(impairment, logger);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }
@@ -862,6 +968,10 @@ bool process_impair(const struct whack_impairment *wc,
 	case CALL_IMPAIR_UPDATE:
 		/* log the update; but not to whack */
 		process_impair_update(impairment, wc, logger);
+		return true;
+	case IMPAIR_FLAGS:
+		/* log the update; but not to whack */
+		process_impair_flags(impairment, wc, logger);
 		return true;
 	case CALL_INITIATE_v2_LIVENESS:
 	case CALL_SEND_KEEPALIVE:

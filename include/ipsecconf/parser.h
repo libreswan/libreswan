@@ -22,11 +22,11 @@
 #include "shunk.h"
 #include "deltatime.h"
 #include "lswlog.h"		/* for enum stream */
+#include "end.h"
 
 struct jambuf;
 struct logger;
 struct parser;
-enum end;
 struct ipsec_conf;
 
 /* Source-And-Line */
@@ -38,9 +38,10 @@ struct ipsec_conf_sal {
 struct ipsec_conf_keyval {
 	const struct keyword_def *key;
 	char *val;
-	/* for "conn" keywords which like to take sides */
-	bool left;
-	bool right;
+	/*
+	 * Either an end, or ROOF.
+	 */
+	enum end end;
 	struct ipsec_conf_sal sal;
 };
 

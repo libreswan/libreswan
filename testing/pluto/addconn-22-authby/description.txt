@@ -1,0 +1,4 @@
+Test authby= combinations
+
+For instance all the IKEv2 RFC 7427 digital signature configurations
+load properly.

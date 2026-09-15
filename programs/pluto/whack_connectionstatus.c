@@ -614,10 +614,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			 */
 			struct authby expect = authby_from_auth(end->auth);
 			struct authby mask = (oriented(c) && end == c->local->host.config ? expect : AUTHBY_ALL);
-			expect.rsasig_v1_5 = false;
-			expect.rsasig_sha2_256 = false;
-			expect.rsasig_sha2_384 = false;
-			expect.rsasig_sha2_512 = false;
+			expect = authby_and(expect, authby_not((struct authby) {
+						AUTHBY_RSASIG_V1_5,
+						AUTHBY_RSASIG_SHA2,
+					}));
 			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
 				jam_enum_human(buf, &auth_names, end->auth);
@@ -811,9 +811,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " initial-contact:%s;", bool_str(c->config->send_initial_contact));
-		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
-		jam(buf, " send-vendorid:%s;", bool_str(c->config->send_vendorid));
+		jam(buf, " initial-contact:%s;",
+		    bool_str(c->config->host.send_initial_contact));
+		jam(buf, " fake-strongswan:%s;",
+		    bool_str(c->config->host.send_vid_fake_strongswan));
+		jam(buf, " send-vendorid:%s;",
+		    bool_str(c->config->host.send_vendorid));
 		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->child.send.esp_tfc_padding_not_supported));
 	}
 
@@ -842,8 +845,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_string(buf, ":  ");
 			/* policy */
 			jam_string(buf, " v2-auth-hash-policy: ");
-			jam_lset_short(buf, &ikev2_hash_algorithm_names, "+",
-				       c->config->sighash_policy);
+			jam_authby_sighash_policy(buf, c->local->config->host.authby);
 			jam_string(buf, ";");
 		}
 	}
@@ -956,7 +958,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
 		jam_string(buf, " sendca: ");
-		jam_enum_human(buf, &send_ca_policy_names, c->config->send_ca);
+		jam_enum_human(buf, &send_ca_policy_names, c->config->host.send_ca);
 		jam_string(buf, ";");
 		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {

@@ -56,6 +56,7 @@ enum config_setup_keyword {
 	KSF_OCSP_TRUSTNAME,
 	KSF_EXPIRE_SHUNT_INTERVAL,
 	KSF_DNS_RESOLVER,
+	KSF_SIGNATURE_HASH_ALGORITHMS,
 
 	/*
 	 * By convention, these are global configuration numeric (and
@@ -124,6 +125,7 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option);
 const char *config_setup_string(enum config_setup_keyword field);
 const char *config_setup_string_or_unset(enum config_setup_keyword field, const char *unset);
 bool config_setup_yn(enum config_setup_keyword field);
+enum yna_options config_setup_yna(enum config_setup_keyword field);
 deltatime_t config_setup_deltatime(enum config_setup_keyword field);
 uintmax_t config_setup_option(enum config_setup_keyword field);
 

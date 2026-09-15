@@ -27,7 +27,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Listcacerts</emphasis> lists all X.509 CA
+      <command>ipsec listcacerts</command> lists all X.509 CA
       certificates contained in the NSS database.
     </para>
   </refsect1>

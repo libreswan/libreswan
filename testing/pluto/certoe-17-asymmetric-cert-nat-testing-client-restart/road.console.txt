@@ -15,26 +15,26 @@ road #
 road #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 road #
- ipsec restart
+ ipsec start
 Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress_retransmits
-road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec status
 Total IPsec connections: loaded 2, routed 1, active 0
+road #
+ ipsec whack --impair suppress_retransmits
 road #
  echo "initdone"
 initdone
 road #
  # check traffic and shunt status
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 road #
- ipsec whack --shuntstatus
+ ipsec shuntstatus
 Bare Shunt list:
  
 road #
@@ -43,15 +43,24 @@ road #
  ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
- ../../guestbin/wait-for.sh --match '#2' -- ipsec whack --trafficstatus
-#2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+ ../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_SA_INIT request'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_AUTH request'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with null and NULL 'ID_NULL'; Child SA #2 {ESPinUDP <0xESPESP} [192.1.3.209/32===192.1.2.23/32]
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#1: initiator established IKE SA'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#2: initiator established Child SA using #1'
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  # ping should succeed through tunnel
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  echo "waiting for road to restart client cleanly"
@@ -64,7 +73,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec status
 Total IPsec connections: loaded 2, routed 1, active 0
 road #
  # should be empty
@@ -76,60 +85,28 @@ road #
  ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
- ../../guestbin/wait-for.sh --match '#2' -- ipsec whack --trafficstatus
-#2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+ ../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_SA_INIT request'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_AUTH request'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with null and NULL 'ID_NULL'; Child SA #2 {ESPinUDP <0xESPESP} [192.1.3.209/32===192.1.2.23/32]
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#1: initiator established IKE SA'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#2: initiator established Child SA using #1'
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  # ping should succeed through tunnel
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  # A tunnel should have established with non-zero byte counters
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
-road #
- grep "^[^|].* established Child SA" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
-road #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (13, 0x0d)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: responder established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (13, 0x0d)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[2] ...192.1.2.254 #3: responder established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (13, 0x0d)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #

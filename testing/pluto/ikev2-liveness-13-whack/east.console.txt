@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+"westnet-eastnet": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --globalstatus | grep total.ike.dpd
+total.ike.dpd.sent=0
+total.ike.dpd.recv=0
+total.ike.dpd.replied=1
+east #

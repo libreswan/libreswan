@@ -16,7 +16,7 @@ west# ipsec whack --impair suppress_retransmits
 west# ipsec add westnet-eastnet
 west# echo "initdone"
 
-west# ipsec up westnet-eastnet
+west# ipsec up westnet-eastnet # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
 rise# ../../guestbin/ping-once.sh --up 192.0.1.15

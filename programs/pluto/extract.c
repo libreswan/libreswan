@@ -34,6 +34,7 @@
 
 #include "extract.h"
 
+#include "ike_alg_hash.h"
 #include "whack.h"
 #include "flags.h"
 #include "verbose.h"
@@ -82,9 +83,10 @@ struct kv {
 #define PRI_KV "\"%s%s=%s\""
 #define pri_kv(KV) (KV).leftright, (KV).key, ((KV).value == NULL ? "" : (KV).value)
 
-static struct kv kv(const struct whack_message *wm,
-		    enum end end,
-		    enum config_conn_keyword key)
+static struct kv kvs(const struct whack_message *wm,
+		     enum end end,
+		     enum config_conn_keyword key,
+		     const char *value)
 {
 	return (struct kv) {
 		.wm = wm,
@@ -92,8 +94,31 @@ static struct kv kv(const struct whack_message *wm,
 			      end == RIGHT_END ? "right" :
 			      ""),
 		.key = config_conn_keywords.item[key].keyname,
-		.value = wm->conn[end].value[key],
+		.value = value,
 	};
+}
+
+static struct kv kv(const struct whack_message *wm,
+		    enum end end,
+		    enum config_conn_keyword key)
+{
+	/*
+	 * Default to the non-ended value when the ended value is
+	 * missing.
+	 */
+	switch (end) {
+	case LEFT_END:
+	case RIGHT_END:
+	{
+		const char *value = wm->conn[end].value[key];
+		if (value != NULL) {
+			return kvs(wm, end, key, value);
+		}
+		end = END_ROOF;
+		break;
+	}
+	}
+	return kvs(wm, end, key, wm->conn[end].value[key]);
 }
 
 static bool is_never_negotiate_type(enum type_options type)
@@ -130,8 +155,8 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 	return is_never_negotiate_type(sparse->value & ~NAME_FLAGS);
 }
 
-static void llog_never_negotiate_option(struct kv nn_kv,
-					struct verbose verbose)
+static void vlog_never_negotiate_option(struct verbose verbose,
+					struct kv nn_kv)
 {
 	if (nn_kv.value == NULL) {
 		/* nothing to ignore */
@@ -150,7 +175,7 @@ static bool never_negotiate_string_option(struct kv kv,
 					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(kv.wm)) {
-		llog_never_negotiate_option(kv, verbose);
+		vlog_never_negotiate_option(verbose, kv);
 		return true;
 	}
 
@@ -556,14 +581,14 @@ static char *extract_string(struct kv kv,
 
 static diag_t extract_flags(struct kv kv,
 			    struct rw_flags flags,
-			    const struct enum_names *names,
+			    const struct names *names,
 			    struct verbose verbose)
 {
 	if (never_negotiate_string_option(kv, verbose)) {
 		return NULL;
 	}
 
-	diag_t d = ttoflags_raw(kv.value, flags, names);
+	diag_t d = tto_rw_flags(kv.value, flags, names);
 	if (d != NULL) {
 		return diag_diag(&d, PRI_KV" invalid, ", pri_kv(kv));
 	}
@@ -631,7 +656,7 @@ static diag_t extract_updown(const struct whack_message *wm,
 	 */
 
 	d = extract_flags(kv(wm, end, KWS_UPDOWN_CONFIG),
-			  RW_FLAGS(child_config->updown.updown_config),
+			  (struct rw_flags) FLAGS(child_config->updown.updown_config),
 			  &updown_config_names,
 			  verbose);
 	if (d != NULL) {
@@ -1240,10 +1265,14 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	return NULL;
 }
 
-static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
-			     enum ike_version ike_version,
-			     const struct whack_message *wm)
+static struct authby extract_authby(struct kv kv,
+				    enum ike_version ike_version,
+				    diag_t *d)
 {
+	if (*d != NULL) {
+		return (struct authby) {0};
+	}
+
 	/*
 	 * Read in the authby= string and translate to policy bits.
 	 *
@@ -1257,101 +1286,126 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
 	 * to avoid confusion with sha3_256
 	 */
-	(*authby) = (struct authby) {0};
-	(*sighash_policy) = LEMPTY;
 
-	if (is_never_negotiate_wm(wm)) {
-		(*authby) = authby_from_auth(AUTH_NEVER);
-		return NULL;
-	}
+	struct authby authby = {0};
+	shunk_t curseby = shunk1(kv.value);
+	while (true) {
 
-	if (wm->wm_authby != NULL) {
-
-		shunk_t curseby = shunk1(wm->wm_authby);
-		while (true) {
-
-			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
-			if (val.ptr == NULL) {
-				break;
-			}
+		shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
+		if (val.ptr == NULL) {
+			break;
+		}
 #if 0
-			if (val.len == 0) {
-				/* ignore empty fields? */
-				continue;
-			}
+		if (val.len == 0) {
+			/* ignore empty fields? */
+			continue;
+		}
 #endif
 
-			/* Supported for IKEv1 and IKEv2 */
+		/* Supported for IKEv1 and IKEv2 */
+		switch (ike_version) {
+		case IKEv1:
 			if (hunk_streq(val, "secret")) {
-				authby->psk = true;
-			} else if (hunk_streq(val, "rsasig") ||
-				   hunk_streq(val, "rsa")) {
-				authby->rsasig_v1_5 = true;
-				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "never")) {
-				authby->never = true;
-			} else if (ike_version == IKEv1) {
-				return diag("authby="PRI_SHUNK" is not valid for IKEv1",
-					    pri_shunk(val));
-				/* everything else is only supported for IKEv2 */
-			} else if (hunk_streq(val, "null")) {
-				authby->null = true;
-			} else if (hunk_streq(val, "rsa-sha1")) {
-				authby->rsasig_v1_5 = true;
-			} else if (hunk_streq(val, "rsa-sha2")) {
-				*authby = authby_or(*authby, AUTHBY_ALL_RSASIG_SHA2);
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "rsa-sha2_256")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_256 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "rsa-sha2_384")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_384 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "rsa-sha2_512")) {
-				authby->rsasig = true;
-				authby->rsasig_sha2_512 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "eddsa")) {
-				authby->eddsa = true;
-				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
-			} else if (hunk_streq(val, "ecdsa") ||
-				   hunk_streq(val, "ecdsa-sha2")) {
-				*authby = authby_or(*authby, AUTHBY_ALL_ECDSA_SHA2);
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
-				authby->ecdsa = true;
-				authby->ecdsa_sha2_256 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
-				authby->ecdsa = true;
-				authby->ecdsa_sha2_384 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
-				authby->ecdsa = true;
-				authby->ecdsa_sha2_512 = true;
-				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha1")) {
-				return diag("authby=ecdsa cannot use sha1, only sha2");
-			} else {
-				return diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
+				authby.psk = true;
+				continue;
 			}
+			if (hunk_streq(val, "rsasig") ||
+			    hunk_streq(val, "rsa")) {
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_RAW,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "never")) {
+				authby.never = true;
+				continue;
+			}
+			*d = diag("authby="PRI_SHUNK" is not valid for IKEv1",
+				  pri_shunk(val));
+			return (struct authby) {0};
+		case IKEv2:
+			if (hunk_streq(val, "eaponly")) {
+				authby.authby_eaponly = true;
+				continue;
+			}
+			if (hunk_streq(val, "secret")) {
+				authby.psk = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsasig") ||
+			    hunk_streq(val, "rsa")) {
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_V1_5,
+						AUTHBY_RSASIG_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "never")) {
+				authby.never = true;
+				continue;
+			}
+			if (hunk_streq(val, "null")) {
+				authby.null = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha1")) {
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_V1_5_SHA1,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2")) {
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_256")) {
+				authby.rsasig_sha2_256 = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_384")) {
+				authby.rsasig_sha2_384 = true;
+				continue;
+			}
+			if (hunk_streq(val, "rsa-sha2_512")) {
+				authby.rsasig_sha2_512 = true;
+				continue;
+			}
+			if (hunk_streq(val, "eddsa")) {
+				authby.eddsa = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa") ||
+			    hunk_streq(val, "ecdsa-sha2")) {
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2,
+					});
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_256")) {
+				authby.ecdsa_sha2_256 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_384")) {
+				authby.ecdsa_sha2_384 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha2_512")) {
+				authby.ecdsa_sha2_512 = true;
+				continue;
+			}
+			if (hunk_streq(val, "ecdsa-sha1")) {
+				*d = diag("authby=ecdsa cannot use sha1, only sha2");
+				return (struct authby) {0};
+			}
+			*d = diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
+			return (struct authby) {0};
 		}
-		return NULL;
+		bad_case(ike_version);
 	}
 
-	(*sighash_policy) = POL_SIGHASH_DEFAULTS;
-	(*authby) = (ike_version == IKEv1 ? AUTHBY_IKEv1_DEFAULTS :
-		     AUTHBY_IKEv2_DEFAULTS);
-	return NULL;
+	return authby;
 }
 
 static diag_t extract_host_end(enum end end,
@@ -1364,7 +1418,6 @@ static diag_t extract_host_end(enum end end,
 			       const struct route_addr *host_addr,
 			       const struct route_addr *const host_addrs[END_ROOF],
 			       enum ike_version ike_version,
-			       struct authby whack_authby,
 			       bool *same_ca,
 			       struct verbose verbose/*connection "..."*/)
 {
@@ -1785,7 +1838,215 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	enum eap_options autheap =
+	/*
+	 * Get {left,right}auth=;  preserve UNSET, authby=....
+	 *
+	 * With unset auth= seems to imply that, for IKEv2, multiple
+	 * authentication algorithms are allowed.
+	 */
+	enum auth whack_auth =
+		extract_enum_name(kv(wm, end, KWS_AUTH),
+				  /*value_when_unset*/AUTH_UNSET,
+				  /*value_when_never_negotiate*/AUTH_NEVER,
+				  &auth_names,
+				  &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	struct kv whack_authby_kv = kv(wm, end, KWS_AUTHBY);
+	struct authby whack_authby = extract_authby(whack_authby_kv,
+						    ike_version, &d);
+	if (d != NULL) {
+		return d;
+	}
+
+	/*
+	 * Determine the authentication from auth= and authby=.
+	 */
+
+	struct authby authby; /*tbd*/
+	switch (ike_version) {
+	case IKEv1:
+	{
+		/*
+		 * IKEv1 only allows symetric authentication using
+		 * authby=.  Only IKEv2 allows the asymetric leftauth=
+		 * and rightauth=.
+		 */
+		if (src->we_auth != NULL) {
+			return diag("%sauth= is not supported by IKEv1", leftright);
+		}
+
+		if (!authby_is_set(whack_authby)) {
+			authby = AUTHBY_ALL_IKEv1_DEFAULTS;
+			break;
+		}
+
+		/*
+		 * Reject AUTHBY from whack when it contains something
+		 * specific to IKEv2.
+		 */
+		struct authby ikev2_authby = authby_and(whack_authby, (struct authby) {
+				AUTHBY_IKEv2_ONLY,
+			});
+		if (authby_is_set(ikev2_authby)) {
+			authby_buf ab;
+			return diag("authby=%s is not supported by IKEv1",
+				    str_authby(ikev2_authby, &ab));
+		}
+
+		/*
+		 * Mask the authby down to a single method.
+		 */
+		struct authby expected_authby =
+			authby_and(authby_from_auth(auth_from_authby(whack_authby)),
+				   (struct authby) {
+					   AUTHBY_IKEv1,
+				   });
+		authby = authby_and(whack_authby, expected_authby);
+
+		/*
+		 * Now check to see if that excluded anything?
+		 */
+		struct authby extra_authby =
+			authby_and(whack_authby, authby_not(authby));
+		if (authby_is_set(extra_authby)) {
+			authby_buf aa;
+			authby_buf ae;
+			return diag("additional %s in authby=%s is not supported by IKEv1",
+				    str_authby(extra_authby, &ae),
+				    str_authby(whack_authby, &aa));
+
+		}
+
+		break;
+	}
+	case IKEv2:
+	{
+		/*
+		 * Convert auth= to equivalent IKEv2 only authby bits.
+		 */
+		struct authby authby_from_whack_auth =
+			authby_and(authby_from_auth(whack_auth),
+				  (struct authby) {
+					  AUTHBY_IKEv2,
+				  });
+
+		switch (whack_auth) {
+		case AUTH_PSK:
+		case AUTH_EAPONLY:
+		case AUTH_NULL:
+		case AUTH_NEVER:
+		{
+			if (!authby_is_set(whack_authby)) {
+				authby = authby_from_whack_auth;
+				break;
+			}
+
+			/*
+			 * Warn when AUTH masks out some of the AUTHBY
+			 * bits.
+			 *
+			 * XXX: Originally the conflict was ignored.
+			 */
+			authby = authby_from_whack_auth;
+			struct authby conflicts =
+				authby_and(whack_authby, authby_not(authby));
+			if (authby_is_set(conflicts)) {
+				name_buf ab;
+				authby_buf cb;
+				struct kv kv = whack_authby_kv;
+				kv.value = str_authby(conflicts, &cb);
+				vwarning("%sauth=%s overrides "PRI_KV,
+					 leftright,
+					 str_enum_short(&auth_names, whack_auth, &ab),
+					 pri_kv(kv));
+			}
+			break;
+		}
+
+		case AUTH_RSASIG:
+		case AUTH_ECDSA:
+		case AUTH_EDDSA:
+		{
+			if (!authby_is_set(whack_authby)) {
+				authby = authby_from_whack_auth;
+				break;
+			}
+
+			authby = authby_and(whack_authby, authby_from_whack_auth);
+			if (!authby_is_set(authby)) {
+				name_buf ab;
+				authby_buf abm;
+				authby_buf abb;
+				return diag("%sauth=%s(%s) expects authby=%s",
+					    leftright,
+					    str_enum_short(&auth_names, whack_auth, &ab),
+					    str_authby(authby, &abb),
+					    str_authby(authby_from_whack_auth, &abm));
+			}
+
+			/* now check for conflicts */
+			struct authby conflicts = authby_and(whack_authby,
+							     authby_not(authby_from_whack_auth));
+			if (authby_is_set(conflicts)) {
+				name_buf ab;
+				authby_buf abm;
+				struct kv kv = whack_authby_kv;
+				kv.value = str_authby(conflicts, &abm);
+				return diag("%sauth=%s conflicts with "PRI_KV,
+					    leftright,
+					    str_enum_short(&auth_names, whack_auth, &ab),
+					    pri_kv(kv));
+			}
+			break;
+		}
+		case AUTH_UNSET:
+			if (!authby_is_set(whack_authby)) {
+				authby = AUTHBY_ALL_IKEv2_DEFAULTS;
+				break;
+			}
+
+			if (whack_authby.never) {
+				/* since whack_auth is not AUTH_NEVER */
+				vexpect(!is_never_negotiate_wm(wm));
+				return diag("connection with authby=never must specify shunt type via type=");
+			}
+
+			/*
+			 * XXX: this can contain multiple
+			 * authentication methods!
+			 */
+			authby = whack_authby;
+			break;
+		default:
+			bad_case(ike_version);
+		}
+		break;
+	}
+	default:
+		bad_case(ike_version);
+	}
+
+	name_buf eab;
+	authby_buf eaby;
+	name_buf wab;
+	authby_buf waby;
+	enum auth auth = host_config->auth = auth_from_authby(authby);
+	host_config->authby = authby;
+	vexpect(auth != AUTH_UNSET);
+	vdbg("fake %sauth=%s %s authby=%s from whack auth=%s and whack authby=%s",
+	     src->leftright, str_enum_short(&auth_names, auth, &eab),
+	     src->leftright, str_authby(host_config->authby, &eaby),
+	     str_enum_short(&auth_names, whack_auth, &wab),
+	     str_authby(whack_authby, &waby));
+
+	/*
+	 * Get eapauth, crosscheck with AUTH
+	 */
+
+	host_config->eap =
 		extract_sparse_name(kv(wm, end, KWS_AUTHEAP),
 				    /*value_when_unset*/IKE_EAP_NONE,
 				    &eap_option_names,
@@ -1794,133 +2055,14 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	host_config->eap = autheap;
-
-	enum auth auth =
-		extract_enum_name(kv(wm, end, KWS_AUTH),
-				  /*value_when_unset*/AUTH_UNSET,
-				  /*value_when_never_negotiate*/AUTH_UNSET,
-				  &auth_names,
-				  &d, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
-	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
-		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
+	if (host_config->eap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
+		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
+			    leftright, leftright);
 	}
 
 	/*
-	 * Determine the authentication from auth= and authby=.
+	 * IDs.
 	 */
-
-	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
-		/* AUTH_UNSET is updated below */
-		name_buf ab;
-		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&auth_names, auth, &ab));
-	}
-
-	struct authby authby = whack_authby;
-
-	/*
-	 * IKEv1 only allows symetric authentication using authby=
-	 * ({left,right}auth= can be asymetric).
-	 *
-	 * Convert authby= into auth=.
-	 */
-	if (ike_version == IKEv1) {
-		/* override auth= using above authby= from whack */
-		if (auth != AUTH_UNSET) {
-			return diag("%sauth= is not supported by IKEv1", leftright);
-		}
-		/*
-		 * From AUTHBY, which has multiple authentication bits
-		 * set, select the best possible AUTH.  Since
-		 * extract_authby(IKEv1) rejects ecdsa et.al. auth
-		 * should not end up with ECDSA et.al.
-		 */
-		auth = auth_from_authby(whack_authby);
-		/*
-		 * Now use AUTH to generate AUTHBY with a single bit
-		 * set (when RSA, both the rsasig and rsasig_v1_5 bits
-		 * are set, so scrub the latter as it isn't supported
-		 * by IKEv1).
-		 */
-		authby = authby_from_auth(auth);
-		authby.rsasig_v1_5 = false; /* not supported */
-		authby.rsasig_sha2_256 = false; /* not supported */
-		authby.rsasig_sha2_384 = false; /* not supported */
-		authby.rsasig_sha2_512 = false; /* not supported */
-		/*
-		 * Now compare the rebuilt AUTH with the original
-		 * WHACK_AUTH, looking for auth bits that disappeared.
-		 */
-		struct authby exclude = authby_not(authby);
-		struct authby supplied = whack_authby;
-		supplied.rsasig_v1_5 = false;
-		supplied.rsasig_sha2_256 = false;
-		supplied.rsasig_sha2_384 = false;
-		supplied.rsasig_sha2_512 = false;
-		supplied.ecdsa = false;
-		supplied.ecdsa_sha2_256 = false;
-		supplied.ecdsa_sha2_384 = false;
-		supplied.ecdsa_sha2_512 = false;
-		supplied.eddsa = false;
-		struct authby unexpected = authby_and(supplied, exclude);
-		if (authby_is_set(unexpected)) {
-			authby_buf wb, ub;
-			return diag("additional %s in authby=%s is not supported by IKEv1",
-				    str_authby(unexpected, &ub),
-				    str_authby(supplied, &wb));
-		}
-	}
-
-	struct authby authby_mask = {0};
-	switch (auth) {
-	case AUTH_RSASIG:
-	case AUTH_ECDSA:
-	case AUTH_EDDSA:
-		authby_mask = authby_from_auth(auth);
-		break;
-	case AUTH_PSK:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .psk = true, };
-		break;
-	case AUTH_NULL:
-		/* force only bit (not on by default) */
-		authby = (struct authby) { .null = true, };
-		break;
-	case AUTH_UNSET:
-		auth = auth_from_authby(authby);
-		break;
-	case AUTH_EAPONLY:
-		break;
-	case AUTH_NEVER:
-		break;
-	}
-
-	if (authby_is_set(authby_mask)) {
-		authby = authby_and(authby, authby_mask);
-		if (!authby_is_set(authby)) {
-			name_buf ab;
-			authby_buf pb;
-			return diag("%sauth=%s expects authby=%s",
-				    leftright,
-				    str_enum_short(&auth_names, auth, &ab),
-				    str_authby(authby_mask, &pb));
-		}
-	}
-
-	name_buf eab;
-	authby_buf wabb;
-	authby_buf eabb;
-	vdbg("fake %sauth=%s %sauthby=%s from whack authby %s",
-	     src->leftright, str_enum_short(&auth_names, auth, &eab),
-	     src->leftright, str_authby(authby, &eabb),
-	     str_authby(whack_authby, &wabb));
-	host_config->auth = auth;
-	host_config->authby = authby;
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
@@ -2973,16 +3115,6 @@ diag_t extract_connection(const struct whack_message *wm,
 	};
 
 	/*
-	 * Turn the .authby string into struct authby bit struct.
-	 */
-	struct authby whack_authby = {0};
-	lset_t sighash_policy = LEMPTY;
-	d = extract_authby(&whack_authby, &sighash_policy, ike_version, wm);
-	if (d != NULL) {
-		return d;
-	}
-
-	/*
 	 * Unpack and verify the ends.
 	 */
 
@@ -3000,7 +3132,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				     whack_ends[that],
 				     host_addrs[this],
 				     host_addrs,
-				     ike_version, whack_authby,
+				     ike_version,
 				     &same_ca[this],
 				     verbose);
 		if (d != NULL) {
@@ -3179,18 +3311,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (whack_authby.never) {
-		if (!is_never_negotiate_wm(wm)) {
-			return diag("connection with authby=never must specify shunt type via type=");
-		}
-	} else if (authby_is_set(whack_authby) &&
-		   is_never_negotiate_wm(wm)) {
-		/* can't be .never and can't be empty */
-		authby_buf ab;
-		return diag("type=%s never-negotiate connection cannot have authby=%s authentication",
-			    wm->wm_type, str_authby(whack_authby, &ab));
-	}
-
 	if (ike_version == IKEv1) {
 #ifdef USE_IKEv1
 		/* avoid using global */
@@ -3221,20 +3341,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		return diag("opportunistic connection MUST have IKEv2");
 	}
 	config->opportunistic = is_opportunistic_wm(host_addrs);
-
-#if 0
-	if (is_opportunistic_wm(host_addr)) {
-		if (whack_authby.psk) {
-			return diag("PSK is not supported for opportunism");
-		}
-		if (!authby_has_digsig(whack_authby)) {
-			return diag("only Digital Signatures are supported for opportunism");
-		}
-		if (!pfs) {
-			return diag("PFS required for opportunism");
-		}
-	}
-#endif
 
 	config->session_resumption =
 		extract_bool(kv(wm, END_ROOF, KWS_SESSION_RESUMPTION),
@@ -3383,6 +3489,21 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (d != NULL) {
 		return d;
 	}
+
+	enum yna_options ike_sa_init_full_transcript_auth =
+		extract_yna(kv(wm, END_ROOF, KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
+			    /*value_when_unset*/YNA_NO,
+			    /*value_when_never_negotiate*/YNA_NO,
+			    &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (ike_sa_init_full_transcript_auth == YNA_YES &&
+	    ike_version < IKEv2) {
+		return diag("ike-sa-init-full-transcript-auth=yes requires IKEv2");
+	}
+
+	config->ike_sa_init_full_transcript_auth = ike_sa_init_full_transcript_auth;
 
 	config->mobike = mobike;
 	if (mobike) {
@@ -3682,17 +3803,6 @@ diag_t extract_connection(const struct whack_message *wm,
 	default:
 		/* must  have been set */
 		bad_sparse(verbose.logger, &tcp_option_names, iketcp);
-	}
-
-
-	/* authentication (proof of identity) */
-
-	if (is_never_negotiate_wm(wm)) {
-		vdbg("ignore sighash, never negotiate");
-	} else if (c->config->ike_version == IKEv1) {
-		vdbg("ignore sighash, IKEv1");
-	} else {
-		config->sighash_policy = sighash_policy;
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -4398,20 +4508,20 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->nat_keepalive = nat_keepalive;
 		config->ikev1_natt = nat_ikev1_method;
 
-		config->send_initial_contact =
+		config->host.send_initial_contact =
 			extract_bool(kv(wm, END_ROOF, KWS_INITIAL_CONTACT),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
-		config->send_vid_fake_strongswan =
+		config->host.send_vid_fake_strongswan =
 			extract_bool(kv(wm, END_ROOF, KWS_FAKE_STRONGSWAN),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
-		config->send_vendorid =
+		config->host.send_vendorid =
 			extract_bool(kv(wm, END_ROOF, KWS_SEND_VENDORID),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
 
-		config->send_ca =
+		config->host.send_ca =
 			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
 					  /*value_when_unset*/CA_SEND_ALL,
 					  /*value_when_never_negotiate*/CA_SEND_ALL,

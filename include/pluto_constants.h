@@ -161,8 +161,6 @@ enum natt_method {
  * timers).
  */
 
-extern const struct enum_names global_timer_names;
-
 enum global_timer {
 #define GLOBAL_TIMER_FLOOR 0
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
@@ -178,6 +176,9 @@ enum global_timer {
 
 #define GLOBAL_TIMER_ROOF (EVENT_RESET_LOG_LIMITER+1)
 };
+
+extern const struct enum_names global_timer_enum_names;
+extern const struct names global_timer_names;
 
 /*
  * Connection based events.
@@ -789,17 +790,6 @@ enum sa_policy_bits {
 
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
-
-/*
- * RFC 7427 Signature Hash Algorithm exchang
- */
-
-#define POL_SIGHASH_SHA1	LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
-#define POL_SIGHASH_SHA2_256	LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
-#define POL_SIGHASH_SHA2_384	LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
-#define POL_SIGHASH_SHA2_512	LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
-#define POL_SIGHASH_IDENTITY	LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
-#define POL_SIGHASH_DEFAULTS	(POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512);
 
 /*
  * values for right=/left=

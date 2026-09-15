@@ -1,0 +1,1 @@
+ike-sa-init-full-transcript-auth=yes with RSA certificate authentication.

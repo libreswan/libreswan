@@ -954,12 +954,12 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
 	bool send_authcerts = (send_cert &&
-			       c->config->send_ca != CA_SEND_NONE);
+			       c->config->host.send_ca != CA_SEND_NONE);
 
 	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
 	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-				       c->config->send_ca,
+				       c->config->host.send_ca,
 				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
@@ -1099,7 +1099,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	 * In Quick Mode, we need to do a little more work, but that's
 	 * in ikev1_quick.c
 	 */
-	if (c->config->send_initial_contact) {
+	if (c->config->host.send_initial_contact) {
 		llog(RC_LOG, ike->sa.logger, "sending INITIAL_CONTACT");
 		if (!emit_v1N_IPSEC_INITIAL_CONTACT(rbody, ike)) {
 			return STF_INTERNAL_ERROR;
@@ -1181,12 +1181,12 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 			  ((c->local->host.config->sendcert == SENDCERT_IFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
-	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->config->host.send_ca != CA_SEND_NONE);
 
 	/* Must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = {0};
 	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-				       c->config->send_ca,
+				       c->config->host.send_ca,
 				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
@@ -1332,7 +1332,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	 *
 	 * XXX: IKEv1 only implements IPv4 leases.
 	 */
-	if (!c->config->send_initial_contact) {
+	if (!c->config->host.send_initial_contact) {
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; initial-contact=false");
 	} else if (!c->local->config->host.modecfg.server) {
 		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; local is not a modecfg server");

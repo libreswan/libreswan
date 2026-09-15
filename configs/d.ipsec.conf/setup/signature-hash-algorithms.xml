@@ -1,0 +1,50 @@
+<varlistentry id='setup.signature-hash-algorithms'>
+  <term>
+    <option>signature-hash-algorithms=&yna_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether &Libreswan; should support &rfc7427; and the
+      SIGNATURE_HASH_ALGORITHMS notification.
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term>
+	  &yes;
+	</term>
+	<listitem>
+	  <para>
+	    Always send and parse the SIGNATURE_HASH_ALGORITHMS
+	    notification.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  &no;
+	</term>
+	<listitem>
+	  <para>
+	    Never send, and always ignore, the
+	    SIGNATURE_HASH_ALGORITHMS notification.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  &auto;
+	</term>
+	<listitem>
+	  <para>
+	    Send the SIGNATURE_HASH_ALGORITHMS when the connection is
+	    using Digital Signatures (pubkeys).  Always parse the
+	    SIGNATURE HASH_ALGORITHMS notification.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      The default is &auto;.
+    </para>
+  </listitem>
+</varlistentry>

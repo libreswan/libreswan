@@ -18,35 +18,18 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair suppress_retransmits
-east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec status
 Total IPsec connections: loaded 7, routed 0, active 0
+east #
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone
 east #
  # A tunnel should have established with non-zero byte counters
 east #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=10.0.10.1/32
-east #
- hostname | grep nic > /dev/null || grep "^[^|].* established Child SA" /tmp/pluto.log
-"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32} #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:EPHEM DPD=passive}
-east #
- hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" /tmp/pluto.log
-| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
-"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: responder established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
 east #

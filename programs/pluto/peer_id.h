@@ -24,7 +24,7 @@ struct id;
 struct ike_sa;
 
 bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
-						  lset_t proposed_authbys,
+						  struct authby proposed_authbys,
 						  const struct id *initiator_id,
 						  const struct id *responder_id/*could-be-null*/);
 

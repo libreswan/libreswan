@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-mismatch
+ ipsec add westnet-eastnet-mismatch
 "westnet-eastnet-mismatch": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -16,7 +16,7 @@ west #
 west #
  ipsec whack --impair revival
 west #
- ipsec auto --up westnet-eastnet-mismatch
+ ipsec up westnet-eastnet-mismatch # sanitize-retransmits
 "westnet-eastnet-mismatch" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-mismatch" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-mismatch" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -31,16 +31,4 @@ IMPAIR: "westnet-eastnet-mismatch" #2: revival: skip scheduling CONNECTION_REVIV
 west #
  echo done
 done
-west #
- # this should not match anything
-west #
- grep v2N_INVALID_MESSAGE_ID /tmp/pluto.log
-west #
- # this shows we returned the error in IKE_AUTH
-west #
- grep "exchange type:" /tmp/pluto.log
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (34, 0x22)
-|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
-|    exchange type: ISAKMP_v2_IKE_AUTH (35, 0x23)
 west #

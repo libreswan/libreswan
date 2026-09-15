@@ -11,5 +11,5 @@ ipsec whack --listpubkeys
 # "has private key"
 ipsec whack --listpubkeys
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
 echo "initdone"

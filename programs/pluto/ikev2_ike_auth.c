@@ -294,7 +294,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
-	bool ic = (pc->config->send_initial_contact && (ike->sa.st_v2_ike_pred == SOS_NOBODY));
+	bool ic = (pc->config->host.send_initial_contact
+		   && (ike->sa.st_v2_ike_pred == SOS_NOBODY));
 	if (ic) {
 		llog_sa(RC_LOG, ike, "sending INITIAL_CONTACT");
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))
@@ -435,7 +436,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * NULL_AUTH in separate chunk. This is only done on the
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if (digital_signature_in_authby(pc->local->host.config->authby) &&
+	if (authby_has_pubkey(pc->local->host.config->authby) &&
 	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
@@ -575,13 +576,15 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * that can be matched?
 	 */
 
-	lset_t proposed_initiator_auths;
+	struct authby proposed_initiator_auths;
 	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
 		/*
 		 * Can only be EAP.  Is EAPONLY right? EAP can be
 		 * combined with some other method?
 		 */
-		proposed_initiator_auths = LELEM(AUTH_EAPONLY);
+		proposed_initiator_auths = (struct authby) {
+			.authby_eaponly = true,
+		};
 	} else if (ike->sa.st_v2_resume_session) {
 		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
 		name_buf rn, an;
@@ -589,12 +592,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
 		     str_enum_short(&auth_names, auth, &rn));
-		proposed_initiator_auths = LELEM(auth);
+		proposed_initiator_auths = authby_from_auth(auth);
 	} else {
 		proposed_initiator_auths = proposed_v2AUTH(ike, md);
 	}
 
-	if (proposed_initiator_auths == LEMPTY) {
+	if (!authby_is_set(proposed_initiator_auths)) {
 		/* already logged */
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -669,7 +672,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * We might be surprised!  Which is why C is only captured
 	 * _after_ this operation.
 	 */
-       if (!LHAS(proposed_initiator_auths, AUTH_NULL)) {
+       if (!proposed_initiator_auths.null) {
 	       refine_host_connection_of_state_on_responder(ike, proposed_initiator_auths,
 							    &initiator_id,
 							    &responder_id);
@@ -846,7 +849,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	struct authby initiator_authby = c->remote->host.config->authby;
 	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
 	bool remote_can_authby_null = initiator_authby.null;
-	bool remote_can_authby_digsig = digital_signature_in_authby(initiator_authby);
+	bool remote_can_authby_pubkey = authby_has_pubkey(initiator_authby);
 
 	if (!ike->sa.st_ppk_ike_auth_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -879,7 +882,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		}
 		ldbg(ike->sa.logger, "NO_PPK_AUTH verified");
 	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
-		   remote_can_authby_null && !remote_can_authby_digsig) {
+		   remote_can_authby_null &&
+		   !remote_can_authby_pubkey) {
+
 		/*
 		 * If received NULL_AUTH in Notify payload and we only
 		 * allow NULL Authentication, proceed with verifying
@@ -1502,11 +1507,11 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 	 * notification's value.
 	 */
 
-	enum v2_notification error =
+	enum ikev2_notification error =
 		(md->v2N_error == NULL ? v2N_NOTHING_WRONG :
 		 md->v2N_error->payload.v2n.isan_type);
 
-	enum v2_notification status =
+	enum ikev2_notification status =
 		(md->v2N_error != NULL ? v2N_NOTHING_WRONG :
 		 md->chain[ISAKMP_NEXT_v2N] == NULL ? v2N_NOTHING_WRONG :
 		 md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type);
@@ -1542,13 +1547,13 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 				name_buf nb;
 				llog(RC_LOG, ike->sa.logger,
 				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s%s",
-				     str_enum_short(&v2_notification_names, error, &nb),
+				     str_name_short(&ikev2_notification_names, error, &nb),
 				     multiple_notifications);
 			} else {
 				name_buf nb;
 				llog(RC_LOG, ike->sa.logger,
 				     "IKE SA authentication failed, incomplete IKE_AUTH response contains the Child SA error notification %s for "PRI_SO"%s",
-				     str_enum_short(&v2_notification_names, error, &nb),
+				     str_name_short(&ikev2_notification_names, error, &nb),
 				     pri_so(child->sa.st_serialno),
 				     multiple_notifications);
 			}
@@ -1559,7 +1564,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			name_buf nb;
 			llog(RC_LOG, ike->sa.logger,
 			     "IKE SA authentication request rejected by peer: %s%s",
-			     str_enum_short(&v2_notification_names, error, &nb),
+			     str_name_short(&ikev2_notification_names, error, &nb),
 			     multiple_notifications);
 			break;
 		}
@@ -1572,7 +1577,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		name_buf nb;
 		llog_sa(RC_LOG, ike,
 			"IKE SA authentication failed, incomplete IKE_AUTH response contains the status notification %s%s",
-			str_enum_short(&v2_notification_names, status, &nb),
+			str_name_short(&ikev2_notification_names, status, &nb),
 			multiple_notifications);
 	} else {
  		llog(RC_LOG, ike->sa.logger,
@@ -1594,10 +1599,9 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		/* AUTH payload (proof-of-identity) */
 		jam_string(buf, " with ");
-		enum auth authby = local_v2_auth(ike);
-		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
-		if (auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
+		jam_enum_human(buf, &ikev2_auth_method_names,
+			       ike->sa.st_v2_local_auth.method);
+		if (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
 		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.signer != NULL) &&
 		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.hash != NULL)) {
 			jam_string(buf, " ");

@@ -20,29 +20,29 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair suppress_retransmits
-east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 3' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 3' -- ipsec status
 Total IPsec connections: loaded 3, routed 0, active 0
+east #
+ ipsec whack --impair suppress_retransmits
 east #
  echo "initdone"
 initdone
 east #
  # checking the connections status - should be up despite road's "crash"
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #
- ipsec whack --shuntstatus
+ ipsec shuntstatus
 Bare Shunt list:
  
 east #
  # Two tunnels should have established with non-zero byte counters. East will have both of the road tunnels established
 east #
- ipsec whack --trafficstatus
-#4: "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
+ ipsec trafficstatus
+#4: "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32} #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:EPHEM DPD=passive}
@@ -56,16 +56,6 @@ east #
 east #
  # A tunnel should have established with non-zero byte counters
 east #
- ipsec whack --trafficstatus
-#4: "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
-east #
- grep "^[^|].* established Child SA" /tmp/pluto.log
-"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32} #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:EPHEM DPD=passive}
-"clear-or-private#192.1.2.254/32"[2] ...192.1.2.254==={10.0.10.1/32} #4: responder established Child SA using #3; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:EPHEM DPD=passive}
-east #
- grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
-|    auth method: IKEv2_AUTH_NULL (13, 0x0d)
-|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
-|    auth method: IKEv2_AUTH_NULL (13, 0x0d)
-|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (14, 0x0e)
+ ipsec trafficstatus
+#4: "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #

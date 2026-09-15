@@ -87,6 +87,7 @@
 #include "helper.h"
 #include "resolve_helper.h"	/* for init_resolve_helper() */
 #include "kernel_alg.h"
+#include "ikev2_ike_sa_init.h"	/* for ikev2_signature_hash_algorithms */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1276,6 +1277,12 @@ int main(int argc, char **argv)
 		     pluto_dns_resolver);
 	}
 
+	/*
+	 * Config setup.
+	 */
+	ikev2_signature_hash_algorithms =
+		config_setup_yna(KSF_SIGNATURE_HASH_ALGORITHMS);
+
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
@@ -1645,6 +1652,10 @@ void show_setup_plutomain(struct show *s)
 		);
 
 	show_x509_ocsp(s);
+
+	name_buf shab;
+	show(s, "signature-hash-algorithms=%s,",
+	     str_sparse_short(&yna_option_names, ikev2_signature_hash_algorithms, &shab));
 
 	show_global_redirect(s);
 }

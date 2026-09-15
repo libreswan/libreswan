@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add east-west
+"east-west": added oriented IKEv2 connection
+west #
+ # initiate async, wait 10 seconds so we get into the 20s retransmit
+west #
+ # timer, giving us time to quickly start east and initiate from there
+west #
+ ipsec auto --up east-west --asynchronous
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ sleep 10
+west #
+ ipsec whack --showstates
+#2: "east-west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "east-west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
+#3: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+west #
+ ipsec traffic
+#3: "east-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # to avoid shutdown logs confusing things, hard kill pluto
+west #
+ kill -9 `cat /run/pluto/pluto.pid`
+west #

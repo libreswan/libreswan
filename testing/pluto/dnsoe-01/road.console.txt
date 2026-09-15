@@ -20,7 +20,7 @@ List of Public Keys:
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
 Total IPsec connections: loaded 6, routed 0, active 0
 road #
  echo "initdone"
@@ -40,14 +40,14 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
- ipsec whack --shuntstatus
+ ipsec shuntstatus
 Bare Shunt list:
  
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
  echo done
@@ -55,7 +55,7 @@ done
 road #
  # A tunnel should have established with non-zero byte counters
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
  grep "^[^|].* established Child SA" /tmp/pluto.log

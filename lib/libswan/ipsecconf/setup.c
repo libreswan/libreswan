@@ -106,6 +106,8 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	,
 	[KSF_DNS_RESOLVER] = "file",
 
+	[KSF_SIGNATURE_HASH_ALGORITHMS] = "auto",
+
 	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
 
 #ifdef USE_SECCOMP
@@ -194,6 +196,11 @@ bool config_setup_yn(enum config_setup_keyword field)
 	case YN_YES: return true;
 	}
 	bad_case(yn);
+}
+
+enum yna_options config_setup_yna(enum config_setup_keyword field)
+{
+	return config_setup_option(field);
 }
 
 deltatime_t config_setup_deltatime(enum config_setup_keyword field)
@@ -546,6 +553,7 @@ static const struct keyword_def config_setup_keyword[] = {
   K("expire-shunt-interval", kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL),
 
   K("dns-resolver", kt_string, KSF_DNS_RESOLVER),
+  K("signature-hash-algorithms", kt_sparse_name, KSF_SIGNATURE_HASH_ALGORITHMS, .sparse_names = &yna_option_names),
 
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 

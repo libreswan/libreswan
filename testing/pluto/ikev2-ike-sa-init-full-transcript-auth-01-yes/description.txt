@@ -1,0 +1,1 @@
+Both west and east have ike-sa-init-full-transcript-auth=yes.

@@ -27,9 +27,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Listall</emphasis> lists information about all
-      locally loaded public keys, X.509 certificates, X.509 certificate
-      authority certificates and certificate revocation lists.
+      <command>ipsec listall</command> lists information about all
+      locally loaded public keys, X.509 certificates, X.509
+      certificate authority certificates and certificate revocation
+      lists.
     </para>
   </refsect1>
 

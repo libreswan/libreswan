@@ -843,6 +843,9 @@ enum ikev2_exchange {
 	/* 240-255 Private Use */
 };
 
+extern const struct enum_names ikev2_exchange_names;
+extern const struct names ikev2_exchange_nom;
+
 /*
  * ISAKMP header flag bits
  */
@@ -1588,6 +1591,9 @@ enum ikev2_auth_method {
 	/* 201 - 255 private use */
 };
 
+extern const struct enum_names ikev2_auth_method_names;
+extern const struct names ikev2_auth_method_nom;
+
 /*
  * Notify messages -- error types
  * See RFC2408 ISAKMP 3.14.1
@@ -1676,7 +1682,7 @@ typedef enum {
  * IKEv2, while similar, is different.  Let's not re-use and confuse.
  */
 
-typedef enum v2_notification {
+typedef enum ikev2_notification {
 
 	/*
 	 * Unofficial!  Must be zero to match default C initial value.
@@ -1796,18 +1802,19 @@ typedef enum v2_notification {
 	v2N_USE_PPK = 16435,			/* RFC-8784 */
 	v2N_PPK_IDENTITY = 16436,		/* RFC-8784 */
 	v2N_NO_PPK_AUTH = 16437,		/* RFC-8784 */
-	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* draft-ietf-ipsecme-ikev2-intermediate-04 */
+	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* RFC-9242 */
 	v2N_IP4_ALLOWED = 16439,		/* RFC-8983 */
 	v2N_IP6_ALLOWED = 16440,		/* RFC-8983 */
 	v2N_ADDITIONAL_KEY_EXCHANGE = 16441,	/* RFC-9370 */
 	v2N_USE_AGGFRAG = 16442,		/* RFC-9347 */
-	v2N_SUPPORTED_AUTH_METHODS = 16443,	/* draft-ietf-ipsecme-ikev2-auth-announce-10 */
+	v2N_SUPPORTED_AUTH_METHODS = 16443,	/* RFC-9593 */
 
 	v2N_SA_RESOURCE_INFO = 16444,		/* RFC-9611 */
-	v2N_USE_PPK_INT = 16445,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
-	v2N_PPK_IDENTITY_KEY = 16446,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
+	v2N_USE_PPK_INT = 16445,		/* RFC-9867 */
+	v2N_PPK_IDENTITY_KEY = 16446,		/* RFC-9867 */
+	v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH = 16447, /* draft-ietf-ipsecme-ikev2-downgrade-prevention */
 
-	/* 16447 - 40959 Unassigned */
+	/* 16448 - 40959 Unassigned */
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 
@@ -1816,6 +1823,9 @@ typedef enum v2_notification {
 	v2N_NULL_AUTH = 40960,
 
 } v2_notification_t;
+
+extern const struct enum_names v2_notification_names;
+extern const struct names ikev2_notification_names;
 
 /* RFC 8784 created registry */
 enum ikev2_ppk_id_type {

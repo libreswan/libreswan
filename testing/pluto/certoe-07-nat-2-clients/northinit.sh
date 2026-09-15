@@ -10,20 +10,20 @@ ipsec start
 ipsec whack --impair suppress_retransmits
 
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec status
 
 # one packet, which gets eaten by XFRM, so east does not initiate
 ../../guestbin/ping-once.sh --forget -I 192.1.3.33 192.1.2.23
 
 # wait on OE IKE negotiation
-../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+../../guestbin/wait-for.sh --match private-or-clear -- ipsec trafficstatus
 
 # ping should succeed through tunnel (road pings once, north twice)
 # should show established tunnel and no bare shunts
 ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23
-ipsec whack --trafficstatus
-ipsec whack --shuntstatus
+ipsec trafficstatus
+ipsec shuntstatus
 ipsec _kernel state
 ipsec _kernel policy
 iptables -t nat -L -n

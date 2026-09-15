@@ -235,7 +235,7 @@ static diag_t colon(shunk_t src, ip_address *dst)
 	struct ip_bytes u = unset_ip_bytes;
 #       define  IT      "IPv6 numeric address"
 
-	int gapat = -1;	/* where was empty piece seen */
+	unsigned colons_at = sizeof(u.byte);
 	unsigned colon_count = 0;
 	unsigned i = 0;
 	/* while there is more to parse and room for a pair of octets ... */
@@ -249,10 +249,10 @@ static diag_t colon(shunk_t src, ip_address *dst)
 				return diag("::: in " IT);
 			}
 			if (colon_count == 2) {
-				if (gapat >= 0) {
+				if (colons_at < sizeof(u.byte)) {
 					return diag("more than one :: in " IT);
 				}
-				gapat = i;
+				colons_at = i;
 			}
 		} else if (colon_count == 1 && i == 0) {
 			return diag("single leading `:' in " IT);
@@ -284,20 +284,22 @@ static diag_t colon(shunk_t src, ip_address *dst)
 		return diag("extra garbage on end of " IT);
 	}
 
-	if (gapat < 0 && i < sizeof(u.byte)) {
+	if (colons_at == sizeof(u.byte) && i < sizeof(u.byte)) {
 		return diag("incomplete " IT);
 	}
 
-	if (gapat >= 0 && i == sizeof(u.byte)) {
+	if (colons_at < sizeof(u.byte) && i == sizeof(u.byte)) {
 		return diag("non-abbreviating empty field in " IT);
 	}
 
 	/* shift bytes; fill gap with zeros */
-	if (gapat >= 0) {
-		int gap = sizeof(u.byte) - i; /* short by ... */
+	if (colons_at < sizeof(u.byte) && colons_at < i) {
 		/* use memmove(); there definitely an overlap! */
-		memmove(&u.byte[gapat + gap], &u.byte[gapat], i - gapat);
-		memset(&u.byte[gapat], '\0', gap);
+		unsigned gap = sizeof(u.byte) - i;
+		memmove(&u.byte[colons_at + gap],
+			&u.byte[colons_at],
+			i - colons_at);
+		memset(&u.byte[colons_at], '\0', gap);
 	}
 
 	*dst = address_from_raw(HERE, &ipv6_info, u);

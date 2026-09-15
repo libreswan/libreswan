@@ -7,5 +7,5 @@ ipsec start
 ipsec whack --impair suppress_retransmits
 ipsec whack --listpubkeys
 # give OE policies time to load
-../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
 echo "initdone"

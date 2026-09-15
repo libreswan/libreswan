@@ -56,13 +56,15 @@ void passert_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 		     BUF != NULL;					\
 		     passert_logjam_to_logger(&logjam_), BUF = NULL)
 
-#define PASSERT_WHERE(LOGGER, WHERE, ASSERTION)				\
+#define PASSERT_WHERE(LOGGER, WHERE, ASSERTION, ...)			\
 	({								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			const struct logger *logger_ = LOGGER;		\
-			llog_passert(logger_, WHERE, "%s", #ASSERTION);	\
+			/* ASSERTION can contain %... */		\
+			llog_passert(logger_, WHERE, "%s",		\
+				     #ASSERTION __VA_ARGS__);		\
 		}							\
 		/* return something so flipping to pexpect() is easy */	\
 		(void) true;						\

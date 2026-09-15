@@ -1,4 +1,5 @@
 # restart ipsec service
 ipsec start
-# give OE conns time to load
 ../../guestbin/wait-until-pluto-started
+# give OE policies time to load
+../../guestbin/wait-for.sh --match 'loaded 3' -- ipsec status

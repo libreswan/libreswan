@@ -1,0 +1,6 @@
+Test whack --liveness, which triggers an on-demand DPD/liveness
+probe (an empty INFORMATIONAL exchange) on the established IKE SA.
+
+The exchange itself is silent (debug-only logging) so the
+total.ike.dpd.* counters are used to verify that west sent and
+received the probe and that east replied to it.

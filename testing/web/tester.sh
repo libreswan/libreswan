@@ -383,9 +383,16 @@ run_target()
 
 cp /dev/null ${resultsdir}/build.json.in
 
-# Native targets
+# Clean out the directory
+#
+# Due to a bug in distclean, more files then intended can be deleted;
+# work-around this.
 
 run_target MAKE distclean
+( cd ${rutdir} ; git status ; git reset --hard HEAD )
+
+# run native targets
+
 run_target MAKE html
 
 for platform in ${platforms[@]} ; do

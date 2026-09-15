@@ -32,8 +32,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Redirect</emphasis> a connection (if connectionname is specified)
-      or all connections to <option>--redirect-to</option> specified ip-address or
+      <command>ipsec redirect</command> a connection (if
+      connectionname is specified) or all connections to
+      <option>--redirect-to</option> specified ip-address or
       comma-separated list of ip-addresses (evenly distributed).
     </para>
     <para>

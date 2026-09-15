@@ -34,7 +34,18 @@ enum perspective;
 struct pubkey_signer;
 struct pbs_out;
 struct pbs_in;
+struct ro_hunk;
 enum auth;
+
+
+struct v2AUTH_transcript {
+	shunk_t zero_prefix;
+	struct ro_hunk *message[2];
+};
+
+void extract_v2AUTH_transcript(const struct ike_sa *ike,
+			       enum perspective from_the_perspective_of,
+			       struct v2AUTH_transcript *transcript);
 
 struct crypt_mac v2_sha1_hash(const struct crypt_mac *hash);
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
@@ -87,7 +98,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike);
 struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike, const char *why,
 				   const struct msg_digest *md);
 
-lset_t proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
+struct authby proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
 
 struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
                struct ike_sa *ike,

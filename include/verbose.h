@@ -141,11 +141,14 @@ struct verbose {
 
 #define vbad(BAD) PBAD(verbose.logger, BAD)
 
-#define vexpect(EXPECT) PEXPECT_WHERE(verbose.logger, verbose.where, EXPECT)
-#define vassert(ASSERT) PASSERT_WHERE(verbose.logger, verbose.where, ASSERT)
+#define vexpect_where(WHERE, ASSERTION) \
+	PEXPECT_WHERE(verbose.logger, WHERE, ASSERTION, "; "HERE_SAL)
+#define vassert_where(WHERE, ASSERTION) \
+	PASSERT_WHERE(verbose.logger, WHERE, ASSERTION, "; "HERE_SAL)
 
-#define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
-#define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
+#define vexpect(ASSERTION) vexpect_where(verbose.where, ASSERTION)
+#define vassert(ASSERTION) vassert_where(verbose.where, ASSERTION)
+
 
 /*
  * Debug-logging: when the logger has debugging enabled, the message

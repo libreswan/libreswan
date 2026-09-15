@@ -1,18 +1,13 @@
-# use strongswan config to generate keys in OUTPUT/strongswan
-
-east# /testing/guestbin/swan-prep --userland strongswan
-east# /testing/x509/bin/strongswan.sh strong-ED --type ed25519
-
 # now config for pluto; importing key
 
 east# /testing/guestbin/swan-prep --nokeys
 west# /testing/guestbin/swan-prep --nokeys
 
-east# /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
-east# /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
+east# /testing/x509/import.sh real/mained/east.p12
+east# /testing/x509/import.sh real/mained/west.p12
 
-west# /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongEast.p12
-west# /testing/x509/import.sh $PWD/OUTPUT/strongswan/strong-ED/strongWest.p12
+west# /testing/x509/import.sh real/mained/east.p12
+west# /testing/x509/import.sh real/mained/west.p12
 
 east# ipsec start
 west# ipsec start

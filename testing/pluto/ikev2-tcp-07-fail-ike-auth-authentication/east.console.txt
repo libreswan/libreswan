@@ -17,11 +17,7 @@ east #
  ipsec add east
 "east": added oriented IKEv2 connection
 east #
- # block IKE and ESP over UDP
-east #
- iptables -I INPUT -p udp --dport 500 -j DROP
-east #
- iptables -I INPUT -p udp --dport 4500 -j DROP
+ # force east into legacy mode
 east #
  echo "initdone"
 initdone

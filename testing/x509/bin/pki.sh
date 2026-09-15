@@ -4,6 +4,10 @@ set -eu
 
 exec 3>&1  # save 3 for console
 
+CERTUTIL=${certutil:-${CERTUTIL}}
+PK12UTIL=${pk12util:-${PK12UTIL}}
+CRLUTIL=${crlutil:-${CRLUTIL}}
+
 case $# in
     1 )
 	DIR=$1
@@ -133,7 +137,7 @@ dump_cert()
 
     # private key + cert chain
 
-    pk12util \
+    ${PK12UTIL} \
 	-d ${certdir} \
 	-n ${cert} \
 	-W ${PASSPHRASE} \
@@ -141,7 +145,7 @@ dump_cert()
 
     # end cert
 
-    certutil \
+    ${CERTUTIL} \
 	-L \
 	-d ${certdir} \
 	-n ${cert} \
@@ -166,12 +170,12 @@ log_cert()
 
     # this goes to log file
 
-    certutil \
+    ${CERTUTIL} \
 	-L \
 	-d ${certdir} \
 	-n ${cert}
 
-    local chain=$(certutil \
+    local chain=$(${CERTUTIL} \
 		      -O \
 		      -d ${certdir} \
 		      -n ${cert}) || exit 1
@@ -214,7 +218,7 @@ generate_root_ca()
     subject="E=\"testing@libreswan.org\", ${subject}"
     echo " subject=${subject}" 1>&3
 
-    # Generate a file containing the constraints that CERTUTIL expects
+    # Generate a file containing the constraints that ${CERTUTIL} expects
     # on stdin.
     local cfg=${certdir}/root.cfg
     {
@@ -223,7 +227,7 @@ generate_root_ca()
 	echo_extAIA_ocsp
     } > ${cfg}
 
-    certutil -S -d ${certdir} \
+    ${CERTUTIL} -S -d ${certdir} \
 	     -m ${serial} \
 	     -x \
 	     -n "${ca}" \
@@ -325,7 +329,7 @@ generate_cert()
     fi
     echo " san=${san}" 1>&3
 
-    # Generate a file containing the constraints that CERTUTIL expects
+    # Generate a file containing the constraints that ${CERTUTIL} expects
     # on stdin.
     local cfg=${certdir}/${cert}.cfg
     {
@@ -341,7 +345,7 @@ generate_cert()
     fi
     echo " trust=${trust}"
 
-    certutil -S \
+    ${CERTUTIL} -S \
 	     -d ${certdir} \
 	     -n ${cert} \
 	     $(test ${ca} = ${cert} && echo -x || echo -c ${ca}) \
@@ -420,6 +424,7 @@ while read dirs cas domain is_ca ku eku param ; do
 done <<EOF
 {real,fake}   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 {real,fake}   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+#real          mained   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ed
 other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 # broken root CA, can't be used to verify
 broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
@@ -520,6 +525,7 @@ while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
 done <<EOF
 {real,fake} {mainca,mainec}  nic                                  1 1 1 / digitalSignature  ocspResponder
 {real,fake} {mainca,mainec}  {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
+#real        mained           {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
 real        mainca           revoked                              1 1 1 / digitalSignature  /
 real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
 real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096

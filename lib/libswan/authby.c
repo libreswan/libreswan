@@ -16,46 +16,51 @@
 #include "authby.h"
 #include "auth.h"
 
+#include "ike_alg.h"
 #include "ike_alg_hash.h"
 
 #include "constants.h"		/* for enum keyword_auth */
 #include "jambuf.h"
 #include "lswlog.h"		/* for bad_case() */
 
+#define REDUCE_SHA2(TYPE, LHS, OP, AUTH)	\
+	(TYPE)(LHS).AUTH##_sha2_256 OP		\
+	(TYPE)(LHS).AUTH##_sha2_384 OP		\
+	(TYPE)(LHS).AUTH##_sha2_512
+
 #define REDUCE(TYPE, LHS, OP)			\
 	((TYPE)(LHS).null OP			\
 	 (TYPE)(LHS).never OP			\
 	 (TYPE)(LHS).psk OP			\
-	 (TYPE)(LHS).rsasig OP			\
-	 (TYPE)(LHS).rsasig_v1_5 OP		\
+	 (TYPE)(LHS).authby_eaponly OP		\
 	 (TYPE)(LHS).eddsa OP			\
-	 (TYPE)(LHS).ecdsa OP			\
-	 (TYPE)(LHS).rsasig_sha2_256 OP		\
-	 (TYPE)(LHS).rsasig_sha2_384 OP		\
-	 (TYPE)(LHS).rsasig_sha2_512 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_256 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_384 OP		\
-	 (TYPE)(LHS).ecdsa_sha2_512)
+	 (TYPE)(LHS).rsasig OP			\
+	 (TYPE)(LHS).rsasig_v1_5_sha1 OP	\
+	 REDUCE_SHA2(TYPE, LHS, OP, rsasig_v1_5) OP \
+	 REDUCE_SHA2(TYPE, LHS, OP, rsasig) OP	\
+	 REDUCE_SHA2(TYPE, LHS, OP, ecdsa))
 
-#define OP(LHS, OP, RHS)						\
-	({								\
-		struct authby tmp_ = {					\
-			.null = (LHS).null OP (RHS).null,		\
-			.never = (LHS).never OP (RHS).never,		\
-			.psk = (LHS).psk OP (RHS).psk,			\
-			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
-			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
-			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
-			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
-			.rsasig_sha2_256 = (LHS).rsasig_sha2_256 OP (RHS).rsasig_sha2_256, \
-			.rsasig_sha2_384 = (LHS).rsasig_sha2_384 OP (RHS).rsasig_sha2_384, \
-			.rsasig_sha2_512 = (LHS).rsasig_sha2_512 OP (RHS).rsasig_sha2_512, \
-			.ecdsa_sha2_256 = (LHS).ecdsa_sha2_256 OP (RHS).ecdsa_sha2_256, \
-			.ecdsa_sha2_384 = (LHS).ecdsa_sha2_384 OP (RHS).ecdsa_sha2_384, \
-			.ecdsa_sha2_512 = (LHS).ecdsa_sha2_512 OP (RHS).ecdsa_sha2_512, \
-		};							\
-		tmp_;							\
-	})
+#define OP4(LHS, OP, RHS, AUTH)					\
+	.AUTH = (LHS).AUTH OP (RHS).AUTH
+
+#define OP_SHA2(LHS, OP, RHS, AUTH)				\
+	OP4(LHS, OP, RHS, AUTH##_sha2_256),			\
+	OP4(LHS, OP, RHS, AUTH##_sha2_384),			\
+	OP4(LHS, OP, RHS, AUTH##_sha2_512)
+
+#define OP(LHS, OP, RHS)					\
+	(struct authby) {					\
+		OP4(LHS, OP, RHS, null),			\
+		OP4(LHS, OP, RHS, never),			\
+		OP4(LHS, OP, RHS, psk),				\
+		OP4(LHS, OP, RHS, authby_eaponly),		\
+		OP4(LHS, OP, RHS, rsasig),			\
+		OP4(LHS, OP, RHS, eddsa),			\
+		OP4(LHS, OP, RHS, rsasig_v1_5_sha1),		\
+		OP_SHA2(LHS, OP, RHS, rsasig_v1_5),		\
+		OP_SHA2(LHS, OP, RHS, rsasig),			\
+		OP_SHA2(LHS, OP, RHS, ecdsa),			\
+	}
 
 bool authby_is_set(struct authby authby)
 {
@@ -74,7 +79,8 @@ struct authby authby_xor(struct authby lhs, struct authby rhs)
 
 struct authby authby_not(struct authby lhs)
 {
-	return authby_xor(lhs, AUTHBY_ALL);
+	const struct authby empty = {0};
+	return OP(lhs, ==, empty);
 }
 
 struct authby authby_and(struct authby lhs, struct authby rhs)
@@ -123,7 +129,7 @@ struct authby authby_and_hash(struct authby authby,
 	if (hash == &ike_alg_hash_sha1) {
 		/* sha1 is only allowed with rsasig_v1.5 */
 		return (struct authby) {
-			.rsasig_v1_5 = authby.rsasig_v1_5,
+			.rsasig_v1_5_sha1 = authby.rsasig_v1_5_sha1,
 		};
 	}
 	/*
@@ -133,7 +139,7 @@ struct authby authby_and_hash(struct authby authby,
 #define AND_HASH(HASH)						\
 	if (hash == &ike_alg_hash_##HASH) {			\
 		return (struct authby) {			\
-			.rsasig_v1_5 = authby.rsasig_v1_5,	\
+			.rsasig_v1_5_##HASH = authby.rsasig_v1_5_##HASH, \
 			.rsasig_##HASH = authby.rsasig_##HASH,	\
 			.ecdsa_##HASH = authby.ecdsa_##HASH,	\
 		};						\
@@ -144,35 +150,57 @@ struct authby authby_and_hash(struct authby authby,
 #undef AND_HASH
 	if (hash == &ike_alg_hash_identity) {
 		/* only allow algs that don't need a hash */
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_ECDSA_SHA2));
-		authby = authby_and(authby, authby_not(AUTHBY_ALL_RSASIG_SHA2));
-		authby.rsasig_v1_5 = false;
-		return authby;
+		return (struct authby) {
+			.eddsa = authby.eddsa,
+		};
 	}
 	return (struct authby) {0};
 }
 
-bool auth_in_authby(enum auth auth, struct authby authby)
+bool authby_has_hash(struct authby authby,
+		     const struct hash_desc *hash)
 {
-	struct authby auth_bit = authby_from_auth(auth);
-	/* auth bit must be set */
-	return authby_is_set(authby_and(auth_bit, authby));
+	return authby_is_set(authby_and_hash(authby, hash));
 }
 
-bool digital_signature_in_authby(struct authby authby)
+struct authby authby_and_auth(struct authby authby, enum auth auth)
 {
-	return authby_is_set(authby_and(AUTHBY_DIGITAL_SIGNATURE, authby));
+	return authby_and(authby, authby_from_auth(auth));
+}
+
+bool authby_has_auth(struct authby authby, enum auth auth)
+{
+	return authby_is_set(authby_and_auth(authby, auth));
+}
+
+bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
+{
+	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
 }
 
 enum auth auth_from_authby(struct authby authby)
 {
-	return (authby.rsasig ? AUTH_RSASIG :
-		authby_has_any(authby, AUTHBY_ALL_ECDSA_SHA2) ? AUTH_ECDSA :
-		authby.eddsa ? AUTH_EDDSA :
-		authby.rsasig_v1_5 ? AUTH_RSASIG :
+	/*
+	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
+	 * v1.5 RSA.  It's just how it has always been.
+	 */
+	return (authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_SHA2,
+			}) ? AUTH_RSASIG :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			}) ? AUTH_ECDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_EDDSA,
+			}) ? AUTH_EDDSA :
+		authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+			}) ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
 		authby.never ? AUTH_NEVER :
+		authby.authby_eaponly ? AUTH_EAPONLY :
 		AUTH_UNSET);
 }
 
@@ -183,48 +211,95 @@ struct authby authby_from_auth(enum auth auth)
 	case AUTH_NEVER: return (struct authby) { .never = true, };
 	case AUTH_NULL: return (struct authby) { .null = true, };
 	case AUTH_PSK: return (struct authby) { .psk = true, };
-	case AUTH_ECDSA: return AUTHBY_ALL_ECDSA_SHA2;
+	case AUTH_ECDSA: return (struct authby) {
+			AUTHBY_ECDSA_SHA2,
+		};
 	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
 	case AUTH_RSASIG: return (struct authby) {
-			.rsasig = true,
-			.rsasig_v1_5 = true,
-			.rsasig_sha2_256 = true,
-			.rsasig_sha2_384 = true,
-			.rsasig_sha2_512 = true,
+			AUTHBY_RSASIG_RAW,
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
 		};
-	case AUTH_EAPONLY: return (struct authby) {0};
+	case AUTH_EAPONLY: return (struct authby) {
+			.authby_eaponly = true,
+		};
 	}
 	bad_case(auth);
 }
 
 size_t jam_authby(struct jambuf *buf, struct authby authby)
 {
+#define JAM_STRING(N)					\
+	{						\
+		s += jam_string(buf, sep);		\
+		s += jam_string(buf, #N);		\
+		sep = "+";				\
+	}
 #define JAM_AUTHBY(F, N)				\
 	{						\
 		if (authby.F) {				\
-			s += jam_string(buf, sep);	\
-			s += jam_string(buf, #N);	\
-			sep = "+";			\
+			JAM_STRING(N);			\
 		}					\
 	}
 	size_t s = 0;
 	const char *sep = "";
 	JAM_AUTHBY(psk, PSK);
-	JAM_AUTHBY(rsasig, RSASIG);
-	if (!authby_le(AUTHBY_ALL_RSASIG_SHA2, authby)) {
-		JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
-		JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
-		JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+	if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			})) {
+		/* legacy */
+		JAM_STRING(RSASIG);
+	} else if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			}) &&
+		!authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			})) {
+		/* IKEv1 */
+		JAM_STRING(RSASIG);
+	} else if (authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			}) &&
+		!authby_has_all(authby, (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			})) {
+		/* IKEv2 */
+		JAM_STRING(RSASIG);
+	} else {
+		JAM_AUTHBY(rsasig, RSASIG);
+		if (authby_has_all(authby, (struct authby) {
+					AUTHBY_RSASIG_SHA2,
+				})) {
+			JAM_STRING(RSASIG_SHA2);
+		} else {
+			JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
+			JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
+			JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+		}
+		if (authby_has_all(authby, (struct authby) {
+					AUTHBY_RSASIG_V1_5,
+				})) {
+			JAM_STRING(RSASIG_v1_5);
+		} else {
+			JAM_AUTHBY(rsasig_v1_5_sha1, RSASIG_v1_5_SHA1);
+			JAM_AUTHBY(rsasig_v1_5_sha2_256, RSASIG_V1_5_SHA2_256);
+			JAM_AUTHBY(rsasig_v1_5_sha2_384, RSASIG_V1_5_SHA2_384);
+			JAM_AUTHBY(rsasig_v1_5_sha2_512, RSASIG_V1_5_SHA2_512);
+		}
 	}
 	/*
 	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
 	 * short-hand ECDSA.  This matches auth=ecdsa which will set
 	 * all the bits below.
 	 */
-	if (authby_has_all(authby, AUTHBY_ALL_ECDSA_SHA2)) {
-		pexpect(authby.ecdsa);
-		s += jam_string(buf, sep); sep = "+";
-		s += jam_string(buf, "ECDSA");
+	if (authby_has_all(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			})) {
+		JAM_STRING(ECDSA);
 	} else {
 		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
 		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
@@ -233,7 +308,8 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
-	JAM_AUTHBY(rsasig_v1_5, RSASIG_v1_5);
+	JAM_AUTHBY(authby_eaponly, EAPONLY);
+#undef JAM_STRING
 #undef JAM_AUTHBY
 	if (s == 0) {
 		s += jam_string(buf, "none");
@@ -246,4 +322,60 @@ const char *str_authby(struct authby authby, authby_buf *buf)
 	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_authby(&jambuf, authby);
 	return buf->buf;
+}
+
+void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
+{
+	const char *sep = NULL;
+	for (const struct hash_desc **hashp = next_hash_desc(NULL);
+	     hashp != NULL;
+	     hashp = next_hash_desc(hashp)) {
+		const struct hash_desc *hash = (*hashp);
+
+		if (!authby_has_hash(authby, hash)) {
+			continue;
+		}
+
+		/*
+		 * XXX: libreswan does not speak of its support for
+		 * the SHA1 hash algorithms.
+		 */
+		if (hash == &ike_alg_hash_sha1) {
+			continue;
+		}
+
+		if (sep != NULL) {
+			jam_string(buf, sep);
+		}
+		sep = "+";
+		jam_string(buf, hash->common.fqn);
+	}
+	if (sep == NULL) {
+		jam_string(buf, "none");
+	}
+}
+
+struct authby supported_ikev2_digsig_auth_payloads(void)
+{
+	return (struct authby) {
+#ifdef USE_EDDSA
+		AUTHBY_EDDSA,
+#endif
+		AUTHBY_RSASIG_V1_5,
+		AUTHBY_RSASIG_SHA2,
+		AUTHBY_ECDSA_SHA2,
+	};
+}
+
+bool authby_has_pubkey(struct authby authby)
+{
+	return authby_has_any(authby, (struct authby) {
+			AUTHBY_RSASIG_RAW,
+#ifdef USE_EDDSA
+			AUTHBY_EDDSA,
+#endif
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
+			AUTHBY_ECDSA_SHA2,
+		});
 }

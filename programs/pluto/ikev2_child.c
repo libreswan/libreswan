@@ -850,12 +850,12 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	 *   ignored, and they should be logged.
 	 */
 	if (md->v2N_error != NULL) {
-		enum v2_notification error = md->v2N_error->payload.v2n.isan_type;
+		enum ikev2_notification error = md->v2N_error->payload.v2n.isan_type;
 		name_buf esb;
 		llog(RC_LOG, child->sa.logger,
 		     "received ERROR NOTIFY (%d): %s ",
 		     error,
-		     str_enum_long(&v2_notification_names, error, &esb));
+		     str_name_long(&ikev2_notification_names, error, &esb));
 		return error;
 	}
 

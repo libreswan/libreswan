@@ -109,13 +109,17 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 	 * v1 policy is a subset of the v2 policy.
 	 */
 
-	lset_t proposed_authbys;
+	struct authby proposed_authbys = {0};
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		proposed_authbys = LELEM(AUTH_PSK);
+		proposed_authbys = (struct authby) {
+			.psk = true,
+		};
 		break;
 	case OAKLEY_RSA_SIG:
-		proposed_authbys = LELEM(AUTH_RSASIG);
+		proposed_authbys = (struct authby) {
+			AUTHBY_RSASIG_RAW,
+		};
 		break;
 		/* Not implemented */
 	case OAKLEY_DSS_SIG:

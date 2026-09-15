@@ -230,8 +230,22 @@ struct host_config {
 		bool split;
 	} cisco;
 
-	bool send_supported_auth_methods;	/* RFC 9593 
-					 * Announcing Supported Authentication Methods */
+	bool send_supported_auth_methods;	/* RFC 9593 Announcing
+						 * Supported
+						 * Authentication
+						 * Methods */
+
+	bool send_initial_contact;		/* Send
+						 * INITIAL_CONTACT
+						 * (RFC-2407)
+						 * payload? */
+	bool send_vendorid;			/* Send our vendorid?
+						 * Security vs
+						 * Debugging help */
+	bool send_vid_fake_strongswan;		/* Send the
+						 * unversioned
+						 * strongswan VID */
+	enum send_ca_policy send_ca;
 };
 
 struct child_config {
@@ -302,13 +316,10 @@ struct config {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 
-	lset_t sighash_policy;
-
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	enum xauthby xauthby;
 	enum xauthfail xauthfail;
-	enum send_ca_policy send_ca;
 
 	reqid_t sa_reqid;
 
@@ -360,15 +371,13 @@ struct config {
 	bool rekey;				/* rekey state either Phase */
 	bool reauth;				/* IKEv2 only initiate re-authentication */
 	bool narrowing;
-	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
-	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */
-	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 
 	ip_port remote_tcpport;		/* TCP remote port to use -
 					 * local port will be
 					 * ephemeral */
 
 	bool mobike;			/* Allow MOBIKE */
+	enum yna_options ike_sa_init_full_transcript_auth;
 	bool intermediate;		/* allow Intermediate Exchange */
 	bool sha2_truncbug;		/* workaround old Linux kernel (android 4.x) */
 	bool share_lease;		/* Allow further connections of IKE SA to use lease IP */

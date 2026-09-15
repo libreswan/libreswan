@@ -185,7 +185,7 @@ struct score {
 };
 
 static bool score_host_connection(const struct ike_sa *ike,
-				  lset_t proposed_authbys,
+				  const struct authby proposed_authbys,
 				  const struct id *initiator_id,/*IDi*/
 				  const struct id *responder_id,/*IDr*/
 				  asn1_t initiator_ca,
@@ -311,7 +311,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			vdbg("skipping because AGGRESSIVE isn't right");
 			return false;	/* differ about aggressive mode */
 		}
-		if (LHAS(proposed_authbys, AUTH_PSK)) {
+		if (proposed_authbys.psk) {
 			if (!(d->remote->host.config->auth == AUTH_PSK)) {
 				/* there needs to be a key */
 				vdbg("skipping because no PSK in POLICY");
@@ -323,7 +323,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 				return false; /* no secret */
 			}
 		}
-		if (LHAS(proposed_authbys, AUTH_RSASIG)) {
+		if (proposed_authbys.rsasig) {
 			if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
 				vdbg("skipping because not RSASIG in POLICY");
 				return false;	/* no key */
@@ -353,7 +353,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		 * (preferred) the below will reject
 		 * ECDSA?
 		 */
-		if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
+		if (!authby_has_auth(proposed_authbys, d->remote->host.config->auth)) {
 			vdbg("skipping because mismatched authby");
 			return false;
 		}
@@ -391,9 +391,9 @@ static bool score_host_connection(const struct ike_sa *ike,
 			break;
 		default:
 		{
-			lset_buf eb;
+			authby_buf eb;
 			vdbg("%s so no authby checks performed",
-			     str_lset_short(&auth_names, "+", proposed_authbys, &eb));
+			     str_authby(proposed_authbys, &eb));
 			break;
 		}
 		}
@@ -542,15 +542,15 @@ static bool better_score(struct score best, struct score score, struct logger *l
 }
 
 static struct connection *refine_host_connection_on_responder(const struct ike_sa *ike,
-							      lset_t proposed_authbys,
+							      const struct authby proposed_authbys,
 							      const struct id *initiator_id,
 							      const struct id *responder_id,
 							      struct verbose verbose)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	PASSERT(ike->sa.logger, !LHAS(proposed_authbys, AUTH_NEVER));
-	PASSERT(ike->sa.logger, !LHAS(proposed_authbys, AUTH_UNSET));
+	vassert(authby_is_set(proposed_authbys));
+	vassert(!proposed_authbys.never);
 
 	/*
 	 * XXX: should, instead, C be a permanent or template as it
@@ -704,7 +704,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 }
 
 bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
-						  lset_t proposed_authbys,
+						  const struct authby proposed_authbys,
 						  const struct id *initiator_id,
 						  const struct id *responder_id)
 {

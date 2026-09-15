@@ -2,6 +2,12 @@
   <term>
     <option>authby=</option>
   </term>
+  <term>
+    <option>leftauthby=</option>
+  </term>
+  <term>
+    <option>rightauthby=</option>
+  </term>
   <listitem>
 
     <para>
@@ -151,6 +157,19 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>eaponly</option>
+	</term>
+	<listitem>
+	  <para>
+	    Only use EAP authentication (omit the regular AUTH
+	    payload).
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>

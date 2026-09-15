@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ RUN() { echo " $@" 1>&2 ; "$@" ; }
+west #
+ START() { RUN ipsec pluto --config $1 ; ../../guestbin/wait-until-pluto-started; }
+west #
+ STATUS() { ipsec status | sed -n -e 's/.*\(signature-hash-algorithms=[^;]*\)[,;]/\1/p' ; }
+west #
+ STOP() { RUN ipsec whack --shutdown ; }
+west #
+ CHECK() { START $1 ; STATUS ; STOP ; }
+west #
+ CHECK $PWD/west.conf
+ ipsec pluto --config /testing/pluto/addconn-57-signature-hash-algorithms/west.conf
+signature-hash-algorithms=auto
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ CHECK $PWD/signature-hash-algorithms-yes.conf
+ ipsec pluto --config /testing/pluto/addconn-57-signature-hash-algorithms/signature-hash-algorithms-yes.conf
+signature-hash-algorithms=yes
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ CHECK $PWD/signature-hash-algorithms-no.conf
+ ipsec pluto --config /testing/pluto/addconn-57-signature-hash-algorithms/signature-hash-algorithms-no.conf
+signature-hash-algorithms=no
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ CHECK $PWD/signature-hash-algorithms-auto.conf
+ ipsec pluto --config /testing/pluto/addconn-57-signature-hash-algorithms/signature-hash-algorithms-auto.conf
+signature-hash-algorithms=auto
+ ipsec whack --shutdown
+Pluto is shutting down
+west #

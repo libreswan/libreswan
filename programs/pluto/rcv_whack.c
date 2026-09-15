@@ -425,6 +425,11 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.op = whack_sa,
 			.jam = jam_whack_name,
 		},
+		[WHACK_LIVENESS] = {
+			.name = "liveness",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
 		[WHACK_DDOS] = {
 			.name = "ddos",
 			.op = whack_ddos,

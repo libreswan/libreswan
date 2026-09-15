@@ -141,6 +141,7 @@
       &conn.fragmentation;
       &conn.ikepad;
       &conn.mobike;
+      &conn.ike-sa-init-full-transcript-auth;
       &conn.intermediate;
       &conn.esn;
       &conn.decap-dscp;

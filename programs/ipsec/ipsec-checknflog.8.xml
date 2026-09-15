@@ -28,9 +28,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Checknflog</emphasis> initialises nftables
-      or iptables rules for the nflog devices when specified via the nflog= or
-      nflog-all= configuration options.
+      <command>ipsec checknflog</command> initialises nftables or
+      iptables rules for the nflog devices when specified via the
+      <option>nflog=</option> or <option>nflog-all=</option>
+      configuration options.
     </para>
   </refsect1>
 

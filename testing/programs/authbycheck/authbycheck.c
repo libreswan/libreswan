@@ -63,43 +63,28 @@ int main(int argc, char *argv[])
 		PRINT("authby_from_auth(%u)", auth);
 		struct authby authby = authby_from_auth(auth);
 
-		bool authby_set = (auth != AUTH_EAPONLY);
-		if (authby_is_set(authby) != authby_set) {
-			FAIL("authby_is_set(%u*) == %u", auth, authby_set);
+		if (!authby_is_set(authby)) {
+			FAIL("authby_is_set(%u*)", auth);
 		}
-		if (auth_in_authby(auth, authby) != authby_set) {
-			FAIL("auth_in_authby(%u, %u*) == %u", auth, auth, authby_set);
+		if (!authby_has_auth(authby, auth)) {
+			FAIL("authby_has_auth(%u, %u*)", auth, auth);
 		}
 
 		struct authby not_authby = authby_not(authby);
 		if (!authby_is_set(not_authby)) {
 			FAIL("authby_is_set(not(%u*)) == %u", auth, false);
 		}
-		if (auth_in_authby(auth, not_authby)) {
-			FAIL("auth_in_authby(%u, not(%u*)) == %u", auth, auth, false);
+		if (authby_has_auth(not_authby, auth)) {
+			FAIL("authby_has_auth(not(%u*), %u) == %u", auth, auth, false);
 		}
 
 		authby_buf ab;
 		str_authby(authby, &ab);
-		if (auth == AUTH_EAPONLY) {
-			if (!streq(ab.buf, "none")) {
-				FAIL("str_authby(%u) == none", auth);
-			}
-		} else {
-			if (streq(ab.buf, "none")) {
-				FAIL("str_authby(%u) != none", auth);
-			}
-		}
-
-		if (auth == AUTH_EAPONLY) {
-			continue;
+		if (streq(ab.buf, "none")) {
+			FAIL("str_authby(%u) != none", auth);
 		}
 
 		for (enum auth alt = AUTH_FLOOR; alt < AUTH_ROOF; alt++) {
-
-			if (alt == AUTH_EAPONLY) {
-				continue;
-			}
 
 			struct authby altby = authby_from_auth(alt);
 
@@ -113,16 +98,16 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_and(authby, altby)) == eq)) {
 				FAIL("authby_is_set(and(%u*,%u*)) == %u", auth, alt, eq);
 			}
-			if (!(auth_in_authby(auth, authby_and(authby, altby)) == eq)) {
-				FAIL("auth_in_authby(%u, and(%u*,%u*)) == %u", auth, auth, alt, eq);
+			if (!(authby_has_auth(authby_and(authby, altby), auth) == eq)) {
+				FAIL("authby_has_auth(and(%u*,%u*), %u) == %u", auth, alt, auth, eq);
 			}
 
 			PRINT("authby_or(%u,%u)", auth, alt);
 			if (!authby_is_set(authby_or(authby, altby))) {
-				FAIL("authby_is_set(or(%u*,%u*))", auth, alt);
+				FAIL("authby_is_set(or(%u*, %u*))", auth, alt);
 			}
-			if (!auth_in_authby(auth, authby_or(authby, altby))) {
-				FAIL("auth_in_authby(%u, or(%u*,%u*))", auth, auth, alt);
+			if (!authby_has_auth(authby_or(authby, altby), auth)) {
+				FAIL("authby_has_auth(or(%u*,%u*), %u)", auth, alt, auth);
 			}
 
 			PRINT("authby_xor(%u,%u)", auth, alt);
@@ -130,8 +115,8 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (!(auth_in_authby(auth, authby_xor(authby, altby)) == (xor && authby_set))) {
-				FAIL("auth_in_authby(%u, xor(%u,%u)) == %u", auth, alt, auth, xor && authby_set);
+			if (!(authby_has_auth(authby_xor(authby, altby), auth) == xor)) {
+				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor);
 			}
 
 			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
@@ -191,17 +176,14 @@ int main(int argc, char *argv[])
 
 	for (enum auth auth = DIGITAL_SIGNATURE_AUTH_FLOOR;
 	     auth < DIGITAL_SIGNATURE_AUTH_ROOF; auth++) {
-		if (!auth_in_authby(auth, AUTHBY_DIGITAL_SIGNATURE)) {
+		if (!authby_has_auth(supported_ikev2_digsig_auth_payloads(), auth)) {
 			FAIL("auth_in_authby(%u, AUTHBY_DIGITAL_SIGNATURE) failed", auth);
 		}
 	}
 
 	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
-		if (auth == AUTH_EAPONLY) {
-			continue;
-		}
-		if (!auth_in_authby(auth, AUTHBY_ALL)) {
-			FAIL("auth_in_authby(%u, AUTHBY_ALL) failed", auth);
+		if (!authby_has_auth(AUTHBY_ALL, auth)) {
+			FAIL("authby_has_auth(AUTHBY_ALL, %u) failed", auth);
 		}
 	}
 
@@ -209,26 +191,37 @@ int main(int argc, char *argv[])
 		struct authby authby_sha2_256 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha2_256);
 		/* XXX: legacy RSA is allowed with SHA2 */
-		if (!authby_sha2_256.rsasig_v1_5 ||
+		if (!authby_sha2_256.rsasig_v1_5_sha2_256 ||
 		    !authby_sha2_256.ecdsa_sha2_256 ||
 		    !authby_sha2_256.rsasig_sha2_256 ||
-		    authby_sha2_256.eddsa) {
+		    authby_has_any(authby_sha2_256, (struct authby) {
+				    AUTHBY_EDDSA,
+			    })) {
 			FAIL("authby_and_hash(sha2_256)");
 		}
 		struct authby authby_sha1 =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
-		if (!authby_sha1.rsasig_v1_5 ||
-		    authby_has_any(authby_sha1, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_any(authby_sha1, AUTHBY_ALL_RSASIG_SHA2) ||
-		    authby_sha1.eddsa) {
+		if (!authby_has_all(authby_sha1, (struct authby) {
+					AUTHBY_RSASIG_V1_5_SHA1,
+				}) ||
+		    authby_has_any(authby_sha1, (struct authby) {
+				    AUTHBY_RSASIG_V1_5_SHA2,
+				    AUTHBY_ECDSA_SHA2,
+				    AUTHBY_RSASIG_SHA2,
+				    AUTHBY_EDDSA,
+			    })) {
 			FAIL("authby_and_hash(sha1");
 		}
 		struct authby authby_identity =
 			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_identity);
-		if (!authby_identity.eddsa ||
-		    authby_identity.rsasig_v1_5 ||
-		    authby_has_any(authby_identity, AUTHBY_ALL_ECDSA_SHA2) ||
-		    authby_has_any(authby_identity, AUTHBY_ALL_RSASIG_SHA2)) {
+		if (!authby_has_all(authby_identity, (struct authby) {
+					AUTHBY_EDDSA,
+				}) ||
+		    authby_has_any(authby_identity, (struct authby) {
+				    AUTHBY_RSASIG_V1_5,
+				    AUTHBY_ECDSA_SHA2,
+				    AUTHBY_RSASIG_SHA2,
+			    })) {
 			FAIL("authby_and_hash(identity)");
 		}
 	} while (false);

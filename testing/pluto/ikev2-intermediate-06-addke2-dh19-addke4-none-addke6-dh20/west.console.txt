@@ -42,7 +42,7 @@ west #
 "west": added oriented IKEv2 connection
 west #
  ipsec connectionstatus | grep ' policy: '
-"west":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
+"west":   policy: IKEv2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
 west #
  echo "initdone"
 initdone

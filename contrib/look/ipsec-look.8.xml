@@ -28,9 +28,10 @@
 
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
-    <para><emphasis>Look</emphasis> is used to get a quick overview of
-    what the status of &Libreswan; is.  the equivalent to running the
-    commands
+    <para>
+      <command>ipsec look</command> is used to get a quick overview of
+      what the status of &Libreswan; is.  the equivalent to running
+      the commands
   </para>
   </refsect1>
 

@@ -1,4 +1,0 @@
-Basic pluto with IKEv2 on the initiator (west), and on the responder,
-using RAW RSA keys for authentication.
-
-This is using nhelpers=0 so all crypto is performed inline.

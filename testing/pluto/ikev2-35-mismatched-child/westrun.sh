@@ -1,3 +1,3 @@
 ipsec whack --impair revival
-ipsec auto --up westnet-eastnet-mismatch
+ipsec up westnet-eastnet-mismatch # sanitize-retransmits
 echo done

@@ -3,6 +3,10 @@
 set -e
 exec 3>&1  # save STDOUT as 3
 
+CERTUTIL=${certutil:-${CERTUTIL}}
+PK12UTIL=${pk12util:-${PK12UTIL}}
+CRLUTIL=${crlutil:-${CRLUTIL}}
+
 if test $# -ne 1 ; then
     cat <<EOF 1>&3
 Usage: $0 <outdir>
@@ -36,8 +40,8 @@ future=$(date  -d @$((now + day * 360)) ${format})
 crl=${certdir}/crl-is-out-of-date.crl
 echo ${crl}
 rm -f ${crl}
-run crlutil -d ${certdir} -E -n mainca
-run crlutil -d ${certdir} -G -o ${crl} -n mainca <<EOF
+run ${CRLUTIL} -d ${certdir} -E -n mainca
+run ${CRLUTIL} -d ${certdir} -G -o ${crl} -n mainca <<EOF
 update=${past}
 nextupdate=${present}
 addcert `cat ${certdir}/revoked.serial` ${past}
@@ -49,8 +53,8 @@ openssl crl -inform DER -in ${crl} -outform PEM -out $(dirname ${crl})/$(basenam
 crl=${certdir}/crl-is-up-to-date.crl
 echo ${crl}
 rm -f ${crl}
-run crlutil -d ${certdir} -D -n mainca
-run crlutil -d ${certdir} -G -o ${crl} -n mainca <<EOF
+run ${CRLUTIL} -d ${certdir} -D -n mainca
+run ${CRLUTIL} -d ${certdir} -G -o ${crl} -n mainca <<EOF
 update=${present}
 nextupdate=${future}
 addcert $(cat ${certdir}/revoked.serial) ${present}

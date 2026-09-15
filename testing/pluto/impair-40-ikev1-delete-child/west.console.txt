@@ -6,14 +6,14 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": ikev2=no has been replaced by keyexchange=ikev1
 "west-east": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-east
+ ipsec up west-east # sanitize-retransmits
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
 "west-east" #1: sent Main Mode I2
@@ -31,7 +31,7 @@ west #
 west #
  ipsec whack --impair v1_ipsec_delete_payload:duplicate
 west #
- ipsec auto --delete west-east
+ ipsec delete west-east # sanitize-retransmits
 "west-east": terminating SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "west-east" #2: emitting duplicate IPsec delete payloads

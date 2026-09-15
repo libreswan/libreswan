@@ -7,5 +7,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/ip-route.sh get to 192.1.2.23
 # this test need --verbose to see source address selection
-ipsec auto --add --verbose road
+ipsec add --verbose road
 echo "initdone"

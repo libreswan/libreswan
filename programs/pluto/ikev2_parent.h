@@ -46,8 +46,6 @@ struct ke_desc;
 struct v2_message;
 struct state;
 
-bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
-					   struct ike_sa *ike);
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name);
 void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md);

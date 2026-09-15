@@ -1,0 +1,84 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add westnet-eastnet-alias
+"westnet-eastnet-alias": added oriented IKEv2 connection
+west #
+ ipsec add westnet-eastnet-second
+"westnet-eastnet-second": added oriented IKEv2 connection
+west #
+ ipsec connectionstatus westnet-eastnet
+no connection or alias named "westnet-eastnet"
+west #
+ echo "initdone"
+initdone
+west #
+ # use the connalias
+west #
+ ipsec up franklin
+initiating all connections with alias "franklin"
+"westnet-eastnet-alias" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-second": queue Child SA; waiting on IKE SA "westnet-eastnet-alias" #1 negotiating with 192.1.2.23
+initiating 2 connections
+"westnet-eastnet-alias" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-alias" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"westnet-eastnet-alias" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-alias" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"westnet-eastnet-alias" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
+"westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; in use by connection "westnet-eastnet-second" with routing unrouted-bare-negotiation
+"westnet-eastnet-alias" #1: response for Child SA #2 was rejected with TEMPORARY_FAILURE; initiating delete of Child SA (IKE SA will remain UP)
+"westnet-eastnet-second" #3: initiating Child SA using IKE SA #1
+"westnet-eastnet-alias" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
+"westnet-eastnet-alias" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "westnet-eastnet-alias" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+ERROR: "westnet-eastnet-alias" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow 192.0.2.0/24===192.0.1.0/24: No such file or directory (errno 2)
+ERROR: "westnet-eastnet-alias" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+"westnet-eastnet-second" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-second" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+west #
+ ipsec trafficstatus
+#3: "westnet-eastnet-second", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #
+ ipsec _kernel state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+west #
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+west #

@@ -7,7 +7,7 @@ PREFIX=@@KVM_PREFIX@@
 release=$(uname -r)
 
 cat <<EOF | tee /etc/pkg_install.conf
-PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/10.0/All
+PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/${release}/All
 EOF
 
 # First install pkgin, it knows how to cache downloaded files.

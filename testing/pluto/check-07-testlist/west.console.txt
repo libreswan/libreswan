@@ -1,0 +1,4 @@
+./testlist-vs-dirs.sh
+west #
+ ./dirs-vs-testlist.sh
+west #

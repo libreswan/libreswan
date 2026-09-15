@@ -27,7 +27,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis>Checknss</emphasis> checks or initialises the NSS
+      <command>ipsec checknss</command> checks or initialises the NSS
       database where all private keys for RSA and certificate keypairs
       are stored. To remove an existing IPsec NSS database, remove all
       the *.db files and pkcs11.txt from the NSS data directory

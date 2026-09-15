@@ -125,6 +125,7 @@ static void help(void)
 		"	[--esn ] [--no-esn] [--decap-dscp[={yes,no}]] [--encap-dscp[={yes,no}]] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
+		"	[--ike-sa-init-full-transcript-auth[={yes,no,auto}]] \\\n"
 		"	[--nm-configured] \\\n"
 #ifdef USE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
@@ -167,6 +168,8 @@ static void help(void)
 		"\n"
 		"rekey: whack (--rekey-ike | --rekey-child) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
+		"\n"
+		"liveness: whack --liveness --name <connection_name> [--asynchronous]\n"
 		"\n"
 		"active redirect: whack [--name <connection_name>] \\\n"
 		"	--redirect-to <ip-address(es)> \n"
@@ -398,6 +401,7 @@ enum opt {
 	OPT_DELETE_CHILD,
 	OPT_DOWN_IKE,
 	OPT_DOWN_CHILD,
+	OPT_LIVENESS,
 
 	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
@@ -564,6 +568,7 @@ enum opt {
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
+	CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
 	CD_SESSION_RESUMPTION,
 
 	CD_IKE,
@@ -765,6 +770,7 @@ const struct option optarg_options[] = {
 	{ "delete-child\0", no_argument, NULL, OPT_DELETE_CHILD },
 	{ "down-ike\0", no_argument, NULL, OPT_DOWN_IKE },
 	{ "down-child\0", no_argument, NULL, OPT_DOWN_CHILD },
+	{ "liveness\0", no_argument, NULL, OPT_LIVENESS },
 
 	{ "suspend\0", no_argument, NULL, OPT_SUSPEND, },
 
@@ -872,6 +878,7 @@ const struct option optarg_options[] = {
 	{ REPLACE_OPT("cisco_unity", "cisco-unity", "3.9"), no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "fake-strongswan\0", optional_argument, NULL, CD_FAKE_STRONGSWAN },
 	{ "mobike\0", optional_argument, NULL, CD_MOBIKE },
+	{ OPT("ike-sa-init-full-transcript-auth", "yes|no|auto"), optional_argument, NULL, CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH },
 
 	{ "dpddelay\0", required_argument, NULL, CD_DPDDELAY },
 	{ "dpdtimeout\0", required_argument, NULL, CD_DPDTIMEOUT },
@@ -1216,6 +1223,10 @@ int main(int argc, char **argv)
 			continue;
 		case OPT_DOWN_CHILD: /* --down-child */
 			whack_command(&msg, WHACK_DOWN_CHILD);
+			continue;
+
+		case OPT_LIVENESS: /* --liveness */
+			whack_command(&msg, WHACK_LIVENESS);
 			continue;
 
 		case OPT_SUSPEND: /* --suspend */
@@ -1749,6 +1760,11 @@ int main(int argc, char **argv)
 			msg.wm_mobike = (optarg == NULL ? "yes" : optarg);
 			continue;
 
+		/* --ike-sa-init-full-transcript-auth[={yes,no,auto}] */
+		case CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH:
+			msg.wm_ike_sa_init_full_transcript_auth = (optarg == NULL ? "yes" : optarg);
+			continue;
+
 		case CDS_PASS:	/* --pass */
 			msg.wm_type = "pass";
 			continue;
@@ -2259,6 +2275,7 @@ int main(int argc, char **argv)
 	    seen[OPT_DELETE_CHILD] ||
 	    seen[OPT_DOWN_IKE] ||
 	    seen[OPT_DOWN_CHILD] ||
+	    seen[OPT_LIVENESS] ||
 	    seen[OPT_SUSPEND] ||
 	    (opts_seen & CONN_OPT_SEEN)) {
 		if (!seen[OPT_NAME]) {

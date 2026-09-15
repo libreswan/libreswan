@@ -1,0 +1,9 @@
+Basic pluto test:
+
+"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
+
+However, the conn has an alias, which is "franklin" for no reason other
+than to test the alias facility.
+
+
+

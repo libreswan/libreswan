@@ -15,7 +15,7 @@ west# ../../guestbin/wait-until-pluto-started
 west# ipsec add west-east
 west# echo "initdone"
 
-west# ipsec up west-east
+west# ipsec up west-east # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
 west# ../../guestbin/ping-once.sh --up 192.1.2.23

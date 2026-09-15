@@ -2253,7 +2253,7 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 		return STF_INTERNAL_ERROR;
 	}
 
-	enum v2_notification error = notify->payload.v2n.isan_type;
+	enum ikev2_notification error = notify->payload.v2n.isan_type;
 	if (!PEXPECT(larval_child->sa.logger, error == v2N_INVALID_KE_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -2263,7 +2263,7 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 		llog(RC_LOG, larval_child->sa.logger,
 		     "%s failed with error notification %s response but no KE was sent",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     str_enum_short(&v2_notification_names, error, &nb));
+		     str_name_short(&ikev2_notification_names, error, &nb));
 		return STF_FATAL;
 	}
 
@@ -2277,7 +2277,7 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 		llog(RC_LOG, larval_child->sa.logger,
 		     "%s failed with error notification %s response: %s",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     str_enum_short(&v2_notification_names, error, &nb),
+		     str_name_short(&ikev2_notification_names, error, &nb),
 		     str_diag(d));
 		pfree_diag(&d);
 		return STF_FATAL;
@@ -2290,7 +2290,7 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 	llog(RC_LOG, larval_child->sa.logger,
 	     "%s failed with error notification %s response suggesting %s instead of %s",
 	     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-	     str_enum_short(&v2_notification_names, error, &nb),
+	     str_name_short(&ikev2_notification_names, error, &nb),
 	     str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
 	     ike->sa.st_oakley.ta_dh->common.fqn);
 	return STF_OK; /* let IKE stumble on */
@@ -2315,7 +2315,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	 * There _should_ be an error notification.
 	 */
 
-	enum v2_notification error =
+	enum ikev2_notification error =
 		(md->v2N_error == NULL ? v2N_NOTHING_WRONG :
 		 md->v2N_error->payload.v2n.isan_type);
 	pstat(ikev2_recv_notifies_e, error); /* yes, counts nothing wrong */
@@ -2330,7 +2330,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		llog(RC_LOG, (*larval_child)->sa.logger,
 		     "%s failed with error notification %s",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     str_enum_short(&v2_notification_names, error, &esb));
+		     str_name_short(&ikev2_notification_names, error, &esb));
 		ldbg((*larval_child)->sa.logger,
 		     "re-add child to pending queue with exponential back-off?");
 		status = (error == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :

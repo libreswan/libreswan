@@ -63,13 +63,15 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
-#define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
+#define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION, ...)			\
 	({								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			const struct logger *logger_ = LOGGER;		\
-			llog_pexpect(logger_, WHERE, "%s", #ASSERTION);	\
+			/* ASSERTION can contain %... */		\
+			llog_pexpect(logger_, WHERE, "%s",		\
+				     #ASSERTION __VA_ARGS__);		\
 		}							\
 		assertion__; /* result */				\
 	})
