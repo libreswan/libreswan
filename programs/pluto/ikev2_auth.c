@@ -411,12 +411,9 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outs)
 {
-	/* EAP only does PSK?!? */
-	enum auth authby = (ike->sa.st_eap != NULL ? AUTH_PSK : local_v2_auth(ike));
-	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
-		.isaa_auth_method = local_auth_method,
+		.isaa_auth_method = ike->sa.st_v2_local_auth.method,
 	};
 
 	struct pbs_out auth_pbs;
@@ -424,7 +421,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		return false;
 	}
 
-	switch (local_auth_method) {
+	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
@@ -787,8 +784,9 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	struct logger *logger = ike->sa.logger;
 
 	enum auth authby = local_v2_auth(ike);
-	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-	switch (auth_method) {
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+
+	switch (ike->sa.st_v2_local_auth.method) {
 
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
@@ -916,7 +914,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names, ike->sa.st_v2_local_auth.method, &eb));
 		return STF_FATAL;
 	}
 	}
@@ -944,8 +942,9 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	enum auth authby = local_v2_auth(ike);
-	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
-	switch (auth_method) {
+	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+
+	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
@@ -1043,7 +1042,8 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names,
+				      ike->sa.st_v2_local_auth.method, &eb));
 		return STF_FATAL;
 	}
 	}
