@@ -859,15 +859,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							struct msg_digest *md,
 							const struct v2_id_payload *id_payload,
-							const struct hash_desc *hash_algo,
-							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
 	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
-				      signer, cb, HERE)) {
+				      &id_payload->mac,
+				      ike->sa.st_v2_local_auth.hash,
+				      LOCAL_PERSPECTIVE,
+				      ike->sa.st_v2_local_auth.signer,
+				      cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
@@ -890,28 +889,20 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
-							     &ike_alg_hash_sha1,
-							     &pubkey_signer_raw_pkcs1_1_5_rsa,
 							     auth_cb);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_256,
-							    &pubkey_signer_raw_ecdsa/*_p256*/,
-							    auth_cb);
+							     &ike->sa.st_v2_id_payload,
+							     auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_384,
-							    &pubkey_signer_raw_ecdsa/*_p384*/,
-							    auth_cb);
+							     &ike->sa.st_v2_id_payload,
+							     auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_512,
-							    &pubkey_signer_raw_ecdsa/*_p521*/,
-							    auth_cb);
+							     &ike->sa.st_v2_id_payload,
+							     auth_cb);
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
@@ -973,8 +964,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
-							     ike->sa.st_v2_digsig.hash,
-							     ike->sa.st_v2_digsig.signer, auth_cb);
+							     auth_cb);
 	}
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
