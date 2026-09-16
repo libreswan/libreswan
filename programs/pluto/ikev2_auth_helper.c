@@ -115,7 +115,8 @@ static void pack_task(struct ike_sa *ike,
 	}
 }
 
-bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
+bool submit_v2_auth_signature(struct ike_sa *ike,
+			      struct msg_digest *md,
 			      const struct crypt_mac *idhash,
 			      const struct hash_desc *hasher,
 			      enum perspective from_the_perspective_of,
@@ -124,20 +125,24 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      where_t where)
 {
 	const struct connection *c = ike->sa.st_connection;
-	struct secret_pubkey_stuff *pks = get_local_private_key(c, signer->type,
-								ike->sa.logger);
-	if (pks == NULL) {
-		/* failure: no key to use */
-		return false;
-	}
 
 	struct ikev2_task task = {
 		.cb = cb,
 		.hasher = hasher,
 		.signer = signer,
-		.pks = secret_pubkey_stuff_addref(pks, HERE),
 		.signature = {0},
 	};
+
+	if (signer != NULL) {
+		struct secret_pubkey_stuff *pks =
+			get_local_private_key(c, signer->type,
+					      ike->sa.logger);
+		if (pks == NULL) {
+			/* failure: no key to use */
+			return false;
+		}
+		task.pks = secret_pubkey_stuff_addref(pks, HERE);
+	}
 
 	pack_task(ike, idhash, from_the_perspective_of, &task);
 
@@ -155,6 +160,13 @@ static stf_status v2_auth_signature_helper(struct ikev2_task *task,
 					   struct logger *logger)
 {
 	logtime_t start = logtime_start(logger);
+
+	if (task->signer == NULL) {
+		task->signature.len = task->idhash.len;
+		PASSERT(logger, sizeof(task->signature.ptr) >= sizeof(task->idhash.ptr));
+		memcpy_hunk(task->signature.ptr, task->idhash, task->idhash.len);
+		return STF_OK;
+	}
 
 	const struct hash_hunk octets[] = {
 		/* optional zero prefix and second packet, len can be 0 */
