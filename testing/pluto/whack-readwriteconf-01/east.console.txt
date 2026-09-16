@@ -17,7 +17,6 @@ conn west
 	right=192.1.2.23
 	right=192.1.2.23
 	rightid=@east
-	authby=rsasig
 	keyexchange=ikev1
 east #
  echo "initdone"
