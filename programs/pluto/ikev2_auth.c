@@ -231,7 +231,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
-enum auth local_v2_auth(struct ike_sa *ike)
+static enum auth local_v2_auth(struct ike_sa *ike)
 {
 	if (ike->sa.st_v2_resume_session != NULL) {
 		return AUTH_PSK;
@@ -268,9 +268,94 @@ enum auth local_v2_auth(struct ike_sa *ike)
  * auth method.
  */
 
-enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum auth auth)
+static struct local_v2AUTH local_pubkey_v2AUTH(enum ikev2_auth_method method,
+					       const struct hash_desc *hash,
+					       const struct pubkey_signer *signer)
 {
+	return (struct local_v2AUTH) {
+		.method = method,
+		.hash = hash,
+		.signer = signer,
+	};
+}
+
+static struct local_v2AUTH local_v2AUTH(struct ike_sa *ike,
+					enum auth auth,
+					enum ikev2_auth_method method)
+{
+	switch (method) {
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
+	{
+		const struct pubkey_signer *signer;
+		const char *signer_story;
+		const struct hash_desc *hash;
+		const char *hash_story;
+		if (ike->sa.st_v2_digsig.hash == NULL) {
+			hash = v2_auth_negotiated_signature_hash(ike);
+			hash_story = "from policy";
+		} else {
+			hash = ike->sa.st_v2_digsig.hash;
+			hash_story = "saved earlier";
+		}
+		switch (auth) {
+		case AUTH_RSASIG:
+			if (ike->sa.st_v2_digsig.signer == NULL ||
+			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
+				signer = &pubkey_signer_digsig_rsassa_pss;
+				signer_story = "from policy";
+			} else {
+				signer = ike->sa.st_v2_digsig.signer;
+				signer_story = "saved earlier";
+			}
+			break;
+		case AUTH_ECDSA:
+			/* no choice */
+			signer = &pubkey_signer_digsig_ecdsa;
+			signer_story = "hardwired(ECDSA)";
+			break;
+		case AUTH_EDDSA:
+			signer = &pubkey_signer_digsig_eddsa_ed25519;
+			signer_story = "hardwired(EDDSA)";
+			break;
+		default:
+			bad_case(auth);
+		}
+		ldbg(ike->sa.logger, "DIGSIG signer %s hash %s", signer_story, hash_story);
+		return local_pubkey_v2AUTH(method, hash, signer);
+	}
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
+		return local_pubkey_v2AUTH(method,
+					   &ike_alg_hash_sha1,
+					   &pubkey_signer_raw_pkcs1_1_5_rsa);
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return local_pubkey_v2AUTH(method,
+					   &ike_alg_hash_sha2_256,
+					   &pubkey_signer_raw_ecdsa/*_p256*/);
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return local_pubkey_v2AUTH(method,
+					   &ike_alg_hash_sha2_384,
+					   &pubkey_signer_raw_ecdsa/*_p384*/);
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		return local_pubkey_v2AUTH(method,
+					   &ike_alg_hash_sha2_512,
+					   &pubkey_signer_raw_ecdsa/*_p521*/);
+	case IKEv2_AUTH_SHARED_KEY_MAC:
+	case IKEv2_AUTH_NULL:
+		return (struct local_v2AUTH) {
+			.method = method,
+		};
+	case IKEv2_AUTH_RESERVED:
+	case IKEv2_AUTH_DSS_DIGITAL_SIGNATURE:
+	case IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD:
+		break;
+	}
+	bad_case(method);
+}
+
+struct local_v2AUTH local_v2AUTH_method(struct ike_sa *ike)
+{
+	enum auth auth = (ike->sa.st_eap != NULL ? AUTH_PSK :
+			  local_v2_auth(ike));
 	struct connection *c = ike->sa.st_connection;
 
 	if (impair.force_v2_auth_method.enabled) {
@@ -278,7 +363,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
 		     str_enum_long(&ikev2_auth_method_names,
 				   impair.force_v2_auth_method.value, &eb));
-		return impair.force_v2_auth_method.value;
+		return local_v2AUTH(ike, auth, impair.force_v2_auth_method.value);
 	}
 
 	/* mask authby with the new "Digital Signature" hashes */
@@ -286,7 +371,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		authby_and(c->local->host.config->authby,
 			   ike->sa.st_v2_digsig.peer_pubkey_mask);
 	if (authby_has_auth(digsig_auth_payload, auth)) {
-		return IKEv2_AUTH_DIGITAL_SIGNATURE;
+		return local_v2AUTH(ike, auth, IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
 	switch (auth) {
@@ -296,7 +381,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * RSASIG_v1_5.
 		 */
 		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
-			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
+			return local_v2AUTH(ike, auth, IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
 		}
 
 		/*
@@ -309,7 +394,10 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 			llog_sa(RC_LOG, ike,
 				"legacy RSA-SHA1 is not allowed but peer supports nothing else");
 		}
-		return IKEv2_AUTH_RESERVED;
+
+		return (struct local_v2AUTH) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
 
 	case AUTH_ECDSA:
 		/*
@@ -325,15 +413,15 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * authby which _should_ be looking at the ECDSA key.
 		 */
 		if (c->local->host.config->authby.ecdsa_sha2_512) {
-			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
+			return local_v2AUTH(ike, auth, IKEv2_AUTH_ECDSA_SHA2_512_P521);
 		}
 
 		if (c->local->host.config->authby.ecdsa_sha2_384) {
-			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
+			return local_v2AUTH(ike, auth, IKEv2_AUTH_ECDSA_SHA2_384_P384);
 		}
 
 		if (c->local->host.config->authby.ecdsa_sha2_256) {
-			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
+			return local_v2AUTH(ike, auth, IKEv2_AUTH_ECDSA_SHA2_256_P256);
 		}
 
 		/*
@@ -342,16 +430,22 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		if (ike->sa.st_seen_hashnotify) {
 			llog_sa(RC_LOG, ike,
 				"local policy requires ECDSA but peer sent no acceptable signature hash algorithms");
-			return IKEv2_AUTH_RESERVED;
+			return (struct local_v2AUTH) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
 		}
 
 		llog_sa(RC_LOG, ike,
 			"legacy ECDSA is not implemented");
-		return IKEv2_AUTH_RESERVED;
+		return (struct local_v2AUTH) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
 
 	case AUTH_EDDSA:
 		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
-		return IKEv2_AUTH_RESERVED;
+		return (struct local_v2AUTH) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
 
 	case AUTH_EAPONLY:
 		/*
@@ -359,13 +453,13 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * bundled in PSK (it certainly isn't one of the
 		 * signature payloads)?
 		 */
-		return IKEv2_AUTH_SHARED_KEY_MAC;
+		return local_v2AUTH(ike, auth, IKEv2_AUTH_SHARED_KEY_MAC);
 
 	case AUTH_PSK:
-		return IKEv2_AUTH_SHARED_KEY_MAC;
+		return local_v2AUTH(ike, auth, IKEv2_AUTH_SHARED_KEY_MAC);
 
 	case AUTH_NULL:
-		return IKEv2_AUTH_NULL;
+		return local_v2AUTH(ike, auth, IKEv2_AUTH_NULL);
 
 	case AUTH_NEVER:
 	case AUTH_UNSET:
@@ -438,6 +532,9 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		/* saved during signing */
 		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
 		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
+		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_alg);
+		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+
 		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
 			return false;
@@ -766,6 +863,8 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
 	if (!submit_v2_auth_signature(ike, md,
 				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
 				      signer, cb, HERE)) {
@@ -784,7 +883,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	struct logger *logger = ike->sa.logger;
 
 	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
 
@@ -927,6 +1026,9 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct pubkey_signer *signer,
 						       v2_auth_signature_cb *cb)
 {
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+
 	if (!submit_v2_auth_signature(ike, md,
 				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
 				      signer, cb, HERE)) {
@@ -942,7 +1044,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
