@@ -115,16 +115,17 @@ static void pack_task(struct ike_sa *ike,
 	}
 }
 
-bool submit_v2_auth_signature(struct ike_sa *ike,
-			      struct msg_digest *md,
-			      const struct crypt_mac *idhash,
-			      const struct hash_desc *hasher,
-			      enum perspective from_the_perspective_of,
-			      const struct pubkey_signer *signer,
-			      v2_auth_signature_cb *cb,
-			      where_t where)
+bool submit_local_v2AUTH_signature(struct ike_sa *ike,
+				   struct msg_digest *md,
+				   const struct crypt_mac *idhash,
+				   v2_auth_signature_cb *cb,
+				   where_t where)
 {
 	const struct connection *c = ike->sa.st_connection;
+
+	const struct hash_desc *hasher = ike->sa.st_v2_local_auth.hash;
+	const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
+	enum perspective from_the_perspective_of = LOCAL_PERSPECTIVE;
 
 	struct ikev2_task task = {
 		.cb = cb,

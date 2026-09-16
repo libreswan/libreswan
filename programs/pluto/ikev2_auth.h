@@ -73,14 +73,11 @@ typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 					  struct msg_digest *md,
 					  const struct hash_signature *sighash_sig);
 
-bool submit_v2_auth_signature(struct ike_sa *ike,
-			      struct msg_digest *md,
-			      const struct crypt_mac *idhash,
-			      const struct hash_desc *hasher,
-			      enum perspective from_the_perspective_of,
-			      const struct pubkey_signer *signer,
-			      v2_auth_signature_cb *cb,
-			      where_t where);
+bool submit_local_v2AUTH_signature(struct ike_sa *ike,
+				   struct msg_digest *md,
+				   const struct crypt_mac *idhash,
+				   v2_auth_signature_cb *cb,
+				   where_t where);
 
 diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,

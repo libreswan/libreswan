@@ -859,12 +859,9 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							const struct v2_id_payload *id_payload,
 							v2_auth_signature_cb *cb)
 {
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac,
-				      ike->sa.st_v2_local_auth.hash,
-				      LOCAL_PERSPECTIVE,
-				      ike->sa.st_v2_local_auth.signer,
-				      cb, HERE)) {
+	if (!submit_local_v2AUTH_signature(ike, md,
+					   &id_payload->mac,
+					   cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
@@ -919,12 +916,8 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		 * The big fake.  This should offload the above, but
 		 * the code isn't ready.
 		 */
-		if (!submit_v2_auth_signature(ike, md, &signed_octets,
-					      /*hasher*/NULL,
-					      LOCAL_PERSPECTIVE,
-					      /*signer*/NULL,
-					      auth_cb,
-					      HERE)) {
+		if (!submit_local_v2AUTH_signature(ike, md, &signed_octets,
+						   auth_cb, HERE)) {
 			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED,
@@ -952,11 +945,8 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct v2_id_payload *id_payload,
 						       v2_auth_signature_cb *cb)
 {
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac,
-				      ike->sa.st_v2_local_auth.hash,
-				      LOCAL_PERSPECTIVE,
-				      ike->sa.st_v2_local_auth.signer, cb, HERE)) {
+	if (!submit_local_v2AUTH_signature(ike, md, &id_payload->mac,
+					   cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}
@@ -1004,11 +994,8 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		 * The big fake.  This should offload the above, but
 		 * the code isn't ready.
 		 */
-		if (!submit_v2_auth_signature(ike, md, &signed_octets,
-					      /*hasher*/NULL,
-					      LOCAL_PERSPECTIVE,
-					      /*signer*/NULL,
-					      cb, HERE)) {
+		if (!submit_local_v2AUTH_signature(ike, md, &signed_octets,
+						   cb, HERE)) {
 			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 			return STF_FATAL;
 		}
