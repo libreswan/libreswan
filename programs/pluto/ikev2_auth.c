@@ -530,12 +530,10 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
-		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_alg);
-		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+		const struct hash_desc *hash = ike->sa.st_v2_local_auth.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
 
-		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
+		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
 			return false;
 		}
