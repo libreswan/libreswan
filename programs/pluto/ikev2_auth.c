@@ -961,55 +961,10 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 
 	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
-
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
-
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		/*
-		 * Save the HASH and SIGNER for later - used when
-		 * emitting the siguature (should the signature
-		 * instead include the bonus blob?).
-		 */
-		ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			return STF_FATAL;
-		}
-
-		const struct pubkey_signer *signer;
-		switch (authby) {
-		case AUTH_RSASIG:
-			/* XXX: way to force PKCS#1 1.5? */
-			signer = &pubkey_signer_digsig_rsassa_pss;
-			break;
-		case AUTH_ECDSA:
-			signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		name_buf ana;
-		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
-		     str_enum_long(&auth_names, authby, &ana),
-		     signer->name);
-		ike->sa.st_v2_digsig.signer = signer;
-
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
 							    cb);
