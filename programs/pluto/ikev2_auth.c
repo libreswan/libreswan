@@ -885,85 +885,13 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	switch (ike->sa.st_v2_local_auth.method) {
 
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     auth_cb);
-
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     auth_cb);
-
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-	{
-		/*
-		 * Prefer the HASH and SIGNER algorithms saved when
-		 * authenticating the initiator (assuming the
-		 * initiator was authenticated using DIGSIG).
-		 *
-		 * For HASH, both ends negotiated acceptable hash
-		 * algorithms during IKE_SA_INIT.  For SIGNER, the
-		 * algorithm also needs to be consistent with local
-		 * AUTHBY.
-		 *
-		 * Save the decision so it is available when emitting
-		 * the computed hash.
-		 */
-		ldbg(ike->sa.logger, "digsig: selecting hash and signer");
-		const char *hash_story;
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-			hash_story = "from policy";
-		} else {
-			hash_story = "saved earlier";
-		}
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		}
-		ldbg(ike->sa.logger,"digsig:   using hash %s %s",
-		     ike->sa.st_v2_digsig.hash->common.fqn,
-		     hash_story);
-		const char *signer_story;
-		switch (authby) {
-		case AUTH_RSASIG:
-			if (ike->sa.st_v2_digsig.signer == NULL ||
-			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_rsassa_pss;
-				signer_story = "from policy";
-			} else {
-				signer_story = "saved earlier";
-			}
-			break;
-		case AUTH_ECDSA:
-			/* no choice */
-			signer_story = "hardwired(ECDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer_story = "hardwired(EDDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
-		     ike->sa.st_v2_digsig.signer->name, signer_story);
-
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
 							     auth_cb);
-	}
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
