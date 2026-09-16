@@ -530,12 +530,10 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
-		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_alg);
-		PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
+		const struct hash_desc *hash = ike->sa.st_v2_local_auth.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
 
-		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
+		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
 			return false;
 		}
@@ -859,15 +857,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							struct msg_digest *md,
 							const struct v2_id_payload *id_payload,
-							const struct hash_desc *hash_algo,
-							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
 	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
-				      signer, cb, HERE)) {
+				      &id_payload->mac,
+				      ike->sa.st_v2_local_auth.hash,
+				      LOCAL_PERSPECTIVE,
+				      ike->sa.st_v2_local_auth.signer,
+				      cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
@@ -888,94 +885,13 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	switch (ike->sa.st_v2_local_auth.method) {
 
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     &ike_alg_hash_sha1,
-							     &pubkey_signer_raw_pkcs1_1_5_rsa,
-							     auth_cb);
-
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_256,
-							    &pubkey_signer_raw_ecdsa/*_p256*/,
-							    auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_384,
-							    &pubkey_signer_raw_ecdsa/*_p384*/,
-							    auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_512,
-							    &pubkey_signer_raw_ecdsa/*_p521*/,
-							    auth_cb);
-
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-	{
-		/*
-		 * Prefer the HASH and SIGNER algorithms saved when
-		 * authenticating the initiator (assuming the
-		 * initiator was authenticated using DIGSIG).
-		 *
-		 * For HASH, both ends negotiated acceptable hash
-		 * algorithms during IKE_SA_INIT.  For SIGNER, the
-		 * algorithm also needs to be consistent with local
-		 * AUTHBY.
-		 *
-		 * Save the decision so it is available when emitting
-		 * the computed hash.
-		 */
-		ldbg(ike->sa.logger, "digsig: selecting hash and signer");
-		const char *hash_story;
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-			hash_story = "from policy";
-		} else {
-			hash_story = "saved earlier";
-		}
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		}
-		ldbg(ike->sa.logger,"digsig:   using hash %s %s",
-		     ike->sa.st_v2_digsig.hash->common.fqn,
-		     hash_story);
-		const char *signer_story;
-		switch (authby) {
-		case AUTH_RSASIG:
-			if (ike->sa.st_v2_digsig.signer == NULL ||
-			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_rsassa_pss;
-				signer_story = "from policy";
-			} else {
-				signer_story = "saved earlier";
-			}
-			break;
-		case AUTH_ECDSA:
-			/* no choice */
-			signer_story = "hardwired(ECDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer_story = "hardwired(EDDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
-		     ike->sa.st_v2_digsig.signer->name, signer_story);
-
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
-							     ike->sa.st_v2_digsig.hash,
-							     ike->sa.st_v2_digsig.signer, auth_cb);
-	}
+							     auth_cb);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
@@ -1022,16 +938,13 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       struct msg_digest *md,
 						       const struct v2_id_payload *id_payload,
-						       const struct hash_desc *hash_algo,
-						       const struct pubkey_signer *signer,
 						       v2_auth_signature_cb *cb)
 {
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash == hash_algo);
-	PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer == signer);
-
 	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
-				      signer, cb, HERE)) {
+				      &id_payload->mac,
+				      ike->sa.st_v2_local_auth.hash,
+				      LOCAL_PERSPECTIVE,
+				      ike->sa.st_v2_local_auth.signer, cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}
@@ -1048,67 +961,12 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 
 	switch (ike->sa.st_v2_local_auth.method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha1,
-							    &pubkey_signer_raw_pkcs1_1_5_rsa,
-							    cb);
-
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_256,
-							    &pubkey_signer_raw_ecdsa/*_p256*/,
-							    cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_384,
-							    &pubkey_signer_raw_ecdsa/*_p384*/,
-							    cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_512,
-							    &pubkey_signer_raw_ecdsa/*_p521*/,
-							    cb);
-
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		/*
-		 * Save the HASH and SIGNER for later - used when
-		 * emitting the siguature (should the signature
-		 * instead include the bonus blob?).
-		 */
-		ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			return STF_FATAL;
-		}
-
-		const struct pubkey_signer *signer;
-		switch (authby) {
-		case AUTH_RSASIG:
-			/* XXX: way to force PKCS#1 1.5? */
-			signer = &pubkey_signer_digsig_rsassa_pss;
-			break;
-		case AUTH_ECDSA:
-			signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		name_buf ana;
-		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
-		     str_enum_long(&auth_names, authby, &ana),
-		     signer->name);
-		ike->sa.st_v2_digsig.signer = signer;
-
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
-							    ike->sa.st_v2_digsig.hash,
-							    ike->sa.st_v2_digsig.signer,
 							    cb);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:

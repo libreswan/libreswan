@@ -1602,12 +1602,12 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_enum_human(buf, &ikev2_auth_method_names,
 			       ike->sa.st_v2_local_auth.method);
 		if (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.signer != NULL) &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.hash != NULL)) {
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer != NULL) &&
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash != NULL)) {
 			jam_string(buf, " ");
-			jam_string(buf, ike->sa.st_v2_digsig.signer->name);
+			jam_string(buf, ike->sa.st_v2_local_auth.signer->name);
 			jam_string(buf, " with ");
-			jam_string(buf, ike->sa.st_v2_digsig.hash->common.fqn);
+			jam_string(buf, ike->sa.st_v2_local_auth.hash->common.fqn);
 		}
 		/* ID payload */
 		jam_string(buf, " and ");
