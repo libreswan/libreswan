@@ -915,13 +915,25 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
-		struct hash_signature signed_signature = {
-			.len = signed_octets.len,
-		};
-		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
-		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
+		/*
+		 * The big fake.  This should offload the above, but
+		 * the code isn't ready.
+		 */
+		if (!submit_v2_auth_signature(ike, md, &signed_octets,
+					      /*hasher*/NULL,
+					      LOCAL_PERSPECTIVE,
+					      /*signer*/NULL,
+					      auth_cb,
+					      HERE)) {
+			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED,
+					    empty_shunk/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
 
-		return auth_cb(ike, md, &signed_signature);
+		return STF_SUSPEND;
 	}
 
 	default:
@@ -988,13 +1000,20 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
-		struct hash_signature signed_signature = {
-			.len = signed_octets.len,
-		};
-		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
-		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
+		/*
+		 * The big fake.  This should offload the above, but
+		 * the code isn't ready.
+		 */
+		if (!submit_v2_auth_signature(ike, md, &signed_octets,
+					      /*hasher*/NULL,
+					      LOCAL_PERSPECTIVE,
+					      /*signer*/NULL,
+					      cb, HERE)) {
+			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
+			return STF_FATAL;
+		}
 
-		return cb(ike, md, &signed_signature);
+		return STF_SUSPEND;
 	}
 
 	default:

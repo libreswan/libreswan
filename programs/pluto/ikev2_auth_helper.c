@@ -26,7 +26,7 @@
 #include "defs.h"
 #include "ikev2_auth.h"
 #include "keys.h"
-#include "server_pool.h"
+#include "ikev2_helper.h"
 #include "state.h"
 #include "secrets.h"
 #include "log.h"
@@ -34,7 +34,11 @@
 #include "ike_alg_hash.h"
 #include "crypt_hash.h"
 
-struct task {
+static ikev2_helper_fn v2_auth_signature_helper; /* type check */
+static ikev2_resume_fn v2_auth_signature_completed; /* type check */
+static ikev2_cleanup_fn v2_auth_signature_cleanup; /* type check */
+
+struct ikev2_task {
 	/* in */
 	shunk_t zero_prefix;
 	struct ro_hunk *message[2];
@@ -54,21 +58,22 @@ struct task {
 	struct hash_signature signature;
 };
 
-static task_computer_fn v2_auth_signature_computer; /* type check */
-static task_completed_cb v2_auth_signature_completed; /* type check */
-static task_cleanup_cb v2_auth_signature_cleanup; /* type check */
-
-struct task_handler v2_auth_signature_handler = {
-	.name = "signature",
-	.computer_fn = v2_auth_signature_computer,
-	.completed_cb = v2_auth_signature_completed,
-	.cleanup_cb = v2_auth_signature_cleanup,
-};
+static void v2_auth_signature_cleanup(struct ikev2_task **task, struct logger *logger)
+{
+	for (unsigned m = 0; m < elemsof((*task)->message); m++) {
+		ro_hunk_delref(&(*task)->message[m], logger);
+	}
+	free_chunk_content(&(*task)->nonce);
+	free_chunk_content(&(*task)->ia1);
+	free_chunk_content(&(*task)->ia2);
+	secret_pubkey_stuff_delref(&(*task)->pks, HERE);
+	pfreeany(*task);
+}
 
 static void pack_task(struct ike_sa *ike,
 		      const struct crypt_mac *idhash,
 		      enum perspective from_the_perspective_of,
-		      struct task *task)
+		      struct ikev2_task *task)
 {
 	enum sa_role role =
 		(from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_sa_role :
@@ -110,7 +115,8 @@ static void pack_task(struct ike_sa *ike,
 	}
 }
 
-bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
+bool submit_v2_auth_signature(struct ike_sa *ike,
+			      struct msg_digest *md,
 			      const struct crypt_mac *idhash,
 			      const struct hash_desc *hasher,
 			      enum perspective from_the_perspective_of,
@@ -119,34 +125,48 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      where_t where)
 {
 	const struct connection *c = ike->sa.st_connection;
-	struct secret_pubkey_stuff *pks = get_local_private_key(c, signer->type,
-								ike->sa.logger);
-	if (pks == NULL) {
-		/* failure: no key to use */
-		return false;
-	}
 
-	struct task task = {
+	struct ikev2_task task = {
 		.cb = cb,
 		.hasher = hasher,
 		.signer = signer,
-		.pks = secret_pubkey_stuff_addref(pks, HERE),
 		.signature = {0},
 	};
 
+	if (signer != NULL) {
+		struct secret_pubkey_stuff *pks =
+			get_local_private_key(c, signer->type,
+					      ike->sa.logger);
+		if (pks == NULL) {
+			/* failure: no key to use */
+			return false;
+		}
+		task.pks = secret_pubkey_stuff_addref(pks, HERE);
+	}
+
 	pack_task(ike, idhash, from_the_perspective_of, &task);
 
-	submit_task(/*callback*/&ike->sa, /*task*/&ike->sa, md,
-		    /*detach_whack*/false,
-		    clone_thing(task, "signature task"),
-		    &v2_auth_signature_handler, where);
+	submit_ikev2_task(ike, md,
+			  clone_thing(task, "auth signature task"),
+			  v2_auth_signature_helper,
+			  v2_auth_signature_completed,
+			  v2_auth_signature_cleanup,
+			  where);
 	return true;
 }
 
-static void v2_auth_signature_computer(struct logger *logger, struct task *task,
-				       int unused_my_thread UNUSED)
+static stf_status v2_auth_signature_helper(struct ikev2_task *task,
+					   struct msg_digest *md UNUSED,
+					   struct logger *logger)
 {
 	logtime_t start = logtime_start(logger);
+
+	if (task->signer == NULL) {
+		task->signature.len = task->idhash.len;
+		PASSERT(logger, sizeof(task->signature.ptr) >= sizeof(task->idhash.ptr));
+		memcpy_hunk(task->signature.ptr, task->idhash, task->idhash.len);
+		return STF_OK;
+	}
 
 	const struct hash_hunk octets[] = {
 		/* optional zero prefix and second packet, len can be 0 */
@@ -180,24 +200,12 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 						   logger);
 	}
 	logtime_stop(&start, "%s()", __func__);
+	return STF_OK;
 }
 
-static stf_status v2_auth_signature_completed(struct state *st,
+static stf_status v2_auth_signature_completed(struct ike_sa *ike,
 					      struct msg_digest *md,
-					      struct task *task)
+					      struct ikev2_task *task)
 {
-	stf_status status = task->cb(pexpect_ike_sa(st), md, &task->signature);
-	return status;
-}
-
-static void v2_auth_signature_cleanup(struct task **task, struct logger *logger)
-{
-	for (unsigned m = 0; m < elemsof((*task)->message); m++) {
-		ro_hunk_delref(&(*task)->message[m], logger);
-	}
-	free_chunk_content(&(*task)->nonce);
-	free_chunk_content(&(*task)->ia1);
-	free_chunk_content(&(*task)->ia2);
-	secret_pubkey_stuff_delref(&(*task)->pks, HERE);
-	pfreeany(*task);
+	return task->cb(ike, md, &task->signature);
 }
