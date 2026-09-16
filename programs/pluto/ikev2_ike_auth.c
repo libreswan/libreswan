@@ -184,8 +184,12 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	v2_IKE_AUTH_initiator_id_payload(ike);
 
-	return submit_v2AUTH_generate_initiator_signature(ike, null_md,
-							  initiate_v2_IKE_AUTH_request_signature_continue);
+	if (!submit_local_v2AUTH_signature_generator(ike, null_md,
+						     initiate_v2_IKE_AUTH_request_signature_continue)) {
+		return STF_FATAL;
+	}
+
+	return STF_SUSPEND;
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,

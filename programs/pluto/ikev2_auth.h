@@ -88,8 +88,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb auth_cb);
 
-stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike, struct msg_digest *md,
-						      v2_auth_signature_cb *cb);
+bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
+					     struct msg_digest *md,
+					     v2_auth_signature_cb *cb);
 
 void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike);
 void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike);

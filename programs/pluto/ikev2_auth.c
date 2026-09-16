@@ -940,22 +940,9 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	}
 }
 
-static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       const struct v2_id_payload *id_payload,
-						       v2_auth_signature_cb *cb)
-{
-	if (!submit_local_v2AUTH_signature(ike, md, &id_payload->mac,
-					   cb, HERE)) {
-		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-		return STF_FATAL;
-	}
-	return STF_SUSPEND;
-}
-
-stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
-						      struct msg_digest *md,
-						      v2_auth_signature_cb *cb)
+bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
+					     struct msg_digest *md,
+					     v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
 	enum auth authby = local_v2_auth(ike);
@@ -967,9 +954,9 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
+		return submit_local_v2AUTH_signature(ike, md,
+						     &ike->sa.st_v2_id_payload.mac,
+						     cb, HERE);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
@@ -983,7 +970,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			return STF_FATAL;
+			return false;
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
@@ -997,10 +984,10 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		if (!submit_local_v2AUTH_signature(ike, md, &signed_octets,
 						   cb, HERE)) {
 			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-			return STF_FATAL;
+			return false;
 		}
 
-		return STF_SUSPEND;
+		return true;
 	}
 
 	default:
@@ -1010,7 +997,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			"authentication method %s not supported",
 			str_enum_long(&ikev2_auth_method_names,
 				      ike->sa.st_v2_local_auth.method, &eb));
-		return STF_FATAL;
+		return false;
 	}
 	}
 
