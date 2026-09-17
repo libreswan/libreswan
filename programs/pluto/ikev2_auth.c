@@ -340,9 +340,14 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 					    &ike_alg_hash_sha2_512,
 					    &pubkey_signer_raw_ecdsa/*_p521*/);
 	case IKEv2_AUTH_SHARED_KEY_MAC:
+		return (struct v2AUTH_method) {
+			.method = method,
+			.psk.method = PSK_AUTH_SHARED_KEY,
+		};
 	case IKEv2_AUTH_NULL:
 		return (struct v2AUTH_method) {
 			.method = method,
+			.psk.method = PSK_AUTH_NULL,
 		};
 	case IKEv2_AUTH_RESERVED:
 	case IKEv2_AUTH_DSS_DIGITAL_SIGNATURE:

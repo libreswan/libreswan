@@ -54,6 +54,7 @@
 #include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
+#include "psk_auth_method.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
 #include "ikev2_prf.h"		/* for struct prf_keys */
 #include "ike_spi.h"
@@ -336,6 +337,9 @@ struct state {
 			const struct hash_desc *hash;
 			const struct pubkey_signer *signer;
 		} pubkey;
+		struct {
+			enum psk_auth_method method;
+		} psk;
 	} st_v2_local_auth;
 
 	/*
