@@ -491,7 +491,16 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		return process_v2_IKE_AUTH_request_EAP_start_signature_continue(ike, md, NULL);
 	}
 
-	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_EAP_start_signature_continue);
+	if (!submit_local_v2AUTH_signature_generator(ike, md,
+						     process_v2_IKE_AUTH_request_EAP_start_signature_continue)) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	return STF_SUSPEND;
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);

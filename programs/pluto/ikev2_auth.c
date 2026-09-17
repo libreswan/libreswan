@@ -854,44 +854,23 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 	}
 }
 
-static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
-							struct msg_digest *md,
-							const struct v2_id_payload *id_payload,
-							v2_auth_signature_cb *cb)
-{
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac,
-				      ike->sa.st_v2_local_auth.hash,
-				      LOCAL_PERSPECTIVE,
-				      ike->sa.st_v2_local_auth.signer,
-				      cb, HERE)) {
-		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	}
-	return STF_SUSPEND;
-}
-
-stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
-						      v2_auth_signature_cb auth_cb)
+bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
+					     struct msg_digest *md,
+					     v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-
 	enum auth authby = local_v2_auth(ike);
 	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
-
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     auth_cb);
+		return submit_local_v2AUTH_signature(ike, md,
+						     &ike->sa.st_v2_id_payload.mac,
+						     cb, HERE);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
@@ -905,10 +884,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
+			return false;
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
@@ -919,101 +895,13 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		 * The big fake.  This should offload the above, but
 		 * the code isn't ready.
 		 */
-		if (!submit_v2_auth_signature(ike, md, &signed_octets,
-					      /*hasher*/NULL,
-					      LOCAL_PERSPECTIVE,
-					      /*signer*/NULL,
-					      auth_cb,
-					      HERE)) {
+		if (!submit_local_v2AUTH_signature(ike, md, &signed_octets,
+						   cb, HERE)) {
 			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED,
-					    empty_shunk/*no-data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
+			return false;
 		}
 
-		return STF_SUSPEND;
-	}
-
-	default:
-	{
-		name_buf eb;
-		llog_sa(RC_LOG, ike,
-			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, ike->sa.st_v2_local_auth.method, &eb));
-		return STF_FATAL;
-	}
-	}
-}
-
-static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       const struct v2_id_payload *id_payload,
-						       v2_auth_signature_cb *cb)
-{
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac,
-				      ike->sa.st_v2_local_auth.hash,
-				      LOCAL_PERSPECTIVE,
-				      ike->sa.st_v2_local_auth.signer, cb, HERE)) {
-		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-		return STF_FATAL;
-	}
-	return STF_SUSPEND;
-}
-
-stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
-						      struct msg_digest *md,
-						      v2_auth_signature_cb *cb)
-{
-	struct logger *logger = ike->sa.logger;
-	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
-
-	switch (ike->sa.st_v2_local_auth.method) {
-	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    cb);
-
-	case IKEv2_AUTH_SHARED_KEY_MAC:
-	case IKEv2_AUTH_NULL:
-	{
-		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
-						       /*accumulated EAP hash*/NULL,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
-						       &signed_octets);
-		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return STF_FATAL;
-		}
-
-		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
-		}
-
-		/*
-		 * The big fake.  This should offload the above, but
-		 * the code isn't ready.
-		 */
-		if (!submit_v2_auth_signature(ike, md, &signed_octets,
-					      /*hasher*/NULL,
-					      LOCAL_PERSPECTIVE,
-					      /*signer*/NULL,
-					      cb, HERE)) {
-			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-			return STF_FATAL;
-		}
-
-		return STF_SUSPEND;
+		return true;
 	}
 
 	default:
@@ -1023,7 +911,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			"authentication method %s not supported",
 			str_enum_long(&ikev2_auth_method_names,
 				      ike->sa.st_v2_local_auth.method, &eb));
-		return STF_FATAL;
+		return false;
 	}
 	}
 
