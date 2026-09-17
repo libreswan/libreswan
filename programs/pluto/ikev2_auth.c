@@ -868,7 +868,6 @@ bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
 					     v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-	enum auth authby = local_v2_auth(ike);
 	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
@@ -885,10 +884,10 @@ bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+		diag_t d = ikev2_calculate_psk_sighash(ike->sa.st_v2_local_auth.psk.method,
+						       LOCAL_PERSPECTIVE,
 						       /*accumulated EAP hash*/NULL,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
+						       ike, &ike->sa.st_v2_id_payload.mac,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));

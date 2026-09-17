@@ -29,10 +29,10 @@ struct pbs_in;
 struct hash_signature;
 enum perspective;
 
-diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
+diag_t ikev2_calculate_psk_sighash(enum psk_auth_method method,
+				   enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
-				   enum auth authby,
 				   const struct crypt_mac *idhash,
 				   struct crypt_mac *sighash);
 
