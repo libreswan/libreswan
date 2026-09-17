@@ -305,7 +305,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	return NULL;
 }
 
-bool ikev2_create_psk_auth(enum auth authby,
+bool ikev2_create_psk_auth(enum psk_auth_method method,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
@@ -315,7 +315,11 @@ bool ikev2_create_psk_auth(enum auth authby,
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
 	diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, NULL,
-					       ike, authby, idhash,
+					       ike,
+					       (method == PSK_AUTH_NULL ? AUTH_NULL :
+						method == PSK_AUTH_SHARED_KEY ? AUTH_PSK :
+						(pexpect(0), 0)),
+					       idhash,
 					       &signed_octets);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -323,10 +327,20 @@ bool ikev2_create_psk_auth(enum auth authby,
 		return false;
 	}
 
-	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_n);
+	const char *chunk_name;
+	switch (method) {
+	case PSK_AUTH_NULL:
+		chunk_name = "NULL_AUTH chunk";
+		break;
+	case PSK_AUTH_SHARED_KEY:
+		chunk_name = "NO_PPK_AUTH chunk";
+		break;
+	default:
+		bad_case(method);
+	}
+	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_name);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_n);
+		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_name);
 	}
 
 	return true;
