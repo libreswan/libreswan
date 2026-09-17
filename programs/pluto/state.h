@@ -336,10 +336,14 @@ struct state {
 		const struct pubkey_signer *signer;
 	} st_v2_local_auth;
 
+	/*
+	 * On responder, capture the v2AUTH payload the initiator
+	 * used.
+	 */
+	struct v2AUTH_method st_v2_initiator_auth;
+
 	struct {
 		struct authby peer_pubkey_mask;
-		const struct hash_desc *hash;
-		const struct pubkey_signer *signer;
 	} st_v2_digsig;
 
 	/*

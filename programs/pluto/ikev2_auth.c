@@ -290,21 +290,21 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		const char *signer_story;
 		const struct hash_desc *hash;
 		const char *hash_story;
-		if (ike->sa.st_v2_digsig.hash == NULL) {
+		if (ike->sa.st_v2_initiator_auth.hash == NULL) {
 			hash = v2_auth_negotiated_signature_hash(ike);
 			hash_story = "from policy";
 		} else {
-			hash = ike->sa.st_v2_digsig.hash;
+			hash = ike->sa.st_v2_initiator_auth.hash;
 			hash_story = "saved earlier";
 		}
 		switch (auth) {
 		case AUTH_RSASIG:
-			if (ike->sa.st_v2_digsig.signer == NULL ||
-			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
+			if (ike->sa.st_v2_initiator_auth.signer == NULL ||
+			    ike->sa.st_v2_initiator_auth.signer->type != &pubkey_type_rsa) {
 				signer = &pubkey_signer_digsig_rsassa_pss;
 				signer_story = "from policy";
 			} else {
-				signer = ike->sa.st_v2_digsig.signer;
+				signer = ike->sa.st_v2_initiator_auth.signer;
 				signer_story = "saved earlier";
 			}
 			break;
@@ -827,8 +827,11 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 * responder can prefer the same
 				 * values.
 				 */
-				ike->sa.st_v2_digsig.hash = (*hash);
-				ike->sa.st_v2_digsig.signer = s->signer;
+				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
+					.method = recv_auth,
+					.hash = (*hash),
+					.signer = s->signer,
+				};
 
 				return verify_v2AUTH_and_log_using_pubkey(s->authby,
 									  ike, idhash_in,
