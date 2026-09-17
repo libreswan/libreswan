@@ -63,7 +63,7 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
  * The local end's proof-of-identity sent to the remote peer.
  */
 
-struct local_v2AUTH local_v2AUTH_method(struct ike_sa *ike);
+struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike);
 
 bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,

@@ -49,8 +49,8 @@ west #
  ../../guestbin/wait-for-pluto.sh 'initiator established IKE SA'
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 3, .* submit_v2_IKE_AUTH_request_signature'
-IMPAIR: "westnet-eastnet-ikev2" #1: task 3, ikev2 helper for submit_v2_IKE_AUTH_request_signature(): helper is pausing for 5 seconds
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 3, .* submit_local_v2AUTH_signature_generator'
+IMPAIR: "westnet-eastnet-ikev2" #1: task 3, ikev2 helper for submit_local_v2AUTH_signature_generator(): helper is pausing for 5 seconds
 west #
  ipsec rereadsecrets
 forgetting secrets
