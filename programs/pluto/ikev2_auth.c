@@ -274,8 +274,8 @@ static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
 {
 	return (struct v2AUTH_method) {
 		.method = method,
-		.hash = hash,
-		.signer = signer,
+		.pubkey.hash = hash,
+		.pubkey.signer = signer,
 	};
 }
 
@@ -290,21 +290,21 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		const char *signer_story;
 		const struct hash_desc *hash;
 		const char *hash_story;
-		if (ike->sa.st_v2_initiator_auth.hash == NULL) {
+		if (ike->sa.st_v2_initiator_auth.pubkey.hash == NULL) {
 			hash = v2_auth_negotiated_signature_hash(ike);
 			hash_story = "from policy";
 		} else {
-			hash = ike->sa.st_v2_initiator_auth.hash;
+			hash = ike->sa.st_v2_initiator_auth.pubkey.hash;
 			hash_story = "saved earlier";
 		}
 		switch (auth) {
 		case AUTH_RSASIG:
-			if (ike->sa.st_v2_initiator_auth.signer == NULL ||
-			    ike->sa.st_v2_initiator_auth.signer->type != &pubkey_type_rsa) {
+			if (ike->sa.st_v2_initiator_auth.pubkey.signer == NULL ||
+			    ike->sa.st_v2_initiator_auth.pubkey.signer->type != &pubkey_type_rsa) {
 				signer = &pubkey_signer_digsig_rsassa_pss;
 				signer_story = "from policy";
 			} else {
-				signer = ike->sa.st_v2_initiator_auth.signer;
+				signer = ike->sa.st_v2_initiator_auth.pubkey.signer;
 				signer_story = "saved earlier";
 			}
 			break;
@@ -530,8 +530,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash = ike->sa.st_v2_local_auth.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
+		const struct hash_desc *hash = ike->sa.st_v2_local_auth.pubkey.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.pubkey.signer;
 
 		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
@@ -830,8 +830,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 */
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
-					.hash = (*hash),
-					.signer = s->signer,
+					.pubkey.hash = (*hash),
+					.pubkey.signer = s->signer,
 				};
 
 				return verify_v2AUTH_and_log_using_pubkey(s->authby,

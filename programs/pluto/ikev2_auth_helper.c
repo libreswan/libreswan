@@ -123,8 +123,8 @@ bool submit_local_v2AUTH_signature(struct ike_sa *ike,
 {
 	const struct connection *c = ike->sa.st_connection;
 
-	const struct hash_desc *hasher = ike->sa.st_v2_local_auth.hash;
-	const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
+	const struct hash_desc *hasher = ike->sa.st_v2_local_auth.pubkey.hash;
+	const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.pubkey.signer;
 	enum perspective from_the_perspective_of = LOCAL_PERSPECTIVE;
 
 	struct ikev2_task task = {
