@@ -45,11 +45,15 @@ for platform in ${platforms} ; do
 	# tunnel-forward is IPv4 with rise/set behind the east=west tunnel
 	# *-ondemand traps traffic and waits for an acquire to initiate
 
+	modeline='#type='
+	leftsubnetline='#leftsubnet='
+	rightsubnetline='#rightsubnet='
+
 	case ${mode} in
 	    transport )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	type=transport"
+		modeline="type=transport"
 		what="host-to-host transport mode"
 		conn=west-east
 		hosts=${platform}east-${platform}west
@@ -60,7 +64,7 @@ for platform in ${platforms} ; do
 	    transport-ondemand )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	type=transport"
+		modeline="type=transport"
 		what="ondemand host-to-host transport mode"
 		conn=west-east
 		hosts=${platform}east-${platform}west
@@ -71,7 +75,6 @@ for platform in ${platforms} ; do
 	    tunnel )
 		west=${west_internet6}
 		east=${east_internet6}
-		modeline=
 		what="IPv6 host-to-host tunnel mode"
 		conn=west-east
 		hosts=${platform}east-${platform}west
@@ -82,8 +85,8 @@ for platform in ${platforms} ; do
 	    tunnel-forward )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	leftsubnet=${westnet4}0/24
-	rightsubnet=${eastnet4}0/24"
+		leftsubnetline="leftsubnet=${westnet4}0/24"
+		rightsubnetline="rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
@@ -94,8 +97,8 @@ for platform in ${platforms} ; do
 	    tunnel-ondemand )
 		west=${west_internet4}
 		east=${east_internet4}
-		modeline="	leftsubnet=${westnet4}0/24
-	rightsubnet=${eastnet4}0/24"
+		leftsubnetline="leftsubnet=${westnet4}0/24"
+		rightsubnetline="rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set triggered by an acquire"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
@@ -131,8 +134,10 @@ conn ${conn}
 	leftid="@west"
 	right=${east}
 	rightid="@east"
-	authby=secret${modeline:+
-${modeline}}
+	authby=secret
+	${modeline}
+	${leftsubnetline}
+	${rightsubnetline}
 	compress=no
 	phase2=esp
 EOF
