@@ -11,5 +11,5 @@
 # routes and addresses setup for the test
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add northnet-eastnet
+ipsec add northnet-eastnet
 echo "initdone"

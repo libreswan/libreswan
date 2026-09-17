@@ -1,6 +1,6 @@
-ipsec auto --up northnet-eastnet
+ipsec up northnet-eastnet # sanitize-retransmits
 ../../guestbin/ping-once.sh --up -I 198.18.66.254  192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 # note this end should be 192.1.3.33
 ipsec _kernel state
 ipsec _kernel policy
