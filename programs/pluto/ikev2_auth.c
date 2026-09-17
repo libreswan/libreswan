@@ -705,7 +705,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY,
+							   ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
@@ -729,7 +730,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_NULL, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: NULL AUTH mismatch (implementation bug?)");

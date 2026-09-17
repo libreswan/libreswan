@@ -752,7 +752,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		LDBG_log_hunk(logger, "EAP: idhash_in:", &idhash_in);
 	}
 
-	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
+	diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY, ike, &idhash_in,
 						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						   &msk);
 

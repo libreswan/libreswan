@@ -338,7 +338,7 @@ bool ikev2_create_psk_auth(enum auth authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
+diag_t verify_v2AUTH_and_log_using_psk(enum psk_auth_method method,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
@@ -346,8 +346,6 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 {
 	struct logger *logger = ike->sa.logger;
 	shunk_t sig = pbs_in_left(sig_pbs);
-
-	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	size_t hash_len = ike->sa.st_oakley.ta_prf->prf_output_size;
 	if (sig.len != hash_len) {
@@ -361,8 +359,10 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 	}
 
 	struct crypt_mac calc_hash = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(REMOTE_PERSPECTIVE, auth_sig,
-					       ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(REMOTE_PERSPECTIVE, auth_sig, ike,
+					       (method == PSK_AUTH_SHARED_KEY ? AUTH_PSK :
+						method == PSK_AUTH_NULL ? AUTH_NULL :
+						(passert(0), 0)), idhash,
 					       &calc_hash);
 	if (d != NULL) {
 		return d;
@@ -395,7 +395,8 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 			/* XXX: log prf(prf(hash based on null or secret)) how? */
 			/* now it was authenticated */
 			jam_string(buf, "using authby=");
-			jam_enum_human(buf, &auth_names, authby);
+			/* method using authby/auth speak */
+			jam_name_short(buf, &psk_auth_method_stories, method);
 			jam_string(buf, " and ");
 			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");
