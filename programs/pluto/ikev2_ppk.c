@@ -341,7 +341,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 	}
 	case AUTH_PSK:
 		/* store in no_ppk_auth */
-		if (!ikev2_create_psk_auth(AUTH_PSK, ike, id_hash, no_ppk_auth)) {
+		if (!ikev2_create_psk_auth(PSK_AUTH_SHARED_KEY, ike, id_hash, no_ppk_auth)) {
 			return false; /* was STF_INTERNAL_ERROR but don't tell */
 		}
 		return true;

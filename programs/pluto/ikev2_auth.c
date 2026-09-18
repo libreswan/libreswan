@@ -274,8 +274,8 @@ static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
 {
 	return (struct v2AUTH_method) {
 		.method = method,
-		.hash = hash,
-		.signer = signer,
+		.pubkey.hash = hash,
+		.pubkey.signer = signer,
 	};
 }
 
@@ -290,21 +290,21 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		const char *signer_story;
 		const struct hash_desc *hash;
 		const char *hash_story;
-		if (ike->sa.st_v2_initiator_auth.hash == NULL) {
+		if (ike->sa.st_v2_initiator_auth.pubkey.hash == NULL) {
 			hash = v2_auth_negotiated_signature_hash(ike);
 			hash_story = "from policy";
 		} else {
-			hash = ike->sa.st_v2_initiator_auth.hash;
+			hash = ike->sa.st_v2_initiator_auth.pubkey.hash;
 			hash_story = "saved earlier";
 		}
 		switch (auth) {
 		case AUTH_RSASIG:
-			if (ike->sa.st_v2_initiator_auth.signer == NULL ||
-			    ike->sa.st_v2_initiator_auth.signer->type != &pubkey_type_rsa) {
+			if (ike->sa.st_v2_initiator_auth.pubkey.signer == NULL ||
+			    ike->sa.st_v2_initiator_auth.pubkey.signer->type != &pubkey_type_rsa) {
 				signer = &pubkey_signer_digsig_rsassa_pss;
 				signer_story = "from policy";
 			} else {
-				signer = ike->sa.st_v2_initiator_auth.signer;
+				signer = ike->sa.st_v2_initiator_auth.pubkey.signer;
 				signer_story = "saved earlier";
 			}
 			break;
@@ -340,9 +340,14 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 					    &ike_alg_hash_sha2_512,
 					    &pubkey_signer_raw_ecdsa/*_p521*/);
 	case IKEv2_AUTH_SHARED_KEY_MAC:
+		return (struct v2AUTH_method) {
+			.method = method,
+			.psk.method = PSK_AUTH_SHARED_KEY,
+		};
 	case IKEv2_AUTH_NULL:
 		return (struct v2AUTH_method) {
 			.method = method,
+			.psk.method = PSK_AUTH_NULL,
 		};
 	case IKEv2_AUTH_RESERVED:
 	case IKEv2_AUTH_DSS_DIGITAL_SIGNATURE:
@@ -530,8 +535,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash = ike->sa.st_v2_local_auth.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.signer;
+		const struct hash_desc *hash = ike->sa.st_v2_local_auth.pubkey.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.pubkey.signer;
 
 		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
@@ -705,7 +710,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY,
+							   ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
@@ -729,7 +735,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_NULL, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: NULL AUTH mismatch (implementation bug?)");
@@ -829,8 +835,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 */
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
-					.hash = (*hash),
-					.signer = s->signer,
+					.pubkey.hash = (*hash),
+					.pubkey.signer = s->signer,
 				};
 
 				return verify_v2AUTH_and_log_using_pubkey(s->authby,
@@ -862,7 +868,6 @@ bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
 					     v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-	enum auth authby = local_v2_auth(ike);
 	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
@@ -879,10 +884,10 @@ bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+		diag_t d = ikev2_calculate_psk_sighash(ike->sa.st_v2_local_auth.psk.method,
+						       LOCAL_PERSPECTIVE,
 						       /*accumulated EAP hash*/NULL,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
+						       ike, &ike->sa.st_v2_id_payload.mac,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));

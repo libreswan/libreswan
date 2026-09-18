@@ -72,10 +72,10 @@ static chunk_t clone_v2AUTH_transcript(const struct ike_sa *ike,
 	return octets;
 }
 
-diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
+diag_t ikev2_calculate_psk_sighash(enum psk_auth_method method,
+				   enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
-				   enum auth authby,
 				   const struct crypt_mac *idhash,
 				   struct crypt_mac *sighash)
 {
@@ -83,14 +83,13 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
-	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	name_buf pb;
-	name_buf an;
+	name_buf mb;
 	ldbg(logger, "%s() called for %s to %s PSK with authby=%s resume=%s",
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
-	     str_enum_long(&auth_names, authby, &an),
+	     str_name_short(&psk_auth_method_stories, method, &mb),
 	     bool_str(ike->sa.st_v2_resume_session != NULL));
 
 	/* this is the IKE_AUTH exchange, so a given */
@@ -229,7 +228,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
 		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(auth_sig), logger);
-	} else if (authby != AUTH_NULL) {
+	} else if (method == PSK_AUTH_SHARED_KEY) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
 		 * so peer doesn't apply?
@@ -305,7 +304,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	return NULL;
 }
 
-bool ikev2_create_psk_auth(enum auth authby,
+bool ikev2_create_psk_auth(enum psk_auth_method method,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
@@ -314,8 +313,8 @@ bool ikev2_create_psk_auth(enum auth authby,
 
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, NULL,
-					       ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(method, LOCAL_PERSPECTIVE,
+					       NULL, ike, idhash,
 					       &signed_octets);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -323,10 +322,20 @@ bool ikev2_create_psk_auth(enum auth authby,
 		return false;
 	}
 
-	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_n);
+	const char *chunk_name;
+	switch (method) {
+	case PSK_AUTH_NULL:
+		chunk_name = "NULL_AUTH chunk";
+		break;
+	case PSK_AUTH_SHARED_KEY:
+		chunk_name = "NO_PPK_AUTH chunk";
+		break;
+	default:
+		bad_case(method);
+	}
+	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_name);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_n);
+		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_name);
 	}
 
 	return true;
@@ -338,7 +347,7 @@ bool ikev2_create_psk_auth(enum auth authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
+diag_t verify_v2AUTH_and_log_using_psk(enum psk_auth_method method,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
@@ -346,8 +355,6 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 {
 	struct logger *logger = ike->sa.logger;
 	shunk_t sig = pbs_in_left(sig_pbs);
-
-	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	size_t hash_len = ike->sa.st_oakley.ta_prf->prf_output_size;
 	if (sig.len != hash_len) {
@@ -361,8 +368,8 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 	}
 
 	struct crypt_mac calc_hash = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(REMOTE_PERSPECTIVE, auth_sig,
-					       ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(method, REMOTE_PERSPECTIVE,
+					       auth_sig, ike, idhash,
 					       &calc_hash);
 	if (d != NULL) {
 		return d;
@@ -395,7 +402,8 @@ diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 			/* XXX: log prf(prf(hash based on null or secret)) how? */
 			/* now it was authenticated */
 			jam_string(buf, "using authby=");
-			jam_enum_human(buf, &auth_names, authby);
+			/* method using authby/auth speak */
+			jam_name_short(buf, &psk_auth_method_stories, method);
 			jam_string(buf, " and ");
 			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");

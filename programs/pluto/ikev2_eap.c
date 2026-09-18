@@ -752,7 +752,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		LDBG_log_hunk(logger, "EAP: idhash_in:", &idhash_in);
 	}
 
-	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
+	diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY, ike, &idhash_in,
 						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						   &msk);
 
@@ -809,7 +809,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	 * EAP only does PSK?!?
 	 */
 
-	enum auth local_authby = AUTH_PSK;
 	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 	if (!PEXPECT(ike->sa.logger,
 		     (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_SHARED_KEY_MAC ||
@@ -818,10 +817,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	struct crypt_mac signed_octets = empty_mac;
-	d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+	d = ikev2_calculate_psk_sighash(PSK_AUTH_SHARED_KEY,
+					LOCAL_PERSPECTIVE,
 					/*accumulated EAP hash*/&msk,
-					ike, local_authby,
-					&ike->sa.st_v2_id_payload.mac,
+					ike, &ike->sa.st_v2_id_payload.mac,
 					&signed_octets);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));

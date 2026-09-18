@@ -444,7 +444,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
-		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
+		if (!ikev2_create_psk_auth(PSK_AUTH_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
 			llog_sa(RC_LOG, ike,
@@ -1615,12 +1615,12 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_enum_human(buf, &ikev2_auth_method_names,
 			       ike->sa.st_v2_local_auth.method);
 		if (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.signer != NULL) &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.hash != NULL)) {
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.pubkey.signer != NULL) &&
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.pubkey.hash != NULL)) {
 			jam_string(buf, " ");
-			jam_string(buf, ike->sa.st_v2_local_auth.signer->name);
+			jam_string(buf, ike->sa.st_v2_local_auth.pubkey.signer->name);
 			jam_string(buf, " with ");
-			jam_string(buf, ike->sa.st_v2_local_auth.hash->common.fqn);
+			jam_string(buf, ike->sa.st_v2_local_auth.pubkey.hash->common.fqn);
 		}
 		/* ID payload */
 		jam_string(buf, " and ");
