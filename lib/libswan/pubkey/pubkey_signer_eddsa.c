@@ -220,6 +220,7 @@ const struct pubkey_signer pubkey_signer_digsig_eddsa_ed25519 = {
 	.name = "EDDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_eddsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
+	.authby = { AUTHBY_EDDSA, },
 	.sign_message = EDDSA_sign_message,
 	.authenticate_message_signature = EDDSA_authenticate_message_signature,
 	.jam_auth_method = EDDSA_jam_auth_method,
