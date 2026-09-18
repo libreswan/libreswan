@@ -204,16 +204,6 @@ EOF
 	esac
 
 	case ${mode} in
-	    transport-ondemand )
-		cat <<EOF >> ${sh}
-west# ../../guestbin/ping-once.sh --up ${east} # east
-
-# wait for larval state to clear; hack
-west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
-west# ipsec _kernel state
-west# ipsec _kernel policy
-EOF
-		;;
 	    tunnel-forward )
 		cat <<EOF >> ${sh}
 rise# ../../guestbin/ping-once.sh --up ${set} # set
@@ -226,16 +216,22 @@ EOF
 rise# ../../guestbin/ping-once.sh --up ${set} # set
 set# ../../guestbin/ping-once.sh --up ${rise} # rise
 east# ipsec whack --trafficstatus
-
-# wait for larval state to clear; hack
-east# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
-east# ipsec _kernel state
-east# ipsec _kernel policy
 EOF
 		;;
 	    * )
 		cat <<EOF >> ${sh}
 west# ../../guestbin/ping-once.sh --up ${east} # east
+EOF
+		;;
+	esac
+
+	case ${mode} in
+	    *-ondemand )
+		cat <<EOF >> ${sh}
+# wait for larval state to clear; hack
+west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+west# ipsec _kernel state
+west# ipsec _kernel policy
 EOF
 		;;
 	esac

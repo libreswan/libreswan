@@ -25,10 +25,9 @@ west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
 set# ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
 east# ipsec whack --trafficstatus
-
 # wait for larval state to clear; hack
-east# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
-east# ipsec _kernel state
-east# ipsec _kernel policy
+west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+west# ipsec _kernel state
+west# ipsec _kernel policy
 west# ipsec down westnet-eastnet
 west# ipsec _kernel state
