@@ -141,28 +141,6 @@ EOF
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 EOF
 
-	case ${platform} in
-	    openbsd )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-ipsecctl -F
-EOF
-		;;
-	    linux )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-../../guestbin/ip.sh xfrm state flush
-../../guestbin/ip.sh xfrm policy flush
-EOF
-		;;
-	    * )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-setkey -F
-EOF
-		;;
-	esac
-
 	touch ${dir}/east.console.txt
 	touch ${dir}/west.console.txt
 
@@ -256,6 +234,28 @@ EOF
 west# ipsec down ${conn}
 west# ipsec _kernel state
 EOF
+
+	case ${platform} in
+	    openbsd )
+		cat <<EOF > ${dir}/final.sh
+ipsec delete ${conn}
+ipsecctl -F
+EOF
+		;;
+	    linux )
+		cat <<EOF > ${dir}/final.sh
+ipsec delete ${conn}
+../../guestbin/ip.sh xfrm state flush
+../../guestbin/ip.sh xfrm policy flush
+EOF
+		;;
+	    * )
+		cat <<EOF > ${dir}/final.sh
+ipsec delete ${conn}
+setkey -F
+EOF
+		;;
+	esac
 
     done
 done

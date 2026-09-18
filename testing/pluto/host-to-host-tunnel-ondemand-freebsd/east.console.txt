@@ -48,20 +48,11 @@ east #
 192.0.1.0/24[any] 192.0.2.0/24[any] any
 	in ipsec
 	esp/tunnel/192.1.2.45-192.1.2.23/require
-	spid=3 seq=1 pid=PID scope=global 
+	spid=1 seq=1 pid=PID scope=global 
 	refcnt=1
 192.0.2.0/24[any] 192.0.1.0/24[any] any
 	out ipsec
 	esp/tunnel/192.1.2.23-192.1.2.45/require
-	spid=4 seq=0 pid=PID scope=global 
+	spid=2 seq=0 pid=PID scope=global 
 	refcnt=1
-east #
- ipsec down westnet-eastnet
-"westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
-"westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet" #2: ESP traffic information: in=168B out=280B
-"westnet-eastnet" #1: deleting IKE SA (established IKE SA)
-east #
- ipsec _kernel state
-No SAD entries.
 east #
