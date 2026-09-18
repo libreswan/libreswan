@@ -22,8 +22,8 @@ west# ipsec _kernel policy
 # trigger acquire using UDP
 set# echo 'TRIGGER' | nc -u -w 1 192.0.2.12 7
 west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
-rise# ../../guestbin/ping-once.sh --up 192.0.1.15
-set# ../../guestbin/ping-once.sh --up 192.0.2.12
+rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
+set# ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
 east# ipsec whack --trafficstatus
 
 # wait for larval state to clear; hack

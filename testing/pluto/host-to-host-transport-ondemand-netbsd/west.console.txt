@@ -34,7 +34,7 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 "west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- ../../guestbin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 up
 west #
  ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state

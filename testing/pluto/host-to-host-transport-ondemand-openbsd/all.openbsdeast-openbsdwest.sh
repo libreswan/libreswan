@@ -23,7 +23,7 @@ west# ipsec _kernel policy
 # trigger acquire using UDP
 west# echo 'TRIGGER' | nc -u -w 1 192.1.2.23 7
 west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
-west# ../../guestbin/ping-once.sh --up 192.1.2.23
+west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 
 # wait for larval state to clear; hack
 west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state

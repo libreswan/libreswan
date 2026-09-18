@@ -19,8 +19,8 @@ west# echo "initdone"
 west# ipsec up westnet-eastnet # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
-rise# ../../guestbin/ping-once.sh --up 192.0.1.15
-set# ../../guestbin/ping-once.sh --up 192.0.2.12
+rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
+set# ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
 west# ipsec whack --trafficstatus
 west# ipsec down westnet-eastnet
 west# ipsec _kernel state

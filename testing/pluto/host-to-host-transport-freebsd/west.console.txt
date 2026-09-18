@@ -58,7 +58,7 @@ west #
 	spid=2 seq=0 pid=PID scope=global 
 	refcnt=1
 west #
- ../../guestbin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 up
 west #
  ipsec down west-east

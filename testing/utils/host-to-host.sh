@@ -53,6 +53,8 @@ for platform in ${platforms} ; do
 	    transport )
 		west=${west_internet4}
 		east=${east_internet4}
+		rise=${rise_eastnet4}
+		set=${set_westnet4}
 		modeline="type=transport"
 		what="host-to-host transport mode"
 		conn=west-east
@@ -63,6 +65,8 @@ for platform in ${platforms} ; do
 	    transport-ondemand )
 		west=${west_internet4}
 		east=${east_internet4}
+		rise=${rise_eastnet4}
+		set=${set_westnet4}
 		modeline="type=transport"
 		what="ondemand host-to-host transport mode"
 		conn=west-east
@@ -73,6 +77,8 @@ for platform in ${platforms} ; do
 	    tunnel )
 		west=${west_internet6}
 		east=${east_internet6}
+		rise=${rise_eastnet6}
+		set=${set_westnet6}
 		what="IPv6 host-to-host tunnel mode"
 		conn=west-east
 		hosts=${platform}east-${platform}west
@@ -82,6 +88,8 @@ for platform in ${platforms} ; do
 	    tunnel-forward )
 		west=${west_internet4}
 		east=${east_internet4}
+		rise=${rise_eastnet4}
+		set=${set_westnet4}
 		leftsubnetline="leftsubnet=${westnet4}0/24"
 		rightsubnetline="rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set"
@@ -93,13 +101,15 @@ for platform in ${platforms} ; do
 	    tunnel-ondemand )
 		west=${west_internet4}
 		east=${east_internet4}
+		rise=${rise_eastnet4}
+		set=${set_westnet4}
 		leftsubnetline="leftsubnet=${westnet4}0/24"
 		rightsubnetline="rightsubnet=${eastnet4}0/24"
 		what="rise-east=TUNNEL=west-set triggered by an acquire"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair=
-		trigger="set# echo 'TRIGGER' | nc -u -w 1 ${rise_eastnet4} 7"
+		trigger="set# echo 'TRIGGER' | nc -u -w 1 ${rise} 7"
 		;;
 	esac
 
@@ -196,7 +206,7 @@ EOF
 	case ${mode} in
 	    transport-ondemand )
 		cat <<EOF >> ${sh}
-west# ../../guestbin/ping-once.sh --up ${east}
+west# ../../guestbin/ping-once.sh --up ${east} # east
 
 # wait for larval state to clear; hack
 west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
@@ -206,15 +216,15 @@ EOF
 		;;
 	    tunnel-forward )
 		cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set_westnet4}
-set# ../../guestbin/ping-once.sh --up ${rise_eastnet4}
+rise# ../../guestbin/ping-once.sh --up ${set} # set
+set# ../../guestbin/ping-once.sh --up ${rise} # rise
 west# ipsec whack --trafficstatus
 EOF
 		;;
 	    tunnel-ondemand )
 		cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set_westnet4}
-set# ../../guestbin/ping-once.sh --up ${rise_eastnet4}
+rise# ../../guestbin/ping-once.sh --up ${set} # set
+set# ../../guestbin/ping-once.sh --up ${rise} # rise
 east# ipsec whack --trafficstatus
 
 # wait for larval state to clear; hack
@@ -225,7 +235,7 @@ EOF
 		;;
 	    * )
 		cat <<EOF >> ${sh}
-west# ../../guestbin/ping-once.sh --up ${east}
+west# ../../guestbin/ping-once.sh --up ${east} # east
 EOF
 		;;
 	esac

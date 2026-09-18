@@ -65,7 +65,7 @@ src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 west #
- ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23 # east
 up
 west #
  ipsec down west-east
