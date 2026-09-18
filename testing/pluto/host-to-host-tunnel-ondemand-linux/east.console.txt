@@ -13,19 +13,6 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec route westnet-eastnet
-east #
- ipsec _kernel state
-east #
- ipsec _kernel policy
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-east #
- ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
-"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
-east #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 east #

@@ -17,21 +17,6 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec route westnet-eastnet
-east #
- ipsec _kernel state
-No SAD entries.
-east #
- ipsec _kernel policy
-192.0.2.0/24[any] 192.0.1.0/24[any] any
-	out ipsec
-	esp/transport//require
-	spid=1 seq=0 pid=PID scope=global 
-	refcnt=1
-east #
- ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
-"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
-east #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=280, maxBytes=2^63B, id='@west'
 east #

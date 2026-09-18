@@ -1,3 +1,5 @@
-../../guestbin/ping-once.sh --up 192.0.2.12
+echo 'TRIGGER' | nc -u -w 1 192.0.2.12 7
+set #
+ ../../guestbin/ping-once.sh --up 192.0.2.12
 up
 set #

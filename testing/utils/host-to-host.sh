@@ -58,7 +58,6 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
-		initiator=west
 		trigger=
 		;;
 	    transport-ondemand )
@@ -69,7 +68,6 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair="west# ipsec whack --impair suppress_retransmits"
-		initiator=west
 		trigger="west# echo 'TRIGGER' | nc -u -w 1 ${east} 7"
 		;;
 	    tunnel )
@@ -79,7 +77,6 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
-		initiator=west
 		trigger=
 		;;
 	    tunnel-forward )
@@ -91,7 +88,6 @@ for platform in ${platforms} ; do
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair="west# ipsec whack --impair suppress_retransmits"
-		initiator=west
 		trigger=
 		;;
 	    tunnel-ondemand )
@@ -103,8 +99,7 @@ for platform in ${platforms} ; do
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair=
-		initiator=east
-		trigger="rise# echo 'TRIGGER' | nc -u -w 1 ${set_westnet4} 7"
+		trigger="set# echo 'TRIGGER' | nc -u -w 1 ${rise_eastnet4} 7"
 		;;
 	esac
 
@@ -202,13 +197,13 @@ EOF
 	case ${mode} in
 	    *-ondemand )
 		cat <<EOF >> ${sh}
-${initiator}# ipsec route ${conn}
-${initiator}# ipsec _kernel state
-${initiator}# ipsec _kernel policy
+west# ipsec route ${conn}
+west# ipsec _kernel state
+west# ipsec _kernel policy
 
 # trigger acquire using UDP
 ${trigger}
-${initiator}# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 EOF
 		;;
 	    * )
@@ -258,8 +253,8 @@ EOF
 	esac
 
 	cat <<EOF >> ${sh}
-${initiator}# ipsec down ${conn}
-${initiator}# ipsec _kernel state
+west# ipsec down ${conn}
+west# ipsec _kernel state
 EOF
 
     done

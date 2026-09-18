@@ -15,3 +15,27 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec route westnet-eastnet
+west #
+ ipsec _kernel state
+No SAD entries.
+west #
+ ipsec _kernel policy
+192.0.1.0/24[any] 192.0.2.0/24[any] any
+	out ipsec
+	esp/transport//require
+	spid=1 seq=0 pid=PID scope=global 
+	refcnt=1
+west #
+ ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ipsec down westnet-eastnet
+"westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
+"westnet-eastnet" #2: ESP traffic information: in=168B out=280B
+"westnet-eastnet" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec _kernel state
+No SAD entries.
+west #

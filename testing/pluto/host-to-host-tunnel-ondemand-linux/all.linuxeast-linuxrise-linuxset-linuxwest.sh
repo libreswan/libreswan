@@ -15,13 +15,13 @@ west# ../../guestbin/wait-until-pluto-started
 west# ipsec add westnet-eastnet
 west# echo "initdone"
 
-east# ipsec route westnet-eastnet
-east# ipsec _kernel state
-east# ipsec _kernel policy
+west# ipsec route westnet-eastnet
+west# ipsec _kernel state
+west# ipsec _kernel policy
 
 # trigger acquire using UDP
-rise# echo 'TRIGGER' | nc -u -w 1 192.0.1.15 7
-east# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+set# echo 'TRIGGER' | nc -u -w 1 192.0.2.12 7
+west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 rise# ../../guestbin/ping-once.sh --up 192.0.1.15
 set# ../../guestbin/ping-once.sh --up 192.0.2.12
 east# ipsec whack --trafficstatus
@@ -30,5 +30,5 @@ east# ipsec whack --trafficstatus
 east# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
 east# ipsec _kernel state
 east# ipsec _kernel policy
-east# ipsec down westnet-eastnet
-east# ipsec _kernel state
+west# ipsec down westnet-eastnet
+west# ipsec _kernel state
