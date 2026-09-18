@@ -63,6 +63,7 @@
 #include "revival.h"
 #include "connection_event.h"
 
+#ifdef USE_IKEv1
 static void terminate_v1_state(struct connection *c,
 			       struct ike_sa **ike,
 			       struct child_sa **child,
@@ -138,6 +139,7 @@ static void terminate_v1_state(struct connection *c,
 	}
 	bad_case(visit_kind);
 }
+#endif
 
 static void terminate_v2_states(struct connection *c,
 				struct ike_sa **ike,
@@ -256,9 +258,11 @@ static void terminate_connection_states(struct connection *c,
 	}
 	context->count++;
 	switch (c->config->ike_version) {
+#ifdef USE_IKEv1
 	case IKEv1:
 		terminate_v1_state(c, ike, child, visit_kind);
 		return;
+#endif
 	case IKEv2:
 		/* may need to delete IKE tree */
 		terminate_v2_states(c, ike, child, visit_kind, verbose);
@@ -536,6 +540,7 @@ void terminate_and_delete_connections(struct connection *c,
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
+#ifdef USE_IKEv1
 static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child,
 			       struct verbose verbose)
 {
@@ -558,6 +563,7 @@ static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child,
 		delete_child_sa(&child);
 	}
 }
+#endif
 
 static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 			       enum terminate_reason reason,
@@ -688,9 +694,11 @@ void terminate_ike_family(struct ike_sa **ike,
 		struct child_sa *child = pexpect_child_sa(cf.st);
 
 		switch (child->sa.st_ike_version) {
+#ifdef USE_IKEv1
 		case IKEv1:
 			terminate_v1_child(ike, child, verbose);
 			break;
+#endif
 		case IKEv2:
 			terminate_v2_child(ike, child, reason, verbose);
 			break;
@@ -701,6 +709,7 @@ void terminate_ike_family(struct ike_sa **ike,
 	connection_teardown_ike(ike, reason, verbose.where);
 }
 
+#ifdef USE_IKEv1
 void connection_delete_v1_state(struct state **st, where_t where)
 {
 	PEXPECT((*st)->logger, (*st)->st_ike_version == IKEv1);
@@ -713,3 +722,4 @@ void connection_delete_v1_state(struct state **st, where_t where)
 	}
 	(*st) = NULL;
 }
+#endif

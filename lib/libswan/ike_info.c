@@ -211,7 +211,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 /*
  * All together now ...
  */
-
+#ifdef USE_IKEv1
 static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.name = "IKE",
 	.alg_id = IKEv1_OAKLEY_ID,
@@ -226,6 +226,7 @@ static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.integ = false,
 	.ke = true,
 };
+#endif
 
 static const struct proposal_protocol ikev2_ike_proposal_protocol = {
 	.name = "IKE",
@@ -239,7 +240,9 @@ static const struct proposal_protocol ikev2_ike_proposal_protocol = {
 };
 
 static const struct proposal_protocol *ike_proposal_protocol[] = {
+#ifdef USE_IKEv1
 	[IKEv1] = &ikev1_ike_proposal_protocol,
+#endif
 	[IKEv2] = &ikev2_ike_proposal_protocol,
 };
 
