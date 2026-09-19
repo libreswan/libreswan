@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-no-sha1
-ipsec auto --status
+ipsec add westnet-eastnet-no-sha1
+ipsec status
 echo "initdone"
 ipsec whack --impair revival
