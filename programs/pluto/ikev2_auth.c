@@ -231,36 +231,62 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
-static enum auth local_v2_auth(struct ike_sa *ike)
+/*
+ * Merge the configured auth with what was negotiated by the peer.
+ */
+
+static struct authby local_v2_authby(struct ike_sa *ike)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+	struct connection *c = ike->sa.st_connection;
+	const struct authby configured_authby = c->local->host.config->authby;
+	struct authby negotiated_authby;
+	const char *negotiation_story;
+	bool override = false;
+
 	if (ike->sa.st_v2_resume_session != NULL) {
-		return AUTH_PSK;
-	}
-
-	if (ike->sa.st_peer_wants_null) {
-		/* we allow authby=null and IDr payload told us to use it */
-		return AUTH_NULL;
-	}
-
-	const struct connection *c = ike->sa.st_connection;
-
-	if (authby_is_set(ike->sa.st_v2_peer_authby)) {
-		struct authby negotiated_authby = authby_and(ike->sa.st_v2_peer_authby, 
-				c->local->host.config->authby);
-		
+		override = true;
+		negotiation_story = "resume session";
+		negotiated_authby = (struct authby) {
+			.authby_psk = true,
+		};
+	} else if (ike->sa.st_eap != NULL) {
+		override = true;
+		negotiation_story = "eap";
+		negotiated_authby = (struct authby) {
+			.authby_psk = true,
+		};
+	} else if (ike->sa.st_peer_wants_null) {
+		negotiation_story = "peer wants null";
+		negotiated_authby = (struct authby) {
+			.authby_null = true,
+		};
+	} else if (!authby_is_set(ike->sa.st_v2_peer_authby)) {
+		negotiation_story = "configured";
+		negotiated_authby = configured_authby;
+	} else {
+		negotiated_authby = authby_and(configured_authby,
+					       ike->sa.st_v2_peer_authby);
 		if (authby_is_set(negotiated_authby)) {
-			name_buf eb;
-			ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: selecting negotiated authby=%s",
-					str_enum_long(&auth_names, auth_from_authby(negotiated_authby), &eb));
-			return auth_from_authby(negotiated_authby);
+			negotiation_story = "negotiated by SUPPORTED_AUTH_METHODS";
+		} else {
+			negotiated_authby = configured_authby;
+			negotiation_story = "SUPPORTED_AUTH_METHODS negotiation failed, using configured";
+			authby_buf sam, ca;
+			vlog("no overlap between peer's supported %s and local configured %s authentication; SUPPORTED_AUTH_METHODS notification ignored",
+			     str_authby(ike->sa.st_v2_peer_authby, &sam),
+			     str_authby(configured_authby, &ca));
 		}
-		name_buf lcb;
-		ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: no negotiated authby, falling back to local config: %s",
-			str_enum_short(&auth_names, c->local->host.config->auth, &lcb));
 	}
-	enum auth authby = c->local->host.config->auth;
-	pexpect(authby != AUTH_UNSET);
-	return authby;
+	authby_buf pab, cab, nab;
+	vdbg("override %s configured %s negotiated %s proposed %s; %s",
+	     bool_str(override),
+	     str_authby(configured_authby, &cab),
+	     str_authby(negotiated_authby, &nab),
+	     str_authby(ike->sa.st_v2_peer_authby, &pab),
+	     negotiation_story);
+	vexpect(override || authby_has_any(configured_authby, negotiated_authby));
+	return negotiated_authby;
 }
 
 /*
@@ -359,9 +385,10 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 
 struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 {
-	enum auth auth = (ike->sa.st_eap != NULL ? AUTH_PSK :
-			  local_v2_auth(ike));
 	struct connection *c = ike->sa.st_connection;
+
+	struct authby negotiated_authby = local_v2_authby(ike);
+	enum auth auth = auth_from_authby(negotiated_authby);
 
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
@@ -488,21 +515,23 @@ static const struct hash_desc *negotiated_hash_map[] = {
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
-	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+
+	vdbg("digsig: selecting negotiated hash algorithm");
 	struct authby digsig_authby =
 		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
 					   ike->sa.st_v2_digsig.peer_pubkey_mask),
-				local_v2_auth(ike));
+				auth_from_authby(local_v2_authby(ike)));
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 		if (authby_has_hash(digsig_authby, (*hash))) {
 			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
 			     (*hash)->common.fqn);
 			return (*hash);
 		}
-		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
+		vdbg("digsig:   skipped hash algorithm %s as not negotiated",
 		     (*hash)->common.fqn);
 	}
-	ldbg(ike->sa.logger, "digsig: no compatible DigSig hash algo");
+	vdbg("digsig: no compatible DigSig hash algo");
 	return NULL;
 }
 
