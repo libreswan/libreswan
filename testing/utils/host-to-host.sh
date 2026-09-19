@@ -23,6 +23,127 @@ do_not_modify()
     echo "#####   do not modify"
 }
 
+up()
+{
+    echo
+    cat <<EOF
+west# ipsec up ${conn} # sanitize-retransmits
+west# ipsec _kernel state
+west# ipsec _kernel policy
+EOF
+}
+
+ping_hosts()
+{
+    local mode=$1
+    case ${mode} in
+	tunnel-ondemand )
+	    cat <<EOF >> ${sh}
+rise# ../../guestbin/ping-once.sh --up ${set} # set
+set# ../../guestbin/ping-once.sh --up ${rise} # rise
+east# ipsec whack --trafficstatus
+EOF
+	    ;;
+	tunnel-forward )
+	    cat <<EOF >> ${sh}
+rise# ../../guestbin/ping-once.sh --up ${set} # set
+set# ../../guestbin/ping-once.sh --up ${rise} # rise
+west# ipsec whack --trafficstatus
+EOF
+	    ;;
+	* )
+	    cat <<EOF >> ${sh}
+west# ../../guestbin/ping-once.sh --up ${east} # east
+EOF
+	    ;;
+    esac
+}
+
+down()
+{
+    #echo
+    cat <<EOF
+west# ipsec down ${conn}
+west# ipsec _kernel state
+EOF
+}
+
+stop()
+{
+    cat <<EOF
+ipsec stop
+EOF
+}
+
+delete()
+{
+    echo
+cat <<EOF
+ipsec delete ${conn}
+EOF
+    case ${platform} in
+	openbsd )
+	    cat <<EOF
+ipsec delete ${conn}
+ipsecctl -F
+EOF
+	    ;;
+	linux )
+	    cat <<EOF
+ipsec delete ${conn}
+../../guestbin/ip.sh xfrm state flush
+../../guestbin/ip.sh xfrm policy flush
+EOF
+	    ;;
+	* )
+	    cat <<EOF
+setkey -F
+EOF
+	    ;;
+    esac
+}
+
+ondemand_child=0
+
+ondemand()
+{
+    local trigger=$1
+    case ${trigger} in
+	west-*-east ) from=west ; to=${east} ; name=east ;;
+	set-*-rise  ) from=set  ; to=${rise} ; name=rise ;;
+	* ) echo confused by ${trigger} 1>&2 ;;
+    esac
+    echo
+    case ${trigger} in
+	*-udp-* )
+	    #echo ${name}
+	    cat <<EOF
+# trigger acquire using UDP
+${from}# echo 'TRIGGER' | nc -u -w 1 ${to} 7
+EOF
+	    ;;
+	*-ping-* )
+	    cat <<EOF
+# trigger acquire using PING
+${from}# ../../guestbin/ping-once.sh --down ${to} # ${name}
+EOF
+	    ;;
+	west-iping-east )
+	    cat <<EOF
+# trigger acquire using PING -I SOURCE
+west# ../../guestbin/ping-once.sh --down -I ${west_westnet} ${east} # east
+EOF
+	    ;;
+	* )
+	    echo confused by ${trigger} 1>&2
+	    ;;
+    esac
+    ondemand_child=$((ondemand_child + 2))
+    cat <<EOF
+west# ../../guestbin/wait-for-pluto.sh '^".*#${ondemand_child}: initiator established Child SA'
+EOF
+}
+
 for platform in ${platforms} ; do
 
     case ${platform} in
@@ -36,6 +157,7 @@ for platform in ${platforms} ; do
 
     for mode in transport transport-ondemand tunnel tunnel-forward tunnel-ondemand ; do
 
+	ondemand_child=0
 	dir=${basedir}-${mode}-${platform}
 	echo ${dir}
 
@@ -48,10 +170,12 @@ for platform in ${platforms} ; do
 	modeline='#type='
 	leftsubnetline='#leftsubnet='
 	rightsubnetline='#rightsubnet='
+	triggers=
 
 	case ${mode} in
 	    transport )
 		west=${west_internet4}
+		west_westnet=${west_westnet4}
 		east=${east_internet4}
 		rise=${rise_eastnet4}
 		set=${set_westnet4}
@@ -60,10 +184,10 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
-		trigger=
 		;;
 	    transport-ondemand )
 		west=${west_internet4}
+		west_westnet=${west_westnet4}
 		east=${east_internet4}
 		rise=${rise_eastnet4}
 		set=${set_westnet4}
@@ -72,10 +196,11 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair="west# ipsec whack --impair suppress_retransmits"
-		trigger="west# echo 'TRIGGER' | nc -u -w 1 ${east} 7"
+		triggers="west-udp-east" # west-ping-east west-iping-east"
 		;;
 	    tunnel )
 		west=${west_internet6}
+		west_westnet=${west_westnet6}
 		east=${east_internet6}
 		rise=${rise_eastnet6}
 		set=${set_westnet6}
@@ -83,10 +208,10 @@ for platform in ${platforms} ; do
 		conn=west-east
 		hosts=${platform}east-${platform}west
 		westimpair=
-		trigger=
 		;;
 	    tunnel-forward )
 		west=${west_internet4}
+		west_westnet=${west_westnet4}
 		east=${east_internet4}
 		rise=${rise_eastnet4}
 		set=${set_westnet4}
@@ -96,10 +221,10 @@ for platform in ${platforms} ; do
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair="west# ipsec whack --impair suppress_retransmits"
-		trigger=
 		;;
 	    tunnel-ondemand )
 		west=${west_internet4}
+		west_westnet=${west_westnet4}
 		east=${east_internet4}
 		rise=${rise_eastnet4}
 		set=${set_westnet4}
@@ -109,7 +234,7 @@ for platform in ${platforms} ; do
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
 		westimpair=
-		trigger="set# echo 'TRIGGER' | nc -u -w 1 ${rise} 7"
+		triggers="set-udp-rise" # set-ping-rise west-udp-east west-iping-east west-ping-east"
 		;;
 	esac
 
@@ -151,115 +276,72 @@ EOF
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 EOF
 
-	touch ${dir}/east.console.txt
-	touch ${dir}/west.console.txt
+	# XXX: currently rise->set pings don't flow on freebsd in
+	# transport mode.
 
 	case ${mode} in
-	    tunnel-forward | tunnel-ondemand )
+	    tunnel-* )
+		touch ${dir}/east.console.txt
+		touch ${dir}/west.console.txt
 		touch ${dir}/rise.console.txt
 		touch ${dir}/set.console.txt
+		;;
+	    * )
+		touch ${dir}/east.console.txt
+		touch ${dir}/west.console.txt
 		;;
 	esac
 
 	rm -f ${dir}/all.*.sh
 	sh=${dir}/all.${hosts}.sh
 	do_not_modify > ${sh}
-	cat <<EOF >> ${sh}
 
+	echo >> ${sh}
+	cat <<EOF >> ${sh}
 east# ${prep}
 east# ipsec start
 east# ../../guestbin/wait-until-pluto-started
 east# ipsec whack --impair suppress_retransmits
 east# ipsec add ${conn}
 east# echo "initdone"
-
+EOF
+	echo >> ${sh}
+	cat <<EOF >> ${sh}
 west# ${prep}
 west# ipsec start
 west# ../../guestbin/wait-until-pluto-started${westimpair:+
 ${westimpair}}
 west# ipsec add ${conn}
 west# echo "initdone"
-
 EOF
+
 
 	case ${mode} in
 	    *-ondemand )
-		cat <<EOF >> ${sh}
+		    echo >> ${sh}
+		    cat <<EOF >> ${sh}
 west# ipsec route ${conn}
 west# ipsec _kernel state
 west# ipsec _kernel policy
-
-# trigger acquire using UDP
-${trigger}
-west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 EOF
-		;;
-	    * )
-		cat <<EOF >> ${sh}
-west# ipsec up ${conn} # sanitize-retransmits
-west# ipsec _kernel state
-west# ipsec _kernel policy
-EOF
-		;;
-	esac
-
-	case ${mode} in
-	    tunnel-forward )
-		cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set} # set
-set# ../../guestbin/ping-once.sh --up ${rise} # rise
-west# ipsec whack --trafficstatus
-EOF
-		;;
-	    tunnel-ondemand )
-		cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set} # set
-set# ../../guestbin/ping-once.sh --up ${rise} # rise
-east# ipsec whack --trafficstatus
-EOF
-		;;
-	    * )
-		cat <<EOF >> ${sh}
-west# ../../guestbin/ping-once.sh --up ${east} # east
-EOF
-		;;
-	esac
-
-	case ${mode} in
-	    *-ondemand )
-		cat <<EOF >> ${sh}
+		for trigger in ${triggers} ; do
+		    ondemand ${trigger} >> ${sh}
+		    ping_hosts ${mode} >> ${sh}
+		    cat <<EOF >> ${sh}
 # wait for larval state to clear; hack
 west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
 west# ipsec _kernel state
 west# ipsec _kernel policy
 EOF
-		;;
-	esac
-
-	cat <<EOF >> ${sh}
-west# ipsec down ${conn}
-west# ipsec _kernel state
-EOF
-
-	case ${platform} in
-	    openbsd )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-ipsecctl -F
-EOF
-		;;
-	    linux )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-../../guestbin/ip.sh xfrm state flush
-../../guestbin/ip.sh xfrm policy flush
-EOF
+		    down >> ${sh}
+		    #delete >> ${sh}
+		    #stop >> ${sh}
+		done
 		;;
 	    * )
-		cat <<EOF > ${dir}/final.sh
-ipsec delete ${conn}
-setkey -F
-EOF
+		up >> ${sh}
+		ping_hosts ${mode} >> ${sh}
+		down >> ${sh}
 		;;
 	esac
 
