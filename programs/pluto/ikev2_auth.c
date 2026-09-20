@@ -49,6 +49,19 @@ struct v2AUTH_blobs {
 };
 
 static const uint8_t v2AUTH_zero_prefix[8] = {0};
+
+/*
+ * Map negotiation bit <-> hash algorithm; in preference order.
+ */
+
+static const struct hash_desc *negotiated_hash_map[] = {
+	&ike_alg_hash_sha2_512,
+	&ike_alg_hash_sha2_384,
+	&ike_alg_hash_sha2_256,
+	&ike_alg_hash_identity,
+	&ike_alg_hash_sha1,
+};
+
 /*
  * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Authentication
  * in IKEv2":
@@ -306,47 +319,107 @@ static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
 }
 
 static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
-					  enum auth auth,
+					  const struct authby negotiated_authby,
 					  enum ikev2_auth_method method)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
 	switch (method) {
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		const struct pubkey_signer *signer;
-		const char *signer_story;
-		const struct hash_desc *hash;
-		const char *hash_story;
-		if (ike->sa.st_v2_initiator_auth.pubkey.hash == NULL) {
-			hash = v2_auth_negotiated_signature_hash(ike);
-			hash_story = "from policy";
-		} else {
-			hash = ike->sa.st_v2_initiator_auth.pubkey.hash;
-			hash_story = "saved earlier";
-		}
-		switch (auth) {
-		case AUTH_RSASIG:
-			if (ike->sa.st_v2_initiator_auth.pubkey.signer == NULL ||
-			    ike->sa.st_v2_initiator_auth.pubkey.signer->type != &pubkey_type_rsa) {
-				signer = &pubkey_signer_digsig_rsassa_pss;
-				signer_story = "from policy";
-			} else {
-				signer = ike->sa.st_v2_initiator_auth.pubkey.signer;
-				signer_story = "saved earlier";
+		/*
+		 * Try to prefer the peer's authentication method.
+		 */
+		if (ike->sa.st_v2_initiator_auth.pubkey.hash != NULL &&
+		    ike->sa.st_v2_initiator_auth.pubkey.signer != NULL) {
+			/* could end up empty */
+			struct authby signer_authby =
+				authby_and(negotiated_authby,
+					   ike->sa.st_v2_initiator_auth.pubkey.signer->authby);
+			if (authby_has_hash(signer_authby, ike->sa.st_v2_initiator_auth.pubkey.hash)) {
+				vdbg("using same hash %s and signer %s as peer",
+				     ike->sa.st_v2_initiator_auth.pubkey.hash->common.fqn,
+				     ike->sa.st_v2_initiator_auth.pubkey.signer->name);
+				return pubkey_v2AUTH_method(method,
+							    ike->sa.st_v2_initiator_auth.pubkey.hash,
+							    ike->sa.st_v2_initiator_auth.pubkey.signer);
 			}
-			break;
-		case AUTH_ECDSA:
-			/* no choice */
-			signer = &pubkey_signer_digsig_ecdsa;
-			signer_story = "hardwired(ECDSA)";
-			break;
-		case AUTH_EDDSA:
-			signer = &pubkey_signer_digsig_eddsa_ed25519;
-			signer_story = "hardwired(EDDSA)";
-			break;
-		default:
-			bad_case(auth);
+			authby_buf ab;
+			vdbg("ignoring peer's hash %s and signer %s as the don't match local policy %s",
+			     ike->sa.st_v2_initiator_auth.pubkey.hash->common.fqn,
+			     ike->sa.st_v2_initiator_auth.pubkey.signer->name,
+			     str_authby(negotiated_authby, &ab));
 		}
-		ldbg(ike->sa.logger, "DIGSIG signer %s hash %s", signer_story, hash_story);
+
+		/*
+		 * This is brute force for now.
+		 * XXX: Should mix in the key's type.  Actually should
+		 * have mixed in the pubkey much earlier.
+		 */
+
+		/*
+		 * Since caller picked digital signature, because the
+		 * masked negotiated_authby had a digsig bit, there
+		 * should be at least one plausible digital signature
+		 * bit.
+		 *
+		 * However, this path can also be reached via an
+		 * impair.  Hence out of an abundance of caution,
+		 * re-mask the policy.
+		 */
+		const struct hash_desc *hash = NULL;
+		struct authby hash_authby =
+			authby_and(negotiated_authby, supported_ikev2_digsig_auth_payloads());
+		vdbg("selecting negotiated hash algorithm");
+		FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
+			if (authby_has_hash(hash_authby, (*hashp))) {
+				hash = (*hashp);
+				vdbg("selected hash %s", hash->common.fqn);
+				break;
+			}
+			vdbg("skiping hash %s as not negotiated",
+			     (*hashp)->common.fqn);
+		}
+		if (hash == NULL) {
+			authby_buf ab;
+			vlog_pexpect(HERE, "no compatible hash algo in %s",
+				     str_authby(hash_authby, &ab));
+			return (struct v2AUTH_method) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
+		}
+
+		/*
+		 * Since there's a hash, there must be at least one
+		 * signer that expects to use that hash.
+		 */
+		struct authby signer_authby = authby_and_hash(hash_authby, hash);
+		const struct pubkey_signer *signer = NULL;
+		vdbg("selecting negotiated signer algorithm");
+		FOR_EACH_THING(signerp,
+			       &pubkey_signer_digsig_rsassa_pss,
+			       &pubkey_signer_digsig_ecdsa,
+			       &pubkey_signer_digsig_eddsa_ed25519,
+			       &pubkey_signer_digsig_pkcs1_1_5_rsa) {
+			if (authby_has_any(signer_authby, signerp->authby)) {
+				signer = signerp;
+				vdbg("selected signer %s", signer->name);
+				break;
+			}
+			vdbg("skipping signer %s as not negotiated", signerp->name);
+		}
+		if (signer == NULL) {
+			authby_buf ab;
+			vlog_pexpect(HERE, "no compatible signature in %s",
+				     str_authby(signer_authby, &ab));
+			return (struct v2AUTH_method) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
+		}
+
+		authby_buf ab;
+		vdbg("picking hash %s signer %s from %s",
+		     hash->common.fqn, signer->name,
+		     str_authby(negotiated_authby, &ab));
 		return pubkey_v2AUTH_method(method, hash, signer);
 	}
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
@@ -395,15 +468,17 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
 		     str_enum_long(&ikev2_auth_method_names,
 				   impair.force_v2_auth_method.value, &eb));
-		return v2AUTH_method(ike, auth, impair.force_v2_auth_method.value);
+		return v2AUTH_method(ike, negotiated_authby,
+				     impair.force_v2_auth_method.value);
 	}
 
 	/* mask authby with the new "Digital Signature" hashes */
-	struct authby digsig_auth_payload =
-		authby_and(c->local->host.config->authby,
+	struct authby digsig_authby =
+		authby_and(negotiated_authby,
 			   ike->sa.st_v2_digsig.peer_pubkey_mask);
-	if (authby_has_auth(digsig_auth_payload, auth)) {
-		return v2AUTH_method(ike, auth, IKEv2_AUTH_DIGITAL_SIGNATURE);
+	if (authby_has_auth(digsig_authby, auth)) {
+		return v2AUTH_method(ike, digsig_authby,
+				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
 	switch (auth) {
@@ -413,7 +488,8 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 		 * RSASIG_v1_5.
 		 */
 		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
-			return v2AUTH_method(ike, auth, IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
+			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+					     IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
 		}
 
 		/*
@@ -445,15 +521,18 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 		 * authby which _should_ be looking at the ECDSA key.
 		 */
 		if (c->local->host.config->authby.ecdsa_sha2_512) {
-			return v2AUTH_method(ike, auth, IKEv2_AUTH_ECDSA_SHA2_512_P521);
+			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+					     IKEv2_AUTH_ECDSA_SHA2_512_P521);
 		}
 
 		if (c->local->host.config->authby.ecdsa_sha2_384) {
-			return v2AUTH_method(ike, auth, IKEv2_AUTH_ECDSA_SHA2_384_P384);
+			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+					     IKEv2_AUTH_ECDSA_SHA2_384_P384);
 		}
 
 		if (c->local->host.config->authby.ecdsa_sha2_256) {
-			return v2AUTH_method(ike, auth, IKEv2_AUTH_ECDSA_SHA2_256_P256);
+			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+					     IKEv2_AUTH_ECDSA_SHA2_256_P256);
 		}
 
 		/*
@@ -485,13 +564,16 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 		 * bundled in PSK (it certainly isn't one of the
 		 * signature payloads)?
 		 */
-		return v2AUTH_method(ike, auth, IKEv2_AUTH_SHARED_KEY_MAC);
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_SHARED_KEY_MAC);
 
 	case AUTH_PSK:
-		return v2AUTH_method(ike, auth, IKEv2_AUTH_SHARED_KEY_MAC);
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_SHARED_KEY_MAC);
 
 	case AUTH_NULL:
-		return v2AUTH_method(ike, auth, IKEv2_AUTH_NULL);
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_NULL);
 
 	case AUTH_NEVER:
 	case AUTH_UNSET:
@@ -504,14 +586,6 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 /*
  * Map negotiation bit <-> hash algorithm; in preference order.
  */
-
-static const struct hash_desc *negotiated_hash_map[] = {
-	&ike_alg_hash_sha2_512,
-	&ike_alg_hash_sha2_384,
-	&ike_alg_hash_sha2_256,
-	&ike_alg_hash_identity,
-	&ike_alg_hash_sha1,
-};
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
