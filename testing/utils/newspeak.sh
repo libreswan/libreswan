@@ -24,7 +24,7 @@ for d in "$@" ; do
 	    $f
 	# this is a common idiom from scripts that predate
 	# connectionstatus
-	sed -i -e 's/ipsec status *| *grep \([-a-z0-9]*\)$/ipsec connectionstatus $1/' $f
+	sed -i -e 's/ipsec status *| *grep \([-a-z0-9]*\)$/ipsec connectionstatus \1/' $f
 	# migrate some strongswan commands
 	sed -i \
 	    -e 's/strongswan up \([-a-z0-9]*\)$/swanctl --initiate --child \1 --loglevel 0/' \
