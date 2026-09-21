@@ -195,7 +195,7 @@ Connection list:
 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
-"private":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"private":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "private":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -220,7 +220,7 @@ Connection list:
 "private#10.1.0.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private#10.1.0.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private#10.1.0.0/24":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
-"private#10.1.0.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"private#10.1.0.0/24":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "private#10.1.0.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private#10.1.0.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private#10.1.0.0/24":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -245,7 +245,7 @@ Connection list:
 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private-or-clear":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
-"private-or-clear":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"private-or-clear":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "private-or-clear":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -270,7 +270,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear#192.1.2.0/24":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private-or-clear#192.1.2.0/24":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failurePASS;
-"private-or-clear#192.1.2.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"private-or-clear#192.1.2.0/24":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "private-or-clear#192.1.2.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear#192.1.2.0/24":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert

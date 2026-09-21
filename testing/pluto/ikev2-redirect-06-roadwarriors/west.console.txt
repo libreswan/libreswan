@@ -48,7 +48,7 @@ Connection list:
 "east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "east-any":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "east-any":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -73,7 +73,7 @@ Connection list:
 "east-any"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any"[1]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "east-any"[1]:   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"east-any"[1]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any"[1]:   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "east-any"[1]:   conn_prio: 0,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any"[1]:   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
@@ -100,7 +100,7 @@ Connection list:
 "east-any"[2]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "east-any"[2]:   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "east-any"[2]:   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"east-any"[2]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"east-any"[2]:   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 "east-any"[2]:   conn_prio: 0,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any"[2]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any"[2]:   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
