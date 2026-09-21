@@ -3,5 +3,5 @@
 /testing/x509/import.sh real/mainca/road.end.cert
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add road-eastnet-ikev1
+ipsec add road-eastnet-ikev1
 echo "initdone"

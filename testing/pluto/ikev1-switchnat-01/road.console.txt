@@ -25,10 +25,10 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec auto --add road1
+ ipsec add road1
 "road1": added oriented IKEv1 connection
 road #
- ipsec auto --up road1
+ ipsec up road1 # sanitize-retransmits
 "road1" #1: initiating IKEv1 Main Mode connection
 "road1" #1: sent Main Mode request
 "road1" #1: sent Main Mode I2
@@ -49,10 +49,10 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road2
+ ipsec add road2
 "road2": added oriented IKEv1 connection
 road #
- ipsec auto --up road2
+ ipsec up road2 # sanitize-retransmits
 "road2" #1: initiating IKEv1 Main Mode connection
 "road2" #1: sent Main Mode request
 "road2" #1: sent Main Mode I2
