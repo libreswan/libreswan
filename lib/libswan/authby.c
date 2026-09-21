@@ -336,14 +336,6 @@ void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
 			continue;
 		}
 
-		/*
-		 * XXX: libreswan does not speak of its support for
-		 * the SHA1 hash algorithms.
-		 */
-		if (hash == &ike_alg_hash_sha1) {
-			continue;
-		}
-
 		if (sep != NULL) {
 			jam_string(buf, sep);
 		}
