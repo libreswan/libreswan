@@ -428,11 +428,11 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
 		return false;
 	}
 
-	if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
-		return false;
+	for (const struct hash_desc **hashp = next_hash_desc(NULL);
+	     hashp != NULL; hashp = next_hash_desc(hashp)) {
+		if (!emit_hash(&n_pbs, supported_authby, *hashp)) {
+			return false;
+		}
 	}
 
 	close_pbs_out(&n_pbs);
