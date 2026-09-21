@@ -1686,7 +1686,7 @@ kvmplutotest	ikev2-tcp-25-rw-nat					good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
 kvmplutotest	ikev2-tcp-27-6in6					good	github/730
 kvmplutotest	ikev2-tcp-28-ondemand					good	github/1746,github/1156
-
+kvmplutotest	ikev2-tcp-29-CVE-2026-94453-unexpected-eof		good
 
 kvmplutotest	ikev2-tcp-05-transport-mode		wip	github/1133
 kvmplutotest	ikev2-udp-05-transport-mode 		good
@@ -1873,7 +1873,6 @@ kvmplutotest	ikev2-routes-subnets-singular		good	github/1950
 kvmplutotest       ikev1-policy-03-stats                  good
 
 kvmplutotest	cve-2026-12413-max-payloads		  good
-
 
 #################################################################
 # RFC 9593
