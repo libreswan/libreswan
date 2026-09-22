@@ -302,32 +302,36 @@ static bool score_host_connection(const struct ike_sa *ike,
 	}
 
 	/*
-	 * The proposed authentication must match the
-	 * policy of this connection.
+	 * The proposed authentication must match the policy of this
+	 * connection's remote.
 	 */
+
+	struct authby remote_authbys = d->remote->host.config->authby;
+	struct authby matching_authbys = authby_and(remote_authbys,
+						    proposed_authbys);
+	if (!authby_is_set(matching_authbys)) {
+		authby_buf rab;
+		vdbg("skipping because %s has zero matches with proposed_authbys",
+		     str_authby(remote_authbys, &rab));
+		return false;
+	}
+
 	switch (ike->sa.st_ike_version) {
+
 	case IKEv1:
+	{
 		if (d->config->aggressive) {
 			vdbg("skipping because AGGRESSIVE isn't right");
 			return false;	/* differ about aggressive mode */
 		}
-		if (proposed_authbys.psk) {
-			if (!(d->remote->host.config->auth == AUTH_PSK)) {
-				/* there needs to be a key */
-				vdbg("skipping because no PSK in POLICY");
-				return false;
-			}
+		if (matching_authbys.authby_psk) {
 			if (get_connection_psk(d) == NULL) {
 				/* there needs to be a key */
 				vdbg("skipping because PSK and no secret");
 				return false; /* no secret */
 			}
 		}
-		if (proposed_authbys.rsasig) {
-			if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
-				vdbg("skipping because not RSASIG in POLICY");
-				return false;	/* no key */
-			}
+		if (matching_authbys.authby_rsasig_raw) {
 			if (get_local_private_key(d, &pubkey_type_rsa,
 						  ike->sa.logger) == NULL) {
 				/*
@@ -339,65 +343,93 @@ static bool score_host_connection(const struct ike_sa *ike,
 			}
 		}
 		break;
+	}
+
 	case IKEv2:
+	{
 		/*
-		 * We need to check if leftauth and
-		 * rightauth match, but we only know
-		 * what the remote end has sent in the
-		 * IKE_AUTH request.
+		 * XXX: Only check against the connection's peer.
 		 *
-		 * XXX: this is too strict.  For
-		 * instance, given a connection that
-		 * allows both both ECDSA and RSASIG
-		 * then because .auth=rsasig
-		 * (preferred) the below will reject
-		 * ECDSA?
+		 * Keep track of when an auth method failed due to
+		 * lack of key.
 		 */
-		if (!authby_has_auth(proposed_authbys, d->remote->host.config->auth)) {
-			vdbg("skipping because mismatched authby");
+		bool missing_key = false;
+
+		if (matching_authbys.authby_psk) {
+			/*
+			 * Because this could be a template,
+			 * unconditionally accept PSK, even when there
+			 * doesn't seem to be a secret.
+			 *
+			 * XXX: Should be able to do better - the IDs
+			 * are known so should be able to query
+			 * ipsec.secrets using that?
+			 */
+			if (get_connection_psk(d) != NULL) {
+				vdbg("PSK and secret");
+				break;
+			}
+			vdbg("has no PSK; template?");
+			break;
+		}
+
+		if (matching_authbys.authby_null) {
+			vdbg("NULL so go with it");
+			break;
+		}
+
+		if (matching_authbys.authby_eaponly) {
+			vdbg("EAPONLY so nothing to check");
+			break;
+		}
+
+		if (authby_has_any(matching_authbys, (struct authby) {
+					AUTHBY_RSASIG,
+				})) {
+			if (get_local_private_key(d, &pubkey_type_rsa,
+						  ike->sa.logger) != NULL) {
+				vdbg("RSASIG and private key");
+				break;
+			}
+			missing_key = true;
+			vdbg("RSASIG and no private key");
+		}
+
+		if (authby_has_any(matching_authbys, (struct authby) {
+					AUTHBY_ECDSA,
+				})) {
+			if (get_local_private_key(d, &pubkey_type_ecdsa,
+						  ike->sa.logger) != NULL) {
+				break;
+			}
+			missing_key = true;
+			vdbg("ECDSA and no private key");
+		}
+
+		if (authby_has_any(matching_authbys, (struct authby) {
+					AUTHBY_EDDSA,
+				})) {
+			if (get_local_private_key(d, &pubkey_type_eddsa,
+						  ike->sa.logger) != NULL) {
+				vdbg("EdDSA and private key");
+				break;
+			}
+			missing_key = true;
+			vdbg("EdDSA and no private key");
+		}
+
+		if (missing_key) {
+			authby_buf eb;
+			vdbg("no keys found for %s",
+			     str_authby(proposed_authbys, &eb));
 			return false;
 		}
-		/* check that the chosen one has a key */
-		switch (d->remote->host.config->auth) {
-		case AUTH_PSK:
-			/*
-			 * XXX: This tries to find the
-			 * PSK for what is potentially
-			 * a template!
-			 */
-			if (get_connection_psk(d) == NULL) {
-				/* need a key */
-#if 0
-				vdbg("skipping because PSK and no secret");
-				return false; /* no secret */
-#else
-				vdbg("has no PSK; why?");
-			}
-#endif
-			break;
-		case AUTH_RSASIG:
-			if (get_local_private_key(d, &pubkey_type_rsa,
-						  ike->sa.logger) == NULL) {
-				vdbg("skipping because RSASIG and no private key");
-				return false;	/* no key */
-			}
-			break;
-		case AUTH_ECDSA:
-			if (get_local_private_key(d, &pubkey_type_ecdsa,
-						  ike->sa.logger) == NULL) {
-				vdbg("skipping because ECDSA and no private key");
-				return false;	/* no key */
-			}
-			break;
-		default:
-		{
-			authby_buf eb;
-			vdbg("%s so no authby checks performed",
+
+		authby_buf eb;
+		vlog_pexpect(HERE, "authby %s is not handled",
 			     str_authby(proposed_authbys, &eb));
-			break;
-		}
-		}
 		break;
+	}
 	}
 
 	/*
