@@ -8,14 +8,9 @@ pluto(ok)
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair suppress_retransmits
-east #
  ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
-east #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=176, outBytes=168, maxBytes=2^63B, id='@west'
 east #

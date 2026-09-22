@@ -8,8 +8,6 @@ pluto(ok)
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress_retransmits
-west #
  ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 west #
@@ -75,9 +73,6 @@ west #
 @0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 @1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=176, outBytes=168, maxBytes=2^63B, id='@east'
-west #
  ipsec down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
@@ -85,4 +80,6 @@ west #
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state
+west #
+ ipsec _kernel policy
 west #

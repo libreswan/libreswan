@@ -86,3 +86,6 @@ west #
 west #
  ipsec _kernel state
 west #
+ ipsec _kernel policy
+@0 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 0.0.0.0 peer 0.0.0.0 type acquire
+west #

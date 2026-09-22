@@ -70,3 +70,6 @@ west #
  ipsec _kernel state
 No SAD entries.
 west #
+ ipsec _kernel policy
+No SPD entries.
+west #

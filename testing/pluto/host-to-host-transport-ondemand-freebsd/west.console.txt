@@ -9,8 +9,6 @@ Starting pluto.
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress_retransmits
-west #
  ipsec add west-east
 "west-east": added oriented IKEv2 connection
 west #
@@ -29,7 +27,7 @@ west #
 	spid=1 seq=0 pid=PID scope=global 
 	refcnt=1
 west #
- echo 'TRIGGER' | nc -u -w 1 192.1.2.23 7
+ echo 'TRIGGER' | nc -u -w 1 192.1.2.23 7 # east
 west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 "west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
@@ -81,4 +79,11 @@ west #
 west #
  ipsec _kernel state
 No SAD entries.
+west #
+ ipsec _kernel policy
+192.1.2.45[any] 192.1.2.23[any] any
+	out ipsec
+	esp/transport//require
+	spid=5 seq=0 pid=PID scope=global 
+	refcnt=1
 west #

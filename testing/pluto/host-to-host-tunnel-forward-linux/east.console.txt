@@ -5,8 +5,6 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair suppress_retransmits
-east #
  ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 east #

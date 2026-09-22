@@ -84,3 +84,5 @@ west #
 west #
  ipsec _kernel state
 west #
+ ipsec _kernel policy
+west #
