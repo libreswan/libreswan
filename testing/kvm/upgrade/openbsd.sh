@@ -32,6 +32,7 @@ add xmlto
 add curl
 add git
 add bash
+add socat
 # stem with branch, see pkg_add
 # add gcc%11
 # add llvm%21
