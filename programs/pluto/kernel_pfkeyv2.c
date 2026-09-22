@@ -1779,12 +1779,14 @@ static bool ask_sadb_policy(uint32_t acquire_seq,
 }
 #endif
 
-static void parse_sadb_acquire(const struct sadb_msg *msg,
+static bool parse_sadb_acquire(const struct sadb_msg *msg,
 			       shunk_t msg_cursor,
+			       struct kernel_acquire *acquire,
 			       struct verbose verbose)
 {
 	vdbg("%s() ...", __func__);
 	verbose.level++;
+	zero(acquire);
 
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
@@ -1798,7 +1800,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			get_sadb_ext(&msg_cursor, &ext_cursor, verbose);
 		if (ext == NULL) {
 			llog_pexpect(verbose.logger, HERE, "bad ext");
-			return;
+			return false;
 		}
 
 		enum sadb_exttype exttype = ext->sadb_ext_type;
@@ -1806,19 +1808,19 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 
 		case SADB_EXT_ADDRESS_SRC:
 			if (!parse_sadb_address(verbose, msg, &ext_cursor, &src_address, &src_port)) {
-				return;
+				return false;
 			}
 			break;
 		case SADB_EXT_ADDRESS_DST:
 			if (!parse_sadb_address(verbose, msg, &ext_cursor, &dst_address, &dst_port)) {
-				return;
+				return false;
 			}
 			break;
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 		case SADB_X_EXT_POLICY:
 			policy_id = 0;
 			if (!parse_sadb_x_policy(verbose, msg, &ext_cursor, &policy_id)) {
-				return;
+				return false;
 			}
 			break;
 #endif
@@ -1855,14 +1857,14 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 				     &dst_address, &dst_port,
 				     verbose)) {
 			vdbg("ask policy failed");
-			return;
+			return false;
 		}
 	}
 #endif
 
 	if (address_is_unset(&src_address) || address_is_unset(&dst_address)) {
 		vdbg("something isn't set");
-		return;
+		return false;
 	}
 
 	ip_packet packet = packet_from_raw(HERE,
@@ -1872,7 +1874,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 					   &ip_protocol_all,
 					   src_port,
 					   dst_port);
-	struct kernel_acquire b = {
+	*acquire = (struct kernel_acquire) {
 		.packet = packet,
 		.by_acquire = true,
 		.logger = verbose.logger, /*on-stack*/
@@ -1880,7 +1882,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 		.sec_label = null_shunk,
 		.policy_id = policy_id,
 	};
-	initiate_ondemand(&b);
+	return true;
 }
 
 static void process_pending(shunk_t payload, struct verbose verbose)
@@ -1899,8 +1901,14 @@ static void process_pending(shunk_t payload, struct verbose verbose)
 
 	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		parse_sadb_acquire(msg, msg_cursor, verbose);
+	{
+		struct kernel_acquire acquire;
+		if (parse_sadb_acquire(msg, msg_cursor,
+				       &acquire, verbose)) {
+			initiate_ondemand(&acquire);
+		}
 		break;
+	}
 	}
 }
 
