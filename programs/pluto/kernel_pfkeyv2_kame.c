@@ -22,6 +22,7 @@
 #include "kernel_sadb.h"
 #include "log.h"
 #include "ip_info.h"
+#include "ip_protocol.h"
 #include "kernel.h"		/* for struct kernel_acquire */
 
 static bool pfkeyv2_poke_ipsec_policy_dir(int fd, int sol, int opt,
@@ -85,8 +86,17 @@ static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b
 /*
  * XXX: KAME and OpenBSD have different sadb_address structures.
  */
-static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
-			       shunk_t *ext_cursor, ip_address *addr, ip_port *port)
+
+struct sadb_endpoint {
+	const struct ip_protocol *protocol;
+	unsigned prefixlen;
+	ip_address address;
+	ip_port port;
+};
+
+static bool parse_sadb_endpoint(struct verbose verbose, const struct sadb_msg *b,
+				shunk_t *ext_cursor,
+				struct sadb_endpoint *endpoint)
 {
 	shunk_t address_cursor;
 	const struct sadb_address *address =
@@ -94,14 +104,36 @@ static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 	if (address == NULL) {
 		return false;
 	}
+
 	llog_sadb_address(verbose, b, address);
 	verbose.level++;
-	if (!get_sadb_sockaddr_address_port(&address_cursor, addr, port, verbose)) {
+
+	endpoint->protocol = protocol_from_ipproto(address->sadb_address_proto);
+	if (endpoint->protocol == NULL) {
 		return false;
 	}
+
+	endpoint->prefixlen = address->sadb_address_prefixlen;
+#if 0
+	if (endpoint->prefixlen > afi->maskbits) {
+		return false
+	}
+#endif
+
+	if (!get_sadb_sockaddr_address_port(&address_cursor,
+					    &endpoint->address,
+					    &endpoint->port,
+					    verbose)) {
+		return false;
+	}
+
 	address_buf ab;
 	port_buf pb;
-	verbose("%s:%s", str_address(addr, &ab), str_hport(*port, &pb));
+	verbose("%s/%u/%s/%s",
+		str_address(&endpoint->address, &ab),
+		endpoint->prefixlen,
+		endpoint->protocol->name,
+		str_hport(endpoint->port, &pb));
 	return true;
 }
 
@@ -114,9 +146,8 @@ bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
 	verbose.level++;
 	zero(acquire);
 
-	ip_address src_address = unset_address;
-	ip_address dst_address = unset_address;
-	ip_port src_port, dst_port;
+	struct sadb_endpoint src = {0};
+	struct sadb_endpoint dst = {0};
 	enum kernel_policy_id policy_id = 0;
 
 	while (msg_cursor.len > 0) {
@@ -133,12 +164,12 @@ bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
 		switch (exttype) {
 
 		case SADB_EXT_ADDRESS_SRC:
-			if (!parse_sadb_address(verbose, msg, &ext_cursor, &src_address, &src_port)) {
+			if (!parse_sadb_endpoint(verbose, msg, &ext_cursor, &src)) {
 				return false;
 			}
 			break;
 		case SADB_EXT_ADDRESS_DST:
-			if (!parse_sadb_address(verbose, msg, &ext_cursor, &dst_address, &dst_port)) {
+			if (!parse_sadb_endpoint(verbose, msg, &ext_cursor, &dst)) {
 				return false;
 			}
 			break;
@@ -160,18 +191,29 @@ bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
 		}
 	}
 
-	if (address_is_unset(&src_address) || address_is_unset(&dst_address)) {
+	if (address_is_unset(&src.address) ||
+	    address_is_unset(&dst.address)) {
 		vdbg("something isn't set");
 		return false;
 	}
 
+	if (address_info(src.address) != address_info(dst.address)) {
+		vdbg("info confusion");
+		return false;
+	}
+
+	if (src.protocol != dst.protocol) {
+		vdbg("protocol confusion");
+		return false;
+	}
+
 	ip_packet packet = packet_from_raw(HERE,
-					   address_info(src_address),
-					   &src_address.bytes,
-					   &dst_address.bytes,
-					   &ip_protocol_all,
-					   src_port,
-					   dst_port);
+					   address_info(src.address),
+					   &src.address.bytes,
+					   &dst.address.bytes,
+					   src.protocol,
+					   src.port,
+					   dst.port);
 	*acquire = (struct kernel_acquire) {
 		.packet = packet,
 		.by_acquire = true,
