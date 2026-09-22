@@ -385,16 +385,14 @@ static bool client_can_reuse_lease(const struct connection *c)
 	 * it either uses GroupID or a non-unique ID_IP* due to
 	 * clients using pre-NAT IP address
 	 */
-	if (c->remote->host.config->authby.psk ||
-	    c->remote->host.config->auth == AUTH_PSK)
+	if (c->remote->host.config->authby.authby_psk)
 		return false;
 
 	/*
 	 * Cannot share with clients that can authenticate using NULL.
 	 * Just a bad idea.
 	 */
-	if (c->remote->host.config->authby.null ||
-	    c->remote->host.config->auth == AUTH_NULL)
+	if (c->remote->host.config->authby.authby_null)
 		return false;
 
 	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */
