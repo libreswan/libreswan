@@ -1342,25 +1342,6 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 #endif
 
-#ifdef SADB_X_EXT_POLICY
-static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
-				shunk_t *ext_cursor,
-				enum kernel_policy_id *policy_id)
-{
-	verbose.level++;
-	shunk_t policy_cursor;
-	const struct sadb_x_policy *policy =
-		get_sadb_x_policy(ext_cursor, &policy_cursor, verbose);
-	if (policy == NULL) {
-		return false;
-	}
-	llog_sadb_x_policy(verbose, b, policy);
-	verbose.level++;
-	*policy_id = policy->sadb_x_policy_id;
-	return true;
-}
-#endif
-
 static bool pfkeyv2_policy_add(enum kernel_policy_op op,
 			       enum direction dir,
 			       const ip_selector *src_client,
@@ -1685,8 +1666,9 @@ static bool pfkeyv2_policy_del(enum direction direction,
 	return true;
 }
 
+#ifdef __OpenBSD__
 static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
-			       shunk_t *ext_cursor, ip_address *addr, ip_port *port)
+			shunk_t *ext_cursor, ip_address *addr, ip_port *port)
 {
 	shunk_t address_cursor;
 	const struct sadb_address *address =
@@ -1704,6 +1686,7 @@ static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 	verbose("%s:%s", str_address(addr, &ab), str_hport(*port, &pb));
 	return true;
 }
+#endif
 
 /*
  * OpenBSD's ACQUIRE only carries the SA's peer (ADDRESS_DST), and
@@ -1779,10 +1762,11 @@ static bool ask_sadb_policy(uint32_t acquire_seq,
 }
 #endif
 
-static bool parse_sadb_acquire(const struct sadb_msg *msg,
-			       shunk_t msg_cursor,
-			       struct kernel_acquire *acquire,
-			       struct verbose verbose)
+#ifdef __OpenBSD__
+bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
+				shunk_t msg_cursor,
+				struct kernel_acquire *acquire,
+				struct verbose verbose)
 {
 	vdbg("%s() ...", __func__);
 	verbose.level++;
@@ -1884,6 +1868,7 @@ static bool parse_sadb_acquire(const struct sadb_msg *msg,
 	};
 	return true;
 }
+#endif
 
 static void process_pending(shunk_t payload, struct verbose verbose)
 {
@@ -1903,8 +1888,8 @@ static void process_pending(shunk_t payload, struct verbose verbose)
 	case SADB_ACQUIRE:
 	{
 		struct kernel_acquire acquire;
-		if (parse_sadb_acquire(msg, msg_cursor,
-				       &acquire, verbose)) {
+		if (pfkeyv2_parse_sadb_acquire(msg, msg_cursor,
+					       &acquire, verbose)) {
 			initiate_ondemand(&acquire);
 		}
 		break;
@@ -1989,9 +1974,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.flush = pfkeyv2_flush,
 	.poke_holes = pfkeyv2_poke_holes,
 	.plug_holes = pfkeyv2_plug_holes,
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	.poke_ipsec_policy_hole = pfkeyv2_poke_ipsec_policy_hole,
-#endif
 	.shutdown = pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,

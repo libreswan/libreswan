@@ -37,4 +37,10 @@ enum sadb_satype;
  */
 bool pfkeyv2_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger);
 
+/* when valid, .packet.is_set */
+bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
+				shunk_t msg_cursor,
+				struct kernel_acquire *acquire,
+				struct verbose verbose);
+
 #endif
