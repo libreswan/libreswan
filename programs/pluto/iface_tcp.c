@@ -46,6 +46,7 @@
 #include "log.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
+#include "terminate.h"
 
 static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,
 				 void *arg, struct logger *logger);
@@ -70,7 +71,7 @@ static void jam_iketcp_prefix(struct jambuf *buf, const struct iface_endpoint *i
 		D(ACCEPTED),
 		D(PREFIX_RECEIVED),
 		D(ENABLED),
-		D(STOPPED),
+		D(INITIATOR),
 #undef D
 	};
 	if (ifp->iketcp_state >= elemsof(iketcp_state_names)) {
@@ -118,19 +119,22 @@ void llog_iketcp(lset_t rc_flags, struct logger *logger,
 	}
 }
 
-static void stop_iketcp_read(const char *why, struct iface_endpoint *ifp)
+/*
+ * Disconnect the read listener, presumably the socket returned EOF
+ * (or an error).  If this is isn't done the EOF will keep re-triggering
+ *
+ * Presumably there's multiple references to IFP outstanding so the
+ * object isn't yet ready to be deleted.
+ */
+
+static void stop_any_iketcp_read_listener(const char *why,
+					  struct iface_endpoint *ifp)
 {
 	if (ifp->iketcp.read_listener != NULL) {
 		dbg_iketcp(ifp, "%s; stopping read event %p",
 			   why, ifp->iketcp.read_listener);
 		detach_fd_read_listener(&ifp->iketcp.read_listener);
 	}
-}
-
-static void iketcp_shutdown(struct iface_endpoint **ifp)
-{
-	stop_iketcp_read("stop", *ifp);
-	iface_endpoint_delref(ifp);
 }
 
 static void stop_iketcp_timeout(const char *why, struct iface_endpoint *ifp)
@@ -142,9 +146,14 @@ static void stop_iketcp_timeout(const char *why, struct iface_endpoint *ifp)
 	}
 }
 
-static struct msg_digest *read_espintcp_packet(const char *what,
-					       struct iface_endpoint **ifp,
-					       struct logger *logger)
+struct packet {
+	bool eagain;
+	struct msg_digest *md;
+};
+
+static struct packet read_espintcp_packet(const char *what,
+					  struct iface_endpoint **ifp,
+					  struct logger *logger)
 {
 	/*
 	 * With TCP, all messages (both IKE and ESP/AH) are prefixed
@@ -161,14 +170,13 @@ static struct msg_digest *read_espintcp_packet(const char *what,
 	if (packet_len < 0 && packet_errno == EAGAIN) {
 		llog_iketcp(RC_LOG, logger, *ifp, /*ignore-error*/0,
 			    "reading %s returned EAGAIN", what);
-		return NULL;
+		return (struct packet) { .eagain = true, };
 	}
 
 	if (packet_len < 0) {
 		llog_iketcp(RC_LOG, logger, *ifp, packet_errno,
 			    "reading %s failed: ", what);
-		iketcp_shutdown(ifp); /* i.e., delete IFP */
-		return NULL;
+		return (struct packet) {0};
 	}
 
 	dbg_iketcp(*ifp, "read %zd of %zu byte %s", packet_len, sizeof(bigbuffer), what);
@@ -178,17 +186,14 @@ static struct msg_digest *read_espintcp_packet(const char *what,
 		llog_iketcp(RC_LOG, logger, *ifp, /*no-error*/0,
 			    "%zd byte %s indicates EOF",
 			    packet_len, what);
-		/* XXX: how to tell state left hanging waiting for input? */
-		iketcp_shutdown(ifp); /* i.e., delete IFP */
-		return NULL;
+		return (struct packet) {0};
 	}
 
 	if (packet_len < NON_ESP_MARKER_SIZE) {
 		llog_iketcp(RC_LOG, logger, *ifp, /*no-error*/0,
 			    "%zd byte %s is way to small",
 			    packet_len, what);
-		iketcp_shutdown(ifp); /* i.e., delete IFP */
-		return NULL;
+		return (struct packet) {0};
 	}
 
 	/*
@@ -201,17 +206,17 @@ static struct msg_digest *read_espintcp_packet(const char *what,
 		llog_iketcp(RC_LOG, logger, *ifp, /*no-error*/0,
 			    "%zd byte %s is missing %d byte zero ESP marker",
 			    packet_len, what, NON_ESP_MARKER_SIZE);
-		iketcp_shutdown(ifp); /* i.e., delete IFP */
-		return NULL;
+		return (struct packet) {0};
 	}
 
 	/* drop the non-ESP marker */
 	packet_len -= sizeof(zero_esp_marker);
 	packet_ptr += sizeof(zero_esp_marker);
 
-	struct msg_digest *md = alloc_md(*ifp, &(*ifp)->iketcp_remote_endpoint,
-					 packet_ptr, packet_len, HERE);
-	return md;
+	return (struct packet) {
+		.md = alloc_md(*ifp, &(*ifp)->iketcp_remote_endpoint,
+			       packet_ptr, packet_len, HERE),
+	};
 }
 
 static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
@@ -229,15 +234,16 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 	case IKETCP_ACCEPTED:
 	{
 		/*
-		 * Read the "IKETCP" prefix.
+		 * Just accept()ed the socket and attached it to the
+		 * event loop.  This is the first data, which should
+		 * be the "IKETCP" prefix.
 		 *
-		 * XXX: Since there's no state sharing IFP (this is
-		 * first attempt at reading the socket) return
-		 * IFACE_READ_ABORT. The caller (the low-level event
-		 * handler) will then delete IFP.
+		 * At this point the event-loop has the only
+		 * reference.
 		 */
-
+		PASSERT(logger, refcnt_peek(*ifp, logger) == 1);
 		dbg_iketcp(*ifp, "reading IKETCP prefix");
+
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		uint8_t buf[sizeof(iketcp)];
 		ssize_t len = read((*ifp)->fd, buf, sizeof(buf));
@@ -247,7 +253,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 			int e = errno;
 			llog_iketcp(RC_LOG, logger, (*ifp), e,
 				    "error reading 'IKETCP' prefix; closing socket: ");
-			iketcp_shutdown(ifp); /* i.e., delete IFP */
+			iface_endpoint_delref(ifp); /* delete only ref */
 			return NULL;
 		}
 
@@ -255,7 +261,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 			llog_iketcp(RC_LOG, logger, (*ifp), /*no-error*/0,
 				    "reading 'IKETCP' prefix returned %zd bytes but expecting %zu; closing socket",
 				    len, sizeof(buf));
-			iketcp_shutdown(ifp); /* i.e., delete IFP */
+			iface_endpoint_delref(ifp); /* delete only ref */
 			return NULL;
 		}
 
@@ -264,7 +270,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 			/* discard this tcp connection */
 			llog_iketcp(RC_LOG, logger, (*ifp), /*no-error*/0,
 				    "prefix did not match 'IKETCP'; closing socket");
-			iketcp_shutdown(ifp); /* i.e., delete IFP */
+			iface_endpoint_delref(ifp); /* delete only ref */
 			return NULL;
 		}
 
@@ -287,7 +293,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 				llog_iketcp(RC_LOG, logger, *ifp, e,
 					    "closing socket; setsockopt(%d, SOL_TCP, TCP_ULP, \"espintcp\") failed: ",
 					    (*ifp)->fd);
-				iketcp_shutdown(ifp); /* i.e., delete IFP */
+				iface_endpoint_delref(ifp); /* delete only ref */
 				return NULL;
 			}
 		}
@@ -295,7 +301,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		if (kernel_ops->poke_ipsec_policy_hole != NULL &&
 		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_info((*ifp)->ip_dev->local_address), logger)) {
 			/* already logged */
-			iketcp_shutdown(ifp); /* i.e., delete IFP */
+			iface_endpoint_delref(ifp); /* delete only ref */
 			return NULL;
 		}
 
@@ -309,49 +315,132 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		 * handler isn't allowed.
 		 */
 		(*ifp)->iketcp_state = IKETCP_PREFIX_RECEIVED;
+		PASSERT(logger, refcnt_peek(*ifp, logger) == 1); /* still only ref */
 		return NULL;
 	}
 
 	case IKETCP_PREFIX_RECEIVED:
 	{
 		/*
-		 * Read the first packet; if successful, stop the
-		 * timeout.  If this fails badly,
-		 * read_raw_iketcp_packet() will shutdown IFP.
+		 * Consumed "IKETCP", now read the first packet.
+		 *
+		 * When successful transfer ownership of IFP to MD
+		 * (technically, MD addrefs then this code delrefs).
+		 *
+		 * If MD is valid, an IKE SA will be created addrefing
+		 * the IFP in the MD.  Also stop timer as that's now
+		 * the responability of the new IKE SA.  *
+		 *
+		 * If MD is invalid, it will delref and release the
+		 * only reference.
 		 */
+		PASSERT(logger, refcnt_peek(*ifp, logger) == 1);
 
-		struct msg_digest *md = read_espintcp_packet("first packet", ifp, logger);
-		if (md == NULL) {
+		struct packet p = read_espintcp_packet("first packet", ifp, logger);
+		if (p.eagain) {
+			PASSERT(logger, refcnt_peek(*ifp, logger) == 1); /*no chage*/
 			return NULL;
 		}
 
-		dbg_iketcp(*ifp, "first packet ok; switch to enabled (release endpoint)");
+		if (p.md == NULL) {
+			PASSERT(logger, refcnt_peek(*ifp, logger) == 1); /*no chage*/
+			iface_endpoint_delref(ifp); /* delete only ref */
+			return NULL;
+		}
+
+		/*
+		 * Now that the MD containing the first packet holds
+		 * an IFP reference, release the one dedicated to the
+		 * event loop (and shutdown the timer).
+		 */
+
+		dbg_iketcp(*ifp, "first packet ok; switch to enabled; leave MD with ENDPOINT");
+		PASSERT(logger, refcnt_peek(*ifp, logger) == 2); /* MD and event-loop */
+		PASSERT(logger, (*ifp) == p.md->iface);
 		(*ifp)->iketcp_state = IKETCP_ENABLED;
 		stop_iketcp_timeout("first packet", *ifp);
+		/* NULL IFP leaving 1 reference in MD */
 		iface_endpoint_delref(ifp);
-		return md;
+		PASSERT(logger, refcnt_peek(p.md->iface, logger) == 1);
+		return p.md;
 	}
 
 	case IKETCP_ENABLED:
-		return read_espintcp_packet("packet", ifp, logger);
-
-	case IKETCP_STOPPED:
 	{
 		/*
-		 * XXX: Even though the event handler has been told to
-		 * shut down there may still be events outstanding;
-		 * drain them.
+		 * IKE SA, and possibly an MD or two held by the IKE
+		 * SA or by the helper queue.
 		 */
-		char bytes[10];
-		ssize_t size = read((*ifp)->fd, &bytes, sizeof(bytes));
-		if (size < 0) {
-			llog_iketcp(RC_LOG, logger, *ifp, errno,
-				    "drain failed: ");
-		} else {
-			dbg_iketcp(*ifp, "drained %zd bytes", size);
+		unsigned iface_refcnt = refcnt_peek(*ifp, logger);
+		PASSERT(logger, iface_refcnt >= 1);
+
+		struct packet p = read_espintcp_packet("packet", ifp, logger);
+		if (p.eagain) {
+			PASSERT(logger, refcnt_peek(*ifp, logger) == iface_refcnt);
+			return NULL;
 		}
-		return NULL; /* ignore read */
+		if (p.md != NULL) {
+			/* now MD also as a reference */
+			PASSERT(logger, refcnt_peek(*ifp, logger) == iface_refcnt+1);
+			return p.md;
+		}
+
+		/*
+		 * Well that went pear shaped.
+		 *
+		 * Terminate any IKE SAs with a reference to this IFP
+		 * - it's dead jim.  Since there could also be MDs in
+		 * the helper queue can't assume this cleans up
+		 * everything.  Hence hold a local reference.
+		 *
+		 * Shutdown the read listener so that the EOF (error)
+		 * doesn't re-trigger.
+		 */
+		struct state_filter sf = {
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = HERE,
+			},
+		};
+
+		stop_any_iketcp_read_listener("error", *ifp);
+		iface_endpoint_addref(*ifp);
+		while(next_state(&sf)) {
+			if (sf.st->st_iface_endpoint != *ifp) {
+				continue;
+			}
+			if (!IS_IKE_SA(sf.st)) {
+				continue;
+			}
+			struct ike_sa *ike = pexpect_ike_sa(sf.st);
+			terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT, HERE);
+		}
+		iface_endpoint_delref(ifp); /* possibly last */
+
+		return NULL;
 	}
+
+	case IKETCP_INITIATOR:
+	{
+		struct packet p = read_espintcp_packet("packet", ifp, logger);
+		if (p.eagain) {
+			return NULL;
+		}
+		if (p.md != NULL) {
+			return p.md;
+		}
+
+		/*
+		 * Shutdown the event-loop so that EOF (error) doesn't
+		 * re-trigger.
+		 */
+		stop_any_iketcp_read_listener("error", *ifp);
+		/* presumably the IKE SA has a reference as well */
+		iface_endpoint_delref(ifp);
+		return NULL;
+	}
+
 	}
 	/* no default - all cases return - missing case error */
 	bad_case((*ifp)->iketcp_state);
@@ -405,7 +494,8 @@ static void iketcp_cleanup(struct iface_endpoint *ifp)
 		pstats_iketcp_aborted[ifp->iketcp_server]++;
 		break;
 	}
-	stop_iketcp_read("cleaning up", ifp);
+	/* may have already happened */
+	stop_any_iketcp_read_listener("cleaning up", ifp);
 	if (ifp->iketcp.accept_listener != NULL) {
 		dbg_iketcp(ifp, "cleaning up accept listener %p",
 			   ifp->iketcp.accept_listener);
@@ -571,7 +661,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 				     local_endpoint,
 				     HERE);
 	ifp->iketcp_remote_endpoint = remote_endpoint;
-	ifp->iketcp_state = IKETCP_ENABLED;
+	ifp->iketcp_state = IKETCP_INITIATOR;
 	ifp->iketcp_server = false;
 #if 0
 	/* private */
@@ -635,4 +725,12 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 				"IKETCP", process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
+
+	/*
+	 * The event loop internally shares a reference between the
+	 * timer and the read listener.
+	 *
+	 * XXX: should they each be given their own reference?
+	 */
+	PASSERT(logger, refcnt_peek(ifp, logger) == 1);
 }
