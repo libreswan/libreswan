@@ -34,28 +34,15 @@ west# ipsec _kernel policy
 EOF
 }
 
-ping_hosts()
+pings()
 {
-    local mode=$1
-    case ${mode} in
-	tunnel-ondemand )
-	    cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set} # set
-set# ../../guestbin/ping-once.sh --up ${rise} # rise
+    for ping in "$@" ; do
+	src=$(expr ${ping} : '\([^-]*\)-[^-]*')
+	dst=$(expr ${ping} : '[^-]*-\([^-]*\)')
+	cat <<EOF
+${src}# ../../guestbin/ping-once.sh --up $(eval echo \${${dst}}) # ${dst}
 EOF
-	    ;;
-	tunnel-forward )
-	    cat <<EOF >> ${sh}
-rise# ../../guestbin/ping-once.sh --up ${set} # set
-set# ../../guestbin/ping-once.sh --up ${rise} # rise
-EOF
-	    ;;
-	* )
-	    cat <<EOF >> ${sh}
-west# ../../guestbin/ping-once.sh --up ${east} # east
-EOF
-	    ;;
-    esac
+    done
 }
 
 down()
@@ -179,6 +166,7 @@ for platform in ${platforms} ; do
 	leftsubnetline='#leftsubnet='
 	rightsubnetline='#rightsubnet='
 	triggers=
+	pings="west-east"
 
 	case ${mode} in
 	    transport )
@@ -225,6 +213,7 @@ for platform in ${platforms} ; do
 		what="rise-east=TUNNEL=west-set"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
+		pings="rise-set set-rise"
 		;;
 	    tunnel-ondemand )
 		west=${west_internet4}
@@ -239,6 +228,7 @@ for platform in ${platforms} ; do
 		# only Linux's SOCAT/NC allow dest port 0
 		hosts=${platform}east-linuxrise-linuxset-${platform}west
 		triggers="set-udp7-rise" # set-ping-rise west-udp7-east west-iping-east west-ping-east"
+		pings="rise-set set-rise"
 		;;
 	esac
 
@@ -328,7 +318,7 @@ west# ipsec _kernel policy
 EOF
 		for trigger in ${triggers} ; do
 		    ondemand ${trigger} >> ${sh}
-		    ping_hosts ${mode} >> ${sh}
+		    pings ${pings} >> ${sh}
 		    cat <<EOF >> ${sh}
 # wait for larval state to clear; hack
 west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
@@ -342,7 +332,7 @@ EOF
 		;;
 	    * )
 		up >> ${sh}
-		ping_hosts ${mode} >> ${sh}
+		pings ${pings} >> ${sh}
 		down >> ${sh}
 		;;
 	esac
