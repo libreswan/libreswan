@@ -107,7 +107,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
-	if (c->local->host.config->auth == AUTH_PSK &&
+	if (c->local->host.config->authby.authby_psk &&
 	    c->config->aggressive) {
 		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
@@ -363,7 +363,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Aggressive Mode and PSK (IKEv1 authentication is symmetric
 	 * so also applies to this end).
 	 */
-	if (c->remote->host.config->auth == AUTH_PSK &&
+	if (c->remote->host.config->authby.authby_psk &&
 	    c->config->aggressive) {
 		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
@@ -375,10 +375,15 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Use remote's allowed authentication; since IKEv1 is
 	 * symmetric this also applies to us.  Strangely this
 	 * preference for PSK over RSASIG is the reverse of
-	 * auth_from_authby() which is used to set host.auth.
+	 * auth_from_authby().
+	 *
+	 * XXX: it doesn't matter (or at least no longer matters).
+	 * For IKEv1, only one auth method is allowed (i.e., only one
+	 * bit is set in .authby).  Hence, regardless of order, the
+	 * same decision will always be made.
 	 */
-	ike->sa.st_oakley.auth = (c->remote->host.config->auth == AUTH_PSK ? OAKLEY_PRESHARED_KEY :
-				  c->remote->host.config->auth == AUTH_RSASIG ? OAKLEY_RSA_SIG :
+	ike->sa.st_oakley.auth = (c->remote->host.config->authby.authby_psk ? OAKLEY_PRESHARED_KEY :
+				  c->remote->host.config->authby.authby_rsasig_raw ? OAKLEY_RSA_SIG :
 				  0);	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
