@@ -36,6 +36,8 @@ struct authby {
 	 */
 	bool flag[AUTHBY_KIND_ROOF];
 #define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+#define AUTHBY_EAPONLY				\
+	.authby_eaponly = true
 
 	bool psk;	/* flag[AUTHBY_KIND_PSK] */
 #define authby_psk psk
@@ -121,7 +123,7 @@ struct authby {
 	.psk = true,				\
 	.null = true,				\
 	.never = true,				\
-	.authby_eaponly = true,			\
+	AUTHBY_EAPONLY,				\
 	AUTHBY_EDDSA,				\
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2,			\

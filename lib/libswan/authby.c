@@ -226,7 +226,7 @@ struct authby authby_from_auth(enum auth auth)
 			AUTHBY_RSASIG_SHA2,
 		};
 	case AUTH_EAPONLY: return (struct authby) {
-			.authby_eaponly = true,
+			AUTHBY_EAPONLY,
 		};
 	}
 	bad_case(auth);

@@ -1325,7 +1325,9 @@ static struct authby extract_authby(struct kv kv,
 			return (struct authby) {0};
 		case IKEv2:
 			if (hunk_streq(val, "eaponly")) {
-				authby.authby_eaponly = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_EAPONLY,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "secret")) {
