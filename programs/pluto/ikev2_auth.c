@@ -688,7 +688,6 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct ike_sa *ike,
 						 const char *signature_payload_name)
 {
 	statetime_t start = statetime_start(&ike->sa);
-
 	struct connection *c = ike->sa.st_connection;
 
 	authby_buf ab;
@@ -759,10 +758,15 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct pbs_in *signature_pbs,
 			     const enum auth that_auth)
 {
+	const struct host_end_config *remote = &ike->sa.st_connection->remote->config->host;
+
 	name_buf ramb, eanb;
-	ldbg(ike->sa.logger, "verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
+	authby_buf rab;
+	ldbg(ike->sa.logger,
+	     "verifying auth payload, remote sent v2AUTH=%s we want auth=%s and authby=%s",
 	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	     str_enum_short(&auth_names, that_auth, &eanb));
+	     str_enum_short(&auth_names, that_auth, &eanb),
+	     str_authby(remote->authby, &rab));
 
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTH matches
@@ -843,73 +847,90 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (!authby_has_supported_ikev2_digsig_payload(authby_from_auth(that_auth))) {
-			name_buf an;
+		if (!authby_has_supported_ikev2_digsig_payload(remote->authby)) {
+			authby_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
-
-		/* try to match ASN.1 blob designating the hash algorithm */
 
 		shunk_t signature = pbs_in_left(signature_pbs);
 
 		/*
-		 * XXX: should this loop be inverted?
+		 * Try to match ASN.1 blob designating the hash
+		 * algorithm.
 		 *
-		 * Find a matching DIGSIG blob, and then check that
-		 * there's an allowed hash algorithm for that blob IN
-		 * the configured AUTHBY.
+		 * For all signers that match the peer's allowed
+		 * authby, try the signer's hashes blobs.
 		 */
+		const struct pubkey_signer *signers[] = {
+			&pubkey_signer_digsig_eddsa_ed25519,
+			&pubkey_signer_digsig_ecdsa,
+			&pubkey_signer_digsig_rsassa_pss,
+			&pubkey_signer_digsig_pkcs1_1_5_rsa,
+		};
 
-		ldbg(ike->sa.logger, "digsig: looking for matching DIGSIG blob");
-		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
+		FOR_EACH_ELEMENT(sp, signers) {
+			const struct pubkey_signer *signer = (*sp);
 
 			/*
-			 * The peer (remote) end has sent us a
-			 * proof-of-identity using HASH; does the
-			 * peer's (remote's) config allow this?
+			 * Only consider auth+hash allowed by this
+			 * signer, assuming there are some.
 			 */
-			if (!authby_has_hash(ike->sa.st_connection->remote->config->host.authby, *hash)) {
-				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
-				     (*hash)->common.fqn);
+			struct authby signer_hashes = authby_and(remote->authby, signer->authby);
+			if (!authby_is_set(signer_hashes)) {
+				authby_buf rab;
+				ldbg(ike->sa.logger, "digsig:   signer %s does not match authby %s",
+				     signer->name,
+				     str_authby(remote->authby, &rab));
 				continue;
 			}
 
 			/*
-			 * Try all signers and their blob.
-			 *
-			 * That way, when a disabled blob matches a
-			 * more meaningful log message can be printed
-			 * (we're looking at you PKCS#1 1.5 RSA).
+			 * Now iterate through the hashes supported by
+			 * this signer and allowed by remote->auth; is
+			 * there a more efficient way of doing this.
 			 */
-			ldbg(ike->sa.logger, "digsig:   trying %s", (*hash)->common.fqn);
-			const struct pubkey_signer *signers[] = {
-				&pubkey_signer_digsig_eddsa_ed25519,
-				&pubkey_signer_digsig_ecdsa,
-				&pubkey_signer_digsig_rsassa_pss,
-				&pubkey_signer_digsig_pkcs1_1_5_rsa,
-			};
 
-			FOR_EACH_ELEMENT(sp, signers) {
-				const struct pubkey_signer *signer = (*sp);
+			authby_buf sab;
+			ldbg(ike->sa.logger,
+			     "digsig: looking for signer %s hashes %s matching DIGSIG blob",
+			     signer->name, str_authby(signer_hashes, &sab));
+
+			FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
+				const struct hash_desc *hash = (*hashp);
+
+				/*
+				 * Do the signer and remote->authby
+				 * allow the hash?
+				 */
+				if (!authby_has_hash(signer_hashes, hash)) {
+					authby_buf sab;
+					ldbg(ike->sa.logger, "digsig:   signer %s hash %s does not match authby %s",
+					     signer->name,
+					     hash->common.fqn,
+					     str_authby(signer_hashes, &sab));
+					continue;
+				}
+
 				enum digital_signature_blob b = signer->digital_signature_blob;
-				shunk_t blob = (*hash)->digital_signature_blob[b];
+				shunk_t blob = hash->digital_signature_blob[b];
 				if (blob.len == 0) {
 					ldbg(ike->sa.logger,
 					     "digsig:     skipping signer %s as no blob for hash %s",
-					     signer->name, (*hash)->common.fqn);
+					     signer->name, hash->common.fqn);
 					continue;
 				}
+
 				if (!hunk_starteq(signature, blob)) {
 					ldbg(ike->sa.logger,
 					     "digsig:     skipping signer %s as blob for hash %s does not match",
-					     signer->name, (*hash)->common.fqn);
+					     signer->name, hash->common.fqn);
 					continue;
 				};
 
 				ldbg(ike->sa.logger,
 				     "digsig:    using signer %s and hash %s",
-				     signer->name, (*hash)->common.fqn);
+				     signer->name, hash->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
@@ -929,13 +950,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 */
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
-					.pubkey.hash = (*hash),
+					.pubkey.hash = hash,
 					.pubkey.signer = signer,
 				};
 
 				return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 									  signature_pbs,
-									  (*hash),
+									  hash,
 									  signer,
 									  "digital signature");
 			}
