@@ -1909,8 +1909,7 @@ static diag_t extract_host_end(enum end end,
 		/*
 		 * Now check to see if that excluded anything?
 		 */
-		struct authby extra_authby =
-			authby_and(whack_authby, authby_not(authby));
+		struct authby extra_authby = authby_and_not(whack_authby, authby);
 		if (authby_is_set(extra_authby)) {
 			authby_buf aa;
 			authby_buf ae;
@@ -1951,8 +1950,7 @@ static diag_t extract_host_end(enum end end,
 			 * XXX: Originally the conflict was ignored.
 			 */
 			authby = authby_from_whack_auth;
-			struct authby conflicts =
-				authby_and(whack_authby, authby_not(authby));
+			struct authby conflicts = authby_and_not(whack_authby, authby);
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf cb;
@@ -1988,8 +1986,8 @@ static diag_t extract_host_end(enum end end,
 			}
 
 			/* now check for conflicts */
-			struct authby conflicts = authby_and(whack_authby,
-							     authby_not(authby_from_whack_auth));
+			struct authby conflicts = authby_and_not(whack_authby,
+								 authby_from_whack_auth);
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf abm;

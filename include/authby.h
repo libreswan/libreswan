@@ -157,6 +157,9 @@ struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
 
+/* lhs & !rhs - what isn't in rhs */
+struct authby authby_and_not(struct authby lhs, struct authby rhs);
+
 bool authby_has_all(struct authby authby, struct authby all);
 bool authby_has_any(struct authby authby, struct authby some);
 bool authby_has_none(struct authby authby, struct authby none);

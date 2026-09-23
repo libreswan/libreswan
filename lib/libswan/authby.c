@@ -88,6 +88,11 @@ struct authby authby_and(struct authby lhs, struct authby rhs)
 	return OP(lhs, &&, rhs);
 }
 
+struct authby authby_and_not(struct authby lhs, struct authby rhs)
+{
+	return authby_and(lhs, authby_not(rhs));
+}
+
 struct authby authby_or(struct authby lhs, struct authby rhs)
 {
 	return OP(lhs, ||, rhs);
