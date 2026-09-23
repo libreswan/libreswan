@@ -78,7 +78,9 @@ void whack_status(struct show *s, const monotime_t now)
 	show_setup_plutomain(s);
 	show_debug_status(s);
 	show_setup_natt(s);
+#ifdef USE_IKEv1
 	show_virtual_private(s);
+#endif
 	show_kernel_alg_status(s);
 	show_ike_alg_status(s);
 	show_db_ops_status(s);

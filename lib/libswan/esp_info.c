@@ -55,6 +55,7 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 	return true;
 }
 
+#ifdef USE_IKEv1
 /*
  * IKEv1:
  *
@@ -88,6 +89,7 @@ static const struct proposal_defaults ikev1_esp_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_esp_proposals,
 	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev1_esp_integ,
 };
+#endif
 
 /*
  * IKEv2:
@@ -131,6 +133,7 @@ static const struct proposal_defaults ikev2_esp_defaults = {
 	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev2_esp_integ,
 };
 
+#ifdef USE_IKEv1
 /*
  * All together now ...
  */
@@ -144,6 +147,7 @@ static const struct proposal_protocol ikev1_esp_proposal_protocol = {
 	.integ = true,
 	.ke = true,
 };
+#endif
 
 static const struct proposal_protocol ikev2_esp_proposal_protocol = {
 	.name = "ESP",
@@ -156,7 +160,9 @@ static const struct proposal_protocol ikev2_esp_proposal_protocol = {
 };
 
 static const struct proposal_protocol *esp_proposal_protocol[] = {
+#ifdef USE_IKEv1
 	[IKEv1] = &ikev1_esp_proposal_protocol,
+#endif
 	[IKEv2] = &ikev2_esp_proposal_protocol,
 };
 

@@ -39,7 +39,9 @@ static void check(const struct ike_alg_protocol *protocol,
 	}
 
 	switch (ike_version) {
+#ifdef USE_IKEv1
 	case IKEv1: printf(" --ikev1"); break;
+#endif
 	case IKEv2: printf(" --ikev2"); break;
 	default: break;
 	}
@@ -554,7 +556,9 @@ static void test(struct logger *logger)
 enum opt {
 	OPT_VERBOSE = 'v',
 	OPT_HELP = 'h',
+#ifdef USE_IKEv1
 	OPT_IKEv1 = '1',
+#endif
 	OPT_IKEv2 = '2',
 	OPT_DEBUG = 256,
 	OPT_TP,
@@ -574,7 +578,9 @@ const struct option optarg_options[] = {
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("version"), no_argument, NULL, OPT_VERSION, },
 	{ OPT("debug"), optional_argument, NULL, OPT_DEBUG, },
+#ifdef USE_IKEv1
 	{ OPT("ikev1"), no_argument, NULL, OPT_IKEv1, },
+#endif
 	{ OPT("ikev2"), no_argument, NULL, OPT_IKEv2, },
 	{ OPT("ta"), no_argument, NULL, OPT_TA, },
 	{ OPT("tp"), no_argument, NULL, OPT_TP, },
@@ -620,9 +626,11 @@ int main(int argc, char *argv[])
 		case OPT_TA:
 			test_algs = true;
 			continue;
+#ifdef USE_IKEv1
 		case OPT_IKEv1:
 			ike_version = IKEv1;
 			continue;
+#endif
 		case OPT_IKEv2:
 			ike_version = IKEv2;
 			continue;

@@ -43,6 +43,7 @@ void whack_deleteuser(const struct whack_message *m, struct show *s)
 	llog(LOG_STREAM/*not-whack*/, show_logger(s),
 	     "received whack to delete connection by user %s", m->name);
 
+#ifdef USE_IKEv1
 	struct state_filter sf = {
 		/* only support deleting ikev1 with XAUTH username */
 		.ike_version = IKEv1,
@@ -67,9 +68,12 @@ void whack_deleteuser(const struct whack_message *m, struct show *s)
 		send_n_log_delete_ike_family_now(&ike, show_logger(s), HERE);
 		nr++;
 	}
-
 	if (nr == 0) {
 		llog(RC_LOG, show_logger(s),
 		     "no connections matching username '%s' found", m->name);
 	}
+#else
+		llog(RC_LOG, show_logger(s),
+		     "IKEv2 connections do not support IKEv1 XAUTH username deletion");
+#endif
 }
