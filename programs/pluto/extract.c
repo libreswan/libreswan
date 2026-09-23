@@ -1936,7 +1936,6 @@ static diag_t extract_host_end(enum end end,
 
 		switch (whack_auth) {
 		case AUTH_PSK:
-		case AUTH_EAPONLY:
 		case AUTH_NULL:
 		case AUTH_NEVER:
 		{
@@ -1966,6 +1965,7 @@ static diag_t extract_host_end(enum end end,
 			break;
 		}
 
+		case AUTH_EAPONLY:
 		case AUTH_RSASIG:
 		case AUTH_ECDSA:
 		case AUTH_EDDSA:
@@ -2012,6 +2012,18 @@ static diag_t extract_host_end(enum end end,
 				/* since whack_auth is not AUTH_NEVER */
 				vexpect(!is_never_negotiate_wm(wm));
 				return diag("connection with authby=never must specify shunt type via type=");
+			}
+
+			if (whack_authby.authby_eaponly) {
+				struct authby conflicts =
+					authby_and_not(whack_authby, (struct authby) {
+							AUTHBY_EAPONLY,
+						});
+				if (authby_is_set(conflicts)) {
+					authby_buf cb;
+					return diag("authby=eaponly conflicts with authby=%s",
+						    str_authby(conflicts, &cb));
+				}
 			}
 
 			/*
