@@ -36,18 +36,6 @@ ip_packet packet_from_raw(where_t where,
 		return unset_packet;
 	}
 
-	/*
-	 * An acquire triggered by a packet with no specified source
-	 * port will have a zero source port.
-	 *
-	 * However, the DST_PORT must always be non-zero (when
-	 * required).
-	 */
-	if (PBAD_WHERE(&global_logger, where,
-		       protocol->zero_port_is_any && dst_port.hport == 0)) {
-		return unset_packet;
-	}
-
 	ip_packet packet = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
@@ -61,6 +49,44 @@ ip_packet packet_from_raw(where_t where,
 			.hport = dst_port.hport,
 		},
 	};
+
+	/*
+	 * For packets such as UDP and TCP, port 0 is reserved.
+	 * Hence, BSD kernels:
+	 *
+	 * - reject a connect(2) call with UDP port 0.
+	 *
+	 * - acquire ignores the packet, or turns it into "any"
+	 *
+	 * However, on Linux ...
+	 *
+	 * - the kernel allows connect(UDP,0)!  For instance using
+	 *   commands such as:
+	 *
+	 *     nc -u -w 1 ADDR 0
+	 *     socat -t0 - UDP:ADDR:0
+	 *
+	 * - ACQUIRE exposes the packet
+	 *
+	 *   AA: [UDP] dport 0 is valid in an ACQUIRE selector: it
+	 *   happens for IP fragments, which have no L4 header to take
+	 *   a port from, and also when pinging a hostname that
+	 *   resolves to more than one address.  The iputils ping sets
+	 *   dport to 1025 for its route-probe connect(), however, on
+	 *   Linux glibc appears to replace that with zero when the
+	 *   hostname resolves to more than one address, e.g. both an
+	 *   A and AAAA record. glibc leaves 1025 when pinging a
+	 *   single IP address.
+	 */
+	if (protocol->zero_port_is_any && dst_port.hport == 0) {
+#ifdef __linux__
+		enum stream stream = RC_LOG;
+#else
+		enum stream stream = PEXPECT_STREAM;
+#endif
+		llog(stream, &global_logger,
+		     "packet with port 0: "PRI_PACKET, pri_packet(&packet));
+	}
 
 	return packet;
 }
