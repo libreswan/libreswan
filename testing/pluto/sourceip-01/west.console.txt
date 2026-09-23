@@ -22,13 +22,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-sourceip
+ ipsec add westnet-eastnet-sourceip
 "westnet-eastnet-sourceip": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-sourceip
+ ipsec up westnet-eastnet-sourceip # sanitize-retransmits
 "westnet-eastnet-sourceip" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-sourceip" #1: sent Main Mode request
 "westnet-eastnet-sourceip" #1: sent Main Mode I2
@@ -45,6 +45,6 @@ west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-sourceip", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
