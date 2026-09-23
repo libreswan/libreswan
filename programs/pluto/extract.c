@@ -1325,7 +1325,9 @@ static struct authby extract_authby(struct kv kv,
 			return (struct authby) {0};
 		case IKEv2:
 			if (hunk_streq(val, "eaponly")) {
-				authby.authby_eaponly = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_EAPONLY,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "secret")) {
@@ -1909,8 +1911,7 @@ static diag_t extract_host_end(enum end end,
 		/*
 		 * Now check to see if that excluded anything?
 		 */
-		struct authby extra_authby =
-			authby_and(whack_authby, authby_not(authby));
+		struct authby extra_authby = authby_and_not(whack_authby, authby);
 		if (authby_is_set(extra_authby)) {
 			authby_buf aa;
 			authby_buf ae;
@@ -1935,7 +1936,6 @@ static diag_t extract_host_end(enum end end,
 
 		switch (whack_auth) {
 		case AUTH_PSK:
-		case AUTH_EAPONLY:
 		case AUTH_NULL:
 		case AUTH_NEVER:
 		{
@@ -1951,8 +1951,7 @@ static diag_t extract_host_end(enum end end,
 			 * XXX: Originally the conflict was ignored.
 			 */
 			authby = authby_from_whack_auth;
-			struct authby conflicts =
-				authby_and(whack_authby, authby_not(authby));
+			struct authby conflicts = authby_and_not(whack_authby, authby);
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf cb;
@@ -1966,6 +1965,7 @@ static diag_t extract_host_end(enum end end,
 			break;
 		}
 
+		case AUTH_EAPONLY:
 		case AUTH_RSASIG:
 		case AUTH_ECDSA:
 		case AUTH_EDDSA:
@@ -1988,8 +1988,8 @@ static diag_t extract_host_end(enum end end,
 			}
 
 			/* now check for conflicts */
-			struct authby conflicts = authby_and(whack_authby,
-							     authby_not(authby_from_whack_auth));
+			struct authby conflicts = authby_and_not(whack_authby,
+								 authby_from_whack_auth);
 			if (authby_is_set(conflicts)) {
 				name_buf ab;
 				authby_buf abm;
@@ -2012,6 +2012,18 @@ static diag_t extract_host_end(enum end end,
 				/* since whack_auth is not AUTH_NEVER */
 				vexpect(!is_never_negotiate_wm(wm));
 				return diag("connection with authby=never must specify shunt type via type=");
+			}
+
+			if (whack_authby.authby_eaponly) {
+				struct authby conflicts =
+					authby_and_not(whack_authby, (struct authby) {
+							AUTHBY_EAPONLY,
+						});
+				if (authby_is_set(conflicts)) {
+					authby_buf cb;
+					return diag("authby=eaponly conflicts with authby=%s",
+						    str_authby(conflicts, &cb));
+				}
 			}
 
 			/*

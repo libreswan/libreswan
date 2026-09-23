@@ -119,6 +119,12 @@ int main(int argc, char *argv[])
 				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor);
 			}
 
+			PRINT("authby_and_not(%u,%u)", auth, alt);
+			bool and_not = (auth != alt);
+			if (!(authby_is_set(authby_and_not(authby, altby)) == and_not)) {
+				FAIL("authby_is_set(and_not(%u,%u)) == %u", auth, alt, and_not);
+			}
+
 			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
 				FAIL("orby: authby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, auth, eq);
 			}

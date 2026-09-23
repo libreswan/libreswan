@@ -587,7 +587,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		 * combined with some other method?
 		 */
 		proposed_initiator_auths = (struct authby) {
-			.authby_eaponly = true,
+			AUTHBY_EAPONLY,
 		};
 	} else if (ike->sa.st_v2_resume_session) {
 		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);

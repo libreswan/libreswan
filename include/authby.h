@@ -36,6 +36,8 @@ struct authby {
 	 */
 	bool flag[AUTHBY_KIND_ROOF];
 #define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+#define AUTHBY_EAPONLY				\
+	.authby_eaponly = true
 
 	bool psk;	/* flag[AUTHBY_KIND_PSK] */
 #define authby_psk psk
@@ -121,7 +123,7 @@ struct authby {
 	.psk = true,				\
 	.null = true,				\
 	.never = true,				\
-	.authby_eaponly = true,			\
+	AUTHBY_EAPONLY,				\
 	AUTHBY_EDDSA,				\
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2,			\
@@ -156,6 +158,9 @@ struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
+
+/* lhs & !rhs - what isn't in rhs */
+struct authby authby_and_not(struct authby lhs, struct authby rhs);
 
 bool authby_has_all(struct authby authby, struct authby all);
 bool authby_has_any(struct authby authby, struct authby some);

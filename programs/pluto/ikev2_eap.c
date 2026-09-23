@@ -451,8 +451,18 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = true;
 
+	/*
+	 * XXX: DANGER
+	 *
+	 * Connection can change below?!?!
+	 */
+
 	const struct connection *c = ike->sa.st_connection;
-	if (c->remote->host.config->auth != AUTH_EAPONLY) {
+
+	/*
+	 * Confirm EAPONLY, and exclusive.
+	 */
+	if (!c->remote->host.config->authby.authby_eaponly) {
 		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
@@ -486,6 +496,12 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	 */
 	v2_IKE_AUTH_responder_id_payload(ike);
 
+	/*
+	 * Check above ruled out all but EAPONLY, so no need to
+	 * compute AUTH in the first payload.
+	 */
+	return process_v2_IKE_AUTH_request_EAP_start_signature_continue(ike, md, NULL);
+#if 0
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
 		ldbg(ike->sa.logger, "EAPONLY: skipping v2AUTH calculation for start response, not needed");
 		return process_v2_IKE_AUTH_request_EAP_start_signature_continue(ike, md, NULL);
@@ -501,6 +517,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	}
 
 	return STF_SUSPEND;
+#endif
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -514,8 +531,6 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 									   struct msg_digest *md,
 									   const struct hash_signature *auth_sig)
 {
-	struct connection *c = ike->sa.st_connection;
-
 	/* when EAPONLY, AUTH_SIG==NULL */
 	if (auth_sig != NULL && auth_sig->len == 0) {
 		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
@@ -586,8 +601,13 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	 * Regardless, the final IKE_AUTH exchange after the EAP
 	 * exchanges, always includes AUTH and always has the EAP
 	 * magic fed into it.
+	 *
+	 * Earlier code has ruled out all but EAPONLY so this code is
+	 * dead.
 	 */
-	if (c->local->host.config->auth == AUTH_EAPONLY) {
+#if 0
+	struct connection *c = ike->sa.st_connection;
+	if (c->local->host.config->authby.authby_eaponly) {
 		pexpect(auth_sig == NULL);
 		ldbg_sa(ike, "EAP: skipping AUTH payload as our proof-of-identity is eap-only");
 	} else {
@@ -606,6 +626,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 			return STF_INTERNAL_ERROR;
 		}
 	}
+#endif
 
 	if (!start_eap(ike, response.pbs, md)) {
 		goto auth_fail;

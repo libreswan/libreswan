@@ -88,6 +88,11 @@ struct authby authby_and(struct authby lhs, struct authby rhs)
 	return OP(lhs, &&, rhs);
 }
 
+struct authby authby_and_not(struct authby lhs, struct authby rhs)
+{
+	return authby_and(lhs, authby_not(rhs));
+}
+
 struct authby authby_or(struct authby lhs, struct authby rhs)
 {
 	return OP(lhs, ||, rhs);
@@ -221,7 +226,7 @@ struct authby authby_from_auth(enum auth auth)
 			AUTHBY_RSASIG_SHA2,
 		};
 	case AUTH_EAPONLY: return (struct authby) {
-			.authby_eaponly = true,
+			AUTHBY_EAPONLY,
 		};
 	}
 	bad_case(auth);
