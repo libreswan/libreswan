@@ -228,8 +228,18 @@ for platform in ${platforms} ; do
 		# only Linux's SOCAT/NC allow dest port 0
 		hosts=${platform}east-linuxrise-linuxset-${platform}west
 		case ${platform} in
-		    openbsd ) triggers="set-udp7-rise" ;;
-		    * )       triggers="set-udp0-rise" ;;
+		    openbsd )
+			# OpenBSD doesn't trigger an acquire when UDP port is zero #3051
+			# KAME acquire doesn't re-trigger #3052
+			triggers="set-udp7-rise"
+			;;
+		    freebsd | netbsd )
+			# KAME acquire doesn't re-trigger #3052
+			triggers="set-udp0-rise"
+			;;
+		    * )
+			triggers="set-udp7-rise set-udp0-rise"
+			;;
 		esac
 		pings="east-west west-east rise-set set-rise"
 		;;

@@ -20,8 +20,24 @@ west# ipsec _kernel state
 west# ipsec _kernel policy
 
 # trigger acquire using UDP
-set# socat -t0 - UDP:192.0.2.12:0 < /dev/null # rise - sends EOF?
+set# echo 'TRIGGER' | nc -u -w 1 192.0.2.12 7 # rise
 west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
+east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west
+west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east
+rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
+set# ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
+# wait for larval state to clear; hack
+west# ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
+west# ipsec _kernel state
+west# ipsec _kernel policy
+
+west# ipsec down westnet-eastnet
+west# ipsec _kernel state
+west# ipsec _kernel policy
+
+# trigger acquire using UDP
+set# socat -t0 - UDP:192.0.2.12:0 < /dev/null # rise - sends EOF?
+west# ../../guestbin/wait-for-pluto.sh '^".*#4: initiator established Child SA'
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west
 west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
