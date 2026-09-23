@@ -3,3 +3,8 @@ set #
  ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
 up
 set #
+ socat -t0 - UDP:192.0.2.12:0 < /dev/null # rise - sends EOF?
+set #
+ ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
+up
+set #

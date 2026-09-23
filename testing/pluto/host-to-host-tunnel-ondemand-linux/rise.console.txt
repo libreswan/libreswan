@@ -1,3 +1,6 @@
 ../../guestbin/ping-once.sh --up 192.0.1.15 # set
 up
 rise #
+ ../../guestbin/ping-once.sh --up 192.0.1.15 # set
+up
+rise # 

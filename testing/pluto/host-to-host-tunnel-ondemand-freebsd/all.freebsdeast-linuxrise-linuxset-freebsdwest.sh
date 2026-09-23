@@ -20,7 +20,7 @@ west# ipsec _kernel state
 west# ipsec _kernel policy
 
 # trigger acquire using UDP
-set# echo 'TRIGGER' | nc -u -w 1 192.0.2.12 7 # rise
+set# socat -t0 - UDP:192.0.2.12:0 < /dev/null # rise - sends EOF?
 west# ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west
 west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east
