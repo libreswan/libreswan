@@ -891,34 +891,33 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			 * (we're looking at you PKCS#1 1.5 RSA).
 			 */
 			ldbg(ike->sa.logger, "digsig:   trying %s", (*hash)->common.fqn);
-			static const struct {
-				const struct pubkey_signer *signer;
-				struct authby authby;
-			} signers[] = {
-				{ &pubkey_signer_digsig_eddsa_ed25519, (struct authby) { AUTHBY_EDDSA, }, },
-				{ &pubkey_signer_digsig_ecdsa, (struct authby) { AUTHBY_ECDSA_SHA2, }, },
-				{ &pubkey_signer_digsig_rsassa_pss, (struct authby) { AUTHBY_RSASIG_SHA2, }, },
-				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, (struct authby) { AUTHBY_RSASIG_V1_5, }, },
+			const struct pubkey_signer *signers[] = {
+				&pubkey_signer_digsig_eddsa_ed25519,
+				&pubkey_signer_digsig_ecdsa,
+				&pubkey_signer_digsig_rsassa_pss,
+				&pubkey_signer_digsig_pkcs1_1_5_rsa,
 			};
 
-			FOR_EACH_ELEMENT(s, signers) {
-				enum digital_signature_blob b = s->signer->digital_signature_blob;
+			FOR_EACH_ELEMENT(sp, signers) {
+				const struct pubkey_signer *signer = (*sp);
+				enum digital_signature_blob b = signer->digital_signature_blob;
 				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
 					ldbg(ike->sa.logger,
-					     "digsig:     skipping %s as no blob",
-					     s->signer->name);
+					     "digsig:     skipping signer %s as no blob for hash %s",
+					     signer->name, (*hash)->common.fqn);
 					continue;
 				}
 				if (!hunk_starteq(signature, blob)) {
 					ldbg(ike->sa.logger,
-					     "digsig:     skipping %s as blob does not match",
-					     s->signer->name);
+					     "digsig:     skipping signer %s as blob for hash %s does not match",
+					     signer->name, (*hash)->common.fqn);
 					continue;
 				};
 
-				ldbg(ike->sa.logger, "digsig:    using signer %s and hash %s",
-				     s->signer->name, (*hash)->common.fqn);
+				ldbg(ike->sa.logger,
+				     "digsig:    using signer %s and hash %s",
+				     signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
@@ -926,8 +925,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
 					ldbg(ike->sa.logger,
-					     "digsig:     failing %s due to I/O error: %s",
-					     s->signer->name, str_diag(d));
+					     "digsig:     failing signer %s due to I/O error: %s",
+					     signer->name, str_diag(d));
 					return d;
 				}
 
@@ -939,14 +938,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
 					.pubkey.hash = (*hash),
-					.pubkey.signer = s->signer,
+					.pubkey.signer = signer,
 				};
 
-				return verify_v2AUTH_and_log_using_pubkey(s->authby,
+				return verify_v2AUTH_and_log_using_pubkey(signer->authby,
 									  ike, idhash_in,
 									  signature_pbs,
 									  (*hash),
-									  s->signer,
+									  signer,
 									  "digital signature");
 			}
 		}
