@@ -1568,7 +1568,7 @@ kvmplutotest	whack-delete-06-larval-cuckoo-ikev2	good
 kvmplutotest	whack-delete-child-01-async-ikev2	good
 kvmplutotest	whack-delete-ike-01-async-ikev2		good
 
-kvmplutotest	whack-deleteuser-01			good	github/1269
+kvmplutotest	whack-deleteuser-01-ikev1		good	github/1269
 kvmplutotest	whack-deleteid-01-psk-ikev1		good	github/1268
 kvmplutotest	whack-deleteid-01-psk-ikev2		good	github/1268
 
