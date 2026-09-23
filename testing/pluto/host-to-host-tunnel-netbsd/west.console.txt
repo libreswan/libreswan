@@ -64,7 +64,7 @@ west #
  ipsec down west-east
 "west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west-east" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east" #2: ESP traffic information: in=144B out=180B
+"west-east" #2: ESP traffic information: in=288B out=360B
 "west-east" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state

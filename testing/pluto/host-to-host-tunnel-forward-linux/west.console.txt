@@ -53,6 +53,9 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
+up
+west #
  ipsec down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA

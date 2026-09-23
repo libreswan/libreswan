@@ -166,7 +166,7 @@ for platform in ${platforms} ; do
 	leftsubnetline='#leftsubnet='
 	rightsubnetline='#rightsubnet='
 	triggers=
-	pings="west-east"
+	pings="east-west west-east"
 
 	case ${mode} in
 	    transport )
@@ -213,7 +213,7 @@ for platform in ${platforms} ; do
 		what="rise-east=TUNNEL=west-set"
 		conn=westnet-eastnet
 		hosts=${platform}east-${platform}rise-${platform}set-${platform}west
-		pings="rise-set set-rise"
+		pings="east-west west-east rise-set set-rise"
 		;;
 	    tunnel-ondemand )
 		west=${west_internet4}
@@ -228,7 +228,7 @@ for platform in ${platforms} ; do
 		# only Linux's SOCAT/NC allow dest port 0
 		hosts=${platform}east-linuxrise-linuxset-${platform}west
 		triggers="set-udp7-rise" # set-ping-rise west-udp7-east west-iping-east west-ping-east"
-		pings="rise-set set-rise"
+		pings="east-west west-east rise-set set-rise"
 		;;
 	esac
 

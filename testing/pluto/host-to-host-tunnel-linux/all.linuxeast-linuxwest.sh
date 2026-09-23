@@ -18,6 +18,7 @@ west# echo "initdone"
 west# ipsec up west-east # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
+east# ../../guestbin/ping-once.sh --up 2001:db8:1:2::45 # west
 west# ../../guestbin/ping-once.sh --up 2001:db8:1:2::23 # east
 
 west# ipsec down west-east

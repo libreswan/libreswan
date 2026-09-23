@@ -30,6 +30,9 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#2: initiator established Child SA'
 "westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
+up
+west #
  ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' ipsec _kernel state
 west #
  ipsec _kernel state

@@ -37,7 +37,7 @@ west #
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
 		state mature replay 16 flags 0x400<esn>
-	lifetime_cur: alloc 0 bytes 68 add N first N
+	lifetime_cur: alloc 0 bytes 136 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.23
@@ -46,21 +46,21 @@ west #
 	key_encrypt: bits 288: ENCKEY
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
-		1 input packet
+		2 input packets
 		0 output packets
-		188 input bytes
+		376 input bytes
 		0 output bytes
-		84 input bytes, decompressed
+		168 input bytes, decompressed
 		0 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 1
+	replay: rpl 2
 @0 esp transport from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-256-gcm \
 	authkey 0xHASHKEY \
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth gmac-aes-256 enc aes-gcm
 		state mature replay 16 flags 0x400<esn>
-	lifetime_cur: alloc 0 bytes 64 add N first N
+	lifetime_cur: alloc 0 bytes 128 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.45
@@ -70,14 +70,14 @@ west #
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
 		0 input packets
-		1 output packet
+		2 output packets
 		0 input bytes
-		120 output bytes
+		240 output bytes
 		0 input bytes, decompressed
-		84 output bytes, uncompressed
+		168 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 2
+	replay: rpl 3
 west #
  ipsec _kernel policy
 @0 flow esp in from 192.1.2.23 to 192.1.2.45 local 192.1.2.45 peer 192.1.2.23 type require
@@ -86,7 +86,7 @@ west #
  ipsec down west-east
 "west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west-east" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east" #2: ESP traffic information: in=68B out=64B
+"west-east" #2: ESP traffic information: in=136B out=128B
 "west-east" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state

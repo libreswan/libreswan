@@ -18,6 +18,8 @@ west# echo "initdone"
 west# ipsec up westnet-eastnet # sanitize-retransmits
 west# ipsec _kernel state
 west# ipsec _kernel policy
+east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west
+west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 rise# ../../guestbin/ping-once.sh --up 192.0.1.15 # set
 set# ../../guestbin/ping-once.sh --up 192.0.2.12 # rise
 
