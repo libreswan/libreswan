@@ -158,7 +158,10 @@ endif
 
 ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_pfkeyv2.o
-ifeq ($(OSDEP),openbsd)
+ifneq ($(filter netbsd freebsd, $(OSDEP)),)
+OBJS += kernel_pfkeyv2_kame.o
+endif
+ifneq ($(filter openbsd, $(OSDEP)),)
 OBJS += kernel_pfkeyv2_openbsd.o
 endif
 endif

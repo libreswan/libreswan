@@ -19,12 +19,28 @@
 
 #include <stdbool.h>
 
+#include "verbose.h"
+#include "shunk.h"
+#include "chunk.h"
+#include "ip_port.h"
+#include "ip_address.h"
+
 struct ip_info;
 struct logger;
+struct sadb_msg;
+struct kernel_acquire;
+enum sadb_type;
+enum sadb_satype;
 
-#ifdef __OpenBSD__
-/* implemented in kernel_pfkeyv2_openbsd.c */
+/*
+ * This has both a KAME and OpenBSD implementation.
+ */
 bool pfkeyv2_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger);
-#endif
+
+/* when valid, .packet.is_set */
+bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
+				shunk_t msg_cursor,
+				struct kernel_acquire *acquire,
+				struct verbose verbose);
 
 #endif
