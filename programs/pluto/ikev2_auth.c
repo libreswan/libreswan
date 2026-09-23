@@ -680,8 +680,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
-						 struct ike_sa *ike,
+static diag_t verify_v2AUTH_and_log_using_pubkey(struct ike_sa *ike,
 						 const struct crypt_mac *idhash,
 						 const struct pbs_in *signature_pbs,
 						 const struct hash_desc *hash_algo,
@@ -692,48 +691,45 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	struct connection *c = ike->sa.st_connection;
 
-	/*
-	 * Strip authby of all auth methods that don't use
-	 * HASH_ALGORITHM.  EDDSA, say, uses the IDENTITY HASH.
-	 *
-	 * The result should be, at most, one bit.
-	 */
-	struct authby hash_authby = authby_and_hash(authby, hash_algo);
-
 	authby_buf ab;
-	authby_buf hb;
 	ldbg(ike->sa.logger,
-	     "verifying authby %s (%s) signer %s and allowed hashes %s",
-	     str_authby(hash_authby, &hb),
-	     str_authby(authby, &ab),
+	     "verifying using hash %s and signer %s (%s)",
 	     hash_algo->common.fqn,
-	     pubkey_signer->name);
+	     pubkey_signer->name,
+	     str_authby(pubkey_signer->authby, &ab));
 
 	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
 	/*
-	 * Per above, there should be at most one authby bit set.
+	 * Strip the signer's allowed AUTHBYs back to just the HASH
+	 * algorithm's AUTHBY.  EDDSA, say, uses the IDENTITY HASH.
+	 *
+	 * The result should be, at most, one bit (checked further
+	 * down).
 	 */
-	unsigned count = authby_count(hash_authby);
+	struct authby sign_hash_bit = authby_and_hash(pubkey_signer->authby, hash_algo);
+	unsigned count = authby_count(sign_hash_bit);
+
 	if (pbad(count > 1)) {
 		authby_buf ab;
 		return diag("INTERNAL ERROR: too many authby bits set in %s",
-			    str_authby(hash_authby, &ab));
+			    str_authby(sign_hash_bit, &ab));
 	}
+
 	if (count == 0) {
 		return diag("authentication failed: peer authentication requires hash algorithm %s",
 			    hash_algo->common.fqn);
 	}
 
 	/*
-	 * Does the configuration include the HASH_AUTHBY bit?
+	 * Does the configuration include the SIGN_HASH_BIT bit?
 	 */
-	if (!authby_has_all(c->remote->host.config->authby, hash_authby)) {
+	if (!authby_has_all(c->remote->host.config->authby, sign_hash_bit)) {
 		authby_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
-			    str_authby(authby, &pb));
+			    str_authby(sign_hash_bit, &pb));
 	}
 
 	shunk_t signature = pbs_in_left(signature_pbs);
@@ -775,31 +771,27 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_RSASIG_V1_5, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
 							  &pubkey_signer_raw_pkcs1_1_5_rsa,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
 							  &pubkey_signer_raw_ecdsa/*_p256*/,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
 							  &pubkey_signer_raw_ecdsa/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
 							  &pubkey_signer_raw_ecdsa/*_p521*/,
@@ -941,8 +933,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 					.pubkey.signer = signer,
 				};
 
-				return verify_v2AUTH_and_log_using_pubkey(signer->authby,
-									  ike, idhash_in,
+				return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 									  signature_pbs,
 									  (*hash),
 									  signer,
