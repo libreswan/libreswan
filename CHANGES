@@ -2,12 +2,17 @@ See also https://libreswan.org/
 
 v5.4.1 (Unreleased, 2026)
 * Security
-  - add test for CVE-2026-77205 - DOS - fips-cert-leak
-    http://libreswan.org/security/CVE-2026-77205
   - fix CVE-2026-77206 - NPE - unexpected-eap-packet
     http://libreswan.org/security/CVE-2026-77206
   - fix CVE-2026-77207 - NPE - empty-pkcs7-payload
     http://libreswan.org/security/CVE-2026-77207
+  - fix CVE-2026-94453 - UAF - EOF in IKETCP
+    http://libreswan.org/security/CVE-2026-94453
+* Linux:
+  - allow connect(ADDR/UDP/0) [#3042 Tuomo, Antony, Andrew]
+* Testing:
+  - add test for CVE-2026-77205 - DOS - fips-cert-leak
+    http://libreswan.org/security/CVE-2026-77205
 * Building
   - fix NetBSD 11.0
 
