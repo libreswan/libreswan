@@ -1,2 +1,3 @@
-test that ike-sa-init-full-transcript-auth= reaches pluto
-(only for ikev2)
+test that ike-sa-init-full-transcript-auth= reaches pluto, both as a
+per-connection setting (ikev2 only) and as config setup's global
+default.
