@@ -57,6 +57,7 @@ enum config_setup_keyword {
 	KSF_EXPIRE_SHUNT_INTERVAL,
 	KSF_DNS_RESOLVER,
 	KSF_SIGNATURE_HASH_ALGORITHMS,
+	KSF_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
 
 	/*
 	 * By convention, these are global configuration numeric (and
