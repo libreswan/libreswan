@@ -96,8 +96,8 @@ ondemand()
 {
     local trigger=$1
     case ${trigger} in
-	west-*-east ) from=west ; to=${east} ; name=east ;;
-	set-*-rise  ) from=set  ; to=${rise} ; name=rise ;;
+	west-*-east ) from=west ; to=east ; src=${west} ; dst=${east} ;;
+	set-*-rise  ) from=set  ; to=rise ; src=${set}  ; dst=${rise} ;;
 	* ) echo confused by ${trigger} 1>&2 ;;
     esac
     echo
@@ -105,7 +105,7 @@ ondemand()
 	*-udp7-* )
 	    cat <<EOF
 # trigger acquire using UDP
-${from}# echo 'TRIGGER' | nc -u -w 1 ${to} 7 # ${name}
+${from}# echo 'TRIGGER' | nc -u -w 1 ${dst} 7 # ${to}
 EOF
 	    ;;
 	*-udp0-* )
@@ -114,13 +114,22 @@ EOF
 	    # fails).
 	    cat <<EOF
 # trigger acquire using UDP
-${from}# socat -t0 - UDP:${to}:0 < /dev/null # ${name} - sends EOF?
+${from}# socat -t0 - UDP:${dst}:0 < /dev/null # ${to} - sends EOF?
 EOF
 	    ;;
 	*-ping-* )
 	    cat <<EOF
 # trigger acquire using PING
-${from}# ../../guestbin/ping-once.sh --down ${to} # ${name}
+${from}# ../../guestbin/ping-once.sh --down ${dst} # ${to}
+EOF
+	    ;;
+	*-frag-* )
+	    cat <<EOF
+# only allow fragments
+west# iptables -A INPUT ! -f -d ${dst} -j DROP
+${from}# dd if=/dev/zero bs=2048 count=1 2>/dev/null | socat -t0 - UDP:${dst}:7,sndbuf=8192 # ${to}
+west# ../../guestbin/wait-for-pluto.sh --match " on-demand .*->${dst}:0"
+west# iptables -D INPUT ! -f -d ${dst} -j DROP
 EOF
 	    ;;
 	west-iping-east )
@@ -238,7 +247,7 @@ for platform in ${platforms} ; do
 			triggers="set-udp0-rise"
 			;;
 		    * )
-			triggers="set-udp7-rise set-udp0-rise"
+			triggers="set-udp7-rise set-frag-rise"
 			;;
 		esac
 		pings="east-west west-east rise-set set-rise"

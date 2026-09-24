@@ -35,8 +35,11 @@ west# ipsec down westnet-eastnet
 west# ipsec _kernel state
 west# ipsec _kernel policy
 
-# trigger acquire using UDP
-set# socat -t0 - UDP:192.0.2.12:0 < /dev/null # rise - sends EOF?
+# only allow fragments
+west# iptables -A INPUT ! -f -d 192.0.2.12 -j DROP
+set# dd if=/dev/zero bs=2048 count=1 2>/dev/null | socat -t0 - UDP:192.0.2.12:7,sndbuf=8192 # rise
+west# ../../guestbin/wait-for-pluto.sh --match " on-demand .*->192.0.2.12:0"
+west# iptables -D INPUT ! -f -d 192.0.2.12 -j DROP
 west# ../../guestbin/wait-for-pluto.sh '^".*#4: initiator established Child SA'
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west
 west# ../../guestbin/ping-once.sh --up 192.1.2.23 # east

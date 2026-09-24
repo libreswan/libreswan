@@ -78,6 +78,13 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 west #
+ iptables -A INPUT ! -f -d 192.0.2.12 -j DROP
+west #
+ ../../guestbin/wait-for-pluto.sh --match " on-demand .*->192.0.2.12:0"
+"westnet-eastnet": initiate on-demand for packet 192.0.1.15-UDP->192.0.2.12:0
+west #
+ iptables -D INPUT ! -f -d 192.0.2.12 -j DROP
+west #
  ../../guestbin/wait-for-pluto.sh '^".*#4: initiator established Child SA'
 "westnet-eastnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
