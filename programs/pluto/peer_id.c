@@ -355,6 +355,37 @@ static bool score_host_connection(const struct ike_sa *ike,
 		 */
 		bool missing_key = false;
 
+		if (ike->sa.st_v2_resume_session != NULL) {
+			/*
+			 * Caller set PROPOSED_AUTHBYS to
+			 * resume_session_authby() from ticket.
+			 *
+			 * While the AUTHBY is ignored and PSK-like is
+			 * used when checking the AUTH payload, the
+			 * ticket's authby needs to still match the
+			 * what was established.
+			 *
+			 * XXX: currently the connection's authby is
+			 * saved, it should instead save the exact
+			 * auth used (but there's not yet enough bits
+			 * for that).
+			 *
+			 * XXX: matching_authbys is ignored,
+			 * notifications like
+			 * SIGNATURE_HASH_ALGORITHMS make no sense
+			 * here.
+			 */
+			if (authby_eq(proposed_authbys, remote_authbys)) {
+				vdbg("session resumption and exact match");
+				break;
+			}
+			authby_buf ta, ca;
+			vdbg("session resumption and ticket authbys %s do not match connection %s",
+			     str_authby(proposed_authbys, &ta),
+			     str_authby(remote_authbys, &ca));
+			return false;
+		}
+
 		if (matching_authbys.authby_psk) {
 			/*
 			 * Because this could be a template,

@@ -583,20 +583,23 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	struct authby proposed_initiator_auths;
 	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
 		/*
-		 * Can only be EAP.  Is EAPONLY right? EAP can be
-		 * combined with some other method?
+		 * Can only be EAP.
+		 *
+		 * Assume it's EAPONLY since that's all libreswan
+		 * supports.
 		 */
 		proposed_initiator_auths = (struct authby) {
 			AUTHBY_EAPONLY,
 		};
 	} else if (ike->sa.st_v2_resume_session) {
-		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
-		name_buf rn, an;
-		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
+		proposed_initiator_auths = resume_session_authby(ike->sa.st_v2_resume_session);
+		name_buf an;
+		authby_buf pia;
+		ldbg(ike->sa.logger,
+		     "session resume ignores v2AUTH method %s and uses %s for connection match, PSK-like for auth",
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
-		     str_enum_short(&auth_names, auth, &rn));
-		proposed_initiator_auths = authby_from_auth(auth);
+		     str_authby(proposed_initiator_auths, &pia));
 	} else {
 		proposed_initiator_auths = proposed_v2AUTH(ike, md);
 	}

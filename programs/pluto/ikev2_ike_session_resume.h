@@ -34,7 +34,7 @@ struct payload_digest;
 struct resume_session;
 struct id;
 
-enum auth resume_session_auth(const struct resume_session *session);
+struct authby resume_session_authby(const struct resume_session *session);
 
 bool verify_resume_session_id(const struct resume_session *session,
 			      const struct id *initiator_id,
