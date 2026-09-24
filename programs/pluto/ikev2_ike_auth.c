@@ -851,10 +851,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	struct connection *c = ike->sa.st_connection;
-	enum auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
-					    c->remote->host.config->auth);
 	struct authby initiator_authby = c->remote->host.config->authby;
-	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
 	bool remote_can_authby_null = initiator_authby.null;
 	bool remote_can_authby_pubkey = authby_has_pubkey(initiator_authby);
 
@@ -875,8 +872,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pbs_in_from_shunk(HUNK_AS_SHUNK(&ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						 ike, &idhash_in, &pbs_no_ppk_auth,
-						 initiator_auth);
+						 ike, &idhash_in, &pbs_no_ppk_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -904,7 +900,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 */
 		struct pbs_in pbs_null_auth = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						 &pbs_null_auth, AUTH_NULL);
+						 &pbs_null_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -920,8 +916,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		ldbg(ike->sa.logger, "responder verifying AUTH payload");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in,
-						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						 initiator_auth);
+						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -1255,10 +1250,6 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
-					    c->remote->host.config->auth);
-
-	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
@@ -1306,8 +1297,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in,
-				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				  responder_auth);
+				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);

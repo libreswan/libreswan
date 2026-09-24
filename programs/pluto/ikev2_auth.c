@@ -755,17 +755,15 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct ike_sa *ike,
 diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
-			     struct pbs_in *signature_pbs,
-			     const enum auth that_auth)
+			     struct pbs_in *signature_pbs)
 {
 	const struct host_end_config *remote = &ike->sa.st_connection->remote->config->host;
 
-	name_buf ramb, eanb;
+	name_buf ramb;
 	authby_buf rab;
 	ldbg(ike->sa.logger,
-	     "verifying auth payload, remote sent v2AUTH=%s we want auth=%s and authby=%s",
+	     "verifying auth payload, remote sent v2AUTH=%s we want and authby=%s",
 	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	     str_enum_short(&auth_names, that_auth, &eanb),
 	     str_authby(remote->authby, &rab));
 
 	/*
@@ -803,15 +801,21 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	{
-		if (that_auth != AUTH_PSK) {
-			name_buf an;
+		if (!remote->authby.authby_psk &&
+		    ike->sa.st_v2_resume_session == NULL) {
+			/*
+			 * XXX: session resume forces PSK, so
+			 * presumably peer has done that.
+			 */
+			authby_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY,
 							   ike, idhash_in,
-							   signature_pbs, NULL/*auth_sig*/);
+							   signature_pbs,
+							   NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
 			return d;
@@ -822,16 +826,10 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		/*
-		 * Given authby=rsa+null, that_auth==rsa.  Hence the
-		 * second test; but doesn't that make the first test
-		 * redundant?
-		 */
-		if (that_auth != AUTH_NULL &&
-		    !ike->sa.st_connection->remote->host.config->authby.null) {
-			name_buf an;
+		if (!remote->authby.authby_null) {
+			authby_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_NULL, ike, idhash_in,
@@ -963,9 +961,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		}
 
 		ldbg(ike->sa.logger, "digsig:   no match");
-		name_buf an;
+		authby_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    str_enum_short(&auth_names, that_auth, &an));
+			    str_authby(remote->authby, &an));
 
 	}
 	default:

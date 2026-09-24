@@ -82,8 +82,7 @@ bool submit_local_v2AUTH_signature(struct ike_sa *ike,
 diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
-			     struct pbs_in *signature_pbs,
-			     const enum auth that_authby);
+			     struct pbs_in *signature_pbs);
 
 bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
 					     struct msg_digest *md,
