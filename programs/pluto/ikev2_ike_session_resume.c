@@ -154,13 +154,17 @@ void refresh_v2_ike_session_resume(struct logger *logger)
 struct resume_session {
 	char initiator_id[256];
 	char responder_id[256];
-	enum auth auth_method;
 	bool full_transcript_auth;
+	/*
+	 * A variation on PSK is used when generating the v2AUTH
+	 * payload, this is just for connection matching.
+	 */
+	struct authby authby_method;
 };
 
-enum auth resume_session_auth(const struct resume_session *session)
+struct authby resume_session_authby(const struct resume_session *session)
 {
-	return session->auth_method;
+	return session->authby_method;
 }
 
 
@@ -302,7 +306,7 @@ static void set_resume_session(struct resume_session *session,
 	jam_id(&initiator_buf, &initiator->host.id);
 	struct jambuf responder_buf = ARRAY_AS_JAMBUF(session->responder_id);
 	jam_id(&responder_buf, &responder->host.id);
-	session->auth_method = initiator->host.config->auth;
+	session->authby_method = initiator->host.config->authby;
 }
 
 static bool ike_responder_to_ticket(const struct ike_sa *ike,
@@ -345,7 +349,7 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 
 	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
-	ticket->secured.state.resume.auth_method = ike->sa.st_connection->local->config->host.auth;
+	ticket->secured.state.resume.authby_method = ike->sa.st_connection->local->config->host.authby;
 	ticket->secured.state.resume.full_transcript_auth = ike->sa.st_v2_full_transcript_auth;
 
 	if (!cipher_context_op_aead(key->encrypt,
