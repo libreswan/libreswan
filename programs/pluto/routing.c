@@ -1748,6 +1748,7 @@ static bool dispatch_1(enum routing_event event,
 		set_routing(c, RT_UNROUTED);
 		return true;
 
+	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/*
 		 * For instance, a permanent connection fails during
