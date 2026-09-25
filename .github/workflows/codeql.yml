@@ -77,6 +77,6 @@ jobs:
 
       - name: Perform CodeQL Analysis
         # pinning to full commit hash from tagged version v2.20.4
-        uses: github/codeql-action/analyze@5595ccaf912efad79be6eef63a5619ff05969be3
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd
         with:
           category: "/language:${{matrix.language}}"
