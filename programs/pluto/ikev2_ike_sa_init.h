@@ -39,5 +39,6 @@ bool calc_v2_new_ike_keymat(struct ike_sa *ike,
 extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 
 extern enum yna_options ikev2_signature_hash_algorithms;
+extern enum yna_options ikev2_ike_sa_init_full_transcript_auth;
 
 #endif

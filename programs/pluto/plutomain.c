@@ -1282,6 +1282,8 @@ int main(int argc, char **argv)
 	 */
 	ikev2_signature_hash_algorithms =
 		config_setup_yna(KSF_SIGNATURE_HASH_ALGORITHMS);
+	ikev2_ike_sa_init_full_transcript_auth =
+		config_setup_yna(KSF_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH);
 
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
@@ -1656,6 +1658,10 @@ void show_setup_plutomain(struct show *s)
 	name_buf shab;
 	show(s, "signature-hash-algorithms=%s,",
 	     str_sparse_short(&yna_option_names, ikev2_signature_hash_algorithms, &shab));
+
+	name_buf ftab;
+	show(s, "ike-sa-init-full-transcript-auth=%s,",
+	     str_sparse_short(&yna_option_names, ikev2_ike_sa_init_full_transcript_auth, &ftab));
 
 	show_global_redirect(s);
 }

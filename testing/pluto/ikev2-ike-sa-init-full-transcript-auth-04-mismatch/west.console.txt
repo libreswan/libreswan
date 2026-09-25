@@ -17,7 +17,7 @@ west #
  ipsec up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: connection has ike-sa-init-full-transcript-auth=yes but peer does not support it
+"westnet-eastnet-ipv4-psk-ikev2" #1: ike-sa-init-full-transcript-auth=yes is required but peer does not support it
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state IKE_SA_INIT_I
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
