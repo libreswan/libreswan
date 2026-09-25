@@ -1,6 +1,6 @@
 See also https://libreswan.org/
 
-v5.4.1 (Unreleased, 2026)
+v5.4.1 (Oct 5, 2026)
 * Security
   - fix CVE-2026-77206 - NPE - unexpected-eap-packet
     http://libreswan.org/security/CVE-2026-77206
