@@ -592,52 +592,23 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":   ");
-		/*
-		 * When showing the AUTH try to show just the AUTH=
-		 * text (and append the AUTHBY mask when things don't
-		 * match).
-		 *
-		 * For instance, given authby=null and auth=null, just
-		 * show "null".
-		 *
-		 * But there's a twist: when the oriented peer AUTH
-		 * and AUTHBY don't match, show just AUTHBY.  When
-		 * authenticating (at least for IKEv2) AUTH is
-		 * actually ignored - it's AUTHBY that counts.
-		 */
-		const char *who = "our";
-		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
+		const struct host_end_config *this_end = (oriented(c) ? c->local->host.config : c->end[LEFT_END].host.config);
+		const struct host_end_config *that_end = (oriented(c) ? c->remote->host.config : c->end[RIGHT_END].host.config);
+
+		const char *who = (oriented(c) ? "our" : "left");
+		FOR_EACH_THING(end, this_end, that_end) {
 			jam_string(buf, who);
 			jam_string(buf, " auth:");
-			/*
-			 * EXPECT everything except rsasig_v1_5.
-			 */
-			struct authby expect = authby_from_auth(end->auth);
-			struct authby mask = (oriented(c) && end == c->local->host.config ? expect : AUTHBY_ALL);
-			expect = authby_and_not(expect, (struct authby) {
-					AUTHBY_RSASIG_V1_5,
-					AUTHBY_RSASIG_SHA2,
-				});
-			struct authby authby = authby_and(end->authby, mask);
-			if (authby_eq(authby, expect)) {
-				jam_enum_human(buf, &auth_names, end->auth);
-			} else if (oriented(c) && end == c->remote->host.config) {
-				jam_authby(buf, end->authby);
-			} else {
-				jam_enum_human(buf, &auth_names, end->auth);
-				jam_string(buf, "(");
-				jam_authby(buf, authby);
-				jam_string(buf, ")");
-			}
-			who = ", their";
+			jam_authby(buf, end->authby);
+			who = (oriented(c) ? ", their" : ", right");
 		}
 		/* eap */
-		who = ", our";
-		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
+		who = (oriented(c) ? ", our" : ", left");
+		FOR_EACH_THING(end, this_end, that_end) {
 			jam(buf, "%s autheap:%s", who,
 			    (end->eap == IKE_EAP_NONE ? "none" :
 			     end->eap == IKE_EAP_TLS ? "tls" : "???"));
-			who = ", their";
+			who = (oriented(c) ? ", their" : ", right");
 		}
 
 		jam(buf, ", send-supported-auth-methods:%s", bool_str(c->config->host.send_supported_auth_methods));
