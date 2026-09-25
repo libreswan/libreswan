@@ -284,13 +284,13 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			    chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum auth authby = c->local->host.config->auth;
+	struct authby local_authby = c->local->host.config->authby;
 
 	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 
-	switch (authby) {
-	case AUTH_RSASIG:
-	{
+	if (authby_has_any(local_authby, (struct authby) {
+				AUTHBY_RSASIG,
+			})) {
 		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
 			if (c->local->config->host.authby.rsasig_v1_5_sha1) {
@@ -339,16 +339,20 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 		free_chunk_content(&hashval);
 		return true;
 	}
-	case AUTH_PSK:
+
+	if (local_authby.authby_psk) {
 		/* store in no_ppk_auth */
 		if (!ikev2_create_psk_auth(PSK_AUTH_SHARED_KEY, ike, id_hash, no_ppk_auth)) {
 			return false; /* was STF_INTERNAL_ERROR but don't tell */
 		}
 		return true;
-
-	default:
-		bad_case(authby);
 	}
+
+	authby_buf lab;
+	llog_pexpect(ike->sa.logger, HERE, "unsuppored auth %s for PPK",
+	     str_authby(local_authby, &lab));
+
+	return false;
 }
 
 /* in X_no_ppk keys are stored keys that go into PRF, and we store result in sk_X */
