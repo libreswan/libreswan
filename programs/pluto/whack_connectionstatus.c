@@ -609,10 +609,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
 			jam_string(buf, who);
 			jam_string(buf, " auth:");
-			/*
-			 * EXPECT everything except rsasig_v1_5.
-			 */
-			jam_authby_human(buf, end->authby);
+			jam_authby_auth(buf, end->authby);
 			who = ", their";
 		}
 		/* eap */

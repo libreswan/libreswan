@@ -329,7 +329,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	return jam_authby_raw(buf, authby, /*human*/false);
 }
 
-size_t jam_authby_human(struct jambuf *buf, struct authby authby)
+size_t jam_authby_auth(struct jambuf *buf, struct authby authby)
 {
 	return jam_authby_raw(buf, authby, /*human*/true);
 }
@@ -338,6 +338,13 @@ const char *str_authby(struct authby authby, authby_buf *buf)
 {
 	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_authby(&jambuf, authby);
+	return buf->buf;
+}
+
+const char *str_authby_auth(struct authby authby, authby_buf *buf)
+{
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	jam_authby_auth(&jambuf, authby);
 	return buf->buf;
 }
 
