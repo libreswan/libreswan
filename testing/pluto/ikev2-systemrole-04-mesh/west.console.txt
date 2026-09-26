@@ -185,7 +185,7 @@ Connection list:
 "private":   mycert=west;
 "private":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private":   our auth:rsasig(RSASIG), their auth:RSASIG, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private":   sec_label:unset;
@@ -210,7 +210,7 @@ Connection list:
 "private#10.1.0.0/24":   mycert=west;
 "private#10.1.0.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private#10.1.0.0/24":   our auth:rsasig(RSASIG), their auth:RSASIG, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private#10.1.0.0/24":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private#10.1.0.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private#10.1.0.0/24":   sec_label:unset;
@@ -235,7 +235,7 @@ Connection list:
 "private-or-clear":   mycert=west;
 "private-or-clear":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear":   our auth:rsasig(RSASIG), their auth:RSASIG, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear":   sec_label:unset;
@@ -260,7 +260,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   mycert=west;
 "private-or-clear#192.1.2.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG), their auth:RSASIG, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"private-or-clear#192.1.2.0/24":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none, send-supported-auth-methods:no;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "private-or-clear#192.1.2.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;

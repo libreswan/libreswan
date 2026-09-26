@@ -37,8 +37,8 @@ west #
 "defaults": added oriented IKEv2 connection
  policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG)
- their auth:RSASIG
+ our auth:rsasig
+ their auth:rsasig
 west #
  authby null
  ipsec addconn --name authby-null authby=null
@@ -89,15 +89,15 @@ west #
  policy: IKEv2+EAPONLY+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:eaponly
- their auth:RSASIG
+ their auth:rsasig
 west #
  authby eddsa
  ipsec addconn --name authby-eddsa authby=eddsa
 "authby-eddsa": added oriented IKEv2 connection
  policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: IDENTITY;
- our auth:3
- their auth:3
+ our auth:eddsa
+ their auth:eddsa
 west #
  authby ecdsa
  ipsec addconn --name authby-ecdsa authby=ecdsa
@@ -120,24 +120,24 @@ west #
 "authby-ecdsa-sha2_256": added oriented IKEv2 connection
  policy: IKEv2+ECDSA_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256;
- our auth:ecdsa(ECDSA_SHA2_256)
- their auth:ECDSA_SHA2_256
+ our auth:ecdsa-sha2_256
+ their auth:ecdsa-sha2_256
 west #
  authby ecdsa-sha2_384
  ipsec addconn --name authby-ecdsa-sha2_384 authby=ecdsa-sha2_384
 "authby-ecdsa-sha2_384": added oriented IKEv2 connection
  policy: IKEv2+ECDSA_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_384;
- our auth:ecdsa(ECDSA_SHA2_384)
- their auth:ECDSA_SHA2_384
+ our auth:ecdsa-sha2_384
+ their auth:ecdsa-sha2_384
 west #
  authby ecdsa-sha2_512
  ipsec addconn --name authby-ecdsa-sha2_512 authby=ecdsa-sha2_512
 "authby-ecdsa-sha2_512": added oriented IKEv2 connection
  policy: IKEv2+ECDSA_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_512;
- our auth:ecdsa(ECDSA_SHA2_512)
- their auth:ECDSA_SHA2_512
+ our auth:ecdsa-sha2_512
+ their auth:ecdsa-sha2_512
 west #
  authby ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512 # merges
  ipsec addconn --name authby-ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512 authby=ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512
@@ -152,72 +152,72 @@ west #
 "authby-rsa": added oriented IKEv2 connection
  policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG)
- their auth:RSASIG
+ our auth:rsasig
+ their auth:rsasig
 west #
  authby rsasig
  ipsec addconn --name authby-rsasig authby=rsasig
 "authby-rsasig": added oriented IKEv2 connection
  policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG)
- their auth:RSASIG
+ our auth:rsasig
+ their auth:rsasig
 west #
  authby rsa-sha1
  ipsec addconn --name authby-rsa-sha1 authby=rsa-sha1
 "authby-rsa-sha1": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1;
- our auth:rsasig(RSASIG_v1_5_SHA1)
- their auth:RSASIG_v1_5_SHA1
+ our auth:rsa-sha1
+ their auth:rsa-sha1
 west #
  authby rsa-sha2
  ipsec addconn --name authby-rsa-sha2 authby=rsa-sha2
 "authby-rsa-sha2": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG_SHA2)
- their auth:RSASIG_SHA2
+ our auth:rsa-sha2
+ their auth:rsa-sha2
 west #
  authby rsa-sha2_256
  ipsec addconn --name authby-rsa-sha2_256 authby=rsa-sha2_256
 "authby-rsa-sha2_256": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2_256+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256;
- our auth:rsasig(RSASIG_SHA2_256)
- their auth:RSASIG_SHA2_256
+ our auth:rsa-sha2_256
+ their auth:rsa-sha2_256
 west #
  authby rsa-sha2_384
  ipsec addconn --name authby-rsa-sha2_384 authby=rsa-sha2_384
 "authby-rsa-sha2_384": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2_384+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_384;
- our auth:rsasig(RSASIG_SHA2_384)
- their auth:RSASIG_SHA2_384
+ our auth:rsa-sha2_384
+ their auth:rsa-sha2_384
 west #
  authby rsa-sha2_512
  ipsec addconn --name authby-rsa-sha2_512 authby=rsa-sha2_512
 "authby-rsa-sha2_512": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_512;
- our auth:rsasig(RSASIG_SHA2_512)
- their auth:RSASIG_SHA2_512
+ our auth:rsa-sha2_512
+ their auth:rsa-sha2_512
 west #
  authby rsa-sha1,rsa-sha2
  ipsec addconn --name authby-rsa-sha1,rsa-sha2 authby=rsa-sha1,rsa-sha2
 "authby-rsa-sha1,rsa-sha2": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG_SHA2+RSASIG_v1_5_SHA1)
- their auth:RSASIG_SHA2+RSASIG_v1_5_SHA1
+ our auth:rsa-sha2+rsa-sha1
+ their auth:rsa-sha2+rsa-sha1
 west #
  authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
  ipsec addconn --name authby-rsa-sha2_256,rsa-sha2_384,rsa-sha2_512 authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
 "authby-rsa-sha2_256,rsa-sha2_384,rsa-sha2_512": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG_SHA2)
- their auth:RSASIG_SHA2
+ our auth:rsa-sha2
+ their auth:rsa-sha2
 west #
  # these are weird sub bits
 west #
@@ -226,8 +226,8 @@ west #
 "leftauth-rsasig": added oriented IKEv2 connection
  policy: IKEv2+RSASIG_SHA2_256+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256+SHA2_512;
- our auth:rsasig(RSASIG_SHA2_256+RSASIG_SHA2_512)
- their auth:RSASIG_SHA2_256+RSASIG_SHA2_512
+ our auth:rsa-sha2_256+rsa-sha2_512
+ their auth:rsa-sha2_256+rsa-sha2_512
 west #
  # these should get a warning
 west #
@@ -241,16 +241,16 @@ west #
 "authby-rsa,secret": added oriented IKEv2 connection
  policy: IKEv2+PSK+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG)
- their auth:PSK+RSASIG
+ our auth:secret+rsasig
+ their auth:secret+rsasig
 west #
  authby rsa-sha2_256,rsa-sha2_512,secret #=> rsa-sha2_256,rsa-sha2_512; warning: psk
  ipsec addconn --name authby-rsa-sha2_256,rsa-sha2_512,secret authby=rsa-sha2_256,rsa-sha2_512,secret
 "authby-rsa-sha2_256,rsa-sha2_512,secret": added oriented IKEv2 connection
  policy: IKEv2+PSK+RSASIG_SHA2_256+RSASIG_SHA2_512+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA2_256+SHA2_512;
- our auth:rsasig(RSASIG_SHA2_256+RSASIG_SHA2_512)
- their auth:PSK+RSASIG_SHA2_256+RSASIG_SHA2_512
+ our auth:secret+rsa-sha2_256+rsa-sha2_512
+ their auth:secret+rsa-sha2_256+rsa-sha2_512
 west #
  leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
  ipsec addconn --name leftauth-psk leftauth=psk authby=rsa
@@ -259,7 +259,7 @@ warning: "leftauth-psk": leftauth=secret overrides "authby=RSASIG"
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:RSASIG
+ their auth:rsasig
 west #
  leftauth secret authby=rsa #=> psk; warning: rsa
  ipsec addconn --name leftauth-secret leftauth=secret authby=rsa
@@ -268,7 +268,7 @@ warning: "leftauth-secret": leftauth=secret overrides "authby=RSASIG"
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:RSASIG
+ their auth:rsasig
 west #
  leftauth secret authby=rsa,secret #=> psk; warning: rsa; warning: rsa
  ipsec addconn --name leftauth-secret leftauth=secret authby=rsa,secret
@@ -277,7 +277,7 @@ warning: "leftauth-secret": leftauth=secret overrides "authby=RSASIG"
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:PSK+RSASIG
+ their auth:secret+rsasig
 west #
  authby rsa leftauthby=secret
  ipsec addconn --name authby-rsa authby=rsa leftauthby=secret
@@ -285,7 +285,7 @@ west #
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:RSASIG
+ their auth:rsasig
 west #
  authby rsa leftauthby=secret rightauthby=eddsa # override allowed
  ipsec addconn --name authby-rsa authby=rsa leftauthby=secret rightauthby=eddsa
@@ -293,14 +293,14 @@ west #
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:3
+ their auth:eddsa
 west #
  leftauth rsasig authby=secret leftauthby=rsa
  ipsec addconn --name leftauth-rsasig leftauth=rsasig authby=secret leftauthby=rsa
 "leftauth-rsasig": added oriented IKEv2 connection
  policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsasig(RSASIG)
+ our auth:rsasig
  their auth:secret
 west #
  leftauth secret leftauthby=rsasig
@@ -310,7 +310,7 @@ warning: "leftauth-secret": leftauth=secret overrides "leftauthby=RSASIG"
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:RSASIG
+ their auth:rsasig
 west #
  leftauth secret leftauthby=secret authby=rsasig
  ipsec addconn --name leftauth-secret leftauth=secret leftauthby=secret authby=rsasig
@@ -318,7 +318,7 @@ west #
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
  our auth:secret
- their auth:RSASIG
+ their auth:rsasig
 west #
  # these should fail to load
 west #
