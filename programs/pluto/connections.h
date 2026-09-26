@@ -101,7 +101,6 @@ struct host_end_config {
 	/*
 	 * Proof of identity.
 	 */
-	enum auth auth;
 	struct authby authby;
 
 	struct id id;			/* or ID_NONE aka %any aka set to host-addr */

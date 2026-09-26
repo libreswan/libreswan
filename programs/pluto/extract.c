@@ -2041,15 +2041,16 @@ static diag_t extract_host_end(enum end end,
 		bad_case(ike_version);
 	}
 
-	name_buf eab;
+	if (!vexpect(authby_is_set(authby))) {
+		return diag("CONFUSED: authby= isn't set");
+	}
+
 	authby_buf eaby;
 	name_buf wab;
 	authby_buf waby;
-	enum auth auth = host_config->auth = auth_from_authby(authby);
 	host_config->authby = authby;
-	vexpect(auth != AUTH_UNSET);
-	vdbg("fake %sauth=%s %s authby=%s from whack auth=%s and whack authby=%s",
-	     src->leftright, str_enum_short(&auth_names, auth, &eab),
+
+	vdbg("fake %s authby=%s from whack auth=%s and whack authby=%s",
 	     src->leftright, str_authby(host_config->authby, &eaby),
 	     str_enum_short(&auth_names, whack_auth, &wab),
 	     str_authby(whack_authby, &waby));
@@ -2067,7 +2068,7 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	if (host_config->eap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
+	if (host_config->eap == IKE_EAP_NONE && authby.authby_eaponly) {
 		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
 			    leftright, leftright);
 	}
@@ -2077,7 +2078,7 @@ static diag_t extract_host_end(enum end end,
 	 */
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
-		if (auth == AUTH_PSK || auth == AUTH_NULL) {
+		if (authby.authby_psk || authby.authby_null) {
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
@@ -4837,30 +4838,22 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (never_negotiate(c)) {
-		if (!vexpect(c->local->host.config->auth == AUTH_NEVER &&
-			     c->remote->host.config->auth == AUTH_NEVER)) {
+		if (!vexpect(c->local->host.config->authby.authby_never &&
+			     c->remote->host.config->authby.authby_never)) {
 			return diag("internal error");
 		}
 	} else {
-		if (c->local->host.config->auth == AUTH_UNSET ||
-		    c->remote->host.config->auth == AUTH_UNSET) {
-			/*
-			 * Since an unset auth is set from authby,
-			 * authby= must have somehow been blanked out
-			 * or left with something useless (such as
-			 * never).
-			 */
-			return diag("no authentication (auth=, authby=) was set");
-		}
 
-		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
-		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
-			name_buf lab, rab;
+		if ((c->local->host.config->authby.authby_psk &&
+		     c->remote->host.config->authby.authby_null) ||
+		    (c->local->host.config->authby.authby_null &&
+		     c->remote->host.config->authby.authby_psk)) {
+			authby_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,
-				    str_enum_short(&auth_names, c->local->host.config->auth, &lab),
+				    str_authby_auth(c->local->host.config->authby, &lab),
 				    c->remote->config->leftright,
-				    str_enum_short(&auth_names, c->remote->host.config->auth, &rab));
+				    str_authby_auth(c->remote->host.config->authby, &rab));
 		}
 	}
 
@@ -4895,19 +4888,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 	}
-
-	/*
-	 * Note: this checks the whack message (WM), and not the
-	 * connection (C) being construct - it could be done before
-	 * extract_end(), but do it here.
-	 *
-	 * XXX: why not allow this?
-	 */
-	if ((config->end[LEFT_END].host.auth == AUTH_UNSET) !=
-	    (config->end[RIGHT_END].host.auth == AUTH_UNSET)) {
-		    return diag("leftauth= and rightauth= must both be set or both be unset");
-	}
-
 
 	/*
 	 * Limit IKEv1 with selectors
