@@ -261,18 +261,18 @@ static struct authby local_v2_authby(struct ike_sa *ike)
 		override = true;
 		negotiation_story = "resume session";
 		negotiated_authby = (struct authby) {
-			.authby_psk = true,
+			AUTHBY_PSK,
 		};
 	} else if (ike->sa.st_eap != NULL) {
 		override = true;
 		negotiation_story = "eap";
 		negotiated_authby = (struct authby) {
-			.authby_psk = true,
+			AUTHBY_PSK,
 		};
 	} else if (ike->sa.st_peer_wants_null) {
 		negotiation_story = "peer wants null";
 		negotiated_authby = (struct authby) {
-			.authby_null = true,
+			AUTHBY_NULL,
 		};
 	} else if (!authby_is_set(ike->sa.st_v2_peer_authby)) {
 		negotiation_story = "configured";
@@ -1193,11 +1193,11 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 		};
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 		return (struct authby) {
-			.authby_psk = true,
+			AUTHBY_PSK,
 		};
 	case IKEv2_AUTH_NULL:
 		return (struct authby) {
-			.authby_null = true,
+			AUTHBY_NULL,
 		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		return (struct authby) {

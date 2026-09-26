@@ -41,12 +41,18 @@ struct authby {
 
 	bool psk;	/* flag[AUTHBY_KIND_PSK] */
 #define authby_psk psk
+#define AUTHBY_PSK				\
+	.authby_psk = true
 
 	bool null;	/* flag[AUTHBY_KIND_NULL] */
 #define authby_null null
+#define AUTHBY_NULL				\
+	.authby_null = true
 
 	bool never;	/* flag[AUTHBY_KIND_NEVER] */
 #define authby_never never
+#define AUTHBY_NEVER				\
+	.authby_never = true
 
 	bool eddsa;	/* flag[AUTHBY_KIND_EDDSA] */
 #define authby_eddsa eddsa
@@ -114,15 +120,15 @@ struct authby {
 #define AUTHBY_ALL authby_not((struct authby) {0})
 
 #define AUTHBY_IKEv1				\
-	.psk = true,				\
-	.null = true,				\
-	.never = true,				\
+	AUTHBY_PSK,				\
+	AUTHBY_NULL,				\
+	AUTHBY_NEVER,				\
 	AUTHBY_RSASIG_RAW
 
 #define AUTHBY_IKEv2				\
-	.psk = true,				\
-	.null = true,				\
-	.never = true,				\
+	AUTHBY_PSK,				\
+	AUTHBY_NULL,				\
+	AUTHBY_NEVER,				\
 	AUTHBY_EAPONLY,				\
 	AUTHBY_EDDSA,				\
 	AUTHBY_RSASIG_V1_5,			\
