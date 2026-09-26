@@ -372,15 +372,9 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	/*
 	 * ??? not sure what's needed here.
 	 *
-	 * Use remote's allowed authentication; since IKEv1 is
-	 * symmetric this also applies to us.  Strangely this
-	 * preference for PSK over RSASIG is the reverse of
-	 * auth_from_authby().
-	 *
-	 * XXX: it doesn't matter (or at least no longer matters).
-	 * For IKEv1, only one auth method is allowed (i.e., only one
-	 * bit is set in .authby).  Hence, regardless of order, the
-	 * same decision will always be made.
+	 * XXX: For IKEv1, only one auth method is allowed (i.e., only
+	 * one bit is set in .authby).  Hence, regardless of order,
+	 * the same decision will always be made.
 	 */
 	ike->sa.st_oakley.auth = (c->remote->host.config->authby.authby_psk ? OAKLEY_PRESHARED_KEY :
 				  c->remote->host.config->authby.authby_rsasig_raw ? OAKLEY_RSA_SIG :
