@@ -1881,7 +1881,9 @@ static diag_t extract_host_end(enum end end,
 		}
 
 		if (!authby_is_set(whack_authby)) {
-			authby = AUTHBY_ALL_IKEv1_DEFAULTS;
+			authby = (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			};
 			break;
 		}
 
