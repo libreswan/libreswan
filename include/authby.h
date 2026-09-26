@@ -202,6 +202,8 @@ typedef struct {
 const char *str_authby(struct authby authby, authby_buf *buf);
 
 size_t jam_authby(struct jambuf *buf, struct authby authby);
+/* try to match what extract.c accepts */
+size_t jam_authby_human(struct jambuf *buf, struct authby authby);
 void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby);
 
 #endif
