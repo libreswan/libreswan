@@ -56,6 +56,14 @@ west #
  our auth:secret
  their auth:secret
 west #
+ authby psk
+ ipsec addconn --name authby-psk authby=psk
+"authby-psk": added oriented IKEv2 connection
+ policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: none;
+ our auth:secret
+ their auth:secret
+west #
  authby never # fail
  ipsec addconn --name authby-never authby=never
 "authby-never": failed to add connection: connection with authby=never must specify shunt type via type=
@@ -231,10 +239,13 @@ west #
 west #
  # these should get a warning
 west #
- authby rsa,psk #=> rsa; warning: psk; FAILS TO LOAD AS PSK IS NOT VALID
+ authby rsa,psk #=> rsa; warning: psk; POLICY SHOWS PSK
  ipsec addconn --name authby-rsa,psk authby=rsa,psk
-"authby-rsa,psk": failed to add connection: authby=psk is unknown
-no connection or alias named "authby-rsa,psk"
+"authby-rsa,psk": added oriented IKEv2 connection
+ policy: IKEv2+PSK+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
+ our auth:rsasig(RSASIG)
+ their auth:PSK+RSASIG
 west #
  authby rsa,secret #=> rsa; warning: psk; POLICY SHOWS PSK
  ipsec addconn --name authby-rsa,secret authby=rsa,secret
@@ -252,9 +263,9 @@ west #
  our auth:secret+rsa-sha2_256+rsa-sha2_512
  their auth:secret+rsa-sha2_256+rsa-sha2_512
 west #
- leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
+ leftauth psk authby=rsa #=> psk; warning: rsa
  ipsec addconn --name leftauth-psk leftauth=psk authby=rsa
-warning: "leftauth-psk": leftauth=secret overrides "authby=RSASIG"
+warning: "leftauth-psk": leftauth=psk overrides "authby=RSASIG"
 "leftauth-psk": added oriented IKEv2 connection
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;

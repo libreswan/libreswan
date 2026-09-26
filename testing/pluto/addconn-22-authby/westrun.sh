@@ -18,6 +18,7 @@ conn defaults
 
 authby null
 authby secret
+authby psk
 
 authby never # fail
 authby never type=drop
@@ -51,11 +52,11 @@ leftauth rsasig authby=rsa-sha2_256,rsa-sha2_512 #=> rsa-sha2_256,rsa-sha2_512
 
 # these should get a warning
 
-authby rsa,psk #=> rsa; warning: psk; FAILS TO LOAD AS PSK IS NOT VALID
+authby rsa,psk #=> rsa; warning: psk; POLICY SHOWS PSK
 authby rsa,secret #=> rsa; warning: psk; POLICY SHOWS PSK
 authby rsa-sha2_256,rsa-sha2_512,secret #=> rsa-sha2_256,rsa-sha2_512; warning: psk
 
-leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
+leftauth psk authby=rsa #=> psk; warning: rsa
 leftauth secret authby=rsa #=> psk; warning: rsa
 leftauth secret authby=rsa,secret #=> psk; warning: rsa; warning: rsa
 
