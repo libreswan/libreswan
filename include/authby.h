@@ -119,12 +119,6 @@ struct authby {
 
 #define AUTHBY_ALL authby_not((struct authby) {0})
 
-#define AUTHBY_IKEv1				\
-	AUTHBY_PSK,				\
-	AUTHBY_NULL,				\
-	AUTHBY_NEVER,				\
-	AUTHBY_RSASIG_RAW
-
 #define AUTHBY_IKEv2				\
 	AUTHBY_PSK,				\
 	AUTHBY_NULL,				\
