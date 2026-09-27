@@ -279,9 +279,110 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	return true;
 }
 
-bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
-			    const struct crypt_mac *id_hash,
-			    chunk_t *no_ppk_auth /* output */)
+/*
+ * XXX: Danger this code, which is duplicating functionality in
+ * ikev2_auth.c, should be eliminated.
+ */
+
+static struct authby local_ppk_authby(struct ike_sa *ike)
+{
+	struct authby authby = local_v2_authby(ike);
+	/*
+	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
+	 * v1.5 RSA.  It's just how it has always been.
+	 */
+	return (authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_SHA2,
+			}) ? (struct authby) {
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
+		}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			}) ? (struct authby) {
+			AUTHBY_ECDSA_SHA2,
+				}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_EDDSA,
+			}) ? (struct authby) {
+			AUTHBY_EDDSA
+				}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+			}) ? (struct authby) {
+			AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+				}
+		: authby.psk ? (struct authby) {
+			AUTHBY_PSK,
+				}
+		: authby.null ? (struct authby) {
+			AUTHBY_NULL,
+				}
+		: authby.never ? (struct authby) {
+			AUTHBY_NEVER,
+				}
+		: authby.authby_eaponly ? (struct authby) {
+			AUTHBY_EAPONLY,
+				}
+		: (struct authby) {0});
+}
+
+/*
+ * XXX: This code duplicates functionality in ikev2_auth.c, it can be
+ * eliminated.
+ */
+
+static struct authby v2_IKE_AUTH_ppk_initiator_authby(struct ike_sa *ike)
+{
+	struct authby authby =
+		authby_and(ike->sa.st_connection->local->config->host.authby,
+			   ike->sa.st_v2_digsig.peer_pubkey_mask);
+	return authby_and(authby, local_ppk_authby(ike));
+}
+
+/*
+ * XXX: This code duplicates functionality in ikev2_auth.c, it can be
+ * eliminated.
+ */
+
+static const struct hash_desc *v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(struct ike_sa *ike)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+
+	vdbg("digsig: selecting negotiated hash algorithm");
+	struct authby digsig_authby =
+		v2_IKE_AUTH_ppk_initiator_authby(ike);
+	static const struct hash_desc *negotiated_hash_map[] = {
+		&ike_alg_hash_sha2_512,
+		&ike_alg_hash_sha2_384,
+		&ike_alg_hash_sha2_256,
+		&ike_alg_hash_identity,
+		&ike_alg_hash_sha1,
+	};
+	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
+		if (authby_has_hash(digsig_authby, (*hash))) {
+			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
+			     (*hash)->common.fqn);
+			return (*hash);
+		}
+		vdbg("digsig:   skipped hash algorithm %s as not negotiated",
+		     (*hash)->common.fqn);
+	}
+	vdbg("digsig: no compatible DigSig hash algo");
+	return NULL;
+}
+
+/*
+ * XXX: This code is RSASIG+PSK specific.
+ *
+ * XXX: This code seems to duplicate more up-to-date functionality in
+ * ikev2_auth.[hc].
+ */
+
+bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
+						const struct crypt_mac *id_hash,
+						chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
 	struct authby local_authby = c->local->host.config->authby;
@@ -291,7 +392,8 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 	if (authby_has_any(local_authby, (struct authby) {
 				AUTHBY_RSASIG,
 			})) {
-		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+		const struct hash_desc *hash_algo =
+			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
 			if (c->local->config->host.authby.rsasig_v1_5_sha1) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */

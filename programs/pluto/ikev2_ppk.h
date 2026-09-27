@@ -61,9 +61,9 @@ bool emit_unified_ppk_id(const struct ppk_id_payload *payl, struct pbs_out *pbs)
 bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
 			       const struct secret_ppk_stuff *ppk);
 
-extern bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
-				   const struct crypt_mac *id_hash,
-				   chunk_t *no_ppk_auth /* output */);
+bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
+						const struct crypt_mac *id_hash,
+						chunk_t *no_ppk_auth /* output */);
 
 struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
 							   const struct secret_ppk_stuff *ppk,

@@ -419,9 +419,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		close_pbs_out(&ppks);
 
 		if (!cc->config->ppk.insist) {
-			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
-						    &ike->sa.st_no_ppk_auth)) {
-				ldbg(ike->sa.logger, "ikev2_calc_no_ppk_auth() failed dying");
+			if (!v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
+									&ike->sa.st_no_ppk_auth)) {
+				ldbg(ike->sa.logger, "ikev2_calc_initiator_no_ppk_auth() failed dying");
 				return STF_FATAL;
 			}
 
