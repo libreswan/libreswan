@@ -279,9 +279,16 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	return true;
 }
 
-bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
-			    const struct crypt_mac *id_hash,
-			    chunk_t *no_ppk_auth /* output */)
+/*
+ * XXX: This code is RSASIG+PSK specific.
+ *
+ * XXX: This code seems to duplicate more up-to-date functionality in
+ * ikev2_auth.[hc].
+ */
+
+bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
+						const struct crypt_mac *id_hash,
+						chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
 	struct authby local_authby = c->local->host.config->authby;
