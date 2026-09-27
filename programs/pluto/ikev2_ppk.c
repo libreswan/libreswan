@@ -284,15 +284,25 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
  * eliminated.
  */
 
+static struct authby v2_IKE_AUTH_ppk_initiator_authby(struct ike_sa *ike)
+{
+	return authby_and(authby_and(ike->sa.st_connection->local->config->host.authby,
+				     ike->sa.st_v2_digsig.peer_pubkey_mask),
+			  authby_from_auth(auth_from_authby(local_v2_authby(ike))));
+}
+
+/*
+ * XXX: This code duplicates functionality in ikev2_auth.c, it can be
+ * eliminated.
+ */
+
 static const struct hash_desc *v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(struct ike_sa *ike)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
 
 	vdbg("digsig: selecting negotiated hash algorithm");
 	struct authby digsig_authby =
-		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
-					   ike->sa.st_v2_digsig.peer_pubkey_mask),
-				auth_from_authby(local_v2_authby(ike)));
+		v2_IKE_AUTH_ppk_initiator_authby(ike);
 	static const struct hash_desc *negotiated_hash_map[] = {
 		&ike_alg_hash_sha2_512,
 		&ike_alg_hash_sha2_384,
