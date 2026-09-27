@@ -248,7 +248,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
  * Merge the configured auth with what was negotiated by the peer.
  */
 
-static struct authby local_v2_authby(struct ike_sa *ike)
+struct authby local_v2_authby(struct ike_sa *ike)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
 	struct connection *c = ike->sa.st_connection;
@@ -572,32 +572,6 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	return (struct v2AUTH_method) {
 		.method = IKEv2_AUTH_RESERVED,
 	};
-}
-
-/*
- * Map negotiation bit <-> hash algorithm; in preference order.
- */
-
-const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
-{
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
-
-	vdbg("digsig: selecting negotiated hash algorithm");
-	struct authby digsig_authby =
-		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
-					   ike->sa.st_v2_digsig.peer_pubkey_mask),
-				auth_from_authby(local_v2_authby(ike)));
-	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (authby_has_hash(digsig_authby, (*hash))) {
-			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
-			     (*hash)->common.fqn);
-			return (*hash);
-		}
-		vdbg("digsig:   skipped hash algorithm %s as not negotiated",
-		     (*hash)->common.fqn);
-	}
-	vdbg("digsig: no compatible DigSig hash algo");
-	return NULL;
 }
 
 bool emit_local_v2AUTH(struct ike_sa *ike,

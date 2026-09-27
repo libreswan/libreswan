@@ -280,6 +280,40 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 }
 
 /*
+ * XXX: This code duplicates functionality in ikev2_auth.c, it can be
+ * eliminated.
+ */
+
+static const struct hash_desc *v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(struct ike_sa *ike)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+
+	vdbg("digsig: selecting negotiated hash algorithm");
+	struct authby digsig_authby =
+		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
+					   ike->sa.st_v2_digsig.peer_pubkey_mask),
+				auth_from_authby(local_v2_authby(ike)));
+	static const struct hash_desc *negotiated_hash_map[] = {
+		&ike_alg_hash_sha2_512,
+		&ike_alg_hash_sha2_384,
+		&ike_alg_hash_sha2_256,
+		&ike_alg_hash_identity,
+		&ike_alg_hash_sha1,
+	};
+	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
+		if (authby_has_hash(digsig_authby, (*hash))) {
+			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
+			     (*hash)->common.fqn);
+			return (*hash);
+		}
+		vdbg("digsig:   skipped hash algorithm %s as not negotiated",
+		     (*hash)->common.fqn);
+	}
+	vdbg("digsig: no compatible DigSig hash algo");
+	return NULL;
+}
+
+/*
  * XXX: This code is RSASIG+PSK specific.
  *
  * XXX: This code seems to duplicate more up-to-date functionality in
@@ -298,7 +332,8 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 	if (authby_has_any(local_authby, (struct authby) {
 				AUTHBY_RSASIG,
 			})) {
-		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+		const struct hash_desc *hash_algo =
+			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
 			if (c->local->config->host.authby.rsasig_v1_5_sha1) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */

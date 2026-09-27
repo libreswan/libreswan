@@ -54,8 +54,6 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct hash_desc *hasher,
 				      enum perspective from_the_perspective_of);
 
-const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
-
 shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 			      enum auth authby);
 
@@ -95,6 +93,7 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike, const char *why,
 				   const struct msg_digest *md);
 
 struct authby proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
+struct authby local_v2_authby(struct ike_sa *ike);
 
 struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
                struct ike_sa *ike,
