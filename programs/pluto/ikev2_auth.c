@@ -459,9 +459,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-
 	struct authby negotiated_authby = local_v2_authby(ike);
-	enum auth auth = auth_from_authby(negotiated_authby);
 
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
@@ -472,93 +470,69 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     impair.force_v2_auth_method.value);
 	}
 
-	/* mask authby with the new "Digital Signature" hashes */
+	if (!authby_is_set(negotiated_authby)) {
+		authby_buf cb;
+		llog_pexpect(ike->sa.logger, HERE,
+			     "no authentication method matched %s",
+			     str_authby(c->local->host.config->authby, &cb));
+		return (struct v2AUTH_method) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
+	}
+
+	/*
+	 * Mask authby with the new "Digital Signature" hashes.  If
+	 * any are valid, use that.
+	 *
+	 * If nothing matches, or the mask is empty, stumble on to one
+	 * of the legacy authentication methods.
+	 */
 	struct authby digsig_authby =
 		authby_and(negotiated_authby,
 			   ike->sa.st_v2_digsig.peer_pubkey_mask);
-	if (authby_has_auth(digsig_authby, auth)) {
+	if (authby_is_set(digsig_authby)) {
 		return v2AUTH_method(ike, digsig_authby,
 				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
-	switch (auth) {
-	case AUTH_RSASIG:
+	if (negotiated_authby.rsasig_v1_5_sha1) {
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
-			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
-					     IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
-		}
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
+	}
 
-		/*
-		 * Nothing acceptable, try to log something helpful.
-		 */
-		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG, ike,
-				"local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
-		} else {
-			llog_sa(RC_LOG, ike,
-				"legacy RSA-SHA1 is not allowed but peer supports nothing else");
-		}
+	/*
+	 * If there are HASH algorithms, prute force pick the
+	 * first and use that.  Note that this doesn't check
+	 * that the ECDSA key matches the Pnnn.  Instead, like
+	 * for Digital Signature Method, it allows any ECDSA
+	 * key.
+	 *
+	 * XXX: this _should_ be looking at the ECDSA key.
+	 *
+	 * XXX: this _should_ be looking at IKE's dynamic
+	 * authby which _should_ be looking at the ECDSA key.
+	 */
 
-		return (struct v2AUTH_method) {
-			.method = IKEv2_AUTH_RESERVED,
-		};
+	if (negotiated_authby.ecdsa_sha2_512) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_512_P521);
+	}
 
-	case AUTH_ECDSA:
-		/*
-		 * If there are HASH algorithms, prute force pick the
-		 * first and use that.  Note that this doesn't check
-		 * that the ECDSA key matches the Pnnn.  Instead, like
-		 * for Digital Signature Method, it allows any ECDSA
-		 * key.
-		 *
-		 * XXX: this _should_ be looking at the ECDSA key.
-		 *
-		 * XXX: this _should_ be looking at IKE's dynamic
-		 * authby which _should_ be looking at the ECDSA key.
-		 */
-		if (c->local->host.config->authby.ecdsa_sha2_512) {
-			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
-					     IKEv2_AUTH_ECDSA_SHA2_512_P521);
-		}
+	if (negotiated_authby.ecdsa_sha2_384) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_384_P384);
+	}
 
-		if (c->local->host.config->authby.ecdsa_sha2_384) {
-			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
-					     IKEv2_AUTH_ECDSA_SHA2_384_P384);
-		}
+	if (negotiated_authby.ecdsa_sha2_256) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
+	}
 
-		if (c->local->host.config->authby.ecdsa_sha2_256) {
-			return v2AUTH_method(ike, /*ignored*/(struct authby){0},
-					     IKEv2_AUTH_ECDSA_SHA2_256_P256);
-		}
-
-		/*
-		 * Nothing acceptable, try to log something helpful.
-		 */
-		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG, ike,
-				"local policy requires ECDSA but peer sent no acceptable signature hash algorithms");
-			return (struct v2AUTH_method) {
-				.method = IKEv2_AUTH_RESERVED,
-			};
-		}
-
-		llog_sa(RC_LOG, ike,
-			"legacy ECDSA is not implemented");
-		return (struct v2AUTH_method) {
-			.method = IKEv2_AUTH_RESERVED,
-		};
-
-	case AUTH_EDDSA:
-		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
-		return (struct v2AUTH_method) {
-			.method = IKEv2_AUTH_RESERVED,
-		};
-
-	case AUTH_EAPONLY:
+	if (negotiated_authby.authby_eaponly) {
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
 		 * bundled in PSK (it certainly isn't one of the
@@ -566,21 +540,38 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 		 */
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_SHARED_KEY_MAC);
+	}
 
-	case AUTH_PSK:
+	if (negotiated_authby.authby_psk) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_SHARED_KEY_MAC);
+	}
 
-	case AUTH_NULL:
+	if (negotiated_authby.authby_null) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_NULL);
-
-	case AUTH_NEVER:
-	case AUTH_UNSET:
-		break;
-
 	}
-	bad_case(auth);
+
+	/*
+	 * Since nothing is acceptable, try to log something helpful.
+	 *
+	 * For instance EdDSA is new-DIGSIG only.
+	 */
+	if (authby_has_supported_ikev2_digsig_payload(negotiated_authby)) {
+		authby_buf cb;
+		llog(RC_LOG, ike->sa.logger,
+		     "local Digital Signature authentication %s is not supported by peer",
+		     str_authby(negotiated_authby, &cb));
+	} else {
+		authby_buf cb;
+		llog_pexpect(ike->sa.logger, HERE,
+			     "local %s authentication is not supported",
+			     str_authby(negotiated_authby, &cb));
+	}
+
+	return (struct v2AUTH_method) {
+		.method = IKEv2_AUTH_RESERVED,
+	};
 }
 
 /*
