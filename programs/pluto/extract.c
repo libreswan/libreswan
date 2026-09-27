@@ -1840,22 +1840,6 @@ static diag_t extract_host_end(enum end end,
 		}
 	}
 
-	/*
-	 * Get {left,right}auth=;  preserve UNSET, authby=....
-	 *
-	 * With unset auth= seems to imply that, for IKEv2, multiple
-	 * authentication algorithms are allowed.
-	 */
-	enum auth whack_auth =
-		extract_enum_name(kv(wm, end, KWS_AUTH),
-				  /*value_when_unset*/AUTH_UNSET,
-				  /*value_when_never_negotiate*/AUTH_NEVER,
-				  &auth_names,
-				  &d, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
 	struct kv whack_authby_kv = kv(wm, end, KWS_AUTHBY);
 	struct authby whack_authby = extract_authby(whack_authby_kv,
 						    ike_version, &d);
@@ -1935,10 +1919,32 @@ static diag_t extract_host_end(enum end end,
 
 		}
 
+		authby_buf eaby;
+		authby_buf waby;
+		vdbg("IKEv1 %s authby=%s from whack authby=%s",
+		     src->leftright, str_authby(host_config->authby, &eaby),
+		     str_authby(whack_authby, &waby));
+
 		break;
 	}
 	case IKEv2:
 	{
+		/*
+		 * Get {left,right}auth=;  preserve UNSET, authby=....
+		 *
+		 * With unset auth= seems to imply that, for IKEv2, multiple
+		 * authentication algorithms are allowed.
+		 */
+		enum auth whack_auth =
+			extract_enum_name(kv(wm, end, KWS_AUTH),
+					  /*value_when_unset*/AUTH_UNSET,
+					  /*value_when_never_negotiate*/AUTH_NEVER,
+					  &auth_names,
+					  &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
+
 		/*
 		 * Convert auth= to equivalent IKEv2 only authby bits.
 		 */
@@ -2049,6 +2055,15 @@ static diag_t extract_host_end(enum end end,
 		default:
 			bad_case(ike_version);
 		}
+
+		authby_buf eaby;
+		name_buf wab;
+		authby_buf waby;
+
+		vdbg("IKEv2 %s authby=%s from whack auth=%s and whack authby=%s",
+		     src->leftright, str_authby(host_config->authby, &eaby),
+		     str_enum_short(&auth_names, whack_auth, &wab),
+		     str_authby(whack_authby, &waby));
 		break;
 	}
 	default:
@@ -2058,16 +2073,7 @@ static diag_t extract_host_end(enum end end,
 	if (!vexpect(authby_is_set(authby))) {
 		return diag("CONFUSED: authby= isn't set");
 	}
-
-	authby_buf eaby;
-	name_buf wab;
-	authby_buf waby;
 	host_config->authby = authby;
-
-	vdbg("fake %s authby=%s from whack auth=%s and whack authby=%s",
-	     src->leftright, str_authby(host_config->authby, &eaby),
-	     str_enum_short(&auth_names, whack_auth, &wab),
-	     str_authby(whack_authby, &waby));
 
 	/*
 	 * Get eapauth, crosscheck with AUTH
