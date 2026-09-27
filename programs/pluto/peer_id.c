@@ -226,6 +226,26 @@ static bool score_host_connection(const struct ike_sa *ike,
 		}
 	}
 
+	switch (d->config->ike_sa_init_full_transcript_auth) {
+	case YNA_YES:
+		if (!ike->sa.st_v2_full_transcript_auth) {
+			vdbg("skipping ike-sa-init-full-transcript-auth=yes connection %s, the extension was not negotiated",
+			     d->name);
+			return false;
+		}
+		break;
+	case YNA_NO:
+		if (ike->sa.st_v2_full_transcript_auth) {
+			vdbg("skipping ike-sa-init-full-transcript-auth=no connection %s, the extension was negotiated",
+			     d->name);
+			return false;
+		}
+		break;
+	case YNA_AUTO:
+	case YNA_UNSET:
+		break;
+	}
+
 	/*
 	 * An Opportunistic connection is never better.
 	 *
