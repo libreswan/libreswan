@@ -280,15 +280,65 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 }
 
 /*
+ * XXX: Danger this code, which is duplicating functionality in
+ * ikev2_auth.c, should be eliminated.
+ */
+
+static struct authby local_ppk_authby(struct ike_sa *ike)
+{
+	struct authby authby = local_v2_authby(ike);
+	/*
+	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
+	 * v1.5 RSA.  It's just how it has always been.
+	 */
+	return (authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_SHA2,
+			}) ? (struct authby) {
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
+		}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_ECDSA_SHA2,
+			}) ? (struct authby) {
+			AUTHBY_ECDSA_SHA2,
+				}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_EDDSA,
+			}) ? (struct authby) {
+			AUTHBY_EDDSA
+				}
+		: authby_has_any(authby, (struct authby) {
+				AUTHBY_RSASIG_V1_5,
+			}) ? (struct authby) {
+			AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+				}
+		: authby.psk ? (struct authby) {
+			AUTHBY_PSK,
+				}
+		: authby.null ? (struct authby) {
+			AUTHBY_NULL,
+				}
+		: authby.never ? (struct authby) {
+			AUTHBY_NEVER,
+				}
+		: authby.authby_eaponly ? (struct authby) {
+			AUTHBY_EAPONLY,
+				}
+		: (struct authby) {0});
+}
+
+/*
  * XXX: This code duplicates functionality in ikev2_auth.c, it can be
  * eliminated.
  */
 
 static struct authby v2_IKE_AUTH_ppk_initiator_authby(struct ike_sa *ike)
 {
-	return authby_and(authby_and(ike->sa.st_connection->local->config->host.authby,
-				     ike->sa.st_v2_digsig.peer_pubkey_mask),
-			  authby_from_auth(auth_from_authby(local_v2_authby(ike))));
+	struct authby authby =
+		authby_and(ike->sa.st_connection->local->config->host.authby,
+			   ike->sa.st_v2_digsig.peer_pubkey_mask);
+	return authby_and(authby, local_ppk_authby(ike));
 }
 
 /*
