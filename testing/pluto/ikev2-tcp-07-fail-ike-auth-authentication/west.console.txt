@@ -42,7 +42,7 @@ west #
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
-"west" #1: legacy RSA-SHA1 is not allowed but peer supports nothing else
+"west" #1: local Digital Signature authentication RSASIG_SHA2 is not supported by peer
 "west" #1: authentication method IKEv2_AUTH_RESERVED not supported
 "west" #1: encountered fatal error in state IKE_SA_INIT_IR
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
