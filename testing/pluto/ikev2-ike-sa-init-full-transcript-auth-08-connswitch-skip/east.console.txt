@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add weakconn
+"weakconn": added oriented IKEv2 connection
+east #
+ ipsec add strongconn
+"strongconn": added oriented IKEv2 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec showstates | grep full-transcript-auth
+east #
+ grep 'v2AUTH transcript' /tmp/pluto.log | sort -u
+east #
+ grep -e 'switched' /tmp/pluto.log
+east #
+ grep -e 'skipping ike-sa-init-full-transcript-auth' /tmp/pluto.log
+| rfc:       skipping ike-sa-init-full-transcript-auth=yes connection "strongconn", the extension was not negotiated
+east #
+ grep -e 'authentication failed' /tmp/pluto.log | sort -u
+east #
