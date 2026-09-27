@@ -81,7 +81,9 @@ struct kv {
 };
 
 #define PRI_KV "\"%s%s=%s\""
-#define pri_kv(KV) (KV).leftright, (KV).key, ((KV).value == NULL ? "" : (KV).value)
+#define pri_kv_key(KV) (KV).leftright, (KV).key
+#define pri_kv_value(KV) ((KV).value == NULL ? "" : (KV).value)
+#define pri_kv(KV) pri_kv_key(KV), pri_kv_value(KV)
 
 static struct kv kvs(const struct whack_message *wm,
 		     enum end end,
@@ -1943,8 +1945,9 @@ static diag_t extract_host_end(enum end end,
 		 * With unset auth= seems to imply that, for IKEv2, multiple
 		 * authentication algorithms are allowed.
 		 */
+		struct kv whack_auth_kv = kv(wm, end, KWS_AUTH);
 		enum auth whack_auth =
-			extract_enum_name(kv(wm, end, KWS_AUTH),
+			extract_enum_name(whack_auth_kv,
 					  /*value_when_unset*/AUTH_UNSET,
 					  /*value_when_never_negotiate*/AUTH_NEVER,
 					  &auth_names,
@@ -1981,14 +1984,12 @@ static diag_t extract_host_end(enum end end,
 			authby = authby_from_whack_auth;
 			struct authby conflicts;
 			if (authby_conflicts(&conflicts, whack_authby, authby)) {
-				name_buf ab;
-				authby_buf cb;
-				struct kv kv = whack_authby_kv;
-				kv.value = str_authby(conflicts, &cb);
-				vwarning("%sauth=%s overrides "PRI_KV,
-					 leftright,
-					 str_enum_short(&auth_names, whack_auth, &ab),
-					 pri_kv(kv));
+				authby_buf cb, wab;
+				vwarning(PRI_KV" overrides "PRI_KV,
+					 pri_kv_key(whack_auth_kv),
+					 str_authby_auth(authby_from_whack_auth, &wab),
+					 pri_kv_key(whack_authby_kv),
+					 str_authby(conflicts, &cb));
 			}
 			break;
 		}
@@ -2005,13 +2006,11 @@ static diag_t extract_host_end(enum end end,
 
 			authby = authby_and(whack_authby, authby_from_whack_auth);
 			if (!authby_is_set(authby)) {
-				name_buf ab;
-				authby_buf abm;
-				authby_buf abb;
-				return diag("%sauth=%s(%s) expects authby=%s",
-					    leftright,
-					    str_enum_short(&auth_names, whack_auth, &ab),
-					    str_authby(authby, &abb),
+				authby_buf abm, wab;
+				return diag(PRI_KV" expects "PRI_KV,
+					    pri_kv_key(whack_auth_kv),
+					    str_authby_auth(whack_authby, &wab),
+					    pri_kv_key(whack_authby_kv),
 					    str_authby(authby_from_whack_auth, &abm));
 			}
 
@@ -2019,14 +2018,12 @@ static diag_t extract_host_end(enum end end,
 			struct authby conflicts;
 			if (authby_conflicts(&conflicts, whack_authby,
 					     authby_from_whack_auth)) {
-				name_buf ab;
-				authby_buf abm;
-				struct kv kv = whack_authby_kv;
-				kv.value = str_authby(conflicts, &abm);
-				return diag("%sauth=%s conflicts with "PRI_KV,
-					    leftright,
-					    str_enum_short(&auth_names, whack_auth, &ab),
-					    pri_kv(kv));
+				authby_buf abm, wab;
+				return diag(PRI_KV" conflicts with %s from "PRI_KV,
+					    pri_kv_key(whack_auth_kv),
+					    str_authby_auth(whack_authby, &wab),
+					    str_authby(conflicts, &abm),
+					    pri_kv(whack_authby_kv));
 			}
 			break;
 		}
@@ -2049,7 +2046,10 @@ static diag_t extract_host_end(enum end end,
 							AUTHBY_EAPONLY,
 						     })) {
 					authby_buf cb;
-					return diag("authby=eaponly conflicts with authby=%s",
+					return diag(PRI_KV" conflicts with "PRI_KV,
+						    pri_kv_key(whack_authby_kv),
+						    "eaponly",
+						    pri_kv_key(whack_authby_kv),
 						    str_authby(conflicts, &cb));
 				}
 			}
@@ -2064,14 +2064,13 @@ static diag_t extract_host_end(enum end end,
 			bad_case(ike_version);
 		}
 
-		authby_buf eaby;
-		name_buf wab;
-		authby_buf waby;
-
-		vdbg("IKEv2 %s authby=%s from whack auth=%s and whack authby=%s",
+		authby_buf eaby, wab, wabb;
+		vdbg("IKEv2 %s authby=%s from whack "PRI_KV" and whack "PRI_KV,
 		     src->leftright, str_authby(host_config->authby, &eaby),
-		     str_enum_short(&auth_names, whack_auth, &wab),
-		     str_authby(whack_authby, &waby));
+		     pri_kv_key(whack_auth_kv),
+		     str_authby_auth(authby_from_whack_auth, &wab),
+		     pri_kv_key(whack_authby_kv),
+		     str_authby(whack_authby, &wabb));
 		break;
 	}
 	default:
