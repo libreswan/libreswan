@@ -54,9 +54,6 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct hash_desc *hasher,
 				      enum perspective from_the_perspective_of);
 
-shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
-			      enum auth authby);
-
 /*
  * The local end's proof-of-identity sent to the remote peer.
  */
