@@ -1881,32 +1881,46 @@ static diag_t extract_host_end(enum end end,
 		}
 
 		if (!authby_is_set(whack_authby)) {
-			authby = AUTHBY_ALL_IKEv1_DEFAULTS;
+			authby = (struct authby) {
+				AUTHBY_RSASIG_RAW,
+			};
 			break;
 		}
 
 		/*
-		 * Reject AUTHBY from whack when it contains something
-		 * specific to IKEv2.
+		 * Mask WHACK_AUTHBY down to a big; for IKEv1 that is
+		 * a single bit.
+		 *
+		 * If none of the bits match, assume this is IKEv2
+		 * specific.  The order is arbitrary, it's just
+		 * looking for duplicate and/or unsupported bits.
 		 */
-		struct authby ikev2_authby = authby_and(whack_authby, (struct authby) {
-				AUTHBY_IKEv2_ONLY,
-			});
-		if (authby_is_set(ikev2_authby)) {
+		static const struct authby ikev1_masks[] = {
+			{
+				AUTHBY_RSASIG_RAW,
+			},
+			{
+				AUTHBY_PSK,
+			},
+			{
+				AUTHBY_NEVER,
+			},
+			{
+				AUTHBY_NULL,
+			},
+		};
+		authby = (struct authby) {0};
+		FOR_EACH_ELEMENT(mask, ikev1_masks) {
+			authby = authby_and(whack_authby, *mask);
+			if (authby_is_set(authby)) {
+				break;
+			}
+		}
+		if (!authby_is_set(authby)) {
 			authby_buf ab;
 			return diag("authby=%s is not supported by IKEv1",
-				    str_authby(ikev2_authby, &ab));
+				    str_authby(whack_authby, &ab));
 		}
-
-		/*
-		 * Mask the authby down to a single method.
-		 */
-		struct authby expected_authby =
-			authby_and(authby_from_auth(auth_from_authby(whack_authby)),
-				   (struct authby) {
-					   AUTHBY_IKEv1,
-				   });
-		authby = authby_and(whack_authby, expected_authby);
 
 		/*
 		 * Now check to see if that excluded anything?
