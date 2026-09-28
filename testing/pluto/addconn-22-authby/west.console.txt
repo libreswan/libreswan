@@ -58,7 +58,7 @@ west #
 west #
  authby never # fail
  ipsec addconn --name authby-never authby=never
-"authby-never": failed to add connection: connection with authby=never must specify shunt type via type=
+"authby-never": failed to add connection: connection with "authby=never" must specify shunt type via type=
 no connection or alias named "authby-never"
 west #
  authby never type=drop
