@@ -1410,6 +1410,14 @@ static struct authby extract_authby(struct kv kv,
 	return authby;
 }
 
+static bool authby_conflicts(struct authby *conflicts,
+			     struct authby authby,
+			     struct authby expected)
+{
+	*conflicts = authby_and(authby, authby_not(expected));
+	return authby_is_set(*conflicts);
+}
+
 static diag_t extract_host_end(enum end end,
 			       struct host_end *host,
 			       struct host_end_config *host_config,
@@ -1971,8 +1979,8 @@ static diag_t extract_host_end(enum end end,
 			 * XXX: Originally the conflict was ignored.
 			 */
 			authby = authby_from_whack_auth;
-			struct authby conflicts = authby_and_not(whack_authby, authby);
-			if (authby_is_set(conflicts)) {
+			struct authby conflicts;
+			if (authby_conflicts(&conflicts, whack_authby, authby)) {
 				name_buf ab;
 				authby_buf cb;
 				struct kv kv = whack_authby_kv;
@@ -2008,9 +2016,9 @@ static diag_t extract_host_end(enum end end,
 			}
 
 			/* now check for conflicts */
-			struct authby conflicts = authby_and_not(whack_authby,
-								 authby_from_whack_auth);
-			if (authby_is_set(conflicts)) {
+			struct authby conflicts;
+			if (authby_conflicts(&conflicts, whack_authby,
+					     authby_from_whack_auth)) {
 				name_buf ab;
 				authby_buf abm;
 				struct kv kv = whack_authby_kv;
@@ -2035,11 +2043,11 @@ static diag_t extract_host_end(enum end end,
 			}
 
 			if (whack_authby.authby_eaponly) {
-				struct authby conflicts =
-					authby_and_not(whack_authby, (struct authby) {
+				struct authby conflicts;
+				if (authby_conflicts(&conflicts, whack_authby,
+						     (struct authby) {
 							AUTHBY_EAPONLY,
-						});
-				if (authby_is_set(conflicts)) {
+						     })) {
 					authby_buf cb;
 					return diag("authby=eaponly conflicts with authby=%s",
 						    str_authby(conflicts, &cb));
