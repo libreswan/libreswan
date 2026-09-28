@@ -1271,16 +1271,58 @@ static struct authby extract_auth(struct kv kv,
 				  diag_t *d,
 				  struct verbose verbose)
 {
-	enum auth auth = extract_enum_name(kv,
-					   /*value_when_unset*/AUTH_UNSET,
-					   /*value_when_never_negotiate*/AUTH_UNSET,
-					   &auth_names,
-					   d, verbose);
-	if (auth == AUTH_UNSET) {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
 		return (struct authby) {0};
 	}
 
-	return authby_from_auth(auth);
+	if (never_negotiate_string_option(kv, verbose)) {
+		return (struct authby) {0};
+	}
+
+	if (kv.value == NULL) {
+		return (struct authby) {0};
+	}
+
+	const struct {
+		const char *name;
+		struct authby authby;
+	} auths[] = {
+#define S(A) { #A, { AUTHBY_##A, }, }
+		S(NEVER),
+		S(PSK),
+		S(RSASIG),
+		S(ECDSA),
+		S(EDDSA),
+		S(EAPONLY),
+		{ "null", { AUTHBY_NULL, }, },
+		{ "secret", { AUTHBY_PSK, }, },
+#undef S
+	};
+
+	FOR_EACH_ELEMENT(auth, auths) {
+		if (strheq(kv.value, auth->name)) {
+			return auth->authby;
+		}
+	}
+
+	JAMBUF(buf) {
+		jam(buf, PRI_KV, pri_kv(kv));
+		jam_string(buf, " is invalid, valid options are ");
+		for (unsigned u = 0; u < elemsof(auths); u++) {
+			if (u == elemsof(auths)-1) {
+				jam_string(buf, ", and ");
+			} else if (u > 0) {
+				jam_string(buf, ", ");
+			}
+			jam_string(buf, "\"");
+			jam_string_human(buf, auths[u].name);
+			jam_string(buf, "\"");
+		}
+		(*d) = diag_jambuf(buf);
+	}
+
+	return (struct authby) {0};
 }
 
 static struct authby extract_authby(struct kv kv,
