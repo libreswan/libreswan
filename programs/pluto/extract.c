@@ -1420,6 +1420,48 @@ static bool authby_conflicts(struct authby *conflicts,
 	return authby_is_set(*conflicts);
 }
 
+static diag_t authby_conflicted(struct kv kv,
+				struct authby authby)
+{
+	if (authby.never) {
+		if (!is_never_negotiate_wm(kv.wm)) {
+			return diag("connection with "PRI_KV" must specify shunt type via type=",
+				    pri_kv_key(kv),
+				    "never");
+		}
+
+		struct authby conflicts;
+		if (authby_conflicts(&conflicts, authby,
+				     (struct authby) {
+					     AUTHBY_NEVER,
+				     })) {
+			authby_buf cb;
+			return diag(PRI_KV" conflicts with "PRI_KV,
+				    pri_kv_key(kv),
+				    "never",
+				    pri_kv_key(kv),
+				    str_authby(conflicts, &cb));
+		}
+	}
+
+	if (authby.authby_eaponly) {
+		struct authby conflicts;
+		if (authby_conflicts(&conflicts, authby,
+				     (struct authby) {
+					     AUTHBY_EAPONLY,
+				     })) {
+			authby_buf cb;
+			return diag(PRI_KV" conflicts with "PRI_KV,
+				    pri_kv_key(kv),
+				    "eaponly",
+				    pri_kv_key(kv),
+				    str_authby(conflicts, &cb));
+		}
+	}
+
+	return NULL;
+}
+
 static diag_t extract_host_end(enum end end,
 			       struct host_end *host,
 			       struct host_end_config *host_config,
@@ -2033,25 +2075,10 @@ static diag_t extract_host_end(enum end end,
 				break;
 			}
 
-			if (whack_authby.never) {
-				/* since whack_auth is not AUTH_NEVER */
-				vexpect(!is_never_negotiate_wm(wm));
-				return diag("connection with authby=never must specify shunt type via type=");
-			}
-
-			if (whack_authby.authby_eaponly) {
-				struct authby conflicts;
-				if (authby_conflicts(&conflicts, whack_authby,
-						     (struct authby) {
-							AUTHBY_EAPONLY,
-						     })) {
-					authby_buf cb;
-					return diag(PRI_KV" conflicts with "PRI_KV,
-						    pri_kv_key(whack_authby_kv),
-						    "eaponly",
-						    pri_kv_key(whack_authby_kv),
-						    str_authby(conflicts, &cb));
-				}
+			/* is this authby internally consistent? */
+			diag_t d = authby_conflicted(whack_authby_kv, whack_authby);
+			if (d != NULL) {
+				return d;
 			}
 
 			/*
