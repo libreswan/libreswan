@@ -254,7 +254,7 @@ west #
 west #
  leftauth psk authby=rsa #=> psk; warning: rsa; WARNING SHOWS SECRET NOT PSK
  ipsec addconn --name leftauth-psk leftauth=psk authby=rsa
-warning: "leftauth-psk": leftauth=secret overrides "authby=RSASIG"
+warning: "leftauth-psk": "leftauth=secret" overrides "authby=RSASIG"
 "leftauth-psk": added oriented IKEv2 connection
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
@@ -263,7 +263,7 @@ warning: "leftauth-psk": leftauth=secret overrides "authby=RSASIG"
 west #
  leftauth secret authby=rsa #=> psk; warning: rsa
  ipsec addconn --name leftauth-secret leftauth=secret authby=rsa
-warning: "leftauth-secret": leftauth=secret overrides "authby=RSASIG"
+warning: "leftauth-secret": "leftauth=secret" overrides "authby=RSASIG"
 "leftauth-secret": added oriented IKEv2 connection
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
@@ -272,7 +272,7 @@ warning: "leftauth-secret": leftauth=secret overrides "authby=RSASIG"
 west #
  leftauth secret authby=rsa,secret #=> psk; warning: rsa; warning: rsa
  ipsec addconn --name leftauth-secret leftauth=secret authby=rsa,secret
-warning: "leftauth-secret": leftauth=secret overrides "authby=RSASIG"
+warning: "leftauth-secret": "leftauth=secret" overrides "authby=RSASIG"
 "leftauth-secret": added oriented IKEv2 connection
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
@@ -305,7 +305,7 @@ west #
 west #
  leftauth secret leftauthby=rsasig
  ipsec addconn --name leftauth-secret leftauth=secret leftauthby=rsasig
-warning: "leftauth-secret": leftauth=secret overrides "leftauthby=RSASIG"
+warning: "leftauth-secret": "leftauth=secret" overrides "leftauthby=RSASIG"
 "leftauth-secret": added oriented IKEv2 connection
  policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: none;
