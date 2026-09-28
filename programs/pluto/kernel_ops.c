@@ -183,7 +183,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 	case SHUNT_TRAP:
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
-		PASSERT(logger, (policy->kind == SHUNT_KIND_ONDEMAND));
+		PASSERT(logger, (policy->kind == SHUNT_KIND_ONDEMAND ||
+				 policy->kind == SHUNT_KIND_NEGOTIATION));
 		break;
 	case SHUNT_NONE:
 		/*
