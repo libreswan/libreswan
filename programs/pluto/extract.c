@@ -1267,6 +1267,22 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	return NULL;
 }
 
+static struct authby extract_auth(struct kv kv,
+				  diag_t *d,
+				  struct verbose verbose)
+{
+	enum auth auth = extract_enum_name(kv,
+					   /*value_when_unset*/AUTH_UNSET,
+					   /*value_when_never_negotiate*/AUTH_UNSET,
+					   &auth_names,
+					   d, verbose);
+	if (auth == AUTH_UNSET) {
+		return (struct authby) {0};
+	}
+
+	return authby_from_auth(auth);
+}
+
 static struct authby extract_authby(struct kv kv,
 				    enum ike_version ike_version,
 				    diag_t *d)
@@ -1988,34 +2004,61 @@ static diag_t extract_host_end(enum end end,
 		 * authentication algorithms are allowed.
 		 */
 		struct kv whack_auth_kv = kv(wm, end, KWS_AUTH);
-		enum auth whack_auth =
-			extract_enum_name(whack_auth_kv,
-					  /*value_when_unset*/AUTH_UNSET,
-					  /*value_when_never_negotiate*/AUTH_NEVER,
-					  &auth_names,
-					  &d, verbose);
+		struct authby whack_auth = extract_auth(whack_auth_kv,
+							&d, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
 		/*
-		 * Convert auth= to equivalent IKEv2 only authby bits.
+		 * Is auth/authby internally consistent?
+		 *
+		 * For instance never-negotiate but contains RSASIG;
+		 * or never and not never-negotiate; eaponly and
+		 * something else.
 		 */
-		struct authby authby_from_whack_auth =
-			authby_and(authby_from_auth(whack_auth),
-				  (struct authby) {
-					  AUTHBY_IKEv2,
-				  });
+		d = authby_conflicted(whack_authby_kv, whack_authby);
+		if (d != NULL) {
+			return d;
+		}
+		d = authby_conflicted(whack_auth_kv, whack_auth);
+		if (d != NULL) {
+			return d;
+		}
 
-		switch (whack_auth) {
-		case AUTH_PSK:
-		case AUTH_NULL:
-		case AUTH_NEVER:
-		{
-			if (!authby_is_set(whack_authby)) {
-				authby = authby_from_whack_auth;
-				break;
-			}
+		if (!authby_is_set(whack_auth) &&
+		    !authby_is_set(whack_authby)) {
+
+			/* neither */
+			authby = (is_never_negotiate_wm(wm) ? (struct authby) { AUTHBY_NEVER, } :
+				  AUTHBY_ALL_IKEv2_DEFAULTS);
+
+		} else if (!authby_is_set(whack_auth)) {
+
+			vexpect(authby_is_set(whack_authby));
+			/*
+			 * XXX: this can contain multiple
+			 * authentication methods!
+			 */
+			authby = whack_authby;
+
+		} else if (!authby_is_set(whack_authby)) {
+
+			vexpect(authby_is_set(whack_auth));
+			/*
+			 * XXX: currently this is only one crypto
+			 * suite; but it will change.
+			 */
+			authby = whack_auth;
+
+		} else if (authby_has_any(whack_auth, (struct authby) {
+					AUTHBY_PSK,
+					AUTHBY_NULL,
+					AUTHBY_NEVER,
+				})) {
+
+			vexpect(authby_is_set(whack_authby));
+			vexpect(authby_is_set(whack_auth));
 
 			/*
 			 * Warn when AUTH masks out some of the AUTHBY
@@ -2023,79 +2066,56 @@ static diag_t extract_host_end(enum end end,
 			 *
 			 * XXX: Originally the conflict was ignored.
 			 */
-			authby = authby_from_whack_auth;
 			struct authby conflicts;
-			if (authby_conflicts(&conflicts, whack_authby, authby)) {
-				authby_buf cb, wab;
+			if (authby_conflicts(&conflicts, whack_authby, whack_auth)) {
+				authby_buf cb, wb;
 				vwarning(PRI_KV" overrides "PRI_KV,
 					 pri_kv_key(whack_auth_kv),
-					 str_authby_auth(authby_from_whack_auth, &wab),
+					 str_authby_auth(whack_auth, &wb),
 					 pri_kv_key(whack_authby_kv),
 					 str_authby(conflicts, &cb));
 			}
-			break;
-		}
+			authby = whack_auth;
 
-		case AUTH_EAPONLY:
-		case AUTH_RSASIG:
-		case AUTH_ECDSA:
-		case AUTH_EDDSA:
-		{
-			if (!authby_is_set(whack_authby)) {
-				authby = authby_from_whack_auth;
-				break;
-			}
+		} else if (authby_has_any(whack_auth, (struct authby) {
+					AUTHBY_EAPONLY,
+					/* XXX: authby_has_pubkey()? */
+					AUTHBY_RSASIG,
+					AUTHBY_ECDSA,
+					AUTHBY_EDDSA,
+				})) {
 
-			authby = authby_and(whack_authby, authby_from_whack_auth);
-			if (!authby_is_set(authby)) {
-				authby_buf abm, wab;
-				return diag(PRI_KV" expects "PRI_KV,
-					    pri_kv_key(whack_auth_kv),
-					    str_authby_auth(whack_authby, &wab),
-					    pri_kv_key(whack_authby_kv),
-					    str_authby(authby_from_whack_auth, &abm));
-			}
-
-			/* now check for conflicts */
 			struct authby conflicts;
-			if (authby_conflicts(&conflicts, whack_authby,
-					     authby_from_whack_auth)) {
-				authby_buf abm, wab;
-				return diag(PRI_KV" conflicts with %s from "PRI_KV,
-					    pri_kv_key(whack_auth_kv),
-					    str_authby_auth(whack_authby, &wab),
-					    str_authby(conflicts, &abm),
-					    pri_kv(whack_authby_kv));
-			}
-			break;
-		}
-		case AUTH_UNSET:
-			if (!authby_is_set(whack_authby)) {
-				authby = AUTHBY_ALL_IKEv2_DEFAULTS;
-				break;
+			if (authby_conflicts(&conflicts, whack_authby, whack_auth)) {
+				authby_buf abm;
+				return diag(PRI_KV" conflicts with "PRI_KV,
+					    pri_kv(whack_auth_kv),
+					    pri_kv_key(whack_authby_kv),
+					    str_authby(conflicts, &abm));
 			}
 
-			/* is this authby internally consistent? */
-			diag_t d = authby_conflicted(whack_authby_kv, whack_authby);
-			if (d != NULL) {
-				return d;
+			authby = authby_and(whack_authby, whack_auth);
+			if (!authby_is_set(authby)) {
+				authby_buf abm;
+				return diag(PRI_KV" expects "PRI_KV,
+					    pri_kv(whack_auth_kv),
+					    pri_kv_key(whack_authby_kv),
+					    str_authby(whack_auth, &abm));
 			}
 
-			/*
-			 * XXX: this can contain multiple
-			 * authentication methods!
-			 */
-			authby = whack_authby;
-			break;
-		default:
-			bad_case(ike_version);
+		} else {
+
+			vlog_pexpect(HERE, "unexpected "PRI_KV,
+				     pri_kv(whack_auth_kv));
+			return diag("EXPECTATION FAILED, unexpected auth=");
+
 		}
 
 		authby_buf eaby, wab, wabb;
 		vdbg("IKEv2 %s authby=%s from whack "PRI_KV" and whack "PRI_KV,
 		     src->leftright, str_authby(host_config->authby, &eaby),
 		     pri_kv_key(whack_auth_kv),
-		     str_authby_auth(authby_from_whack_auth, &wab),
+		     str_authby_auth(whack_auth, &wab),
 		     pri_kv_key(whack_authby_kv),
 		     str_authby(whack_authby, &wabb));
 		break;
