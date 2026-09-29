@@ -397,6 +397,15 @@ match args.userland:
 src = "%s%s" % (nsbasepath, dst)
 lsw_init_dir(src, dst)
 
+# NSS loads p11-kit-proxy, which exposes the host's SoftHSM tokens; give
+# each namespace its own empty token store so stale tokens can't shadow
+# certs imported into the NSS DB.
+softhsm_tokens = "/var/lib/softhsm/tokens"
+if args.namespace and os.path.isdir(softhsm_tokens):
+    src = "%s%s" % (nsbasepath, softhsm_tokens)
+    shutil.rmtree(src, ignore_errors=True)
+    lsw_init_dir(src, softhsm_tokens)
+
 match args.userland:
 
     case "libreswan":
