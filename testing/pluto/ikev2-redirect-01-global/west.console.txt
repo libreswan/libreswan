@@ -84,3 +84,7 @@ west #
 west #
  hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 west #
+ # confirm logging of no errors
+west #
+ hostname | grep east > /dev/null && grep "failed to send REDIRECT" /tmp/pluto.log
+west #
