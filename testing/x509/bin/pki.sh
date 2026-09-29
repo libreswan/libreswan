@@ -8,35 +8,23 @@ CERTUTIL=${certutil:-${CERTUTIL}}
 PK12UTIL=${pk12util:-${PK12UTIL}}
 CRLUTIL=${crlutil:-${CRLUTIL}}
 
-case $# in
-    1 )
-	DIR=$1
-	NR_INT_CERTS=0
-	NR_END_CERTS=0
-	;;
-    2 )
-	DIR=$1
-	NR_INT_CERTS=1
-	NR_END_CERTS=$2
-	;;
-    3 )
-	DIR=$1
-	NR_INT_CERTS=$2
-	NR_END_CERTS=$3
-	;;
-    * )
-	cat <<EOF 1>&2
-Usage: $0 <outdir> [ [ <nr-int-certs=1> ] <nr-end-certs=0> ]
+if test $# -lt 1 ; then
+    cat <<EOF 1>&2
+Usage: $0 <outdir>
 EOF
 	exit 1
-	;;
-esac
+fi
 
+DIR=$1
 NOISE_FILE=$0
+
+# the certificate is valid for 13 months fom now ?
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-# the certificate is valid for 13 months fom now ?
 
+# tweak these to generate lots of certs
+NR_INT_CERTS=0
+NR_END_CERTS=0
 
 :
 : clean up
@@ -430,66 +418,6 @@ other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical
 broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
-
-:
-: Generate many man certs, when requested
-:
-
-int=-1
-while int=$((int + 1)) ; test ${int} -lt ${NR_INT_CERTS} ; do
-
-    dir=real
-    ca=mainca
-    cert=$(printf "int-%03d" ${int})
-    add_san=1
-    add_ocsp=1
-    add_crl=1
-    bc=Y
-    ku=certSigning,critical
-    eku=/
-    param=
-
-    certdir=${OUTDIR}/${dir}/${ca}
-
-    log=${certdir}/${cert}.log
-    user=${cert}
-
-    if generate_cert \
-	   ${certdir} ${ca} ${cert} ${user} \
-	   ${add_san} ${add_ocsp} ${add_crl} \
-	   ${bc} ${ku} ${eku} ${param} \
-	   > ${log} 2>&1 ; then
-	:
-    else
-	cat ${log}
-	exit 1
-    fi
-
-    ca=${cert}
-
-    end=-1
-    while end=$((end + 1)) ; test ${end} -lt ${NR_END_CERTS} ; do
-
-	cert=$(printf "end-%03d-%03d" ${int} ${end})
-	bc=/
-	ku=digitalSignature
-
-	log=${certdir}/${cert}.log
-	user=${cert}
-
-	if generate_cert \
-	       ${certdir} ${ca} ${cert} ${user} \
-	       ${add_san} ${add_ocsp} ${add_crl} \
-	       ${bc} ${ku} ${eku} ${param} \
-	       > ${log} 2>&1 ; then
-	    :
-	else
-	    cat ${log}
-	    exit 1
-	fi
-    done
-
-done
 
 :
 : Generate end certs that are needed.
