@@ -292,7 +292,7 @@ bool redirect_global(struct msg_digest *md)
 		.Ni = Ni,
 	};
 
-	if (send_v2_response_from_md(md, "REDIRECT",
+	if (!send_v2_response_from_md(md, "REDIRECT",
 				     emit_v2N_REDIRECT_response,
 				     &context)) {
 		llog(RC_LOG, logger, "failed to send REDIRECT response");
