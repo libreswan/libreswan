@@ -152,10 +152,9 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up westnet-eastnet
+ ipsec up westnet-eastnet # sanitize-retransmits
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
-"westnet-eastnet" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_I1
 "westnet-eastnet" #1: sent Main Mode I2
 "westnet-eastnet" #1: sent Main Mode I3
 "westnet-eastnet" #1: Peer ID is FQDN: '@east'
@@ -168,10 +167,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ipsec down  westnet-eastnet
+ ipsec down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B

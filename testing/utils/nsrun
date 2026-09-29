@@ -3319,19 +3319,24 @@ def check_host_xfrm_stack():
 
 def check_host_networking():
 
-    r = subprocess.run(["sudo", "ip", "link", "add", "_nscheck_br", "type", "bridge"],
+    # unique names: concurrent nsrun processes probe at the same time
+    br = "_nsb%d" % os.getpid()
+    veth = "_nsv%d" % os.getpid()
+    veth_peer = "_nsw%d" % os.getpid()
+
+    r = subprocess.run(["sudo", "ip", "link", "add", br, "type", "bridge"],
                        capture_output=True)
     if r.returncode == 0:
-        subprocess.run(["sudo", "ip", "link", "del", "_nscheck_br"], capture_output=True)
+        subprocess.run(["sudo", "ip", "link", "del", br], capture_output=True)
     else:
         logger.error("ABORT: no Linux bridge support found. cannot run test, %s enable CONFIG_BRIDGE=y is not set", r.stderr.decode())
         return True
 
-    r = subprocess.run(["sudo", "ip", "link", "add", "_nscheck_veth", "type", "veth",
-                        "peer", "name", "_nscheck_veth2"],
+    r = subprocess.run(["sudo", "ip", "link", "add", veth, "type", "veth",
+                        "peer", "name", veth_peer],
                        capture_output=True)
     if r.returncode == 0:
-        subprocess.run(["sudo", "ip", "link", "del", "_nscheck_veth"], capture_output=True)
+        subprocess.run(["sudo", "ip", "link", "del", veth], capture_output=True)
     else:
         logger.error("ABORT: no Linux veth support found. cannot run test, %s enable CONFIG_VETH=y", r.stderr.decode())
         return True

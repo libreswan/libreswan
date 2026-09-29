@@ -155,7 +155,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (c->local->host.config->auth == AUTH_EAPONLY) {
+	if (c->local->host.config->authby.authby_eaponly) {
 		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
 		     c->local->config->leftright);
 		return false;

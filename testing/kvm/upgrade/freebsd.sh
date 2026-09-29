@@ -42,3 +42,4 @@ pkg install -y fping
 pkg install -y gdb
 pkg install -y gcc
 pkg install -y emacs
+pkg install -y socat

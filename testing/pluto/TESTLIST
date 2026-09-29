@@ -797,9 +797,9 @@ kvmplutotest	dnsoe-04				wip	github/895
 kvmplutotest	dnsoe-05				wip	github/895
 kvmplutotest	dnsoe-06				wip
 
-kvmplutotest	newoe-18-poc-cop-port-7-whack		good
-kvmplutotest	newoe-18-poc-cop-port-7			good
+kvmplutotest	newoe-18-poc-cop-port-7-tunnel		good
 kvmplutotest	newoe-18-poc-cop-port-7-transport	good
+kvmplutotest	newoe-18-poc-cop-port-7-whack		good
 kvmplutotest	newoe-18-poc-cop-port-7-both		wip	github/1750
 kvmplutotest	newoe-18-poc-cop-port-7-both-reorder	wip	github:519
 
@@ -1568,7 +1568,7 @@ kvmplutotest	whack-delete-06-larval-cuckoo-ikev2	good
 kvmplutotest	whack-delete-child-01-async-ikev2	good
 kvmplutotest	whack-delete-ike-01-async-ikev2		good
 
-kvmplutotest	whack-deleteuser-01			good	github/1269
+kvmplutotest	whack-deleteuser-01-ikev1		good	github/1269
 kvmplutotest	whack-deleteid-01-psk-ikev1		good	github/1268
 kvmplutotest	whack-deleteid-01-psk-ikev2		good	github/1268
 
@@ -1865,6 +1865,7 @@ kvmplutotest	ikev2-resume-01-psk			good	github/436
 kvmplutotest	ikev2-resume-02-x509			good	github/436
 kvmplutotest	ikev2-resume-03-rollover		good	github/1949
 kvmplutotest	ikev2-resume-04-instance		good	github/1951
+kvmplutotest	ikev2-resume-05-full-transcript-auth	good
 
 kvmplutotest	ikev2-routes-subnets-plural		good	github/1950
 kvmplutotest	ikev2-routes-subnets-singular		good	github/1950

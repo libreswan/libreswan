@@ -1254,10 +1254,11 @@ static enum ikev1_auth_method sa_auth_method(const struct connection *c,
 	 * Notice how MAIN and AGGR modes use slightly different code
 	 * to compute the index.
 	 */
-	enum auth auth = c->local->host.config->auth;
-	PEXPECT(logger, auth == c->remote->host.config->auth);
-	unsigned index = ((auth == AUTH_PSK ? 1 :
-			   auth == AUTH_RSASIG ? 2 : 0) |
+	PEXPECT(logger, authby_eq(c->local->host.config->authby,
+				  c->remote->host.config->authby));
+	struct authby authby = c->local->host.config->authby;
+	unsigned index = ((authby.authby_psk ? 1 :
+			   authby.authby_rsasig_raw ? 2 : 0) |
 			  (c->local->host.config->xauth.server ? 4 : 0) |
 			  (c->local->host.config->xauth.client ? 8 : 0));
 
@@ -1850,7 +1851,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					}
 psk_common:
 
-					if (c->remote->host.config->auth != AUTH_PSK) {
+					if (!c->remote->host.config->authby.authby_psk) {
 						UGH("policy does not allow OAKLEY_PRESHARED_KEY authentication");
 					} else {
 						/* check that we can find a proper preshared secret */
@@ -1904,7 +1905,7 @@ psk_common:
 					}
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
-					if (c->remote->host.config->auth != AUTH_RSASIG) {
+					if (!c->remote->host.config->authby.authby_rsasig_raw) {
 						UGH("policy does not allow OAKLEY_RSA_SIG authentication");
 					} else {
 						/* We'd like to check
@@ -2042,7 +2043,7 @@ rsasig_common:
 
 		while (ok) {
 
-			if (c->remote->host.config->auth == AUTH_PSK &&
+			if (c->remote->host.config->authby.authby_psk &&
 			    pss != NULL &&
 			    ta.ta_prf != NULL) {
 				const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);

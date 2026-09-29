@@ -36,15 +36,23 @@ struct authby {
 	 */
 	bool flag[AUTHBY_KIND_ROOF];
 #define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+#define AUTHBY_EAPONLY				\
+	.authby_eaponly = true
 
 	bool psk;	/* flag[AUTHBY_KIND_PSK] */
 #define authby_psk psk
+#define AUTHBY_PSK				\
+	.authby_psk = true
 
 	bool null;	/* flag[AUTHBY_KIND_NULL] */
 #define authby_null null
+#define AUTHBY_NULL				\
+	.authby_null = true
 
 	bool never;	/* flag[AUTHBY_KIND_NEVER] */
 #define authby_never never
+#define AUTHBY_NEVER				\
+	.authby_never = true
 
 	bool eddsa;	/* flag[AUTHBY_KIND_EDDSA] */
 #define authby_eddsa eddsa
@@ -111,26 +119,15 @@ struct authby {
 
 #define AUTHBY_ALL authby_not((struct authby) {0})
 
-#define AUTHBY_IKEv1				\
-	.psk = true,				\
-	.null = true,				\
-	.never = true,				\
-	AUTHBY_RSASIG_RAW
-
 #define AUTHBY_IKEv2				\
-	.psk = true,				\
-	.null = true,				\
-	.never = true,				\
-	.authby_eaponly = true,			\
+	AUTHBY_PSK,				\
+	AUTHBY_NULL,				\
+	AUTHBY_NEVER,				\
+	AUTHBY_EAPONLY,				\
 	AUTHBY_EDDSA,				\
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2,			\
 	AUTHBY_ECDSA_SHA2
-
-#define AUTHBY_ALL_IKEv1_DEFAULTS		\
-	(struct authby) {			\
-		AUTHBY_RSASIG_RAW,		\
-	}
 
 #define AUTHBY_ALL_IKEv2_DEFAULTS		\
 	(struct authby) {			\
@@ -156,6 +153,9 @@ struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
+
+/* lhs & !rhs - what isn't in rhs */
+struct authby authby_and_not(struct authby lhs, struct authby rhs);
 
 bool authby_has_all(struct authby authby, struct authby all);
 bool authby_has_any(struct authby authby, struct authby some);
@@ -195,8 +195,12 @@ typedef struct {
 } authby_buf;
 
 const char *str_authby(struct authby authby, authby_buf *buf);
-
 size_t jam_authby(struct jambuf *buf, struct authby authby);
+
+/* try to match what extract.c accepts and the auth: logs */
+const char *str_authby_auth(struct authby authby, authby_buf *buf);
+size_t jam_authby_auth(struct jambuf *buf, struct authby authby);
+
 void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby);
 
 #endif

@@ -65,14 +65,28 @@ src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 west #
- ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23 # east
 up
 west #
  ipsec down west-east
 "west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west-east" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east" #2: ESP traffic information: in=104B out=104B
+"west-east" #2: ESP traffic information: in=208B out=208B
 "west-east" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state
+west #
+ ipsec _kernel policy
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
 west #

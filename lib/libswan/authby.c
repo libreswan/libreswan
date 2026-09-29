@@ -88,6 +88,11 @@ struct authby authby_and(struct authby lhs, struct authby rhs)
 	return OP(lhs, &&, rhs);
 }
 
+struct authby authby_and_not(struct authby lhs, struct authby rhs)
+{
+	return authby_and(lhs, authby_not(rhs));
+}
+
 struct authby authby_or(struct authby lhs, struct authby rhs)
 {
 	return OP(lhs, ||, rhs);
@@ -221,36 +226,38 @@ struct authby authby_from_auth(enum auth auth)
 			AUTHBY_RSASIG_SHA2,
 		};
 	case AUTH_EAPONLY: return (struct authby) {
-			.authby_eaponly = true,
+			AUTHBY_EAPONLY,
 		};
 	}
 	bad_case(auth);
 }
 
-size_t jam_authby(struct jambuf *buf, struct authby authby)
+static size_t jam_authby_raw(struct jambuf *buf,
+			     struct authby authby,
+			     bool human)
 {
-#define JAM_STRING(N)					\
-	{						\
-		s += jam_string(buf, sep);		\
-		s += jam_string(buf, #N);		\
-		sep = "+";				\
-	}
-#define JAM_AUTHBY(F, N)				\
-	{						\
-		if (authby.F) {				\
-			JAM_STRING(N);			\
-		}					\
-	}
 	size_t s = 0;
 	const char *sep = "";
-	JAM_AUTHBY(psk, PSK);
+#define JAM_STRING(N,H)					\
+	{						\
+		s += jam_string(buf, sep);		\
+		s += jam_string(buf, (human ? #H : #N)); \
+		sep = "+";				\
+	}
+#define JAM_AUTHBY(F, N, H)				\
+	{						\
+		if (authby.F) {				\
+			JAM_STRING(N, H);		\
+		}					\
+	}
+	JAM_AUTHBY(psk, PSK, secret);
 	if (authby_has_all(authby, (struct authby) {
 				AUTHBY_RSASIG_RAW,
 				AUTHBY_RSASIG_V1_5,
 				AUTHBY_RSASIG_SHA2,
 			})) {
 		/* legacy */
-		JAM_STRING(RSASIG);
+		JAM_STRING(RSASIG, rsasig);
 	} else if (authby_has_all(authby, (struct authby) {
 				AUTHBY_RSASIG_RAW,
 			}) &&
@@ -259,7 +266,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 				AUTHBY_RSASIG_SHA2,
 			})) {
 		/* IKEv1 */
-		JAM_STRING(RSASIG);
+		JAM_STRING(RSASIG, rsasig);
 	} else if (authby_has_all(authby, (struct authby) {
 				AUTHBY_RSASIG_V1_5,
 				AUTHBY_RSASIG_SHA2,
@@ -268,27 +275,27 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 				AUTHBY_RSASIG_RAW,
 			})) {
 		/* IKEv2 */
-		JAM_STRING(RSASIG);
+		JAM_STRING(RSASIG, rsasig);
 	} else {
-		JAM_AUTHBY(rsasig, RSASIG);
+		JAM_AUTHBY(rsasig, RSASIG, rsasig);
 		if (authby_has_all(authby, (struct authby) {
 					AUTHBY_RSASIG_SHA2,
 				})) {
-			JAM_STRING(RSASIG_SHA2);
+			JAM_STRING(RSASIG_SHA2, rsa-sha2);
 		} else {
-			JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256);
-			JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384);
-			JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512);
+			JAM_AUTHBY(rsasig_sha2_256, RSASIG_SHA2_256, rsa-sha2_256);
+			JAM_AUTHBY(rsasig_sha2_384, RSASIG_SHA2_384, rsa-sha2_384);
+			JAM_AUTHBY(rsasig_sha2_512, RSASIG_SHA2_512, rsa-sha2_512);
 		}
 		if (authby_has_all(authby, (struct authby) {
 					AUTHBY_RSASIG_V1_5,
 				})) {
-			JAM_STRING(RSASIG_v1_5);
+			JAM_STRING(RSASIG_v1_5, rsa-v15);
 		} else {
-			JAM_AUTHBY(rsasig_v1_5_sha1, RSASIG_v1_5_SHA1);
-			JAM_AUTHBY(rsasig_v1_5_sha2_256, RSASIG_V1_5_SHA2_256);
-			JAM_AUTHBY(rsasig_v1_5_sha2_384, RSASIG_V1_5_SHA2_384);
-			JAM_AUTHBY(rsasig_v1_5_sha2_512, RSASIG_V1_5_SHA2_512);
+			JAM_AUTHBY(rsasig_v1_5_sha1, RSASIG_v1_5_SHA1, rsa-sha1);
+			JAM_AUTHBY(rsasig_v1_5_sha2_256, RSASIG_V1_5_SHA2_256, rsa-v15-sha2_256);
+			JAM_AUTHBY(rsasig_v1_5_sha2_384, RSASIG_V1_5_SHA2_384, rsa-v15-sha2_384);
+			JAM_AUTHBY(rsasig_v1_5_sha2_512, RSASIG_V1_5_SHA2_512, rsa-v15-sha2_512);
 		}
 	}
 	/*
@@ -299,16 +306,16 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	if (authby_has_all(authby, (struct authby) {
 				AUTHBY_ECDSA_SHA2,
 			})) {
-		JAM_STRING(ECDSA);
+		JAM_STRING(ECDSA, ecdsa);
 	} else {
-		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256);
-		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384);
-		JAM_AUTHBY(ecdsa_sha2_512, ECDSA_SHA2_512);
+		JAM_AUTHBY(ecdsa_sha2_256, ECDSA_SHA2_256, ecdsa-sha2_256);
+		JAM_AUTHBY(ecdsa_sha2_384, ECDSA_SHA2_384, ecdsa-sha2_384);
+		JAM_AUTHBY(ecdsa_sha2_512, ECDSA_SHA2_512, ecdsa-sha2_512);
 	}
-	JAM_AUTHBY(eddsa, EDDSA);
-	JAM_AUTHBY(never, AUTH_NEVER);
-	JAM_AUTHBY(null, AUTH_NULL);
-	JAM_AUTHBY(authby_eaponly, EAPONLY);
+	JAM_AUTHBY(eddsa, EDDSA, eddsa);
+	JAM_AUTHBY(never, AUTH_NEVER, never);
+	JAM_AUTHBY(null, AUTH_NULL, null);
+	JAM_AUTHBY(authby_eaponly, EAPONLY, eaponly);
 #undef JAM_STRING
 #undef JAM_AUTHBY
 	if (s == 0) {
@@ -317,10 +324,27 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	return s;
 }
 
+size_t jam_authby(struct jambuf *buf, struct authby authby)
+{
+	return jam_authby_raw(buf, authby, /*human*/false);
+}
+
+size_t jam_authby_auth(struct jambuf *buf, struct authby authby)
+{
+	return jam_authby_raw(buf, authby, /*human*/true);
+}
+
 const char *str_authby(struct authby authby, authby_buf *buf)
 {
 	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_authby(&jambuf, authby);
+	return buf->buf;
+}
+
+const char *str_authby_auth(struct authby authby, authby_buf *buf)
+{
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	jam_authby_auth(&jambuf, authby);
 	return buf->buf;
 }
 
@@ -333,14 +357,6 @@ void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
 		const struct hash_desc *hash = (*hashp);
 
 		if (!authby_has_hash(authby, hash)) {
-			continue;
-		}
-
-		/*
-		 * XXX: libreswan does not speak of its support for
-		 * the SHA1 hash algorithms.
-		 */
-		if (hash == &ike_alg_hash_sha1) {
 			continue;
 		}
 

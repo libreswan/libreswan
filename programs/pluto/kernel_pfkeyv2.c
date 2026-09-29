@@ -1,6 +1,7 @@
 /* Interface to the PF_KEY v2 IPsec mechanism, for Libreswan
  *
- * Copyright (C)  2022  Andrew Cagney
+ * Copyright (C)  2022-2026  Andrew Cagney
+ * Copyright (C)  2026 Amrinder Singh <officialamrindersinghh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,9 +22,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <netipsec/ipsec.h>
-#endif
 
 #include "lsw_socket.h"
 
@@ -726,48 +724,6 @@ static void pfkeyv2_plug_holes(struct logger *logger)
 	ldbg(logger, "does PFKEY need to poke holes in its kernel policies?");
 }
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-static bool pfkeyv2_poke_ipsec_policy_dir(int fd, int sol, int opt,
-					  const char *dir, struct logger *logger)
-{
-	char *policy = ipsec_set_policy((char *)dir, strlen(dir)); /* must free() */
-	if (policy == NULL) {
-		llog(ERROR_STREAM, logger,
-		     "ipsec_set_policy %s: %s", dir, ipsec_strerror());
-		return false;
-	}
-	bool ok = (setsockopt(fd, sol, opt, policy, ipsec_get_policylen(policy)) == 0);
-	if (!ok) {
-		llog_errno(ERROR_STREAM, logger, errno,
-			   "setsockopt IP_IPSEC_POLICY %s: ", dir);
-	}
-	free(policy); /* not pfree() */
-	return ok;
-}
-
-static bool pfkeyv2_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger)
-{
-	int af = afi->af;
-
-	int opt, sol;
-	switch (af) {
-	case AF_INET:
-		sol = IPPROTO_IP;
-		opt = IP_IPSEC_POLICY;
-		break;
-	case AF_INET6:
-		sol = IPPROTO_IPV6;
-		opt = IPV6_IPSEC_POLICY;
-		break;
-	default:
-		bad_case(af);
-	}
-
-	return pfkeyv2_poke_ipsec_policy_dir(fd, sol, opt, "in bypass", logger) &&
-	       pfkeyv2_poke_ipsec_policy_dir(fd, sol, opt, "out bypass", logger);
-}
-#endif
-
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
 					 const ip_address *dst,
@@ -1386,25 +1342,6 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 #endif
 
-#ifdef SADB_X_EXT_POLICY
-static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
-				shunk_t *ext_cursor,
-				enum kernel_policy_id *policy_id)
-{
-	verbose.level++;
-	shunk_t policy_cursor;
-	const struct sadb_x_policy *policy =
-		get_sadb_x_policy(ext_cursor, &policy_cursor, verbose);
-	if (policy == NULL) {
-		return false;
-	}
-	llog_sadb_x_policy(verbose, b, policy);
-	verbose.level++;
-	*policy_id = policy->sadb_x_policy_id;
-	return true;
-}
-#endif
-
 static bool pfkeyv2_policy_add(enum kernel_policy_op op,
 			       enum direction dir,
 			       const ip_selector *src_client,
@@ -1729,8 +1666,9 @@ static bool pfkeyv2_policy_del(enum direction direction,
 	return true;
 }
 
+#ifdef __OpenBSD__
 static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
-			       shunk_t *ext_cursor, ip_address *addr, ip_port *port)
+			shunk_t *ext_cursor, ip_address *addr, ip_port *port)
 {
 	shunk_t address_cursor;
 	const struct sadb_address *address =
@@ -1748,6 +1686,7 @@ static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 	verbose("%s:%s", str_address(addr, &ab), str_hport(*port, &pb));
 	return true;
 }
+#endif
 
 /*
  * OpenBSD's ACQUIRE only carries the SA's peer (ADDRESS_DST), and
@@ -1823,12 +1762,15 @@ static bool ask_sadb_policy(uint32_t acquire_seq,
 }
 #endif
 
-static void parse_sadb_acquire(const struct sadb_msg *msg,
-			       shunk_t msg_cursor,
-			       struct verbose verbose)
+#ifdef __OpenBSD__
+bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
+				shunk_t msg_cursor,
+				struct kernel_acquire *acquire,
+				struct verbose verbose)
 {
 	vdbg("%s() ...", __func__);
 	verbose.level++;
+	zero(acquire);
 
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
@@ -1842,7 +1784,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			get_sadb_ext(&msg_cursor, &ext_cursor, verbose);
 		if (ext == NULL) {
 			llog_pexpect(verbose.logger, HERE, "bad ext");
-			return;
+			return false;
 		}
 
 		enum sadb_exttype exttype = ext->sadb_ext_type;
@@ -1850,19 +1792,19 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 
 		case SADB_EXT_ADDRESS_SRC:
 			if (!parse_sadb_address(verbose, msg, &ext_cursor, &src_address, &src_port)) {
-				return;
+				return false;
 			}
 			break;
 		case SADB_EXT_ADDRESS_DST:
 			if (!parse_sadb_address(verbose, msg, &ext_cursor, &dst_address, &dst_port)) {
-				return;
+				return false;
 			}
 			break;
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 		case SADB_X_EXT_POLICY:
 			policy_id = 0;
 			if (!parse_sadb_x_policy(verbose, msg, &ext_cursor, &policy_id)) {
-				return;
+				return false;
 			}
 			break;
 #endif
@@ -1899,14 +1841,14 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 				     &dst_address, &dst_port,
 				     verbose)) {
 			vdbg("ask policy failed");
-			return;
+			return false;
 		}
 	}
 #endif
 
 	if (address_is_unset(&src_address) || address_is_unset(&dst_address)) {
 		vdbg("something isn't set");
-		return;
+		return false;
 	}
 
 	ip_packet packet = packet_from_raw(HERE,
@@ -1916,7 +1858,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 					   &ip_protocol_all,
 					   src_port,
 					   dst_port);
-	struct kernel_acquire b = {
+	*acquire = (struct kernel_acquire) {
 		.packet = packet,
 		.by_acquire = true,
 		.logger = verbose.logger, /*on-stack*/
@@ -1924,8 +1866,9 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 		.sec_label = null_shunk,
 		.policy_id = policy_id,
 	};
-	initiate_ondemand(&b);
+	return true;
 }
+#endif
 
 static void process_pending(shunk_t payload, struct verbose verbose)
 {
@@ -1943,8 +1886,14 @@ static void process_pending(shunk_t payload, struct verbose verbose)
 
 	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		parse_sadb_acquire(msg, msg_cursor, verbose);
+	{
+		struct kernel_acquire acquire;
+		if (pfkeyv2_parse_sadb_acquire(msg, msg_cursor,
+					       &acquire, verbose)) {
+			initiate_ondemand(&acquire);
+		}
 		break;
+	}
 	}
 }
 
@@ -2025,9 +1974,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.flush = pfkeyv2_flush,
 	.poke_holes = pfkeyv2_poke_holes,
 	.plug_holes = pfkeyv2_plug_holes,
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	.poke_ipsec_policy_hole = pfkeyv2_poke_ipsec_policy_hole,
-#endif
 	.shutdown = pfkeyv2_shutdown,
 
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,

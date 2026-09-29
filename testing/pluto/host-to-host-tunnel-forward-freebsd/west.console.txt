@@ -9,8 +9,6 @@ Starting pluto.
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress_retransmits
-west #
  ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 west #
@@ -60,8 +58,8 @@ west #
 	spid=2 seq=0 pid=PID scope=global 
 	refcnt=1
 west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=280, maxBytes=2^63B, id='@east'
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
+up
 west #
  ipsec down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
@@ -71,4 +69,7 @@ west #
 west #
  ipsec _kernel state
 No SAD entries.
+west #
+ ipsec _kernel policy
+No SPD entries.
 west #

@@ -6,10 +6,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-no-sha1
+ ipsec add westnet-eastnet-no-sha1
 "westnet-eastnet-no-sha1": added oriented IKEv2 connection
 west #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface lo 127.0.0.1:UDP/4500 (NAT)
@@ -117,7 +117,7 @@ Connection list:
 "westnet-eastnet-no-sha1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-no-sha1":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-no-sha1":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-no-sha1":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
+"westnet-eastnet-no-sha1":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
 "westnet-eastnet-no-sha1":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-no-sha1":   routing: unrouted;
 "westnet-eastnet-no-sha1":   reqid: REQID;
@@ -140,9 +140,7 @@ west #
 west #
  # this should fail, as SHA1 is not part of the default proposal set anymore
 west #
- ipsec whack --impair timeout_on_retransmit
-west #
- ipsec auto --up westnet-eastnet-no-sha1
+ ipsec up westnet-eastnet-no-sha1
 "westnet-eastnet-no-sha1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-no-sha1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-no-sha1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

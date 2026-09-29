@@ -51,14 +51,16 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 west #
- ../../guestbin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 up
 west #
  ipsec down west-east
 "west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west-east" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east" #2: ESP traffic information: in=64B out=64B
+"west-east" #2: ESP traffic information: in=128B out=128B
 "west-east" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state
+west #
+ ipsec _kernel policy
 west #

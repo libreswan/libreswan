@@ -15,7 +15,7 @@ road #
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec status
 Total IPsec connections: loaded 11, routed 6, active 0
 road #
  echo "initdone"
@@ -30,10 +30,10 @@ road #
 road #
  # workaround for diff err msg between fedora versions resulting in diff byte count
 road #
- ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
+ ipsec trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
 #2: "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23, [...]
 road #
- ipsec whack --shuntstatus
+ ipsec shuntstatus
 Bare Shunt list:
  
 road #

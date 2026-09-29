@@ -6,10 +6,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
+ ipsec add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 east #
- ipsec status | grep westnet-eastnet-ipv4-psk-ikev1
+ ipsec connectionstatus $1
+Connection list:
+ 
 "westnet-eastnet-ipv4-psk-ikev1": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "westnet-eastnet-ipv4-psk-ikev1":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -33,6 +35,8 @@ east #
 "westnet-eastnet-ipv4-psk-ikev1":   reqid: REQID;
 "westnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms: 3DES_CBC-HMAC_SHA2_256_128
+ 
+Total IPsec connections: loaded 1, routed 0, active 0
 east #
  echo "initdone"
 initdone

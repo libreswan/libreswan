@@ -184,8 +184,12 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	v2_IKE_AUTH_initiator_id_payload(ike);
 
-	return submit_v2AUTH_generate_initiator_signature(ike, null_md,
-							  initiate_v2_IKE_AUTH_request_signature_continue);
+	if (!submit_local_v2AUTH_signature_generator(ike, null_md,
+						     initiate_v2_IKE_AUTH_request_signature_continue)) {
+		return STF_FATAL;
+	}
+
+	return STF_SUSPEND;
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
@@ -415,9 +419,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		close_pbs_out(&ppks);
 
 		if (!cc->config->ppk.insist) {
-			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
-						    &ike->sa.st_no_ppk_auth)) {
-				ldbg(ike->sa.logger, "ikev2_calc_no_ppk_auth() failed dying");
+			if (!v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
+									&ike->sa.st_no_ppk_auth)) {
+				ldbg(ike->sa.logger, "ikev2_calc_initiator_no_ppk_auth() failed dying");
 				return STF_FATAL;
 			}
 
@@ -440,7 +444,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
-		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
+		if (!ikev2_create_psk_auth(PSK_AUTH_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
 			llog_sa(RC_LOG, ike,
@@ -579,20 +583,23 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	struct authby proposed_initiator_auths;
 	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
 		/*
-		 * Can only be EAP.  Is EAPONLY right? EAP can be
-		 * combined with some other method?
+		 * Can only be EAP.
+		 *
+		 * Assume it's EAPONLY since that's all libreswan
+		 * supports.
 		 */
 		proposed_initiator_auths = (struct authby) {
-			.authby_eaponly = true,
+			AUTHBY_EAPONLY,
 		};
 	} else if (ike->sa.st_v2_resume_session) {
-		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
-		name_buf rn, an;
-		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
+		proposed_initiator_auths = resume_session_authby(ike->sa.st_v2_resume_session);
+		name_buf an;
+		authby_buf pia;
+		ldbg(ike->sa.logger,
+		     "session resume ignores v2AUTH method %s and uses %s for connection match, PSK-like for auth",
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
-		     str_enum_short(&auth_names, auth, &rn));
-		proposed_initiator_auths = authby_from_auth(auth);
+		     str_authby(proposed_initiator_auths, &pia));
 	} else {
 		proposed_initiator_auths = proposed_v2AUTH(ike, md);
 	}
@@ -844,10 +851,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	struct connection *c = ike->sa.st_connection;
-	enum auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
-					    c->remote->host.config->auth);
 	struct authby initiator_authby = c->remote->host.config->authby;
-	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
 	bool remote_can_authby_null = initiator_authby.null;
 	bool remote_can_authby_pubkey = authby_has_pubkey(initiator_authby);
 
@@ -868,8 +872,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pbs_in_from_shunk(HUNK_AS_SHUNK(&ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						 ike, &idhash_in, &pbs_no_ppk_auth,
-						 initiator_auth);
+						 ike, &idhash_in, &pbs_no_ppk_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -897,7 +900,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 */
 		struct pbs_in pbs_null_auth = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						 &pbs_null_auth, AUTH_NULL);
+						 &pbs_null_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -913,8 +916,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		ldbg(ike->sa.logger, "responder verifying AUTH payload");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in,
-						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						 initiator_auth);
+						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -980,7 +982,16 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	 */
 	v2_IKE_AUTH_responder_id_payload(ike);
 
-	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
+	if (!submit_local_v2AUTH_signature_generator(ike, md,
+						     process_v2_IKE_AUTH_request_auth_signature_continue)) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	return STF_SUSPEND;
 }
 
 bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirection)
@@ -1239,10 +1250,6 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
-					    c->remote->host.config->auth);
-
-	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
@@ -1290,8 +1297,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in,
-				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				  responder_auth);
+				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -1602,12 +1608,12 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_enum_human(buf, &ikev2_auth_method_names,
 			       ike->sa.st_v2_local_auth.method);
 		if (ike->sa.st_v2_local_auth.method == IKEv2_AUTH_DIGITAL_SIGNATURE &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.signer != NULL) &&
-		    PEXPECT(ike->sa.logger, ike->sa.st_v2_digsig.hash != NULL)) {
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.pubkey.signer != NULL) &&
+		    PEXPECT(ike->sa.logger, ike->sa.st_v2_local_auth.pubkey.hash != NULL)) {
 			jam_string(buf, " ");
-			jam_string(buf, ike->sa.st_v2_digsig.signer->name);
+			jam_string(buf, ike->sa.st_v2_local_auth.pubkey.signer->name);
 			jam_string(buf, " with ");
-			jam_string(buf, ike->sa.st_v2_digsig.hash->common.fqn);
+			jam_string(buf, ike->sa.st_v2_local_auth.pubkey.hash->common.fqn);
 		}
 		/* ID payload */
 		jam_string(buf, " and ");

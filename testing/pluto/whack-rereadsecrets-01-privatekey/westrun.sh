@@ -12,7 +12,7 @@ ipsec rereadsecrets
 
 ../../guestbin/wait-for-pluto.sh 'initiator established IKE SA'
 
-../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 3, .* submit_v2_IKE_AUTH_request_signature'
+../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 3, .* submit_local_v2AUTH_signature_generator'
 ipsec rereadsecrets
 
 ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 4, .* process_v2_IKE_AUTH_response'

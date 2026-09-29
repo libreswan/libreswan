@@ -54,6 +54,7 @@
 #include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
+#include "psk_auth_method.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
 #include "ikev2_prf.h"		/* for struct prf_keys */
 #include "ike_spi.h"
@@ -330,14 +331,25 @@ struct state {
 	 * using that same algorithm.
 	 */
 
-	struct {
+	struct v2AUTH_method {
 		enum ikev2_auth_method method;
+		struct {
+			const struct hash_desc *hash;
+			const struct pubkey_signer *signer;
+		} pubkey;
+		struct {
+			enum psk_auth_method method;
+		} psk;
 	} st_v2_local_auth;
+
+	/*
+	 * On responder, capture the v2AUTH payload the initiator
+	 * used.
+	 */
+	struct v2AUTH_method st_v2_initiator_auth;
 
 	struct {
 		struct authby peer_pubkey_mask;
-		const struct hash_desc *hash;
-		const struct pubkey_signer *signer;
 	} st_v2_digsig;
 
 	/*

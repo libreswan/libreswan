@@ -225,53 +225,56 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 {
 	const struct connection *c = ike->sa.st_connection;
-	struct logger *logger = ike->sa.logger;
 	struct id id = c->remote->host.id;
 
-	if (!c->remote->host.config->key_from_DNS_on_demand)
+	if (!c->remote->host.config->key_from_DNS_on_demand) {
 		return false;
-
-	if (c->remote->host.config->auth == AUTH_RSASIG &&
-	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
-{
-		switch (atype) {
-		case IKEv2_AUTH_RESERVED:
-		case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-			return true; /* success */
-		default:
-			break;	/*  failure */
-		}
 	}
 
-	if (LDBGP(DBG_BASE, logger)) {
-		/* eb2 and err2 must have same scope */
-		name_buf eb2;
-		const char *err1 = "%dnsondemand";
-		const char *err2 = "";
-
-		if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA_DIGITAL_SIGNATURE ||
-							atype == IKEv2_AUTH_DIGITAL_SIGNATURE)) {
-			err1 = " initiator IKEv2 Auth Method mismatched ";
-			err2 = str_enum_long(&ikev2_auth_method_names, atype, &eb2);
-		}
-
-		if (id.kind != ID_FQDN &&
-		    id.kind != ID_IPV4_ADDR &&
-		    id.kind != ID_IPV6_ADDR) {
-			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-			err2 = str_enum_short(&ike_id_type_names, id.kind, &eb2);
-		}
-
-		id_buf thatid;
-		endpoint_buf ra;
-		LDBG_log(logger, "%s "PRI_SO" not fetching ipseckey %s%s remote=%s thatid=%s",
-			 c->name, pri_so(ike->sa.st_serialno),
-			 err1, err2,
-			 str_endpoint(&ike->sa.st_remote_endpoint, &ra),
-			 str_id(&id, &thatid));
+	if (!authby_has_any(c->remote->host.config->authby,
+			     (struct authby) {
+				     AUTHBY_RSASIG,
+			     })) {
+		name_buf mb;
+		authby_buf ab;
+		ldbg(ike->sa.logger,
+		     "not fetching ipsec key, initiator IKEv2 Auth Method %s mismatched %s",
+		     str_enum_short(&ikev2_auth_method_names, atype, &mb),
+		     str_authby(c->remote->host.config->authby, &ab));
+		return false;
 	}
-	return false;
+
+	if (id.kind != ID_FQDN &&
+	    !id_is_ipaddr(&id)) {
+		name_buf idb;
+		ldbg(ike->sa.logger,
+		     "not fetching ipsec key, ID type %s is not FQDNor IPADDR",
+		     str_enum_short(&ike_id_type_names, id.kind, &idb));
+		return false;
+	}
+
+	switch (atype) {
+	case IKEv2_AUTH_RESERVED:
+		/*
+		 * passed in during IKE_SA_INIT to sniff test need to
+		 * fetch IPSEC key.
+		 */
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
+		break;
+	default:
+	{
+		id_buf idb;
+		endpoint_buf rab;
+		ldbg(ike->sa.logger,
+		     "not fetching ipseckey, %%dnsondemand, remote=%s peer-id=%s",
+		     str_endpoint(&ike->sa.st_remote_endpoint, &rab),
+		     str_id(&id, &idb));
+		return false;
+	}
+	}
+
+	return true;
 }
 
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t pred)

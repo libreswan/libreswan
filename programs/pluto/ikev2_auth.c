@@ -49,6 +49,19 @@ struct v2AUTH_blobs {
 };
 
 static const uint8_t v2AUTH_zero_prefix[8] = {0};
+
+/*
+ * Map negotiation bit <-> hash algorithm; in preference order.
+ */
+
+static const struct hash_desc *negotiated_hash_map[] = {
+	&ike_alg_hash_sha2_512,
+	&ike_alg_hash_sha2_384,
+	&ike_alg_hash_sha2_256,
+	&ike_alg_hash_identity,
+	&ike_alg_hash_sha1,
+};
+
 /*
  * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Authentication
  * in IKEv2":
@@ -231,36 +244,62 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
-enum auth local_v2_auth(struct ike_sa *ike)
+/*
+ * Merge the configured auth with what was negotiated by the peer.
+ */
+
+struct authby local_v2_authby(struct ike_sa *ike)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+	struct connection *c = ike->sa.st_connection;
+	const struct authby configured_authby = c->local->host.config->authby;
+	struct authby negotiated_authby;
+	const char *negotiation_story;
+	bool override = false;
+
 	if (ike->sa.st_v2_resume_session != NULL) {
-		return AUTH_PSK;
-	}
-
-	if (ike->sa.st_peer_wants_null) {
-		/* we allow authby=null and IDr payload told us to use it */
-		return AUTH_NULL;
-	}
-
-	const struct connection *c = ike->sa.st_connection;
-
-	if (authby_is_set(ike->sa.st_v2_peer_authby)) {
-		struct authby negotiated_authby = authby_and(ike->sa.st_v2_peer_authby, 
-				c->local->host.config->authby);
-		
+		override = true;
+		negotiation_story = "resume session";
+		negotiated_authby = (struct authby) {
+			AUTHBY_PSK,
+		};
+	} else if (ike->sa.st_eap != NULL) {
+		override = true;
+		negotiation_story = "eap";
+		negotiated_authby = (struct authby) {
+			AUTHBY_PSK,
+		};
+	} else if (ike->sa.st_peer_wants_null) {
+		negotiation_story = "peer wants null";
+		negotiated_authby = (struct authby) {
+			AUTHBY_NULL,
+		};
+	} else if (!authby_is_set(ike->sa.st_v2_peer_authby)) {
+		negotiation_story = "configured";
+		negotiated_authby = configured_authby;
+	} else {
+		negotiated_authby = authby_and(configured_authby,
+					       ike->sa.st_v2_peer_authby);
 		if (authby_is_set(negotiated_authby)) {
-			name_buf eb;
-			ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: selecting negotiated authby=%s",
-					str_enum_long(&auth_names, auth_from_authby(negotiated_authby), &eb));
-			return auth_from_authby(negotiated_authby);
+			negotiation_story = "negotiated by SUPPORTED_AUTH_METHODS";
+		} else {
+			negotiated_authby = configured_authby;
+			negotiation_story = "SUPPORTED_AUTH_METHODS negotiation failed, using configured";
+			authby_buf sam, ca;
+			vlog("no overlap between peer's supported %s and local configured %s authentication; SUPPORTED_AUTH_METHODS notification ignored",
+			     str_authby(ike->sa.st_v2_peer_authby, &sam),
+			     str_authby(configured_authby, &ca));
 		}
-		name_buf lcb;
-		ldbg(ike->sa.logger, "SUPPORTED_AUTH_METHODS: no negotiated authby, falling back to local config: %s",
-			str_enum_short(&auth_names, c->local->host.config->auth, &lcb));
 	}
-	enum auth authby = c->local->host.config->auth;
-	pexpect(authby != AUTH_UNSET);
-	return authby;
+	authby_buf pab, cab, nab;
+	vdbg("override %s configured %s negotiated %s proposed %s; %s",
+	     bool_str(override),
+	     str_authby(configured_authby, &cab),
+	     str_authby(negotiated_authby, &nab),
+	     str_authby(ike->sa.st_v2_peer_authby, &pab),
+	     negotiation_story);
+	vexpect(override || authby_has_any(configured_authby, negotiated_authby));
+	return negotiated_authby;
 }
 
 /*
@@ -268,143 +307,271 @@ enum auth local_v2_auth(struct ike_sa *ike)
  * auth method.
  */
 
-enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum auth auth)
+static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
+						 const struct hash_desc *hash,
+						 const struct pubkey_signer *signer)
+{
+	return (struct v2AUTH_method) {
+		.method = method,
+		.pubkey.hash = hash,
+		.pubkey.signer = signer,
+	};
+}
+
+static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
+					  const struct authby negotiated_authby,
+					  enum ikev2_auth_method method)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "digsig");
+	switch (method) {
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
+	{
+		/*
+		 * Try to prefer the peer's authentication method.
+		 */
+		if (ike->sa.st_v2_initiator_auth.pubkey.hash != NULL &&
+		    ike->sa.st_v2_initiator_auth.pubkey.signer != NULL) {
+			/* could end up empty */
+			struct authby signer_authby =
+				authby_and(negotiated_authby,
+					   ike->sa.st_v2_initiator_auth.pubkey.signer->authby);
+			if (authby_has_hash(signer_authby, ike->sa.st_v2_initiator_auth.pubkey.hash)) {
+				vdbg("using same hash %s and signer %s as peer",
+				     ike->sa.st_v2_initiator_auth.pubkey.hash->common.fqn,
+				     ike->sa.st_v2_initiator_auth.pubkey.signer->name);
+				return pubkey_v2AUTH_method(method,
+							    ike->sa.st_v2_initiator_auth.pubkey.hash,
+							    ike->sa.st_v2_initiator_auth.pubkey.signer);
+			}
+			authby_buf ab;
+			vdbg("ignoring peer's hash %s and signer %s as the don't match local policy %s",
+			     ike->sa.st_v2_initiator_auth.pubkey.hash->common.fqn,
+			     ike->sa.st_v2_initiator_auth.pubkey.signer->name,
+			     str_authby(negotiated_authby, &ab));
+		}
+
+		/*
+		 * This is brute force for now.
+		 * XXX: Should mix in the key's type.  Actually should
+		 * have mixed in the pubkey much earlier.
+		 */
+
+		/*
+		 * Since caller picked digital signature, because the
+		 * masked negotiated_authby had a digsig bit, there
+		 * should be at least one plausible digital signature
+		 * bit.
+		 *
+		 * However, this path can also be reached via an
+		 * impair.  Hence out of an abundance of caution,
+		 * re-mask the policy.
+		 */
+		const struct hash_desc *hash = NULL;
+		struct authby hash_authby =
+			authby_and(negotiated_authby, supported_ikev2_digsig_auth_payloads());
+		vdbg("selecting negotiated hash algorithm");
+		FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
+			if (authby_has_hash(hash_authby, (*hashp))) {
+				hash = (*hashp);
+				vdbg("selected hash %s", hash->common.fqn);
+				break;
+			}
+			vdbg("skiping hash %s as not negotiated",
+			     (*hashp)->common.fqn);
+		}
+		if (hash == NULL) {
+			authby_buf ab;
+			vlog_pexpect(HERE, "no compatible hash algo in %s",
+				     str_authby(hash_authby, &ab));
+			return (struct v2AUTH_method) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
+		}
+
+		/*
+		 * Since there's a hash, there must be at least one
+		 * signer that expects to use that hash.
+		 */
+		struct authby signer_authby = authby_and_hash(hash_authby, hash);
+		const struct pubkey_signer *signer = NULL;
+		vdbg("selecting negotiated signer algorithm");
+		FOR_EACH_THING(signerp,
+			       &pubkey_signer_digsig_rsassa_pss,
+			       &pubkey_signer_digsig_ecdsa,
+			       &pubkey_signer_digsig_eddsa_ed25519,
+			       &pubkey_signer_digsig_pkcs1_1_5_rsa) {
+			if (authby_has_any(signer_authby, signerp->authby)) {
+				signer = signerp;
+				vdbg("selected signer %s", signer->name);
+				break;
+			}
+			vdbg("skipping signer %s as not negotiated", signerp->name);
+		}
+		if (signer == NULL) {
+			authby_buf ab;
+			vlog_pexpect(HERE, "no compatible signature in %s",
+				     str_authby(signer_authby, &ab));
+			return (struct v2AUTH_method) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
+		}
+
+		authby_buf ab;
+		vdbg("picking hash %s signer %s from %s",
+		     hash->common.fqn, signer->name,
+		     str_authby(negotiated_authby, &ab));
+		return pubkey_v2AUTH_method(method, hash, signer);
+	}
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
+		return pubkey_v2AUTH_method(method,
+					    &ike_alg_hash_sha1,
+					    &pubkey_signer_raw_pkcs1_1_5_rsa);
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return pubkey_v2AUTH_method(method,
+					    &ike_alg_hash_sha2_256,
+					    &pubkey_signer_raw_ecdsa/*_p256*/);
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return pubkey_v2AUTH_method(method,
+					    &ike_alg_hash_sha2_384,
+					    &pubkey_signer_raw_ecdsa/*_p384*/);
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		return pubkey_v2AUTH_method(method,
+					    &ike_alg_hash_sha2_512,
+					    &pubkey_signer_raw_ecdsa/*_p521*/);
+	case IKEv2_AUTH_SHARED_KEY_MAC:
+		return (struct v2AUTH_method) {
+			.method = method,
+			.psk.method = PSK_AUTH_SHARED_KEY,
+		};
+	case IKEv2_AUTH_NULL:
+		return (struct v2AUTH_method) {
+			.method = method,
+			.psk.method = PSK_AUTH_NULL,
+		};
+	case IKEv2_AUTH_RESERVED:
+	case IKEv2_AUTH_DSS_DIGITAL_SIGNATURE:
+	case IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD:
+		break;
+	}
+	bad_case(method);
+}
+
+struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
+	struct authby negotiated_authby = local_v2_authby(ike);
 
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
 		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
 		     str_enum_long(&ikev2_auth_method_names,
 				   impair.force_v2_auth_method.value, &eb));
-		return impair.force_v2_auth_method.value;
+		return v2AUTH_method(ike, negotiated_authby,
+				     impair.force_v2_auth_method.value);
 	}
 
-	/* mask authby with the new "Digital Signature" hashes */
-	struct authby digsig_auth_payload =
-		authby_and(c->local->host.config->authby,
+	if (!authby_is_set(negotiated_authby)) {
+		authby_buf cb;
+		llog_pexpect(ike->sa.logger, HERE,
+			     "no authentication method matched %s",
+			     str_authby(c->local->host.config->authby, &cb));
+		return (struct v2AUTH_method) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
+	}
+
+	/*
+	 * Mask authby with the new "Digital Signature" hashes.  If
+	 * any are valid, use that.
+	 *
+	 * If nothing matches, or the mask is empty, stumble on to one
+	 * of the legacy authentication methods.
+	 */
+	struct authby digsig_authby =
+		authby_and(negotiated_authby,
 			   ike->sa.st_v2_digsig.peer_pubkey_mask);
-	if (authby_has_auth(digsig_auth_payload, auth)) {
-		return IKEv2_AUTH_DIGITAL_SIGNATURE;
+	if (authby_is_set(digsig_authby)) {
+		return v2AUTH_method(ike, digsig_authby,
+				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
-	switch (auth) {
-	case AUTH_RSASIG:
+	if (negotiated_authby.rsasig_v1_5_sha1) {
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->host.config->authby.rsasig_v1_5_sha1) {
-			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
-		}
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_RSA_DIGITAL_SIGNATURE);
+	}
 
-		/*
-		 * Nothing acceptable, try to log something helpful.
-		 */
-		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG, ike,
-				"local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
-		} else {
-			llog_sa(RC_LOG, ike,
-				"legacy RSA-SHA1 is not allowed but peer supports nothing else");
-		}
-		return IKEv2_AUTH_RESERVED;
+	/*
+	 * If there are HASH algorithms, prute force pick the
+	 * first and use that.  Note that this doesn't check
+	 * that the ECDSA key matches the Pnnn.  Instead, like
+	 * for Digital Signature Method, it allows any ECDSA
+	 * key.
+	 *
+	 * XXX: this _should_ be looking at the ECDSA key.
+	 *
+	 * XXX: this _should_ be looking at IKE's dynamic
+	 * authby which _should_ be looking at the ECDSA key.
+	 */
 
-	case AUTH_ECDSA:
-		/*
-		 * If there are HASH algorithms, prute force pick the
-		 * first and use that.  Note that this doesn't check
-		 * that the ECDSA key matches the Pnnn.  Instead, like
-		 * for Digital Signature Method, it allows any ECDSA
-		 * key.
-		 *
-		 * XXX: this _should_ be looking at the ECDSA key.
-		 *
-		 * XXX: this _should_ be looking at IKE's dynamic
-		 * authby which _should_ be looking at the ECDSA key.
-		 */
-		if (c->local->host.config->authby.ecdsa_sha2_512) {
-			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
-		}
+	if (negotiated_authby.ecdsa_sha2_512) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_512_P521);
+	}
 
-		if (c->local->host.config->authby.ecdsa_sha2_384) {
-			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
-		}
+	if (negotiated_authby.ecdsa_sha2_384) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_384_P384);
+	}
 
-		if (c->local->host.config->authby.ecdsa_sha2_256) {
-			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
-		}
+	if (negotiated_authby.ecdsa_sha2_256) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
+	}
 
-		/*
-		 * Nothing acceptable, try to log something helpful.
-		 */
-		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG, ike,
-				"local policy requires ECDSA but peer sent no acceptable signature hash algorithms");
-			return IKEv2_AUTH_RESERVED;
-		}
-
-		llog_sa(RC_LOG, ike,
-			"legacy ECDSA is not implemented");
-		return IKEv2_AUTH_RESERVED;
-
-	case AUTH_EDDSA:
-		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
-		return IKEv2_AUTH_RESERVED;
-
-	case AUTH_EAPONLY:
+	if (negotiated_authby.authby_eaponly) {
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
 		 * bundled in PSK (it certainly isn't one of the
 		 * signature payloads)?
 		 */
-		return IKEv2_AUTH_SHARED_KEY_MAC;
-
-	case AUTH_PSK:
-		return IKEv2_AUTH_SHARED_KEY_MAC;
-
-	case AUTH_NULL:
-		return IKEv2_AUTH_NULL;
-
-	case AUTH_NEVER:
-	case AUTH_UNSET:
-		break;
-
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
-	bad_case(auth);
-}
 
-/*
- * Map negotiation bit <-> hash algorithm; in preference order.
- */
-
-static const struct hash_desc *negotiated_hash_map[] = {
-	&ike_alg_hash_sha2_512,
-	&ike_alg_hash_sha2_384,
-	&ike_alg_hash_sha2_256,
-	&ike_alg_hash_identity,
-	&ike_alg_hash_sha1,
-};
-
-const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
-{
-	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
-	struct authby digsig_authby =
-		authby_and_auth(authby_and(ike->sa.st_connection->local->config->host.authby,
-					   ike->sa.st_v2_digsig.peer_pubkey_mask),
-				local_v2_auth(ike));
-	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (authby_has_hash(digsig_authby, (*hash))) {
-			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
-			     (*hash)->common.fqn);
-			return (*hash);
-		}
-		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
-		     (*hash)->common.fqn);
+	if (negotiated_authby.authby_psk) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
-	ldbg(ike->sa.logger, "digsig: no compatible DigSig hash algo");
-	return NULL;
+
+	if (negotiated_authby.authby_null) {
+		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
+				     IKEv2_AUTH_NULL);
+	}
+
+	/*
+	 * Since nothing is acceptable, try to log something helpful.
+	 *
+	 * For instance EdDSA is new-DIGSIG only.
+	 */
+	if (authby_has_supported_ikev2_digsig_payload(negotiated_authby)) {
+		authby_buf cb;
+		llog(RC_LOG, ike->sa.logger,
+		     "local Digital Signature authentication %s is not supported by peer",
+		     str_authby(negotiated_authby, &cb));
+	} else {
+		authby_buf cb;
+		llog_pexpect(ike->sa.logger, HERE,
+			     "local %s authentication is not supported",
+			     str_authby(negotiated_authby, &cb));
+	}
+
+	return (struct v2AUTH_method) {
+		.method = IKEv2_AUTH_RESERVED,
+	};
 }
 
 bool emit_local_v2AUTH(struct ike_sa *ike,
@@ -436,9 +603,10 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
-		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
+		const struct hash_desc *hash = ike->sa.st_v2_local_auth.pubkey.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.pubkey.signer;
+
+		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
 		if (!pexpect(b.len > 0)) {
 			return false;
 		}
@@ -477,8 +645,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
-						 struct ike_sa *ike,
+static diag_t verify_v2AUTH_and_log_using_pubkey(struct ike_sa *ike,
 						 const struct crypt_mac *idhash,
 						 const struct pbs_in *signature_pbs,
 						 const struct hash_desc *hash_algo,
@@ -486,51 +653,47 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 						 const char *signature_payload_name)
 {
 	statetime_t start = statetime_start(&ike->sa);
-
 	struct connection *c = ike->sa.st_connection;
 
-	/*
-	 * Strip authby of all auth methods that don't use
-	 * HASH_ALGORITHM.  EDDSA, say, uses the IDENTITY HASH.
-	 *
-	 * The result should be, at most, one bit.
-	 */
-	struct authby hash_authby = authby_and_hash(authby, hash_algo);
-
 	authby_buf ab;
-	authby_buf hb;
 	ldbg(ike->sa.logger,
-	     "verifying authby %s (%s) signer %s and allowed hashes %s",
-	     str_authby(hash_authby, &hb),
-	     str_authby(authby, &ab),
+	     "verifying using hash %s and signer %s (%s)",
 	     hash_algo->common.fqn,
-	     pubkey_signer->name);
+	     pubkey_signer->name,
+	     str_authby(pubkey_signer->authby, &ab));
 
 	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
 	/*
-	 * Per above, there should be at most one authby bit set.
+	 * Strip the signer's allowed AUTHBYs back to just the HASH
+	 * algorithm's AUTHBY.  EDDSA, say, uses the IDENTITY HASH.
+	 *
+	 * The result should be, at most, one bit (checked further
+	 * down).
 	 */
-	unsigned count = authby_count(hash_authby);
+	struct authby sign_hash_bit = authby_and_hash(pubkey_signer->authby, hash_algo);
+	unsigned count = authby_count(sign_hash_bit);
+
 	if (pbad(count > 1)) {
 		authby_buf ab;
 		return diag("INTERNAL ERROR: too many authby bits set in %s",
-			    str_authby(hash_authby, &ab));
+			    str_authby(sign_hash_bit, &ab));
 	}
+
 	if (count == 0) {
 		return diag("authentication failed: peer authentication requires hash algorithm %s",
 			    hash_algo->common.fqn);
 	}
 
 	/*
-	 * Does the configuration include the HASH_AUTHBY bit?
+	 * Does the configuration include the SIGN_HASH_BIT bit?
 	 */
-	if (!authby_has_all(c->remote->host.config->authby, hash_authby)) {
+	if (!authby_has_all(c->remote->host.config->authby, sign_hash_bit)) {
 		authby_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
-			    str_authby(authby, &pb));
+			    str_authby(sign_hash_bit, &pb));
 	}
 
 	shunk_t signature = pbs_in_left(signature_pbs);
@@ -557,13 +720,16 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
-			     struct pbs_in *signature_pbs,
-			     const enum auth that_auth)
+			     struct pbs_in *signature_pbs)
 {
-	name_buf ramb, eanb;
-	ldbg(ike->sa.logger, "verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
+	const struct host_end_config *remote = &ike->sa.st_connection->remote->config->host;
+
+	name_buf ramb;
+	authby_buf rab;
+	ldbg(ike->sa.logger,
+	     "verifying auth payload, remote sent v2AUTH=%s we want and authby=%s",
 	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	     str_enum_short(&auth_names, that_auth, &eanb));
+	     str_authby(remote->authby, &rab));
 
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTH matches
@@ -572,31 +738,27 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_RSASIG_V1_5, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
 							  &pubkey_signer_raw_pkcs1_1_5_rsa,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
 							  &pubkey_signer_raw_ecdsa/*_p256*/,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
 							  &pubkey_signer_raw_ecdsa/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return verify_v2AUTH_and_log_using_pubkey((struct authby) { AUTHBY_ECDSA_SHA2, },
-							  ike, idhash_in,
+		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
 							  &pubkey_signer_raw_ecdsa/*_p521*/,
@@ -604,14 +766,21 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	{
-		if (that_auth != AUTH_PSK) {
-			name_buf an;
+		if (!remote->authby.authby_psk &&
+		    ike->sa.st_v2_resume_session == NULL) {
+			/*
+			 * XXX: session resume forces PSK, so
+			 * presumably peer has done that.
+			 */
+			authby_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
-							   signature_pbs, NULL/*auth_sig*/);
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY,
+							   ike, idhash_in,
+							   signature_pbs,
+							   NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
 			return d;
@@ -622,19 +791,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		/*
-		 * Given authby=rsa+null, that_auth==rsa.  Hence the
-		 * second test; but doesn't that make the first test
-		 * redundant?
-		 */
-		if (that_auth != AUTH_NULL &&
-		    !ike->sa.st_connection->remote->host.config->authby.null) {
-			name_buf an;
+		if (!remote->authby.authby_null) {
+			authby_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
 
-		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
+		diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_NULL, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			ldbg(ike->sa.logger, "authentication failed: NULL AUTH mismatch (implementation bug?)");
@@ -647,74 +810,90 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (!authby_has_supported_ikev2_digsig_payload(authby_from_auth(that_auth))) {
-			name_buf an;
+		if (!authby_has_supported_ikev2_digsig_payload(remote->authby)) {
+			authby_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    str_enum_short(&auth_names, that_auth, &an));
+				    str_authby(remote->authby, &an));
 		}
-
-		/* try to match ASN.1 blob designating the hash algorithm */
 
 		shunk_t signature = pbs_in_left(signature_pbs);
 
 		/*
-		 * XXX: should this loop be inverted?
+		 * Try to match ASN.1 blob designating the hash
+		 * algorithm.
 		 *
-		 * Find a matching DIGSIG blob, and then check that
-		 * there's an allowed hash algorithm for that blob IN
-		 * the configured AUTHBY.
+		 * For all signers that match the peer's allowed
+		 * authby, try the signer's hashes blobs.
 		 */
+		const struct pubkey_signer *signers[] = {
+			&pubkey_signer_digsig_eddsa_ed25519,
+			&pubkey_signer_digsig_ecdsa,
+			&pubkey_signer_digsig_rsassa_pss,
+			&pubkey_signer_digsig_pkcs1_1_5_rsa,
+		};
 
-		ldbg(ike->sa.logger, "digsig: looking for matching DIGSIG blob");
-		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
+		FOR_EACH_ELEMENT(sp, signers) {
+			const struct pubkey_signer *signer = (*sp);
 
 			/*
-			 * The peer (remote) end has sent us a
-			 * proof-of-identity using HASH; does the
-			 * peer's (remote's) config allow this?
+			 * Only consider auth+hash allowed by this
+			 * signer, assuming there are some.
 			 */
-			if (!authby_has_hash(ike->sa.st_connection->remote->config->host.authby, *hash)) {
-				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
-				     (*hash)->common.fqn);
+			struct authby signer_hashes = authby_and(remote->authby, signer->authby);
+			if (!authby_is_set(signer_hashes)) {
+				authby_buf rab;
+				ldbg(ike->sa.logger, "digsig:   signer %s does not match authby %s",
+				     signer->name,
+				     str_authby(remote->authby, &rab));
 				continue;
 			}
 
 			/*
-			 * Try all signers and their blob.
-			 *
-			 * That way, when a disabled blob matches a
-			 * more meaningful log message can be printed
-			 * (we're looking at you PKCS#1 1.5 RSA).
+			 * Now iterate through the hashes supported by
+			 * this signer and allowed by remote->auth; is
+			 * there a more efficient way of doing this.
 			 */
-			ldbg(ike->sa.logger, "digsig:   trying %s", (*hash)->common.fqn);
-			static const struct {
-				const struct pubkey_signer *signer;
-				struct authby authby;
-			} signers[] = {
-				{ &pubkey_signer_digsig_eddsa_ed25519, (struct authby) { AUTHBY_EDDSA, }, },
-				{ &pubkey_signer_digsig_ecdsa, (struct authby) { AUTHBY_ECDSA_SHA2, }, },
-				{ &pubkey_signer_digsig_rsassa_pss, (struct authby) { AUTHBY_RSASIG_SHA2, }, },
-				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, (struct authby) { AUTHBY_RSASIG_V1_5, }, },
-			};
 
-			FOR_EACH_ELEMENT(s, signers) {
-				enum digital_signature_blob b = s->signer->digital_signature_blob;
-				shunk_t blob = (*hash)->digital_signature_blob[b];
-				if (blob.len == 0) {
-					ldbg(ike->sa.logger,
-					     "digsig:     skipping %s as no blob",
-					     s->signer->name);
+			authby_buf sab;
+			ldbg(ike->sa.logger,
+			     "digsig: looking for signer %s hashes %s matching DIGSIG blob",
+			     signer->name, str_authby(signer_hashes, &sab));
+
+			FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
+				const struct hash_desc *hash = (*hashp);
+
+				/*
+				 * Do the signer and remote->authby
+				 * allow the hash?
+				 */
+				if (!authby_has_hash(signer_hashes, hash)) {
+					authby_buf sab;
+					ldbg(ike->sa.logger, "digsig:   signer %s hash %s does not match authby %s",
+					     signer->name,
+					     hash->common.fqn,
+					     str_authby(signer_hashes, &sab));
 					continue;
 				}
+
+				enum digital_signature_blob b = signer->digital_signature_blob;
+				shunk_t blob = hash->digital_signature_blob[b];
+				if (blob.len == 0) {
+					ldbg(ike->sa.logger,
+					     "digsig:     skipping signer %s as no blob for hash %s",
+					     signer->name, hash->common.fqn);
+					continue;
+				}
+
 				if (!hunk_starteq(signature, blob)) {
 					ldbg(ike->sa.logger,
-					     "digsig:     skipping %s as blob does not match",
-					     s->signer->name);
+					     "digsig:     skipping signer %s as blob for hash %s does not match",
+					     signer->name, hash->common.fqn);
 					continue;
 				};
 
-				ldbg(ike->sa.logger, "digsig:    using signer %s and hash %s",
-				     s->signer->name, (*hash)->common.fqn);
+				ldbg(ike->sa.logger,
+				     "digsig:    using signer %s and hash %s",
+				     signer->name, hash->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
@@ -722,8 +901,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
 					ldbg(ike->sa.logger,
-					     "digsig:     failing %s due to I/O error: %s",
-					     s->signer->name, str_diag(d));
+					     "digsig:     failing signer %s due to I/O error: %s",
+					     signer->name, str_diag(d));
 					return d;
 				}
 
@@ -732,22 +911,24 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 * responder can prefer the same
 				 * values.
 				 */
-				ike->sa.st_v2_digsig.hash = (*hash);
-				ike->sa.st_v2_digsig.signer = s->signer;
+				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
+					.method = recv_auth,
+					.pubkey.hash = hash,
+					.pubkey.signer = signer,
+				};
 
-				return verify_v2AUTH_and_log_using_pubkey(s->authby,
-									  ike, idhash_in,
+				return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 									  signature_pbs,
-									  (*hash),
-									  s->signer,
+									  hash,
+									  signer,
 									  "digital signature");
 			}
 		}
 
 		ldbg(ike->sa.logger, "digsig:   no match");
-		name_buf an;
+		authby_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    str_enum_short(&auth_names, that_auth, &an));
+			    str_authby(remote->authby, &an));
 
 	}
 	default:
@@ -759,282 +940,53 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 	}
 }
 
-static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
-							struct msg_digest *md,
-							const struct v2_id_payload *id_payload,
-							const struct hash_desc *hash_algo,
-							const struct pubkey_signer *signer,
-							v2_auth_signature_cb *cb)
-{
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
-				      signer, cb, HERE)) {
-		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	}
-	return STF_SUSPEND;
-}
-
-stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
-						      v2_auth_signature_cb auth_cb)
+bool submit_local_v2AUTH_signature_generator(struct ike_sa *ike,
+					     struct msg_digest *md,
+					     v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-
-	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
+	ike->sa.st_v2_local_auth = local_v2AUTH_method(ike);
 
 	switch (ike->sa.st_v2_local_auth.method) {
-
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     &ike_alg_hash_sha1,
-							     &pubkey_signer_raw_pkcs1_1_5_rsa,
-							     auth_cb);
-
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_256,
-							    &pubkey_signer_raw_ecdsa/*_p256*/,
-							    auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_384,
-							    &pubkey_signer_raw_ecdsa/*_p384*/,
-							    auth_cb);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_512,
-							    &pubkey_signer_raw_ecdsa/*_p521*/,
-							    auth_cb);
-
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-	{
-		/*
-		 * Prefer the HASH and SIGNER algorithms saved when
-		 * authenticating the initiator (assuming the
-		 * initiator was authenticated using DIGSIG).
-		 *
-		 * For HASH, both ends negotiated acceptable hash
-		 * algorithms during IKE_SA_INIT.  For SIGNER, the
-		 * algorithm also needs to be consistent with local
-		 * AUTHBY.
-		 *
-		 * Save the decision so it is available when emitting
-		 * the computed hash.
-		 */
-		ldbg(ike->sa.logger, "digsig: selecting hash and signer");
-		const char *hash_story;
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-			hash_story = "from policy";
-		} else {
-			hash_story = "saved earlier";
-		}
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		}
-		ldbg(ike->sa.logger,"digsig:   using hash %s %s",
-		     ike->sa.st_v2_digsig.hash->common.fqn,
-		     hash_story);
-		const char *signer_story;
-		switch (authby) {
-		case AUTH_RSASIG:
-			if (ike->sa.st_v2_digsig.signer == NULL ||
-			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_rsassa_pss;
-				signer_story = "from policy";
-			} else {
-				signer_story = "saved earlier";
-			}
-			break;
-		case AUTH_ECDSA:
-			/* no choice */
-			signer_story = "hardwired(ECDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer_story = "hardwired(EDDSA)";
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
-		     ike->sa.st_v2_digsig.signer->name, signer_story);
-
-		return submit_v2_IKE_AUTH_response_signature(ike, md,
-							     &ike->sa.st_v2_id_payload,
-							     ike->sa.st_v2_digsig.hash,
-							     ike->sa.st_v2_digsig.signer, auth_cb);
-	}
+		return submit_local_v2AUTH_signature(ike, md,
+						     &ike->sa.st_v2_id_payload.mac,
+						     cb, HERE);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
+		diag_t d = ikev2_calculate_psk_sighash(ike->sa.st_v2_local_auth.psk.method,
+						       LOCAL_PERSPECTIVE,
 						       /*accumulated EAP hash*/NULL,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
+						       ike, &ike->sa.st_v2_id_payload.mac,
 						       &signed_octets);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
+			return false;
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
-		struct hash_signature signed_signature = {
-			.len = signed_octets.len,
-		};
-		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
-		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
-
-		return auth_cb(ike, md, &signed_signature);
-	}
-
-	default:
-	{
-		name_buf eb;
-		llog_sa(RC_LOG, ike,
-			"authentication method %s not supported",
-			str_enum_long(&ikev2_auth_method_names, ike->sa.st_v2_local_auth.method, &eb));
-		return STF_FATAL;
-	}
-	}
-}
-
-static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       const struct v2_id_payload *id_payload,
-						       const struct hash_desc *hash_algo,
-						       const struct pubkey_signer *signer,
-						       v2_auth_signature_cb *cb)
-{
-	if (!submit_v2_auth_signature(ike, md,
-				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
-				      signer, cb, HERE)) {
-		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
-		return STF_FATAL;
-	}
-	return STF_SUSPEND;
-}
-
-stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
-						      struct msg_digest *md,
-						      v2_auth_signature_cb *cb)
-{
-	struct logger *logger = ike->sa.logger;
-	enum auth authby = local_v2_auth(ike);
-	ike->sa.st_v2_local_auth.method = local_v2AUTH_method(ike, authby);
-
-	switch (ike->sa.st_v2_local_auth.method) {
-	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha1,
-							    &pubkey_signer_raw_pkcs1_1_5_rsa,
-							    cb);
-
-	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_256,
-							    &pubkey_signer_raw_ecdsa/*_p256*/,
-							    cb);
-	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_384,
-							    &pubkey_signer_raw_ecdsa/*_p384*/,
-							    cb);
-	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    &ike_alg_hash_sha2_512,
-							    &pubkey_signer_raw_ecdsa/*_p521*/,
-							    cb);
-
-	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		/*
-		 * Save the HASH and SIGNER for later - used when
-		 * emitting the siguature (should the signature
-		 * instead include the bonus blob?).
+		 * The big fake.  This should offload the above, but
+		 * the code isn't ready.
 		 */
-		ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-		if (ike->sa.st_v2_digsig.hash == NULL) {
-			return STF_FATAL;
+		if (!submit_local_v2AUTH_signature(ike, md, &signed_octets,
+						   cb, HERE)) {
+			ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
+			return false;
 		}
 
-		const struct pubkey_signer *signer;
-		switch (authby) {
-		case AUTH_RSASIG:
-			/* XXX: way to force PKCS#1 1.5? */
-			signer = &pubkey_signer_digsig_rsassa_pss;
-			break;
-		case AUTH_ECDSA:
-			signer = &pubkey_signer_digsig_ecdsa;
-			break;
-		case AUTH_EDDSA:
-			signer = &pubkey_signer_digsig_eddsa_ed25519;
-			break;
-		default:
-			bad_case(authby);
-		}
-		name_buf ana;
-		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
-		     str_enum_long(&auth_names, authby, &ana),
-		     signer->name);
-		ike->sa.st_v2_digsig.signer = signer;
-
-		return submit_v2_IKE_AUTH_request_signature(ike, md,
-							    &ike->sa.st_v2_id_payload,
-							    ike->sa.st_v2_digsig.hash,
-							    ike->sa.st_v2_digsig.signer,
-							    cb);
-
-	case IKEv2_AUTH_SHARED_KEY_MAC:
-	case IKEv2_AUTH_NULL:
-	{
-		struct crypt_mac signed_octets = empty_mac;
-		diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE,
-						       /*accumulated EAP hash*/NULL,
-						       ike, authby,
-						       &ike->sa.st_v2_id_payload.mac,
-						       &signed_octets);
-		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return STF_FATAL;
-		}
-
-		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
-		}
-
-		struct hash_signature signed_signature = {
-			.len = signed_octets.len,
-		};
-		PASSERT(ike->sa.logger, sizeof(signed_signature.ptr) >= sizeof(signed_octets.ptr));
-		memcpy_hunk(signed_signature.ptr, signed_octets, signed_octets.len);
-
-		return cb(ike, md, &signed_signature);
+		return true;
 	}
 
 	default:
@@ -1044,7 +996,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			"authentication method %s not supported",
 			str_enum_long(&ikev2_auth_method_names,
 				      ike->sa.st_v2_local_auth.method, &eb));
-		return STF_FATAL;
+		return false;
 	}
 	}
 
@@ -1206,11 +1158,11 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 		};
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 		return (struct authby) {
-			.authby_psk = true,
+			AUTHBY_PSK,
 		};
 	case IKEv2_AUTH_NULL:
 		return (struct authby) {
-			.authby_null = true,
+			AUTHBY_NULL,
 		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		return (struct authby) {

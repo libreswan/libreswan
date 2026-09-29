@@ -1,7 +1,7 @@
 nft list ruleset
-ipsec auto --up westnet-eastnet-nflog
+ipsec up westnet-eastnet-nflog # sanitize-retransmits
 nft list ruleset
-ipsec auto --up west-east-nflog
+ipsec up west-east-nflog # sanitize-retransmits
 nft list ruleset
 
 # suppress job monitoring; specify packet count
@@ -12,9 +12,9 @@ nft list ruleset
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 
-ipsec auto --down westnet-eastnet-nflog
+ipsec down westnet-eastnet-nflog # sanitize-retransmits
 nft list ruleset
-ipsec auto --down west-east-nflog
+ipsec down west-east-nflog # sanitize-retransmits
 nft list ruleset
 
 # wait for count to reach tcpdump then dump it

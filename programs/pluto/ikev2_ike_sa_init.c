@@ -339,6 +339,11 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		release_whack(ike->sa.logger, HERE);
 	}
 
+	/*
+	 * XXX: this attempt to prefetch the IPSEC key during
+	 * IKE_SA_INIT is pretty dodgy.  A connswitch can happen
+	 * during IKE_AUTH, making it a wrong decision.
+	 */
 	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
 		/*
 		 * This submits a background task?  How is it ever
@@ -346,6 +351,10 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		 *
 		 * The value returned (the PUBKEY) is required during
 		 * IKE AUTH.
+		 *
+		 * XXX: A second request for (hopefully) the same
+		 * IPSEC key will be made during IKE AUTH.  If DNS
+		 * hasn't finished that request will block.
 		 */
 		if (!initiator_fetch_idr_ipseckey(ike)) {
 			llog_sa(RC_LOG, ike,
@@ -428,11 +437,11 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
 		return false;
 	}
 
-	if (!emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_256) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_384) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_sha2_512) ||
-	    !emit_hash(&n_pbs, supported_authby, &ike_alg_hash_identity)) {
-		return false;
+	for (const struct hash_desc **hashp = next_hash_desc(NULL);
+	     hashp != NULL; hashp = next_hash_desc(hashp)) {
+		if (!emit_hash(&n_pbs, supported_authby, *hashp)) {
+			return false;
+		}
 	}
 
 	close_pbs_out(&n_pbs);

@@ -1,6 +1,6 @@
 # show nflog global ipsec-all rules
 nft list ruleset
-ipsec auto --up westnet-eastnet-ikev2
+ipsec up westnet-eastnet-ikev2 # sanitize-retransmits
 
 # suppress job monitoring; specify packet count
 ../../guestbin/tcpdump.sh --start -c 4 -i nflog:50

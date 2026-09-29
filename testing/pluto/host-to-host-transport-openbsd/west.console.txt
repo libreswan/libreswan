@@ -73,14 +73,16 @@ west #
 @0 flow esp in from 192.1.2.23 to 192.1.2.45 local 192.1.2.45 peer 192.1.2.23 type require
 @1 flow esp out from 192.1.2.45 to 192.1.2.23 local 192.1.2.45 peer 192.1.2.23 type require
 west #
- ../../guestbin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23 # east
 up
 west #
  ipsec down west-east
 "west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west-east" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east" #2: ESP traffic information: in=68B out=64B
+"west-east" #2: ESP traffic information: in=136B out=128B
 "west-east" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec _kernel state
+west #
+ ipsec _kernel policy
 west #

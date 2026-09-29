@@ -1,10 +1,9 @@
 #!/bin/sh
 ../../guestbin/ping-once.sh --up 192.1.2.23
-ipsec auto --up road-east-x509-ipv4
+ipsec up road-east-x509-ipv4 # sanitize-retransmits
 ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
-ipsec whack --trafficstatus
-# east's rekey is 50s, margin 10s
-sleep 40
+ipsec trafficstatus
+
 # wait for both rekey, ...
 ../../guestbin/wait-for-pluto.sh '^".*#3: responder rekeyed IKE SA #1'
 # and delete, ...

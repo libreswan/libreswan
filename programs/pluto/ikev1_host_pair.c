@@ -129,29 +129,24 @@ static bool match_v1_connection(const struct connection *c,
 	 *
 	 * Order matters.  First match, be it RSA or PSK is accepted.
 	 */
-	switch (c->remote->host.config->auth) {
-	case AUTH_RSASIG:
+	if (c->remote->host.config->authby.authby_rsasig_raw) {
 		if (!hpc->authby.rsasig) {
 			ldbg(logger, "  skipping %s, RSASIG was not proposed",
 			     c->name);
 			return false;
 		}
-		break;
-	case AUTH_PSK:
+	} else if (c->remote->host.config->authby.authby_psk) {
 		if (!hpc->authby.psk) {
 			ldbg(logger, "  skipping %s, PSK was not proposed",
 			     c->name);
 			return false;
 		}
-		break;
-	default:
-	{
-		name_buf eb;
+	} else {
+		authby_buf abb;
 		ldbg(logger, "  skipping %s, %s is never proposed",
 		     c->name,
-		     str_enum_long(&auth_names, c->remote->host.config->auth, &eb));
+		     str_authby(c->remote->host.config->authby, &abb));
 		return false;
-	}
 	}
 
 	return true;

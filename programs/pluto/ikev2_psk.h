@@ -18,7 +18,9 @@
 #define IKEV2_PSK_H
 
 #include <stdbool.h>
-#include <chunk.h>
+
+#include "chunk.h"
+#include "psk_auth_method.h"
 
 enum auth;
 struct ike_sa;
@@ -27,20 +29,20 @@ struct pbs_in;
 struct hash_signature;
 enum perspective;
 
-diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
+diag_t ikev2_calculate_psk_sighash(enum psk_auth_method method,
+				   enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
-				   enum auth authby,
 				   const struct crypt_mac *idhash,
 				   struct crypt_mac *sighash);
 
-diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
+diag_t verify_v2AUTH_and_log_using_psk(enum psk_auth_method method,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
 				       const struct hash_signature *auth_sig);
 
-bool ikev2_create_psk_auth(enum auth authby,
+bool ikev2_create_psk_auth(enum psk_auth_method method,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */);

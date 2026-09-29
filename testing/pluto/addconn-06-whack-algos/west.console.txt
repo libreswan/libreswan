@@ -28,12 +28,12 @@ west #
 "whack--defaults":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 west #
  ipsec connectionstatus | grep "hash-policy:" | grep rsasig
-"parser---rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"whack----rsasig":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"parser---rsasig":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
+"whack----rsasig":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 west #
  ipsec connectionstatus | grep "hash-policy:" | grep defaults
-"parser-defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"whack--defaults":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"parser-defaults":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
+"whack--defaults":   v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
 west #
  ipsec connectionstatus | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
 IKEv2

@@ -20,7 +20,7 @@ east #
 east #
  # give OE policies time to load
 east #
- ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec status
 Total IPsec connections: loaded 11, routed 6, active 0
 east #
  echo "initdone"

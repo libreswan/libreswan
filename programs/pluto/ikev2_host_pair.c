@@ -395,7 +395,7 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 		{ .psk = true, },
 		{ .null = true, },
 		{ .never = true, },
-		{ .authby_eaponly = true, },
+		{ AUTHBY_EAPONLY, },
 	};
 
 	struct connection *c = NULL;

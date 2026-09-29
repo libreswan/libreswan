@@ -36,6 +36,7 @@
 #include "refcnt.h"
 #include "crypt_mac.h"
 #include "ike_alg.h"		/* for HASH_ALGORITHM_IDENTIFIER */
+#include "authby.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -225,6 +226,7 @@ struct pubkey_type {
 struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
+	struct authby authby; /* bits it can authenticate */
 	const struct pubkey_type *type;
 	struct hash_signature (*sign_message)(const struct pubkey_signer *signer,
 					      const struct secret_pubkey_stuff *pks,

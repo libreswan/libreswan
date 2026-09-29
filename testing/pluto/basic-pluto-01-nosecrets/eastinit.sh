@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --hostkeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet
-ipsec auto --status
+ipsec add westnet-eastnet
+ipsec status
 echo "initdone"

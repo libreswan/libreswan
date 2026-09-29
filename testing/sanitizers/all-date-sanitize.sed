@@ -10,3 +10,4 @@ s/\(Jan\|Feb\|Mar\|Apr\|May\|Jun\|Jul\|Aug\|Sep\|Oct\|Nov\|Dec\) .. ..:..:.. 20.
 s/expires in [0-9]* days/expires in X days/g
 # lie!
 s/expires in [0-9]* hours/expires in X days/g
+/^.*not reset as customized by admin.*$/d
