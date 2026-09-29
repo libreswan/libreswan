@@ -59,8 +59,27 @@ endif
 	$(PKI) end: other       otherca          'othereast otherwest'                1 1 1 / digitalSignature  /
 	: # Use the (broken) CA with BC=n to sign a cert
 	$(PKI) end: broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
-	: # generate intermediate et.al. certs
-	$(PKI)
+	: #
+	: # Generate certificate chains
+	: #
+	: #    SUBDIR CA CERT ADD_SAN ADD_OCSP ADD_CRL BC KU EKU PARAM
+	: #
+	: # correct certificate chain
+	$(PKI) cert: real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
+	: # Cert chain with intermediate BC CA=Y missing
+	$(PKI) cert: real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
+	$(PKI) cert: real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
+	: # Cert for SUPPORTED_AUTH_METHODS tests
+	$(PKI) cert: real/mainca        mainca               rsa-east                   1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainca        mainca               rsa-west                   1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainec        mainec               ecdsa-east                 1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainec        mainec               ecdsa-west                 1 1 1 /  digitalSignature      /
+	:
 	$(overrides) ./bin/crl.sh $(X509DIR)
 	$(overrides) ./bin/selfsigned.sh $(X509DIR)/selfsigned
 

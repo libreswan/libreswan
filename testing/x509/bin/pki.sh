@@ -445,32 +445,22 @@ generate_end_certs()
     done
 }
 
-# XXX: should be at end of file, later
-
-if test $# -gt 0 ; then
-    case $1 in
-	root: )
-	    shift
-	    generate_root_certs "$@"
-	    exit $?
-	    ;;
-	end: )
-	    shift
-	    generate_end_certs "$@"
-	    exit $?
-	    ;;
-    esac
-fi
-
 :
 : Generate a multi-level certificate chain
 :
 
-while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
-
-    case "${subdir}" in
-	'#'* ) continue ;;
-    esac
+generate_cert_chain()
+{
+    local subdir="$1" ; shift
+    local ca="$1" ; shift
+    local cert="$1" ; shift
+    local add_san="$1" ; shift
+    local add_ocsp="$1" ; shift
+    local add_crl="$1" ; shift
+    local bc="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@"
 
     certdir=${OUTDIR}/${subdir}
     log=${certdir}/${cert}.log
@@ -486,21 +476,24 @@ while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 	cat ${log}
 	exit 1
     fi
+}
 
-done <<EOF
-# correct certificate chain
-real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
-real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
-real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
-real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
-real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
-real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
-# Cert chain with intermediate BC CA=Y missing
-real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
-real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
-# Cert for SUPPORTED_AUTH_METHODS tests
-real/mainca        mainca           rsa-east                   1 1 1 / digitalSignature  /
-real/mainca        mainca           rsa-west                  1 1 1 / digitalSignature  /
-real/mainec        mainec           ecdsa-east                1 1 1 / digitalSignature  /
-real/mainec        mainec           ecdsa-west                1 1 1 / digitalSignature  /
-EOF
+if test $# -gt 0 ; then
+    case $1 in
+	root: )
+	    shift
+	    generate_root_certs "$@"
+	    exit $?
+	    ;;
+	end: )
+	    shift
+	    generate_end_certs "$@"
+	    exit $?
+	    ;;
+	cert: )
+	    shift
+	    generate_cert_chain "$@"
+	    exit $?
+	    ;;
+    esac
+fi
