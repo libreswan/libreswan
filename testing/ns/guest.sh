@@ -69,6 +69,7 @@ RUN mkdir -p "${nsdir}"
 RM_BIND run.nsd /run/nsd
 RM_BIND etc.strongswan /etc/strongswan
 RM_BIND nss /var/lib/ipsec/nss
+RM_BIND softhsm /var/lib/softhsm/tokens
 
 # bind and rebuild OCSPD's directory
 RM_BIND etc.ocspd /etc/ocspd
