@@ -38,6 +38,27 @@ endif
 	$(PKI) root: other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 	: # broken root CA, ca not be used to verify
 	$(PKI) root: broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+	: #
+	: # Generate end certs that are needed.
+	: #
+	: #    DIRs CAs CERTs ADD_SAN ADD_OCSP ADD_CRL BC KU EKU PARAM
+	: #
+	$(PKI) end: 'real fake' 'mainca mainec'  nic                                  1 1 1 / digitalSignature  ocspResponder
+	$(PKI) end: 'real fake' 'mainca mainec'  'east west road north rise set'      1 1 1 / digitalSignature  /
+ifeq ($(USE_EDDSA),true)
+	$(PKI) end: real        mained           'east west road north rise set'      1 1 1 / digitalSignature  /
+endif
+	$(PKI) end: real        mainca           revoked                              1 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
+	$(PKI) end: real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096
+	$(PKI) end: real        mainca           'east-nosan west-nosan'              0 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           semiroad                             1 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
+	: # Embed a comma in the user's email address
+	$(PKI) end: real        mainca           comma,                               1 0 0 / digitalSignature  /
+	$(PKI) end: other       otherca          'othereast otherwest'                1 1 1 / digitalSignature  /
+	: # Use the (broken) CA with BC=n to sign a cert
+	$(PKI) end: broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 	: # generate intermediate et.al. certs
 	$(PKI)
 	$(overrides) ./bin/crl.sh $(X509DIR)

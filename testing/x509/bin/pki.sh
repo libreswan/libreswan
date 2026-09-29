@@ -276,17 +276,6 @@ generate_root_certs()
     done
 }
 
-# XXX: should be at end of file, later
-
-if test $# -gt 0 ; then
-    case $1 in
-	root: )
-	    shift
-	    generate_root_certs "$@"
-	    exit $?
-    esac
-fi
-
 #
 
 east_ipv4=192.1.2.23
@@ -302,6 +291,7 @@ generate_cert()
 (
     set -x
 
+    echo 1>&3
     echo "generating certificate: $@" 1>&3
     echo 1>&3
 
@@ -419,15 +409,22 @@ generate_cert()
 : Generate end certs that are needed.
 :
 
-while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
+generate_end_certs()
+{
+    local dirs="$1" ; shift
+    local cas="$1" ; shift
+    local certs="$1" ; shift
+    local add_san="$1" ; shift
+    local add_ocsp="$1" ; shift
+    local add_crl="$1" ; shift
+    local bc="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@"
 
-    case "${dirs}" in
-	'#'* ) continue ;;
-    esac
-
-    for dir in $(eval echo ${dirs}) ; do
-	for ca in $(eval echo ${cas}) ; do
-	    for cert in $(eval echo ${certs}) ; do
+    for dir in ${dirs} ; do
+	for ca in ${cas} ; do
+	    for cert in ${certs} ; do
 		certdir=${OUTDIR}/${dir}/${ca}
 		log=${certdir}/${cert}.log
 		user=user-${cert}
@@ -446,23 +443,24 @@ while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
 	    done
 	done
     done
-done <<EOF
-{real,fake} {mainca,mainec}  nic                                  1 1 1 / digitalSignature  ocspResponder
-{real,fake} {mainca,mainec}  {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
-#real        mained           {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
-real        mainca           revoked                              1 1 1 / digitalSignature  /
-real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
-real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096
-real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
-real        mainca           semiroad                             1 1 1 / digitalSignature  /
-real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
-# Embed a comma in the user's email address
-real        mainca           comma,                               1 0 0 / digitalSignature  /
-other       otherca          other{east,west}                     1 1 1 / digitalSignature  /
-# Use the (broken) CA with BC=n to sign a cert
-broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
-EOF
+}
 
+# XXX: should be at end of file, later
+
+if test $# -gt 0 ; then
+    case $1 in
+	root: )
+	    shift
+	    generate_root_certs "$@"
+	    exit $?
+	    ;;
+	end: )
+	    shift
+	    generate_end_certs "$@"
+	    exit $?
+	    ;;
+    esac
+fi
 
 :
 : Generate a multi-level certificate chain
