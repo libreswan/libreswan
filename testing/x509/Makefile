@@ -21,9 +21,25 @@ overrides += CERTUTIL=$(CERTUTIL)
 overrides += PK12UTIL=$(PK12UTIL)
 overrides += CRLUTIL=$(CRLUTIL)
 
+PKI = $(overrides) ./bin/pki.sh $(X509DIR)
+
 .PHONY: all
 all:
-	$(overrides) ./bin/pki.sh $(X509DIR)
+	: #
+	: # Generate root certificates
+	: #
+	: #   DIRs CAs DOMAIN IS_CA KU EKU=/ PARAM...
+	: #
+	$(PKI) root: 'real fake'   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+	$(PKI) root: 'real fake'   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+ifeq ($(USE_EDDSA),true)
+	$(PKI) root: real          mained   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ed
+endif
+	$(PKI) root: other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+	: # broken root CA, ca not be used to verify
+	$(PKI) root: broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+	: # generate intermediate et.al. certs
+	$(PKI)
 	$(overrides) ./bin/crl.sh $(X509DIR)
 	$(overrides) ./bin/selfsigned.sh $(X509DIR)/selfsigned
 

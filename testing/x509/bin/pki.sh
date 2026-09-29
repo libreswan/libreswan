@@ -15,7 +15,8 @@ EOF
 	exit 1
 fi
 
-DIR=$1
+DIR=$1 ; shift
+
 NOISE_FILE=$0
 
 # the certificate is valid for 13 months fom now ?
@@ -26,19 +27,8 @@ NOW_OFFSET_MONTHS=-11
 NR_INT_CERTS=0
 NR_END_CERTS=0
 
-:
-: clean up
-:
-
 OUTDIR=${DIR}/pki
 mkdir -p ${OUTDIR}
-rm -rf ${OUTDIR}/*
-
-for d in real fake bc-n-ca otherca ; do
-    rm -rf ${DIR}/${d}
-    mkdir -p ${OUTDIR}/${d}
-done
-
 
 :
 : load the password
@@ -172,7 +162,7 @@ log_cert()
     printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 }
 
-generate_root_ca()
+generate_root_cert()
 (
     set -x
 
@@ -198,6 +188,7 @@ generate_root_ca()
     local serial=$(serial ${certdir})
     echo "${serial}" > ${certdir}/${cert}.serial
     echo ${serial} > ${certdir}/root.serial
+    echo " serial=${serial}" 1>&3
 
     # NSS expects subject to be orderd local,..,global (per RFCs) and
     # not global,..,local per OpenSSL.
@@ -244,6 +235,59 @@ generate_root_ca()
 
     log_cert ${certdir} ${cert}
 )
+
+generate_root_certs()
+{
+    local dirs="$1" ; shift
+    local cas="$1" ; shift
+    local domain="$1" ; shift
+    local is_ca="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@" ; shift
+
+    for dir in ${dirs} ; do
+	for ca in ${cas} ; do
+
+	    echo creating cert directory: ${dir} ${ca} ${domain} ${is_ca} ${param} 1>&2
+
+	    certdir=${OUTDIR}/${dir}/${ca}
+	    mkdir -p ${certdir}
+
+	    # configure NSS
+
+	    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
+
+	    # configure root certificate
+
+	    echo 1           > ${certdir}/serial	# next
+	    echo "${param}"  > ${certdir}/param
+	    echo "${domain}" > ${certdir}/domain
+
+	    # generate root certificate
+
+	    log=${certdir}/root.log
+	    if ! generate_root_cert ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+
+	done
+    done
+}
+
+# XXX: should be at end of file, later
+
+if test $# -gt 0 ; then
+    case $1 in
+	root: )
+	    shift
+	    generate_root_certs "$@"
+	    exit $?
+    esac
+fi
+
+#
 
 east_ipv4=192.1.2.23
 east_ipv6=2001:db8:1:2::23
@@ -370,54 +414,6 @@ generate_cert()
 
     log_cert ${certdir} ${cert}
 )
-
-# generate ca directories
-
-while read dirs cas domain is_ca ku eku param ; do
-
-    case "${dirs}" in
-	'#'* ) continue ;;
-    esac
-
-    for dir in $(eval echo ${dirs}) ; do
-	for ca in $(eval echo ${cas}) ; do
-
-	    echo creating cert directory: ${dir} ${ca} ${domain} ${is_ca} ${param} 1>&2
-
-	    certdir=${OUTDIR}/${dir}/${ca}
-	    mkdir -p ${certdir}
-
-	    # configure NSS
-
-	    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
-
-	    # configure root certificate
-
-	    echo 1           > ${certdir}/serial	# next
-	    echo "${param}"  > ${certdir}/param
-	    echo "${domain}" > ${certdir}/domain
-
-	    # generate root certificate
-
-	    log=${certdir}/root.log
-	    if ! generate_root_ca ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-
-	done
-    done
-
-    # DIRs CAs DOMAIN IS_CA KU EKU=/ PARAM...
-done <<EOF
-{real,fake}   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-{real,fake}   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-#real          mained   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ed
-other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-# broken root CA, can't be used to verify
-broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
-EOF
-
 
 :
 : Generate end certs that are needed.
