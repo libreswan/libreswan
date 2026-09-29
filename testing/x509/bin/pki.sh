@@ -8,49 +8,27 @@ CERTUTIL=${certutil:-${CERTUTIL}}
 PK12UTIL=${pk12util:-${PK12UTIL}}
 CRLUTIL=${crlutil:-${CRLUTIL}}
 
-case $# in
-    1 )
-	DIR=$1
-	NR_INT_CERTS=0
-	NR_END_CERTS=0
-	;;
-    2 )
-	DIR=$1
-	NR_INT_CERTS=1
-	NR_END_CERTS=$2
-	;;
-    3 )
-	DIR=$1
-	NR_INT_CERTS=$2
-	NR_END_CERTS=$3
-	;;
-    * )
-	cat <<EOF 1>&2
-Usage: $0 <outdir> [ [ <nr-int-certs=1> ] <nr-end-certs=0> ]
+if test $# -lt 1 ; then
+    cat <<EOF 1>&2
+Usage: $0 <outdir>
 EOF
 	exit 1
-	;;
-esac
+fi
+
+DIR=$1 ; shift
 
 NOISE_FILE=$0
+
+# the certificate is valid for 13 months fom now ?
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-# the certificate is valid for 13 months fom now ?
 
-
-:
-: clean up
-:
+# tweak these to generate lots of certs
+NR_INT_CERTS=0
+NR_END_CERTS=0
 
 OUTDIR=${DIR}/pki
 mkdir -p ${OUTDIR}
-rm -rf ${OUTDIR}/*
-
-for d in real fake bc-n-ca otherca ; do
-    rm -rf ${DIR}/${d}
-    mkdir -p ${OUTDIR}/${d}
-done
-
 
 :
 : load the password
@@ -184,7 +162,7 @@ log_cert()
     printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 }
 
-generate_root_ca()
+generate_root_cert()
 (
     set -x
 
@@ -210,6 +188,7 @@ generate_root_ca()
     local serial=$(serial ${certdir})
     echo "${serial}" > ${certdir}/${cert}.serial
     echo ${serial} > ${certdir}/root.serial
+    echo " serial=${serial}" 1>&3
 
     # NSS expects subject to be orderd local,..,global (per RFCs) and
     # not global,..,local per OpenSSL.
@@ -257,6 +236,48 @@ generate_root_ca()
     log_cert ${certdir} ${cert}
 )
 
+generate_root_certs()
+{
+    local dirs="$1" ; shift
+    local cas="$1" ; shift
+    local domain="$1" ; shift
+    local is_ca="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@" ; shift
+
+    for dir in ${dirs} ; do
+	for ca in ${cas} ; do
+
+	    echo creating cert directory: ${dir} ${ca} ${domain} ${is_ca} ${param} 1>&2
+
+	    certdir=${OUTDIR}/${dir}/${ca}
+	    mkdir -p ${certdir}
+
+	    # configure NSS
+
+	    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
+
+	    # configure root certificate
+
+	    echo 1           > ${certdir}/serial	# next
+	    echo "${param}"  > ${certdir}/param
+	    echo "${domain}" > ${certdir}/domain
+
+	    # generate root certificate
+
+	    log=${certdir}/root.log
+	    if ! generate_root_cert ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+
+	done
+    done
+}
+
+#
+
 east_ipv4=192.1.2.23
 east_ipv6=2001:db8:1:2::23
 
@@ -270,6 +291,7 @@ generate_cert()
 (
     set -x
 
+    echo 1>&3
     echo "generating certificate: $@" 1>&3
     echo 1>&3
 
@@ -383,127 +405,26 @@ generate_cert()
     log_cert ${certdir} ${cert}
 )
 
-# generate ca directories
-
-while read dirs cas domain is_ca ku eku param ; do
-
-    case "${dirs}" in
-	'#'* ) continue ;;
-    esac
-
-    for dir in $(eval echo ${dirs}) ; do
-	for ca in $(eval echo ${cas}) ; do
-
-	    echo creating cert directory: ${dir} ${ca} ${domain} ${is_ca} ${param} 1>&2
-
-	    certdir=${OUTDIR}/${dir}/${ca}
-	    mkdir -p ${certdir}
-
-	    # configure NSS
-
-	    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
-
-	    # configure root certificate
-
-	    echo 1           > ${certdir}/serial	# next
-	    echo "${param}"  > ${certdir}/param
-	    echo "${domain}" > ${certdir}/domain
-
-	    # generate root certificate
-
-	    log=${certdir}/root.log
-	    if ! generate_root_ca ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-
-	done
-    done
-
-    # DIRs CAs DOMAIN IS_CA KU EKU=/ PARAM...
-done <<EOF
-{real,fake}   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-{real,fake}   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-#real          mained   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ed
-other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
-# broken root CA, can't be used to verify
-broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
-EOF
-
-
-:
-: Generate many man certs, when requested
-:
-
-int=-1
-while int=$((int + 1)) ; test ${int} -lt ${NR_INT_CERTS} ; do
-
-    dir=real
-    ca=mainca
-    cert=$(printf "int-%03d" ${int})
-    add_san=1
-    add_ocsp=1
-    add_crl=1
-    bc=Y
-    ku=certSigning,critical
-    eku=/
-    param=
-
-    certdir=${OUTDIR}/${dir}/${ca}
-
-    log=${certdir}/${cert}.log
-    user=${cert}
-
-    if generate_cert \
-	   ${certdir} ${ca} ${cert} ${user} \
-	   ${add_san} ${add_ocsp} ${add_crl} \
-	   ${bc} ${ku} ${eku} ${param} \
-	   > ${log} 2>&1 ; then
-	:
-    else
-	cat ${log}
-	exit 1
-    fi
-
-    ca=${cert}
-
-    end=-1
-    while end=$((end + 1)) ; test ${end} -lt ${NR_END_CERTS} ; do
-
-	cert=$(printf "end-%03d-%03d" ${int} ${end})
-	bc=/
-	ku=digitalSignature
-
-	log=${certdir}/${cert}.log
-	user=${cert}
-
-	if generate_cert \
-	       ${certdir} ${ca} ${cert} ${user} \
-	       ${add_san} ${add_ocsp} ${add_crl} \
-	       ${bc} ${ku} ${eku} ${param} \
-	       > ${log} 2>&1 ; then
-	    :
-	else
-	    cat ${log}
-	    exit 1
-	fi
-    done
-
-done
-
 :
 : Generate end certs that are needed.
 :
 
-while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
+generate_end_certs()
+{
+    local dirs="$1" ; shift
+    local cas="$1" ; shift
+    local certs="$1" ; shift
+    local add_san="$1" ; shift
+    local add_ocsp="$1" ; shift
+    local add_crl="$1" ; shift
+    local bc="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@"
 
-    case "${dirs}" in
-	'#'* ) continue ;;
-    esac
-
-    for dir in $(eval echo ${dirs}) ; do
-	for ca in $(eval echo ${cas}) ; do
-	    for cert in $(eval echo ${certs}) ; do
+    for dir in ${dirs} ; do
+	for ca in ${cas} ; do
+	    for cert in ${certs} ; do
 		certdir=${OUTDIR}/${dir}/${ca}
 		log=${certdir}/${cert}.log
 		user=user-${cert}
@@ -522,33 +443,24 @@ while read dirs cas certs add_san add_ocsp add_crl bc ku eku param ; do
 	    done
 	done
     done
-done <<EOF
-{real,fake} {mainca,mainec}  nic                                  1 1 1 / digitalSignature  ocspResponder
-{real,fake} {mainca,mainec}  {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
-#real        mained           {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
-real        mainca           revoked                              1 1 1 / digitalSignature  /
-real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
-real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096
-real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
-real        mainca           semiroad                             1 1 1 / digitalSignature  /
-real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
-# Embed a comma in the user's email address
-real        mainca           comma,                               1 0 0 / digitalSignature  /
-other       otherca          other{east,west}                     1 1 1 / digitalSignature  /
-# Use the (broken) CA with BC=n to sign a cert
-broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
-EOF
-
+}
 
 :
 : Generate a multi-level certificate chain
 :
 
-while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
-
-    case "${subdir}" in
-	'#'* ) continue ;;
-    esac
+generate_cert_chain()
+{
+    local subdir="$1" ; shift
+    local ca="$1" ; shift
+    local cert="$1" ; shift
+    local add_san="$1" ; shift
+    local add_ocsp="$1" ; shift
+    local add_crl="$1" ; shift
+    local bc="$1" ; shift
+    local ku="$1" ; shift
+    local eku="$1" ; shift
+    local param="$@"
 
     certdir=${OUTDIR}/${subdir}
     log=${certdir}/${cert}.log
@@ -564,21 +476,24 @@ while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 	cat ${log}
 	exit 1
     fi
+}
 
-done <<EOF
-# correct certificate chain
-real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
-real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
-real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
-real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
-real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
-real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
-# Cert chain with intermediate BC CA=Y missing
-real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
-real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
-# Cert for SUPPORTED_AUTH_METHODS tests
-real/mainca        mainca           rsa-east                   1 1 1 / digitalSignature  /
-real/mainca        mainca           rsa-west                  1 1 1 / digitalSignature  /
-real/mainec        mainec           ecdsa-east                1 1 1 / digitalSignature  /
-real/mainec        mainec           ecdsa-west                1 1 1 / digitalSignature  /
-EOF
+if test $# -gt 0 ; then
+    case $1 in
+	root: )
+	    shift
+	    generate_root_certs "$@"
+	    exit $?
+	    ;;
+	end: )
+	    shift
+	    generate_end_certs "$@"
+	    exit $?
+	    ;;
+	cert: )
+	    shift
+	    generate_cert_chain "$@"
+	    exit $?
+	    ;;
+    esac
+fi

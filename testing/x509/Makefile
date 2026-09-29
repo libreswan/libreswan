@@ -21,9 +21,65 @@ overrides += CERTUTIL=$(CERTUTIL)
 overrides += PK12UTIL=$(PK12UTIL)
 overrides += CRLUTIL=$(CRLUTIL)
 
+PKI = $(overrides) ./bin/pki.sh $(X509DIR)
+
 .PHONY: all
 all:
-	$(overrides) ./bin/pki.sh $(X509DIR)
+	: #
+	: # Generate root certificates
+	: #
+	: #   DIRs CAs DOMAIN IS_CA KU EKU=/ PARAM...
+	: #
+	$(PKI) root: 'real fake'   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+	$(PKI) root: 'real fake'   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+ifeq ($(USE_EDDSA),true)
+	$(PKI) root: real          mained   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ed
+endif
+	$(PKI) root: other         otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+	: # broken root CA, ca not be used to verify
+	$(PKI) root: broken        bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+	: #
+	: # Generate end certs that are needed.
+	: #
+	: #    DIRs CAs CERTs ADD_SAN ADD_OCSP ADD_CRL BC KU EKU PARAM
+	: #
+	$(PKI) end: 'real fake' 'mainca mainec'  nic                                  1 1 1 / digitalSignature  ocspResponder
+	$(PKI) end: 'real fake' 'mainca mainec'  'east west road north rise set'      1 1 1 / digitalSignature  /
+ifeq ($(USE_EDDSA),true)
+	$(PKI) end: real        mained           'east west road north rise set'      1 1 1 / digitalSignature  /
+endif
+	$(PKI) end: real        mainca           revoked                              1 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
+	$(PKI) end: real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096
+	$(PKI) end: real        mainca           'east-nosan west-nosan'              0 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           semiroad                             1 1 1 / digitalSignature  /
+	$(PKI) end: real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
+	: # Embed a comma in the user's email address
+	$(PKI) end: real        mainca           comma,                               1 0 0 / digitalSignature  /
+	$(PKI) end: other       otherca          'othereast otherwest'                1 1 1 / digitalSignature  /
+	: # Use the (broken) CA with BC=n to sign a cert
+	$(PKI) end: broken      bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
+	: #
+	: # Generate certificate chains
+	: #
+	: #    SUBDIR CA CERT ADD_SAN ADD_OCSP ADD_CRL BC KU EKU PARAM
+	: #
+	: # correct certificate chain
+	$(PKI) cert: real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
+	$(PKI) cert: real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
+	: # Cert chain with intermediate BC CA=Y missing
+	$(PKI) cert: real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
+	$(PKI) cert: real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
+	: # Cert for SUPPORTED_AUTH_METHODS tests
+	$(PKI) cert: real/mainca        mainca               rsa-east                   1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainca        mainca               rsa-west                   1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainec        mainec               ecdsa-east                 1 1 1 /  digitalSignature      /
+	$(PKI) cert: real/mainec        mainec               ecdsa-west                 1 1 1 /  digitalSignature      /
+	:
 	$(overrides) ./bin/crl.sh $(X509DIR)
 	$(overrides) ./bin/selfsigned.sh $(X509DIR)/selfsigned
 
