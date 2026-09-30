@@ -399,7 +399,32 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			st = NULL;
 		} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* note: no md->st to clear */
-			submit_v2_delete_exchange(ike, pexpect_child_sa(st));
+			struct child_sa *child = pexpect_child_sa(st);
+			submit_v2_delete_exchange(ike, child);
+
+			/* If this is an Initial SA, also delete its Additional SAs (RFC 9611) */
+			if (child != NULL &&
+			    child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
+			    child->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE) {
+				struct state_filter sf = {
+					.connection_serialno = child->sa.st_connection->serialno,
+					.search = {
+						.order = NEW2OLD,
+						.where = HERE,
+					},
+				};
+				while (next_state(&sf)) {
+					struct child_sa *additional = IS_CHILD_SA(sf.st) ? pexpect_child_sa(sf.st) : NULL;
+					if (additional != NULL &&
+					    additional->sa.st_v2_resource_info.initial_sa == child->sa.st_serialno) {
+						llog(RC_LOG, child->sa.logger,
+							"deleting Additional Child SA (cpu_id=%u) associated with this Initial SA",
+							additional->sa.st_v2_resource_info.cpu_id);
+						submit_v2_delete_exchange(ike, additional);
+					}
+				}
+			}
+
 			st = NULL;
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
