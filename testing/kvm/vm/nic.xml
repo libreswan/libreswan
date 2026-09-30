@@ -79,4 +79,6 @@
     <label>@@KVM_UID@@:@@KVM_GID@@</label>
     <imagelabel>@@KVM_UID@@:@@KVM_GID@@</imagelabel>
   </seclabel>
+  <!-- disable SELinux MCS separation; test VMs share a backing image -->
+  <seclabel type='none' model='selinux'/>
 </domain>
