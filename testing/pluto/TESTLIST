@@ -283,6 +283,7 @@ kvmplutotest	ikev2-68-sa-clones-auto-route		skiptest
 kvmplutotest	ikev2-70-src-address-selection		good
 kvmplutotest	ikev2-71-cp-resolve-name		good
 kvmplutotest 	ikev2-72-cp-resolve-both		good
+kvmplutotest	ikev2-73-sa-clones-smoke		good
 
 kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
 kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
