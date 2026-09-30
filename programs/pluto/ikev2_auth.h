@@ -92,7 +92,4 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike, const char *why,
 struct authby proposed_v2AUTH(struct ike_sa *ike, struct msg_digest *md);
 struct authby local_v2_authby(struct ike_sa *ike);
 
-struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
-               struct ike_sa *ike,
-               const struct msg_digest *md);
 #endif

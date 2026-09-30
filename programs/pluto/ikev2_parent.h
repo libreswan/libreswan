@@ -45,6 +45,7 @@ struct child_sa;
 struct ke_desc;
 struct v2_message;
 struct state;
+struct connection;
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name);
@@ -60,5 +61,9 @@ void save_first_outbound_ikev2_packet(const char *why, struct ike_sa *ike,
 				      const struct v2_message *message);
 
 void jam_v2_ike_protection(struct jambuf *buf, struct ike_sa *ike);
+
+struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
+               struct ike_sa *ike,
+               const struct msg_digest *md);
 
 #endif
