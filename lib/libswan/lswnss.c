@@ -399,3 +399,45 @@ void seed_prng(struct logger *logger)
 	messupn(buf, seedbytes);
 	pfree(buf);
 }
+
+/*
+ * NSS public key policy check (RSA, DSA, ECC).
+ *
+ * Returns NULL when the key is acceptable, a rejection diag_t otherwise.
+ */
+diag_t enforce_nss_key_size_policy(SECKEYPublicKey *public_key)
+{
+	if (public_key == NULL) {
+		return diag("cannot enforce key-size policy: null public key");
+	}
+
+	/*
+	 * Skip check for edKey and ecMontKey.
+	 *
+	 * Those type has no minimum size in NSS and they fall through to
+	 * SECKEY_EnforceKeySize()'s default case which unconditionally returns
+	 * SECFailure.
+	 */
+	if (public_key->keyType == edKey || public_key->keyType == ecMontKey) {
+		return NULL;
+	}
+
+	/* Skip check if there is no policy. */
+	PRInt32 policy_flags;
+	if (NSS_OptionGet(NSS_KEY_SIZE_POLICY_FLAGS, &policy_flags) != SECSuccess) {
+		return NULL;
+	}
+
+	/* Skip check if it is not needed. */
+	if ((policy_flags & NSS_KEY_SIZE_POLICY_VERIFY_FLAG) == 0) {
+		return NULL;
+	}
+
+	unsigned key_size = SECKEY_PublicKeyStrengthInBits(public_key);
+	if (SECKEY_EnforceKeySize(public_key->keyType, key_size,
+				  SEC_ERROR_INVALID_KEY) != SECSuccess) {
+		return diag_nss_error("rejecting %u-bit key", key_size);
+	}
+
+	return NULL;
+}

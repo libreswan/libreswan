@@ -64,8 +64,6 @@ extern const struct sparse_names ikev2_option_names;
 #define IPSEC_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_day)
 #define FIPS_IPSEC_SA_LIFETIME_MAXIMUM deltatime_from_seconds(secs_per_hour * 8)
 
-#define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
-
 #define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
 
 /*
