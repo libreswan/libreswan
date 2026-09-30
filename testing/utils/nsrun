@@ -3062,8 +3062,9 @@ def ns_run_line_subprocess(cmd, f_log, prompt='', timeout=10):
         else:
             logger.info(l)
     except subprocess.CalledProcessError as e:
+        # CalledProcessError cannot happen as subprocess.run() is called without check=True?
         logger.error("ERROR CalledProcessError %s %s", cmd, e.output)
-        l = "CalledProcessError %s returned error %d" % (cmd, o.returncode)
+        l = "CalledProcessError %s returned error %d" % (cmd, e.returncode)
         if f_log:
             f_log.writelines(e.output + prompt)
             f_log.writelines(
