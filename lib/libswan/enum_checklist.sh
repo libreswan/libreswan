@@ -25,9 +25,9 @@ list()
     # wrapped in #ifdef MACRO.  Just the macro name is included.
     {
 	sed -n \
-	    -e "s/^extern ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	    -e "s/^extern ${names} \([a-z0-9_]*\);.* #ifdef \([A-Za-z0-9_]*\).*$/\1 \2/p" \
 	    -e "s/^extern ${names} \([a-z0-9_]*\);.*$/\1/p" \
-	    -e "s/^extern const struct ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	    -e "s/^extern const struct ${names} \([a-z0-9_]*\);.* #ifdef \([A-Za-z0-9_]*\).*$/\1 \2/p" \
 	    -e "s/^extern const struct ${names} \([a-z0-9_]*\);.*$/\1/p" \
 	    "$@"
     } | {

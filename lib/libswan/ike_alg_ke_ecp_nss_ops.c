@@ -224,8 +224,10 @@ static void nss_ecp_check(const struct ke_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->nss.ecp.oid > 0);
+#ifdef USE_IKEv1
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id > 0);
+#endif
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->initiator_bytes == kem->bytes);
 	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);

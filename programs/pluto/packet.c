@@ -80,7 +80,11 @@ static field_desc isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
 	{ ft_mnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_IN_BYTE, "ISAKMP version", &version_names },
+#ifdef USE_IKEv1
 	{ ft_enum, 8 / BITS_IN_BYTE, "exchange type", &isakmp_xchg_type_names },
+#else
+	{ ft_enum, 8 / BITS_IN_BYTE, "exchange type", &ikev2_exchange_names },
+#endif
 	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &isakmp_flag_names },
 	{ ft_nat, 32 / BITS_IN_BYTE, "Message ID", NULL },
 	{ ft_len, 32 / BITS_IN_BYTE, "length", NULL },
@@ -131,6 +135,7 @@ static field_desc isag_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
+#ifdef USE_IKEv1
 /* ISAKMP Data Attribute (generic representation within payloads)
  * layout from RFC 2408 "ISAKMP" section 3.3
  * This is not a payload type.
@@ -376,6 +381,7 @@ struct_desc isakmp_ipcomp_transform_desc = {
 	.fields = isat_fields_ipcomp,
 	.size = sizeof(struct isakmp_transform),
 };
+#endif
 
 /* ISAKMP Key Exchange Payload: no fixed fields beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.7
@@ -593,6 +599,7 @@ struct_desc isakmp_nonce_desc =	{
 	.pt = ISAKMP_NEXT_NONCE,
 };
 
+#ifdef USE_IKEv1
 /* ISAKMP Notification Payload
  * layout from RFC 2408 "ISAKMP" section 3.14
  * This is followed by a variable length SPI
@@ -842,6 +849,7 @@ struct_desc isakmp_ikefrag_desc = {
 	.size = sizeof(struct isakmp_ikefrag),
 	.pt = ISAKMP_NEXT_IKE_FRAGMENTATION,
 };
+#endif
 
 /*
  * GENERIC IKEv2 header.
@@ -1720,6 +1728,7 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 	.size = 3,
 };
 
+#ifdef USE_IKEv1
 /*
  * descriptor for each V1 payload type
  *
@@ -1757,6 +1766,7 @@ struct_desc *v1_payload_desc(unsigned p)
 	};
 	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
 }
+#endif
 
 struct_desc *v2_payload_desc(unsigned p)
 {
