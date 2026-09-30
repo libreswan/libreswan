@@ -1771,6 +1771,7 @@ bool pfkeyv2_parse_sadb_acquire(const struct sadb_msg *msg,
 	vdbg("%s() ...", __func__);
 	verbose.level++;
 	zero(acquire);
+	acquire->cpu_id = KERNEL_CPU_ID_NONE;
 
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;

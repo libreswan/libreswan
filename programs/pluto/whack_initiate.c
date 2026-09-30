@@ -135,6 +135,7 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 		.background = wm->whack_async,
 		.sec_label = shunk1(wa->label),
 		.policy_id = wa->reqid,
+		.cpu_id = KERNEL_CPU_ID_NONE,	/* whack: not a per-CPU acquire (RFC 9611) */
 	};
 
 	initiate_ondemand(&b);

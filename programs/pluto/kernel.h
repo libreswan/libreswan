@@ -406,6 +406,7 @@ struct kernel_acquire {
 	shunk_t sec_label;			/* on stack */
 	enum kernel_state_id state_id;		/* matches kernel state's .seq? */
 	enum kernel_policy_id policy_id;	/* matches kernel policy's .index? */
+	uint32_t cpu_id;            /* CPU id from kernel per-CPU ACQUIRE */
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);

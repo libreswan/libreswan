@@ -1002,6 +1002,18 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	info->dir = xfrm_dir;
 
 	/*
+	 * RFC 9611: for a per-resource (per-CPU) connection, tell the
+	 * kernel to generate a per-CPU ACQUIRE instead of a single ACQUIRE
+	 * to let Additional Child SAs be negotiated on demand.
+	 */
+#ifdef XFRM_POLICY_CPU_ACQUIRE
+	if (policy->cpu_acquire) {
+		ldbg(logger, "%s() setting XFRM_POLICY_CPU_ACQUIRE", __func__);
+		info->flags |= XFRM_POLICY_CPU_ACQUIRE;
+	}
+#endif
+
+	/*
 	 * Add the encapsulation protocol found in proto_info[] that
 	 * will carry the packets (which the kernel seems to call
 	 * user_templ).
@@ -2300,8 +2312,11 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	 *
 	 * Also capture the first tmpl reqid: add_spd_kernel_policy()
 	 * planted reqid here.
+	 *
+	 * Also capture the per-CPU ACQUIRE CPU id from XFRMA_SA_PCPU (RFC 9611).
 	 */
 	reqid_t acquire_reqid = 0;
+	uint32_t acquire_cpu_id = KERNEL_CPU_ID_NONE;
 	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
@@ -2335,6 +2350,16 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			}
 			break;
 		}
+#ifdef XFRMA_SA_PCPU
+		case XFRMA_SA_PCPU:
+		{
+			/* RFC 9611: per-CPU ACQUIRE carries the CPU id */
+			memcpy(&acquire_cpu_id, RTA_DATA(attr), sizeof(acquire_cpu_id));
+			ldbg(logger, "netlink_acquire: captured CPU id %ju from XFRMA_SA_PCPU",
+			     (uintmax_t) acquire_cpu_id);
+			break;
+		}
+#endif
 		case XFRMA_POLICY_TYPE:
 		{
 			/* discard */
@@ -2408,6 +2433,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.state_id = acquire->seq,
 		.policy_id = (acquire_reqid != 0 ? acquire_reqid
 						 : acquire->policy.index),
+		.cpu_id = acquire_cpu_id,	/* KERNEL_CPU_ID_NONE if absent (RFC 9611) */
 	};
 
 	initiate_ondemand(&b);
