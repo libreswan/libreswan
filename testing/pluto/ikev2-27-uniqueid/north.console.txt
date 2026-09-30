@@ -45,9 +45,11 @@ north #
 north #
  ../../guestbin/ip-route.sh add 0.0.0.0/0 via 192.1.3.254 dev eth1
 north #
- killall -9 pluto
+ kill -9 `cat /var/run/pluto/pluto.pid`
 north #
- ipsec restart
+ rm /var/run/pluto/pluto.pid
+north #
+ ipsec start
 Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
