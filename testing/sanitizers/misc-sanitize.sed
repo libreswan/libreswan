@@ -46,3 +46,6 @@ s/\t seq-hi 0x0, seq [^,]*, oseq-hi 0x0, oseq .*$/\t seq-hi 0x0, seq 0xXX, oseq-
 s/^debug:.*/debug .../
 s/ reqid [1-9][0-9]\{4,\} mode / reqid REQID mode /g
 s/policy_id [1-9][0-9]\{4,\}/policy_id REQID/g
+
+# nsrun needs ipv6 nodad, this shows up in ip output, so filter away
+s/scope global nodad/scope global/g
