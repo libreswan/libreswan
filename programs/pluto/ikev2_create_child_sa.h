@@ -36,7 +36,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						     bool detach_whack);
 struct child_sa *submit_v2_CREATE_CHILD_SA_additional_child(struct ike_sa *ike,
 							      struct child_sa *initial_sa,
-							      uint32_t cpu_id);
+							      enum ipsec_resource_type resource_type,
+							      uint32_t resource_id);
+
+uint32_t connection_num_resources(struct connection *c);
 
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_new_child_request;
 

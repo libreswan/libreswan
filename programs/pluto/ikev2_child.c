@@ -297,9 +297,9 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
 	if (!ike_auth_exchange &&
-	    larval_child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE) {
-		ldbg(logger, "sending SA_RESOURCE_INFO for Additional Child SA (cpu=%u)",
-		     larval_child->sa.st_v2_resource_info.cpu_id);
+	    larval_child->sa.st_v2_resource_info.resource_id != RESOURCE_ID_NONE) {
+		ldbg(logger, "sending SA_RESOURCE_INFO for Additional Child SA (resource=%u)",
+		     larval_child->sa.st_v2_resource_info.resource_id);
 		if (!emit_v2N(v2N_SA_RESOURCE_INFO, pbs)) {
 			return false;
 		}
@@ -585,7 +585,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	}
 
 	/* Echo SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
-	if (larval_child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE &&
+	if (larval_child->sa.st_v2_resource_info.resource_id != RESOURCE_ID_NONE &&
 	    !emit_v2N(v2N_SA_RESOURCE_INFO, outpbs)) {
 		return false;
 	}
@@ -825,7 +825,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	 * Only Initial Child SA (RFC 9611) is scheduled for rekey, Additional Child SA
 	 * are tied to their Initial.
 	 */
-	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+	if (child->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE) {
 		schedule_v2_replace_event(&child->sa);
 	}
 
@@ -853,22 +853,24 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	 */
 	if (child->sa.st_sa_role == SA_INITIATOR &&
 	    child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+		struct connection *cc = child->sa.st_connection;
 		struct child_sa *predecessor = child_sa_by_serialno(child->sa.st_v2_rekey_pred);
 		if (predecessor != NULL &&
-		    predecessor->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
+		    predecessor->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE &&
 		    predecessor->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE &&
-		    child->sa.st_connection->config->child.clones.nr > 0) {
+		    connection_resource_type(cc) != RESOURCE_TYPE_NONE) {
+			enum ipsec_resource_type resource_type = connection_resource_type(cc);
+			unsigned int num_additional_sas = connection_num_resources(cc);
 			llog_sa(RC_LOG, child, "Initial Child SA rekeyed - recreating %u Additional Child SAs",
-				child->sa.st_connection->config->child.clones.nr);
+				num_additional_sas);
 
-			/* RESOURCE_INFO negotiation already happened (CPU_ID_NONE set already) */
+			/* RESOURCE_INFO negotiation already happened (RESOURCE_ID_NONE set already) */
 			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
 
 			/* Recreate Additional SAs for new Initial SA */
-			unsigned int num_additional_sas = child->sa.st_connection->config->child.clones.nr;
 			for (unsigned int i = 0; i < num_additional_sas; i++) {
 				llog_sa(RC_LOG, child, "creating Additional Child SA %u for rekeyed Initial SA", i);
-				submit_v2_CREATE_CHILD_SA_additional_child(ike, child, i);
+				submit_v2_CREATE_CHILD_SA_additional_child(ike, child, resource_type, i);
 			}
 		}
 	}
@@ -1141,21 +1143,21 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		return n;
 	}
 
-	/* Check if initiator supports per-CPU Child SAs (RFC 9611) */
+	/* Check if initiator supports per-resource Child SAs (RFC 9611) */
 	if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
 		child->sa.st_v2_resource_info.state = RESOURCE_INFO_RECV;
-		ldbg(child->sa.logger, "initiator supports per-CPU Child SAs");
+		ldbg(child->sa.logger, "initiator supports per-resource Child SAs");
 
 		/* Send SA_RESOURCE_INFO back if wanted for the connection */
 		struct connection *c = child->sa.st_connection;
-		if (c->config->child.clones.nr > 0) {
+		if (connection_resource_type(c) != RESOURCE_TYPE_NONE) {
 			llog(RC_LOG, child->sa.logger, "sending SA_RESOURCE_INFO (clones=%u)",
-			     c->config->child.clones.nr);
+			     connection_resource_count(c));
 			if (!emit_v2N(v2N_SA_RESOURCE_INFO, sk_pbs)) {
 				return v2N_INVALID_SYNTAX;
 			}
 			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
-			llog_sa(RC_LOG, child, "per-CPU SA negotiation complete");
+			llog_sa(RC_LOG, child, "per-resource SA negotiation complete");
 		}
 	}
 
@@ -1268,33 +1270,43 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 */
 	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
-	/* Check if responder supports per-CPU Child SAs (RFC 9611) */
-	if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
-		passert(child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT);
+	/* Check if responder supports per-resource Child SAs (RFC 9611) */
+	if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL &&
+	    child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT) {
+		struct connection *cc = child->sa.st_connection;
+		enum ipsec_resource_type resource_type = connection_resource_type(cc);
 		child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
-		llog_sa(RC_LOG, child, "per-CPU child SA negotiation complete");
+		llog_sa(RC_LOG, child, "per-resource child SA negotiation complete");
 
 		/* Note: this Child SA is the Initial SA */
 
-		/* Create Additional Child SAs */
-		unsigned int num_additional_sas = child->sa.st_connection->config->child.clones.nr;
-		unsigned int num_to_create = (num_additional_sas < MAX_ADDITIONAL_SAS) ? num_additional_sas : MAX_ADDITIONAL_SAS;
+		/*
+		 * Create Additional Child SAs.
+		 *
+		 * Requested count (e.g. clones=) is reduced to the number of resources
+		 * that actually exist locally.
+		 */
+		unsigned int requested = connection_resource_count(cc);
+		unsigned int num_to_create = connection_num_resources(cc);
 
-		if (num_to_create < num_additional_sas) {
+		if (num_to_create < requested) {
 			llog_sa(RC_LOG, child,
-				"Additional Child SAs count reduced from %u to %u (limit)",
-				num_additional_sas, MAX_ADDITIONAL_SAS);
+				"Additional Child SAs count reduced from %u to %u (only %u resource(s) available)",
+				requested, num_to_create, num_to_create);
 		}
 
 		for (unsigned int i = 0; i < num_to_create; i++) {
 			llog_sa(RC_LOG, child, "creating Additional Child SA %u", i);
-			submit_v2_CREATE_CHILD_SA_additional_child(ike, child, i);
+			submit_v2_CREATE_CHILD_SA_additional_child(ike, child, resource_type, i);
 		}
 
+	} else if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
+		/* peer echoed SA_RESOURCE_INFO we never sent - ignore */
+		ldbg(child->sa.logger,
+		     "ignoring unexpected SA_RESOURCE_INFO in response (not requested)");
 	} else {
 		if (child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT) {
-			llog_sa(RC_LOG, child, "peer does not support per-CPU child SA");
-
+			llog_sa(RC_LOG, child, "peer does not support per-resource child SA");
 		}
 	}
 

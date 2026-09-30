@@ -404,7 +404,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 			/* If this is an Initial SA, also delete its Additional SAs (RFC 9611) */
 			if (child != NULL &&
-			    child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE &&
+			    child->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE &&
 			    child->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE) {
 				struct state_filter sf = {
 					.connection_serialno = child->sa.st_connection->serialno,
@@ -418,8 +418,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 					if (additional != NULL &&
 					    additional->sa.st_v2_resource_info.initial_sa == child->sa.st_serialno) {
 						llog(RC_LOG, child->sa.logger,
-							"deleting Additional Child SA (cpu_id=%u) associated with this Initial SA",
-							additional->sa.st_v2_resource_info.cpu_id);
+							"deleting Additional Child SA (resource=%u) associated with this Initial SA",
+							additional->sa.st_v2_resource_info.resource_id);
 						submit_v2_delete_exchange(ike, additional);
 					}
 				}

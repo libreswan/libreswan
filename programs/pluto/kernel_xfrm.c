@@ -1742,10 +1742,10 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 		/*
 		 * RFC 9611 - Per-CPU Child SAs
 		 *
-		 *  - Initial SA = no cpu binding (CPU_ID_NONE)
+		 *  - Initial SA = no cpu binding (KERNEL_CPU_ID_NONE)
 		 *  - Additional SA = cpu binding via XFRMA_SA_PCPU
 		 */
-		if (sa->cpu_id != CPU_ID_NONE) {
+		if (sa->cpu_id != KERNEL_CPU_ID_NONE) {
 			ldbg(logger, "%s() setting XFRMA_SA_PCPU to %u for Additional Child SA", __func__, sa->cpu_id);
 			attr->rta_type = XFRMA_SA_PCPU;
 			attr->rta_len = RTA_LENGTH(sizeof(sa->cpu_id));
@@ -3098,6 +3098,7 @@ static bool qry_xfrm_base_support(struct logger *logger,
 		.integ = integ,
 		.encrypt_key = cipher_key,
 		.integ_key = integ_key,
+		.cpu_id = KERNEL_CPU_ID_NONE,
 	};
 	if (check_iptfs) {
 		const struct config_iptfs iptfs = {

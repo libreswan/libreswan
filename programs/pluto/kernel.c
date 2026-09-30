@@ -1266,9 +1266,10 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.sa_mark_out = (c->ipsec_interface == NULL ? NULL :
 				(c->sa_marks.out.val == 0 && c->sa_marks.out.mask == 0) ? NULL :
 				&c->sa_marks.out),
-		.cpu_id = (child->sa.st_v2_resource_info.cpu_id != CPU_ID_NONE &&
+		.cpu_id = (child->sa.st_v2_resource_info.resource_type == RESOURCE_TYPE_CPU &&
+			   child->sa.st_v2_resource_info.resource_id != RESOURCE_ID_NONE &&
 			   kernel_ops->pcpu_ipsec_sa_is_enabled(c->logger) == NULL) ?
-			  child->sa.st_v2_resource_info.cpu_id : CPU_ID_NONE,
+			  child->sa.st_v2_resource_info.resource_id : KERNEL_CPU_ID_NONE,
 	};
 
 	address_buf sab, dab;

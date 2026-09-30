@@ -327,10 +327,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
-	/* Send SA_RESOURCE_INFO if per-CPU Child SAs are requested (RFC 9611) */
-	if (pc->config->child.clones.nr > 0) {
+	/* Send SA_RESOURCE_INFO if per-resource Child SAs are requested (RFC 9611) */
+	if (connection_resource_type(pc) != RESOURCE_TYPE_NONE) {
 		llog(RC_LOG, ike->sa.logger, "sending SA_RESOURCE_INFO (clones=%u)",
-		     pc->config->child.clones.nr);
+		     connection_resource_count(pc));
 		if (!emit_v2N(v2N_SA_RESOURCE_INFO, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -383,7 +383,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
 
-		if (pc->config->child.clones.nr > 0) {
+		if (connection_resource_type(pc) != RESOURCE_TYPE_NONE) {
 			child->sa.st_v2_resource_info.state = RESOURCE_INFO_SENT;
 		}
 

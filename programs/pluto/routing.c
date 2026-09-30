@@ -550,7 +550,7 @@ static void set_established_inbound(struct connection *c,
 				    const struct routing_annex *e)
 {
 	struct child_sa *child = (*e->child);
-	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+	if (child->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE) {
 		c->routing_sa = child->sa.st_serialno;
 		c->negotiating_child_sa = child->sa.st_serialno;
 	}
@@ -603,7 +603,7 @@ static void set_established_outbound(struct connection *c,
 	c->routing.state = routing;
 
 	/* Only Initial Child SAs own the connection (RFC 9611) */
-	if (child->sa.st_v2_resource_info.cpu_id == CPU_ID_NONE) {
+	if (child->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE) {
 		c->routing_sa = child->sa.st_serialno;
 		c->negotiating_child_sa = child->sa.st_serialno;
 		c->established_child_sa = child->sa.st_serialno;

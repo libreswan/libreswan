@@ -202,8 +202,11 @@ struct kernel_state {
 
 	const struct config_iptfs *iptfs;	/* non-NULL when enabled */
 
-	uint32_t cpu_id; /* CPU ID or CPU_ID_NONE (RFC 9611) */
+	uint32_t cpu_id; /* Per-Resource Child SAs - CPU resource (RFC 9611) */
 };
+
+/* No CPU bound to the kernel SA (RFC 9611) */
+#define KERNEL_CPU_ID_NONE ((uint32_t)-1)
 
 struct kernel_ops {
 	/*

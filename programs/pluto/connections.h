@@ -1272,4 +1272,7 @@ void delete_connection_proposals(struct connection *c);
 
 reqid_t child_reqid(const struct config *config, const struct logger *logger);
 
+enum ipsec_resource_type connection_resource_type(const struct connection *c);
+unsigned connection_resource_count(const struct connection *c);
+
 #endif
