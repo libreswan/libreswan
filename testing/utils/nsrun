@@ -3067,7 +3067,7 @@ def ns_run_line_subprocess(cmd, f_log, prompt='', timeout=10):
         if f_log:
             f_log.writelines(e.output + prompt)
             f_log.writelines(
-                ": ==== cut ====\n%s%s\n%s\: ==== tuc ====\n" % (prompt, l, prompt))
+                ": ==== cut ====\n%s%s\n%s: ==== tuc ====\n" % (prompt, l, prompt))
 
     if o.returncode != 0:
         l = "%s exit status %d %s" % (cmd, o.returncode, o.stderr)
