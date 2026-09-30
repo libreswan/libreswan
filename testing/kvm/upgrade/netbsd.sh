@@ -36,7 +36,7 @@ pkgin -y install xmlto
 pkgin -y install pkgconf
 pkgin -y install fping
 pkgin -y install bash
-pkgin -y install racoon2
+# pkgin -y install racoon2 # missing from 2026Q3
 pkgin -y install socat
 #pkgin -y install pkg_developer
 
