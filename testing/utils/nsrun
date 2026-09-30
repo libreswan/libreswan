@@ -2761,6 +2761,14 @@ class NS_GuestNetwork():
         cmd = "%s link set lo up" % DEF.ip_c
         sudo_shell_run(cmd, self.shell)
 
+    if ns.startswith("nic-"):
+        # New network namespaces do not inherit the host's
+        # net.ipv6.conf.*.forwarding (devconf_inherit_init_net=0),
+        # so turn it on in the router namespace.
+        for scope in ("all", "default"):
+            cmd = "sysctl -w net.ipv6.conf.%s.forwarding=1 > /dev/null" % scope
+            sudo_shell_run(cmd, self.shell)
+
         cmd = "%s link set %s name %s" % (DEF.ip_c, eth.gif, eth.name)
         sudo_shell_run(cmd, self.shell)
 
@@ -2888,8 +2896,8 @@ sysctl -w net.ipv4.conf.all.forwarding=1
 sysctl -w net.ipv6.conf.all.forwarding=1
 sysctl -w net.ipv4.conf.default.forwarding=1
 sysctl -w net.ipv6.conf.default.forwarding=1
-systel -w net.ipv6.conf.all.accept_dad=0
-systel -w net.ipv6.conf.default.accept_dad=0
+sysctl -w net.ipv6.conf.all.accept_dad=0
+sysctl -w net.ipv6.conf.default.accept_dad=0
 """
 
     if os.path.isdir("/proc/sys/net/bridge"):
