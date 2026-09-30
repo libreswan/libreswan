@@ -1974,6 +1974,11 @@ static diag_t extract_host_end(enum end end,
 			return diag("%sauth= is not supported by IKEv1", leftright);
 		}
 
+		authby_buf waby;
+		vdbg("extracting IKEv1 %s authby from whack authby=%s",
+		     src->leftright,
+		     str_authby(whack_authby, &waby));
+
 		if (!authby_is_set(whack_authby)) {
 			authby = (struct authby) {
 				AUTHBY_RSASIG_RAW,
@@ -2029,12 +2034,6 @@ static diag_t extract_host_end(enum end end,
 
 		}
 
-		authby_buf eaby;
-		authby_buf waby;
-		vdbg("IKEv1 %s authby=%s from whack authby=%s",
-		     src->leftright, str_authby(host_config->authby, &eaby),
-		     str_authby(whack_authby, &waby));
-
 		break;
 	}
 	case IKEv2:
@@ -2051,6 +2050,14 @@ static diag_t extract_host_end(enum end end,
 		if (d != NULL) {
 			return d;
 		}
+
+		authby_buf wab, wabb;
+		vdbg("extracting IKEv2 %s authby from whack "PRI_KV" and whack "PRI_KV,
+		     src->leftright,
+		     pri_kv_key(whack_auth_kv),
+		     str_authby_auth(whack_auth, &wab),
+		     pri_kv_key(whack_authby_kv),
+		     str_authby(whack_authby, &wabb));
 
 		/*
 		 * Is auth/authby internally consistent?
@@ -2153,13 +2160,6 @@ static diag_t extract_host_end(enum end end,
 
 		}
 
-		authby_buf eaby, wab, wabb;
-		vdbg("IKEv2 %s authby=%s from whack "PRI_KV" and whack "PRI_KV,
-		     src->leftright, str_authby(host_config->authby, &eaby),
-		     pri_kv_key(whack_auth_kv),
-		     str_authby_auth(whack_auth, &wab),
-		     pri_kv_key(whack_authby_kv),
-		     str_authby(whack_authby, &wabb));
 		break;
 	}
 	default:
@@ -2170,6 +2170,10 @@ static diag_t extract_host_end(enum end end,
 		return diag("CONFUSED: authby= isn't set");
 	}
 	host_config->authby = authby;
+
+	authby_buf eaby;
+	vdbg("extracted IKEv%d %s authby=%s",
+	     ike_version, src->leftright, str_authby(host_config->authby, &eaby));
 
 	/*
 	 * Get eapauth, crosscheck with AUTH
