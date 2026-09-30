@@ -160,6 +160,7 @@
 <!ENTITY busy '<literal>busy</literal>'>
 <!ENTITY cisco '<literal>cisco</literal>'>
 <!ENTITY crypto '<literal>crypto</literal>'>
+<!ENTITY digsig '<literal>digsig</literal>'>
 <!ENTITY direct '<literal>&#37;direct</literal>'>
 <!ENTITY drafts '<literal>drafts</literal>'>
 <!ENTITY drop '<literal>drop</literal>'>
