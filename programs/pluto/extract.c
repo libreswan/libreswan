@@ -1487,33 +1487,33 @@ static diag_t authby_conflicted(struct kv kv,
 				    pri_kv_key(kv),
 				    "never");
 		}
-
-		struct authby conflicts;
-		if (authby_conflicts(&conflicts, authby,
-				     (struct authby) {
-					     AUTHBY_NEVER,
-				     })) {
-			authby_buf cb;
-			return diag(PRI_KV" conflicts with "PRI_KV,
-				    pri_kv_key(kv),
-				    "never",
-				    pri_kv_key(kv),
-				    str_authby(conflicts, &cb));
-		}
 	}
 
-	if (authby.authby_eaponly) {
-		struct authby conflicts;
-		if (authby_conflicts(&conflicts, authby,
-				     (struct authby) {
-					     AUTHBY_EAPONLY,
-				     })) {
-			authby_buf cb;
-			return diag(PRI_KV" conflicts with "PRI_KV,
-				    pri_kv_key(kv),
-				    "eaponly",
-				    pri_kv_key(kv),
-				    str_authby(conflicts, &cb));
+	static const struct authby cannot_be_combined[] = {
+		{ AUTHBY_NEVER, },
+		{ AUTHBY_EAPONLY, },
+#if 0
+		/*
+		 * While the documentation says that these can't be
+		 * combined, multioe-*tests say otherwise (although it
+		 * appears to be somewhat ignored).
+		 */
+		{ AUTHBY_PSK, },
+		{ AUTHBY_NULL, },
+#endif
+	};
+
+	FOR_EACH_ELEMENT(unique, cannot_be_combined) {
+		if (authby_has_any(authby, *unique)) {
+			struct authby conflicts;
+			if (authby_conflicts(&conflicts, authby, *unique)) {
+				authby_buf cb, ub;
+				return diag(PRI_KV" cannot be combined with "PRI_KV,
+					    pri_kv_key(kv),
+					    str_authby_auth(*unique, &ub),
+					    pri_kv_key(kv),
+					    str_authby_auth(conflicts, &cb));
+			}
 		}
 	}
 
@@ -1957,6 +1957,16 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
+	authby_buf waby;
+	vdbg("extracted IKEv%d whack %s authby=%s",
+	     ike_version, src->leftright,
+	     str_authby(whack_authby, &waby));
+
+	d = authby_conflicted(whack_authby_kv, whack_authby);
+	if (d != NULL) {
+		return d;
+	}
+
 	/*
 	 * Determine the authentication from auth= and authby=.
 	 */
@@ -2060,20 +2070,19 @@ static diag_t extract_host_end(enum end end,
 		     str_authby(whack_authby, &wabb));
 
 		/*
-		 * Is auth/authby internally consistent?
+		 * XXX: overkill but easier.
 		 *
-		 * For instance never-negotiate but contains RSASIG;
-		 * or never and not never-negotiate; eaponly and
-		 * something else.
+		 * Since, at most, auth= can set one bit, the only
+		 * possible conflict is auth= vs never-negotiate.
 		 */
-		d = authby_conflicted(whack_authby_kv, whack_authby);
-		if (d != NULL) {
-			return d;
-		}
 		d = authby_conflicted(whack_auth_kv, whack_auth);
 		if (d != NULL) {
 			return d;
 		}
+
+		/*
+		 * XXX: Is auth vs authby consistent?
+		 */
 
 		if (!authby_is_set(whack_auth) &&
 		    !authby_is_set(whack_authby)) {
