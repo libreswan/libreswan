@@ -252,7 +252,7 @@ west #
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
-  auth_names: [1..8)
+  auth_names: [1..9)
     1 -> AUTH_RSASIG
          jam_enum 1: AUTH_RSASIG OK
          match AUTH_RSASIG: OK
@@ -267,32 +267,39 @@ west #
          jam_enum_short 2: ECDSA OK
          jam_enum_human 2: ecdsa OK
          match ECDSA [short]: OK
-    4 -> secret
-         jam_enum 4: secret OK
+    4 -> AUTH_DIGSIG
+         jam_enum 4: AUTH_DIGSIG OK
+         match AUTH_DIGSIG: OK
+         short_name 4: DIGSIG OK
+         jam_enum_short 4: DIGSIG OK
+         jam_enum_human 4: digsig OK
+         match DIGSIG [short]: OK
+    5 -> secret
+         jam_enum 5: secret OK
          match secret: OK
-         short_name 4: secret OK
-         jam_enum_short 4: secret OK
-         jam_enum_human 4: secret OK
-    5 -> AUTH_NULL
-         jam_enum 5: AUTH_NULL OK
+         short_name 5: secret OK
+         jam_enum_short 5: secret OK
+         jam_enum_human 5: secret OK
+    6 -> AUTH_NULL
+         jam_enum 6: AUTH_NULL OK
          match AUTH_NULL: OK
-         short_name 5: NULL OK
-         jam_enum_short 5: NULL OK
-         jam_enum_human 5: null OK
+         short_name 6: NULL OK
+         jam_enum_short 6: NULL OK
+         jam_enum_human 6: null OK
          match NULL [short]: OK
-    6 -> AUTH_NEVER
-         jam_enum 6: AUTH_NEVER OK
+    7 -> AUTH_NEVER
+         jam_enum 7: AUTH_NEVER OK
          match AUTH_NEVER: OK
-         short_name 6: NEVER OK
-         jam_enum_short 6: NEVER OK
-         jam_enum_human 6: never OK
+         short_name 7: NEVER OK
+         jam_enum_short 7: NEVER OK
+         jam_enum_human 7: never OK
          match NEVER [short]: OK
-    7 -> AUTH_EAPONLY
-         jam_enum 7: AUTH_EAPONLY OK
+    8 -> AUTH_EAPONLY
+         jam_enum 8: AUTH_EAPONLY OK
          match AUTH_EAPONLY: OK
-         short_name 7: EAPONLY OK
-         jam_enum_short 7: EAPONLY OK
-         jam_enum_human 7: eaponly OK
+         short_name 8: EAPONLY OK
+         jam_enum_short 8: EAPONLY OK
+         jam_enum_human 8: eaponly OK
          match EAPONLY [short]: OK
   connection_event_kind_names: [1..3)
     1 -> CONNECTION_REVIVAL
