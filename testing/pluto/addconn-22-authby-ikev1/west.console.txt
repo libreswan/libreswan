@@ -54,12 +54,12 @@ west #
 west #
  authby rsa,secret
  ipsec addconn --name authby:rsa,secret authby=rsa,secret
-"authby:rsa,secret": failed to add connection: additional PSK in authby=PSK+RSASIG is not supported by IKEv1
+"authby:rsa,secret": failed to add connection: IKEv1 does not support "authby=rsa,secret" containing multiple authentications
 no connection or alias named "authby:rsa,secret"
 west #
  authby secret,rsa
  ipsec addconn --name authby:secret,rsa authby=secret,rsa
-"authby:secret,rsa": failed to add connection: additional PSK in authby=PSK+RSASIG is not supported by IKEv1
+"authby:secret,rsa": failed to add connection: IKEv1 does not support "authby=secret,rsa" containing multiple authentications
 no connection or alias named "authby:secret,rsa"
 west #
  # keyexchange=ikev1 ignored; requires type=drop
@@ -148,6 +148,6 @@ no connection or alias named "authby:digsig"
 west #
  leftauth rsa
  ipsec addconn --name leftauth:rsa leftauth=rsa
-"leftauth:rsa": failed to add connection: leftauth= is not supported by IKEv1
+"leftauth:rsa": failed to add connection: IKEv1 does not support "leftauth="
 no connection or alias named "leftauth:rsa"
 west #
