@@ -1,0 +1,153 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ RUN()      { echo " $@" ; "$@" ; }
+west #
+ policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.*  \(policy:.*\)/ \1/p' ; }
+west #
+ hash_policy()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(v2-auth-hash-policy:.*\)/ \1/p' ; }
+west #
+ our_auth()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(our auth:[^,]*\).*/ \1/p' ; }
+west #
+ their_auth()   { name=$1 ; shift ; ipsec connectionstatus ${name} | sed -n -e 's/.* \(their auth:[^,]*\).*/ \1/p' ; }
+west #
+ policies() { policy $1 ; hash_policy $1 ; our_auth $1 ; their_auth $1 ; }
+west #
+ add()      ( name=$1 ; shift ; RUN ipsec addconn --name ${name} "$@" ; )
+west #
+ del()      { name=$1 ; shift ; ipsec delete ${name} ; }
+west #
+ conn()     { name=$1 ; shift ; add ${name} "$@" ; policies ${name} ; del ${name} ; }
+west #
+ authby()   { name=$1 ; shift ; conn authby:${name}   authby=${name} "$@" ; }
+west #
+ leftauth() { name=$1 ; shift ; conn leftauth:${name} leftauth=${name} "$@" ; }
+west #
+ # these should load properly
+west #
+ conn defaults
+ ipsec addconn --name defaults
+"defaults": added oriented IKEv1 connection
+ policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:rsasig
+ their auth:rsasig
+west #
+ authby secret
+ ipsec addconn --name authby:secret authby=secret
+"authby:secret": added oriented IKEv1 connection
+ policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:secret
+ their auth:secret
+west #
+ authby rsa
+ ipsec addconn --name authby:rsa authby=rsa
+"authby:rsa": added oriented IKEv1 connection
+ policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:rsasig
+ their auth:rsasig
+west #
+ # multiple authentications
+west #
+ authby rsa,secret
+ ipsec addconn --name authby:rsa,secret authby=rsa,secret
+"authby:rsa,secret": failed to add connection: IKEv1 does not support "authby=rsa,secret" containing multiple authentications
+no connection or alias named "authby:rsa,secret"
+west #
+ authby secret,rsa
+ ipsec addconn --name authby:secret,rsa authby=secret,rsa
+"authby:secret,rsa": failed to add connection: IKEv1 does not support "authby=secret,rsa" containing multiple authentications
+no connection or alias named "authby:secret,rsa"
+west #
+ # keyexchange=ikev1 ignored; requires type=drop
+west #
+ authby never
+ ipsec addconn --name authby:never authby=never
+"authby:never": failed to add connection: connection with "authby=never" must specify shunt type via type=
+no connection or alias named "authby:never"
+west #
+ authby never type=drop
+ ipsec addconn --name authby:never authby=never type=drop
+warning: "authby:never": "keyexchange=ikev1" ignored for never-negotiate ("type=drop") connection
+"authby:never": added oriented drop connection
+ policy: IKEv2+AUTH_NEVER+DROP+NEVER_NEGOTIATE;
+ v2-auth-hash-policy: none;
+ our auth:never
+ their auth:never
+west #
+ authby never,secret type=drop
+ ipsec addconn --name authby:never,secret authby=never,secret type=drop
+warning: "authby:never,secret": "keyexchange=ikev1" ignored for never-negotiate ("type=drop") connection
+"authby:never,secret": failed to add connection: "authby=never" cannot be combined with "authby=secret"
+no connection or alias named "authby:never,secret"
+west #
+ # {left,right}authby= trumps auth=
+west #
+ authby rsa leftauthby=secret rightauthby=secret
+ ipsec addconn --name authby:rsa authby=rsa leftauthby=secret rightauthby=secret
+"authby:rsa": added oriented IKEv1 connection
+ policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:secret
+ their auth:secret
+west #
+ conn leftright leftauthby=rsa rightauthby=rsasig
+ ipsec addconn --name leftright leftauthby=rsa rightauthby=rsasig
+"leftright": added oriented IKEv1 connection
+ policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:rsasig
+ their auth:rsasig
+west #
+ # conflict because rightauthby=rsa
+west #
+ authby rsa leftauthby=secret
+ ipsec addconn --name authby:rsa authby=rsa leftauthby=secret
+"authby:rsa": added oriented IKEv1 connection
+ policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:secret
+ their auth:rsasig
+west #
+ # IKEv2 only
+west #
+ authby null
+ ipsec addconn --name authby:null authby=null
+"authby:null": failed to add connection: authby=null is not valid for IKEv1
+no connection or alias named "authby:null"
+west #
+ authby eaponly
+ ipsec addconn --name authby:eaponly authby=eaponly
+"authby:eaponly": failed to add connection: authby=eaponly is not valid for IKEv1
+no connection or alias named "authby:eaponly"
+west #
+ authby eddsa
+ ipsec addconn --name authby:eddsa authby=eddsa
+"authby:eddsa": failed to add connection: authby=eddsa is not valid for IKEv1
+no connection or alias named "authby:eddsa"
+west #
+ authby ecdsa
+ ipsec addconn --name authby:ecdsa authby=ecdsa
+"authby:ecdsa": failed to add connection: authby=ecdsa is not valid for IKEv1
+no connection or alias named "authby:ecdsa"
+west #
+ authby rsa-sha1
+ ipsec addconn --name authby:rsa-sha1 authby=rsa-sha1
+"authby:rsa-sha1": failed to add connection: authby=rsa-sha1 is not valid for IKEv1
+no connection or alias named "authby:rsa-sha1"
+west #
+ authby rsa-sha2
+ ipsec addconn --name authby:rsa-sha2 authby=rsa-sha2
+"authby:rsa-sha2": failed to add connection: authby=rsa-sha2 is not valid for IKEv1
+no connection or alias named "authby:rsa-sha2"
+west #
+ authby digsig
+ ipsec addconn --name authby:digsig authby=digsig
+"authby:digsig": failed to add connection: authby=digsig is not valid for IKEv1
+no connection or alias named "authby:digsig"
+west #
+ leftauth rsa
+ ipsec addconn --name leftauth:rsa leftauth=rsa
+"leftauth:rsa": failed to add connection: IKEv1 does not support "leftauth="
+no connection or alias named "leftauth:rsa"
+west #

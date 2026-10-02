@@ -1487,33 +1487,33 @@ static diag_t authby_conflicted(struct kv kv,
 				    pri_kv_key(kv),
 				    "never");
 		}
-
-		struct authby conflicts;
-		if (authby_conflicts(&conflicts, authby,
-				     (struct authby) {
-					     AUTHBY_NEVER,
-				     })) {
-			authby_buf cb;
-			return diag(PRI_KV" conflicts with "PRI_KV,
-				    pri_kv_key(kv),
-				    "never",
-				    pri_kv_key(kv),
-				    str_authby(conflicts, &cb));
-		}
 	}
 
-	if (authby.authby_eaponly) {
-		struct authby conflicts;
-		if (authby_conflicts(&conflicts, authby,
-				     (struct authby) {
-					     AUTHBY_EAPONLY,
-				     })) {
-			authby_buf cb;
-			return diag(PRI_KV" conflicts with "PRI_KV,
-				    pri_kv_key(kv),
-				    "eaponly",
-				    pri_kv_key(kv),
-				    str_authby(conflicts, &cb));
+	static const struct authby cannot_be_combined[] = {
+		{ AUTHBY_NEVER, },
+		{ AUTHBY_EAPONLY, },
+#if 0
+		/*
+		 * While the documentation says that these can't be
+		 * combined, multioe-*tests say otherwise (although it
+		 * appears to be somewhat ignored).
+		 */
+		{ AUTHBY_PSK, },
+		{ AUTHBY_NULL, },
+#endif
+	};
+
+	FOR_EACH_ELEMENT(unique, cannot_be_combined) {
+		if (authby_has_any(authby, *unique)) {
+			struct authby conflicts;
+			if (authby_conflicts(&conflicts, authby, *unique)) {
+				authby_buf cb, ub;
+				return diag(PRI_KV" cannot be combined with "PRI_KV,
+					    pri_kv_key(kv),
+					    str_authby_auth(*unique, &ub),
+					    pri_kv_key(kv),
+					    str_authby_auth(conflicts, &cb));
+			}
 		}
 	}
 
@@ -1957,6 +1957,16 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
+	authby_buf waby;
+	vdbg("extracted IKEv%d whack %s authby=%s",
+	     ike_version, src->leftright,
+	     str_authby(whack_authby, &waby));
+
+	d = authby_conflicted(whack_authby_kv, whack_authby);
+	if (d != NULL) {
+		return d;
+	}
+
 	/*
 	 * Determine the authentication from auth= and authby=.
 	 */
@@ -1970,70 +1980,49 @@ static diag_t extract_host_end(enum end end,
 		 * authby=.  Only IKEv2 allows the asymetric leftauth=
 		 * and rightauth=.
 		 */
-		if (src->we_auth != NULL) {
-			return diag("%sauth= is not supported by IKEv1", leftright);
+		struct kv whack_auth_kv = kv(wm, end, KWS_AUTH);
+		if (whack_auth_kv.value != NULL) {
+			return diag("IKEv1 does not support "PRI_KV,
+				    pri_kv_key(whack_auth_kv), "");
 		}
 
-		authby_buf waby;
-		vdbg("extracting IKEv1 %s authby from whack authby=%s",
-		     src->leftright,
-		     str_authby(whack_authby, &waby));
+		/*
+		 * Check for conflicts, i.e., anything not allowed by
+		 * IKEv1.
+		 */
+		struct authby non_ikev1_authby;
+		if (authby_conflicts(&non_ikev1_authby, whack_authby,
+				     (struct authby) {
+					     AUTHBY_RSASIG_RAW,
+					     AUTHBY_PSK,
+					     AUTHBY_NEVER,
+				     })) {
+			authby_buf ae;
+			return diag("IKEv1 does not support "PRI_KV" authentication",
+				    pri_kv_key(whack_authby_kv),
+				    str_authby_auth(non_ikev1_authby, &ae));
 
-		if (!authby_is_set(whack_authby)) {
+		}
+
+		/*
+		 * Check there's no more than one auth.
+		 */
+		switch (authby_count(whack_authby)) {
+		case 0:
+			/* i.e., unset */
 			authby = (struct authby) {
 				AUTHBY_RSASIG_RAW,
 			};
 			break;
+		case 1:
+			authby = whack_authby;
+			break;
+		default:
+		{
+			return diag("IKEv1 does not support "PRI_KV" containing multiple authentications",
+				    pri_kv(whack_authby_kv));
 		}
-
-		/*
-		 * Mask WHACK_AUTHBY down to a big; for IKEv1 that is
-		 * a single bit.
-		 *
-		 * If none of the bits match, assume this is IKEv2
-		 * specific.  The order is arbitrary, it's just
-		 * looking for duplicate and/or unsupported bits.
-		 */
-		static const struct authby ikev1_masks[] = {
-			{
-				AUTHBY_RSASIG_RAW,
-			},
-			{
-				AUTHBY_PSK,
-			},
-			{
-				AUTHBY_NEVER,
-			},
-			{
-				AUTHBY_NULL,
-			},
-		};
-		authby = (struct authby) {0};
-		FOR_EACH_ELEMENT(mask, ikev1_masks) {
-			authby = authby_and(whack_authby, *mask);
-			if (authby_is_set(authby)) {
-				break;
-			}
 		}
-		if (!authby_is_set(authby)) {
-			authby_buf ab;
-			return diag("authby=%s is not supported by IKEv1",
-				    str_authby(whack_authby, &ab));
-		}
-
-		/*
-		 * Now check to see if that excluded anything?
-		 */
-		struct authby extra_authby = authby_and_not(whack_authby, authby);
-		if (authby_is_set(extra_authby)) {
-			authby_buf aa;
-			authby_buf ae;
-			return diag("additional %s in authby=%s is not supported by IKEv1",
-				    str_authby(extra_authby, &ae),
-				    str_authby(whack_authby, &aa));
-
-		}
-
 		break;
 	}
 	case IKEv2:
@@ -2060,20 +2049,19 @@ static diag_t extract_host_end(enum end end,
 		     str_authby(whack_authby, &wabb));
 
 		/*
-		 * Is auth/authby internally consistent?
+		 * XXX: overkill but easier.
 		 *
-		 * For instance never-negotiate but contains RSASIG;
-		 * or never and not never-negotiate; eaponly and
-		 * something else.
+		 * Since, at most, auth= can set one bit, the only
+		 * possible conflict is auth= vs never-negotiate.
 		 */
-		d = authby_conflicted(whack_authby_kv, whack_authby);
-		if (d != NULL) {
-			return d;
-		}
 		d = authby_conflicted(whack_auth_kv, whack_auth);
 		if (d != NULL) {
 			return d;
 		}
+
+		/*
+		 * XXX: Is auth vs authby consistent?
+		 */
 
 		if (!authby_is_set(whack_auth) &&
 		    !authby_is_set(whack_authby)) {
