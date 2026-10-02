@@ -34,6 +34,7 @@
 #include "connections.h"
 #include "nat_traversal.h"
 #include "keys.h"
+#include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "secrets.h"
 #include "ikev2_message.h"
 #include "ikev2.h"
@@ -244,6 +245,27 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
+/* Get the key type of the local certificate, returns NULL on failure. */
+static const struct pubkey_type *get_cert_key_type(struct ike_sa *ike)
+{
+	const struct connection *c = ike->sa.st_connection;
+	CERTCertificate *nss_cert = c->local->host.config->cert.nss_cert;
+	if (nss_cert == NULL) {
+		ldbg(ike->sa.logger, "no certificate available");
+		return NULL;
+	}
+
+	SECKEYPublicKey *pubkey = CERT_ExtractPublicKey(nss_cert);
+	if (pubkey == NULL) {
+		ldbg(ike->sa.logger, "cannot extract public key from certificate");
+		return NULL;
+	}
+
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubkey);
+	SECKEY_DestroyPublicKey(pubkey);
+	return type;
+}
+
 /*
  * Merge the configured auth with what was negotiated by the peer.
  */
@@ -326,11 +348,21 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 	switch (method) {
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
+		const struct pubkey_type *type = get_cert_key_type(ike);
+		if (type == NULL) {
+			llog_sa(RC_LOG, ike,
+				"certificate required new Digital Signature");
+			return (struct v2AUTH_method) {
+				.method = IKEv2_AUTH_RESERVED,
+			};
+		}
+
 		/*
 		 * Try to prefer the peer's authentication method.
 		 */
 		if (ike->sa.st_v2_initiator_auth.pubkey.hash != NULL &&
-		    ike->sa.st_v2_initiator_auth.pubkey.signer != NULL) {
+		    ike->sa.st_v2_initiator_auth.pubkey.signer != NULL &&
+		    ike->sa.st_v2_initiator_auth.pubkey.signer->type == type) {
 			/* could end up empty */
 			struct authby signer_authby =
 				authby_and(negotiated_authby,
@@ -352,6 +384,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 
 		/*
 		 * This is brute force for now.
+		 *
 		 * XXX: Should mix in the key's type.  Actually should
 		 * have mixed in the pubkey much earlier.
 		 */
@@ -400,12 +433,18 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 			       &pubkey_signer_digsig_ecdsa,
 			       &pubkey_signer_digsig_eddsa_ed25519,
 			       &pubkey_signer_digsig_pkcs1_1_5_rsa) {
-			if (authby_has_any(signer_authby, signerp->authby)) {
-				signer = signerp;
-				vdbg("selected signer %s", signer->name);
-				break;
+			if (signerp->type != type) {
+				vdbg("skipping signer %s has wrong pubkey type %s",
+				     signerp->name, type->name);
+				continue;
 			}
-			vdbg("skipping signer %s as not negotiated", signerp->name);
+			if (!authby_has_any(signer_authby, signerp->authby)) {
+				vdbg("skipping signer %s as not negotiated", signerp->name);
+				continue;
+			}
+			signer = signerp;
+			vdbg("selected signer %s", signer->name);
+			break;
 		}
 		if (signer == NULL) {
 			authby_buf ab;
@@ -1122,8 +1161,8 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
  * Convert the proposed connections into something this responder
  * might accept.
  *
- * + DIGITAL_SIGNATURE code seems a bit dodgy, should this be looking
- * inside the auth proposal to see what is actually required?
+ * DIGITAL_SIGNATURE peeks at the AlgorithmIdentifier length
+ * (first byte, RFC 7427 section 3) to determine the concrete type.
  *
  * + the legacy ECDSA_SHA2* methods also seem to be a bit dodgy,
  * shouldn't they also specify the SHA algorithm so that can be

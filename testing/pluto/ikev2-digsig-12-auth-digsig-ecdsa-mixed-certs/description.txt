@@ -1,0 +1,3 @@
+Initiator auth=ecdsa (ECDSA cert), responder auth=digsig (RSA cert).
+Responder should detect the RSA cert and sign with RSASSA-PSS.
+Connection should establish.

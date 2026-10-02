@@ -1300,6 +1300,11 @@ static struct authby extract_auth(struct kv kv,
 #undef S
 	};
 
+	/* XXX: hack, this value is dynamic */
+	if (strheq("digsig", kv.value)) {
+		return supported_ikev2_digsig_auth_payloads();
+	}
+
 	FOR_EACH_ELEMENT(auth, auths) {
 		if (strheq(kv.value, auth->name)) {
 			return auth->authby;
