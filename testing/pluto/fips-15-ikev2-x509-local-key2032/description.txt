@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 on the initiator and on the responder.
+It uses certificates, sast in FIPS mode attempts to load a connection
+with leftcert/rightcert set to an undersized (2032-bit) RSA certificate
+and should reject it at load time.
