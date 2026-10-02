@@ -448,6 +448,21 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
 	return true;
 }
 
+
+static enum yna_options full_transcript_auth_policy(const struct connection *c)
+{
+	switch (ikev2_ike_sa_init_full_transcript_auth) {
+	case YNA_YES:
+	case YNA_NO:
+		return ikev2_ike_sa_init_full_transcript_auth;
+	case YNA_AUTO:
+		return c->config->ike_sa_init_full_transcript_auth;
+	case YNA_UNSET:
+		break;
+	}
+	bad_case(ikev2_ike_sa_init_full_transcript_auth);
+}
+
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -546,7 +561,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* Send IKE_SA_INIT_FULL_TRANSCRIPT_AUTH Notify payload */
-	if (c->config->ike_sa_init_full_transcript_auth != YNA_NO) {
+	if (full_transcript_auth_policy(c) != YNA_NO) {
 		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, request.pbs))
 			return false;
 	}
@@ -776,15 +791,15 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	ike->sa.st_v2_full_transcript_auth =
 		accept_v2_notification(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
 				       ike->sa.logger, md,
-				       c->config->ike_sa_init_full_transcript_auth != YNA_NO);
+				       full_transcript_auth_policy(c) != YNA_NO);
 
-	if (c->config->ike_sa_init_full_transcript_auth == YNA_YES &&
+	if (full_transcript_auth_policy(c) == YNA_YES &&
 	    !ike->sa.st_v2_full_transcript_auth) {
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk,
 				    UNENCRYPTED_PAYLOAD);
 		llog_sa(RC_LOG, ike,
-			"connection has ike-sa-init-full-transcript-auth=yes but peer does not support it");
+			"ike-sa-init-full-transcript-auth=yes is required but peer does not support it");
 		return STF_FATAL;
 	}
 
@@ -949,7 +964,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (c->config->ike_sa_init_full_transcript_auth != YNA_NO) {
+	if (full_transcript_auth_policy(c) != YNA_NO) {
 		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1229,17 +1244,17 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
 	ike->sa.st_v2_full_transcript_auth =
-		(c->config->ike_sa_init_full_transcript_auth != YNA_NO &&
+		(full_transcript_auth_policy(c) != YNA_NO &&
 		 md->pd[PD_v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH] != NULL);
 	if (ike->sa.st_v2_full_transcript_auth) {
 		ldbg(ike->sa.logger,
 		     "responder accepted our proposed IKE_SA_INIT_FULL_TRANSCRIPT_AUTH notification");
 	}
 
-	if (c->config->ike_sa_init_full_transcript_auth == YNA_YES &&
+	if (full_transcript_auth_policy(c) == YNA_YES &&
 	    !ike->sa.st_v2_full_transcript_auth) {
 		llog_sa(RC_LOG, ike,
-			"connection has ike-sa-init-full-transcript-auth=yes but peer does not support it");
+			"ike-sa-init-full-transcript-auth=yes is required but peer does not support it");
 		return STF_FATAL;
 	}
 
@@ -1587,3 +1602,4 @@ V2_EXCHANGE(IKE_SA_INIT, "",
 	    &state_v2_IKE_SA_INIT_I0);
 
 enum yna_options ikev2_signature_hash_algorithms;
+enum yna_options ikev2_ike_sa_init_full_transcript_auth;
