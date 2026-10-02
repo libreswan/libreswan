@@ -136,7 +136,7 @@ static const struct keyword_def config_conn_keyword[] = {
   KWS("ms-dh-downgrade", LEMPTY, KWS_MS_DH_DOWNGRADE),
   KWS("pfs-rekey-workaround", LEMPTY, KWS_PFS_REKEY_WORKAROUND),
   KWS("require-id-on-certificate", LEMPTY, KWS_REQUIRE_ID_ON_CERTIFICATE),
-  KWS("dns-match-id,", LEMPTY, KWS_DNS_MATCH_ID),
+  KWS("dns-match-id", LEMPTY, KWS_DNS_MATCH_ID),
   KWS("ipsec-max-bytes", LEMPTY, KWS_IPSEC_MAX_BYTES),
   KWS("ipsec-max-packets", LEMPTY, KWS_IPSEC_MAX_PACKETS),
   KWS("ipsec-lifetime", LEMPTY, KWS_IPSEC_LIFETIME),
