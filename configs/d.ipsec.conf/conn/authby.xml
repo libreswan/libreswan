@@ -124,6 +124,9 @@
 
       <varlistentry>
 	<term>
+	  <option>psk</option>
+	</term>
+	<term>
 	  <option>secret</option>
 	</term>
 	<listitem>
