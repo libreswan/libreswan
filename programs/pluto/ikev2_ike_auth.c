@@ -1209,6 +1209,13 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *st, struct msg_digest *md);
 
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode_tail(struct ike_sa *ike,
+								      struct msg_digest *md,
+								      bool err);
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode_continue(struct ike_sa *ike,
+									 struct msg_digest *md,
+									 bool err);
+
 static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 					       struct child_sa *unused_child UNUSED,
 					       struct msg_digest *md)
@@ -1246,6 +1253,43 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * was okay, and then send an INFORMATIONAL DELETE IKE
 		 * SA.
 		 */
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+	}
+
+	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, atype)) {
+		dns_status ret = initiator_fetch_idr_ipseckey(ike, md,
+							      process_v2_IKE_AUTH_response_post_cert_decode_continue);
+		switch (ret) {
+		case DNS_SUSPEND:
+			return STF_SUSPEND;
+		case DNS_FATAL:
+			llog_sa(RC_LOG, ike,
+				"fetching IDr IPsec key using DNS failed");
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+			return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		case DNS_OK:
+			break;
+		}
+	}
+
+	return process_v2_IKE_AUTH_response_post_cert_decode_tail(ike, md, false);
+}
+
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode_continue(struct ike_sa *ike,
+									 struct msg_digest *md,
+									 bool err)
+{
+	return process_v2_IKE_AUTH_response_post_cert_decode_tail(ike, md, err);
+}
+
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode_tail(struct ike_sa *ike,
+								      struct msg_digest *md,
+								      bool err)
+{
+	if (err) {
+		llog_sa(RC_LOG, ike, "DNS: IDr IPSECKEY not found or usable");
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_OK_INITIATOR_SEND_DELETE_IKE;
 	}
 
@@ -1295,9 +1339,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	/* process AUTH payload */
 
 	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
-	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				  ike, &idhash_in,
-				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+	diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+					 ike, &idhash_in,
+					 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);

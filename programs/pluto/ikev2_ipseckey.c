@@ -175,10 +175,18 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
 }
 
+static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
+				       struct msg_digest *md,
+				       bool err,
+				       stf_status(*callback)(struct ike_sa *ike,
+							     struct msg_digest *md,
+							     bool err));
+
 static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 {
 	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
 	const char *parse_err;
+	bool err = false;
 
 	dnsr->done_time = realnow();
 
@@ -195,6 +203,7 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
+		err = true;
 	}
 
 	if (dnsr->cache_hit) {
@@ -203,12 +212,17 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 		} else {
 			/* is there a better ret status ? */
 			dnsr->dns_status = DNS_FATAL;
+			err = true;
 		}
 		return;
 	}
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
 	ike->sa.ipseckey_dnsr = NULL;
+
+	if (dnsr->callback != NULL) {
+		idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
+	}
 	free_ipseckey_dns(dnsr);
 }
 
@@ -452,24 +466,29 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
  * the call back function will be called without returning.
  */
 
-bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
+dns_status initiator_fetch_idr_ipseckey(struct ike_sa *ike,
+				       struct msg_digest *md,
+				       stf_status (*callback)(struct ike_sa *ike,
+							      struct msg_digest *md,
+							      bool err))
 {
 	/* ask for the DNS's IPSECKEY */
-	struct p_dns_req *dnsr = ipseckey_qry_st_init(ike, /*initiator:no-md*/NULL,
+	struct p_dns_req *dnsr = ipseckey_qry_st_init(ike, md,
 						      initiator_fetch_idr_ipseckey_continue,
-						      NULL/*no-callback-for-ike*/); /* must save/free */
+						      callback); /* must save/free */
 	if (dnsr == NULL) {
-		return false;
+		return DNS_FATAL;
 	}
 
 	dns_status ret = dns_qry_start(dnsr);
 	if (ret == DNS_SUSPEND) {
 		ike->sa.ipseckey_dnsr = dnsr; /* saved */
-		return true;	/* while querying IDr do not suspend */
+		/* suspend: caller returns STF_SUSPEND; resume via callback */
+		return callback == NULL ? DNS_OK : DNS_SUSPEND;
 	}
 
 	free_ipseckey_dns(dnsr); /* freed */
-	return ret == DNS_OK;
+	return ret;
 }
 
 /*
