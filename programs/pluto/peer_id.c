@@ -899,6 +899,13 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		     "rhc: %%fromcert and no certificate payload - continuing with peer ID %s",
 		     str_id(peer_id, &idb));
 		replace_connection_that_id(c, peer_id);
+	} else if (c->remote->host.id.kind == ID_NONE) {
+		/* rightid=%any: learn the ID from the peer */
+		id_buf idb;
+		ldbg(ike->sa.logger,
+		     "rhc: %%any - updating connection ID from peer ID %s",
+		     str_id(peer_id, &idb));
+		replace_connection_that_id(c, peer_id);
 	} else if (same_id(&c->remote->host.id, peer_id)) {
 		id_buf idb;
 		ldbg(ike->sa.logger,
