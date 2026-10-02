@@ -1,0 +1,6 @@
+DNS Opportunistic Encryption with rightid=%any on both sides.
+
+Both east (responder) and road (initiator) use rightid=%any (ID_NONE)
+plus rightrsasigkey=%dnsondemand and dns-match-id=yes.  Each side
+must learn the peer's ID via update_peer_id()'s ID_NONE branch
+and fetch the peer's IPSECKEY RR by that learned ID before AUTH verification.
