@@ -86,8 +86,9 @@
 	</term>
 	<listitem>
 	  <para>
-	    Allow authentication using a shared secret (PSK); cannot
-	    be combined with other authentication methods.
+	    Allow authentication using a shared secret (PSK). In &IKEv1;,
+	    it cannot be combined with other authentication methods. In
+	    &IKEv2;, it can be combined with digital signatures.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -115,8 +116,11 @@
 	</term>
 	<listitem>
 	  <para>
-	    Allow NULL-authentication; cannot be combined with other
-	    authentication methods.
+	    Allow NULL-authentication. In &IKEv1;, it cannot be combined
+	    with other authentication methods. In &IKEv2;, it can be
+	    combined with digital signatures (such as
+	    <option>&rsasig;</option>) for Opportunistic Encryption (OE)
+	    fallback.
 	  </para>
 	  <para>
 	    This method is used for "anonymous opportunistic IPsec"
