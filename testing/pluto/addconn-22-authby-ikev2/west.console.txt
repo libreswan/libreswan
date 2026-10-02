@@ -37,6 +37,14 @@ west #
  our auth:rsasig
  their auth:rsasig
 west #
+ authby digsig
+ ipsec addconn --name authby:digsig authby=digsig
+"authby:digsig": added oriented IKEv2 connection
+ policy: IKEv2+RSASIG+ECDSA+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512+IDENTITY;
+ our auth:rsasig+ecdsa+eddsa
+ their auth:rsasig+ecdsa+eddsa
+west #
  authby null
  ipsec addconn --name authby:null authby=null
 "authby:null": added oriented IKEv2 connection
@@ -180,6 +188,61 @@ west #
  v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
  our auth:rsa-sha2
  their auth:rsa-sha2
+west #
+ # auth= variants
+west #
+ leftauth ecdsa
+ ipsec addconn --name leftauth:ecdsa leftauth=ecdsa
+"leftauth:ecdsa": added oriented IKEv2 connection
+ policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+ our auth:ecdsa
+ their auth:rsasig
+west #
+ leftauth eddsa
+ ipsec addconn --name leftauth:eddsa leftauth=eddsa
+"leftauth:eddsa": added oriented IKEv2 connection
+ policy: IKEv2+EDDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: IDENTITY;
+ our auth:eddsa
+ their auth:rsasig
+west #
+ leftauth none
+ ipsec addconn --name leftauth:none leftauth=none
+"leftauth:none": failed to add connection: "leftauth=none" is invalid, valid options are "never", "psk", "rsasig", "ecdsa", "eddsa", "eaponly", "null", and "secret"
+no connection or alias named "leftauth:none"
+west #
+ leftauth null
+ ipsec addconn --name leftauth:null leftauth=null
+"leftauth:null": added oriented IKEv2 connection
+ policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: none;
+ our auth:null
+ their auth:rsasig
+west #
+ leftauth psk
+ ipsec addconn --name leftauth:psk leftauth=psk
+"leftauth:psk": added oriented IKEv2 connection
+ policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: none;
+ our auth:secret
+ their auth:rsasig
+west #
+ leftauth rsasig
+ ipsec addconn --name leftauth:rsasig leftauth=rsasig
+"leftauth:rsasig": added oriented IKEv2 connection
+ policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
+ our auth:rsasig
+ their auth:rsasig
+west #
+ leftauth secret
+ ipsec addconn --name leftauth:secret leftauth=secret
+"leftauth:secret": added oriented IKEv2 connection
+ policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: none;
+ our auth:secret
+ their auth:rsasig
 west #
  # keyexchange=ikev2 ignored; requires type=drop
 west #

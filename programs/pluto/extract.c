@@ -1284,6 +1284,12 @@ static struct authby extract_auth(struct kv kv,
 		return (struct authby) {0};
 	}
 
+	if (strheq(kv.value, "digsig")) {
+		/* not strictly correct - as old style payloads are
+		 * also allowed */
+		return supported_ikev2_digsig_auth_payloads();
+	}
+
 	const struct {
 		const char *name;
 		struct authby authby;
@@ -1408,6 +1414,13 @@ static struct authby extract_authby(struct kv kv,
 			}
 			if (hunk_streq(val, "null")) {
 				authby.null = true;
+				continue;
+			}
+			if (hunk_streq(val, "digsig")) {
+				/* not strictly correct - as old style payloads are
+				 * also allowed */
+				authby = authby_or(authby,
+						   supported_ikev2_digsig_auth_payloads());
 				continue;
 			}
 			if (hunk_streq(val, "rsa-sha1")) {

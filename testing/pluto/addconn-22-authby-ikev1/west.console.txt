@@ -111,6 +111,11 @@ west #
 west #
  # IKEv2 only
 west #
+ authby digsig
+ ipsec addconn --name authby:digsig authby=digsig
+"authby:digsig": failed to add connection: authby=digsig is not valid for IKEv1
+no connection or alias named "authby:digsig"
+west #
  authby null
  ipsec addconn --name authby:null authby=null
 "authby:null": failed to add connection: authby=null is not valid for IKEv1

@@ -18,6 +18,20 @@
 
       <varlistentry>
 	<term>
+	  <option>&digsig;</option>
+	</term>
+	<listitem>
+	  <para>
+	    Allow authentication using an ECDSA, EdDSA, or RSA digital
+	    signature.  The exact choice is determined at run time
+	    based on the connections private key and supported
+	    algorithms.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
 	  <option>&ecdsa;</option>
 	</term>
 	<term>

@@ -45,6 +45,7 @@ authby rsa leftauthby=secret
 
 # IKEv2 only
 
+authby digsig
 authby null
 authby eaponly
 authby eddsa

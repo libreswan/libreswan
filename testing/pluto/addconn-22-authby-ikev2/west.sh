@@ -20,8 +20,11 @@ leftauth() { name=$1 ; shift ; conn leftauth:${name} leftauth=${name} "$@" ; }
 
 conn defaults
 
+authby digsig
+
 authby null
 authby secret
+
 authby eddsa
 
 authby ecdsa
@@ -40,6 +43,16 @@ authby rsa-sha2_384
 authby rsa-sha2_512
 authby rsa-sha1,rsa-sha2
 authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
+
+# auth= variants
+
+leftauth ecdsa
+leftauth eddsa
+leftauth none
+leftauth null
+leftauth psk
+leftauth rsasig
+leftauth secret
 
 # keyexchange=ikev2 ignored; requires type=drop
 
