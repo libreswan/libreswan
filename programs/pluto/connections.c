@@ -623,9 +623,13 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	 * Update the %any ID to HOST_ADDR, but only when it set to a
 	 * proper address, i.e., is set and not %any aka 0.0.0 --
 	 * WildCard.
+	 *
+	 * Skip the remote end: rightid=%any (ID_NONE) must be preserved
+	 * so update_peer_id() can learn the peer's ID from IDi/IDr.
 	 */
 	if (address_is_specified(host_addr) &&
-	    host->id.kind == ID_NONE) {
+	    host->id.kind == ID_NONE &&
+	    end == c->local->config->index) {
 		struct id id = {
 			.kind = afi->id_ip_addr,
 			.ip_addr = host->addr,

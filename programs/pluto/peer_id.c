@@ -486,9 +486,10 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 * result. - matt
 	 */
 	if (!score->initiator_id_matched) {
-		/* must be checking certs */
-		if (d->remote->host.id.kind != ID_FROMCERT) {
-			vdbg("skipping because initiator_id does not match and that.id.kind is not a cert");
+		/* must be checking certs or %any */
+		if (d->remote->host.id.kind != ID_FROMCERT &&
+		    d->remote->host.id.kind != ID_NONE) {
+			vdbg("skipping because initiator_id does not match and that.id.kind is not a cert or %%any");
 			return false;
 		}
 	}
