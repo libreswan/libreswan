@@ -1492,15 +1492,13 @@ static diag_t authby_conflicted(struct kv kv,
 	static const struct authby cannot_be_combined[] = {
 		{ AUTHBY_NEVER, },
 		{ AUTHBY_EAPONLY, },
-#if 0
 		/*
-		 * While the documentation says that these can't be
-		 * combined, multioe-*tests say otherwise (although it
-		 * appears to be somewhat ignored).
+		 * In IKEv2, AUTHBY_PSK and AUTHBY_NULL can be combined
+		 * with digital signatures (e.g. for Opportunistic
+		 * Encryption fallback in mixoe-* tests, or for
+		 * SUPPORTED_AUTH_METHODS announcements under RFC 9593).
+		 * In IKEv1, multiple methods are rejected in extract_authby().
 		 */
-		{ AUTHBY_PSK, },
-		{ AUTHBY_NULL, },
-#endif
 	};
 
 	FOR_EACH_ELEMENT(unique, cannot_be_combined) {
