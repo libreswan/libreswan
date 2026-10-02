@@ -1,4 +1,4 @@
 mixed deployment OE
 
-In this case both east and road allow CERT and AUTHNULL, and
-a connection should establish authenticated with CERTs
+In this case road only allows AUTHNULL and east allows CERT and
+AUTHNULL. The connection should establish authenticated with AUTHNULL.
