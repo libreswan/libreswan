@@ -200,7 +200,7 @@ west #
  authby never,secret type=drop
  ipsec addconn --name authby:never,secret authby=never,secret type=drop
 warning: "authby:never,secret": "keyexchange=ikev2" ignored for never-negotiate ("type=drop") connection
-"authby:never,secret": failed to add connection: "authby=never" conflicts with "authby=PSK"
+"authby:never,secret": failed to add connection: "authby=never" cannot be combined with "authby=secret"
 no connection or alias named "authby:never,secret"
 west #
  # eaponly also requires *autheap

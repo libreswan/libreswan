@@ -66,10 +66,8 @@ west #
 west #
  authby never
  ipsec addconn --name authby:never authby=never
-"authby:never": added oriented IKEv1 connection
- policy: IKEv1+AUTH_NEVER+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
- our auth:never
- their auth:never
+"authby:never": failed to add connection: connection with "authby=never" must specify shunt type via type=
+no connection or alias named "authby:never"
 west #
  authby never type=drop
  ipsec addconn --name authby:never authby=never type=drop
@@ -83,7 +81,7 @@ west #
  authby never,secret type=drop
  ipsec addconn --name authby:never,secret authby=never,secret type=drop
 warning: "authby:never,secret": "keyexchange=ikev1" ignored for never-negotiate ("type=drop") connection
-"authby:never,secret": failed to add connection: "authby=never" conflicts with "authby=PSK"
+"authby:never,secret": failed to add connection: "authby=never" cannot be combined with "authby=secret"
 no connection or alias named "authby:never,secret"
 west #
  # {left,right}authby= trumps auth=
