@@ -84,17 +84,7 @@ int main(int argc, char *argv[])
 			FAIL("str_authby(%u) != none", auth);
 		}
 
-		/* AUTH_DIGSIG sets all digital signature bits,
-		 * skip disjointness checks */
-		if (auth == AUTH_DIGSIG) {
-			continue;
-		}
-
 		for (enum auth alt = AUTH_FLOOR; alt < AUTH_ROOF; alt++) {
-
-			if (alt == AUTH_DIGSIG) {
-				continue;
-			}
 
 			struct authby altby = authby_from_auth(alt);
 
@@ -108,25 +98,31 @@ int main(int argc, char *argv[])
 			if (!(authby_is_set(authby_and(authby, altby)) == eq)) {
 				FAIL("authby_is_set(and(%u*,%u*)) == %u", auth, alt, eq);
 			}
-			if (!(authby_has_auth(authby_and(authby, altby), auth) == eq)) {
-				FAIL("authby_has_auth(and(%u*,%u*), %u) == %u", auth, alt, auth, eq);
-			}
-
-			PRINT("authby_or(%u,%u)", auth, alt);
+			PRINT("authby_or(%u*,%u*)", auth, alt);
 			if (!authby_is_set(authby_or(authby, altby))) {
 				FAIL("authby_is_set(or(%u*, %u*))", auth, alt);
 			}
-			if (!authby_has_auth(authby_or(authby, altby), auth)) {
-				FAIL("authby_has_auth(or(%u*,%u*), %u)", auth, alt, auth);
-			}
-
 			PRINT("authby_xor(%u,%u)", auth, alt);
 			bool xor = (auth != alt);
 			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (!(authby_has_auth(authby_xor(authby, altby), auth) == xor)) {
-				FAIL("authby_has_auth(xor(%u,%u), %u) == %u", auth, alt, auth, xor);
+
+			PRINT("authby_and_auth(%u,%u)", auth, alt);
+			if (!(authby_is_set(authby_and_auth(authby, alt)) == eq)) {
+				FAIL("authby_is_set(and_auth(%u*,%u)) == %u", auth, alt, eq);
+			}
+
+			PRINT("authby_or_auth(%u*,%u)", auth, alt);
+			if (!authby_is_set(authby_or_auth(authby, alt))) {
+				FAIL("authby_is_set(or_auth(%u*, %u))", auth, alt);
+			}
+			/* check for individual bits from OR */
+			if (!(authby_has_auth(authby_or_auth(authby, alt), auth))) {
+				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, auth);
+			}
+			if (!(authby_has_auth(authby_or_auth(authby, alt), alt))) {
+				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
 			}
 
 			PRINT("authby_and_not(%u,%u)", auth, alt);
@@ -187,13 +183,6 @@ int main(int argc, char *argv[])
 				FAIL("authby_has_none(%u*,%u*) == %u", auth, alt, false);
 			}
 
-		}
-	}
-
-	for (enum auth auth = DIGITAL_SIGNATURE_AUTH_FLOOR;
-	     auth < DIGITAL_SIGNATURE_AUTH_ROOF; auth++) {
-		if (!authby_has_auth(supported_ikev2_digsig_auth_payloads(), auth)) {
-			FAIL("auth_in_authby(%u, AUTHBY_DIGITAL_SIGNATURE) failed", auth);
 		}
 	}
 

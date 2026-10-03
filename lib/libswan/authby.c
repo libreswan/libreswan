@@ -173,6 +173,11 @@ struct authby authby_and_auth(struct authby authby, enum auth auth)
 	return authby_and(authby, authby_from_auth(auth));
 }
 
+struct authby authby_or_auth(struct authby authby, enum auth auth)
+{
+	return authby_or(authby, authby_from_auth(auth));
+}
+
 bool authby_has_auth(struct authby authby, enum auth auth)
 {
 	return authby_is_set(authby_and_auth(authby, auth));
@@ -185,67 +190,56 @@ bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
 
 enum auth auth_from_authby(struct authby authby)
 {
-	/*
-	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
-	 * v1.5 RSA.  It's just how it has always been.
-	 */
-	return (authby_has_any(authby, (struct authby) {
-				AUTHBY_RSASIG_RAW,
-				AUTHBY_RSASIG_SHA2,
-			}) ? AUTH_RSASIG :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_ECDSA_SHA2,
-			}) ? AUTH_ECDSA :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_EDDSA,
-			}) ? AUTH_EDDSA :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_RSASIG_V1_5,
-			}) ? AUTH_RSASIG :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_PSK,
-			}) ? AUTH_PSK :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_NULL,
-			}) ? AUTH_NULL :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_NEVER,
-			}) ? AUTH_NEVER :
-		authby_has_any(authby, (struct authby) {
-				AUTHBY_EAPONLY,
-			}) ? AUTH_EAPONLY :
-		AUTH_UNSET);
+#define S(AUTH)						\
+	if (authby_has_all(authby, (struct authby) {	\
+				AUTHBY_##AUTH,		\
+			})) {				\
+		return AUTH_##AUTH;			\
+	}
+	S(EAPONLY);
+	S(ECDSA_SHA2_256);
+	S(ECDSA_SHA2_384);
+	S(ECDSA_SHA2_512);
+	S(EDDSA);
+	S(NEVER);
+	S(NULL);
+	S(PSK);
+	S(RSASIG_RAW);
+	S(RSASIG_SHA2_256);
+	S(RSASIG_SHA2_384);
+	S(RSASIG_SHA2_512);
+	S(RSASIG_V1_5_SHA1);
+	S(RSASIG_V1_5_SHA2_256);
+	S(RSASIG_V1_5_SHA2_384);
+	S(RSASIG_V1_5_SHA2_512);
+#undef S
+	return AUTH_ROOF;
 }
 
 struct authby authby_from_auth(enum auth auth)
 {
 	switch (auth) {
-	case AUTH_UNSET:
-	case AUTH_NEVER: return (struct authby) {
-			AUTHBY_NEVER,
+#define S(AUTH) case AUTH_##AUTH:		\
+		return (struct authby) {	\
+			AUTHBY_##AUTH,		\
 		};
-	case AUTH_NULL: return (struct authby) {
-			AUTHBY_NULL,
-		};
-	case AUTH_PSK: return (struct authby) {
-			AUTHBY_PSK,
-		};
-	case AUTH_ECDSA: return (struct authby) {
-			AUTHBY_ECDSA_SHA2,
-		};
-	case AUTH_EDDSA: return (struct authby) {
-			AUTHBY_EDDSA,
-		};
-	case AUTH_RSASIG: return (struct authby) {
-			AUTHBY_RSASIG_RAW,
-			AUTHBY_RSASIG_V1_5,
-			AUTHBY_RSASIG_SHA2,
-		};
-	case AUTH_EAPONLY: return (struct authby) {
-			AUTHBY_EAPONLY,
-		};
-	case AUTH_DIGSIG:
-		return supported_ikev2_digsig_auth_payloads();
+	S(EAPONLY);
+	S(ECDSA_SHA2_256);
+	S(ECDSA_SHA2_384);
+	S(ECDSA_SHA2_512);
+	S(EDDSA);
+	S(NEVER);
+	S(NULL);
+	S(PSK);
+	S(RSASIG_RAW);
+	S(RSASIG_SHA2_256);
+	S(RSASIG_SHA2_384);
+	S(RSASIG_SHA2_512);
+	S(RSASIG_V1_5_SHA1);
+	S(RSASIG_V1_5_SHA2_256);
+	S(RSASIG_V1_5_SHA2_384);
+	S(RSASIG_V1_5_SHA2_512);
+#undef S
 	}
 	bad_case(auth);
 }
