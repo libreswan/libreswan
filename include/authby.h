@@ -68,7 +68,7 @@ struct authby {
 	bool rsasig_v1_5_sha1;
 #define authby_rsasig_v1_5_sha1 rsasig_v1_5_sha1
 #define AUTHBY_RSASIG_V1_5_SHA1			\
-	.rsasig_v1_5_sha1 = true
+	.authby_rsasig_v1_5_sha1 = true
 
 	bool rsasig_v1_5_sha2_256;
 	bool rsasig_v1_5_sha2_384;
@@ -76,10 +76,16 @@ struct authby {
 #define authby_rsasig_v1_5_sha2_256 rsasig_v1_5_sha2_256
 #define authby_rsasig_v1_5_sha2_384 rsasig_v1_5_sha2_384
 #define authby_rsasig_v1_5_sha2_512 rsasig_v1_5_sha2_512
-#define AUTHBY_RSASIG_V1_5_SHA2			\
-	.authby_rsasig_v1_5_sha2_256 = true,		\
-	.authby_rsasig_v1_5_sha2_384 = true,		\
+#define AUTHBY_RSASIG_V1_5_SHA2_256		\
+	.authby_rsasig_v1_5_sha2_256 = true
+#define AUTHBY_RSASIG_V1_5_SHA2_384		\
+	.authby_rsasig_v1_5_sha2_384 = true
+#define AUTHBY_RSASIG_V1_5_SHA2_512		\
 	.authby_rsasig_v1_5_sha2_512 = true
+#define AUTHBY_RSASIG_V1_5_SHA2			\
+	AUTHBY_RSASIG_V1_5_SHA2_256,		\
+	AUTHBY_RSASIG_V1_5_SHA2_384,		\
+	AUTHBY_RSASIG_V1_5_SHA2_512
 
 #define AUTHBY_RSASIG_V1_5			\
 	AUTHBY_RSASIG_V1_5_SHA1,		\
@@ -91,10 +97,16 @@ struct authby {
 #define authby_rsasig_sha2_256 rsasig_sha2_256
 #define authby_rsasig_sha2_384 rsasig_sha2_384
 #define authby_rsasig_sha2_512 rsasig_sha2_512
-#define AUTHBY_RSASIG_SHA2			\
-	.authby_rsasig_sha2_256 = true,		\
-	.authby_rsasig_sha2_384 = true,		\
+#define AUTHBY_RSASIG_SHA2_256			\
+	.authby_rsasig_sha2_256 = true
+#define AUTHBY_RSASIG_SHA2_384			\
+	.authby_rsasig_sha2_384 = true
+#define AUTHBY_RSASIG_SHA2_512			\
 	.authby_rsasig_sha2_512 = true
+#define AUTHBY_RSASIG_SHA2			\
+	AUTHBY_RSASIG_SHA2_256,			\
+	AUTHBY_RSASIG_SHA2_384,			\
+	AUTHBY_RSASIG_SHA2_512
 #define AUTHBY_RSASIG				\
 	AUTHBY_RSASIG_RAW,			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -106,10 +118,16 @@ struct authby {
 #define authby_ecdsa_sha2_256 ecdsa_sha2_256
 #define authby_ecdsa_sha2_384 ecdsa_sha2_384
 #define authby_ecdsa_sha2_512 ecdsa_sha2_512
-#define AUTHBY_ECDSA_SHA2			\
-	.authby_ecdsa_sha2_256 = true,		\
-	.authby_ecdsa_sha2_384 = true,		\
+#define AUTHBY_ECDSA_SHA2_256			\
+	.authby_ecdsa_sha2_256 = true
+#define AUTHBY_ECDSA_SHA2_384			\
+	.authby_ecdsa_sha2_384 = true
+#define AUTHBY_ECDSA_SHA2_512			\
 	.authby_ecdsa_sha2_512 = true
+#define AUTHBY_ECDSA_SHA2			\
+	AUTHBY_ECDSA_SHA2_256,			\
+	AUTHBY_ECDSA_SHA2_384,			\
+	AUTHBY_ECDSA_SHA2_512
 #define AUTHBY_ECDSA				\
 	AUTHBY_ECDSA_SHA2
 
