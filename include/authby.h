@@ -17,24 +17,20 @@
 #define AUTHBY_H
 
 #include <stdbool.h>
+#include <stddef.h>	/* for size_t */
 
-#include "lset.h"
+#include "auth.h"
 
 struct jambuf;
 struct hash_desc;
-
-enum authby_kind {
-	AUTHBY_KIND_EAPONLY,
-#define AUTHBY_KIND_ROOF (AUTHBY_KIND_EAPONLY+1)
-};
 
 struct authby {
 	/*
 	 * XXX: add new authby flags to this array so there's less to
 	 * move over down the track.
 	 */
-	bool flag[AUTHBY_KIND_ROOF];
-#define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+	bool authby[AUTH_ROOF];
+#define authby_eaponly authby[AUTH_EAPONLY]
 #define AUTHBY_EAPONLY				\
 	.authby_eaponly = true
 
