@@ -70,6 +70,13 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 	passert(dns_pubkeys != NULL);
 
 	const struct state *st = state_by_serialno(dnsr->so_serial);
+	if (st == NULL) {
+		/*
+		 * The IKE SA has been deleted while unbound's async
+		 * IPSECKEY query was still pending; drop the keys.
+		 */
+		return;
+	}
 	const struct id *keyid = &st->st_connection->remote->host.id;
 
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
@@ -141,6 +148,13 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 {
 	struct state *st = state_by_serialno(dnsr->so_serial);
+	if (st == NULL) {
+		/*
+		 * The IKE SA has been deleted while unbound's async
+		 * A-record query was still pending; drop the response
+		 */
+		return;
+	}
 	ip_address ipaddr;
 	const struct ip_info *afi = endpoint_info(st->st_remote_endpoint);
 
