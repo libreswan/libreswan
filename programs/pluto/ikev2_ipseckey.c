@@ -162,16 +162,18 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	if (!endpoint_address_eq_address(st->st_remote_endpoint, ipaddr)) {
 		endpoint_buf ra;
 		address_buf rb;
-		ldbg(dnsr->logger, " forward address of IDi %s do not match remote address %s != %s",
-		     dnsr->qname,
-		     str_endpoint(&st->st_remote_endpoint, &ra),
-		     str_address(&ipaddr, &rb));
+		ldbg(dnsr->logger,
+			     "dns-match-id: forward A for %s do not match remote address %s != %s",
+			     dnsr->qname,
+			     str_endpoint(&st->st_remote_endpoint, &ra),
+			     str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = true;
 	endpoint_buf ra;
-	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
+	ldbg(dnsr->logger,
+	     "dns-match-id: forward A for %s matches remote address %s, dns-match-id succeeded",
 	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
 }
 
