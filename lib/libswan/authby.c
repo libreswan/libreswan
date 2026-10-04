@@ -104,12 +104,6 @@ bool authby_eq(struct authby lhs, struct authby rhs)
 	return REDUCE(bool, eq, &&);
 }
 
-bool authby_le(struct authby lhs, struct authby rhs)
-{
-	struct authby le = OP(lhs, <=, rhs);
-	return REDUCE(bool, le, &&);
-}
-
 bool authby_has_all(struct authby authby, struct authby all)
 {
 	struct authby and = authby_and(authby, all);

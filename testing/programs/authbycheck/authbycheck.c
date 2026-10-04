@@ -131,20 +131,6 @@ int main(int argc, char *argv[])
 				FAIL("authby_is_set(and_not(%u,%u)) == %u", auth, alt, and_not);
 			}
 
-			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
-				FAIL("orby: authby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, auth, eq);
-			}
-			if (!(authby_le(authby_or(authby, altby), altby) == eq)) {
-				FAIL("orby:altby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, alt, eq);
-			}
-
-			if (!authby_le(authby, authby_or(authby, altby))) {
-				FAIL("authby:orby: authby_le(%u*, or(%u*,%u*))", auth, auth, alt);
-			}
-			if (!authby_le(altby, authby_or(authby, altby))) {
-				FAIL("altby:orby: authby_le(%u*, or(%u*,%u*))", alt, auth, alt);
-			}
-
 			/**/
 
 			if (!(authby_has_all(authby_or(authby, altby), authby) == true)) {
