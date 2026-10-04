@@ -1,0 +1,16 @@
+setenforce Permissive 2>/dev/null
+nic #
+ /testing/guestbin/nic-dnssec.sh start
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
+nic #
+ echo done
+done
+nic #
+ # pluto must still be running, and no SA should be left
+nic #
+ ipsec trafficstatus
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+nic #
