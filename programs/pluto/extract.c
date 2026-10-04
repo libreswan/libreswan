@@ -3298,10 +3298,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->ms_dh_downgrade = ms_dh_downgrade;
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
-	config->dns_match_id =
-		extract_bool(kv(wm, END_ROOF, KWS_DNS_MATCH_ID),
-			     /*value_when_unset*/YN_NO,
-			     &d, verbose);
+	struct kv dns_match_id_kv = kv(wm, END_ROOF, KWS_DNS_MATCH_ID);
+	if (dns_match_id_kv.value != NULL) {
+		return diag(PRI_KV" is not supported", pri_kv(dns_match_id_kv));
+	}
+
 	/* IKEv2 only; IKEv1 uses xauth=pam */
 	config->ikev2_pam_authorize =
 		extract_bool(kv(wm, END_ROOF, KWS_PAM_AUTHORIZE),
