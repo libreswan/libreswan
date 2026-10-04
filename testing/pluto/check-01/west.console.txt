@@ -11,6 +11,7 @@ ipsec _dncheck: leak detective found no leaks
 west #
  valgrind --quiet $(ipsec -n _flagscheck) > /dev/null || echo failed
 ipsec _flagscheck: 0,2 0,no1,2
+ipsec _flagscheck: leak detective found no leaks
 west #
  valgrind --quiet $(ipsec -n _hunkcheck) > /dev/null || echo failed
 ipsec _hunkcheck: leak detective found no leaks
