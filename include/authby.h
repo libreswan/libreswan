@@ -147,7 +147,6 @@ bool authby_has_supported_ikev2_digsig_payload(struct authby);
 	AUTHBY_ECDSA_SHA2,			\
 	AUTHBY_EDDSA
 
-struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);

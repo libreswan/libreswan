@@ -72,11 +72,6 @@ unsigned authby_count(struct authby authby)
 	return REDUCE(unsigned, authby, +);
 }
 
-struct authby authby_xor(struct authby lhs, struct authby rhs)
-{
-	return OP(lhs, !=, rhs);
-}
-
 struct authby authby_not(struct authby lhs)
 {
 	const struct authby empty = {0};
