@@ -16,38 +16,41 @@
 #include "auth.h"
 
 #include "enum_names.h"
+#include "names.h"
 #include "lswcdefs.h"		/* for ARRAY_PTR */
 
 static const char *const auth_name[] = {
 #define S(E) [E - AUTH_FLOOR] = #E
-	S(AUTH_NEVER),
-	S(AUTH_PSK),
-	S(AUTH_RSASIG),
-	S(AUTH_ECDSA),
-	S(AUTH_DIGSIG),
-	S(AUTH_NULL),
 	S(AUTH_EAPONLY),
-#undef R
+	S(AUTH_ECDSA_SHA2_256),
+	S(AUTH_ECDSA_SHA2_384),
+	S(AUTH_ECDSA_SHA2_512),
+	S(AUTH_EDDSA),
+	S(AUTH_NEVER),
+	S(AUTH_NULL),
+	S(AUTH_PSK),
+	S(AUTH_RSASIG_RAW),
+	S(AUTH_RSASIG_SHA2_256),
+	S(AUTH_RSASIG_SHA2_384),
+	S(AUTH_RSASIG_SHA2_512),
+	S(AUTH_RSASIG_V1_5_SHA1),
+	S(AUTH_RSASIG_V1_5_SHA2_256),
+	S(AUTH_RSASIG_V1_5_SHA2_384),
+	S(AUTH_RSASIG_V1_5_SHA2_512),
+#undef S
 };
 
-static const struct enum_names auth_real_names = {
+static const struct enum_names auth_enum_names = {
 	AUTH_FLOOR, AUTH_ROOF-1,
 	ARRAY_PTR(auth_name),
 	"AUTH_", /* prefix */
 	NULL,
 };
 
-static const char *auth_alias_name[] = {
-	"secret",
-};
-
 /*
  * XXX: note hack, PSK is mapped to SECRET.
  */
 
-const struct enum_names auth_names = {
-	AUTH_PSK, AUTH_PSK,
-	ARRAY_PTR(auth_alias_name),
-	NULL,
-	&auth_real_names,
+const struct names auth_names = {
+	.enum_names = & auth_enum_names,
 };

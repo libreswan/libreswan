@@ -1,6 +1,6 @@
 /* AUTH constants, for libreswan
  *
- * Copyright (C) 2020, 2022 Andrew Cagney
+ * Copyright (C) 2020, 2022, 2026 Andrew Cagney
  * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
@@ -22,21 +22,28 @@
 #define AUTH_H
 
 enum auth {
-	AUTH_UNSET = 0,
-#define AUTH_FLOOR (AUTH_UNSET+1)
-#define DIGITAL_SIGNATURE_AUTH_FLOOR AUTH_RSASIG
-	AUTH_RSASIG,
-	AUTH_ECDSA,
+#define AUTH_FLOOR 0
+
+	AUTH_ECDSA_SHA2_256,
+	AUTH_ECDSA_SHA2_384,
+	AUTH_ECDSA_SHA2_512,
 	AUTH_EDDSA,
-#define DIGITAL_SIGNATURE_AUTH_ROOF (AUTH_EDDSA + 1)
-	AUTH_DIGSIG,
-	AUTH_PSK,
-	AUTH_NULL,
+	AUTH_RSASIG_RAW,
+	AUTH_RSASIG_SHA2_256,
+	AUTH_RSASIG_SHA2_384,
+	AUTH_RSASIG_SHA2_512,
+	AUTH_RSASIG_V1_5_SHA1,
+	AUTH_RSASIG_V1_5_SHA2_256,
+	AUTH_RSASIG_V1_5_SHA2_384,
+	AUTH_RSASIG_V1_5_SHA2_512,
+
 	AUTH_NEVER,
+	AUTH_NULL,
+	AUTH_PSK,
 	AUTH_EAPONLY,
 #define AUTH_ROOF (AUTH_EAPONLY+1)
 };
 
-extern const struct enum_names auth_names;
+extern const struct names auth_names;
 
 #endif

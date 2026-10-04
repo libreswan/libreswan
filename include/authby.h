@@ -17,25 +17,20 @@
 #define AUTHBY_H
 
 #include <stdbool.h>
+#include <stddef.h>	/* for size_t */
 
-#include "lset.h"
+#include "auth.h"
 
-enum auth;
 struct jambuf;
 struct hash_desc;
-
-enum authby_kind {
-	AUTHBY_KIND_EAPONLY,
-#define AUTHBY_KIND_ROOF (AUTHBY_KIND_EAPONLY+1)
-};
 
 struct authby {
 	/*
 	 * XXX: add new authby flags to this array so there's less to
 	 * move over down the track.
 	 */
-	bool flag[AUTHBY_KIND_ROOF];
-#define authby_eaponly flag[AUTHBY_KIND_EAPONLY]
+	bool authby[AUTH_ROOF];
+#define authby_eaponly authby[AUTH_EAPONLY]
 #define AUTHBY_EAPONLY				\
 	.authby_eaponly = true
 
@@ -68,7 +63,7 @@ struct authby {
 	bool rsasig_v1_5_sha1;
 #define authby_rsasig_v1_5_sha1 rsasig_v1_5_sha1
 #define AUTHBY_RSASIG_V1_5_SHA1			\
-	.rsasig_v1_5_sha1 = true
+	.authby_rsasig_v1_5_sha1 = true
 
 	bool rsasig_v1_5_sha2_256;
 	bool rsasig_v1_5_sha2_384;
@@ -76,10 +71,16 @@ struct authby {
 #define authby_rsasig_v1_5_sha2_256 rsasig_v1_5_sha2_256
 #define authby_rsasig_v1_5_sha2_384 rsasig_v1_5_sha2_384
 #define authby_rsasig_v1_5_sha2_512 rsasig_v1_5_sha2_512
-#define AUTHBY_RSASIG_V1_5_SHA2			\
-	.authby_rsasig_v1_5_sha2_256 = true,		\
-	.authby_rsasig_v1_5_sha2_384 = true,		\
+#define AUTHBY_RSASIG_V1_5_SHA2_256		\
+	.authby_rsasig_v1_5_sha2_256 = true
+#define AUTHBY_RSASIG_V1_5_SHA2_384		\
+	.authby_rsasig_v1_5_sha2_384 = true
+#define AUTHBY_RSASIG_V1_5_SHA2_512		\
 	.authby_rsasig_v1_5_sha2_512 = true
+#define AUTHBY_RSASIG_V1_5_SHA2			\
+	AUTHBY_RSASIG_V1_5_SHA2_256,		\
+	AUTHBY_RSASIG_V1_5_SHA2_384,		\
+	AUTHBY_RSASIG_V1_5_SHA2_512
 
 #define AUTHBY_RSASIG_V1_5			\
 	AUTHBY_RSASIG_V1_5_SHA1,		\
@@ -91,10 +92,16 @@ struct authby {
 #define authby_rsasig_sha2_256 rsasig_sha2_256
 #define authby_rsasig_sha2_384 rsasig_sha2_384
 #define authby_rsasig_sha2_512 rsasig_sha2_512
-#define AUTHBY_RSASIG_SHA2			\
-	.authby_rsasig_sha2_256 = true,		\
-	.authby_rsasig_sha2_384 = true,		\
+#define AUTHBY_RSASIG_SHA2_256			\
+	.authby_rsasig_sha2_256 = true
+#define AUTHBY_RSASIG_SHA2_384			\
+	.authby_rsasig_sha2_384 = true
+#define AUTHBY_RSASIG_SHA2_512			\
 	.authby_rsasig_sha2_512 = true
+#define AUTHBY_RSASIG_SHA2			\
+	AUTHBY_RSASIG_SHA2_256,			\
+	AUTHBY_RSASIG_SHA2_384,			\
+	AUTHBY_RSASIG_SHA2_512
 #define AUTHBY_RSASIG				\
 	AUTHBY_RSASIG_RAW,			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -106,10 +113,16 @@ struct authby {
 #define authby_ecdsa_sha2_256 ecdsa_sha2_256
 #define authby_ecdsa_sha2_384 ecdsa_sha2_384
 #define authby_ecdsa_sha2_512 ecdsa_sha2_512
-#define AUTHBY_ECDSA_SHA2			\
-	.authby_ecdsa_sha2_256 = true,		\
-	.authby_ecdsa_sha2_384 = true,		\
+#define AUTHBY_ECDSA_SHA2_256			\
+	.authby_ecdsa_sha2_256 = true
+#define AUTHBY_ECDSA_SHA2_384			\
+	.authby_ecdsa_sha2_384 = true
+#define AUTHBY_ECDSA_SHA2_512			\
 	.authby_ecdsa_sha2_512 = true
+#define AUTHBY_ECDSA_SHA2			\
+	AUTHBY_ECDSA_SHA2_256,			\
+	AUTHBY_ECDSA_SHA2_384,			\
+	AUTHBY_ECDSA_SHA2_512
 #define AUTHBY_ECDSA				\
 	AUTHBY_ECDSA_SHA2
 
@@ -175,7 +188,11 @@ bool authby_is_set(struct authby authby);
 unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
+enum auth auth_from_authby(struct authby authby);
+struct authby authby_from_auth(enum auth auth);
+
 struct authby authby_and_auth(struct authby, enum auth);
+struct authby authby_or_auth(struct authby, enum auth);
 bool authby_has_auth(struct authby, enum auth);
 
 /*
@@ -184,9 +201,6 @@ bool authby_has_auth(struct authby, enum auth);
  * with RFC 7427 (Digital Signature AUTH payload).
  */
 bool authby_has_pubkey(struct authby);
-
-enum auth auth_from_authby(struct authby authby);
-struct authby authby_from_auth(enum auth auth);
 
 typedef struct {
 	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+AUTH_NEVER+AUTH_NULL+"
