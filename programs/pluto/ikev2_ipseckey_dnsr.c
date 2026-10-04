@@ -487,29 +487,31 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 dns_status dns_qry_start(struct p_dns_req *dnsr)
 {
 	int ub_ret;
-	dns_status ret;
 
 	PASSERT(dnsr->logger, dnsr->ctx != NULL);
 	ldbg(dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
+	ldbg(dnsr->logger, "UB: %s submitted", dnsr->log_buf);
 	ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
 				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {
 		llog(RC_LOG, dnsr->logger,
 		     "unbound resolve call failed for %s", dnsr->log_buf);
-		free_ipseckey_dns(dnsr);
 		return DNS_FATAL;
 	}
 
-	ret = dnsr->dns_status;
+	dns_status ret = dnsr->dns_status;
 	if (dnsr->dns_status == DNS_SUSPEND) {
 		dnsr->cache_hit = false;
-	} else {
-		free_ipseckey_dns(dnsr);
 	}
 
+	ldbg(dnsr->logger, "UB: %s returned %d (%s)",
+	     dnsr->log_buf, ret,
+	     (ret == DNS_SUSPEND ? "suspend" :
+	      ret == DNS_OK ? "ok" :
+	      "ERROR"));
 	return ret;
 }
