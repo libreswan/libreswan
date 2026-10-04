@@ -2033,7 +2033,7 @@ def cmdline():
 
     global logger
     logutil.config(args, sys.stdout)
-    logger = logutil.getLogger("nsrunner")
+    logger = logutil.getLogger("ns")
     logger.info("Options:")
     logger.info("  directories: %s", [args.libreswandir + "/testing/pluto/"])
     logger.info("  verbose: %s", args.log_level)
@@ -3602,7 +3602,7 @@ class Namespace:
         ns = "%s-%s" % (host, test.name)
         cmd = [self.nsenter_cmd(ns) + ' /bin/bash']
         logger.debug("nsenter full command : %s", cmd)
-        s = shell.Remote(cmd, logger, hostname=host, username="root")
+        s = shell.Remote(cmd, logger.nest(host), hostname=host, username="root")
         if s:
             logger.debug("Got console %s lets sanitize" % ns)
             # next few lines are bit hackery to get the local prompt behave
@@ -3672,8 +3672,8 @@ class Namespace:
         logger.debug("ns_clean_prev_run %s" % cmd)
         try:
             output = subprocess.check_output(cmd, shell=True, timeout=timer)
-        except subprocess.TimeoutExpired:
-            logger.error("%s #timedout %s\n%s" % (cmd, timer, e.output))
+        except subprocess.TimeoutExpired as e:
+            logger.error("%s #timedout %s\n%s", cmd, timer, e.output or "")
             return True
         except subprocess.CalledProcessError as e:
             # this could be non fatal
@@ -3924,25 +3924,28 @@ class Test():
 
         console_out = "OUTPUT/%s.console.verbose.txt" % host
 
+        console.logger.info("running %s", script)
+
         with open(console_out, 'a', encoding='utf-8') as f_log:
             console.redirect_output(f_log)
             with open(script, 'r', encoding='utf-8') as f_cmds:
                 output = ''
                 for line in f_cmds:
                     line = line.rstrip()
-                    # logger.debug(line)
+                    if line and not line.startswith("#"):
+                        console.logger.info("%s# %s", host, line)
                     try:
                         status = console.run(line, timeout=timeout)
                         if status:
                             # Cannot abort some commands are expected to fail.
                             # leave a cut/tuc marker in verbose to cleanup
-                            logger.warning(
-                                "WARNING %s line %s exit status %d", script, line, status)
+                            console.logger.warning(
+                                "%s line %s exit status %d", script, line, status)
                             console.append_output("%s exit status %s %s '%s' %s",
                                 LINECUT, status, script, line, LINETUC)
                     except pexpect.TIMEOUT as e:
                         post_timeout = "%s %s:%s" % (TIMEOUT, host, script)
-                        logger.warning("*** %s ***" % post_timeout)
+                        console.logger.warning("*** %s ***" % post_timeout)
                         console.append_output(
                             "%s\n%s %s\n", CUT, post_timeout, TUC)
                     except BaseException as e:
