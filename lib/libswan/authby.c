@@ -182,34 +182,6 @@ bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
 	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
 }
 
-enum auth auth_from_authby(struct authby authby)
-{
-#define S(AUTH)						\
-	if (authby_has_all(authby, (struct authby) {	\
-				AUTHBY_##AUTH,		\
-			})) {				\
-		return AUTH_##AUTH;			\
-	}
-	S(EAPONLY);
-	S(ECDSA_SHA2_256);
-	S(ECDSA_SHA2_384);
-	S(ECDSA_SHA2_512);
-	S(EDDSA);
-	S(NEVER);
-	S(NULL);
-	S(PSK);
-	S(RSASIG_RAW);
-	S(RSASIG_SHA2_256);
-	S(RSASIG_SHA2_384);
-	S(RSASIG_SHA2_512);
-	S(RSASIG_V1_5_SHA1);
-	S(RSASIG_V1_5_SHA2_256);
-	S(RSASIG_V1_5_SHA2_384);
-	S(RSASIG_V1_5_SHA2_512);
-#undef S
-	return AUTH_ROOF;
-}
-
 struct authby authby_from_auth(enum auth auth)
 {
 	switch (auth) {
