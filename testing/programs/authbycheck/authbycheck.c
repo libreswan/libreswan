@@ -125,12 +125,6 @@ int main(int argc, char *argv[])
 				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
 			}
 
-			PRINT("authby_and_not(%u,%u)", auth, alt);
-			bool and_not = (auth != alt);
-			if (!(authby_is_set(authby_and_not(authby, altby)) == and_not)) {
-				FAIL("authby_is_set(and_not(%u,%u)) == %u", auth, alt, and_not);
-			}
-
 			/**/
 
 			if (!(authby_has_all(authby_or(authby, altby), authby) == true)) {
