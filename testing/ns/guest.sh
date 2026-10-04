@@ -71,6 +71,13 @@ RM_BIND etc.strongswan /etc/strongswan
 RM_BIND nss /var/lib/ipsec/nss
 RM_BIND softhsm /var/lib/softhsm/tokens
 
+# mount an empty /etc/resolv.conf so guests that never run swan-prep
+# (nic) can't overwrite the host's file; swan-prep re-fills the same
+# NS/<host>/etc/resolv.conf
+RUN mkdir -p "${nsdir}"/etc
+RUN touch "${nsdir}"/etc/resolv.conf
+BIND "${nsdir}"/etc/resolv.conf /etc/resolv.conf
+
 # bind and rebuild OCSPD's directory
 RM_BIND etc.ocspd /etc/ocspd
 mkdir -p /etc/ocspd/private
