@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -u
 
 # a wrapper to around 'ipsec trafficstatus' with sanitizer fluctations in byte count

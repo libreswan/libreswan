@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -u
 
 # Send a ping packets using fping and then wait for a reply.
