@@ -147,13 +147,9 @@ bool authby_has_supported_ikev2_digsig_payload(struct authby);
 	AUTHBY_ECDSA_SHA2,			\
 	AUTHBY_EDDSA
 
-struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
-
-/* lhs & !rhs - what isn't in rhs */
-struct authby authby_and_not(struct authby lhs, struct authby rhs);
 
 bool authby_has_all(struct authby authby, struct authby all);
 bool authby_has_any(struct authby authby, struct authby some);
@@ -168,12 +164,10 @@ bool authby_has_none(struct authby authby, struct authby none);
 struct authby authby_and_hash(struct authby authby, const struct hash_desc *hash);
 bool authby_has_hash(struct authby authby, const struct hash_desc *hash);
 
-bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
 unsigned authby_count(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
-enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
 
 struct authby authby_and_auth(struct authby, enum auth);

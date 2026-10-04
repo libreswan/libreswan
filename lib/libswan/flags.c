@@ -85,3 +85,99 @@ bool ro_flags_set(struct ro_flags flags)
 	}
 	return false;
 }
+
+void flags_and_op(struct rw_flags result,
+		  struct ro_flags lhs,
+		  struct ro_flags rhs)
+{
+	for (unsigned u = 0; u < result.len; u++) {
+		result.flag[u] = lhs.flag[u] && rhs.flag[u];
+	}
+}
+
+void flags_or_op(struct rw_flags result,
+		  struct ro_flags lhs,
+		  struct ro_flags rhs)
+{
+	for (unsigned u = 0; u < result.len; u++) {
+		result.flag[u] = lhs.flag[u] || rhs.flag[u];
+	}
+}
+
+void flags_and_flag_op(struct rw_flags result,
+		       struct ro_flags lhs,
+		       unsigned rhs)
+{
+	for (unsigned u = 0; u < result.len; u++) {
+		result.flag[u] = (u == rhs ? lhs.flag[u] : false);
+	}
+}
+
+void flags_or_flag_op(struct rw_flags result,
+		      struct ro_flags lhs,
+		      unsigned rhs)
+{
+	for (unsigned u = 0; u < result.len; u++) {
+		result.flag[u] = (u == rhs ? true : lhs.flag[u]);
+	}
+}
+
+void flags_not_op(struct rw_flags result,
+		  struct ro_flags lhs)
+{
+	for (unsigned u = 0; u < result.len; u++) {
+		result.flag[u] = !lhs.flag[u];
+	}
+}
+
+bool flags_eq_op(struct ro_flags lhs,
+		 struct ro_flags rhs)
+{
+	for (unsigned u = 0; u < lhs.len; u++) {
+		if (lhs.flag[u] != rhs.flag[u]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+unsigned flags_count_op(struct ro_flags flags)
+{
+	unsigned count = 0;
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (flags.flag[u]) {
+			count++;
+		}
+	}
+	return count;
+}
+
+bool flags_has_all_op(struct ro_flags flags, struct ro_flags all)
+{
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (all.flag[u] && !flags.flag[u]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool flags_has_any_op(struct ro_flags flags, struct ro_flags any)
+{
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (any.flag[u] && flags.flag[u]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool flags_has_none_op(struct ro_flags flags, struct ro_flags none)
+{
+	for (unsigned u = 0; u < flags.len; u++) {
+		if (none.flag[u] && flags.flag[u]) {
+			return false;
+		}
+	}
+	return true;
+}

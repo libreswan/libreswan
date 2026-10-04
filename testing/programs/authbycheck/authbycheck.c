@@ -102,11 +102,6 @@ int main(int argc, char *argv[])
 			if (!authby_is_set(authby_or(authby, altby))) {
 				FAIL("authby_is_set(or(%u*, %u*))", auth, alt);
 			}
-			PRINT("authby_xor(%u,%u)", auth, alt);
-			bool xor = (auth != alt);
-			if (!(authby_is_set(authby_xor(authby, altby)) == xor)) {
-				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
-			}
 
 			PRINT("authby_and_auth(%u,%u)", auth, alt);
 			if (!(authby_is_set(authby_and_auth(authby, alt)) == eq)) {
@@ -125,26 +120,6 @@ int main(int argc, char *argv[])
 				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
 			}
 
-			PRINT("authby_and_not(%u,%u)", auth, alt);
-			bool and_not = (auth != alt);
-			if (!(authby_is_set(authby_and_not(authby, altby)) == and_not)) {
-				FAIL("authby_is_set(and_not(%u,%u)) == %u", auth, alt, and_not);
-			}
-
-			if (!(authby_le(authby_or(authby, altby), authby) == eq)) {
-				FAIL("orby: authby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, auth, eq);
-			}
-			if (!(authby_le(authby_or(authby, altby), altby) == eq)) {
-				FAIL("orby:altby: authby_le(or(%u*,%u*), %u) == %u", auth, alt, alt, eq);
-			}
-
-			if (!authby_le(authby, authby_or(authby, altby))) {
-				FAIL("authby:orby: authby_le(%u*, or(%u*,%u*))", auth, auth, alt);
-			}
-			if (!authby_le(altby, authby_or(authby, altby))) {
-				FAIL("altby:orby: authby_le(%u*, or(%u*,%u*))", alt, auth, alt);
-			}
-
 			/**/
 
 			if (!(authby_has_all(authby_or(authby, altby), authby) == true)) {
@@ -154,13 +129,6 @@ int main(int argc, char *argv[])
 				FAIL("authby_has_all(%u*, or(%u*,%u*)) == %u", auth, auth, alt, eq);
 			}
 
-			if (!(authby_has_all(authby_xor(authby, altby), authby) == !eq)) {
-				FAIL("authby_has_all(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
-			}
-			if (!(authby_has_all(authby, authby_xor(authby, altby)) == eq)) {
-				FAIL("authby_has_all(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, eq);
-			}
-
 			/**/
 
 			if (!(authby_has_any(authby_or(authby, altby), authby) == true)) {
@@ -168,13 +136,6 @@ int main(int argc, char *argv[])
 			}
 			if (!(authby_has_any(authby, authby_or(authby, altby)) == true)) {
 				FAIL("authby_has_any(%u*, or(%u*,%u*)) == %u", auth, auth, alt, true);
-			}
-
-			if (!(authby_has_any(authby_xor(authby, altby), authby) == !eq)) {
-				FAIL("authby_has_any(xor(%u*,%u*), %u*) == %u", auth, alt, auth, !eq);
-			}
-			if (!(authby_has_any(authby, authby_xor(authby, altby)) == !eq)) {
-				FAIL("authby_has_any(%u*, xor(%u*,%u*)) == %u", auth, auth, alt, !eq);
 			}
 
 			/**/

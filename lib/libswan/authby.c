@@ -1,6 +1,6 @@
 /* Authentication, for libreswan
  *
- * Copyright (C) 2022 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2022,2026 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,45 +22,7 @@
 #include "constants.h"		/* for enum keyword_auth */
 #include "jambuf.h"
 #include "lswlog.h"		/* for bad_case() */
-
-#define REDUCE_SHA2(TYPE, LHS, OP, AUTH)	\
-	(TYPE)(LHS).AUTH##_sha2_256 OP		\
-	(TYPE)(LHS).AUTH##_sha2_384 OP		\
-	(TYPE)(LHS).AUTH##_sha2_512
-
-#define REDUCE(TYPE, LHS, OP)			\
-	((TYPE)(LHS).authby_null OP		\
-	 (TYPE)(LHS).authby_never OP		\
-	 (TYPE)(LHS).authby_psk OP		\
-	 (TYPE)(LHS).authby_eaponly OP		\
-	 (TYPE)(LHS).authby_eddsa OP		\
-	 (TYPE)(LHS).authby_rsasig_raw OP	\
-	 (TYPE)(LHS).authby_rsasig_v1_5_sha1 OP	\
-	 REDUCE_SHA2(TYPE, LHS, OP, authby_rsasig_v1_5) OP \
-	 REDUCE_SHA2(TYPE, LHS, OP, authby_rsasig) OP	\
-	 REDUCE_SHA2(TYPE, LHS, OP, authby_ecdsa))
-
-#define OP4(LHS, OP, RHS, AUTH)					\
-	.AUTH = (LHS).AUTH OP (RHS).AUTH
-
-#define OP_SHA2(LHS, OP, RHS, AUTH)				\
-	OP4(LHS, OP, RHS, AUTH##_sha2_256),			\
-	OP4(LHS, OP, RHS, AUTH##_sha2_384),			\
-	OP4(LHS, OP, RHS, AUTH##_sha2_512)
-
-#define OP(LHS, OP, RHS)					\
-	(struct authby) {					\
-		OP4(LHS, OP, RHS, authby_null),			\
-		OP4(LHS, OP, RHS, authby_never),		\
-		OP4(LHS, OP, RHS, authby_psk),			\
-		OP4(LHS, OP, RHS, authby_eaponly),		\
-		OP4(LHS, OP, RHS, authby_rsasig_raw),		\
-		OP4(LHS, OP, RHS, authby_eddsa),		\
-		OP4(LHS, OP, RHS, authby_rsasig_v1_5_sha1),	\
-		OP_SHA2(LHS, OP, RHS, authby_rsasig_v1_5),	\
-		OP_SHA2(LHS, OP, RHS, authby_rsasig),		\
-		OP_SHA2(LHS, OP, RHS, authby_ecdsa),		\
-	}
+#include "flags.h"
 
 bool authby_is_set(struct authby authby)
 {
@@ -69,63 +31,42 @@ bool authby_is_set(struct authby authby)
 
 unsigned authby_count(struct authby authby)
 {
-	return REDUCE(unsigned, authby, +);
-}
-
-struct authby authby_xor(struct authby lhs, struct authby rhs)
-{
-	return OP(lhs, !=, rhs);
+	return flags_count(authby, authby);
 }
 
 struct authby authby_not(struct authby lhs)
 {
-	const struct authby empty = {0};
-	return OP(lhs, ==, empty);
+	return flags_not(authby, lhs);
 }
 
 struct authby authby_and(struct authby lhs, struct authby rhs)
 {
-	return OP(lhs, &&, rhs);
-}
-
-struct authby authby_and_not(struct authby lhs, struct authby rhs)
-{
-	return authby_and(lhs, authby_not(rhs));
+	return flags_and(authby, lhs, rhs);
 }
 
 struct authby authby_or(struct authby lhs, struct authby rhs)
 {
-	return OP(lhs, ||, rhs);
+	return flags_or(authby, lhs, rhs);
 }
 
 bool authby_eq(struct authby lhs, struct authby rhs)
 {
-	struct authby eq = OP(lhs, ==, rhs);
-	return REDUCE(bool, eq, &&);
-}
-
-bool authby_le(struct authby lhs, struct authby rhs)
-{
-	struct authby le = OP(lhs, <=, rhs);
-	return REDUCE(bool, le, &&);
+	return flags_eq(authby, lhs, rhs);
 }
 
 bool authby_has_all(struct authby authby, struct authby all)
 {
-	struct authby and = authby_and(authby, all);
-	return authby_eq(and, all); /*all*/
+	return flags_has_all(authby, authby, all);
 }
 
-bool authby_has_any(struct authby authby, struct authby some)
+bool authby_has_any(struct authby authby, struct authby any)
 {
-	struct authby and = authby_and(authby, some);
-	return authby_count(and) > 0; /* at least 1 */
+	return flags_has_any(authby, authby, any);
 }
 
 bool authby_has_none(struct authby authby, struct authby none)
 {
-	struct authby and = authby_and(authby, none);
-	return authby_count(and) == 0; /*none*/
+	return flags_has_none(authby, authby, none);
 }
 
 struct authby authby_and_hash(struct authby authby,
@@ -170,17 +111,17 @@ bool authby_has_hash(struct authby authby,
 
 struct authby authby_and_auth(struct authby authby, enum auth auth)
 {
-	return authby_and(authby, authby_from_auth(auth));
+	return flags_and_flag(authby, authby, auth);
 }
 
 struct authby authby_or_auth(struct authby authby, enum auth auth)
 {
-	return authby_or(authby, authby_from_auth(auth));
+	return flags_or_flag(authby, authby, auth);
 }
 
 bool authby_has_auth(struct authby authby, enum auth auth)
 {
-	return authby_is_set(authby_and_auth(authby, auth));
+	return flags_has_flag(authby, authby, auth);
 }
 
 bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
@@ -188,60 +129,9 @@ bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
 	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
 }
 
-enum auth auth_from_authby(struct authby authby)
-{
-#define S(AUTH)						\
-	if (authby_has_all(authby, (struct authby) {	\
-				AUTHBY_##AUTH,		\
-			})) {				\
-		return AUTH_##AUTH;			\
-	}
-	S(EAPONLY);
-	S(ECDSA_SHA2_256);
-	S(ECDSA_SHA2_384);
-	S(ECDSA_SHA2_512);
-	S(EDDSA);
-	S(NEVER);
-	S(NULL);
-	S(PSK);
-	S(RSASIG_RAW);
-	S(RSASIG_SHA2_256);
-	S(RSASIG_SHA2_384);
-	S(RSASIG_SHA2_512);
-	S(RSASIG_V1_5_SHA1);
-	S(RSASIG_V1_5_SHA2_256);
-	S(RSASIG_V1_5_SHA2_384);
-	S(RSASIG_V1_5_SHA2_512);
-#undef S
-	return AUTH_ROOF;
-}
-
 struct authby authby_from_auth(enum auth auth)
 {
-	switch (auth) {
-#define S(AUTH) case AUTH_##AUTH:		\
-		return (struct authby) {	\
-			AUTHBY_##AUTH,		\
-		};
-	S(EAPONLY);
-	S(ECDSA_SHA2_256);
-	S(ECDSA_SHA2_384);
-	S(ECDSA_SHA2_512);
-	S(EDDSA);
-	S(NEVER);
-	S(NULL);
-	S(PSK);
-	S(RSASIG_RAW);
-	S(RSASIG_SHA2_256);
-	S(RSASIG_SHA2_384);
-	S(RSASIG_SHA2_512);
-	S(RSASIG_V1_5_SHA1);
-	S(RSASIG_V1_5_SHA2_256);
-	S(RSASIG_V1_5_SHA2_384);
-	S(RSASIG_V1_5_SHA2_512);
-#undef S
-	}
-	bad_case(auth);
+	return flags_from_flag(authby, auth);
 }
 
 static size_t jam_authby_raw(struct jambuf *buf,
