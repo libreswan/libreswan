@@ -2054,10 +2054,10 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 void wipe_old_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool new_remote_is_authnull = c->remote->host.config->authby.null;
+	bool new_remote_is_authnull = c->remote->host.config->authby.authby_null;
 
 	if (c->local->host.config->xauth.server &&
-	    c->remote->host.config->authby.psk) {
+	    c->remote->host.config->authby.authby_psk) {
 		/*
 		 * If we are a server and authenticate all clients
 		 * using PSK then all clients use the same group ID
@@ -2105,7 +2105,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_remote_is_nullauth = d->remote->host.config->authby.null;
+		bool old_remote_is_nullauth = d->remote->host.config->authby.authby_null;
 		if (!old_remote_is_nullauth && new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;

@@ -441,7 +441,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
 	if (authby_has_pubkey(pc->local->host.config->authby) &&
-	    pc->local->host.config->authby.null) {
+	    pc->local->host.config->authby.authby_null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
 		if (!ikev2_create_psk_auth(PSK_AUTH_NULL, ike,
@@ -679,7 +679,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * We might be surprised!  Which is why C is only captured
 	 * _after_ this operation.
 	 */
-       if (!proposed_initiator_auths.null) {
+       if (!proposed_initiator_auths.authby_null) {
 	       refine_host_connection_of_state_on_responder(ike, proposed_initiator_auths,
 							    &initiator_id,
 							    &responder_id);
@@ -852,7 +852,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	struct connection *c = ike->sa.st_connection;
 	struct authby initiator_authby = c->remote->host.config->authby;
-	bool remote_can_authby_null = initiator_authby.null;
+	bool remote_can_authby_null = initiator_authby.authby_null;
 	bool remote_can_authby_pubkey = authby_has_pubkey(initiator_authby);
 
 	if (!ike->sa.st_ppk_ike_auth_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
@@ -1021,7 +1021,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
 		if (c->local->host.config->xauth.server &&
-		    c->remote->host.config->authby.psk) {
+		    c->remote->host.config->authby.authby_psk) {
 			/*
 			 * If we are a server and expect remote
 			 * clients to authenticate using PSK, then all

@@ -313,13 +313,13 @@ static struct authby local_ppk_authby(struct ike_sa *ike)
 			AUTHBY_RSASIG_V1_5,
 				AUTHBY_RSASIG_SHA2,
 				}
-		: authby.psk ? (struct authby) {
+		: authby.authby_psk ? (struct authby) {
 			AUTHBY_PSK,
 				}
-		: authby.null ? (struct authby) {
+		: authby.authby_null ? (struct authby) {
 			AUTHBY_NULL,
 				}
-		: authby.never ? (struct authby) {
+		: authby.authby_never ? (struct authby) {
 			AUTHBY_NEVER,
 				}
 		: authby.authby_eaponly ? (struct authby) {
@@ -395,7 +395,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 		const struct hash_desc *hash_algo =
 			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
-			if (c->local->config->host.authby.rsasig_v1_5_sha1) {
+			if (c->local->config->host.authby.authby_rsasig_v1_5_sha1) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */
 				if (!ikev2_calculate_hash(ike, id_hash, NULL, no_ppk_auth,
 							  &ike_alg_hash_sha1,

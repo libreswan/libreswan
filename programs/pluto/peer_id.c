@@ -613,7 +613,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	struct connection *c = ike->sa.st_connection;
 
 	vassert(authby_is_set(proposed_authbys));
-	vassert(!proposed_authbys.never);
+	vassert(!proposed_authbys.authby_never);
 
 	/*
 	 * XXX: should, instead, C be a permanent or template as it
@@ -904,7 +904,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		ldbg(ike->sa.logger,
 		     "rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		     str_id(peer_id, &idb));
-	} else if (c->remote->host.config->authby.null &&
+	} else if (c->remote->host.config->authby.authby_null &&
 		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,

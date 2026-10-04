@@ -87,7 +87,7 @@ static bool match_v2_connection(const struct connection *c,
 		 * logic to detect these cases and clear.
 		 */
 		if (is_from_group(c)) {
-			PEXPECT(verbose.logger, remote_authby.never);
+			PEXPECT(verbose.logger, remote_authby.authby_never);
 			(*send_reject_response) = false;
 		}
 		vdbg("skipping %s, never negotiate", c->name);
