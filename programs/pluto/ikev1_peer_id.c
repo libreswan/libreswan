@@ -113,7 +113,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
 		proposed_authbys = (struct authby) {
-			.psk = true,
+			AUTHBY_PSK,
 		};
 		break;
 	case OAKLEY_RSA_SIG:

@@ -498,7 +498,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	      !address_is_specified(c->remote->host.addr) ) ||
 
 	    /* case 2 */
-	    ( c->remote->host.config->authby.psk &&
+	    ( c->remote->host.config->authby.authby_psk &&
 	      kind == SECRET_PSK /*shared-secret*/ &&
 	      ( ( is_template(c) &&
 		  c->remote->host.id.kind == ID_NONE ) ||

@@ -1420,17 +1420,17 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 				switch (attr.isaat_lv) {
 				case XAUTHInitPreShared:
 					xauth = true;
-					authby.psk = true;
+					authby.authby_psk = true;
 					break;
 				case OAKLEY_PRESHARED_KEY:
-					authby.psk = true;
+					authby.authby_psk = true;
 					break;
 				case XAUTHInitRSA:
 					xauth = true;
-					authby.rsasig = true;
+					authby.authby_rsasig_raw = true;
 					break;
 				case OAKLEY_RSA_SIG:
-					authby.rsasig = true;
+					authby.authby_rsasig_raw = true;
 					break;
 				}
 				break;

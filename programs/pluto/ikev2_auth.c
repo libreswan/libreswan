@@ -495,7 +495,7 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
-	if (negotiated_authby.rsasig_v1_5_sha1) {
+	if (negotiated_authby.authby_rsasig_v1_5_sha1) {
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
@@ -517,17 +517,17 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	 * authby which _should_ be looking at the ECDSA key.
 	 */
 
-	if (negotiated_authby.ecdsa_sha2_512) {
+	if (negotiated_authby.authby_ecdsa_sha2_512) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_512_P521);
 	}
 
-	if (negotiated_authby.ecdsa_sha2_384) {
+	if (negotiated_authby.authby_ecdsa_sha2_384) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_384_P384);
 	}
 
-	if (negotiated_authby.ecdsa_sha2_256) {
+	if (negotiated_authby.authby_ecdsa_sha2_256) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
 	}

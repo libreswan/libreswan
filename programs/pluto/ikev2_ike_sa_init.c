@@ -621,8 +621,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 *
 	 * XXX: should this check POLICY_OPPORTUNISTIC?
 	 */
-	if (c->local->host.config->authby.null ||
-	    c->remote->host.config->authby.null) {
+	if (c->local->host.config->authby.authby_null ||
+	    c->remote->host.config->authby.authby_null) {
 		if (!emit_v2VID(request.pbs, VID_OPPORTUNISTIC))
 			return false;
 	}
@@ -1039,8 +1039,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 *
 	 * XXX: should this check POLICY_OPPORTUNISTIC?
 	 */
-	if (c->local->host.config->authby.null ||
-	    c->remote->host.config->authby.null) {
+	if (c->local->host.config->authby.authby_null ||
+	    c->remote->host.config->authby.authby_null) {
 		if (!emit_v2VID(response.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}

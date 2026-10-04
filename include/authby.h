@@ -34,43 +34,34 @@ struct authby {
 #define AUTHBY_EAPONLY				\
 	.authby_eaponly = true
 
-	bool psk;	/* flag[AUTHBY_KIND_PSK] */
-#define authby_psk psk
+#define authby_psk authby[AUTH_PSK]
 #define AUTHBY_PSK				\
 	.authby_psk = true
 
-	bool null;	/* flag[AUTHBY_KIND_NULL] */
-#define authby_null null
+#define authby_null authby[AUTH_NULL]
 #define AUTHBY_NULL				\
 	.authby_null = true
 
-	bool never;	/* flag[AUTHBY_KIND_NEVER] */
-#define authby_never never
+#define authby_never authby[AUTH_NEVER]
 #define AUTHBY_NEVER				\
 	.authby_never = true
 
-	bool eddsa;	/* flag[AUTHBY_KIND_EDDSA] */
-#define authby_eddsa eddsa
+#define authby_eddsa authby[AUTH_EDDSA]
 #define AUTHBY_EDDSA				\
 	.authby_eddsa = true
 
 	/* XXX: should be IKEv1 only */
-	bool rsasig;	/* flag[AUTHBY_KIND_RSASIG_RAW] */
-#define authby_rsasig_raw rsasig
+#define authby_rsasig_raw authby[AUTH_RSASIG_RAW]
 #define AUTHBY_RSASIG_RAW			\
 	.authby_rsasig_raw = true
 
-	bool rsasig_v1_5_sha1;
-#define authby_rsasig_v1_5_sha1 rsasig_v1_5_sha1
+#define authby_rsasig_v1_5_sha1 authby[AUTH_RSASIG_V1_5_SHA1]
 #define AUTHBY_RSASIG_V1_5_SHA1			\
 	.authby_rsasig_v1_5_sha1 = true
 
-	bool rsasig_v1_5_sha2_256;
-	bool rsasig_v1_5_sha2_384;
-	bool rsasig_v1_5_sha2_512;
-#define authby_rsasig_v1_5_sha2_256 rsasig_v1_5_sha2_256
-#define authby_rsasig_v1_5_sha2_384 rsasig_v1_5_sha2_384
-#define authby_rsasig_v1_5_sha2_512 rsasig_v1_5_sha2_512
+#define authby_rsasig_v1_5_sha2_256 authby[AUTH_RSASIG_V1_5_SHA2_256]
+#define authby_rsasig_v1_5_sha2_384 authby[AUTH_RSASIG_V1_5_SHA2_384]
+#define authby_rsasig_v1_5_sha2_512 authby[AUTH_RSASIG_V1_5_SHA2_512]
 #define AUTHBY_RSASIG_V1_5_SHA2_256		\
 	.authby_rsasig_v1_5_sha2_256 = true
 #define AUTHBY_RSASIG_V1_5_SHA2_384		\
@@ -86,12 +77,9 @@ struct authby {
 	AUTHBY_RSASIG_V1_5_SHA1,		\
 	AUTHBY_RSASIG_V1_5_SHA2
 
-	bool rsasig_sha2_256;
-	bool rsasig_sha2_384;
-	bool rsasig_sha2_512;
-#define authby_rsasig_sha2_256 rsasig_sha2_256
-#define authby_rsasig_sha2_384 rsasig_sha2_384
-#define authby_rsasig_sha2_512 rsasig_sha2_512
+#define authby_rsasig_sha2_256 authby[AUTH_RSASIG_SHA2_256]
+#define authby_rsasig_sha2_384 authby[AUTH_RSASIG_SHA2_384]
+#define authby_rsasig_sha2_512 authby[AUTH_RSASIG_SHA2_512]
 #define AUTHBY_RSASIG_SHA2_256			\
 	.authby_rsasig_sha2_256 = true
 #define AUTHBY_RSASIG_SHA2_384			\
@@ -107,12 +95,9 @@ struct authby {
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2
 
-	bool ecdsa_sha2_256;
-	bool ecdsa_sha2_384;
-	bool ecdsa_sha2_512;
-#define authby_ecdsa_sha2_256 ecdsa_sha2_256
-#define authby_ecdsa_sha2_384 ecdsa_sha2_384
-#define authby_ecdsa_sha2_512 ecdsa_sha2_512
+#define authby_ecdsa_sha2_256 authby[AUTH_ECDSA_SHA2_256]
+#define authby_ecdsa_sha2_384 authby[AUTH_ECDSA_SHA2_384]
+#define authby_ecdsa_sha2_512 authby[AUTH_ECDSA_SHA2_512]
 #define AUTHBY_ECDSA_SHA2_256			\
 	.authby_ecdsa_sha2_256 = true
 #define AUTHBY_ECDSA_SHA2_384			\

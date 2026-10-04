@@ -87,7 +87,7 @@ static bool match_v2_connection(const struct connection *c,
 		 * logic to detect these cases and clear.
 		 */
 		if (is_from_group(c)) {
-			PEXPECT(verbose.logger, remote_authby.never);
+			PEXPECT(verbose.logger, remote_authby.authby_never);
 			(*send_reject_response) = false;
 		}
 		vdbg("skipping %s, never negotiate", c->name);
@@ -388,13 +388,13 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 * the authbys.
 	 */
 	static const struct authby remote_authbys[] = {
-		(struct authby) { AUTHBY_ECDSA_SHA2, },
-		(struct authby) { AUTHBY_EDDSA, },
-		(struct authby) { AUTHBY_RSASIG_SHA2, },
-		(struct authby) { AUTHBY_RSASIG_V1_5, },
-		{ .psk = true, },
-		{ .null = true, },
-		{ .never = true, },
+		{ AUTHBY_ECDSA_SHA2, },
+		{ AUTHBY_EDDSA, },
+		{ AUTHBY_RSASIG_SHA2, },
+		{ AUTHBY_RSASIG_V1_5, },
+		{ AUTHBY_PSK, },
+		{ AUTHBY_NULL, },
+		{ AUTHBY_NEVER, },
 		{ AUTHBY_EAPONLY, },
 	};
 

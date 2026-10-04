@@ -1372,7 +1372,9 @@ static struct authby extract_authby(struct kv kv,
 		switch (ike_version) {
 		case IKEv1:
 			if (hunk_streq(val, "secret")) {
-				authby.psk = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_PSK,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "rsasig") ||
@@ -1383,7 +1385,9 @@ static struct authby extract_authby(struct kv kv,
 				continue;
 			}
 			if (hunk_streq(val, "never")) {
-				authby.never = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_NEVER,
+					});
 				continue;
 			}
 			*d = diag("authby="PRI_SHUNK" is not valid for IKEv1",
@@ -1397,7 +1401,9 @@ static struct authby extract_authby(struct kv kv,
 				continue;
 			}
 			if (hunk_streq(val, "secret")) {
-				authby.psk = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_PSK,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "rsasig") ||
@@ -1409,11 +1415,15 @@ static struct authby extract_authby(struct kv kv,
 				continue;
 			}
 			if (hunk_streq(val, "never")) {
-				authby.never = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_NEVER,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "null")) {
-				authby.null = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_NULL,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "digsig")) {
@@ -1436,19 +1446,27 @@ static struct authby extract_authby(struct kv kv,
 				continue;
 			}
 			if (hunk_streq(val, "rsa-sha2_256")) {
-				authby.rsasig_sha2_256 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2_256,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "rsa-sha2_384")) {
-				authby.rsasig_sha2_384 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2_384,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "rsa-sha2_512")) {
-				authby.rsasig_sha2_512 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_RSASIG_SHA2_512,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "eddsa")) {
-				authby.eddsa = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_EDDSA,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "ecdsa") ||
@@ -1459,15 +1477,21 @@ static struct authby extract_authby(struct kv kv,
 				continue;
 			}
 			if (hunk_streq(val, "ecdsa-sha2_256")) {
-				authby.ecdsa_sha2_256 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2_256,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "ecdsa-sha2_384")) {
-				authby.ecdsa_sha2_384 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2_384,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "ecdsa-sha2_512")) {
-				authby.ecdsa_sha2_512 = true;
+				authby = authby_or(authby, (struct authby) {
+						AUTHBY_ECDSA_SHA2_512,
+					});
 				continue;
 			}
 			if (hunk_streq(val, "ecdsa-sha1")) {
@@ -1494,7 +1518,7 @@ static bool authby_conflicts(struct authby *conflicts,
 static diag_t authby_conflicted(struct kv kv,
 				struct authby authby)
 {
-	if (authby.never) {
+	if (authby.authby_never) {
 		if (!is_never_negotiate_wm(kv.wm)) {
 			return diag("connection with "PRI_KV" must specify shunt type via type=",
 				    pri_kv_key(kv),
