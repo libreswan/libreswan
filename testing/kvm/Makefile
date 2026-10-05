@@ -16,6 +16,7 @@ include ../../mk/dirs.mk
 include ../../mk/config.mk
 include ../../mk/testing.mk
 
+KVM_SELINUX ?= $(TESTING_SELINUX)
 KVM_RUTDIR ?= $(TESTING_RUTDIR)
 KVM_BENCHDIR ?= $(TESTING_BENCHDIR)
 KVM_SOURCEDIR ?= $(TESTING_SOURCEDIR)
@@ -1511,9 +1512,10 @@ define define-test-domain
 		-e 's;@@DOMAIN_MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
 		-e 's;@@KVM_SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
 		-e 's;@@KVM_TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
-		-e 's/<!--[a-z?]*\($(strip $(2))\)[?].*-->/<!--*\1*-->/' \
-		-e 's/<!--[a-z?]*\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
-		-e 's/<!--[a-z?]*\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \
+		-e 's/<!--\($(strip $(2))\)[?].*-->/<!--*\1*-->/' \
+		-e 's/<!--\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
+		-e 's/<!--\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \
+		$(if $(KVM_SELINUX), -e 's/<!--selinux[?].*-->/<!--*\1*-->/') \
 		-e '/<!--[a-z?]*-->/ { s/--> / / ; s/$$$$/ -->/ }' \
 		vm/$(strip $(3)).xml \
 		> '$$@.tmp'
