@@ -1,0 +1,19 @@
+dns-match-id fails on the initiator: the A record for IDr does not match
+the IKE source address of the responder.
+
+East authenticates as @east-private.testing.libreswan.org using its own
+key, which matches the IPSECKEY published for that name.  The A record
+for east-private is 192.0.2.254 but east's IKE source address is
+192.1.2.23.
+
+West has dns-match-id=yes and rightrsasigkey=%dnsondemand.  It fetches
+the IPSECKEY and the A record for the IDr, the A record check fails,
+and west gives up by deleting the IKE SA.
+
+West tries twice.
+
+The first time the DNS queries are sent to the nameserver when
+IKE_SA_INIT is sent and the answers arrive in the background.
+
+The second time west has the DNS answers cached so the callbacks run
+before the queries return.  Pluto must survive both.
