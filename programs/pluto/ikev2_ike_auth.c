@@ -820,6 +820,9 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 			return STF_SUSPEND;
 		case DNS_FATAL:
 			llog_sa(RC_LOG, ike, "DNS: IPSECKEY not found or usable");
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		case DNS_OK:
 			break;
