@@ -14,7 +14,7 @@ desc="Libreswan IKE Daemon"
 required_modules=ipsec
 rcvar=${name}_enable
 
-command="@@LIBEXECDIR@@/pluto"
+command="@@IPSEC_LIBEXECDIR@@/pluto"
 command_args="--config @@IPSEC_CONF@@"
 required_files="@@IPSEC_CONF@@"
 

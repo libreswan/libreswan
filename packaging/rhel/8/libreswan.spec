@@ -10,7 +10,7 @@
 # does not require its own FIPS validation. Only the system
 # and NSS needs to be FIPS validated.
 %global libreswan_config \\\
-    LIBEXECDIR=%{_libexecdir}/ipsec \\\
+    IPSEC_LIBEXECDIR=%{_libexecdir}/ipsec \\\
     MANDIR=%{_mandir} \\\
     NSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
