@@ -25,6 +25,7 @@ s/ip_vti0@NONE: <NOARP> mtu [0-9]* /ip_vti0@NONE: <NOARP> mtu XXXX /
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*->[0-9]*\.[0-9]*/last_contact=XX.XXX->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
+s/elapsed time [0-9][0-9.]* seconds/elapsed time XXX seconds/g
 
 # TCP sockets
 s/ socket [0-9][0-9]*: / socket XX: /g
