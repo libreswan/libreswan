@@ -743,7 +743,7 @@ kvmplutotest 	newoe-21-liveness-clear			wip
 kvmplutotest	newoe-22-nat-poc-cop			good
 kvmplutotest	newoe-25-cat-1				wip	github/896
 kvmplutotest	newoe-25-cat-2				wip	github/896
-kvmplutotest	newoe-25-cat-3-4-way			wip	github/896
+kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				wip	github/896
 kvmplutotest 	newoe-25-cat-5				wip	github/896
 kvmplutotest 	newoe-26-poc-poc-host			good
@@ -788,16 +788,22 @@ kvmplutotest	certoe-18-pass-then-go-slash32		wip
 kvmplutotest	certoe-18-pass-then-go-slash24-keyingtries1	good
 kvmplutotest	certoe-18-pass-then-go-slash32-keyingtries1	wip	github:530
 kvmplutotest	certoe-19-bareshunts-expire		good
+kvmplutotest	certoe-20-3-way				good
 
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
 
-kvmplutotest	dnsoe-01				wip	github/895
+kvmplutotest	dnsoe-01				good
 kvmplutotest	dnsoe-02				wip	github/895
 kvmplutotest	dnsoe-03				wip
 kvmplutotest	dnsoe-04				wip	github/895
 kvmplutotest	dnsoe-05				wip	github/895
 kvmplutotest	dnsoe-06				wip
+kvmplutotest	dnsoe-07-match-id			good
+kvmplutotest	dnsoe-07-match-id-both			good
+kvmplutotest	dnsoe-08-match-idi-fail			good
+kvmplutotest	dnsoe-08-match-idr-fail			good
+kvmplutotest	dnsoe-09-match-id-any			good
 
 kvmplutotest	newoe-18-poc-cop-port-7-tunnel		good
 kvmplutotest	newoe-18-poc-cop-port-7-transport	good
@@ -1342,6 +1348,8 @@ kvmplutotest 	ikev2-55-ipseckey-06				good
 kvmplutotest 	ikev2-55-ipseckey-07				wip
 kvmplutotest 	ikev2-55-ipseckey-08				good
 kvmplutotest 	ikev2-55-ipseckey-09				good
+kvmplutotest 	ikev2-55-ipseckey-11-delete			good
+kvmplutotest 	ikev2-55-ipseckey-12-misconfigured		good
 
 #################################################################
 # Specific bug tests
