@@ -3754,8 +3754,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->ms_dh_downgrade = ms_dh_downgrade;
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
-	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id,
-					  /*value_when_unset*/YN_NO, wm, c->logger);
+	if (wm->dns_match_id != 0) {
+		return diag("dns-match-id,= is disabled");
+	}
+
 	/* IKEv2 only; IKEv1 uses xauth=pam */
 	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize,
 						 /*value_when_unset*/YN_NO, wm, c->logger);
