@@ -150,4 +150,6 @@ SECItem same_shunk_as_secitem(shunk_t chunk, SECItemType type); /* NSS doesn't d
 /* this clones */
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
 
+diag_t enforce_nss_key_size_policy(SECKEYPublicKey *public_key);
+
 #endif
