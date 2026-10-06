@@ -396,10 +396,10 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		const struct pubkey_signer *signer = NULL;
 		vdbg("selecting negotiated signer algorithm");
 		FOR_EACH_THING(signerp,
-			       &pubkey_signer_digsig_rsassa_pss,
-			       &pubkey_signer_digsig_ecdsa,
-			       &pubkey_signer_digsig_eddsa_ed25519,
-			       &pubkey_signer_digsig_pkcs1_1_5_rsa) {
+			       &signer_pubkey_rsassa_pss_blob,
+			       &signer_pubkey_ecdsa_blob,
+			       &signer_pubkey_eddsa_ed25519_blob,
+			       &signer_pubkey_pkcs1_1_5_rsa_blob) {
 			if (authby_has_any(signer_authby, signerp->authby)) {
 				signer = signerp;
 				vdbg("selected signer %s", signer->name);
@@ -425,19 +425,19 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha1,
-					    &pubkey_signer_raw_pkcs1_1_5_rsa);
+					    &signer_pubkey_pkcs1_1_5_rsa_raw);
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha2_256,
-					    &pubkey_signer_raw_ecdsa/*_p256*/);
+					    &signer_pubkey_ecdsa_raw/*_p256*/);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha2_384,
-					    &pubkey_signer_raw_ecdsa/*_p384*/);
+					    &signer_pubkey_ecdsa_raw/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha2_512,
-					    &pubkey_signer_raw_ecdsa/*_p521*/);
+					    &signer_pubkey_ecdsa_raw/*_p521*/);
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 		return (struct v2AUTH_method) {
 			.method = method,
@@ -741,27 +741,27 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
-							  &pubkey_signer_raw_pkcs1_1_5_rsa,
+							  &signer_pubkey_pkcs1_1_5_rsa_raw,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
-							  &pubkey_signer_raw_ecdsa/*_p256*/,
+							  &signer_pubkey_ecdsa_raw/*_p256*/,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
-							  &pubkey_signer_raw_ecdsa/*_p384*/,
+							  &signer_pubkey_ecdsa_raw/*_p384*/,
 							  NULL/*legacy-signature-name*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
-							  &pubkey_signer_raw_ecdsa/*_p521*/,
+							  &signer_pubkey_ecdsa_raw/*_p521*/,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
@@ -826,10 +826,10 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		 * authby, try the signer's hashes blobs.
 		 */
 		const struct pubkey_signer *signers[] = {
-			&pubkey_signer_digsig_eddsa_ed25519,
-			&pubkey_signer_digsig_ecdsa,
-			&pubkey_signer_digsig_rsassa_pss,
-			&pubkey_signer_digsig_pkcs1_1_5_rsa,
+			&signer_pubkey_eddsa_ed25519_blob,
+			&signer_pubkey_ecdsa_blob,
+			&signer_pubkey_rsassa_pss_blob,
+			&signer_pubkey_pkcs1_1_5_rsa_blob,
 		};
 
 		FOR_EACH_ELEMENT(sp, signers) {
