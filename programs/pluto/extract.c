@@ -1284,10 +1284,9 @@ static struct authby extract_auth(struct kv kv,
 		return (struct authby) {0};
 	}
 
-	if (strheq(kv.value, "digsig")) {
-		/* not strictly correct - as old style payloads are
-		 * also allowed */
-		return supported_ikev2_digsig_auth_payloads();
+	if (strheq(kv.value, "digsig") ||
+	    strheq(kv.value, "pubkey")) {
+		return authby_v2AUTH_pubkey();
 	}
 
 	const struct {
@@ -1426,11 +1425,9 @@ static struct authby extract_authby(struct kv kv,
 					});
 				continue;
 			}
-			if (hunk_streq(val, "digsig")) {
-				/* not strictly correct - as old style payloads are
-				 * also allowed */
-				authby = authby_or(authby,
-						   supported_ikev2_digsig_auth_payloads());
+			if (hunk_streq(val, "digsig") ||
+			    hunk_streq(val, "pubkey")) {
+				authby = authby_or(authby, authby_v2AUTH_pubkey());
 				continue;
 			}
 			if (hunk_streq(val, "rsa-sha1")) {

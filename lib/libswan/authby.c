@@ -285,15 +285,19 @@ struct authby supported_ikev2_digsig_auth_payloads(void)
 	};
 }
 
-bool authby_has_pubkey(struct authby authby)
+struct authby authby_v2AUTH_pubkey(void)
 {
-	return authby_has_any(authby, (struct authby) {
-			AUTHBY_RSASIG_RAW,
+	return (struct authby) {
 #ifdef USE_EDDSA
-			AUTHBY_EDDSA,
+		AUTHBY_EDDSA,
 #endif
-			AUTHBY_RSASIG_V1_5,
-			AUTHBY_RSASIG_SHA2,
-			AUTHBY_ECDSA_SHA2,
-		});
+		AUTHBY_RSASIG_V1_5,
+		AUTHBY_RSASIG_SHA2,
+		AUTHBY_ECDSA_SHA2,
+	};
+}
+
+bool authby_has_v2AUTH_pubkey(struct authby authby)
+{
+	return authby_has_any(authby, authby_v2AUTH_pubkey());
 }
