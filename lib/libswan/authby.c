@@ -124,11 +124,6 @@ bool authby_has_auth(struct authby authby, enum auth auth)
 	return flags_has_flag(authby, authby, auth);
 }
 
-bool authby_has_supported_ikev2_digsig_payload(struct authby authby)
-{
-	return authby_has_any(authby, supported_ikev2_digsig_auth_payloads());
-}
-
 struct authby authby_from_auth(enum auth auth)
 {
 	return flags_from_flag(authby, auth);
@@ -273,7 +268,7 @@ void jam_authby_sighash_policy(struct jambuf *buf, struct authby authby)
 	}
 }
 
-struct authby supported_ikev2_digsig_auth_payloads(void)
+struct authby authby_v2AUTH_digsig_payload(void)
 {
 	return (struct authby) {
 #ifdef USE_EDDSA
@@ -283,6 +278,11 @@ struct authby supported_ikev2_digsig_auth_payloads(void)
 		AUTHBY_RSASIG_SHA2,
 		AUTHBY_ECDSA_SHA2,
 	};
+}
+
+bool authby_has_v2AUTH_digsig_payload(struct authby authby)
+{
+	return authby_has_any(authby, authby_v2AUTH_digsig_payload());
 }
 
 struct authby authby_v2AUTH_pubkey(void)

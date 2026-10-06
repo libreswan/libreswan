@@ -135,11 +135,12 @@ struct authby {
 
 /*
  * Returns all the authentication methods that are supported using RFC
- * 7427's new "Digital Signature" AUTH payload.
+ * 7427's new "Digital Signature" AUTH payload identified by a BLOB
+ * prefix.
  */
 
-struct authby supported_ikev2_digsig_auth_payloads(void);
-bool authby_has_supported_ikev2_digsig_payload(struct authby);
+struct authby authby_v2AUTH_digsig_payload(void);
+bool authby_has_v2AUTH_digsig_payload(struct authby authby);
 
 /*
  * Set of authentication methods that use a pubkey (Digital Signature

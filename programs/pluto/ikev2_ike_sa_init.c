@@ -150,7 +150,7 @@ static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
 		}
 
 		struct authby peer_pubkey_mask =
-			authby_and_hash(supported_ikev2_digsig_auth_payloads(), hash);
+			authby_and_hash(authby_v2AUTH_digsig_payload(), hash);
 		if (!authby_is_set(peer_pubkey_mask)) {
 			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable pubkey hash algorithm %s", hash->common.fqn);
 			continue;
@@ -428,7 +428,7 @@ static bool emit_hash(struct pbs_out *pbs,
 
 static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(struct pbs_out *outs)
 {
-	const struct authby supported_authby = supported_ikev2_digsig_auth_payloads();
+	const struct authby supported_authby = authby_v2AUTH_digsig_payload();
 	v2_notification_t ntype = v2N_SIGNATURE_HASH_ALGORITHMS;
 
 	struct pbs_out n_pbs;
@@ -582,8 +582,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		ldbg(ike->sa.logger, "send-signature-hash_algorithms? NO");
 		break;
 	case YNA_AUTO:
-		if (authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
-		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+		if (authby_has_v2AUTH_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_v2AUTH_digsig_payload(c->remote->host.config->authby)) {
 			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
 			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(request.pbs)) {
 				return false;
@@ -970,8 +970,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		break;
 	case YNA_AUTO:
 		if (ike->sa.st_seen_hashnotify ||
-		    authby_has_supported_ikev2_digsig_payload(c->local->host.config->authby) ||
-		    authby_has_supported_ikev2_digsig_payload(c->remote->host.config->authby)) {
+		    authby_has_v2AUTH_digsig_payload(c->local->host.config->authby) ||
+		    authby_has_v2AUTH_digsig_payload(c->remote->host.config->authby)) {
 			ldbg(ike->sa.logger, "send-signature-hash_algorithms=auto? YES");
 			if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(response.pbs)) {
 				return STF_INTERNAL_ERROR;

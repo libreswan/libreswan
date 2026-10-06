@@ -368,7 +368,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		 */
 		const struct hash_desc *hash = NULL;
 		struct authby hash_authby =
-			authby_and(negotiated_authby, supported_ikev2_digsig_auth_payloads());
+			authby_and(negotiated_authby, authby_v2AUTH_digsig_payload());
 		vdbg("selecting negotiated hash algorithm");
 		FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
 			if (authby_has_hash(hash_authby, (*hashp))) {
@@ -557,7 +557,7 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	 *
 	 * For instance EdDSA is new-DIGSIG only.
 	 */
-	if (authby_has_supported_ikev2_digsig_payload(negotiated_authby)) {
+	if (authby_has_v2AUTH_digsig_payload(negotiated_authby)) {
 		authby_buf cb;
 		llog(RC_LOG, ike->sa.logger,
 		     "local Digital Signature authentication %s is not supported by peer",
@@ -810,7 +810,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (!authby_has_supported_ikev2_digsig_payload(remote->authby)) {
+		if (!authby_has_v2AUTH_digsig_payload(remote->authby)) {
 			authby_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    str_authby(remote->authby, &an));
