@@ -1,0 +1,14 @@
+IKEv2 initiator (west) has its larval Child SA deleted while the
+IKE_AUTH response is still outstanding.
+
+The IKE_AUTH response is dropped on west on its way in, the larval Child
+SA (#2) is deleted with whack.
+
+The IKE SA is not established, so a delete exchange can't be sent and the
+larval Child SA can't be deleted on its own: whack tears down the whole
+IKE state (#1 and #2).
+Revival is impaired, to reduce noise, so west is left with no states.
+
+East, the responder, still shows the Child SA as established: west
+never sent a delete, as it was waiting for the IKE_AUTH response (which
+the impairment dropped).
