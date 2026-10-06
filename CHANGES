@@ -1,6 +1,6 @@
 See also https://libreswan.org/
 
-v5.3.x (Oct 5, 2026)
+v5.3.3 (Oct 5, 2026)
 Security:
   - fix CVE-2026-77205 - DOS - fips-cert-leak
     http://libreswan.org/security/CVE-2026-77205
