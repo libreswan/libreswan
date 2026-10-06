@@ -215,7 +215,7 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
 const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_raw = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
-	.authby = { AUTHBY_RSASIG_V1_5_SHA1, },
+	.authby = { AUTHBY_RSASIG_V1_5_SHA1_RAW, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
@@ -225,7 +225,7 @@ const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_raw = {
 const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_blob = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-	.authby = { AUTHBY_RSASIG_V1_5, },
+	.authby = { AUTHBY_RSASIG_V1_5_BLOB, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
