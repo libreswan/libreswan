@@ -1,0 +1,56 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ echo "initdone"
+initdone
+west #
+ # the IKE_SA_INIT response is inbound message 1, drop the IKE_AUTH response, 2
+west #
+ ipsec whack --impair drop_inbound:2
+IMPAIR: recording all inbound messages
+IMPAIR: will drop inbound message 2
+west #
+ ipsec up --asynchronous westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ # the IKE_AUTH request is out, so the larval Child SA exists
+west #
+ ../../guestbin/wait-for.sh --match '#2:' -- ipsec showstates
+#2: "westnet-eastnet-ipv4-psk-ikev2":500 sent CREATE_CHILD_SA request for new IPsec SA; eroute owner; idle;
+west #
+ # delete the larval Child SA while the IKE_AUTH response is outstanding
+west #
+ ipsec whack --deletestate 2
+"westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+west #
+ # now let the IKE_AUTH response arrive
+west #
+ ipsec whack --impair drip_inbound:2
+IMPAIR: start processing inbound drip packet 2
+packet from 192.1.2.23:500: IKE_AUTH response has no corresponding IKE SA; message dropped
+IMPAIR: stop processing inbound drip packet 2
+west #
+ # west no longer expects a Child SA so rejects the response, deleting the IKE SA
+west #
+ sleep 5
+west #
+ ipsec showstates
+west #
+ echo done
+done
+west #
+ ipsec trafficstatus
+west #
