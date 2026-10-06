@@ -8,6 +8,27 @@ v5.5 (unreleased)
 * Testing:
   - fix KVM testing with SELinux enabled [Ondrej]
 
+v5.4.1 (Oct 5, 2026)
+* Security
+  - fix CVE-2026-77206 - NPE - unexpected-eap-packet
+    http://libreswan.org/security/CVE-2026-77206
+    [Claude and Ada Logics, David Korczynski, Andrew]
+  - fix CVE-2026-77207 - NPE - empty-pkcs7-payload
+    http://libreswan.org/security/CVE-2026-77207
+    [Claude and Ada Logics, David Korczynski, Andrew]
+  - fix CVE-2026-94453 - UAF - EOF in IKETCP
+    http://libreswan.org/security/CVE-2026-94453
+    [Vlad Miu, Andrew]
+  - disable dns-match-id,=, - UAF [#3071 Vlad Miu, Andrew]
+* Linux:
+  - allow connect(ADDR/UDP/0) [#3042 Tuomo, Antony, Andrew]
+* Testing:
+  - add test for CVE-2026-77205 - DOS - fips-cert-leak
+    http://libreswan.org/security/CVE-2026-77205
+    [Wojciech Tatarski (TuxCare), Andrew]
+* Building
+  - fix NetBSD 11.0
+
 v5.4 (August 13, 2026)
 * Security
   - add __counted_by__() attribute to buffers [Andrew]
@@ -94,6 +115,22 @@ v5.4 (August 13, 2026)
   - document reject-simultaneous-ike-auth [Ondrej Moris]
   - clarify sendifasked= [Daiki Ueno]
   - document authby=eddsa [Rishabh]
+
+v5.3.3 (Oct 5, 2026)
+* Security:
+  - fix CVE-2026-77205 - DOS - fips-cert-leak
+    http://libreswan.org/security/CVE-2026-77205
+    [Wojciech Tatarski (TuxCare), Andrew]
+  - fix CVE-2026-77206 - NPE - unexpected-eap-packet
+    http://libreswan.org/security/CVE-2026-77206
+    [Claude and Ada Logics, David Korczynski, Andrew]
+  - fix CVE-2026-77207 - NPE - empty-pkcs7-payload
+    http://libreswan.org/security/CVE-2026-77207
+    [Claude and Ada Logics, David Korczynski, Andrew]
+  - fix CVE-2026-94453 - UAF - EOF in IKETCP
+    http://libreswan.org/security/CVE-2026-94453
+    [Vlad Miu, Andrew]
+  - disable dns-match-id,=, - UAF [#3071 Vlad Miu, Andrew]
 
 v5.3.2 (July 15, 2026)
 * Security: Fixes http://libreswan.org/security/CVE-2026-14957
