@@ -77,7 +77,9 @@
 #include "ikev2_notification.h"
 #include "ipsecconf/setup.h"
 
+#ifdef USE_IKEv1
 static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
+#endif
 static callback_cb handle_md_event;		/* type assertion */
 
 /*
@@ -160,12 +162,12 @@ void process_md(struct msg_digest *md)
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 	{
+#ifdef USE_IKEv1
 		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
 			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			pstats_ikev1_dropped++;
 			return;
 		}
-#ifdef USE_IKEv1
 		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
 			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
@@ -357,7 +359,9 @@ enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr)
 {
 	unsigned vmaj = hdr->isa_version >> ISA_MAJ_SHIFT;
 	switch (vmaj) {
+#ifdef USE_IKEv1
 	case ISAKMP_MAJOR_VERSION: return IKEv1;
+#endif
 	case IKEv2_MAJOR_VERSION: return IKEv2;
 	default: return 0;
 	}
@@ -463,15 +467,15 @@ void limited_llog_md(const struct msg_digest *md,
 	}
 }
 
-void init_demux(struct logger *logger UNUSED)
+#ifdef USE_IKEv1
+void ikev1_init_demux(struct logger *logger UNUSED)
 {
 	global_ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
-#ifndef USE_IKEv1
 	if (global_ikev1_policy != GLOBAL_IKEv1_DROP) {
 		name_buf pb;
 		llog(RC_LOG, logger, "ignoring ikev1-policy=%s as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped",
 		     str_sparse_long(&global_ikev1_policy_names, global_ikev1_policy, &pb));
 		global_ikev1_policy = GLOBAL_IKEv1_DROP;
 	}
-#endif
 }
+#endif

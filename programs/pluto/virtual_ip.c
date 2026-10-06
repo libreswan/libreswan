@@ -1,4 +1,4 @@
-/* Libreswan Virtual IP Management
+/* Libreswan Virtual IKEv1 IP Management
  * Copyright (C) 2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
