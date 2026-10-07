@@ -757,9 +757,7 @@ enum ikev1_xauth_type {
 	IKEv1_XAUTH_TYPE_SKEY = 3,
 };
 
-#ifdef USE_IKEv1
-extern const struct enum_names ikev1_xauth_type_names;	/* #ifdef USE_IKEv1 */
-#endif
+extern const struct enum_names ikev1_xauth_type_names;
 
 /* proprietary Microsoft attributes */
 #define IKEv1_INTERNAL_IP4_SERVER 23456
@@ -1234,9 +1232,7 @@ enum ikev1_oakley_attr {
 	/* 16384-32767 Reserved for private use */
 };
 
-#ifdef USE_IKEv1
-extern const struct enum_enum_names ikev1_oakley_attr_value_names;	/* #ifdef USE_IKEv1 */
-#endif
+extern const struct enum_enum_names ikev1_oakley_attr_value_names;
 
 
 /*
@@ -1265,11 +1261,9 @@ enum ikev1_ipsec_attr {
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 
-#ifdef USE_IKEv1
-extern const struct enum_names ipsec_attr_names;	/* #ifdef USE_IKEv1 */
-extern const struct enum_names ikev1_ipsec_attr_names;	/* #ifdef USE_IKEv1 */
-extern const struct enum_enum_names ikev1_ipsec_attr_value_names;	/* #ifdef USE_IKEv1 */
-#endif
+extern const struct enum_names ipsec_attr_names;
+extern const struct enum_names ikev1_ipsec_attr_names;
+extern const struct enum_enum_names ikev1_ipsec_attr_value_names;
 
 /*
  * SA Lifetime Type attribute
@@ -1519,9 +1513,7 @@ enum oakley_group {
 	/* 32768 - 65535 Reserved for private use */
 };
 
-#ifdef USE_IKEv1
-extern const struct enum_names oakley_group_names;	/* #ifdef USE_IKEv1 */
-#endif
+extern const struct enum_names oakley_group_names;
 
 /*
  * IKEv1's Oakley Group Type attribute

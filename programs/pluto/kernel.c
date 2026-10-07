@@ -1899,7 +1899,6 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 	}
 
 	switch (child->sa.st_ike_version) {
-#ifdef USE_IKEv1
 	case IKEv1:
 		if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 #if 0
@@ -1912,7 +1911,6 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 			uninstall_kernel_states(child);
 		}
 		break;
-#endif
 	case IKEv2:
 		if (IS_CHILD_SA_ESTABLISHED(&child->sa)) {
 			/*

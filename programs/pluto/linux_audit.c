@@ -191,11 +191,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 						  }) ? "ECDSA" :
 					  "unknown"));
 		} else {
-#ifdef USE_IKEv1
 			jam_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
-#else
-			jam_string(&buf, "unknown"); /* unreachable: no IKEv1 support */
-#endif
 		}
 
 		jam(&buf, " cipher=%s ksize=%d",
@@ -211,7 +207,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 * XXX: dead code path?  IKEv1 can't do
 			 * INTEG==NONE; "none"'s name is "none".
 			 */
-			if (st->st_ike_version < IKEv2) {
+			if (st->st_ike_version == IKEv1) {
 				/* IKE takes integ from prf, except of course gcm */
 				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_string(&buf, prfname);
@@ -229,7 +225,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			/*
 			 * XXX: dead code path?  Integ is never NULL?
 			 */
-			if (st->st_ike_version < IKEv2) {
+			if (st->st_ike_version == IKEv1) {
 				/* IKE takes integ from prf, except of course gcm */
 				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_string(&buf, prfname);

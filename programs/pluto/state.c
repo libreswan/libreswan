@@ -133,12 +133,10 @@ void jam_finite_state(struct jambuf *buf, const struct finite_state *fs)
 		jam(buf, " category: ");
 		jam_enum_short(buf, &state_category_names, fs->category);
 		switch (fs->ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			/* no enum_name available? */
 			jam(buf, "; v1.flags: "PRI_LSET, fs->v1.flags);
 			break;
-#endif
 		case IKEv2:
 			jam(buf, "; v2.secured: %s", bool_str(fs->v2.secured));
 			break;
@@ -358,7 +356,7 @@ struct ike_sa *parent_sa_where(struct child_sa *child, where_t where)
 		return parent;
 	}
 
-	if (child->sa.st_ike_version < IKEv2) {
+	if (child->sa.st_ike_version == IKEv1) {
 		ldbg(child->sa.logger,
 		     "IKEv1 IPsec SA "PRI_SO" missing ISAKMP SA "PRI_SO" "PRI_WHERE,
 		     pri_so(child->sa.st_serialno),
@@ -380,7 +378,7 @@ struct ike_sa *isakmp_sa_where(struct child_sa *child, where_t where)
 		return NULL;
 	}
 
-	if (!PEXPECT(child->sa.logger, child->sa.st_ike_version < IKEv2)) {
+	if (!PEXPECT(child->sa.logger, child->sa.st_ike_version == IKEv1)) {
 		return NULL;
 	}
 
@@ -750,14 +748,12 @@ static void flush_incomplete_children(struct ike_sa *ike)
 	while (next_state(&sf)) {
 		struct child_sa *child = pexpect_child_sa(sf.st);
 		switch (child->sa.st_ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 				whack_attach(&child->sa, ike->sa.logger);
 				connection_teardown_child(&child, REASON_DELETED, HERE);
 			}
 			continue;
-#endif
 		case IKEv2:
 			whack_attach(&child->sa, ike->sa.logger);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
@@ -900,7 +896,7 @@ void delete_state(struct state *st)
 	}
 
 	if (!st->st_on_delete.skip_log_message) {
-		if (st->st_ike_version < IKEv2) {
+		if (st->st_ike_version == IKEv1) {
 			/* actually logs NOT sending delete */
 			llog_sa_delete_n_send(NULL, st);
 		} else if (IS_PARENT_SA(st)) {
@@ -934,13 +930,13 @@ void delete_state(struct state *st)
 	 * establish needs reporting.
 	 */
 	switch (st->st_ike_version) {
-#ifdef USE_IKEv1
 	case IKEv1:
+#ifdef USE_IKEv1
 		if (IS_V1_ISAKMP_SA(st) && !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			linux_audit_conn(st, LAK_PARENT_FAIL);
 		}
-		break;
 #endif
+		break;
 	case IKEv2:
 		if (IS_IKE_SA(st) && st->st_state->kind < STATE_V2_ESTABLISHED_IKE_SA) {
 			linux_audit_conn(st, LAK_PARENT_FAIL);
@@ -1010,13 +1006,11 @@ void delete_state(struct state *st)
 	/* session resumption */
 	pfreeany(st->st_v2_resume_session);
 
-#ifdef USE_IKEv1
 	/* if there's an IKEv1 background md, release it */
 	if (st->st_v1_background_md != NULL) {
 		ldbg(st->logger, "releasing IKEv1 MD received during background task");
 		md_delref(&st->st_v1_background_md);
 	}
-#endif
 
 	/* delete any pending timer event */
 	delete_state_event(&st->st_v1_event, HERE);
@@ -1087,11 +1081,11 @@ void delete_state(struct state *st)
 	 * call one!  XXX: should be a union???
 	 */
 	switch (st->st_ike_version) {
-#ifdef USE_IKEv1
 	case IKEv1:
+#ifdef USE_IKEv1
 		free_v1_message_queues(st);
-		break;
 #endif
+		break;
 	case IKEv2:
 		free_v2_message_queues(st);
 		break;
@@ -1291,7 +1285,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 #   undef state_clone_chunk
 	}
 
-#ifdef USE_IKEv1
 	/*
 	 * Due to IKEv1, these IKE (ISAKMP) SA fields need to be
 	 * copied to the Child SA so that they are still available
@@ -1306,11 +1299,10 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
 	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
-#endif
+
 	return child;
 }
 
-#ifdef USE_IKEv1
 struct child_sa *new_v1_child_sa(struct connection *c,
 				 struct ike_sa *ike,
 				 enum sa_role sa_role)
@@ -1337,7 +1329,6 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 
 	return child;
 }
-#endif
 
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
@@ -1580,12 +1571,10 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 {
 	lset_t ok_states;
 	switch (c->config->ike_info->version) {
-#ifdef USE_IKEv1
 	case IKEv1:
 		ok_states = (V1_ISAKMP_SA_ESTABLISHED_STATES |
 			     V1_PHASE1_INITIATOR_STATES);
 		break;
-#endif
 	case IKEv2:
 		ok_states = (LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
 			     IKEV2_ISAKMP_INITIATOR_STATES);
@@ -1755,7 +1744,6 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 	if (IS_PARENT_SA_ESTABLISHED(&(*ike)->sa)) {
 		switch ((*ike)->sa.st_ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			/*
 			 * Because IKEv1 needs the ISAKMP SA to delete
@@ -1767,7 +1755,6 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 			 */
 			established_isakmp = (*ike);
 			break;
-#endif
 		case IKEv2:
 			/*
 			 * Per above, we're in a panic, violating
@@ -1793,7 +1780,6 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		struct child_sa *child = pexpect_child_sa(cf.st);
 		whack_attach(&child->sa, logger); /* no detach, going down */
 		switch (child->sa.st_ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			llog_sa_delete_n_send(established_isakmp, &child->sa);
 			if (established_isakmp != NULL) {
@@ -1801,7 +1787,6 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 			}
 			connection_teardown_child(&child, REASON_DELETED, where);
 			break;
-#endif
 		case IKEv2:
 			/* nothing to say? */
 			connection_teardown_child(&child, REASON_DELETED, where);

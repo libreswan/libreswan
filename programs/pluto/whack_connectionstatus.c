@@ -42,9 +42,7 @@
 #include "defs.h"
 #include "connections.h"
 #include "orient.h"
-#ifdef USE_IKEv1
 #include "virtual_ip.h"        /* needs connections.h */
-#endif
 #include "ipsec_interface.h"
 #include "iface.h"
 #include "nat_traversal.h"
@@ -207,14 +205,12 @@ void jam_end_client(struct jambuf *buf,
 	if (side == RIGHT_END && separator != NULL) {
 		jam_string(buf, separator);
 	}
-#ifdef USE_IKEv1
+
 	if (is_virtual_host(this->virt)) {
 		jam_string(buf, "vhost:?");
 	} else if (is_virtual_net(this->virt)) {
 		jam_string(buf,  "vnet:?");
-	} else
-#endif
-	{
+	} else {
 		if (this->is_addresspool) {
 			jam_string(buf, "{");
 		}
@@ -957,7 +953,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	switch (c->config->ike_version) {
-#ifdef USE_IKEv1
 	case IKEv1:
 		SHOW_JAMBUF(s, buf) {
 			jam_string(buf, c->name);
@@ -969,7 +964,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam(buf, " timeout:%jds", deltasecs(c->config->dpd.timeout));
 		}
 		break;
-#endif
 	case IKEv2:
 		SHOW_JAMBUF(s, buf) {
 			jam_string(buf, c->name);
@@ -998,8 +992,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		} else {
 			jam_string(buf, bool_str(false));
 		}
-
-#ifdef USE_IKEv1
 		/* nat-ikev1-method= */
 		if (c->config->ike_version == IKEv1) {
 			jam_string(buf, "; ikev1-method:");
@@ -1011,7 +1003,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			default: bad_case(c->config->ikev1_natt);
 			}
 		}
-#endif
 	}
 
 	if (c->logger->debugging != LEMPTY) {

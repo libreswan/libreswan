@@ -283,8 +283,6 @@ void limited_llog_md(const struct msg_digest *md, const char *message, ...) PRIN
 
 void process_md(struct msg_digest *md);
 
-#ifdef USE_IKEv1
-void ikev1_init_demux(struct logger *logger);
-#endif
+void init_demux(struct logger *logger);
 
 #endif /* _DEMUX_H */

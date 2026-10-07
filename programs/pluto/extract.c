@@ -1370,7 +1370,6 @@ static struct authby extract_authby(struct kv kv,
 
 		/* Supported for IKEv1 and IKEv2 */
 		switch (ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			if (hunk_streq(val, "secret")) {
 				authby = authby_or(authby, (struct authby) {
@@ -1394,7 +1393,6 @@ static struct authby extract_authby(struct kv kv,
 			*d = diag("authby="PRI_SHUNK" is not valid for IKEv1",
 				  pri_shunk(val));
 			return (struct authby) {0};
-#endif
 		case IKEv2:
 			if (hunk_streq(val, "eaponly")) {
 				authby = authby_or(authby, (struct authby) {
@@ -2012,7 +2010,6 @@ static diag_t extract_host_end(enum end end,
 
 	struct authby authby; /*tbd*/
 	switch (ike_version) {
-#ifdef USE_IKEv1
 	case IKEv1:
 	{
 		/*
@@ -2065,7 +2062,6 @@ static diag_t extract_host_end(enum end end,
 		}
 		break;
 	}
-#endif
 	case IKEv2:
 	{
 		/*
@@ -2424,14 +2420,12 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	}
 #endif
 		break;
-#ifdef USE_IKEv1
 	case IKEv1:
 		if (src->we_cat != NULL) {
 			vwarning("IKEv1, ignoring %scat=%s (client address translation)",
 				 leftright, src->we_cat);
 		}
 		break;
-#endif
 	default:
 		bad_case(ike_version);
 	}
@@ -2493,7 +2487,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			const struct ip_info *afi = pool_type(pool);
 
-			if (ike_version < IKEv2 && afi == &ipv6_info) {
+			if (ike_version == IKEv1 && afi == &ipv6_info) {
 				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
 					    leftright, src->we_addresspool);
 			}
@@ -2582,7 +2576,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * it and skip updating the client address from the host.
 	 */
 	if (is_virt(src)) {
-		if (ike_version >= IKEv2) {
+		if (ike_version > IKEv1) {
 			return diag("IKEv%d does not support virtual subnets",
 				    ike_version);
 		}
@@ -3061,9 +3055,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 
 
 static const struct ike_info *const ike_info[] = {
-#ifdef USE_IKEv1
 	[IKEv1] = &ikev1_info,
-#endif
 	[IKEv2] = &ikev2_info,
 };
 
@@ -3093,7 +3085,6 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 		return 0;
 	}
 
-#ifdef USE_IKEv1
 	enum ike_version ike_version;
 	if (keyexchange == 0 || keyexchange == IKE_VERSION_ROOF) {
 		ike_version = (ikev2 == YN_NO ? IKEv1 : IKEv2);
@@ -3117,20 +3108,6 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 	}
 
 	return ike_version;
-#else
-	if (ikev2 == YN_NO)
-		vlog("ignoring ikev2=no as IKEv1 support is not available");
-	/*
-	 * keyexchange=ikev1 was already rejected by the sparse-name
-	 * lookup ("ikev1" is compiled out of
-	 * keyexchange_option_names); unset, "ikev2" and "ike" all
-	 * mean IKEv2 here.
-	 */
-	vexpect(keyexchange == 0 ||
-		keyexchange == IKEv2 ||
-		keyexchange == IKE_VERSION_ROOF);
-	return IKEv2;
-#endif
 }
 
 static diag_t extract_encap_alg(const char **encap_alg,
@@ -3492,8 +3469,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-#ifdef USE_IKEv1
 	if (ike_version == IKEv1) {
+#ifdef USE_IKEv1
 		/* avoid using global */
 		enum global_ikev1_policy ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 		if (ikev1_policy != GLOBAL_IKEv1_ACCEPT) {
@@ -3502,12 +3479,10 @@ diag_t extract_connection(const struct whack_message *wm,
 				    str_sparse_long(&global_ikev1_policy_names,
 						    ikev1_policy, &pb));
 		}
-	}
 #else
-	if (ike_version < IKEv2) {
 		return diag("IKEv1 support not compiled in");
-	}
 #endif
+	}
 
 	vassert(ike_version < elemsof(ike_info));
 	vassert(ike_info[ike_version] != NULL);
@@ -3601,7 +3576,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			     /*value_when_unset*/YN_NO,
 			     &d, verbose);
 
-#ifdef USE_IKEv1
 	enum yna_options ikepad =
 		extract_yna(kv(wm, END_ROOF, KWS_IKEPAD),
 			    /*value_when_unset*/YNA_UNSET,
@@ -3611,9 +3585,20 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	config->v1_ikepad.modecfg = (ikepad == YNA_YES);
-	config->v1_ikepad.message = (ikepad != YNA_NO);
-#endif
+	if (ike_version >= IKEv2) {
+		if (ikepad != YNA_UNSET) {
+			name_buf vn;
+			vwarning("%s connection ignores ikepad=%s",
+				 str_enum_long(&ike_version_names, ike_version, &vn),
+				 wm->wm_ikepad);
+		}
+		/* default */
+		config->v1_ikepad.message = true;
+		config->v1_ikepad.modecfg = false;
+	} else {
+		config->v1_ikepad.modecfg = (ikepad == YNA_YES);
+		config->v1_ikepad.message = (ikepad != YNA_NO);
+	}
 
 	config->require_id_on_certificate =
 		extract_bool(kv(wm, END_ROOF, KWS_REQUIRE_ID_ON_CERTIFICATE),
@@ -3858,7 +3843,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	if (ike_version < IKEv2) {
+	if (ike_version == IKEv1) {
 		if (send_redirect != YNA_UNSET) {
 			vwarning("IKEv1 connection ignores send-redirect=%s", wm->wm_send_redirect);
 		}
@@ -3886,7 +3871,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (ike_version < IKEv2) {
+	if (ike_version == IKEv1) {
 		if (wm->wm_accept_redirect != NULL) {
 			vwarning("IKEv1 connection ignores accept-redirect=");
 		}
@@ -4151,7 +4136,8 @@ diag_t extract_connection(const struct whack_message *wm,
 				 wm->wm_esn);
 		}
 		config->esn.no = true;
-	} else if (ike_version < IKEv2) {
+#ifdef USE_IKEv1
+	} else if (ike_version == IKEv1) {
 		/*
 		 * Ignore ESN when IKEv1.
 		 *
@@ -4179,6 +4165,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			config->esn.yes = true;
 			break;
 		}
+#endif
 	} else {
 		switch (esn) {
 		case YNE_UNSET:
@@ -4204,7 +4191,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	if (ike_version < IKEv2) {
+	if (ike_version == IKEv1) {
 		if (wm->wm_ppk != NULL) {
 			vwarning("ignoring ppk=%s as IKEv1",
 				 wm->wm_ppk);
@@ -4598,7 +4585,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		switch (ike_version) {
-#ifdef USE_IKEv1
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
 			if (wm->wm_dpddelay != NULL &&
@@ -4625,7 +4611,6 @@ diag_t extract_connection(const struct whack_message *wm,
 				vwarning("IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
-#endif
 		case IKEv2:
 			if (wm->wm_dpddelay != NULL) {
 				diag_t d;
@@ -4669,21 +4654,17 @@ diag_t extract_connection(const struct whack_message *wm,
 			extract_bool(kv(wm, END_ROOF, KWS_NAT_KEEPALIVE),
 				     /*value_when_unset*/YN_YES,
 				     &d, verbose);
-#ifdef USE_IKEv1
 		enum ikev1_natt_policy nat_ikev1_method =
 			extract_sparse_name(kv(wm, END_ROOF, KWS_NAT_IKEv1_METHOD),
 					    /*value_when_unset*/NATT_BOTH,
 					    &nat_ikev1_method_option_names,
 					    &d, verbose);
-#endif
 		if (d != NULL) {
 			return d;
 		}
 
 		config->nat_keepalive = nat_keepalive;
-#ifdef USE_IKEv1
 		config->ikev1_natt = nat_ikev1_method;
-#endif
 
 		config->host.send_initial_contact =
 			extract_bool(kv(wm, END_ROOF, KWS_INITIAL_CONTACT),
@@ -4746,7 +4727,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			     &d, verbose);
 
 	config->modecfg.dns = extract_addresses(kv(wm, END_ROOF, KWS_MODECFGDNS),
-						(ike_version < IKEv2 ? &ipv4_info : NULL),
+						(ike_version == IKEv1 ? &ipv4_info : NULL),
 						&d, verbose);
 	if (d != NULL) {
 		return d;
@@ -4756,7 +4737,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (can_extract_string(dns_kv, verbose)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(dns_kv.value),
 							     ", ", HERE);
-		if (ike_version < IKEv2 &&
+		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
 			vwarning("IKEv1 only uses the first domain in "PRI_KV,
@@ -4896,7 +4877,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->wm_sec_label != NULL) {
 		vdbg("received sec_label '%s' from whack", wm->wm_sec_label);
-		if (ike_version < IKEv2) {
+		if (ike_version == IKEv1) {
 			return diag("IKEv1 does not support Labeled IPsec");
 		}
 		/* include NUL! */
@@ -5056,7 +5037,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Limit IKEv1 with selectors
 	 */
-	if (ike_version < IKEv2) {
+	if (ike_version == IKEv1) {
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 			const char *leftright = config->end[lr].leftright;
 			if (len(config->end[lr].child.selectors) <= 1) {
