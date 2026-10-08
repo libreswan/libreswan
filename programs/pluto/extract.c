@@ -1284,46 +1284,21 @@ static struct authby extract_auth(struct kv kv,
 		return (struct authby) {0};
 	}
 
-	if (strheq(kv.value, "digsig") ||
-	    strheq(kv.value, "pubkey")) {
-		return authby_v2AUTH_pubkey();
+	if (strheq(kv.value, "psk")) {
+		return (struct authby) {
+				AUTHBY_PSK,
+		};
 	}
 
-	const struct {
-		const char *name;
-		struct authby authby;
-	} auths[] = {
-#define S(A) { #A, { AUTHBY_##A, }, }
-		S(NEVER),
-		S(PSK),
-		S(RSASIG),
-		S(ECDSA),
-		S(EDDSA),
-		S(EAPONLY),
-		{ "null", { AUTHBY_NULL, }, },
-		{ "secret", { AUTHBY_PSK, }, },
-#undef S
-	};
-
-	FOR_EACH_ELEMENT(auth, auths) {
-		if (strheq(kv.value, auth->name)) {
-			return auth->authby;
-		}
+	struct authby authby = {0};
+	if (tto_ikev2_authby(shunk1(kv.value), &authby)) {
+		return authby;
 	}
 
 	JAMBUF(buf) {
 		jam(buf, PRI_KV, pri_kv(kv));
 		jam_string(buf, " is invalid, valid options are ");
-		for (unsigned u = 0; u < elemsof(auths); u++) {
-			if (u == elemsof(auths)-1) {
-				jam_string(buf, ", and ");
-			} else if (u > 0) {
-				jam_string(buf, ", ");
-			}
-			jam_string(buf, "\"");
-			jam_string_human(buf, auths[u].name);
-			jam_string(buf, "\"");
-		}
+		jam_authbys_auth(buf);
 		(*d) = diag_jambuf(buf);
 	}
 
