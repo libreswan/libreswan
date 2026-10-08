@@ -209,6 +209,54 @@ static const struct {
 
 };
 
+bool tto_ikev2_authby(shunk_t input, struct authby *authby)
+{
+	zero(authby);
+
+	/*
+	 * Keep these out of the name->authby table, so that when
+	 * showing "digsig" it appears as the individual auth methods.
+	 */
+	if (hunk_strheq(input, "digsig") ||
+	    hunk_strheq(input, "pubkey")) {
+		*authby = authby_v2AUTH_pubkey();
+		return true;
+	}
+
+	/*
+	 * Some aliases.
+	 */
+	static const struct {
+		const char *human;
+		struct authby authby;
+	} aliases[] = {
+		{ "rsa", {
+				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASIG_SHA2,
+			},
+		},
+		{ "ecdsa-sha2", {
+				AUTHBY_ECDSA,
+			},
+		},
+	};
+	FOR_EACH_ELEMENT(alias, aliases) {
+		if (hunk_strheq(input, alias->human)) {
+			*authby = alias->authby;
+			return true;
+		}
+	}
+
+	FOR_EACH_ELEMENT(name, authby_names) {
+		if (hunk_strheq(input, name->human)) {
+			*authby = name->authby;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static size_t jam_authby_raw(struct jambuf *buf,
 			     struct authby authby,
 			     bool human)
