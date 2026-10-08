@@ -1,0 +1,3 @@
+Both sides auth=digsig with generated EdDSA raw keys.
+Both sides should sign with EdDSA.
+Connection should establish.

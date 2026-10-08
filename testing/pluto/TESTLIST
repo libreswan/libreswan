@@ -536,6 +536,10 @@ kvmplutotest	ikev2-x509-38-failureshunt		good
 kvmplutotest	ikev2-x509-40-dn-wildcard		good
 kvmplutotest	ikev2-x509-41-rightid-fromcert-rightid-ip good	github/600
 kvmplutotest	ikev2-x509-42-no-rightca		  wip	github/2437
+kvmplutotest	ikev2-x509-43-missing-key		good
+kvmplutotest	ikev2-x509-43-missing-key-legacy	good
+kvmplutotest	ikev2-x509-44-rsacert-psk-fallback	good
+kvmplutotest	ikev2-x509-45-wrong-key-type		good
 
 # wildcard ID related tests
 kvmplutotest	ikev1-x509-17-id-any			good
@@ -562,7 +566,8 @@ kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev2	good
 #
 
 kvmplutotest	ikev2-auth-null-01			good
-kvmplutotest	ikev2-auth-mismatch-bug			wip	github/2931
+kvmplutotest	ikev2-auth-mismatch-bug			good	github/2931
+kvmplutotest	ikev2-auth-mismatch-bug-legacy		good
 
 kvmplutotest	ddos-01-ikev2				wip	non-deterministic
 
@@ -1334,6 +1339,8 @@ kvmplutotest	ikev2-digsig-02-legacy			good
 kvmplutotest	ikev2-digsig-03-rsa-sha2		good
 kvmplutotest	ikev2-digsig-04-mismatch		good
 kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
+kvmplutotest	ikev2-digsig-06-auth-digsig-mixed-certs		good
+kvmplutotest	ikev2-digsig-07-auth-digsig-eddsa-rawkey	good
 
 #################################################################
 # IPSEC KEY (from dns) tests

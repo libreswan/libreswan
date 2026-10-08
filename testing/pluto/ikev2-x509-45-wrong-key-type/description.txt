@@ -1,0 +1,5 @@
+Both sides authby=rsasig,null. The initiator has an ECDSA cert, whose
+key type authby=rsasig does not allow; the responder has an RSA cert.
+
+The initiator should fail before sending IKE_AUTH and not use NULL
+authentication. Connection should not establish.
