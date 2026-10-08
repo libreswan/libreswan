@@ -126,16 +126,6 @@ struct authby {
 
 /* all algs IKEv1 and IKEv2 allow */
 
-#define AUTHBY_IKEv2				\
-	AUTHBY_PSK,				\
-	AUTHBY_NULL,				\
-	AUTHBY_NEVER,				\
-	AUTHBY_EAPONLY,				\
-	AUTHBY_EDDSA,				\
-	AUTHBY_RSASIG_V1_5,			\
-	AUTHBY_RSASIG_SHA2,			\
-	AUTHBY_ECDSA_SHA2
-
 #define AUTHBY_ALL_IKEv2_DEFAULTS		\
 	(struct authby) {			\
 		AUTHBY_RSASIG_V1_5,		\
@@ -159,12 +149,6 @@ bool authby_has_v2AUTH_digsig_payload(struct authby authby);
  */
 struct authby authby_v2AUTH_pubkey(void);
 bool authby_has_v2AUTH_pubkey(struct authby);
-
-#define AUTHBY_IKEv2_ONLY			\
-	AUTHBY_RSASIG_V1_5,			\
-	AUTHBY_RSASIG_SHA2,			\
-	AUTHBY_ECDSA_SHA2,			\
-	AUTHBY_EDDSA
 
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
