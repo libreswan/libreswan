@@ -1284,46 +1284,21 @@ static struct authby extract_auth(struct kv kv,
 		return (struct authby) {0};
 	}
 
-	if (strheq(kv.value, "digsig") ||
-	    strheq(kv.value, "pubkey")) {
-		return authby_v2AUTH_pubkey();
+	if (strheq(kv.value, "psk")) {
+		return (struct authby) {
+				AUTHBY_PSK,
+		};
 	}
 
-	const struct {
-		const char *name;
-		struct authby authby;
-	} auths[] = {
-#define S(A) { #A, { AUTHBY_##A, }, }
-		S(NEVER),
-		S(PSK),
-		S(RSASIG),
-		S(ECDSA),
-		S(EDDSA),
-		S(EAPONLY),
-		{ "null", { AUTHBY_NULL, }, },
-		{ "secret", { AUTHBY_PSK, }, },
-#undef S
-	};
-
-	FOR_EACH_ELEMENT(auth, auths) {
-		if (strheq(kv.value, auth->name)) {
-			return auth->authby;
-		}
+	struct authby authby = {0};
+	if (tto_ikev2_authby(shunk1(kv.value), &authby)) {
+		return authby;
 	}
 
 	JAMBUF(buf) {
 		jam(buf, PRI_KV, pri_kv(kv));
 		jam_string(buf, " is invalid, valid options are ");
-		for (unsigned u = 0; u < elemsof(auths); u++) {
-			if (u == elemsof(auths)-1) {
-				jam_string(buf, ", and ");
-			} else if (u > 0) {
-				jam_string(buf, ", ");
-			}
-			jam_string(buf, "\"");
-			jam_string_human(buf, auths[u].name);
-			jam_string(buf, "\"");
-		}
+		jam_authbys_auth(buf);
 		(*d) = diag_jambuf(buf);
 	}
 
@@ -1393,110 +1368,15 @@ static struct authby extract_authby(struct kv kv,
 				  pri_shunk(val));
 			return (struct authby) {0};
 		case IKEv2:
-			if (hunk_streq(val, "eaponly")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_EAPONLY,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "secret")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_PSK,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "rsasig") ||
-			    hunk_streq(val, "rsa")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_V1_5,
-						AUTHBY_RSASIG_SHA2,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "never")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_NEVER,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "null")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_NULL,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "digsig") ||
-			    hunk_streq(val, "pubkey")) {
-				authby = authby_or(authby, authby_v2AUTH_pubkey());
-				continue;
-			}
-			if (hunk_streq(val, "rsa-sha1")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_V1_5_SHA1,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "rsa-sha2")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_SHA2,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "rsa-sha2_256")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_SHA2_256,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "rsa-sha2_384")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_SHA2_384,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "rsa-sha2_512")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_SHA2_512,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "eddsa")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_EDDSA,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "ecdsa") ||
-			    hunk_streq(val, "ecdsa-sha2")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_ECDSA_SHA2,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "ecdsa-sha2_256")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_ECDSA_SHA2_256,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "ecdsa-sha2_384")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_ECDSA_SHA2_384,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "ecdsa-sha2_512")) {
-				authby = authby_or(authby, (struct authby) {
-						AUTHBY_ECDSA_SHA2_512,
-					});
-				continue;
-			}
-			if (hunk_streq(val, "ecdsa-sha1")) {
-				*d = diag("authby=ecdsa cannot use sha1, only sha2");
+		{
+			struct authby moreby = {0};
+			if (!tto_ikev2_authby(val, &moreby)) {
+				*d = diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
 				return (struct authby) {0};
 			}
-			*d = diag("authby="PRI_SHUNK" is unknown", pri_shunk(val));
-			return (struct authby) {0};
+			authby = authby_or(authby, moreby);
+			continue;
+		}
 		}
 		bad_case(ike_version);
 	}
