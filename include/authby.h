@@ -205,6 +205,7 @@ const char *str_authby(struct authby authby, authby_buf *buf);
 size_t jam_authby(struct jambuf *buf, struct authby authby);
 
 bool tto_ikev2_authby(shunk_t input, struct authby *update);
+void jam_authbys_auth(struct jambuf *buf);
 
 /* try to match what extract.c accepts and the auth: logs */
 const char *str_authby_auth(struct authby authby, authby_buf *buf);

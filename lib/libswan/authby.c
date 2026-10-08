@@ -139,7 +139,7 @@ struct authby authby_from_auth(enum auth auth)
  *
  * - broader bitsets come first, so they are prefered.
  */
-static const struct {
+static const struct authby_name {
 	const char *policy;
 	const char *human;
 	struct authby authby;
@@ -255,6 +255,39 @@ bool tto_ikev2_authby(shunk_t input, struct authby *authby)
 	}
 
 	return false;
+}
+
+void jam_authbys_auth(struct jambuf *buf)
+{
+	jam_string(buf, "\"digsig\"");
+
+	struct authby jamed_authbys = {0};
+	const struct authby_name *name = NULL;
+	for (unsigned u = 0; u < elemsof(authby_names); u++) {
+		/*
+		 * Skip name when a super set has already been shown.
+		 */
+		if (authby_has_all(jamed_authbys, authby_names[u].authby)) {
+			continue;
+		}
+		/* show the previous */
+		if (name != NULL) {
+			jam_string(buf, ", ");
+			jam_string(buf, "\"");
+			jam_string(buf, name->human);
+			jam_string(buf, "\"");
+		}
+		/* save next */
+		name = &authby_names[u];
+		jamed_authbys = authby_or(jamed_authbys, name->authby);
+	}
+
+	if (name != NULL) {
+		jam_string(buf, ", and ");
+		jam_string(buf, "\"");
+		jam_string(buf, name->human);
+		jam_string(buf, "\"");
+	}
 }
 
 static size_t jam_authby_raw(struct jambuf *buf,
