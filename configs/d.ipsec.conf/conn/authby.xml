@@ -156,6 +156,13 @@
     </variablelist>
 
     <para>
+      When more than one digital signature method is allowed, for
+      instance <option>authby=rsasig,ecdsa</option>, &IKEv2; picks
+      the one to use at run time based on the connection's private
+      key.
+    </para>
+
+    <para>
       Notes:
       <note>
 	<title>&IKEv1;:</title>

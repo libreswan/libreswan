@@ -778,6 +778,61 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 }
 
 /*
+ * The private key of the connection's certificate or CKAID; NULL
+ * when it is missing or AUTHBY doesn't allow its type.
+ */
+
+struct secret_pubkey_stuff *get_local_private_key_for_authby(const struct connection *c,
+							     struct authby authby,
+							     struct logger *logger)
+{
+	struct secret_pubkey_stuff *pks = NULL;
+	bool load_needed;
+	err_t err;
+	if (c->local->host.config->cert.nss_cert != NULL) {
+		err = find_or_load_private_key_by_cert(&pluto_secrets,
+						       &c->local->host.config->cert,
+						       &pks, &load_needed, logger);
+	} else if (c->local->host.config->ckaid != NULL) {
+		err = find_or_load_private_key_by_ckaid(&pluto_secrets,
+							c->local->host.config->ckaid,
+							&pks, &load_needed, logger);
+	} else {
+		return NULL;
+	}
+
+	if (err != NULL) {
+		authby_buf ab;
+		ldbg(logger, "connection %s's %s private key not found: %s",
+		     c->name, str_authby(authby, &ab), err);
+		return NULL;
+	}
+
+	if (!authby_has_any(private_key_authby(pks), authby)) {
+		authby_buf ab;
+		ldbg(logger, "connection %s's private key has type %s but %s is needed",
+		     c->name, pks->content.type->name, str_authby(authby, &ab));
+		return NULL;
+	}
+
+	return pks;
+}
+
+/*
+ * The authby bits for the private key's type (RSA, ECDSA or
+ * EdDSA); empty for any other type.
+ */
+
+struct authby private_key_authby(const struct secret_pubkey_stuff *pks)
+{
+	const struct pubkey_type *type = pks->content.type;
+	return (type == &pubkey_type_rsa ? (struct authby) { AUTHBY_RSASIG, } :
+		type == &pubkey_type_ecdsa ? (struct authby) { AUTHBY_ECDSA, } :
+		type == &pubkey_type_eddsa ? (struct authby) { AUTHBY_EDDSA, } :
+		(struct authby) {0});
+}
+
+/*
  * public key machinery
  */
 
