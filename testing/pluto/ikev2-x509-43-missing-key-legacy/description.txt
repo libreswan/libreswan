@@ -1,0 +1,8 @@
+Both sides authby=rsasig with RSA certs. The initiator has its
+certificate but not its private key.
+Same as ikev2-x509-43-missing-key.
+The responder sets signature-hash-algorithms=no, so the initiator
+has only legacy RSA authentication available.
+
+The initiator should fail before sending IKE_AUTH. Connection should
+not establish.
