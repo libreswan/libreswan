@@ -216,6 +216,22 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (impair.empty_ike_auth_auth) {
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "sending IKE_AUTH containing only an empty AUTH payload");
+		struct ikev2_auth a = {
+			.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
+		};
+		if (!pbs_out_struct(request.pbs, a, &ikev2_auth_desc, NULL)) {
+			return STF_FATAL;
+		}
+		if (!close_and_record_v2_message(&request)) {
+			return STF_INTERNAL_ERROR;
+		}
+		return STF_OK;
+	}
+
+
 	/* actual data */
 
 	/* send out the IDi payload (always) */

@@ -20,6 +20,7 @@ struct eap_state;
 
 extern void free_eap_state(struct eap_state **eap);
 
-extern const struct v2_exchange v2_IKE_AUTH_EAP_exchange;
+extern const struct v2_exchange v2_IKE_AUTH_EAP_start_exchange;
+extern const struct v2_exchange v2_IKE_AUTH_EAP_continue_exchange;
 
 #endif
