@@ -117,7 +117,7 @@ static size_t RSA_jam_auth_method(struct jambuf *buf,
 		   signer->name, hash->common.fqn);
 }
 
-const struct pubkey_signer pubkey_signer_raw_rsa = {
+const struct pubkey_signer signer_pubkey_rsa_raw = {
 	.name = "raw RSA",
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.authby = { AUTHBY_RSASIG_RAW, },
@@ -212,20 +212,20 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
 	return true;
 }
 
-const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
+const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_raw = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
-	.authby = { AUTHBY_RSASIG_V1_5_SHA1, },
+	.authby = { AUTHBY_RSASIG_V1_5_SHA1_RAW, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
-const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
+const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_blob = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-	.authby = { AUTHBY_RSASIG_V1_5, },
+	.authby = { AUTHBY_RSASIG_V1_5_BLOB, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
@@ -387,7 +387,7 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 	return true;
 }
 
-const struct pubkey_signer pubkey_signer_digsig_rsassa_pss = {
+const struct pubkey_signer signer_pubkey_rsassa_pss_blob = {
 	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,

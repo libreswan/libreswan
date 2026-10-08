@@ -62,7 +62,7 @@ struct hash_signature pubkey_sign_hash(const struct pubkey_signer *signer,
 		 * Force RAW RSA as other signers are too smart and
 		 * reject the hash.
 		 */
-		return pubkey_signer_raw_rsa.sign_hash(pks, &tmp_hash, &ike_alg_hash_sha1, logger);
+		return signer_pubkey_rsa_raw.sign_hash(pks, &tmp_hash, &ike_alg_hash_sha1, logger);
 	}
 
 	return signer->sign_hash(pks, hash_to_sign,

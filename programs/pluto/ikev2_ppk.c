@@ -395,11 +395,11 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 		const struct hash_desc *hash_algo =
 			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
-			if (c->local->config->host.authby.authby_rsasig_v1_5_sha1) {
+			if (c->local->config->host.authby.authby_rsasig_v1_5_sha1_raw) {
 				/* RSA with SHA1 without Digsig: no oid blob appended */
 				if (!ikev2_calculate_hash(ike, id_hash, NULL, no_ppk_auth,
 							  &ike_alg_hash_sha1,
-							  &pubkey_signer_raw_pkcs1_1_5_rsa)) {
+							  &signer_pubkey_pkcs1_1_5_rsa_raw)) {
 					return false;
 				}
 				return true;
@@ -420,7 +420,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 
 		chunk_t hashval = NULL_HUNK;
 		if (!ikev2_calculate_hash(ike, id_hash, NULL, &hashval,
-					  hash_algo, &pubkey_signer_digsig_rsassa_pss)) {
+					  hash_algo, &signer_pubkey_rsassa_pss_blob)) {
 			return false;
 		}
 

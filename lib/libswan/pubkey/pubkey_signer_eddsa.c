@@ -216,7 +216,7 @@ static bool EDDSA_authenticate_message_signature(const struct pubkey_signer *sig
 	return ok;
 }
 
-const struct pubkey_signer pubkey_signer_digsig_eddsa_ed25519 = {
+const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob = {
 	.name = "EDDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_eddsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,

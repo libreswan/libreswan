@@ -161,7 +161,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (!authby_has_pubkey(c->local->host.config->authby)) {
+	if (!authby_has_v2AUTH_pubkey(c->local->host.config->authby)) {
 		authby_buf pb;
 		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: local %sauthby=%s does not have RSA or ECDSA",
 		     c->local->config->leftright,

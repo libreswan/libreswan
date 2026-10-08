@@ -80,12 +80,14 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 	 *
 	 */
 
-	if (authby_has_any(authby, (struct authby) { AUTHBY_RSASIG_V1_5, })) {
-		/* RSASIG_V1_5 allows any sha1, sha2 hash */
-		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH,
-					IKEv2_AUTH_RSA_DIGITAL_SIGNATURE, 0 /* cert link */ };
+	if (authby.authby_rsasig_v1_5_sha1_raw) {
+		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
+			THREE_OCTET_ANNOUNCEMENT_LENGTH,
+			IKEv2_AUTH_RSA_DIGITAL_SIGNATURE,
+			0 /* cert link */
+		};
 		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3),
-				"SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced")) {
+				 "SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced")) {
 			return false;
 		}
 	}
@@ -225,9 +227,7 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			switch (auth_method) {
 			case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-				peer = authby_or(peer, (struct authby) {
-						AUTHBY_RSASIG_V1_5,
-					});
+				peer.authby_rsasig_v1_5_sha1_raw = true;
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 				peer.authby_ecdsa_sha2_256 = true;

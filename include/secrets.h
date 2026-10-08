@@ -274,15 +274,16 @@ extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 extern const struct pubkey_type pubkey_type_eddsa;
 
-extern const struct pubkey_signer pubkey_signer_raw_rsa;		/* IKEv1 */
-extern const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa;	/* rfc7296 */
-extern const struct pubkey_signer pubkey_signer_raw_ecdsa;		/* rfc4754 */
-/* extern const struct pubkey_signer pubkey_signer_raw_eddsa; NO SUCH IKEv2 Authentication METHOD */
+extern const struct pubkey_signer signer_pubkey_rsa_raw;		/* IKEv1 */
 
-extern const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa;	/* rfc7427 */
-extern const struct pubkey_signer pubkey_signer_digsig_rsassa_pss;	/* rfc7427 */
-extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
-extern const struct pubkey_signer pubkey_signer_digsig_eddsa_ed25519;	/* rfc7427+ */
+extern const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_raw;	/* rfc7296 */
+extern const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_blob;	/* rfc7427 */
+
+extern const struct pubkey_signer signer_pubkey_ecdsa_raw;		/* rfc4754 */
+extern const struct pubkey_signer signer_pubkey_ecdsa_blob;		/* rfc7427 */
+
+extern const struct pubkey_signer signer_pubkey_rsassa_pss_blob;	/* rfc7427 */
+extern const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob;	/* rfc7427+ */
 
 const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
 const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *public_key);

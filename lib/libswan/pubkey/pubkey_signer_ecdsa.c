@@ -158,7 +158,7 @@ static size_t ECDSA_jam_auth_method(struct jambuf *buf,
 		   hash->common.fqn);
 }
 
-const struct pubkey_signer pubkey_signer_raw_ecdsa = {
+const struct pubkey_signer signer_pubkey_ecdsa_raw = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
@@ -276,7 +276,7 @@ static bool ECDSA_digsig_authenticate_hash_signature(const struct pubkey_signer 
 	return true;
 }
 
-const struct pubkey_signer pubkey_signer_digsig_ecdsa = {
+const struct pubkey_signer signer_pubkey_ecdsa_blob = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,

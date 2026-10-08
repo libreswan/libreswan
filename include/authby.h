@@ -55,9 +55,15 @@ struct authby {
 #define AUTHBY_RSASIG_RAW			\
 	.authby_rsasig_raw = true
 
-#define authby_rsasig_v1_5_sha1 authby[AUTH_RSASIG_V1_5_SHA1]
+#define authby_rsasig_v1_5_sha1_raw authby[AUTH_RSASIG_V1_5_SHA1_RAW]
+#define AUTHBY_RSASIG_V1_5_SHA1_RAW		\
+	.authby_rsasig_v1_5_sha1_raw = true
+#define authby_rsasig_v1_5_sha1_blob authby[AUTH_RSASIG_V1_5_SHA1_BLOB]
+#define AUTHBY_RSASIG_V1_5_SHA1_BLOB		\
+	.authby_rsasig_v1_5_sha1_blob = true
 #define AUTHBY_RSASIG_V1_5_SHA1			\
-	.authby_rsasig_v1_5_sha1 = true
+	AUTHBY_RSASIG_V1_5_SHA1_RAW,		\
+	AUTHBY_RSASIG_V1_5_SHA1_BLOB
 
 #define authby_rsasig_v1_5_sha2_256 authby[AUTH_RSASIG_V1_5_SHA2_256]
 #define authby_rsasig_v1_5_sha2_384 authby[AUTH_RSASIG_V1_5_SHA2_384]
@@ -72,6 +78,10 @@ struct authby {
 	AUTHBY_RSASIG_V1_5_SHA2_256,		\
 	AUTHBY_RSASIG_V1_5_SHA2_384,		\
 	AUTHBY_RSASIG_V1_5_SHA2_512
+
+#define AUTHBY_RSASIG_V1_5_BLOB			\
+	AUTHBY_RSASIG_V1_5_SHA1_BLOB,		\
+	AUTHBY_RSASIG_V1_5_SHA2
 
 #define AUTHBY_RSASIG_V1_5			\
 	AUTHBY_RSASIG_V1_5_SHA1,		\
@@ -135,11 +145,21 @@ struct authby {
 
 /*
  * Returns all the authentication methods that are supported using RFC
- * 7427's new "Digital Signature" AUTH payload.
+ * 7427's new "Digital Signature" AUTH payload identified by a BLOB
+ * prefix.
  */
 
-struct authby supported_ikev2_digsig_auth_payloads(void);
-bool authby_has_supported_ikev2_digsig_payload(struct authby);
+struct authby authby_v2AUTH_digsig_payload(void);
+bool authby_has_v2AUTH_digsig_payload(struct authby authby);
+
+/*
+ * Set of authentication methods that use a pubkey (Digital Signature
+ * Algorithm).  In addition to the new "Digital Signature" method
+ * requiring RFC 7427 (Digital Signature AUTH payload) this includes
+ * methods that require an AUTH specific.
+ */
+struct authby authby_v2AUTH_pubkey(void);
+bool authby_has_v2AUTH_pubkey(struct authby);
 
 #define AUTHBY_IKEv2_ONLY			\
 	AUTHBY_RSASIG_V1_5,			\
@@ -173,13 +193,6 @@ struct authby authby_from_auth(enum auth auth);
 struct authby authby_and_auth(struct authby, enum auth);
 struct authby authby_or_auth(struct authby, enum auth);
 bool authby_has_auth(struct authby, enum auth);
-
-/*
- * Do the authentication methods include pubkey (digital signature)
- * algorithms.  This is not the same has a pubkey method that works
- * with RFC 7427 (Digital Signature AUTH payload).
- */
-bool authby_has_pubkey(struct authby);
 
 typedef struct {
 	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+AUTH_NEVER+AUTH_NULL+"
