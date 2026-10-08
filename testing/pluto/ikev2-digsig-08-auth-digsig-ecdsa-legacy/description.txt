@@ -1,0 +1,6 @@
+Initiator auth=digsig, responder auth=ecdsa with authby=ecdsa-sha2_384,
+both with P-384 ECDSA certs.
+The responder sets signature-hash-algorithms=no, so both sides use
+legacy ECDSA.
+Initiator should sign with ECDSA-SHA2-384, which matches its P-384 key.
+Connection should establish.

@@ -683,6 +683,7 @@ kvmplutotest	replay-window-ikev2-pfkeyv2-freebsd	good
 
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
+kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384-legacy	good
 
 kvmplutotest	ikev2-x509-ecdsa-01					good
 kvmplutotest	ikev2-x509-ecdsa-02-mismatch				good
@@ -690,6 +691,8 @@ kvmplutotest	ikev2-x509-ecdsa-03-legacy-initiator			good
 kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			good
 kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				good
 kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
+kvmplutotest	ikev2-x509-ecdsa-08-legacy-p256				good
+kvmplutotest	ikev2-x509-ecdsa-08-legacy-sha2_512			good
 
 kvmplutotest	ikev2-x509-eddsa-01-preloaded-cert	skip
 kvmplutotest	ikev2-x509-eddsa-02-sendcerts		skip
@@ -1341,6 +1344,7 @@ kvmplutotest	ikev2-digsig-04-mismatch		good
 kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
 kvmplutotest	ikev2-digsig-06-auth-digsig-mixed-certs		good
 kvmplutotest	ikev2-digsig-07-auth-digsig-eddsa-rawkey	good
+kvmplutotest	ikev2-digsig-08-auth-digsig-ecdsa-legacy	good
 
 #################################################################
 # IPSEC KEY (from dns) tests

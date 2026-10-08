@@ -79,6 +79,8 @@ endif
 	$(PKI) cert: real/mainca        mainca               rsa-west                   1 1 1 /  digitalSignature      /
 	$(PKI) cert: real/mainec        mainec               ecdsa-east                 1 1 1 /  digitalSignature      /
 	$(PKI) cert: real/mainec        mainec               ecdsa-west                 1 1 1 /  digitalSignature      /
+	: # P-256 cert for the legacy ECDSA tests (mainec is P-384)
+	$(PKI) cert: real/mainec        mainec               p256-west                  1 1 1 /  digitalSignature      /  -k ec -Z SHA256 -q nistp256
 	:
 	$(overrides) ./bin/crl.sh $(X509DIR)
 	$(overrides) ./bin/selfsigned.sh $(X509DIR)/selfsigned
