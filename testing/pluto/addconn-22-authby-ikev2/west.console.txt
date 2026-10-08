@@ -209,7 +209,7 @@ west #
 west #
  leftauth none
  ipsec addconn --name leftauth:none leftauth=none
-"leftauth:none": failed to add connection: "leftauth=none" is invalid, valid options are "never", "psk", "rsasig", "ecdsa", "eddsa", "eaponly", "null", and "secret"
+"leftauth:none": failed to add connection: "leftauth=none" is invalid, valid options are "digsig", "secret", "rsasig", "ecdsa", "eddsa", "never", "null", and "eaponly"
 no connection or alias named "leftauth:none"
 west #
  leftauth null
