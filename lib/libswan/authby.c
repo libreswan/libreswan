@@ -129,98 +129,148 @@ struct authby authby_from_auth(enum auth auth)
 	return flags_from_flag(authby, auth);
 }
 
+/*
+ * Map names to authby bits.
+ *
+ * Note: order matters, for instance:
+ *
+ * - it decides the order that things are shown in POLICY, hence PSK
+ *   is first
+ *
+ * - broader bitsets come first, so they are prefered.
+ */
+static const struct {
+	const char *policy;
+	const char *human;
+	struct authby authby;
+} authby_names[] = {
+
+	{ "PSK", "secret", { AUTHBY_PSK, }, },
+
+	/*
+	 * RSASIG
+	 */
+
+	{ "RSASIG", "rsasig", {
+			AUTHBY_RSASIG_V1_5,
+			AUTHBY_RSASIG_SHA2,
+		},
+	},
+	{ "RSASIG_SHA2", "rsa-sha2", {
+			AUTHBY_RSASIG_SHA2,
+		},
+	},
+	{ "RSASIG_v1_5", "rsa-v15", {
+			AUTHBY_RSASIG_V1_5,
+		},
+	},
+	{ "RSASIG_v1_5_SHA1", "rsa-sha1", {
+			AUTHBY_RSASIG_V1_5_SHA1,
+		},
+	},
+
+	{ "RSASIG_SHA2_256", "rsa-sha2_256", { .authby_rsasig_sha2_256 = true, }, },
+	{ "RSASIG_SHA2_384", "rsa-sha2_384", { .authby_rsasig_sha2_384 = true, }, },
+	{ "RSASIG_SHA2_512", "rsa-sha2_512", { .authby_rsasig_sha2_512 = true, }, },
+	{ "RSASIG_v1_5_SHA1_RAW", "rsa-sha1-raw", { .authby_rsasig_v1_5_sha1_raw = true, }, },
+	{ "RSASIG_v1_5_SHA1_BLOB", "rsa-sha1-blob", { .authby_rsasig_v1_5_sha1_blob = true, }, },
+	{ "RSASIG_V1_5_SHA2_256", "rsa-v15-sha2_256", { .authby_rsasig_v1_5_sha2_256 = true, }, },
+	{ "RSASIG_V1_5_SHA2_384", "rsa-v15-sha2_384", { .authby_rsasig_v1_5_sha2_384 = true, }, },
+	{ "RSASIG_V1_5_SHA2_512", "rsa-v15-sha2_512", { .authby_rsasig_v1_5_sha2_512 = true, }, },
+
+	/*
+	 * ECDSA
+	 *
+	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
+	 * short-hand ECDSA.  This matches auth=ecdsa which will set
+	 * all the bits below.
+	 */
+
+	{ "ECDSA", "ecdsa", {
+			AUTHBY_ECDSA,
+		},
+	},
+
+	{ "ECDSA_SHA2_256", "ecdsa-sha2_256", { .authby_ecdsa_sha2_256 = true, }, },
+	{ "ECDSA_SHA2_384", "ecdsa-sha2_384", { .authby_ecdsa_sha2_384 = true, }, },
+	{ "ECDSA_SHA2_512", "ecdsa-sha2_512", { .authby_ecdsa_sha2_512 = true, }, },
+
+	/*
+	 * EDDSA
+	 */
+
+	{ "EDDSA", "eddsa", { AUTHBY_EDDSA, }, },
+
+	/* stragglers */
+
+	{ "AUTH_NEVER", "never", { AUTHBY_NEVER, }, },
+	{ "AUTH_NULL", "null", { AUTHBY_NULL, }, },
+	{ "EAPONLY", "eaponly", { AUTHBY_EAPONLY, }, },
+
+};
+
 static size_t jam_authby_raw(struct jambuf *buf,
 			     struct authby authby,
 			     bool human)
 {
 	size_t s = 0;
 	const char *sep = "";
-#define JAM_STRING(N,H)					\
-	{						\
-		s += jam_string(buf, sep);		\
-		s += jam_string(buf, (human ? #H : #N)); \
-		sep = "+";				\
+#define JAM_AUTHBY(N, H, ...)						\
+	{								\
+		const struct authby f_ = { __VA_ARGS__ };		\
+		if (authby_has_all(authby, f_)) {			\
+			s += jam_string(buf, sep);			\
+			sep = "+";					\
+			s += jam_string(buf, (human ? #H : #N));	\
+			authby = authby_and(authby, authby_not(f_));	\
+		}							\
 	}
-#define JAM_AUTHBY(F, N, H)				\
-	{						\
-		if (authby.F) {				\
-			JAM_STRING(N, H);		\
-		}					\
-	}
-	JAM_AUTHBY(authby_psk, PSK, secret);
-	if (authby_has_all(authby, (struct authby) {
-				AUTHBY_RSASIG_RAW,
-				AUTHBY_RSASIG_V1_5,
-				AUTHBY_RSASIG_SHA2,
-			})) {
-		/* legacy */
-		JAM_STRING(RSASIG, rsasig);
-	} else if (authby_has_all(authby, (struct authby) {
-				AUTHBY_RSASIG_RAW,
-			}) &&
-		!authby_has_any(authby, (struct authby) {
-				AUTHBY_RSASIG_V1_5,
-				AUTHBY_RSASIG_SHA2,
-			})) {
-		/* IKEv1 */
-		JAM_STRING(RSASIG, rsasig);
-	} else if (authby_has_all(authby, (struct authby) {
-				AUTHBY_RSASIG_V1_5,
-				AUTHBY_RSASIG_SHA2,
-			}) &&
-		!authby_has_all(authby, (struct authby) {
-				AUTHBY_RSASIG_RAW,
-			})) {
-		/* IKEv2 */
-		JAM_STRING(RSASIG, rsasig);
-	} else {
-		JAM_AUTHBY(authby_rsasig_raw, RSASIG, rsasig);
-		if (authby_has_all(authby, (struct authby) {
-					AUTHBY_RSASIG_SHA2,
-				})) {
-			JAM_STRING(RSASIG_SHA2, rsa-sha2);
-		} else {
-			JAM_AUTHBY(authby_rsasig_sha2_256, RSASIG_SHA2_256, rsa-sha2_256);
-			JAM_AUTHBY(authby_rsasig_sha2_384, RSASIG_SHA2_384, rsa-sha2_384);
-			JAM_AUTHBY(authby_rsasig_sha2_512, RSASIG_SHA2_512, rsa-sha2_512);
-		}
-		if (authby_has_all(authby, (struct authby) {
-					AUTHBY_RSASIG_V1_5,
-				})) {
-			JAM_STRING(RSASIG_v1_5, rsa-v15);
-		} else {
-			if (authby_has_all(authby, (struct authby) {
-						AUTHBY_RSASIG_V1_5_SHA1,
-					})) {
-				JAM_STRING(RSASIG_v1_5_SHA1, rsa-sha1);
-			} else {
-				JAM_AUTHBY(authby_rsasig_v1_5_sha1_raw, RSASIG_v1_5_SHA1_RAW, rsa-sha1-raw);
-				JAM_AUTHBY(authby_rsasig_v1_5_sha1_blob, RSASIG_v1_5_SHA1_BLOB, rsa-sha1-blob);
-			}
-			JAM_AUTHBY(authby_rsasig_v1_5_sha2_256, RSASIG_V1_5_SHA2_256, rsa-v15-sha2_256);
-			JAM_AUTHBY(authby_rsasig_v1_5_sha2_384, RSASIG_V1_5_SHA2_384, rsa-v15-sha2_384);
-			JAM_AUTHBY(authby_rsasig_v1_5_sha2_512, RSASIG_V1_5_SHA2_512, rsa-v15-sha2_512);
-		}
-	}
+
 	/*
-	 * When AUTHBY has all the ECDSA_SHA2 bits set, use the the
-	 * short-hand ECDSA.  This matches auth=ecdsa which will set
-	 * all the bits below.
+	 * Some code still sets both IKEv1 and IKEv2 authby bits.
+	 * Hide it.
+	 *
+	 * Keep this out of the table so string->authby can't see it.
 	 */
-	if (authby_has_all(authby, (struct authby) {
-				AUTHBY_ECDSA_SHA2,
-			})) {
-		JAM_STRING(ECDSA, ecdsa);
-	} else {
-		JAM_AUTHBY(authby_ecdsa_sha2_256, ECDSA_SHA2_256, ecdsa-sha2_256);
-		JAM_AUTHBY(authby_ecdsa_sha2_384, ECDSA_SHA2_384, ecdsa-sha2_384);
-		JAM_AUTHBY(authby_ecdsa_sha2_512, ECDSA_SHA2_512, ecdsa-sha2_512);
+	JAM_AUTHBY(RSASIG, rsasig,
+		  AUTHBY_RSASIG_RAW,
+		  AUTHBY_RSASIG_V1_5,
+		  AUTHBY_RSASIG_SHA2);
+
+	/*
+	 * Pure IKEv1.
+	 *
+	 * Keep this out of the table so string->authby can't see it.
+	 */
+	JAM_AUTHBY(RSASIG, rsasig, AUTHBY_RSASIG_RAW);
+
+	/*
+	 * scan table printing and scrubbing each bit as it matches.
+	 */
+	FOR_EACH_ELEMENT(name, authby_names) {
+		if (authby_has_all(authby, name->authby)) {
+			/* those bits are done with */
+			authby = authby_and(authby, authby_not(name->authby));
+			s += jam_string(buf, sep);
+			sep ="+";
+			s += jam_string(buf, (human ? name->human : name->policy));
+		}
 	}
-	JAM_AUTHBY(authby_eddsa, EDDSA, eddsa);
-	JAM_AUTHBY(authby_never, AUTH_NEVER, never);
-	JAM_AUTHBY(authby_null, AUTH_NULL, null);
-	JAM_AUTHBY(authby_eaponly, EAPONLY, eaponly);
-#undef JAM_STRING
+
+	/*
+	 * Now dump what was missed.
+	 */
+	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
+		if (authby.authby[auth]) {
+			s += jam_string(buf, sep);
+			sep = "+";
+			if (human) {
+				jam_name_human(buf, &auth_names, auth);
+			} else {
+				jam_name_short(buf, &auth_names, auth);
+			}
+		}
+	}
 #undef JAM_AUTHBY
 	if (s == 0) {
 		s += jam_string(buf, "none");
