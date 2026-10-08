@@ -9,32 +9,21 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 "mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
- /testing/x509/import.sh real/mainca/west.end.cert
- ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
- ipsec certutil -O -n west
-"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
-east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
+ ipsec add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
 east #
- ipsec whack --impair send_pkcs7_thingie
+ ipsec whack --impair send_pkcs7_thingie:1 # CERTS
 east #
  echo "initdone"
 initdone
 east #
- grep -e 'parse IKEv2 Certificate' -e 'emit IKEv2 Certificate' -e 'ikev2 cert encoding' /tmp/pluto.log
-| ***emit IKEv2 Certificate Request Payload:
-|    ikev2 cert encoding: CERT_X509_SIGNATURE (4, 0x04)
-| **parse IKEv2 Certificate Payload:
-|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (1, 0x01)
-| ****emit IKEv2 Certificate Payload:
-|    ikev2 cert encoding: CERT_PKCS7_WRAPPED_X509 (1, 0x01)
+ grep '^[^|].*PKCS7' /tmp/pluto.log
+IMPAIR: "ikev2-westnet-eastnet-x509-cr" #1: sending certs as PKCS7 blob
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45

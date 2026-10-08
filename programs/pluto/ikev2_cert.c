@@ -53,10 +53,10 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	bool send_full_chain = send_authcerts && c->config->host.send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
-		llog(IMPAIR_STREAM, outpbs->logger, "sending cert as PKCS7 blob");
 		passert(mycert != NULL);
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain,
-						outpbs->logger);
+		/* this logs the impair */
+		SECItem *pkcs7 = impaired_pkcs7_blob(mycert, send_full_chain,
+						     outpbs->logger);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}

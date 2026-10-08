@@ -52,9 +52,9 @@ extern diag_t cert_verify_subject_alt_name(const char *who,
 					   const struct id *id,
 					   struct logger *logger);
 
-extern SECItem *nss_pkcs7_blob(const struct cert *cert,
-			       bool send_full_chain,
-			       struct logger *logger);
+extern SECItem *impaired_pkcs7_blob(const struct cert *cert,
+				    bool send_full_chain,
+				    struct logger *logger);
 
 extern bool groundhogday;
 

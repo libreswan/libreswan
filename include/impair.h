@@ -172,7 +172,7 @@ struct impair {
 	bool corrupt_encrypted;
 
 	bool allow_dns_insecure;
-	bool send_pkcs7_thingie;
+	unsigned send_pkcs7_thingie; /*1:certs;2:crls*/
 	bool send_nonzero_reserved;
 	bool send_nonzero_reserved_id;
 	bool ikev1_del_with_notify;
