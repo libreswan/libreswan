@@ -833,6 +833,27 @@ struct authby private_key_authby(const struct secret_pubkey_stuff *pks)
 }
 
 /*
+ * The legacy ECDSA authby bit for the private key's curve; empty
+ * for no key or any other curve. The curve is found by key size;
+ * a secp256k1 key also has 256 bits, but NSS's own token can't
+ * sign with it.
+ */
+
+struct authby private_key_legacy_ecdsa_authby(const struct secret_pubkey_stuff *pks)
+{
+	if (pks == NULL || pks->content.type != &pubkey_type_ecdsa) {
+		return (struct authby) {0};
+	}
+
+	switch (SECKEY_PublicKeyStrengthInBits(pks->content.public_key)) {
+	case 256: return (struct authby) { AUTHBY_ECDSA_SHA2_256, };
+	case 384: return (struct authby) { AUTHBY_ECDSA_SHA2_384, };
+	case 521: return (struct authby) { AUTHBY_ECDSA_SHA2_512, };
+	}
+	return (struct authby) {0};
+}
+
+/*
  * public key machinery
  */
 

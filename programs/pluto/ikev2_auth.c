@@ -551,17 +551,23 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	}
 
 	/*
-	 * If there are HASH algorithms, prute force pick the
-	 * first and use that.  Note that this doesn't check
-	 * that the ECDSA key matches the Pnnn.  Instead, like
-	 * for Digital Signature Method, it allows any ECDSA
-	 * key.
-	 *
-	 * XXX: this _should_ be looking at the ECDSA key.
-	 *
-	 * XXX: this _should_ be looking at IKE's dynamic
-	 * authby which _should_ be looking at the ECDSA key.
+	 * Narrow the legacy ECDSA methods with the private key's
+	 * curve because RFC 4754 ties each method to one curve.
+	 * Without a key, or when its curve's method is not allowed,
+	 * use the first allowed method, which the peer may reject.
 	 */
+
+	struct authby legacy_ecdsa_authby = { AUTHBY_ECDSA_SHA2, };
+	struct authby curve_authby =
+		authby_and(negotiated_authby,
+			   private_key_legacy_ecdsa_authby(pks));
+	if (authby_is_set(curve_authby)) {
+		negotiated_authby = curve_authby;
+	} else if (pks != NULL && authby_has_any(negotiated_authby, legacy_ecdsa_authby)) {
+		authby_buf ab;
+		ldbg(ike->sa.logger, "no legacy %s method matches the private key; picking the first",
+		     str_authby(authby_and(negotiated_authby, legacy_ecdsa_authby), &ab));
+	}
 
 	if (negotiated_authby.authby_ecdsa_sha2_512) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
