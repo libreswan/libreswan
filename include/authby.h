@@ -126,8 +126,6 @@ struct authby {
 
 /* all algs IKEv1 and IKEv2 allow */
 
-#define AUTHBY_ALL authby_not((struct authby) {0})
-
 #define AUTHBY_IKEv2				\
 	AUTHBY_PSK,				\
 	AUTHBY_NULL,				\
