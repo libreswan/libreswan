@@ -147,15 +147,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	const struct authby all_authby_bits_set = authby_not((struct authby) {0});
+
 	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
-		if (!authby_has_auth(AUTHBY_ALL, auth)) {
+		if (!authby_has_auth(all_authby_bits_set, auth)) {
 			FAIL("authby_has_auth(AUTHBY_ALL, %u) failed", auth);
 		}
 	}
 
 	do { /* hack so FAIL() works */
 		struct authby authby_sha2_256 =
-			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha2_256);
+			authby_and_hash(all_authby_bits_set,
+					&ike_alg_hash_sha2_256);
 		/* XXX: legacy RSA is allowed with SHA2 */
 		if (!authby_sha2_256.authby_rsasig_v1_5_sha2_256 ||
 		    !authby_sha2_256.authby_ecdsa_sha2_256 ||
@@ -166,7 +169,7 @@ int main(int argc, char *argv[])
 			FAIL("authby_and_hash(sha2_256)");
 		}
 		struct authby authby_sha1 =
-			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_sha1);
+			authby_and_hash(all_authby_bits_set, &ike_alg_hash_sha1);
 		if (!authby_has_all(authby_sha1, (struct authby) {
 					AUTHBY_RSASIG_V1_5_SHA1,
 				}) ||
@@ -179,7 +182,7 @@ int main(int argc, char *argv[])
 			FAIL("authby_and_hash(sha1");
 		}
 		struct authby authby_identity =
-			authby_and_hash(AUTHBY_ALL, &ike_alg_hash_identity);
+			authby_and_hash(all_authby_bits_set, &ike_alg_hash_identity);
 		if (!authby_has_all(authby_identity, (struct authby) {
 					AUTHBY_EDDSA,
 				}) ||
