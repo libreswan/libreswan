@@ -1,0 +1,24 @@
+name: "Enforce PR Comment Rules"
+
+on:
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  check-comments:
+    # Ensure this only runs on Pull Requests, not regular Issues
+    if: github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check comment text for forbidden phrases
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          
+          # Define your blacklisted phrases (pipe separated for regex OR logic)
+          FORBIDDEN_PHRASES="like to work on|want to work on"
+          
+          if echo "$COMMENT_BODY" | grep -iE "$FORBIDDEN_PHRASES"; then
+            echo "::error::Either do a PR or not, don't ask to work on it."
+            exit 1
+          fi
+          
