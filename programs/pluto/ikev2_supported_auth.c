@@ -44,6 +44,11 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 		return false;
 	}
 
+	/*
+	 * XXX: This table is ordered according to "enum auth".  Hence
+	 * that enum the preference order.
+	 */
+
 	static const struct auth_method {
 		enum {
 			NO_OCTET = 1,
@@ -183,6 +188,12 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 		},
 #endif
 	};
+
+	/*
+	 * XXX: The order that supported, and hence prefered,
+	 * authentication methods are emitted is determined by "enum
+	 * auth"'s ordering.
+	 */
 
 	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
 		if (authby.authby[auth]) {
