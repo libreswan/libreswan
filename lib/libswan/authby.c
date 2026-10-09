@@ -191,9 +191,9 @@ static const struct authby_name {
 		},
 	},
 
-	{ "ECDSA_SHA2_256", "ecdsa-sha2_256", { .authby_ecdsa_sha2_256 = true, }, },
-	{ "ECDSA_SHA2_384", "ecdsa-sha2_384", { .authby_ecdsa_sha2_384 = true, }, },
-	{ "ECDSA_SHA2_512", "ecdsa-sha2_512", { .authby_ecdsa_sha2_512 = true, }, },
+	{ "ECDSA_SHA2_256", "ecdsa-sha2_256", { AUTHBY_ECDSA_SHA2_256, }, },
+	{ "ECDSA_SHA2_384", "ecdsa-sha2_384", { AUTHBY_ECDSA_SHA2_384, }, },
+	{ "ECDSA_SHA2_512", "ecdsa-sha2_512", { AUTHBY_ECDSA_SHA2_512, }, },
 
 	/*
 	 * EDDSA
@@ -414,7 +414,7 @@ struct authby authby_v2AUTH_digsig_payload(void)
 #endif
 		AUTHBY_RSASIG_V1_5_SHA1_BLOB,
 		AUTHBY_RSASIG_SHA2,
-		AUTHBY_ECDSA_SHA2,
+		AUTHBY_ECDSA_BLOB,
 	};
 }
 

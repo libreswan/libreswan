@@ -161,7 +161,8 @@ int main(int argc, char *argv[])
 					&ike_alg_hash_sha2_256);
 		/* XXX: legacy RSA is allowed with SHA2 */
 		if (!authby_sha2_256.authby_rsasig_v1_5_sha2_256 ||
-		    !authby_sha2_256.authby_ecdsa_sha2_256 ||
+		    !authby_sha2_256.authby_ecdsa_sha2_256_raw ||
+		    !authby_sha2_256.authby_ecdsa_sha2_256_blob ||
 		    !authby_sha2_256.authby_rsasig_sha2_256 ||
 		    authby_has_any(authby_sha2_256, (struct authby) {
 				    AUTHBY_EDDSA,
