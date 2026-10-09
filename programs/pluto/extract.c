@@ -3504,7 +3504,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum yna_options ike_sa_init_full_transcript_auth =
 		extract_yna(kv(wm, END_ROOF, KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
-			    /*value_when_unset*/YNA_NO,
+			    /*value_when_unset*/YNA_AUTO,
 			    /*value_when_never_negotiate*/YNA_NO,
 			    &d, verbose);
 	if (d != NULL) {
