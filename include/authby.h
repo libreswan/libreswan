@@ -190,7 +190,7 @@ struct authby authby_from_auth(enum auth auth);
 
 struct authby authby_and_auth(struct authby, enum auth);
 struct authby authby_or_auth(struct authby, enum auth);
-bool authby_has_auth(struct authby, enum auth);
+bool authby_has(struct authby, enum auth);
 
 typedef struct {
 	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+AUTH_NEVER+AUTH_NULL+"

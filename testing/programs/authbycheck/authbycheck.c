@@ -66,16 +66,16 @@ int main(int argc, char *argv[])
 		if (!authby_is_set(authby)) {
 			FAIL("authby_is_set(%u*)", auth);
 		}
-		if (!authby_has_auth(authby, auth)) {
-			FAIL("authby_has_auth(%u, %u*)", auth, auth);
+		if (!authby_has(authby, auth)) {
+			FAIL("authby_has(%u, %u*)", auth, auth);
 		}
 
 		struct authby not_authby = authby_not(authby);
 		if (!authby_is_set(not_authby)) {
 			FAIL("authby_is_set(not(%u*)) == %u", auth, false);
 		}
-		if (authby_has_auth(not_authby, auth)) {
-			FAIL("authby_has_auth(not(%u*), %u) == %u", auth, auth, false);
+		if (authby_has(not_authby, auth)) {
+			FAIL("authby_has(not(%u*), %u) == %u", auth, auth, false);
 		}
 
 		authby_buf ab;
@@ -113,11 +113,11 @@ int main(int argc, char *argv[])
 				FAIL("authby_is_set(or_auth(%u*, %u))", auth, alt);
 			}
 			/* check for individual bits from OR */
-			if (!(authby_has_auth(authby_or_auth(authby, alt), auth))) {
-				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, auth);
+			if (!(authby_has(authby_or_auth(authby, alt), auth))) {
+				FAIL("authby_has(authby_or_auth(%u*,%u), %u)", auth, alt, auth);
 			}
-			if (!(authby_has_auth(authby_or_auth(authby, alt), alt))) {
-				FAIL("authby_has_auth(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
+			if (!(authby_has(authby_or_auth(authby, alt), alt))) {
+				FAIL("authby_has(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
 			}
 
 			/**/
@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
 	const struct authby all_authby_bits_set = authby_not((struct authby) {0});
 
 	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
-		if (!authby_has_auth(all_authby_bits_set, auth)) {
-			FAIL("authby_has_auth(AUTHBY_ALL, %u) failed", auth);
+		if (!authby_has(all_authby_bits_set, auth)) {
+			FAIL("authby_has(AUTHBY_ALL, %u) failed", auth);
 		}
 	}
 
