@@ -108,16 +108,16 @@ int main(int argc, char *argv[])
 				FAIL("authby_is_set(and_auth(%u*,%u)) == %u", auth, alt, eq);
 			}
 
-			PRINT("authby_or_auth(%u*,%u)", auth, alt);
-			if (!authby_is_set(authby_or_auth(authby, alt))) {
+			PRINT("authby_add(%u*,%u)", auth, alt);
+			if (!authby_is_set(authby_add(authby, alt))) {
 				FAIL("authby_is_set(or_auth(%u*, %u))", auth, alt);
 			}
 			/* check for individual bits from OR */
-			if (!(authby_has(authby_or_auth(authby, alt), auth))) {
-				FAIL("authby_has(authby_or_auth(%u*,%u), %u)", auth, alt, auth);
+			if (!(authby_has(authby_add(authby, alt), auth))) {
+				FAIL("authby_has(authby_add(%u*,%u), %u)", auth, alt, auth);
 			}
-			if (!(authby_has(authby_or_auth(authby, alt), alt))) {
-				FAIL("authby_has(authby_or_auth(%u*,%u), %u)", auth, alt, alt);
+			if (!(authby_has(authby_add(authby, alt), alt))) {
+				FAIL("authby_has(authby_add(%u*,%u), %u)", auth, alt, alt);
 			}
 
 			/**/

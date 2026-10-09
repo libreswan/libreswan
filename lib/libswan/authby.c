@@ -114,7 +114,7 @@ struct authby authby_and_auth(struct authby authby, enum auth auth)
 	return flags_and_flag(authby, authby, auth);
 }
 
-struct authby authby_or_auth(struct authby authby, enum auth auth)
+struct authby authby_add(struct authby authby, enum auth auth)
 {
 	return flags_or_flag(authby, authby, auth);
 }
