@@ -107,6 +107,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KSF_DNS_RESOLVER] = "file",
 
 	[KSF_SIGNATURE_HASH_ALGORITHMS] = "auto",
+	[KSF_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH] = "auto",
 
 	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
 
@@ -554,6 +555,7 @@ static const struct keyword_def config_setup_keyword[] = {
 
   K("dns-resolver", kt_string, KSF_DNS_RESOLVER),
   K("signature-hash-algorithms", kt_sparse_name, KSF_SIGNATURE_HASH_ALGORITHMS, .sparse_names = &yna_option_names),
+  K("ike-sa-init-full-transcript-auth", kt_sparse_name, KSF_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, .sparse_names = &yna_option_names),
 
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 
