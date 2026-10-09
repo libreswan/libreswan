@@ -200,6 +200,7 @@
 <!ENTITY permit '<literal>permit</literal>'>
 <!ENTITY post '<literal>post</literal>'>
 <!ENTITY propose '<literal>propose</literal>'>
+<!ENTITY psk '<literal>psk</literal>'>
 <!ENTITY reject '<literal>reject</literal>'>
 <!ENTITY rfc '<literal>rfc</literal>'>
 <!ENTITY rsa '<literal>rsa</literal>'>
