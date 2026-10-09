@@ -1002,6 +1002,18 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	info->dir = xfrm_dir;
 
 	/*
+	 * RFC 9611: for a per-resource (per-CPU) connection, tell the
+	 * kernel to generate a per-CPU ACQUIRE instead of a single ACQUIRE
+	 * to let Additional Child SAs be negotiated on demand.
+	 */
+#ifdef XFRM_POLICY_CPU_ACQUIRE
+	if (policy->cpu_acquire) {
+		ldbg(logger, "%s() setting XFRM_POLICY_CPU_ACQUIRE", __func__);
+		info->flags |= XFRM_POLICY_CPU_ACQUIRE;
+	}
+#endif
+
+	/*
 	 * Add the encapsulation protocol found in proto_info[] that
 	 * will carry the packets (which the kernel seems to call
 	 * user_templ).
@@ -1738,6 +1750,22 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		}
+
+		/*
+		 * RFC 9611 - Per-CPU Child SAs
+		 *
+		 *  - Initial SA = no cpu binding (KERNEL_CPU_ID_NONE)
+		 *  - Additional SA = cpu binding via XFRMA_SA_PCPU
+		 */
+		if (sa->cpu_id != KERNEL_CPU_ID_NONE) {
+			ldbg(logger, "%s() setting XFRMA_SA_PCPU to %u for Additional Child SA", __func__, sa->cpu_id);
+			attr->rta_type = XFRMA_SA_PCPU;
+			attr->rta_len = RTA_LENGTH(sizeof(sa->cpu_id));
+			memcpy(RTA_DATA(attr), &sa->cpu_id, sizeof(sa->cpu_id));
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		}
+
 		if (sa->nopmtudisc) {
 			ldbg(logger, "%s() disabling Path MTU Discovery", __func__);
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
@@ -2284,8 +2312,11 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	 *
 	 * Also capture the first tmpl reqid: add_spd_kernel_policy()
 	 * planted reqid here.
+	 *
+	 * Also capture the per-CPU ACQUIRE CPU id from XFRMA_SA_PCPU (RFC 9611).
 	 */
 	reqid_t acquire_reqid = 0;
+	uint32_t acquire_cpu_id = KERNEL_CPU_ID_NONE;
 	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
@@ -2319,6 +2350,16 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			}
 			break;
 		}
+#ifdef XFRMA_SA_PCPU
+		case XFRMA_SA_PCPU:
+		{
+			/* RFC 9611: per-CPU ACQUIRE carries the CPU id */
+			memcpy(&acquire_cpu_id, RTA_DATA(attr), sizeof(acquire_cpu_id));
+			ldbg(logger, "netlink_acquire: captured CPU id %ju from XFRMA_SA_PCPU",
+			     (uintmax_t) acquire_cpu_id);
+			break;
+		}
+#endif
 		case XFRMA_POLICY_TYPE:
 		{
 			/* discard */
@@ -2392,6 +2433,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.state_id = acquire->seq,
 		.policy_id = (acquire_reqid != 0 ? acquire_reqid
 						 : acquire->policy.index),
+		.cpu_id = acquire_cpu_id,	/* KERNEL_CPU_ID_NONE if absent (RFC 9611) */
 	};
 
 	initiate_ondemand(&b);
@@ -3082,6 +3124,7 @@ static bool qry_xfrm_base_support(struct logger *logger,
 		.integ = integ,
 		.encrypt_key = cipher_key,
 		.integ_key = integ_key,
+		.cpu_id = KERNEL_CPU_ID_NONE,
 	};
 	if (check_iptfs) {
 		const struct config_iptfs iptfs = {
@@ -3116,6 +3159,46 @@ static bool qry_xfrm_iptfs_support(struct logger *logger) {
 	return qry_xfrm_base_support(logger, true, true);
 }
 
+static bool qry_xfrm_pcpu_support(struct logger *logger)
+{
+	uint8_t fakekey[max(AES_BLOCK_SIZE, SHA2_256_DIGEST_SIZE)];
+	get_rnd_bytes(&fakekey, sizeof(fakekey));
+
+	const struct encrypt_desc *cipher = &ike_alg_encrypt_aes_cbc;
+	shunk_t cipher_key = shunk2(fakekey, AES_BLOCK_SIZE);
+
+	const struct integ_desc *integ = &ike_alg_integ_sha2_256;
+	shunk_t integ_key = shunk2(fakekey, SHA2_256_DIGEST_SIZE);
+
+	struct kernel_state sa = {
+		.mode = KERNEL_MODE_TUNNEL,
+		.src.address = ipv4_info.address.zero,
+		.dst.address = ipv4_info.address.zero,
+		.proto = &ip_protocol_esp,
+		.direction = DIRECTION_OUTBOUND,
+		.spi = 1,
+		.state_id = DEFAULT_KERNEL_STATE_ID,
+		.reqid = 1,
+		.story = "PCPU Probe",
+		.encrypt = cipher,
+		.integ = integ,
+		.encrypt_key = cipher_key,
+		.integ_key = integ_key,
+		.cpu_id = 0,  /* Check support of XFRMA_SA_PCPU with CPU 0 */
+	};
+
+	if (netlink_add_sa(&sa, false, logger)) {
+		ldbg(logger, "kernel: XFRMA_SA_PCPU (per-CPU SAs) supported");
+		if (!xfrm_del_ipsec_spi(sa.spi, sa.proto,
+			&sa.src.address, &sa.dst.address,
+			"del percpu probe", logger)) {
+			llog(RC_LOG, logger, "kernel: per-CPU probe SA deletion failed - ignored");
+		}
+		return true;
+	}
+	ldbg(logger, "kernel: XFRMA_SA_PCPU (per-CPU SAs) not supported");
+	return false;
+}
 
 static bool qry_xfrm_migrate_support(const struct logger *logger)
 {
@@ -3268,6 +3351,26 @@ static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
+static err_t xfrm_pcpu_ipsec_sa_is_enabled(struct logger *logger)
+{
+	static enum {
+		UNKNOWN, ENABLED, DISABLED,
+	} state = UNKNOWN;
+	static const char disabled_message[] = "requires kernel with XFRMA_SA_PCPU support";
+
+	switch (state) {
+	case UNKNOWN:
+		state = (qry_xfrm_pcpu_support(logger) ? ENABLED : DISABLED);
+		return state == ENABLED ? NULL : disabled_message;
+	case ENABLED:
+		return NULL;
+	case DISABLED:
+		return disabled_message;
+	default:
+		bad_case(state);
+	}
+}
+
 static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
 {
 	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
@@ -3407,6 +3510,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,
 	.directional_ipsec_sa_is_enabled = xfrm_directional_ipsec_sa_is_enabled,
 	.iptfs_ipsec_sa_is_enabled = xfrm_iptfs_ipsec_sa_is_enabled,
+	.pcpu_ipsec_sa_is_enabled = xfrm_pcpu_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.sha2_truncbug_support = true,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,

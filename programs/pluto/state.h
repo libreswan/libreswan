@@ -82,6 +82,52 @@ struct child_policy {
 
 #define has_child_policy(POLICY) ((POLICY) != NULL && (POLICY)->is_set)
 
+/*
+ * Hard limit on the number of Additional Child SAs per connection (RFC 9611).
+ *
+ * The sole purpose of this limit is to prevent initiators from exhausting
+ * responder resources by creating too many Additional SAs.
+ */
+#define MAX_ADDITIONAL_SAS 64
+
+/*
+ * Per-resource Child SAs (RFC 9611).
+ *
+ * RFC 9611 negotiates multiple Child SAs with identical Traffic Selectors,
+ * each bound to a distinct local resource. At this moment the only supported
+ * resource is a CPU.
+ *
+ *   RESOURCE_TYPE_NONE - the Initial (fallback) Child SA; not bound to
+ *                        any resource and usable by all resources.
+ *   RESOURCE_TYPE_CPU  - Additional Child SA bound to a CPU.
+ */
+enum ipsec_resource_type {
+	RESOURCE_TYPE_NONE = 0,
+	RESOURCE_TYPE_CPU,
+};
+
+/*
+ * No resource bound to the SA (RFC 9611).
+ *
+ * Used for the Initial (fallback) Child SA.
+ */
+#define RESOURCE_ID_NONE ((uint32_t)-1)
+
+/*
+ * State of negotiation of using Additional SAs (RFC 9611).
+ *
+ *   NONE - no negotiated
+ *   SENT - SA_RESOURCE_INFO notify message sent
+ *   RECV - SA_RESOURCE_INFO notify message received
+ *   DONE - successfully negotiated
+ */
+enum resource_info_state {
+	RESOURCE_INFO_NONE = 0,
+	RESOURCE_INFO_SENT,
+	RESOURCE_INFO_RECV,
+	RESOURCE_INFO_DONE,
+};
+
 typedef struct {
 	char buf[32];
 } child_policy_buf;
@@ -458,6 +504,16 @@ struct state {
 		unsigned next_exchange;
 		struct prf_keys *keys;
 	} st_v2_ike_followup_ke;
+
+	/*
+	 * RFC 9611.
+	 */
+	struct {
+		enum ipsec_resource_type resource_type;
+		uint32_t resource_id;            /* RESOURCE_ID_NONE for Initial SA, or 0..N for Additional SA */
+		enum resource_info_state state;  /* SA_RESOURCE_INFO negotiation state */
+		so_serial_t initial_sa;          /* serialno of the Initial SA this Additional SA belongs to */
+	} st_v2_resource_info;
 
 	/** end of IKEv2-only things **/
 

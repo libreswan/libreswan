@@ -2576,6 +2576,30 @@ reqid_t child_reqid(const struct config *config, const struct logger *logger)
 	return reqid;
 }
 
+enum ipsec_resource_type connection_resource_type(const struct connection *c)
+{
+	/*
+	 * Per-resource Child SAs (RFC 9611). Only CPU resource is supported
+	 * now and clones= keyword is used for that resource.
+	 */
+	if (c->config->child.clones.nr > 0) {
+		return RESOURCE_TYPE_CPU;
+	}
+	return RESOURCE_TYPE_NONE;
+}
+
+unsigned connection_resource_count(const struct connection *c)
+{
+	/* number of Additional (per-resource) Child SAs requested */
+	switch (connection_resource_type(c)) {
+	case RESOURCE_TYPE_CPU:
+		return c->config->child.clones.nr;
+	case RESOURCE_TYPE_NONE:
+		return 0;
+	}
+	return 0;
+}
+
 size_t jam_co(struct jambuf *buf, co_serial_t co)
 {
 	return jam(buf, PRI_CO, co);

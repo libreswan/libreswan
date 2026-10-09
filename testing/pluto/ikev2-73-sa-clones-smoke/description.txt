@@ -1,0 +1,5 @@
+Smoke test for clones= (RFC 9611 per-resource / per-CPU Child SAs).
+
+Two-node IKEv2 PSK tunnel with clones=3. Verifies the protocol-level
+behaviour only not the actual per-CPU binding (the KVM test nodes are
+single-CPU VMs)

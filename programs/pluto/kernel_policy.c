@@ -35,6 +35,7 @@
 #include "kernel.h"
 #include "kernel_ops.h"
 #include "updown.h"
+#include "connections.h"
 
 static bool install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd *spd,
 						where_t where);
@@ -366,6 +367,19 @@ bool add_spd_kernel_policy(const struct spd *spd,
 	if (kernel_policy.nr_rules > 0) {
 		kernel_policy.rule[0].reqid = c->child.reqid;
 	}
+
+	/*
+	 * RFC 9611: for a per-resource (per-CPU) connection, ask the
+	 * kernel to generate per-resource ACQUIRE messages from this
+	 * outbound ondemand/negotiation trap policy.  Each such ACQUIRE
+	 * carries the resource (CPU) id and triggers negotiation of an
+	 * Additional Child SA bound to that resource.
+	 */
+	kernel_policy.cpu_acquire =
+		(direction == DIRECTION_OUTBOUND &&
+		 (shunt_kind == SHUNT_KIND_ONDEMAND ||
+		  shunt_kind == SHUNT_KIND_NEGOTIATION) &&
+		 connection_resource_type(c) == RESOURCE_TYPE_CPU);
 
 	if (!kernel_ops_policy_add(op, direction,
 				   &kernel_policy.src.client,
