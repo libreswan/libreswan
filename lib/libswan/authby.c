@@ -114,12 +114,12 @@ struct authby authby_and_auth(struct authby authby, enum auth auth)
 	return flags_and_flag(authby, authby, auth);
 }
 
-struct authby authby_or_auth(struct authby authby, enum auth auth)
+struct authby authby_add(struct authby authby, enum auth auth)
 {
 	return flags_or_flag(authby, authby, auth);
 }
 
-bool authby_has_auth(struct authby authby, enum auth auth)
+bool authby_has(struct authby authby, enum auth auth)
 {
 	return flags_has_flag(authby, authby, auth);
 }

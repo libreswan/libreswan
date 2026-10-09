@@ -23,7 +23,7 @@
 #include "log.h"
 
 bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
-					       struct pbs_out *outs) 
+				     struct pbs_out *outs)
 {
 	struct authby authby = ike->sa.st_connection->remote->host.config->authby;
 
@@ -44,140 +44,242 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 		return false;
 	}
 
-	/* --- 2-octet announcements --- 
-	 *
-	 *	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
-	 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *	|  Length (=2)  |  Auth Method  |
-	 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *
-	 */
+	static const struct auth_method {
+		enum {
+			NO_OCTET = 1,
+			TWO_OCTET,
+			THREE_OCTET,
+			MULTI_OCTET,
+		} kind;
+		const char *story;
+		enum ikev2_auth_method method;
+		const struct hash_desc *hash;
+		enum digital_signature_blob blob;
+	} auth_methods[AUTH_ROOF] = {
+		/*ignore these*/
+		[AUTH_NEVER].kind = NO_OCTET,
+		[AUTH_EAPONLY].kind = NO_OCTET,
+		/*real*/
+		[AUTH_PSK] = {
+			TWO_OCTET,
+			"SUPPORTED_AUTH_METHODS 'PSK' announced",
+			IKEv2_AUTH_SHARED_KEY_MAC,
+		},
+		[AUTH_NULL] = {
+			TWO_OCTET,
+			"SUPPORTED_AUTH_METHODS 'NULL' announced",
+			IKEv2_AUTH_NULL,
+		},
 
-	if (authby.authby_psk) {
-		uint8_t ann2[TWO_OCTET_ANNOUNCEMENT_LENGTH] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, 
-					IKEv2_AUTH_SHARED_KEY_MAC };
-		if (!pbs_out_raw(&n_pbs, ann2, sizeof(ann2) , 
-				"SUPPORTED_AUTH_METHODS 'PSK' announced")) {
-			return false;
-		}
-	}
-
-	if (authby.authby_null) {
-		uint8_t ann2[TWO_OCTET_ANNOUNCEMENT_LENGTH] = { TWO_OCTET_ANNOUNCEMENT_LENGTH, 
-					IKEv2_AUTH_NULL };
-		if (!pbs_out_raw(&n_pbs, ann2, sizeof(ann2), 
-				"SUPPORTED_AUTH_METHODS 'NULL' announced")) {
-			return false;
-		}
-	}
-
-	/* --- 3-octet announcements --- 
-	 *						 1                   2
-	 *	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
-	 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *	|  Length (=3)  |  Auth Method  |   Cert Link   |
-	 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *
-	 */
-
-	if (authby.authby_rsasig_v1_5_sha1_raw) {
-		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
-			THREE_OCTET_ANNOUNCEMENT_LENGTH,
+		[AUTH_RSASIG_V1_5_SHA1_RAW] = {
+			THREE_OCTET,
+			"SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced",
 			IKEv2_AUTH_RSA_DIGITAL_SIGNATURE,
-			0 /* cert link */
-		};
-		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3),
-				 "SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced")) {
-			return false;
+		},
+
+		[AUTH_ECDSA_SHA2_256_RAW] = {
+			THREE_OCTET,
+			"SUPPORTED_AUTH_METHODS 'ECDSA-SHA2-256-P256' announced",
+			IKEv2_AUTH_ECDSA_SHA2_256_P256,
+		},
+		[AUTH_ECDSA_SHA2_384_RAW] = {
+			THREE_OCTET,
+			"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_384_P384' announced",
+			IKEv2_AUTH_ECDSA_SHA2_384_P384,
+		},
+		[AUTH_ECDSA_SHA2_512_RAW] = {
+			THREE_OCTET,
+			"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_512_P521' announced",
+			IKEv2_AUTH_ECDSA_SHA2_512_P521,
+		},
+
+		[AUTH_RSASIG_SHA2_512] = {
+			MULTI_OCTET,
+			"RSASSA-PSS-SHA2-512",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_512,
+			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
+		},
+		[AUTH_RSASIG_SHA2_384] = {
+			MULTI_OCTET,
+			"RSASSA-PSS-SHA2-384",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_384,
+			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
+		},
+		[AUTH_RSASIG_SHA2_256] = {
+			MULTI_OCTET,
+			"RSASSA-PSS-SHA2-256",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_256,
+			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
+		},
+
+		[AUTH_ECDSA_SHA2_512_BLOB] = {
+			MULTI_OCTET,
+			"ECDSA-SHA2-512",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_512,
+			DIGITAL_SIGNATURE_ECDSA_BLOB,
+		},
+		[AUTH_ECDSA_SHA2_384_BLOB] = {
+			MULTI_OCTET,
+			"ECDSA-SHA2-384",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_384,
+			DIGITAL_SIGNATURE_ECDSA_BLOB,
+		},
+		[AUTH_ECDSA_SHA2_256_BLOB] = {
+			MULTI_OCTET,
+			"ECDSA-SHA2-256",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_256,
+			DIGITAL_SIGNATURE_ECDSA_BLOB,
+		},
+
+		[AUTH_RSASIG_V1_5_SHA1_BLOB] = {
+			MULTI_OCTET,
+			"RSASIG_V1_5-SHA1",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha1,
+			DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+		},
+		[AUTH_RSASIG_V1_5_SHA2_512] = {
+			MULTI_OCTET,
+			"RSASIG_V1_5-SHA2-512",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_512,
+			DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+		},
+		[AUTH_RSASIG_V1_5_SHA2_384] = {
+			MULTI_OCTET,
+			"RSASIG_V1_6-SHA2-384",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_384,
+			DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+		},
+		[AUTH_RSASIG_V1_5_SHA2_256] = {
+			MULTI_OCTET,
+			"RSASIG_V1_5-SHA2-256",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_sha2_256,
+			DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+		},
+
+		[AUTH_EDDSA] = {
+			MULTI_OCTET,
+			"EDDSA-ED25519",
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_identity,
+			DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
+		},
+#if 0
+		[AUTH_EDDSA] = {
+			"EDDSA-ED448",
+			MULTI_OCTET,
+			IKEv2_AUTH_DIGITAL_SIGNATURE,
+			&ike_alg_hash_identity,
+			DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB,
+		},
+#endif
+	};
+
+	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
+		if (authby.authby[auth]) {
+			const struct auth_method *method = &auth_methods[auth];
+			switch (method->kind) {
+			case NO_OCTET:
+			{
+				/* ignore these */
+				continue;
+			}
+			case TWO_OCTET:
+			{
+				/* --- 2-octet announcements ---
+				 *
+				 *	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+				 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				 *	|  Length (=2)  |  Auth Method  |
+				 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				 *
+				 */
+				uint8_t ann2[TWO_OCTET_ANNOUNCEMENT_LENGTH] = {
+					TWO_OCTET_ANNOUNCEMENT_LENGTH,
+					method->method,
+				};
+				if (!pbs_out_raw(&n_pbs, ann2, sizeof(ann2),
+						 method->story)) {
+					return false;
+				}
+				continue;
+			}
+			case THREE_OCTET:
+			{
+				/* --- 3-octet announcements ---
+				 *						 1                   2
+				 *	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+				 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				 *	|  Length (=3)  |  Auth Method  |   Cert Link   |
+				 *	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+				 *
+				 */
+				uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
+					THREE_OCTET_ANNOUNCEMENT_LENGTH,
+					method->method,
+					0 /* cert link */
+				};
+				if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3),
+						 method->story)) {
+					return false;
+				}
+				continue;
+			}
+			case MULTI_OCTET:
+			{
+				if (PBAD(outs->logger, method->hash == NULL)) {
+					continue;
+				}
+
+				shunk_t b = method->hash->digital_signature_blob[method->blob];
+				if (PBAD(outs->logger, b.len == 0)) {
+					continue;
+				}
+
+				/* +1/-1 skips the first byte, which contains the size of the blob */
+				shunk_t algid = shunk_slice(b, 1, b.len);
+				uint8_t hdr[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
+					(uint8_t)(THREE_OCTET_ANNOUNCEMENT_LENGTH + algid.len),
+					IKEv2_AUTH_DIGITAL_SIGNATURE,
+					0, /* cert link */
+				};
+				if (!pbs_out_raw(&n_pbs, hdr, sizeof(hdr),
+						 method->story)) {
+					return false;
+				}
+				if (!pbs_out_hunk(&n_pbs, algid,
+						  method->story)) {
+					return false;
+				}
+				continue;
+			}
+			default:
+			{
+				name_buf ab;
+				llog_pexpect(outs->logger, HERE,
+					     "unhandled auth method %s",
+					     str_name_short(&auth_names, auth, &ab));
+				continue;
+			}
+			}
 		}
 	}
-
-	if (authby.authby_ecdsa_sha2_256_raw) {
-		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
-					IKEv2_AUTH_ECDSA_SHA2_256_P256, 0 /* cert link */ };
-		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
-				"SUPPORTED_AUTH_METHODS 'ECDSA-SHA2-256-P256' announced")) {
-			return false;
-		}
-	}
-
-	if (authby.authby_ecdsa_sha2_384_raw) {
-		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
-					IKEv2_AUTH_ECDSA_SHA2_384_P384, 0 /* cert link */ };
-		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
-				"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_384_P384' announced")) {
-			return false;
-		}
-	}
-
-	if (authby.authby_ecdsa_sha2_512_raw) {
-		uint8_t ann3[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { THREE_OCTET_ANNOUNCEMENT_LENGTH, 
-					IKEv2_AUTH_ECDSA_SHA2_512_P521, 0 /* cert link */ };
-		if (!pbs_out_raw(&n_pbs, ann3, sizeof(ann3), 
-				"SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_512_P521' announced")) {
-			return false;
-		}
-	}
-
-	/* --- multi-octet announcements ---
-	 *						1                   2                   3
-	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 * |  Length (>3)  |  Auth Method  |   Cert Link   |               |
-	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
-	 * |                                                               |
-	 * ~                      AlgorithmIdentifier                      ~
-	 * |                                                               |
-	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *
-	 */
-
-#define EMIT_DIGSIG(AUTH, HASH, BLOB, NAME)												\
-	{																					\
-		if (authby.AUTH) {																\
-			shunk_t b = (HASH)->digital_signature_blob[BLOB];							\
-			if (b.len > 0) {															\
-				/* +1/-1 skips the first byte, which contains the size of the blob */	\
-				shunk_t algid = shunk2(b.ptr + 1, b.len - 1);							\
-				uint8_t hdr[THREE_OCTET_ANNOUNCEMENT_LENGTH] = { 						\
-					(uint8_t)(THREE_OCTET_ANNOUNCEMENT_LENGTH + algid.len),				\
-						IKEv2_AUTH_DIGITAL_SIGNATURE, 0 /* cert link */ };				\
-				if (!pbs_out_raw(&n_pbs, hdr, sizeof(hdr),								\
-						"SUPPORTED_AUTH_METHODS '"NAME"' announced")) {					\
-					return false;														\
-				}																		\
-				if (!pbs_out_hunk(&n_pbs, algid, "AlgorithmIdentifier '"NAME"'")) {		\
-					return false;														\
-				}																		\
-			}																			\
-		}																				\
-	}																					
-
-	EMIT_DIGSIG(authby_rsasig_sha2_512, &ike_alg_hash_sha2_512, 
-			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB, "RSASSA-PSS-SHA2-512");
-	EMIT_DIGSIG(authby_rsasig_sha2_384, &ike_alg_hash_sha2_384, 
-			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB, "RSASSA-PSS-SHA2-384");
-	EMIT_DIGSIG(authby_rsasig_sha2_256, &ike_alg_hash_sha2_256, 
-			DIGITAL_SIGNATURE_RSASSA_PSS_BLOB, "RSASSA-PSS-SHA2-256");
-	EMIT_DIGSIG(authby_ecdsa_sha2_512_blob, &ike_alg_hash_sha2_512, 
-			DIGITAL_SIGNATURE_ECDSA_BLOB, "ECDSA-SHA2-512");
-	EMIT_DIGSIG(authby_ecdsa_sha2_384_blob, &ike_alg_hash_sha2_384, 
-			DIGITAL_SIGNATURE_ECDSA_BLOB, "ECDSA-SHA2-384");
-	EMIT_DIGSIG(authby_ecdsa_sha2_256_blob, &ike_alg_hash_sha2_256, 
-			DIGITAL_SIGNATURE_ECDSA_BLOB, "ECDSA-SHA2-256");
-	EMIT_DIGSIG(authby_eddsa, &ike_alg_hash_identity, 
-			DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB, "EDDSA-ED25519");
-	EMIT_DIGSIG(authby_eddsa, &ike_alg_hash_identity, 
-			DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB, "EDDSA-ED448");
-#undef EMIT_DIGSIG
 
 	close_pbs_out(&n_pbs);
 	return true;
 }
 
-
-bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike, 
-							const struct pbs_in *notify_pbs)
+bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
+					const struct pbs_in *notify_pbs)
 {
 	struct authby peer = {0};
 	struct pbs_in input_pbs = *notify_pbs;
@@ -204,15 +306,15 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 		if (length == TWO_OCTET_ANNOUNCEMENT_LENGTH) {
 			switch (auth_method) {
 			case IKEv2_AUTH_SHARED_KEY_MAC:
-				peer.authby_psk = true;
+				peer = authby_add(peer, AUTH_PSK);
 				break;
 			case IKEv2_AUTH_NULL:
-				peer.authby_null = true;
+				peer = authby_add(peer, AUTH_NULL);
 				break;
 			default:
 				ldbg(ike->sa.logger,
-					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
-					auth_method, length);
+				     "SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+				     auth_method, length);
 				break;
 			}
 		} else if (length == THREE_OCTET_ANNOUNCEMENT_LENGTH) {
@@ -227,25 +329,25 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			switch (auth_method) {
 			case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-				peer.authby_rsasig_v1_5_sha1_raw = true;
+				peer = authby_add(peer, AUTH_RSASIG_V1_5_SHA1_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-				peer.authby_ecdsa_sha2_256_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_256_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-				peer.authby_ecdsa_sha2_384_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_384_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-				peer.authby_ecdsa_sha2_512_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_512_RAW);
 				break;
 			default:
 				ldbg(ike->sa.logger,
-					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
-					auth_method, length);
+				     "SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+				     auth_method, length);
 				break;
 			}
-		} else if (length > THREE_OCTET_ANNOUNCEMENT_LENGTH && 
-				auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
+		} else if (length > THREE_OCTET_ANNOUNCEMENT_LENGTH &&
+			   auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
 			uint8_t cert_link;
 			d = pbs_in_thing(&input_pbs, cert_link, "SUPPORTED_AUTH_METHODS Cert Link");
 			if (d != NULL) {
@@ -263,40 +365,50 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			bool matched = false;
 
-#define MATCH_DIGSIG(AUTH, HASH, BLOB)										\
-			{																\
-				if (!matched) {												\
-					shunk_t b = (HASH)->digital_signature_blob[BLOB];		\
-					if (b.len > 0) {										\
-						/*
-						 * +1/-1 skips the first byte, which contains 		
-						 * the size of the blob
-						 */													\
-						shunk_t known = shunk2(b.ptr + 1, b.len - 1);		\
-						if (hunk_eq(algid, known)) {						\
-							peer.AUTH = true;								\
-							matched = true;									\
-						}													\
-					}														\
-				}															\
-			}																					
+#define MATCH_DIGSIG(AUTH, HASH, BLOB)					\
+			{						\
+				if (!matched) {				\
+					shunk_t b = (HASH)->digital_signature_blob[BLOB]; \
+					if (b.len > 0) {		\
+						/*			\
+						 * +1/-1 skips the first byte, which contains \
+						 * the size of the blob	\
+						 */			\
+						shunk_t known = shunk2(b.ptr + 1, b.len - 1); \
+						if (hunk_eq(algid, known)) { \
+							peer = authby_add(peer, AUTH); \
+							matched = true; \
+						}			\
+					}				\
+				}					\
+			}
 
-			MATCH_DIGSIG(authby_rsasig_sha2_512, &ike_alg_hash_sha2_512,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_rsasig_sha2_384, &ike_alg_hash_sha2_384,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_rsasig_sha2_256, &ike_alg_hash_sha2_256,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_512_blob, &ike_alg_hash_sha2_512,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_384_blob, &ike_alg_hash_sha2_384,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_256_blob, &ike_alg_hash_sha2_256,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_eddsa, &ike_alg_hash_identity,
-					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
-			MATCH_DIGSIG(authby_eddsa, &ike_alg_hash_identity,
-					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_512, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_384, &ike_alg_hash_sha2_384,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_256, &ike_alg_hash_sha2_256,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+
+			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA1_BLOB, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
+
+			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_512, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_384, &ike_alg_hash_sha2_384,
+				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_256, &ike_alg_hash_sha2_256,
+				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
+
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_512_BLOB, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_384_BLOB, &ike_alg_hash_sha2_384,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_256_BLOB, &ike_alg_hash_sha2_256,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+
+			MATCH_DIGSIG(AUTH_EDDSA, &ike_alg_hash_identity,
+				     DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
 #undef MATCH_DIGSIG
 		} else {
 			shunk_t skip_bytes;
