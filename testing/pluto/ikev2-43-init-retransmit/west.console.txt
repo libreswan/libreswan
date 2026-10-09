@@ -36,7 +36,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: JACOB 2-2: resending 732 bytes for IKE_SA_INIT request through eth1 from 192.1.2.45:500 to 192.1.2.23:500:
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: JACOB 2-2: resending 740 bytes for IKE_SA_INIT request through eth1 from 192.1.2.45:500 to 192.1.2.23:500:
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

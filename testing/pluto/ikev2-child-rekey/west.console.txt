@@ -58,7 +58,7 @@ west #
  # expect IKE #1 CHILD #3
 west #
  ipsec showstates
-#1: "west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#1: "west":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
 #3: "west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
@@ -92,7 +92,7 @@ west #
  # expect IKE #1 CHILD #4
 west #
  ipsec showstates
-#1: "west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#1: "west":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
 #4: "west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #4: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #

@@ -146,7 +146,7 @@ Connection list:
 "clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"clear":   policy: IKEv2+AUTH_NEVER+ROUTE+GROUP+PASS+NEVER_NEGOTIATE;
+"clear":   policy: IKEv2+AUTH_NEVER+ROUTE+IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_NO+GROUP+PASS+NEVER_NEGOTIATE;
 "clear":   v2-auth-hash-policy: none;
 "clear":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -169,7 +169,7 @@ Connection list:
 "clear#192.1.2.254/32":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear#192.1.2.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear#192.1.2.254/32":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"clear#192.1.2.254/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+ROUTE+PASS+NEVER_NEGOTIATE;
+"clear#192.1.2.254/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+ROUTE+IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_NO+PASS+NEVER_NEGOTIATE;
 "clear#192.1.2.254/32":   v2-auth-hash-policy: none;
 "clear#192.1.2.254/32":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
