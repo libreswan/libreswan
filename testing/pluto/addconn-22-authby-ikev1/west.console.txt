@@ -43,6 +43,13 @@ west #
  our auth:secret
  their auth:secret
 west #
+ authby psk
+ ipsec addconn --name authby:psk authby=psk
+"authby:psk": added oriented IKEv1 connection
+ policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ our auth:secret
+ their auth:secret
+west #
  authby rsa
  ipsec addconn --name authby:rsa authby=rsa
 "authby:rsa": added oriented IKEv1 connection
