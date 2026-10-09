@@ -306,15 +306,15 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 		if (length == TWO_OCTET_ANNOUNCEMENT_LENGTH) {
 			switch (auth_method) {
 			case IKEv2_AUTH_SHARED_KEY_MAC:
-				peer.authby_psk = true;
+				peer = authby_add(peer, AUTH_PSK);
 				break;
 			case IKEv2_AUTH_NULL:
-				peer.authby_null = true;
+				peer = authby_add(peer, AUTH_NULL);
 				break;
 			default:
 				ldbg(ike->sa.logger,
-					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
-					auth_method, length);
+				     "SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+				     auth_method, length);
 				break;
 			}
 		} else if (length == THREE_OCTET_ANNOUNCEMENT_LENGTH) {
@@ -329,25 +329,25 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			switch (auth_method) {
 			case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-				peer.authby_rsasig_v1_5_sha1_raw = true;
+				peer = authby_add(peer, AUTH_RSASIG_V1_5_SHA1_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-				peer.authby_ecdsa_sha2_256_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_256_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-				peer.authby_ecdsa_sha2_384_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_384_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-				peer.authby_ecdsa_sha2_512_raw = true;
+				peer = authby_add(peer, AUTH_ECDSA_SHA2_512_RAW);
 				break;
 			default:
 				ldbg(ike->sa.logger,
-					"SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
-					auth_method, length);
+				     "SUPPORTED_AUTH_METHODS ignoring unknown auth method %d in %d-octet announcement",
+				     auth_method, length);
 				break;
 			}
-		} else if (length > THREE_OCTET_ANNOUNCEMENT_LENGTH && 
-				auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
+		} else if (length > THREE_OCTET_ANNOUNCEMENT_LENGTH &&
+			   auth_method == IKEv2_AUTH_DIGITAL_SIGNATURE) {
 			uint8_t cert_link;
 			d = pbs_in_thing(&input_pbs, cert_link, "SUPPORTED_AUTH_METHODS Cert Link");
 			if (d != NULL) {
@@ -365,40 +365,38 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			bool matched = false;
 
-#define MATCH_DIGSIG(AUTH, HASH, BLOB)										\
-			{																\
-				if (!matched) {												\
-					shunk_t b = (HASH)->digital_signature_blob[BLOB];		\
-					if (b.len > 0) {										\
-						/*
-						 * +1/-1 skips the first byte, which contains 		
-						 * the size of the blob
-						 */													\
-						shunk_t known = shunk2(b.ptr + 1, b.len - 1);		\
-						if (hunk_eq(algid, known)) {						\
-							peer.AUTH = true;								\
-							matched = true;									\
-						}													\
-					}														\
-				}															\
-			}																					
+#define MATCH_DIGSIG(AUTH, HASH, BLOB)					\
+			{						\
+				if (!matched) {				\
+					shunk_t b = (HASH)->digital_signature_blob[BLOB]; \
+					if (b.len > 0) {		\
+						/*			\
+						 * +1/-1 skips the first byte, which contains \
+						 * the size of the blob	\
+						 */			\
+						shunk_t known = shunk2(b.ptr + 1, b.len - 1); \
+						if (hunk_eq(algid, known)) { \
+							peer = authby_add(peer, AUTH); \
+							matched = true; \
+						}			\
+					}				\
+				}					\
+			}
 
-			MATCH_DIGSIG(authby_rsasig_sha2_512, &ike_alg_hash_sha2_512,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_rsasig_sha2_384, &ike_alg_hash_sha2_384,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_rsasig_sha2_256, &ike_alg_hash_sha2_256,
-					DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_512_blob, &ike_alg_hash_sha2_512,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_384_blob, &ike_alg_hash_sha2_384,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_ecdsa_sha2_256_blob, &ike_alg_hash_sha2_256,
-					DIGITAL_SIGNATURE_ECDSA_BLOB);
-			MATCH_DIGSIG(authby_eddsa, &ike_alg_hash_identity,
-					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
-			MATCH_DIGSIG(authby_eddsa, &ike_alg_hash_identity,
-					DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_512, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_384, &ike_alg_hash_sha2_384,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(AUTH_RSASIG_SHA2_256, &ike_alg_hash_sha2_256,
+				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_512_BLOB, &ike_alg_hash_sha2_512,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_384_BLOB, &ike_alg_hash_sha2_384,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(AUTH_ECDSA_SHA2_256_BLOB, &ike_alg_hash_sha2_256,
+				     DIGITAL_SIGNATURE_ECDSA_BLOB);
+			MATCH_DIGSIG(AUTH_EDDSA, &ike_alg_hash_identity,
+				     DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
 #undef MATCH_DIGSIG
 		} else {
 			shunk_t skip_bytes;
