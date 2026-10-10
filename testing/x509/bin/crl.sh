@@ -63,7 +63,6 @@ crls()
 update=${update}
 nextupdate=${nextupdate}
 addcert $(cat ${certdir}/revoked.serial) ${past}
->>>>>>> 6711ec0df3 (testing x509: generate a PKCS#7 wrapped CRL)
 EOF
     openssl crl -inform DER -in ${crl}.crl -outform PEM -out ${crl}.pem
     openssl crl2pkcs7 -in ${crl}.pem -outform DER -out ${crl}.p7
