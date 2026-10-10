@@ -15,7 +15,11 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 					stf_status (*callback)(struct ike_sa *ike,
 							       struct msg_digest *md,
 							       bool err));
-bool initiator_fetch_idr_ipseckey(struct ike_sa *ike);
+dns_status initiator_fetch_idr_ipseckey(struct ike_sa *ike,
+				       struct msg_digest *md,
+				       stf_status (*callback)(struct ike_sa *ike,
+							      struct msg_digest *md,
+							      bool err));
 
 void init_ikev2_ipseckey(struct event_base *event_base,
 			 struct logger *logger);

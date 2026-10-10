@@ -1,0 +1,44 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec add road-east-ikev2
+"road-east-ikev2": added oriented IKEv2 connection
+road #
+ # Make road patient enough to receive east's IKE_AUTH (DNS query takes some time).
+road #
+ ipsec whack --impair suppress_retransmits
+road #
+ ipsec whack --impair revival
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec up --asynchronous road-east-ikev2
+"road-east-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+road #
+ # Brief window for the unbound queries to be sent but not yet returned.
+road #
+ sleep 1
+road #
+ ipsec whack --deletestate 2
+"road-east-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "road-east-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+road #
+ # Give unbound's late replies time to arrive at the now deleted state.
+road #
+ sleep 10
+road #
+ echo done
+done
+road #
+ # No SA should be left;
+road #
+ ipsec trafficstatus
+road #
+ hostname | grep nic && nft list ruleset || true
+road #

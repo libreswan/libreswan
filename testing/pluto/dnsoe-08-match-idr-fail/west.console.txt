@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up --asynchronous west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ../../guestbin/wait-for.sh --match '#1: fetching IDr IPsec key using DNS failed' -- grep -s 'fetching IDr' /tmp/pluto.log
+"west-east" #1: fetching IDr IPsec key using DNS failed
+west #
+ # again, this time west has the DNS answers cached
+west #
+ ipsec up --asynchronous west-east
+"west-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ../../guestbin/wait-for.sh --match '#3: fetching IDr IPsec key using DNS failed' -- grep -s 'fetching IDr' /tmp/pluto.log
+"west-east" #3: fetching IDr IPsec key using DNS failed
+west #
+ echo done
+done
+west #
+ grep -s "forward address validation failed" /tmp/pluto.log
+"west-east" #1: forward address validation failed IKEv2 DNS query -- east-private.testing.libreswan.org. IN A --
+"west-east" #1: forward address validation failed IKEv2 DNS query -- east-private.testing.libreswan.org. IN A --
+"west-east" #3: forward address validation failed IKEv2 DNS query -- east-private.testing.libreswan.org. IN A --
+west #

@@ -1,0 +1,19 @@
+dns-match-id fails: the A record for IDi does not match the IKE source address.
+
+West authenticates as @west-private.testing.libreswan.org using its own
+key, which matches the IPSECKEY published for that name.  The A record
+for west-private is 192.0.1.254 but west's IKE source address is
+192.1.2.45.
+
+East has dns-match-id=yes and rightrsasigkey=%dnsondemand.  It fetches the
+IPSECKEY and the A record for the IDi, the A record check fails, and
+the AUTH is rejected with AUTHENTICATION_FAILED.
+
+West tries twice.
+
+The first time the DNS queries are sent to the nameserver and east
+replies once the answers arrive.  West drops that reply so it times out.
+
+The second time east has the DNS answers cached so the callbacks run
+before the queries return.  East must still reply with
+AUTHENTICATION_FAILED.  Pluto must survive both.

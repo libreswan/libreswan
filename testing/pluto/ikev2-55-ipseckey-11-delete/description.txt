@@ -1,0 +1,8 @@
+IKEv2 initiator, road, deletes IKE SA during unbound's async IPSECKEY fetch.
+
+Road and east both use rightrsasigkey=%dnsondemand (and leftrsasigkey=%dnsondemand
+on the responder side), so each side fires an unbound async query to fetch the
+other side's pubkey.  The test deletes the IKE SA while unbound's callback is
+still pending; the callback later runs add_dns_pubkeys_to_pluto() with
+st == NULL (the state was removed from the hash table), and dereferences
+st->st_connection->remote->host.id.  This surfaces as a SIGSEGV.

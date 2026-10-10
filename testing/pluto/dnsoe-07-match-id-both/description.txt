@@ -1,0 +1,10 @@
+DNS Opportunistic Encryption with FQDN id at both ends and
+dns-match-id validation on both the responder and the initiator.
+
+Mirrors dnsoe-07-match-id (FQDN identities, %dnsondemand) but adds
+dns-match-id=yes on road as well, so the initiator also performs the
+reverse-A-record check on its IDr's FQDN against the IKE source
+endpoint.
+
+Both ends use same ikev2-oe.conf local id and public key are set
+in conn %default

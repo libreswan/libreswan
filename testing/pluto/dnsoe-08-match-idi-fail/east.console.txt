@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east-west
+"east-west": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+east #
+ grep -s "forward address validation failed" /tmp/pluto.log
+"east-west" #1: forward address validation failed IKEv2 DNS query -- west-private.testing.libreswan.org. IN A --
+"east-west" #2: forward address validation failed IKEv2 DNS query -- west-private.testing.libreswan.org. IN A --
+east #

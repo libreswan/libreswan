@@ -1,2 +1,13 @@
-Basic Client Address Translation (CAT) proof of concept test
-using OE/IDNULL.
+OE/IDNULL with CAT, NAT'd and non-NAT'd hosts.
+This is a realistic setup of an e-mail client and servers running OE.
+All hosts use the same ipsec.conf and ikev2-oe.conf.
+
+- road is NAT'd towards east and west (a laptop sending e-mail to the servers).
+- east and west lease an address from their pool to road.
+- road is not NAT'd towards north (an e-mail server on its LAN).
+- north and west are not NAT'd (e-mail servers talking to each other).
+- north has no OE policy for east, so there is no north-east tunnel.
+
+north, west and road ping their peers with fping --lossy 15 to trigger OE.
+final.sh checks that every tunnel carried traffic, not the exact byte or
+packet counts.
