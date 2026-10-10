@@ -182,9 +182,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			struct authby authby = c->local->host.config->authby;
 			jam_string(&buf, ((authby.authby_psk) ? "PRESHARED_KEY" :
 					  authby_has_any(authby, (struct authby) {
-							  AUTHBY_RSASIG_RAW,
-							  AUTHBY_RSASIG_V1_5,
-							  AUTHBY_RSASIG_SHA2,
+							  AUTHBY_RSASIG_IKEv1,
+							  AUTHBY_RSASIG_IKEv2,
 						  }) ? "RSA_SIG" :
 					  authby_has_any(authby, (struct authby) {
 							  AUTHBY_ECDSA_SHA2,

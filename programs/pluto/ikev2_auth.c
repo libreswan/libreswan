@@ -1166,7 +1166,7 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		return (struct authby) {
-			AUTHBY_RSASIG,
+			AUTHBY_RSASIG_IKEv2,
 			AUTHBY_ECDSA,
 			AUTHBY_EDDSA,
 		};

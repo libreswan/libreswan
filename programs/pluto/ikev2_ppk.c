@@ -390,7 +390,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 
 	if (authby_has_any(local_authby, (struct authby) {
-				AUTHBY_RSASIG,
+				AUTHBY_RSASIG_IKEv2,
 			})) {
 		const struct hash_desc *hash_algo =
 			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);

@@ -32,7 +32,9 @@ static const char *const auth_name[] = {
 	S(AUTH_NEVER),
 	S(AUTH_NULL),
 	S(AUTH_PSK),
-	S(AUTH_RSASIG_RAW),
+	/**/
+	S(AUTH_RSASIG_IKEv1),
+	/**/
 	S(AUTH_RSASIG_SHA2_256),
 	S(AUTH_RSASIG_SHA2_384),
 	S(AUTH_RSASIG_SHA2_512),

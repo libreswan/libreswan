@@ -274,7 +274,7 @@ extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 extern const struct pubkey_type pubkey_type_eddsa;
 
-extern const struct pubkey_signer signer_pubkey_rsa_raw;		/* IKEv1 */
+extern const struct pubkey_signer signer_pubkey_rsa_ikev1;		/* IKEv1 */
 
 extern const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_raw;	/* rfc7296 */
 extern const struct pubkey_signer signer_pubkey_pkcs1_1_5_rsa_blob;	/* rfc7427 */

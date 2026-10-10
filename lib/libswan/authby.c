@@ -138,6 +138,9 @@ struct authby authby_from_auth(enum auth auth)
  *   is first
  *
  * - broader bitsets come first, so they are prefered.
+ *
+ * - Kind of assumes IKEv2, for instance IKEv1 "rsa" is handled
+ *   separately.
  */
 static const struct authby_name {
 	const char *policy;
@@ -152,8 +155,7 @@ static const struct authby_name {
 	 */
 
 	{ "RSASIG", "rsasig", {
-			AUTHBY_RSASIG_V1_5,
-			AUTHBY_RSASIG_SHA2,
+			AUTHBY_RSASIG_IKEv2,
 		},
 	},
 	{ "RSASIG_SHA2", "rsa-sha2", {
@@ -308,22 +310,11 @@ static size_t jam_authby_raw(struct jambuf *buf,
 	}
 
 	/*
-	 * Some code still sets both IKEv1 and IKEv2 authby bits.
-	 * Hide it.
-	 *
-	 * Keep this out of the table so string->authby can't see it.
-	 */
-	JAM_AUTHBY(RSASIG, rsasig,
-		  AUTHBY_RSASIG_RAW,
-		  AUTHBY_RSASIG_V1_5,
-		  AUTHBY_RSASIG_SHA2);
-
-	/*
 	 * Pure IKEv1.
 	 *
 	 * Keep this out of the table so string->authby can't see it.
 	 */
-	JAM_AUTHBY(RSASIG, rsasig, AUTHBY_RSASIG_RAW);
+	JAM_AUTHBY(RSASIG, rsasig, AUTHBY_RSASIG_IKEv1);
 
 	/*
 	 * scan table printing and scrubbing each bit as it matches.
