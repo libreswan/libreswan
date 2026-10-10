@@ -24,7 +24,7 @@ west #
 west #
  ipsec add westnet-eastnet-ikev1
 ipsec add: warning: /etc/ipsec.conf:38: obsolete keyword ignored: dpdaction=clear
-"westnet-eastnet-ikev1": added oriented IKEv1 connection
+"westnet-eastnet-ikev1": added oriented IKEv1 permanent connection
 west #
  echo "initdone"
 initdone

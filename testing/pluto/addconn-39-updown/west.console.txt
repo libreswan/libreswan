@@ -11,45 +11,45 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=
-"addconn--leftupdown=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--leftupdown=": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=quotes
-"addconn--leftupdown=quotes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--leftupdown=quotes": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=%disabled
-"addconn--leftupdown=%disabled": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--leftupdown=%disabled": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--leftupdown=my-updown
 conn addconn--leftupdown=my-updown: not found (tried aliases)
 west #
  ipsec add addconn--leftupdown=left
-"addconn--leftupdown=left": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--leftupdown=left": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--rightupdown=right
-"addconn--rightupdown=right": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--rightupdown=right": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--leftupdown=left
 warning: "addconn--type=passthrough--leftupdown=left": "leftupdown=left" ignored for never-negotiate ("type=passthrough") connection
-"addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough--leftupdown=left": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
-"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--updown=from  --updown=from          --host 1.2.3.4 --to --host 5.6.7.8
-"whack--updown=from": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--updown=from": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass               --pass                --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--pass": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
 warning: "whack--pass--updown=from": "leftupdown=from" ignored for never-negotiate ("type=pass") connection
-"whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--pass--updown=from": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
 "addconn--leftupdown=%disabled": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
@@ -89,7 +89,7 @@ west #
  AD() { rm -f /tmp/updown.env ; ipsec add --auto=route $2 ; ipsec connectionstatus $2 | sed -n -e '/: .*updown=/ s/  */ /gp' ; sleep $1 ; grep -e PLUTO_ARGV= -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env ; ipsec delete $2 ; }
 west #
  AD 0 addconn--updown=/tmp/updown.sh
-"addconn--updown=/tmp/updown.sh": added oriented IKEv2 connection
+"addconn--updown=/tmp/updown.sh": added oriented IKEv2 permanent connection
 "addconn--updown=/tmp/updown.sh": my_updown=/tmp/updown.sh custom; my_updown-config=noasync,noexec;
 PLUTO_ARGV=custom
 PLUTO_CONNECTION=addconn--updown=/tmp/updown.sh
@@ -97,7 +97,7 @@ PLUTO_VERB=route-client
 PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
 west #
  AD 0 addconn--updown=/tmp/updown.sh--updown-config=exec
-"addconn--updown=/tmp/updown.sh--updown-config=exec": added oriented IKEv2 connection
+"addconn--updown=/tmp/updown.sh--updown-config=exec": added oriented IKEv2 permanent connection
 "addconn--updown=/tmp/updown.sh--updown-config=exec": my_updown=/tmp/updown.sh custom; my_updown-config=noasync,exec;
 PLUTO_ARGV=custom
 PLUTO_CONNECTION=addconn--updown=/tmp/updown.sh--updown-config=exec
@@ -105,7 +105,7 @@ PLUTO_VERB=route-client
 PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
 west #
  AD 0 addconn--updown=updown.sh
-"addconn--updown=updown.sh": added oriented IKEv2 connection
+"addconn--updown=updown.sh": added oriented IKEv2 permanent connection
 "addconn--updown=updown.sh": my_updown=updown.sh custom; my_updown-config=noasync,noexec;
 PLUTO_ARGV=custom
 PLUTO_CONNECTION=addconn--updown=updown.sh
@@ -113,7 +113,7 @@ PLUTO_VERB=route-client
 PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/tmp
 west #
  AD 0 addconn--updown=updown.sh--updown-config=exec
-"addconn--updown=updown.sh--updown-config=exec": added oriented IKEv2 connection
+"addconn--updown=updown.sh--updown-config=exec": added oriented IKEv2 permanent connection
 "addconn--updown=updown.sh--updown-config=exec": my_updown=updown.sh custom; my_updown-config=noasync,exec;
 PLUTO_ARGV=custom
 PLUTO_CONNECTION=addconn--updown=updown.sh--updown-config=exec

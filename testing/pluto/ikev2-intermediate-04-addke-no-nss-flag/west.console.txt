@@ -22,10 +22,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-mlkem
-"west-mlkem": added oriented IKEv2 connection
+"west-mlkem": added oriented IKEv2 permanent connection
 west #
  ipsec add west-ecp
-"west-ecp": added oriented IKEv2 connection
+"west-ecp": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone

@@ -8,7 +8,7 @@ west #
 west #
  ipsec add west-east-transport
 "west-east-transport": interface search skipped interface eth1 as it does not have nic-offload support
-"west-east-transport": added unoriented IKEv2 connection (neither left=192.1.2.45 nor right=192.1.2.23 match an interface)
+"west-east-transport": added unoriented IKEv2 permanent connection (neither left=192.1.2.45 nor right=192.1.2.23 match an interface)
 west #
  ipsec whack --impair suppress_retransmits
 west #

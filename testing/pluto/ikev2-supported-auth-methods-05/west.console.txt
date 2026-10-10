@@ -49,7 +49,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added oriented IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 permanent connection
 west #
  ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
 "westnet-eastnet-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

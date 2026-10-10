@@ -18,10 +18,10 @@ east #
 east #
  ipsec auto --add northnet-eastnet
 "northnet-eastnet": created ipsec-interface ipsec1@NONE
-"northnet-eastnet": added oriented IKEv2 connection
+"northnet-eastnet": added oriented IKEv2 permanent connection
 east #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added oriented IKEv2 connection
+"westnet-eastnet": added oriented IKEv2 permanent connection
 east #
  echo "initdone"
 initdone
