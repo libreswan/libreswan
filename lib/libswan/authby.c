@@ -241,6 +241,10 @@ bool tto_ikev2_authby(shunk_t input, struct authby *authby)
 				AUTHBY_ECDSA,
 			},
 		},
+		{ "psk", {
+				AUTHBY_PSK,
+			},
+		},
 	};
 	FOR_EACH_ELEMENT(alias, aliases) {
 		if (hunk_strheq(input, alias->human)) {
