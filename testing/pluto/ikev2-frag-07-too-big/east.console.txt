@@ -15,7 +15,7 @@ east #
  ipsec whack --impair add_fragments:1:1024
 east #
  ipsec add west-east
-"west-east": added oriented IKEv2 connection
+"west-east": added oriented IKEv2 permanent connection
 east #
  echo "initdone"
 initdone

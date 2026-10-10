@@ -8,15 +8,15 @@ west #
 west #
  ipsec add west-east
 ipsec add: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=hold
-"west-east": added oriented IKEv1 connection
+"west-east": added oriented IKEv1 permanent connection
 west #
  ipsec add west-eastnet
 ipsec add: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=hold
-"west-eastnet": added oriented IKEv1 connection
+"west-eastnet": added oriented IKEv1 permanent connection
 west #
  ipsec add westnet-east
 ipsec add: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=hold
-"westnet-east": added oriented IKEv1 connection
+"westnet-east": added oriented IKEv1 permanent connection
 west #
  # don't auto-revive, instead wait for a trigger
 west #

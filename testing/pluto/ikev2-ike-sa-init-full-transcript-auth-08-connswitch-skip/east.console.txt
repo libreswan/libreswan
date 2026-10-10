@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add weakconn
-"weakconn": added oriented IKEv2 connection
+"weakconn": added oriented IKEv2 template connection
 east #
  ipsec add strongconn
-"strongconn": added oriented IKEv2 connection
+"strongconn": added oriented IKEv2 template connection
 east #
  ipsec whack --impair suppress_retransmits
 east #

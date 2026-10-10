@@ -48,7 +48,7 @@ conn hostkey
 	leftrsasigkey=0s<<RAW-PUBKEY#2>>
 west #
  ipsec add hostkey
-"hostkey": added oriented IKEv2 connection
+"hostkey": added oriented IKEv2 permanent connection
 west #
  ipsec up hostkey # sanitize-retransmits
 "hostkey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
