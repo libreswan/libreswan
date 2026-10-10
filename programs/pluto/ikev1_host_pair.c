@@ -129,8 +129,8 @@ static bool match_v1_connection(const struct connection *c,
 	 *
 	 * Order matters.  First match, be it RSA or PSK is accepted.
 	 */
-	if (c->remote->host.config->authby.authby_rsasig_raw) {
-		if (!hpc->authby.authby_rsasig_raw) {
+	if (authby_has(c->remote->host.config->authby, AUTH_RSASIG_IKEv1)) {
+		if (!authby_has(hpc->authby, AUTH_RSASIG_IKEv1)) {
 			ldbg(logger, "  skipping %s, RSASIG was not proposed",
 			     c->name);
 			return false;

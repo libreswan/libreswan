@@ -331,7 +331,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 				return false; /* no secret */
 			}
 		}
-		if (matching_authbys.authby_rsasig_raw) {
+		if (authby_has(matching_authbys, AUTH_RSASIG_IKEv1)) {
 			if (get_local_private_key(d, &pubkey_type_rsa,
 						  ike->sa.logger) == NULL) {
 				/*
@@ -415,7 +415,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		}
 
 		if (authby_has_any(matching_authbys, (struct authby) {
-					AUTHBY_RSASIG,
+					AUTHBY_RSASIG_IKEv2,
 				})) {
 			if (get_local_private_key(d, &pubkey_type_rsa,
 						  ike->sa.logger) != NULL) {

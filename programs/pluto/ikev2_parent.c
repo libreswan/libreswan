@@ -233,7 +233,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 
 	if (!authby_has_any(c->remote->host.config->authby,
 			     (struct authby) {
-				     AUTHBY_RSASIG,
+				     AUTHBY_RSASIG_IKEv2,
 			     })) {
 		name_buf mb;
 		authby_buf ab;

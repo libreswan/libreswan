@@ -1257,8 +1257,8 @@ static enum ikev1_auth_method sa_auth_method(const struct connection *c,
 	PEXPECT(logger, authby_eq(c->local->host.config->authby,
 				  c->remote->host.config->authby));
 	struct authby authby = c->local->host.config->authby;
-	unsigned index = ((authby.authby_psk ? 1 :
-			   authby.authby_rsasig_raw ? 2 : 0) |
+	unsigned index = ((authby_has(authby, AUTH_PSK) ? 1 :
+			   authby_has(authby, AUTH_RSASIG_IKEv1) ? 2 : 0) |
 			  (c->local->host.config->xauth.server ? 4 : 0) |
 			  (c->local->host.config->xauth.client ? 8 : 0));
 
@@ -1427,10 +1427,10 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 					break;
 				case XAUTHInitRSA:
 					xauth = true;
-					authby.authby_rsasig_raw = true;
+					authby = authby_add(authby, AUTH_RSASIG_IKEv1);
 					break;
 				case OAKLEY_RSA_SIG:
-					authby.authby_rsasig_raw = true;
+					authby = authby_add(authby, AUTH_RSASIG_IKEv1);
 					break;
 				}
 				break;
@@ -1905,7 +1905,8 @@ psk_common:
 					}
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
-					if (!c->remote->host.config->authby.authby_rsasig_raw) {
+					if (!authby_has(c->remote->host.config->authby,
+							AUTH_RSASIG_IKEv1)) {
 						UGH("policy does not allow OAKLEY_RSA_SIG authentication");
 					} else {
 						/* We'd like to check

@@ -376,9 +376,10 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * one bit is set in .authby).  Hence, regardless of order,
 	 * the same decision will always be made.
 	 */
-	ike->sa.st_oakley.auth = (c->remote->host.config->authby.authby_psk ? OAKLEY_PRESHARED_KEY :
-				  c->remote->host.config->authby.authby_rsasig_raw ? OAKLEY_RSA_SIG :
-				  0);	/* we don't really know */
+	ike->sa.st_oakley.auth =
+		(authby_has(c->remote->host.config->authby, AUTH_PSK) ? OAKLEY_PRESHARED_KEY :
+		 authby_has(c->remote->host.config->authby, AUTH_RSASIG_IKEv1) ? OAKLEY_RSA_SIG :
+		 0);	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
 		llog_sa(RC_LOG, ike, "X509: CERT payload bogus or revoked");

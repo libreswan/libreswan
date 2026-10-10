@@ -118,7 +118,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 		break;
 	case OAKLEY_RSA_SIG:
 		proposed_authbys = (struct authby) {
-			AUTHBY_RSASIG_RAW,
+			AUTHBY_RSASIG_IKEv1,
 		};
 		break;
 		/* Not implemented */

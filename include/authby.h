@@ -51,10 +51,8 @@ struct authby {
 #define AUTHBY_EDDSA				\
 	.authby_eddsa = true
 
-	/* XXX: should be IKEv1 only */
-#define authby_rsasig_raw authby[AUTH_RSASIG_RAW]
-#define AUTHBY_RSASIG_RAW			\
-	.authby_rsasig_raw = true
+#define AUTHBY_RSASIG_IKEv1			\
+	.authby[AUTH_RSASIG_IKEv1] = true
 
 #define authby_rsasig_v1_5_sha1_raw authby[AUTH_RSASIG_V1_5_SHA1_RAW]
 #define AUTHBY_RSASIG_V1_5_SHA1_RAW		\
@@ -101,8 +99,7 @@ struct authby {
 	AUTHBY_RSASIG_SHA2_256,			\
 	AUTHBY_RSASIG_SHA2_384,			\
 	AUTHBY_RSASIG_SHA2_512
-#define AUTHBY_RSASIG				\
-	AUTHBY_RSASIG_RAW,			\
+#define AUTHBY_RSASIG_IKEv2			\
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2
 

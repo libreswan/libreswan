@@ -1354,7 +1354,7 @@ static struct authby extract_authby(struct kv kv,
 			if (hunk_streq(val, "rsasig") ||
 			    hunk_streq(val, "rsa")) {
 				authby = authby_or(authby, (struct authby) {
-						AUTHBY_RSASIG_RAW,
+						AUTHBY_RSASIG_IKEv1,
 					});
 				continue;
 			}
@@ -1907,7 +1907,7 @@ static diag_t extract_host_end(enum end end,
 		struct authby non_ikev1_authby;
 		if (authby_conflicts(&non_ikev1_authby, whack_authby,
 				     (struct authby) {
-					     AUTHBY_RSASIG_RAW,
+					     AUTHBY_RSASIG_IKEv1,
 					     AUTHBY_PSK,
 					     AUTHBY_NEVER,
 				     })) {
@@ -1925,7 +1925,7 @@ static diag_t extract_host_end(enum end end,
 		case 0:
 			/* i.e., unset */
 			authby = (struct authby) {
-				AUTHBY_RSASIG_RAW,
+				AUTHBY_RSASIG_IKEv1,
 			};
 			break;
 		case 1:
@@ -2031,7 +2031,7 @@ static diag_t extract_host_end(enum end end,
 		} else if (authby_has_any(whack_auth, (struct authby) {
 					AUTHBY_EAPONLY,
 					/* XXX: authby_has_pubkey()? */
-					AUTHBY_RSASIG,
+					AUTHBY_RSASIG_IKEv2,
 					AUTHBY_ECDSA,
 					AUTHBY_EDDSA,
 				})) {
