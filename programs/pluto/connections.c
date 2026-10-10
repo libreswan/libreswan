@@ -487,6 +487,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	pfree_session(&c->session);
 
+	ro_hunk_delref(&c->autoall_config, logger);
+
 	/*
 	 * Only free config when the root connection.  Non-root
 	 * connections have .root_config==NULL.

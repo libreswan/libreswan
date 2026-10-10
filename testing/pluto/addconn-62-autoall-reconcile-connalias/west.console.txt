@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"corp/1x1" $1
+"corp/1x2" $2
+"corp/extra" $3
+"delta" $5
+"gamma" $4
+west #
+ ipsec add --autoall
+"corp/1x1": unchanged
+"corp/1x2": unchanged
+"corp/extra": unchanged
+"gamma": unchanged
+"delta": unchanged
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"corp/1x1" $1
+"corp/1x2" $2
+"corp/extra" $3
+"delta" $5
+"gamma" $4
+west #

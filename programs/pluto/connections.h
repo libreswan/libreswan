@@ -840,6 +840,11 @@ struct connection {
 #define del_policy(C, POLICY)					\
 	set_policy(C, POLICY, false)
 
+	bool autoall_stale;
+
+	struct ro_hunk *autoall_config;
+	unsigned autoall_nr_roots;
+
 	struct sa_marks sa_marks;	/* contains a MARK values and
 					 * MASK value for IPsec SA
 					 * (per-connection) */
