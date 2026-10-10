@@ -98,21 +98,21 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.method = IKEv2_AUTH_ECDSA_SHA2_512_P521,
 		},
 
-		[AUTH_RSASIG_SHA2_512] = {
+		[AUTH_RSASSA_PSS_SHA2_512_BLOB] = {
 			.kind = MULTI_OCTET,
 			.story = "RSASSA-PSS-SHA2-512",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha2_512,
 			.blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 		},
-		[AUTH_RSASIG_SHA2_384] = {
+		[AUTH_RSASSA_PSS_SHA2_384_BLOB] = {
 			.kind = MULTI_OCTET,
 			.story = "RSASSA-PSS-SHA2-384",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha2_384,
 			.blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 		},
-		[AUTH_RSASIG_SHA2_256] = {
+		[AUTH_RSASSA_PSS_SHA2_256_BLOB] = {
 			.kind = MULTI_OCTET,
 			.story = "RSASSA-PSS-SHA2-256",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
@@ -394,11 +394,14 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 				}					\
 			}
 
-			MATCH_DIGSIG(AUTH_RSASIG_SHA2_512, &ike_alg_hash_sha2_512,
+			MATCH_DIGSIG(AUTH_RSASSA_PSS_SHA2_512_BLOB,
+				     &ike_alg_hash_sha2_512,
 				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(AUTH_RSASIG_SHA2_384, &ike_alg_hash_sha2_384,
+			MATCH_DIGSIG(AUTH_RSASSA_PSS_SHA2_384_BLOB,
+				     &ike_alg_hash_sha2_384,
 				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
-			MATCH_DIGSIG(AUTH_RSASIG_SHA2_256, &ike_alg_hash_sha2_256,
+			MATCH_DIGSIG(AUTH_RSASSA_PSS_SHA2_256_BLOB,
+				     &ike_alg_hash_sha2_256,
 				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
 
 			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA1_BLOB, &ike_alg_hash_sha2_512,

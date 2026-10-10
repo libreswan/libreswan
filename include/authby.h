@@ -86,15 +86,23 @@ struct authby {
 	AUTHBY_RSASIG_V1_5_SHA1,		\
 	AUTHBY_RSASIG_V1_5_SHA2
 
-#define authby_rsasig_sha2_256 authby[AUTH_RSASIG_SHA2_256]
-#define authby_rsasig_sha2_384 authby[AUTH_RSASIG_SHA2_384]
-#define authby_rsasig_sha2_512 authby[AUTH_RSASIG_SHA2_512]
+#define AUTHBY_RSASSA_PSS_SHA2_256_BLOB			\
+	.authby[AUTH_RSASSA_PSS_SHA2_256_BLOB] = true
+#define AUTHBY_RSASSA_PSS_SHA2_384_BLOB			\
+	.authby[AUTH_RSASSA_PSS_SHA2_384_BLOB] = true
+#define AUTHBY_RSASSA_PSS_SHA2_512_BLOB			\
+	.authby[AUTH_RSASSA_PSS_SHA2_512_BLOB] = true
+
+#define authby_rsasig_sha2_256 authby[AUTH_RSASSA_PSS_SHA2_256_BLOB]
+#define authby_rsasig_sha2_384 authby[AUTH_RSASSA_PSS_SHA2_384_BLOB]
+#define authby_rsasig_sha2_512 authby[AUTH_RSASSA_PSS_SHA2_512_BLOB]
 #define AUTHBY_RSASIG_SHA2_256			\
 	.authby_rsasig_sha2_256 = true
 #define AUTHBY_RSASIG_SHA2_384			\
 	.authby_rsasig_sha2_384 = true
 #define AUTHBY_RSASIG_SHA2_512			\
 	.authby_rsasig_sha2_512 = true
+
 #define AUTHBY_RSASIG_SHA2			\
 	AUTHBY_RSASIG_SHA2_256,			\
 	AUTHBY_RSASIG_SHA2_384,			\
