@@ -105,33 +105,27 @@ struct authby {
 	AUTHBY_RSASIG_V1_5,			\
 	AUTHBY_RSASIG_SHA2
 
-#define authby_ecdsa_sha2_256_blob authby[AUTH_ECDSA_SHA2_256_BLOB]
-#define authby_ecdsa_sha2_384_blob authby[AUTH_ECDSA_SHA2_384_BLOB]
-#define authby_ecdsa_sha2_512_blob authby[AUTH_ECDSA_SHA2_512_BLOB]
-#define authby_ecdsa_sha2_256_raw authby[AUTH_ECDSA_SHA2_256_RAW]
-#define authby_ecdsa_sha2_384_raw authby[AUTH_ECDSA_SHA2_384_RAW]
-#define authby_ecdsa_sha2_512_raw authby[AUTH_ECDSA_SHA2_512_RAW]
-#define AUTHBY_ECDSA_SHA2_256			\
-	.authby_ecdsa_sha2_256_blob = true,	\
-	.authby_ecdsa_sha2_256_raw = true
-#define AUTHBY_ECDSA_SHA2_384			\
-	.authby_ecdsa_sha2_384_blob = true,	\
-	.authby_ecdsa_sha2_384_raw = true
-#define AUTHBY_ECDSA_SHA2_512			\
-	.authby_ecdsa_sha2_512_blob = true,	\
-	.authby_ecdsa_sha2_512_raw = true
+#define AUTHBY_ECDSA_SHA2_256				\
+	.authby[AUTH_ECDSA_SHA2_256_BLOB] = true,	\
+	.authby[AUTH_ECDSA_SHA2_256_RAW] = true
+#define AUTHBY_ECDSA_SHA2_384				\
+	.authby[AUTH_ECDSA_SHA2_384_BLOB] = true,	\
+	.authby[AUTH_ECDSA_SHA2_384_RAW] = true
+#define AUTHBY_ECDSA_SHA2_512				\
+	.authby[AUTH_ECDSA_SHA2_512_BLOB] = true,	\
+	.authby[AUTH_ECDSA_SHA2_512_RAW] = true
 #define AUTHBY_ECDSA_SHA2			\
 	AUTHBY_ECDSA_SHA2_256,			\
 	AUTHBY_ECDSA_SHA2_384,			\
 	AUTHBY_ECDSA_SHA2_512
-#define AUTHBY_ECDSA_RAW			\
-	.authby_ecdsa_sha2_256_raw = true,	\
-	.authby_ecdsa_sha2_384_raw = true,	\
-	.authby_ecdsa_sha2_512_raw = true
-#define AUTHBY_ECDSA_BLOB			\
-	.authby_ecdsa_sha2_256_blob = true,	\
-	.authby_ecdsa_sha2_384_blob = true,	\
-	.authby_ecdsa_sha2_512_blob = true
+#define AUTHBY_ECDSA_BLOB				\
+	.authby[AUTH_ECDSA_SHA2_256_BLOB] = true,	\
+	.authby[AUTH_ECDSA_SHA2_384_BLOB] = true,	\
+	.authby[AUTH_ECDSA_SHA2_512_BLOB] = true
+#define AUTHBY_ECDSA_RAW				\
+	.authby[AUTH_ECDSA_SHA2_256_RAW] = true,	\
+	.authby[AUTH_ECDSA_SHA2_384_RAW] = true,	\
+	.authby[AUTH_ECDSA_SHA2_512_RAW] = true
 #define AUTHBY_ECDSA				\
 	AUTHBY_ECDSA_BLOB,			\
 	AUTHBY_ECDSA_RAW

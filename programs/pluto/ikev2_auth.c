@@ -518,17 +518,17 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	 * authby which _should_ be looking at the ECDSA key.
 	 */
 
-	if (negotiated_authby.authby_ecdsa_sha2_512_raw) {
+	if (authby_has(negotiated_authby, AUTH_ECDSA_SHA2_512_RAW)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_512_P521);
 	}
 
-	if (negotiated_authby.authby_ecdsa_sha2_384_raw) {
+	if (authby_has(negotiated_authby, AUTH_ECDSA_SHA2_384_RAW)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_384_P384);
 	}
 
-	if (negotiated_authby.authby_ecdsa_sha2_256_raw) {
+	if (authby_has(negotiated_authby, AUTH_ECDSA_SHA2_256_RAW)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
 	}
@@ -1146,17 +1146,11 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 			AUTHBY_RSASIG_V1_5_SHA1,
 		};
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return (struct authby) {
-			.authby_ecdsa_sha2_256_raw = true,
-		};
+		return authby_from_auth(AUTH_ECDSA_SHA2_256_RAW);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return (struct authby) {
-			.authby_ecdsa_sha2_384_raw = true,
-		};
+		return authby_from_auth(AUTH_ECDSA_SHA2_384_RAW);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return (struct authby) {
-			.authby_ecdsa_sha2_512_raw = true,
-		};
+		return authby_from_auth(AUTH_ECDSA_SHA2_512_RAW);
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 		return (struct authby) {
 			AUTHBY_PSK,
