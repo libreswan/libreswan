@@ -415,7 +415,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		}
 
 		if (authby_has_any(matching_authbys, (struct authby) {
-					AUTHBY_RSASIG_IKEv2,
+					AUTHBY_RSASSA,
 				})) {
 			if (get_local_private_key(d, &pubkey_type_rsa,
 						  ike->sa.logger) != NULL) {

@@ -2031,7 +2031,7 @@ static diag_t extract_host_end(enum end end,
 		} else if (authby_has_any(whack_auth, (struct authby) {
 					AUTHBY_EAPONLY,
 					/* XXX: authby_has_pubkey()? */
-					AUTHBY_RSASIG_IKEv2,
+					AUTHBY_RSASSA,
 					AUTHBY_ECDSA,
 					AUTHBY_EDDSA,
 				})) {

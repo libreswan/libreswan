@@ -388,10 +388,10 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 * the authbys.
 	 */
 	static const struct authby remote_authbys[] = {
-		{ AUTHBY_ECDSA_SHA2, },
+		{ AUTHBY_ECDSA, },
 		{ AUTHBY_EDDSA, },
-		{ AUTHBY_RSASIG_SHA2, },
-		{ AUTHBY_RSASIG_V1_5, },
+		{ AUTHBY_RSASSA_PSS_BLOB, }, /* prefer new */
+		{ AUTHBY_RSASSA, }, /* catch-all*/
 		{ AUTHBY_PSK, },
 		{ AUTHBY_NULL, },
 		{ AUTHBY_NEVER, },
