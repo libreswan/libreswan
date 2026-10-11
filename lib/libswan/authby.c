@@ -85,7 +85,7 @@ struct authby authby_and_hash(struct authby authby,
 #define AND_HASH(Hash, HASH)					\
 	if (hash == &ike_alg_hash_##Hash) {			\
 		return authby_and(authby, (struct authby) {	\
-				AUTHBY_RSASIG_V1_5_##HASH,	\
+				AUTHBY_RSASSA_PKCS1_V1_5_##HASH##_BLOB,	\
 				AUTHBY_RSASIG_##HASH,/*PSS*/	\
 				AUTHBY_ECDSA_##HASH,		\
 			});					\
@@ -174,11 +174,6 @@ static const struct authby_name {
 	{ "RSASIG_SHA2_256", "rsa-sha2_256", { .authby_rsasig_sha2_256 = true, }, },
 	{ "RSASIG_SHA2_384", "rsa-sha2_384", { .authby_rsasig_sha2_384 = true, }, },
 	{ "RSASIG_SHA2_512", "rsa-sha2_512", { .authby_rsasig_sha2_512 = true, }, },
-	{ "RSASIG_v1_5_SHA1_RAW", "rsa-sha1-raw", { .authby_rsasig_v1_5_sha1_raw = true, }, },
-	{ "RSASIG_v1_5_SHA1_BLOB", "rsa-sha1-blob", { .authby_rsasig_v1_5_sha1_blob = true, }, },
-	{ "RSASIG_V1_5_SHA2_256", "rsa-v15-sha2_256", { .authby_rsasig_v1_5_sha2_256 = true, }, },
-	{ "RSASIG_V1_5_SHA2_384", "rsa-v15-sha2_384", { .authby_rsasig_v1_5_sha2_384 = true, }, },
-	{ "RSASIG_V1_5_SHA2_512", "rsa-v15-sha2_512", { .authby_rsasig_v1_5_sha2_512 = true, }, },
 
 	/*
 	 * ECDSA
@@ -403,7 +398,7 @@ struct authby authby_v2AUTH_digsig_payload(void)
 #ifdef USE_EDDSA
 		AUTHBY_EDDSA,
 #endif
-		AUTHBY_RSASIG_V1_5_SHA1_BLOB,
+		AUTHBY_RSASSA_PKCS1_V1_5_SHA1_BLOB,
 		AUTHBY_RSASIG_SHA2,
 		AUTHBY_ECDSA_BLOB,
 	};

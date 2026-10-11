@@ -399,7 +399,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 			       &signer_pubkey_rsassa_pss_blob,
 			       &signer_pubkey_ecdsa_blob,
 			       &signer_pubkey_eddsa_ed25519_blob,
-			       &signer_pubkey_pkcs1_1_5_rsa_blob) {
+			       &signer_pubkey_rsassa_pkcs1_1_5_blob) {
 			if (authby_has_any(signer_authby, signerp->authby)) {
 				signer = signerp;
 				vdbg("selected signer %s", signer->name);
@@ -425,7 +425,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha1,
-					    &signer_pubkey_pkcs1_1_5_rsa_raw);
+					    &signer_pubkey_rsassa_pkcs1_1_5_raw);
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return pubkey_v2AUTH_method(method,
 					    &ike_alg_hash_sha2_256,
@@ -495,7 +495,8 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
-	if (negotiated_authby.authby_rsasig_v1_5_sha1_raw) {
+	if (authby_has(negotiated_authby,
+		       AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW)) {
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
@@ -741,7 +742,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
-							  &signer_pubkey_pkcs1_1_5_rsa_raw,
+							  &signer_pubkey_rsassa_pkcs1_1_5_raw,
 							  NULL/*legacy-signature-name*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
@@ -829,7 +830,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			&signer_pubkey_eddsa_ed25519_blob,
 			&signer_pubkey_ecdsa_blob,
 			&signer_pubkey_rsassa_pss_blob,
-			&signer_pubkey_pkcs1_1_5_rsa_blob,
+			&signer_pubkey_rsassa_pkcs1_1_5_blob,
 		};
 
 		FOR_EACH_ELEMENT(sp, signers) {
