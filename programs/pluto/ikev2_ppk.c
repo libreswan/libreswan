@@ -401,7 +401,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 				 * oid blob appended */
 				if (!ikev2_calculate_hash(ike, id_hash, NULL, no_ppk_auth,
 							  &ike_alg_hash_sha1,
-							  &signer_pubkey_pkcs1_1_5_rsa_raw)) {
+							  &signer_pubkey_rsassa_pkcs1_1_5_raw)) {
 					return false;
 				}
 				return true;
