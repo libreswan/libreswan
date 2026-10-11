@@ -176,10 +176,10 @@ west #
  authby rsa-sha1,rsa-sha2
  ipsec addconn --name authby:rsa-sha1,rsa-sha2 authby=rsa-sha1,rsa-sha2
 "authby:rsa-sha1,rsa-sha2": added oriented IKEv2 connection
- policy: IKEv2+RSASIG_SHA2+RSASIG_v1_5_SHA1+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
- our auth:rsa-sha2+rsa-sha1
- their auth:rsa-sha2+rsa-sha1
+ our auth:rsasig
+ their auth:rsasig
 west #
  authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
  ipsec addconn --name authby:rsa-sha2_256,rsa-sha2_384,rsa-sha2_512 authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
