@@ -495,7 +495,8 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_DIGITAL_SIGNATURE);
 	}
 
-	if (negotiated_authby.authby_rsasig_v1_5_sha1_raw) {
+	if (authby_has(negotiated_authby,
+		       AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW)) {
 		/*
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.

@@ -76,7 +76,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.method = IKEv2_AUTH_NULL,
 		},
 
-		[AUTH_RSASIG_V1_5_SHA1_RAW] = {
+		[AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW] = {
 			.kind = THREE_OCTET,
 			.story = "SUPPORTED_AUTH_METHODS 'RSASSA-PKCS1-v1_5' announced",
 			.method = IKEv2_AUTH_RSA_DIGITAL_SIGNATURE,
@@ -142,30 +142,30 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 		},
 
-		[AUTH_RSASIG_V1_5_SHA1_BLOB] = {
+		[AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB] = {
 			.kind = MULTI_OCTET,
-			.story = "RSASIG_V1_5-SHA1",
+			.story = "RSASSA-PKCS#1_v1_5-SHA1",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha1,
 			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 		},
-		[AUTH_RSASIG_V1_5_SHA2_512] = {
+		[AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB] = {
 			.kind = MULTI_OCTET,
-			.story = "RSASIG_V1_5-SHA2-512",
+			.story = "RSASSA-PKCS#1-v1_5-SHA2-512",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha2_512,
 			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 		},
-		[AUTH_RSASIG_V1_5_SHA2_384] = {
+		[AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB] = {
 			.kind = MULTI_OCTET,
-			.story = "RSASIG_V1_6-SHA2-384",
+			.story = "RSASSA-PKCS#1-v1_5-SHA2-384",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha2_384,
 			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 		},
-		[AUTH_RSASIG_V1_5_SHA2_256] = {
+		[AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB] = {
 			.kind = MULTI_OCTET,
-			.story = "RSASIG_V1_5-SHA2-256",
+			.story = "RSASSA-PKCS#1_v1_5-SHA2-256",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
 			.hash = &ike_alg_hash_sha2_256,
 			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
@@ -340,7 +340,7 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 
 			switch (auth_method) {
 			case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-				peer = authby_add(peer, AUTH_RSASIG_V1_5_SHA1_RAW);
+				peer = authby_add(peer, AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW);
 				break;
 			case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 				peer = authby_add(peer, AUTH_ECDSA_SHA2_256_RAW);
@@ -404,14 +404,18 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 				     &ike_alg_hash_sha2_256,
 				     DIGITAL_SIGNATURE_RSASSA_PSS_BLOB);
 
-			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA1_BLOB, &ike_alg_hash_sha2_512,
+			MATCH_DIGSIG(AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB,
+				     &ike_alg_hash_sha2_512,
 				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
 
-			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_512, &ike_alg_hash_sha2_512,
+			MATCH_DIGSIG(AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB,
+				     &ike_alg_hash_sha2_512,
 				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
-			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_384, &ike_alg_hash_sha2_384,
+			MATCH_DIGSIG(AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB,
+				     &ike_alg_hash_sha2_384,
 				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
-			MATCH_DIGSIG(AUTH_RSASIG_V1_5_SHA2_256, &ike_alg_hash_sha2_256,
+			MATCH_DIGSIG(AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,
+				     &ike_alg_hash_sha2_256,
 				     DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB);
 
 			MATCH_DIGSIG(AUTH_ECDSA_SHA2_512_BLOB, &ike_alg_hash_sha2_512,

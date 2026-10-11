@@ -160,7 +160,9 @@ int main(int argc, char *argv[])
 			authby_and_hash(all_authby_bits_set,
 					&ike_alg_hash_sha2_256);
 		/* XXX: legacy RSA is allowed with SHA2 */
-		if (!authby_sha2_256.authby_rsasig_v1_5_sha2_256 ||
+		if (!authby_has_all(authby_sha2_256, (struct authby) {
+					AUTHBY_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,
+				}) ||
 		    !authby_sha2_256.authby_ecdsa_sha2_256_raw ||
 		    !authby_sha2_256.authby_ecdsa_sha2_256_blob ||
 		    !authby_has(authby_sha2_256, AUTH_RSASSA_PSS_SHA2_256_BLOB) ||

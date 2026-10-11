@@ -54,32 +54,27 @@ struct authby {
 #define AUTHBY_RSASIG_IKEv1			\
 	.authby[AUTH_RSASIG_IKEv1] = true
 
-#define authby_rsasig_v1_5_sha1_raw authby[AUTH_RSASIG_V1_5_SHA1_RAW]
-#define AUTHBY_RSASIG_V1_5_SHA1_RAW		\
-	.authby_rsasig_v1_5_sha1_raw = true
-#define authby_rsasig_v1_5_sha1_blob authby[AUTH_RSASIG_V1_5_SHA1_BLOB]
-#define AUTHBY_RSASIG_V1_5_SHA1_BLOB		\
-	.authby_rsasig_v1_5_sha1_blob = true
-#define AUTHBY_RSASIG_V1_5_SHA1			\
-	AUTHBY_RSASIG_V1_5_SHA1_RAW,		\
-	AUTHBY_RSASIG_V1_5_SHA1_BLOB
+#define AUTHBY_RSASSA_PKCS1_V1_5_SHA1_RAW		\
+	.authby[AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW] = true
+#define AUTHBY_RSASSA_PKCS1_V1_5_SHA1_BLOB		\
+	.authby[AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB] = true
+#define AUTHBY_RSASIG_V1_5_SHA1				\
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA1_RAW,		\
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA1_BLOB
 
-#define authby_rsasig_v1_5_sha2_256 authby[AUTH_RSASIG_V1_5_SHA2_256]
-#define authby_rsasig_v1_5_sha2_384 authby[AUTH_RSASIG_V1_5_SHA2_384]
-#define authby_rsasig_v1_5_sha2_512 authby[AUTH_RSASIG_V1_5_SHA2_512]
-#define AUTHBY_RSASIG_V1_5_SHA2_256		\
-	.authby_rsasig_v1_5_sha2_256 = true
-#define AUTHBY_RSASIG_V1_5_SHA2_384		\
-	.authby_rsasig_v1_5_sha2_384 = true
-#define AUTHBY_RSASIG_V1_5_SHA2_512		\
-	.authby_rsasig_v1_5_sha2_512 = true
+#define AUTHBY_RSASSA_PKCS1_V1_5_SHA2_256_BLOB		\
+	.authby[AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB] = true
+#define AUTHBY_RSASSA_PKCS1_V1_5_SHA2_384_BLOB		\
+	.authby[AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB] = true
+#define AUTHBY_RSASSA_PKCS1_V1_5_SHA2_512_BLOB			\
+	.authby[AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB] = true
 #define AUTHBY_RSASIG_V1_5_SHA2			\
-	AUTHBY_RSASIG_V1_5_SHA2_256,		\
-	AUTHBY_RSASIG_V1_5_SHA2_384,		\
-	AUTHBY_RSASIG_V1_5_SHA2_512
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,	\
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA2_384_BLOB,	\
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA2_512_BLOB
 
 #define AUTHBY_RSASIG_V1_5_BLOB			\
-	AUTHBY_RSASIG_V1_5_SHA1_BLOB,		\
+	AUTHBY_RSASSA_PKCS1_V1_5_SHA1_BLOB,	\
 	AUTHBY_RSASIG_V1_5_SHA2
 
 #define AUTHBY_RSASIG_V1_5			\
