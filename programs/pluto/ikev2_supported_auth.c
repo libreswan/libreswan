@@ -171,7 +171,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 		},
 
-		[AUTH_EDDSA] = {
+		[AUTH_EDDSA_ED25519] = {
 			.kind = MULTI_OCTET,
 			.story = "EDDSA-ED25519",
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
@@ -179,7 +179,7 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
 		},
 #if 0
-		[AUTH_EDDSA] = {
+		[AUTH_EDDSA_ED488] = {
 			.story = "EDDSA-ED448",
 			.kind = MULTI_OCTET,
 			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
@@ -425,8 +425,12 @@ bool process_v2N_SUPPORTED_AUTH_METHODS(struct ike_sa *ike,
 			MATCH_DIGSIG(AUTH_ECDSA_SHA2_256_BLOB, &ike_alg_hash_sha2_256,
 				     DIGITAL_SIGNATURE_ECDSA_BLOB);
 
-			MATCH_DIGSIG(AUTH_EDDSA, &ike_alg_hash_identity,
+			MATCH_DIGSIG(AUTH_EDDSA_ED25519, &ike_alg_hash_identity,
 				     DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB);
+#if 0
+			MATCH_DIGSIG(AUTH_EDDSA_ED448, &ike_alg_hash_identity,
+				     DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB);
+#endif
 #undef MATCH_DIGSIG
 		} else {
 			shunk_t skip_bytes;
