@@ -288,14 +288,13 @@ static struct authby local_ppk_authby(struct ike_sa *ike)
 {
 	struct authby authby = local_v2_authby(ike);
 	/*
-	 * XXX: check for IKEv1 and SHA2 RSA, and then later check for
-	 * v1.5 RSA.  It's just how it has always been.
+	 * XXX: check for RSASSA-PSS, and then later check for v1.5
+	 * RSA.  It's just how it has always been.
 	 */
 	return (authby_has_any(authby, (struct authby) {
-				AUTHBY_RSASIG_SHA2,
+				AUTHBY_RSASSA_PSS_BLOB,
 			}) ? (struct authby) {
-			AUTHBY_RSASIG_V1_5,
-			AUTHBY_RSASIG_SHA2,
+			AUTHBY_RSASSA_PSS_BLOB,
 		}
 		: authby_has_any(authby, (struct authby) {
 				AUTHBY_ECDSA_SHA2,
@@ -308,10 +307,9 @@ static struct authby local_ppk_authby(struct ike_sa *ike)
 			AUTHBY_EDDSA
 				}
 		: authby_has_any(authby, (struct authby) {
-				AUTHBY_RSASIG_V1_5,
+				AUTHBY_RSASSA_PKCS1_V1_5,
 			}) ? (struct authby) {
-			AUTHBY_RSASIG_V1_5,
-				AUTHBY_RSASIG_SHA2,
+			AUTHBY_RSASSA_PKCS1_V1_5,
 				}
 		: authby.authby_psk ? (struct authby) {
 			AUTHBY_PSK,
@@ -390,7 +388,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 
 	if (authby_has_any(local_authby, (struct authby) {
-				AUTHBY_RSASIG_IKEv2,
+				AUTHBY_RSASSA,
 			})) {
 		const struct hash_desc *hash_algo =
 			v2_IKE_AUTH_ppk_initiator_negotiated_signature_hash(ike);

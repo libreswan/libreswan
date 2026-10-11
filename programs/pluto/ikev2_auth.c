@@ -1142,9 +1142,7 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 
 	switch (atype) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		return (struct authby) {
-			AUTHBY_RSASIG_V1_5_SHA1,
-		};
+		return authby_from_auth(AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW);
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return authby_from_auth(AUTH_ECDSA_SHA2_256_RAW);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
@@ -1161,7 +1159,7 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		return (struct authby) {
-			AUTHBY_RSASIG_IKEv2,
+			AUTHBY_RSASSA_BLOB,
 			AUTHBY_ECDSA,
 			AUTHBY_EDDSA,
 		};

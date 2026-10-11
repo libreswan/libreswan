@@ -183,7 +183,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			jam_string(&buf, ((authby.authby_psk) ? "PRESHARED_KEY" :
 					  authby_has_any(authby, (struct authby) {
 							  AUTHBY_RSASIG_IKEv1,
-							  AUTHBY_RSASIG_IKEv2,
+							  AUTHBY_RSASSA,
 						  }) ? "RSA_SIG" :
 					  authby_has_any(authby, (struct authby) {
 							  AUTHBY_ECDSA_SHA2,

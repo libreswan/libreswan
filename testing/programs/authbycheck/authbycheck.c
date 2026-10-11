@@ -172,12 +172,11 @@ int main(int argc, char *argv[])
 		struct authby authby_sha1 =
 			authby_and_hash(all_authby_bits_set, &ike_alg_hash_sha1);
 		if (!authby_has_all(authby_sha1, (struct authby) {
-					AUTHBY_RSASIG_V1_5_SHA1,
+					AUTHBY_RSASSA_PKCS1_V1_5_SHA1_RAW,
 				}) ||
 		    authby_has_any(authby_sha1, (struct authby) {
-				    AUTHBY_RSASIG_V1_5_SHA2,
+				    AUTHBY_RSASSA_SHA2,
 				    AUTHBY_ECDSA_SHA2,
-				    AUTHBY_RSASIG_SHA2,
 				    AUTHBY_EDDSA,
 			    })) {
 			FAIL("authby_and_hash(sha1");
@@ -188,9 +187,8 @@ int main(int argc, char *argv[])
 					AUTHBY_EDDSA,
 				}) ||
 		    authby_has_any(authby_identity, (struct authby) {
-				    AUTHBY_RSASIG_V1_5,
-				    AUTHBY_ECDSA_SHA2,
-				    AUTHBY_RSASIG_SHA2,
+				    AUTHBY_RSASSA,
+				    AUTHBY_ECDSA,
 			    })) {
 			FAIL("authby_and_hash(identity)");
 		}
