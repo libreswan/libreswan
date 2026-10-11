@@ -203,11 +203,13 @@
 <!ENTITY reject '<literal>reject</literal>'>
 <!ENTITY rfc '<literal>rfc</literal>'>
 <!ENTITY rsa '<literal>rsa</literal>'>
+<!ENTITY rsa-pss '<literal>rsa-pss</literal>'>
 <!ENTITY rsa-sha1 '<literal>rsa-sha1</literal>'>
 <!ENTITY rsa-sha2 '<literal>rsa-sha2</literal>'>
 <!ENTITY rsa-sha2_256 '<literal>rsa-sha2_256</literal>'>
 <!ENTITY rsa-sha2_384 '<literal>rsa-sha2_384</literal>'>
 <!ENTITY rsa-sha2_512 '<literal>rsa-sha2_512</literal>'>
+<!ENTITY rsa-v15 '<literal>rsa-v15</literal>'>
 <!ENTITY rsasig '<literal>rsasig</literal>'>
 <!ENTITY secret '<literal>secret</literal>'>
 <!ENTITY soft '<literal>soft</literal>'>

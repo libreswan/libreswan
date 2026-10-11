@@ -72,17 +72,16 @@
 	</term>
 	<listitem>
 	  <para>
-	    Allow authentication using either RSA PKCS#1 v1.5 signing
-	    a SHA1, SHA2_256, SHA2_384, SHA2_512 hash; or RSASSA PSS
-	    digital signature signing a SHA2_256, SHA2_384, SHA2_512
-	    hash.
+	    Allow authentication using either RSASSA PKCS#1 v1.5
+	    signing a SHA1, SHA2_256, SHA2_384, SHA2_512 hash; or
+	    RSASSA PSS digital signature signing a SHA2_256, SHA2_384,
+	    SHA2_512 hash.
 	  </para>
 	  <para>
 	    The choice of hash algorithm can be narrowed further by
-	    specifying <option>&rsa-sha1;</option>,
-	    <option>&rsa-sha2;</option>, <option>&rsa-sha2_256;</option>,
-	    <option>&rsa-sha2_384;</option>, or
-	    <option>&rsa-sha2_512;</option>.
+	    specifying &rsa-sha1;, &rsa-sha2;, &rsa-sha2_256;,
+	    &rsa-sha2_384;, &rsa-sha2_512;, &rsa-pss;, or
+	    &rsa-v15;.
 	  </para>
 	  <note>
 	    <para>
