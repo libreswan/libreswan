@@ -163,6 +163,8 @@ static const struct authby_name {
 	{ "RSASIG_SHA2_384", "rsa-sha2_384", { AUTHBY_RSASSA_SHA2_384, }, },
 	{ "RSASIG_SHA2_512", "rsa-sha2_512", { AUTHBY_RSASSA_SHA2_512, }, },
 
+	{ "RSASSA_PSS", "rsa-pss", { AUTHBY_RSASSA_PSS_BLOB, }, },
+
 	/*
 	 * ECDSA
 	 *
