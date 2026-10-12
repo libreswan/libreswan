@@ -37,12 +37,16 @@ authby ecdsa-sha2_256,ecdsa-sha2_384,ecdsa-sha2_512 # merges
 
 authby rsa
 authby rsasig
+authby rsa-v15
+authby rsa-pss
 authby rsa-sha1
 authby rsa-sha2
 authby rsa-sha2_256
 authby rsa-sha2_384
 authby rsa-sha2_512
+# combines
 authby rsa-sha1,rsa-sha2
+# combines
 authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
 
 # auth= variants
