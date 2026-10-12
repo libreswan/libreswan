@@ -35,12 +35,16 @@ struct hash_desc;
  */
 
 struct authby {
-	/*
-	 * XXX: add new authby flags to this array so there's less to
-	 * move over down the track.
-	 */
 	bool authby[AUTH_ROOF];
+};
 
+/*
+ * Macros for building authby structures.
+ *
+ * Note the strict grouping.  For instance AUTHBY_RSASSA_SHA2 includes
+ * *all* RSA SHA2 algorithms - i.e., both RSASSA PKCS#1 v1.5 and
+ * RSASSA-PSS.
+ */
 #define AUTHBY_EAPONLY				\
 	.authby[AUTH_EAPONLY] = true
 
@@ -154,8 +158,6 @@ struct authby {
 #define AUTHBY_ECDSA				\
 	AUTHBY_ECDSA_BLOB,			\
 	AUTHBY_ECDSA_RAW
-
-};
 
 /* all algs IKEv1 and IKEv2 allow */
 

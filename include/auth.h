@@ -22,6 +22,17 @@
 #define AUTH_H
 
 /*
+ * List of all possible auth methods.
+ *
+ * If an authentication has several variants, then each gets a
+ * separate entry.
+ *
+ * For instance RSA PKCS#1 v1.5 SHA1 has two variants: in the v2AUTH
+ * RSA_DIGITAL_SIGNATURE (aka RAW) payload; or the v2AUTH new "Digital
+ * Signature" payload (aka BLOB).
+ *
+ * BLOB is code for uses v2AUTH's Digital Signature Payload.
+ *
  * XXX: the order of this enum determines the order that
  * SUPPORTED_AUTH_METHODS is emitted.
  */
