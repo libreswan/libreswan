@@ -26,6 +26,7 @@
     USE_LINUX_AUDIT=true \\\
     USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
+    USE_XFRM_HEADER_COPY=true \\\
 %{nil}
 
 #global prever rc2
