@@ -404,7 +404,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			break;
 		}
 
-		if (matching_authbys.authby_null) {
+		if (authby_has(matching_authbys, AUTH_NULL)) {
 			vdbg("NULL so go with it");
 			break;
 		}
@@ -904,7 +904,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		ldbg(ike->sa.logger,
 		     "rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		     str_id(peer_id, &idb));
-	} else if (c->remote->host.config->authby.authby_null &&
+	} else if (authby_has(c->remote->host.config->authby, AUTH_NULL) &&
 		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,

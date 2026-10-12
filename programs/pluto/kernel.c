@@ -135,7 +135,7 @@ spd_priority_t spd_priority(const struct spd *spd)
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
 	if (is_from_group(c)) {
-		if (c->remote->host.config->authby.authby_null) {
+		if (authby_has(c->remote->host.config->authby, AUTH_NULL)) {
 			base = 3; /* opportunistic anonymous */
 		} else {
 			base = 2; /* opportunistic */

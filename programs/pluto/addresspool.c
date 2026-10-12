@@ -392,7 +392,7 @@ static bool client_can_reuse_lease(const struct connection *c)
 	 * Cannot share with clients that can authenticate using NULL.
 	 * Just a bad idea.
 	 */
-	if (c->remote->host.config->authby.authby_null)
+	if (authby_has(c->remote->host.config->authby, AUTH_NULL))
 		return false;
 
 	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */

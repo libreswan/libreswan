@@ -2054,7 +2054,8 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 void wipe_old_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool new_remote_is_authnull = c->remote->host.config->authby.authby_null;
+	bool new_remote_is_authnull =
+		authby_has(c->remote->host.config->authby, AUTH_NULL);
 
 	if (c->local->host.config->xauth.server &&
 	    authby_has(c->remote->host.config->authby, AUTH_PSK)) {
@@ -2105,7 +2106,8 @@ void wipe_old_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_remote_is_nullauth = d->remote->host.config->authby.authby_null;
+		bool old_remote_is_nullauth =
+			authby_has(d->remote->host.config->authby, AUTH_NULL);
 		if (!old_remote_is_nullauth && new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;
