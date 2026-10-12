@@ -112,6 +112,7 @@ make %{?_smp_mflags} \
 %if 0%{with_efence}
     USE_EFENCE=true \
 %endif
+    WERROR_CFLAGS= \
     USERLINK="%{?__global_ldflags}" \
     %{libreswan_config} \
     programs
