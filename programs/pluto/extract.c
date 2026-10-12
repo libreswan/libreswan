@@ -1284,12 +1284,6 @@ static struct authby extract_auth(struct kv kv,
 		return (struct authby) {0};
 	}
 
-	if (strheq(kv.value, "psk")) {
-		return (struct authby) {
-				AUTHBY_PSK,
-		};
-	}
-
 	struct authby authby = {0};
 	if (tto_ikev2_authby(shunk1(kv.value), &authby)) {
 		return authby;
@@ -1319,7 +1313,7 @@ static struct authby extract_authby(struct kv kv,
 	 * This is the symmetric (left+right) version.  There is also
 	 * leftauth=/rightauth= version stored in 'end'
 	 *
-	 * authby=secret|rsasig|null|never|rsa-HASH
+	 * authby=secret|psk|rsasig|null|never|rsa-HASH
 	 *
 	 * using authby=rsasig results in both RSASIG_v1_5 and RSA_PSS
 	 *
@@ -1345,7 +1339,8 @@ static struct authby extract_authby(struct kv kv,
 		/* Supported for IKEv1 and IKEv2 */
 		switch (ike_version) {
 		case IKEv1:
-			if (hunk_streq(val, "secret")) {
+			if (hunk_streq(val, "secret") ||
+			    hunk_streq(val, "psk")) {
 				authby = authby_or(authby, (struct authby) {
 						AUTHBY_PSK,
 					});

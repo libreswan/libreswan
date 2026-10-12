@@ -21,6 +21,7 @@ leftauth() { name=$1 ; shift ; conn leftauth:${name} leftauth=${name} "$@" ; }
 conn defaults
 
 authby secret
+authby psk
 authby rsa
 
 # multiple authentications

@@ -9,18 +9,19 @@
     <para>
       How the security gateways will authenticate to the other side in
       the case of asymmetric authentication; acceptable values are
-      <option>rsasig</option> or <option>rsa</option>
-      for RSA Authentication with SHA-1, <option>rsa-sha2</option>
+      <option>&rsasig;</option> or <option>&rsa;</option>
+      for RSA Authentication with SHA-1, <option>&rsa-sha2;</option>
       for RSA-PSS digital signatures based authentication with SHA2-256,
-      <option>rsa-sha2_384</option> for RSA-PSS digital signatures
-      based authentication with SHA2-384, <option>rsa-sha2_512</option>
+      <option>&rsa-sha2_384;</option> for RSA-PSS digital signatures
+      based authentication with SHA2-384, <option>&rsa-sha2_512;</option>
       for RSA-PSS digital signatures based authentication with SHA2-512,
-      <option>ecdsa</option> for ECDSA digital signatures based
-      authentication, <option>digsig</option> to let the
+      <option>&ecdsa;</option> for ECDSA digital signatures based
+      authentication, <option>&eddsa;</option> for EdDSA digital signatures
+      based authentication, <option>&digsig;</option> to let the
       certificate determine the digital signature algorithm at
       runtime (RSA-PSS, ECDSA, or EdDSA),
-      <option>secret</option> for shared
-      secrets (PSK) authentication and <option>null</option> for
+      <option>&psk;</option> or <option>&secret;</option> for shared
+      secrets (PSK) authentication and <option>&null;</option> for
       null-authentication.
     </para>
     <para>
@@ -38,7 +39,7 @@
     <para>
       When using EAPONLY authentication, which omits the regular IKEv2
       AUTH payload, leftauth= (or rightauth=) should be set to
-      <option>eaponly</option>.
+      <option>&eaponly;</option>.
     </para>
     <para>
       Be aware that the symmetric keyword is <option>authby=</option>

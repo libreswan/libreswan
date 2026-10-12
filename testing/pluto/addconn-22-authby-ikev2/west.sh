@@ -24,6 +24,7 @@ authby digsig
 
 authby null
 authby secret
+authby psk
 
 authby eddsa
 
@@ -74,7 +75,7 @@ leftauth rsasig authby=rsa-sha2_256,rsa-sha2_512 #=> rsa-sha2_256,rsa-sha2_512
 
 # these should get a warning
 
-authby rsa,psk #=> rsa; warning: psk; FAILS TO LOAD AS PSK IS NOT VALID
+authby rsa,psk #=> rsa; warning: psk; POLICY SHOWS PSK
 authby rsa,secret #=> rsa; warning: psk; POLICY SHOWS PSK
 authby rsa-sha2_256,rsa-sha2_512,secret #=> rsa-sha2_256,rsa-sha2_512; warning: psk
 
