@@ -133,6 +133,22 @@ west #
  our auth:rsasig
  their auth:rsasig
 west #
+ authby rsa-v15
+ ipsec addconn --name authby:rsa-v15 authby=rsa-v15
+"authby:rsa-v15": added oriented IKEv2 connection
+ policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
+ our auth:rsa-v15
+ their auth:rsa-v15
+west #
+ authby rsa-pss
+ ipsec addconn --name authby:rsa-pss authby=rsa-pss
+"authby:rsa-pss": added oriented IKEv2 connection
+ policy: IKEv2+RSASSA_PSS+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+ our auth:rsa-pss
+ their auth:rsa-pss
+west #
  authby rsa-sha1
  ipsec addconn --name authby:rsa-sha1 authby=rsa-sha1
 "authby:rsa-sha1": added oriented IKEv2 connection
@@ -173,6 +189,8 @@ west #
  our auth:rsa-sha2_512
  their auth:rsa-sha2_512
 west #
+ # combines
+west #
  authby rsa-sha1,rsa-sha2
  ipsec addconn --name authby:rsa-sha1,rsa-sha2 authby=rsa-sha1,rsa-sha2
 "authby:rsa-sha1,rsa-sha2": added oriented IKEv2 connection
@@ -180,6 +198,8 @@ west #
  v2-auth-hash-policy: SHA1+SHA2_256+SHA2_384+SHA2_512;
  our auth:rsasig
  their auth:rsasig
+west #
+ # combines
 west #
  authby rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
  ipsec addconn --name authby:rsa-sha2_256,rsa-sha2_384,rsa-sha2_512 authby=rsa-sha2_256,rsa-sha2_384,rsa-sha2_512
