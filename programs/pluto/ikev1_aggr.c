@@ -107,7 +107,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
-	if (c->local->host.config->authby.authby_psk &&
+	if (authby_has(c->local->host.config->authby, AUTH_PSK) &&
 	    c->config->aggressive) {
 		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
@@ -363,7 +363,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Aggressive Mode and PSK (IKEv1 authentication is symmetric
 	 * so also applies to this end).
 	 */
-	if (c->remote->host.config->authby.authby_psk &&
+	if (authby_has(c->remote->host.config->authby, AUTH_PSK) &&
 	    c->config->aggressive) {
 		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");

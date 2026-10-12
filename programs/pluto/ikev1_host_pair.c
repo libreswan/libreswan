@@ -135,8 +135,8 @@ static bool match_v1_connection(const struct connection *c,
 			     c->name);
 			return false;
 		}
-	} else if (c->remote->host.config->authby.authby_psk) {
-		if (!hpc->authby.authby_psk) {
+	} else if (authby_has(c->remote->host.config->authby, AUTH_PSK)) {
+		if (!authby_has(hpc->authby, AUTH_PSK)) {
 			ldbg(logger, "  skipping %s, PSK was not proposed",
 			     c->name);
 			return false;

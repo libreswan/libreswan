@@ -1390,7 +1390,7 @@ static bool authby_conflicts(struct authby *conflicts,
 static diag_t authby_conflicted(struct kv kv,
 				struct authby authby)
 {
-	if (authby.authby_never) {
+	if (authby_has(authby, AUTH_NEVER)) {
 		if (!is_never_negotiate_wm(kv.wm)) {
 			return diag("connection with "PRI_KV" must specify shunt type via type=",
 				    pri_kv_key(kv),
@@ -2085,7 +2085,8 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	if (host_config->eap == IKE_EAP_NONE && authby.authby_eaponly) {
+	if (host_config->eap == IKE_EAP_NONE &&
+	    authby_has(authby, AUTH_EAPONLY)) {
 		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
 			    leftright, leftright);
 	}
@@ -2095,7 +2096,8 @@ static diag_t extract_host_end(enum end end,
 	 */
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
-		if (authby.authby_psk || authby.authby_null) {
+		if (authby_has(authby, AUTH_PSK) ||
+		    authby_has(authby, AUTH_NULL)) {
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
@@ -4855,16 +4857,16 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (never_negotiate(c)) {
-		if (!vexpect(c->local->host.config->authby.authby_never &&
-			     c->remote->host.config->authby.authby_never)) {
+		if (!vexpect(authby_has(c->local->host.config->authby, AUTH_NEVER) &&
+			     authby_has(c->remote->host.config->authby, AUTH_NEVER))) {
 			return diag("internal error");
 		}
 	} else {
 
-		if ((c->local->host.config->authby.authby_psk &&
-		     c->remote->host.config->authby.authby_null) ||
-		    (c->local->host.config->authby.authby_null &&
-		     c->remote->host.config->authby.authby_psk)) {
+		if ((authby_has(c->local->host.config->authby, AUTH_PSK) &&
+		     authby_has(c->remote->host.config->authby, AUTH_NULL)) ||
+		    (authby_has(c->local->host.config->authby, AUTH_NULL) &&
+		     authby_has(c->remote->host.config->authby, AUTH_PSK))) {
 			authby_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,

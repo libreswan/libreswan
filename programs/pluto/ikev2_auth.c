@@ -533,7 +533,7 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
 	}
 
-	if (negotiated_authby.authby_eaponly) {
+	if (authby_has(negotiated_authby, AUTH_EAPONLY)) {
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
 		 * bundled in PSK (it certainly isn't one of the
@@ -543,12 +543,12 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
 
-	if (negotiated_authby.authby_psk) {
+	if (authby_has(negotiated_authby, AUTH_PSK)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
 
-	if (negotiated_authby.authby_null) {
+	if (authby_has(negotiated_authby, AUTH_NULL)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_NULL);
 	}
@@ -767,7 +767,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	{
-		if (!remote->authby.authby_psk &&
+		if (!authby_has(remote->authby, AUTH_PSK) &&
 		    ike->sa.st_v2_resume_session == NULL) {
 			/*
 			 * XXX: session resume forces PSK, so
@@ -792,7 +792,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!remote->authby.authby_null) {
+		if (!authby_has(remote->authby, AUTH_NULL)) {
 			authby_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
 				    str_authby(remote->authby, &an));

@@ -180,7 +180,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 * result.  Is local correct?
 			 */
 			struct authby authby = c->local->host.config->authby;
-			jam_string(&buf, ((authby.authby_psk) ? "PRESHARED_KEY" :
+			jam_string(&buf, (authby_has(authby, AUTH_PSK) ? "PRESHARED_KEY" :
 					  authby_has_any(authby, (struct authby) {
 							  AUTHBY_RSASIG_IKEv1,
 							  AUTHBY_RSASSA,

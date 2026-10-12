@@ -311,16 +311,16 @@ static struct authby local_ppk_authby(struct ike_sa *ike)
 			}) ? (struct authby) {
 			AUTHBY_RSASSA_PKCS1_V1_5,
 				}
-		: authby.authby_psk ? (struct authby) {
+		: authby_has(authby, AUTH_PSK) ? (struct authby) {
 			AUTHBY_PSK,
 				}
-		: authby.authby_null ? (struct authby) {
+		: authby_has(authby, AUTH_NULL) ? (struct authby) {
 			AUTHBY_NULL,
 				}
-		: authby.authby_never ? (struct authby) {
+		: authby_has(authby, AUTH_NEVER) ? (struct authby) {
 			AUTHBY_NEVER,
 				}
-		: authby.authby_eaponly ? (struct authby) {
+		: authby_has(authby, AUTH_EAPONLY) ? (struct authby) {
 			AUTHBY_EAPONLY,
 				}
 		: (struct authby) {0});
@@ -442,7 +442,7 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 		return true;
 	}
 
-	if (local_authby.authby_psk) {
+	if (authby_has(local_authby, AUTH_PSK)) {
 		/* store in no_ppk_auth */
 		if (!ikev2_create_psk_auth(PSK_AUTH_SHARED_KEY, ike, id_hash, no_ppk_auth)) {
 			return false; /* was STF_INTERNAL_ERROR but don't tell */

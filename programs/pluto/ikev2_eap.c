@@ -462,7 +462,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	/*
 	 * Confirm EAPONLY, and exclusive.
 	 */
-	if (!c->remote->host.config->authby.authby_eaponly) {
+	if (!authby_has(c->remote->host.config->authby, AUTH_EAPONLY)) {
 		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;

@@ -324,7 +324,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			vdbg("skipping because AGGRESSIVE isn't right");
 			return false;	/* differ about aggressive mode */
 		}
-		if (matching_authbys.authby_psk) {
+		if (authby_has(matching_authbys, AUTH_PSK)) {
 			if (get_connection_psk(d) == NULL) {
 				/* there needs to be a key */
 				vdbg("skipping because PSK and no secret");
@@ -386,7 +386,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			return false;
 		}
 
-		if (matching_authbys.authby_psk) {
+		if (authby_has(matching_authbys, AUTH_PSK)) {
 			/*
 			 * Because this could be a template,
 			 * unconditionally accept PSK, even when there
@@ -404,12 +404,12 @@ static bool score_host_connection(const struct ike_sa *ike,
 			break;
 		}
 
-		if (matching_authbys.authby_null) {
+		if (authby_has(matching_authbys, AUTH_NULL)) {
 			vdbg("NULL so go with it");
 			break;
 		}
 
-		if (matching_authbys.authby_eaponly) {
+		if (authby_has(matching_authbys, AUTH_EAPONLY)) {
 			vdbg("EAPONLY so nothing to check");
 			break;
 		}
@@ -613,7 +613,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	struct connection *c = ike->sa.st_connection;
 
 	vassert(authby_is_set(proposed_authbys));
-	vassert(!proposed_authbys.authby_never);
+	vassert(!authby_has(proposed_authbys, AUTH_NEVER));
 
 	/*
 	 * XXX: should, instead, C be a permanent or template as it
@@ -904,7 +904,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		ldbg(ike->sa.logger,
 		     "rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		     str_id(peer_id, &idb));
-	} else if (c->remote->host.config->authby.authby_null &&
+	} else if (authby_has(c->remote->host.config->authby, AUTH_NULL) &&
 		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,

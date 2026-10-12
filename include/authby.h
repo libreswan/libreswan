@@ -25,27 +25,37 @@
 struct jambuf;
 struct hash_desc;
 
+/*
+ * A bitset of possible auth methods.
+ *
+ * Currently its implemented as a bool array (see flags.h).
+ *
+ * Code needing to test for an individual auth method should use
+ * authby_has(authby, auth).
+ */
+
 struct authby {
-	/*
-	 * XXX: add new authby flags to this array so there's less to
-	 * move over down the track.
-	 */
 	bool authby[AUTH_ROOF];
-#define authby_eaponly authby[AUTH_EAPONLY]
+};
+
+/*
+ * Macros for building authby structures.
+ *
+ * Note the strict grouping.  For instance AUTHBY_RSASSA_SHA2 includes
+ * *all* RSA SHA2 algorithms - i.e., both RSASSA PKCS#1 v1.5 and
+ * RSASSA-PSS.
+ */
 #define AUTHBY_EAPONLY				\
-	.authby_eaponly = true
+	.authby[AUTH_EAPONLY] = true
 
-#define authby_psk authby[AUTH_PSK]
 #define AUTHBY_PSK				\
-	.authby_psk = true
+	.authby[AUTH_PSK] = true
 
-#define authby_null authby[AUTH_NULL]
 #define AUTHBY_NULL				\
-	.authby_null = true
+	.authby[AUTH_NULL] = true
 
-#define authby_never authby[AUTH_NEVER]
 #define AUTHBY_NEVER				\
-	.authby_never = true
+	.authby[AUTH_NEVER] = true
 
 #define AUTHBY_EDDSA				\
 	.authby[AUTH_EDDSA_ED25519] = true
@@ -148,8 +158,6 @@ struct authby {
 #define AUTHBY_ECDSA				\
 	AUTHBY_ECDSA_BLOB,			\
 	AUTHBY_ECDSA_RAW
-
-};
 
 /* all algs IKEv1 and IKEv2 allow */
 
