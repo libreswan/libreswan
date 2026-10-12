@@ -50,9 +50,8 @@ struct authby {
 #define AUTHBY_NULL				\
 	.authby[AUTH_NULL] = true
 
-#define authby_never authby[AUTH_NEVER]
 #define AUTHBY_NEVER				\
-	.authby_never = true
+	.authby[AUTH_NEVER] = true
 
 #define AUTHBY_EDDSA				\
 	.authby[AUTH_EDDSA_ED25519] = true

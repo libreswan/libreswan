@@ -613,7 +613,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	struct connection *c = ike->sa.st_connection;
 
 	vassert(authby_is_set(proposed_authbys));
-	vassert(!proposed_authbys.authby_never);
+	vassert(!authby_has(proposed_authbys, AUTH_NEVER));
 
 	/*
 	 * XXX: should, instead, C be a permanent or template as it

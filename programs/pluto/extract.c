@@ -1390,7 +1390,7 @@ static bool authby_conflicts(struct authby *conflicts,
 static diag_t authby_conflicted(struct kv kv,
 				struct authby authby)
 {
-	if (authby.authby_never) {
+	if (authby_has(authby, AUTH_NEVER)) {
 		if (!is_never_negotiate_wm(kv.wm)) {
 			return diag("connection with "PRI_KV" must specify shunt type via type=",
 				    pri_kv_key(kv),
@@ -4857,8 +4857,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (never_negotiate(c)) {
-		if (!vexpect(c->local->host.config->authby.authby_never &&
-			     c->remote->host.config->authby.authby_never)) {
+		if (!vexpect(authby_has(c->local->host.config->authby, AUTH_NEVER) &&
+			     authby_has(c->remote->host.config->authby, AUTH_NEVER))) {
 			return diag("internal error");
 		}
 	} else {

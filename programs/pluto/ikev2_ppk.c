@@ -317,7 +317,7 @@ static struct authby local_ppk_authby(struct ike_sa *ike)
 		: authby_has(authby, AUTH_NULL) ? (struct authby) {
 			AUTHBY_NULL,
 				}
-		: authby.authby_never ? (struct authby) {
+		: authby_has(authby, AUTH_NEVER) ? (struct authby) {
 			AUTHBY_NEVER,
 				}
 		: authby_has(authby, AUTH_EAPONLY) ? (struct authby) {
