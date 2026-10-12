@@ -533,7 +533,7 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_ECDSA_SHA2_256_P256);
 	}
 
-	if (negotiated_authby.authby_eaponly) {
+	if (authby_has(negotiated_authby, AUTH_EAPONLY)) {
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
 		 * bundled in PSK (it certainly isn't one of the

@@ -25,15 +25,24 @@
 struct jambuf;
 struct hash_desc;
 
+/*
+ * A bitset of possible auth methods.
+ *
+ * Currently its implemented as a bool array (see flags.h).
+ *
+ * Code needing to test for an individual auth method should use
+ * authby_has(authby, auth).
+ */
+
 struct authby {
 	/*
 	 * XXX: add new authby flags to this array so there's less to
 	 * move over down the track.
 	 */
 	bool authby[AUTH_ROOF];
-#define authby_eaponly authby[AUTH_EAPONLY]
+
 #define AUTHBY_EAPONLY				\
-	.authby_eaponly = true
+	.authby[AUTH_EAPONLY] = true
 
 #define authby_psk authby[AUTH_PSK]
 #define AUTHBY_PSK				\

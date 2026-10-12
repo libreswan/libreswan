@@ -409,7 +409,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			break;
 		}
 
-		if (matching_authbys.authby_eaponly) {
+		if (authby_has(matching_authbys, AUTH_EAPONLY)) {
 			vdbg("EAPONLY so nothing to check");
 			break;
 		}

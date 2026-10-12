@@ -2085,7 +2085,8 @@ static diag_t extract_host_end(enum end end,
 		return d;
 	}
 
-	if (host_config->eap == IKE_EAP_NONE && authby.authby_eaponly) {
+	if (host_config->eap == IKE_EAP_NONE &&
+	    authby_has(authby, AUTH_EAPONLY)) {
 		return diag("%sauth can only be 'eaponly' when %sautheap is not 'none'",
 			    leftright, leftright);
 	}
