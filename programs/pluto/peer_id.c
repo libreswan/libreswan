@@ -324,7 +324,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			vdbg("skipping because AGGRESSIVE isn't right");
 			return false;	/* differ about aggressive mode */
 		}
-		if (matching_authbys.authby_psk) {
+		if (authby_has(matching_authbys, AUTH_PSK)) {
 			if (get_connection_psk(d) == NULL) {
 				/* there needs to be a key */
 				vdbg("skipping because PSK and no secret");
@@ -386,7 +386,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 			return false;
 		}
 
-		if (matching_authbys.authby_psk) {
+		if (authby_has(matching_authbys, AUTH_PSK)) {
 			/*
 			 * Because this could be a template,
 			 * unconditionally accept PSK, even when there

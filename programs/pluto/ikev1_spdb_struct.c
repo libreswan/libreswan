@@ -1420,10 +1420,10 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 				switch (attr.isaat_lv) {
 				case XAUTHInitPreShared:
 					xauth = true;
-					authby.authby_psk = true;
+					authby = authby_add(authby, AUTH_PSK);
 					break;
 				case OAKLEY_PRESHARED_KEY:
-					authby.authby_psk = true;
+					authby = authby_add(authby, AUTH_PSK);
 					break;
 				case XAUTHInitRSA:
 					xauth = true;
@@ -1851,7 +1851,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					}
 psk_common:
 
-					if (!c->remote->host.config->authby.authby_psk) {
+					if (!authby_has(c->remote->host.config->authby, AUTH_PSK)) {
 						UGH("policy does not allow OAKLEY_PRESHARED_KEY authentication");
 					} else {
 						/* check that we can find a proper preshared secret */
@@ -2044,7 +2044,7 @@ rsasig_common:
 
 		while (ok) {
 
-			if (c->remote->host.config->authby.authby_psk &&
+			if (authby_has(c->remote->host.config->authby, AUTH_PSK) &&
 			    pss != NULL &&
 			    ta.ta_prf != NULL) {
 				const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);

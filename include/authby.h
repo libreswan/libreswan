@@ -44,9 +44,8 @@ struct authby {
 #define AUTHBY_EAPONLY				\
 	.authby[AUTH_EAPONLY] = true
 
-#define authby_psk authby[AUTH_PSK]
 #define AUTHBY_PSK				\
-	.authby_psk = true
+	.authby[AUTH_PSK] = true
 
 #define authby_null authby[AUTH_NULL]
 #define AUTHBY_NULL				\

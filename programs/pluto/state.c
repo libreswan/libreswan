@@ -2057,7 +2057,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 	bool new_remote_is_authnull = c->remote->host.config->authby.authby_null;
 
 	if (c->local->host.config->xauth.server &&
-	    c->remote->host.config->authby.authby_psk) {
+	    authby_has(c->remote->host.config->authby, AUTH_PSK)) {
 		/*
 		 * If we are a server and authenticate all clients
 		 * using PSK then all clients use the same group ID

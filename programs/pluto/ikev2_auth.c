@@ -543,7 +543,7 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
 
-	if (negotiated_authby.authby_psk) {
+	if (authby_has(negotiated_authby, AUTH_PSK)) {
 		return v2AUTH_method(ike, /*ignored*/(struct authby){0},
 				     IKEv2_AUTH_SHARED_KEY_MAC);
 	}
@@ -767,7 +767,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	{
-		if (!remote->authby.authby_psk &&
+		if (!authby_has(remote->authby, AUTH_PSK) &&
 		    ike->sa.st_v2_resume_session == NULL) {
 			/*
 			 * XXX: session resume forces PSK, so

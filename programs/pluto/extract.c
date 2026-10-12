@@ -2096,7 +2096,7 @@ static diag_t extract_host_end(enum end end,
 	 */
 
 	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
-		if (authby.authby_psk || authby.authby_null) {
+		if (authby_has(authby, AUTH_PSK) || authby.authby_null) {
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
@@ -4862,10 +4862,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	} else {
 
-		if ((c->local->host.config->authby.authby_psk &&
+		if ((authby_has(c->local->host.config->authby, AUTH_PSK) &&
 		     c->remote->host.config->authby.authby_null) ||
 		    (c->local->host.config->authby.authby_null &&
-		     c->remote->host.config->authby.authby_psk)) {
+		     authby_has(c->remote->host.config->authby, AUTH_PSK))) {
 			authby_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,

@@ -1037,7 +1037,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
 		if (c->local->host.config->xauth.server &&
-		    c->remote->host.config->authby.authby_psk) {
+		    authby_has(c->remote->host.config->authby, AUTH_PSK)) {
 			/*
 			 * If we are a server and expect remote
 			 * clients to authenticate using PSK, then all

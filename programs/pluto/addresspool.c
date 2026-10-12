@@ -385,7 +385,7 @@ static bool client_can_reuse_lease(const struct connection *c)
 	 * it either uses GroupID or a non-unique ID_IP* due to
 	 * clients using pre-NAT IP address
 	 */
-	if (c->remote->host.config->authby.authby_psk)
+	if (authby_has(c->remote->host.config->authby, AUTH_PSK))
 		return false;
 
 	/*
