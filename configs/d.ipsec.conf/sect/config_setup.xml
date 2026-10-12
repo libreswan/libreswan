@@ -82,6 +82,7 @@
       &setup.uniqueids;
       &setup.virtual-private;
       &setup.signature-hash-algorithms;
+      &setup.ike-sa-init-full-transcript-auth;
     </variablelist>
   </para>
 </refsect2>

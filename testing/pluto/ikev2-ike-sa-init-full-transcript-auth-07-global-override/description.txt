@@ -1,0 +1,2 @@
+Both west and east have ike-sa-init-full-transcript-auth=no on the connection, but ike-sa-init-full-transcript-auth=yes globally, in
+config setup.

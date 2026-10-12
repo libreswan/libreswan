@@ -5,7 +5,7 @@ west #
 west #
  START() { RUN ipsec pluto --config $1 ; ../../guestbin/wait-until-pluto-started; }
 west #
- STATUS() { ipsec status | sed -n -e 's/.*\(signature-hash-algorithms=[^;]*\)[,;]/\1/p' ; }
+ STATUS() { ipsec status | sed -n -e 's/.*\(signature-hash-algorithms=[^,;]*\)[,;].*/\1/p' ; }
 west #
  STOP() { RUN ipsec whack --shutdown ; }
 west #
