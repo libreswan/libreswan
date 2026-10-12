@@ -1,0 +1,1 @@
+Connection switching must not switch to an ike-sa-init-full-transcript-auth=yes connection when the extension was not negotiated.
