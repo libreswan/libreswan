@@ -410,12 +410,17 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 			}
 		}
 
-		shunk_t h = hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
-		if (h.len == 0) {
+		const struct pubkey_signer_blob *blob = NULL;
+		FOR_EACH_ITEM(b, &signer_pubkey_rsassa_pss_blob.digital_signature_blobs) {
+			if (b->hash == hash_algo) {
+				blob = b;
+				break;
+			}
+		}
+		if (blob == NULL || blob->len <= 1) {
 			llog_pexpect(ike->sa.logger, HERE,
 				     "negotiated hash algorithm %s has no RSA ASN1 blob",
 				     hash_algo->common.fqn);
-			return false;
 		}
 
 		chunk_t hashval = NULL_HUNK;
@@ -430,12 +435,12 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 			 * - ASN.1 algo blob
 			 * - hashval
 			 */
-			int len = h.len + hashval.len;
+			int len = blob->len + hashval.len;
 			uint8_t *blobs = alloc_bytes(len,
 				"bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 
-			memcpy(&blobs[0], h.ptr, h.len);
-			memcpy(&blobs[h.len], hashval.ptr, hashval.len);
+			memcpy(&blobs[0], blob->ptr, blob->len);
+			memcpy(&blobs[blob->len], hashval.ptr, hashval.len);
 			*no_ppk_auth = chunk2(blobs, len);
 		}
 		free_chunk_content(&hashval);
