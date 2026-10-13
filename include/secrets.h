@@ -268,12 +268,6 @@ struct hash_signature pubkey_sign_hash(const struct pubkey_signer *signer,
 				       const struct hash_desc *hash_alg,
 				       struct logger *logger);
 
-extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
-
-extern const struct pubkey_type pubkey_type_rsa;
-extern const struct pubkey_type pubkey_type_ecdsa;
-extern const struct pubkey_type pubkey_type_eddsa;
-
 extern const struct pubkey_signer signer_pubkey_rsa_ikev1;		/* IKEv1 */
 
 extern const struct pubkey_signer signer_pubkey_rsassa_pkcs1_1_5_raw;	/* rfc7296 */
@@ -285,8 +279,17 @@ extern const struct pubkey_signer signer_pubkey_ecdsa_blob;		/* rfc7427 */
 extern const struct pubkey_signer signer_pubkey_rsassa_pss_blob;	/* rfc7427 */
 extern const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob;	/* rfc7427+ */
 
+extern const struct pubkey_signers {
+	unsigned len;
+	const struct pubkey_signer *const *list COUNTED_BY_PTR(len);
+} pubkey_blob_signers;
+
 const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
 const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *public_key);
+
+extern const struct pubkey_type pubkey_type_rsa;
+extern const struct pubkey_type pubkey_type_ecdsa;
+extern const struct pubkey_type pubkey_type_eddsa;
 
 /*
  * Public Key Machinery.

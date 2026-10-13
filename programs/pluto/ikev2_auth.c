@@ -41,6 +41,7 @@
 #include "ikev2_psk.h"
 #include "ikev2_send.h"
 #include "ikev2_notification.h"
+#include "lswcdefs.h"
 
 struct v2AUTH_blobs {
 	uint32_t mid;
@@ -395,17 +396,13 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 		struct authby signer_authby = authby_and_hash(hash_authby, hash);
 		const struct pubkey_signer *signer = NULL;
 		vdbg("selecting negotiated signer algorithm");
-		FOR_EACH_THING(signerp,
-			       &signer_pubkey_rsassa_pss_blob,
-			       &signer_pubkey_ecdsa_blob,
-			       &signer_pubkey_eddsa_ed25519_blob,
-			       &signer_pubkey_rsassa_pkcs1_1_5_blob) {
-			if (authby_has_any(signer_authby, signerp->authby)) {
-				signer = signerp;
+		FOR_EACH_ITEM(s, &pubkey_blob_signers) {
+			if (authby_has_any(signer_authby, (*s)->authby)) {
+				signer = (*s);
 				vdbg("selected signer %s", signer->name);
 				break;
 			}
-			vdbg("skipping signer %s as not negotiated", signerp->name);
+			vdbg("skipping signer %s as not negotiated", (*s)->name);
 		}
 		if (signer == NULL) {
 			authby_buf ab;
@@ -826,14 +823,8 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		 * For all signers that match the peer's allowed
 		 * authby, try the signer's hashes blobs.
 		 */
-		const struct pubkey_signer *signers[] = {
-			&signer_pubkey_eddsa_ed25519_blob,
-			&signer_pubkey_ecdsa_blob,
-			&signer_pubkey_rsassa_pss_blob,
-			&signer_pubkey_rsassa_pkcs1_1_5_blob,
-		};
 
-		FOR_EACH_ELEMENT(sp, signers) {
+		FOR_EACH_ITEM(sp, &pubkey_blob_signers) {
 			const struct pubkey_signer *signer = (*sp);
 
 			/*

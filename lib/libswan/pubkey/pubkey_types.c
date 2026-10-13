@@ -15,17 +15,15 @@
 
 #include "secrets.h"
 
-const struct pubkey_type *pubkey_types[] = {
+static const struct pubkey_type *pubkey_type[] = {
 	&pubkey_type_rsa,
 	&pubkey_type_ecdsa,
 	&pubkey_type_eddsa,
-	NULL,
 };
 
 const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type algorithm)
 {
-	for (const struct pubkey_type **p = pubkey_types;
-	     (*p) != NULL; p++) {
+	FOR_EACH_ELEMENT(p, pubkey_type) {
 		const struct pubkey_type *type = (*p);
 		if (type->ipseckey_algorithm == algorithm) {
 			return type;
