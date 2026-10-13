@@ -27,15 +27,6 @@
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
 
-static const uint8_t asn1_pkcs1_1_5_rsa_sha1_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
-	ASN1_PKCS1_1_5_RSA_SIZE,
-	ASN1_PKCS1_1_5_RSA_SHA1_BLOB
-};
-static const uint8_t asn1_ecdsa_sha1_blob[1+ASN1_ECDSA_SHA1_SIZE] = {
-	ASN1_ECDSA_SHA1_SIZE,
-	ASN1_ECDSA_SHA1_BLOB
-};
-
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
 		.fqn = "SHA1",
@@ -56,9 +47,4 @@ const struct hash_desc ike_alg_hash_sha1 = {
 	.hash_digest_size = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_hash_nss_ops,
-
-	.digital_signature_blob = {
-		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = ARRAY_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_blob),
-		[DIGITAL_SIGNATURE_ECDSA_BLOB] = ARRAY_AS_HUNK(asn1_ecdsa_sha1_blob),
-	},
 };
