@@ -279,6 +279,11 @@ extern const struct pubkey_signer signer_pubkey_ecdsa_blob;		/* rfc7427 */
 extern const struct pubkey_signer signer_pubkey_rsassa_pss_blob;	/* rfc7427 */
 extern const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob;	/* rfc7427+ */
 
+extern const struct pubkey_signers {
+	unsigned len;
+	const struct pubkey_signer *const *list COUNTED_BY_PTR(len);
+} pubkey_blob_signers;
+
 const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
 const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *public_key);
 
