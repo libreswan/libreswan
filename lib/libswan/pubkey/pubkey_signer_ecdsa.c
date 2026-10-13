@@ -43,6 +43,7 @@
 #include "secrets.h"
 #include "ike_alg_ke.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
+#include "ike_alg_hash.h"
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
 						 const struct crypt_mac *hash_to_sign,
@@ -276,10 +277,55 @@ static bool ECDSA_digsig_authenticate_hash_signature(const struct pubkey_signer 
 	return true;
 }
 
+static const uint8_t asn1_ecdsa_sha2_256_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_256_BLOB
+};
+static const uint8_t asn1_ecdsa_sha2_384_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_384_BLOB
+};
+static const uint8_t asn1_ecdsa_sha2_512_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_512_BLOB
+};
+#if 0
+static const uint8_t asn1_ecdsa_sha1_blob[1+ASN1_ECDSA_SHA1_SIZE] = {
+	ASN1_ECDSA_SHA1_SIZE,
+	ASN1_ECDSA_SHA1_BLOB
+};
+#endif
+
+static const struct pubkey_signer_blob ecdsa_pubkey_signer_blobs[] = {
+	{
+		.auth = AUTH_ECDSA_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_ecdsa_sha2_256_blob),
+	},
+	{
+		.auth = AUTH_ECDSA_SHA2_384_BLOB,
+		.hash = &ike_alg_hash_sha2_384,
+		HUNK_PTR(asn1_ecdsa_sha2_384_blob),
+	},
+	{
+		.auth = AUTH_ECDSA_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_ecdsa_sha2_512_blob),
+	},
+#if 0
+	{
+		.auth = AUTH_ECDSA_SHA1_BLOB,
+		.hash = &ike_alg_hash_sha1,
+		HUNK_PTR(asn1_ecdsa_sha1_blob),
+	},
+#endif
+};
+
 const struct pubkey_signer signer_pubkey_ecdsa_blob = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
+	.digital_signature_blobs = { LIST_REF(ecdsa_pubkey_signer_blobs), },
 	.authby = { AUTHBY_ECDSA_BLOB, },
 	.sign_hash = ECDSA_digsig_sign_hash,
 	.authenticate_hash_signature = ECDSA_digsig_authenticate_hash_signature,

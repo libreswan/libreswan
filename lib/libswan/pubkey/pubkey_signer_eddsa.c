@@ -35,6 +35,7 @@
 #include "ike_alg_ke.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 #include "crypt_hash.h"
+#include "ike_alg_hash.h"
 
 static size_t EDDSA_jam_auth_method(struct jambuf *buf,
 				    const struct pubkey_signer *signer,
@@ -216,10 +217,38 @@ static bool EDDSA_authenticate_message_signature(const struct pubkey_signer *sig
 	return ok;
 }
 
+static const uint8_t asn1_eddsa_identity_ed25519_blob[1+ASN1_EDDSA_IDENTITY_SIZE] = {
+	ASN1_EDDSA_IDENTITY_SIZE,
+	ASN1_EDDSA_IDENTITY_ED25519_BLOB,
+};
+
+#if 0
+static const uint8_t asn1_eddsa_identity_ed448_blob[1+ASN1_EDDSA_IDENTITY_SIZE] = {
+	ASN1_EDDSA_IDENTITY_SIZE,
+	ASN1_EDDSA_IDENTITY_ED448_BLOB,
+};
+#endif
+
+static const struct pubkey_signer_blob eddsa_pubkey_signer_blobs[] = {
+	{
+		.auth = AUTH_EDDSA_ED25519,
+		.hash = &ike_alg_hash_identity,
+		HUNK_PTR(asn1_eddsa_identity_ed25519_blob),
+	},
+#if 0
+	{
+		.auth = AUTH_EDDSA_ED448,
+		.hash = &ike_alg_hash_identity,
+		HUNK_PTR(asn1_eddsa_identity_ed448_blob),
+	},
+#endif
+};
+
 const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob = {
 	.name = "EDDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_eddsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
+	.digital_signature_blobs = { LIST_REF(eddsa_pubkey_signer_blobs), },
 	.authby = { AUTHBY_EDDSA, },
 	.sign_message = EDDSA_sign_message,
 	.authenticate_message_signature = EDDSA_authenticate_message_signature,

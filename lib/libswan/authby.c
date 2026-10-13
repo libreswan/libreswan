@@ -325,9 +325,9 @@ static size_t jam_authby_raw(struct jambuf *buf,
 			s += jam_string(buf, sep);
 			sep = "+";
 			if (human) {
-				jam_name_human(buf, &auth_names, auth);
+				s += jam_name_human(buf, &auth_names, auth);
 			} else {
-				jam_name_short(buf, &auth_names, auth);
+				s += jam_name_short(buf, &auth_names, auth);
 			}
 		}
 	}

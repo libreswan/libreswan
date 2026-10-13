@@ -176,6 +176,8 @@ char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESUL
  * array is empty.
  */
 
+#define DATA_PTR(ARRAY) .len = elemsof(ARRAY), .data = (ARRAY)
+
 #define alloc_data(DATA, COUNT)					\
 	({							\
 		(DATA)->data = alloc_things((DATA)->data[0],	\
