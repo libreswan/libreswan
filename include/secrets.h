@@ -223,9 +223,31 @@ struct pubkey_type {
 	} nss;
 };
 
+/*
+ * IKEv2 v2AUTH new "Digital Signature" payloads use a "blob" to
+ * identify the authentication algorithm.
+ */
+
+struct pubkey_signer_blob {
+	enum auth auth;
+	const struct hash_desc *hash;
+	/* hunk like */
+	unsigned len;
+	const uint8_t *ptr COUNTED_BY_PTR(len);
+};
+
+/*
+ * Public key (digital signature) signer.
+ *
+ * XXX: rename to "signer" and incorporate PSK?
+ */
 struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
+	struct {
+		unsigned len;
+		const struct pubkey_signer_blob *list COUNTED_BY_PTR(len);
+	} digital_signature_blobs;
 	struct authby authby; /* bits it can authenticate */
 	const struct pubkey_type *type;
 	struct hash_signature (*sign_message)(const struct pubkey_signer *signer,

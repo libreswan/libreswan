@@ -139,9 +139,49 @@ const struct pubkey_signer signer_pubkey_rsassa_pkcs1_1_5_raw = {
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
+static const uint8_t asn1_rsassa_pkcs1_v1_5_sha2_256_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_256_BLOB
+};
+static const uint8_t asn1_rsassa_pkcs1_v1_5_sha2_384_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_384_BLOB
+};
+static const uint8_t asn1_rsassa_pkcs1_v1_5_sha2_512_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_512_BLOB
+};
+static const uint8_t asn1_rsassa_pkcs1_v1_5_sha1_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA1_BLOB
+};
+static const struct pubkey_signer_blob rsassa_pkcs1_v1_5_pubkey_signer_blobs[] = {
+	{
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_256_blob),
+	},
+	{
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB,
+		.hash = &ike_alg_hash_sha2_384,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_384_blob),
+	},
+	{
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_512_blob),
+	},
+	{
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB,
+		.hash = &ike_alg_hash_sha1,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha1_blob),
+	},
+};
+
 const struct pubkey_signer signer_pubkey_rsassa_pkcs1_1_5_blob = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+	.digital_signature_blobs = { LIST_REF(rsassa_pkcs1_v1_5_pubkey_signer_blobs), },
 	.authby = { AUTHBY_RSASSA_PKCS1_V1_5_BLOB, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
@@ -304,10 +344,41 @@ static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signe
 	return true;
 }
 
+static const uint8_t asn1_rsassa_pss_sha2_256_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_256_BLOB
+};
+static const uint8_t asn1_rsassa_pss_sha2_384_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_384_BLOB
+};
+static const uint8_t asn1_rsassa_pss_sha2_512_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_512_BLOB
+};
+static const struct pubkey_signer_blob rsassa_pss_pubkey_signer_blobs[] = {
+	{
+		.auth = AUTH_RSASSA_PSS_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_rsassa_pss_sha2_256_blob),
+	},
+	{
+		.auth = AUTH_RSASSA_PSS_SHA2_384_BLOB,
+		.hash = &ike_alg_hash_sha2_384,
+		HUNK_PTR(asn1_rsassa_pss_sha2_384_blob),
+	},
+	{
+		.auth = AUTH_RSASSA_PSS_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_rsassa_pss_sha2_512_blob),
+	},
+};
+
 const struct pubkey_signer signer_pubkey_rsassa_pss_blob = {
 	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
+	.digital_signature_blobs = { LIST_REF(rsassa_pss_pubkey_signer_blobs), },
 	.authby = { AUTHBY_RSASSA_PSS_BLOB, },
 	.sign_hash = RSA_rsassa_pss_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_rsassa_pss,
