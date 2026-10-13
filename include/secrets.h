@@ -243,7 +243,6 @@ struct pubkey_signer_blob {
  */
 struct pubkey_signer {
 	const char *name;
-	enum digital_signature_blob digital_signature_blob;
 	struct {
 		unsigned len;
 		/* preference ordered */

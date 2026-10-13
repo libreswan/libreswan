@@ -131,7 +131,6 @@ static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_si
 
 const struct pubkey_signer signer_pubkey_rsassa_pkcs1_1_5_raw = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
-	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.authby = { AUTHBY_RSASSA_PKCS1_V1_5_SHA1_RAW, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
@@ -181,7 +180,6 @@ static const struct pubkey_signer_blob rsassa_pkcs1_v1_5_pubkey_signer_blobs[] =
 
 const struct pubkey_signer signer_pubkey_rsassa_pkcs1_1_5_blob = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
-	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 	.digital_signature_blobs = { LIST_REF(rsassa_pkcs1_v1_5_pubkey_signer_blobs), },
 	.authby = { AUTHBY_RSASSA_PKCS1_V1_5_BLOB, },
 	.type = &pubkey_type_rsa,
@@ -378,7 +376,6 @@ static const struct pubkey_signer_blob rsassa_pss_pubkey_signer_blobs[] = {
 const struct pubkey_signer signer_pubkey_rsassa_pss_blob = {
 	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
-	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 	.digital_signature_blobs = { LIST_REF(rsassa_pss_pubkey_signer_blobs), },
 	.authby = { AUTHBY_RSASSA_PSS_BLOB, },
 	.sign_hash = RSA_rsassa_pss_sign_hash,

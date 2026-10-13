@@ -162,7 +162,6 @@ static size_t ECDSA_jam_auth_method(struct jambuf *buf,
 const struct pubkey_signer signer_pubkey_ecdsa_raw = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
-	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.authby = { AUTHBY_ECDSA_RAW, },
 	.sign_hash = ECDSA_raw_sign_hash,
 	.authenticate_hash_signature = ECDSA_raw_authenticate_hash_signature,
@@ -325,7 +324,6 @@ static const struct pubkey_signer_blob ecdsa_pubkey_signer_blobs[] = {
 const struct pubkey_signer signer_pubkey_ecdsa_blob = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
-	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 	.digital_signature_blobs = { LIST_REF(ecdsa_pubkey_signer_blobs), },
 	.authby = { AUTHBY_ECDSA_BLOB, },
 	.sign_hash = ECDSA_digsig_sign_hash,
