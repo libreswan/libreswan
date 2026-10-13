@@ -155,11 +155,12 @@ static const uint8_t asn1_rsassa_pkcs1_v1_5_sha1_blob[1+ASN1_PKCS1_1_5_RSA_SIZE]
 	ASN1_PKCS1_1_5_RSA_SIZE,
 	ASN1_PKCS1_1_5_RSA_SHA1_BLOB
 };
+/* preference order */
 static const struct pubkey_signer_blob rsassa_pkcs1_v1_5_pubkey_signer_blobs[] = {
 	{
-		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,
-		.hash = &ike_alg_hash_sha2_256,
-		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_256_blob),
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_512_blob),
 	},
 	{
 		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB,
@@ -167,9 +168,9 @@ static const struct pubkey_signer_blob rsassa_pkcs1_v1_5_pubkey_signer_blobs[] =
 		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_384_blob),
 	},
 	{
-		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB,
-		.hash = &ike_alg_hash_sha2_512,
-		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_512_blob),
+		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_rsassa_pkcs1_v1_5_sha2_256_blob),
 	},
 	{
 		.auth = AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB,
@@ -358,9 +359,9 @@ static const uint8_t asn1_rsassa_pss_sha2_512_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] 
 };
 static const struct pubkey_signer_blob rsassa_pss_pubkey_signer_blobs[] = {
 	{
-		.auth = AUTH_RSASSA_PSS_SHA2_256_BLOB,
-		.hash = &ike_alg_hash_sha2_256,
-		HUNK_PTR(asn1_rsassa_pss_sha2_256_blob),
+		.auth = AUTH_RSASSA_PSS_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_rsassa_pss_sha2_512_blob),
 	},
 	{
 		.auth = AUTH_RSASSA_PSS_SHA2_384_BLOB,
@@ -368,9 +369,9 @@ static const struct pubkey_signer_blob rsassa_pss_pubkey_signer_blobs[] = {
 		HUNK_PTR(asn1_rsassa_pss_sha2_384_blob),
 	},
 	{
-		.auth = AUTH_RSASSA_PSS_SHA2_512_BLOB,
-		.hash = &ike_alg_hash_sha2_512,
-		HUNK_PTR(asn1_rsassa_pss_sha2_512_blob),
+		.auth = AUTH_RSASSA_PSS_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_rsassa_pss_sha2_256_blob),
 	},
 };
 

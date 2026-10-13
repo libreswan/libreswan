@@ -246,6 +246,7 @@ struct pubkey_signer {
 	enum digital_signature_blob digital_signature_blob;
 	struct {
 		unsigned len;
+		/* preference ordered */
 		const struct pubkey_signer_blob *list COUNTED_BY_PTR(len);
 	} digital_signature_blobs;
 	struct authby authby; /* bits it can authenticate */
