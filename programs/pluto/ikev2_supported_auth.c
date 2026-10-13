@@ -51,19 +51,13 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 
 	static const struct auth_method {
 		enum {
-			NO_OCTET = 1,
-			TWO_OCTET,
+			NO_OCTET = 0,
+			TWO_OCTET = 1,
 			THREE_OCTET,
-			MULTI_OCTET,
 		} kind;
 		const char *story;
 		enum ikev2_auth_method method;
-		const struct hash_desc *hash;
-		enum digital_signature_blob blob;
 	} auth_methods[AUTH_ROOF] = {
-		/*ignore these*/
-		[AUTH_NEVER].kind = NO_OCTET,
-		[AUTH_EAPONLY].kind = NO_OCTET,
 		/*real*/
 		[AUTH_PSK] = {
 			.kind = TWO_OCTET,
@@ -97,97 +91,48 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 			.story = "SUPPORTED_AUTH_METHODS 'ECDSA_SHA2_512_P521' announced",
 			.method = IKEv2_AUTH_ECDSA_SHA2_512_P521,
 		},
-
-		[AUTH_RSASSA_PSS_SHA2_512_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PSS-SHA2-512",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_512,
-			.blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
-		},
-		[AUTH_RSASSA_PSS_SHA2_384_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PSS-SHA2-384",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_384,
-			.blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
-		},
-		[AUTH_RSASSA_PSS_SHA2_256_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PSS-SHA2-256",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_256,
-			.blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
-		},
-
-		[AUTH_ECDSA_SHA2_512_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "ECDSA-SHA2-512",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_512,
-			.blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
-		},
-		[AUTH_ECDSA_SHA2_384_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "ECDSA-SHA2-384",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_384,
-			.blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
-		},
-		[AUTH_ECDSA_SHA2_256_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "ECDSA-SHA2-256",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_256,
-			.blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
-		},
-
-		[AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PKCS#1_v1_5-SHA1",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha1,
-			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-		},
-		[AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PKCS#1-v1_5-SHA2-512",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_512,
-			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-		},
-		[AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PKCS#1-v1_5-SHA2-384",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_384,
-			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-		},
-		[AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB] = {
-			.kind = MULTI_OCTET,
-			.story = "RSASSA-PKCS#1_v1_5-SHA2-256",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_sha2_256,
-			.blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
-		},
-
-		[AUTH_EDDSA_ED25519] = {
-			.kind = MULTI_OCTET,
-			.story = "EDDSA-ED25519",
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_identity,
-			.blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
-		},
-#if 0
-		[AUTH_EDDSA_ED488] = {
-			.story = "EDDSA-ED448",
-			.kind = MULTI_OCTET,
-			.method = IKEv2_AUTH_DIGITAL_SIGNATURE,
-			.hash = &ike_alg_hash_identity,
-			.blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB,
-		},
-#endif
 	};
+
+
+	/*
+	 * First emit the new "Digital Signature" auth payload
+	 * methods.  Presumably these are prefered?
+	 *
+	 * As each is emitted, scrub the authby bit so that the next
+	 * loop doesn't try to find it.
+	 */
+
+	FOR_EACH_ITEM(signer, &pubkey_blob_signers) {
+
+		FOR_EACH_ITEM(blob, &(*signer)->digital_signature_blobs) {
+			enum auth auth = blob->auth;
+			if (!authby_has(authby, auth)) {
+				continue;
+			}
+
+			/* handled */
+			authby.authby[auth] = false; /* XXX: authby_del()? */
+
+			if (PBAD(outs->logger, blob->len <= 1)) {
+				continue;
+			}
+
+			/* +1/-1 skips the first byte, which contains the size of the blob */
+			shunk_t algid = shunk_slice(*blob, 1, blob->len);
+			uint8_t hdr[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
+				(uint8_t)(THREE_OCTET_ANNOUNCEMENT_LENGTH + algid.len),
+				IKEv2_AUTH_DIGITAL_SIGNATURE,
+				0, /* cert link */
+			};
+			if (!pbs_out_raw(&n_pbs, hdr, sizeof(hdr),
+					 (*signer)->name)) {
+				return false;
+			}
+			if (!pbs_out_hunk(&n_pbs, algid, (*signer)->name)) {
+				return false;
+			}
+		}
+	}
 
 	/*
 	 * XXX: The order that supported, and hence prefered,
@@ -243,42 +188,6 @@ bool emit_v2N_SUPPORTED_AUTH_METHODS(const struct ike_sa *ike,
 						 method->story)) {
 					return false;
 				}
-				continue;
-			}
-			case MULTI_OCTET:
-			{
-				if (PBAD(outs->logger, method->hash == NULL)) {
-					continue;
-				}
-
-				shunk_t b = method->hash->digital_signature_blob[method->blob];
-				if (PBAD(outs->logger, b.len == 0)) {
-					continue;
-				}
-
-				/* +1/-1 skips the first byte, which contains the size of the blob */
-				shunk_t algid = shunk_slice(b, 1, b.len);
-				uint8_t hdr[THREE_OCTET_ANNOUNCEMENT_LENGTH] = {
-					(uint8_t)(THREE_OCTET_ANNOUNCEMENT_LENGTH + algid.len),
-					IKEv2_AUTH_DIGITAL_SIGNATURE,
-					0, /* cert link */
-				};
-				if (!pbs_out_raw(&n_pbs, hdr, sizeof(hdr),
-						 method->story)) {
-					return false;
-				}
-				if (!pbs_out_hunk(&n_pbs, algid,
-						  method->story)) {
-					return false;
-				}
-				continue;
-			}
-			default:
-			{
-				name_buf ab;
-				llog_pexpect(outs->logger, HERE,
-					     "unhandled auth method %s",
-					     str_name_short(&auth_names, auth, &ab));
 				continue;
 			}
 			}
