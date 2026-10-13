@@ -110,6 +110,7 @@ void replace_ro_hunk(struct ro_hunk **hunk, struct ro_hunk *with,
  */
 
 #define ARRAY_AS_HUNK(ARRAY) { .ptr = (ARRAY), .len = sizeof(ARRAY), }
+#define HUNK_PTR(ARRAY) .len = sizeof(ARRAY), .ptr = (ARRAY)
 
 #define NULL_HUNK { .ptr = NULL, .len = 0, }
 /* #define EMPTY_HUNK { .ptr = &buffer, .len = 0, } */
