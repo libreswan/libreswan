@@ -149,10 +149,13 @@ char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESUL
  *
  *   struct whatever {
  *     unsigned len;
- *     <TYPE> items[];
+ *     <TYPE> items[] COUNTED_BY(len);
  *   }
  *
  * XXX: should this be made HUNK like, as in call the items[] ptr[]?
+ *
+ * XXX: probably not, instead the hunk like structures should use
+ * something other than .ptr as it just creates confusion.
  */
 
 #define ITEMS_FOR_EACH(ITEM, ITEMS)					\
@@ -166,7 +169,7 @@ char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESUL
  *
  *   struct whatever {
  *      unsigned len;
- *      <TYPE> *data;
+ *      <TYPE> *data COUNTED_BY_PTR(len);
  *   }
  *
  * Since .len always exits it simplifies code needing to check if the
