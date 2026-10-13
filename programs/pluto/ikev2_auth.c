@@ -834,7 +834,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			struct authby signer_hashes = authby_and(remote->authby, signer->authby);
 			if (!authby_is_set(signer_hashes)) {
 				authby_buf rab;
-				ldbg(ike->sa.logger, "digsig:   signer %s does not match authby %s",
+				ldbg(ike->sa.logger, "digsig: signer %s does not match authby %s",
 				     signer->name,
 				     str_authby(remote->authby, &rab));
 				continue;
@@ -848,48 +848,56 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 			authby_buf sab;
 			ldbg(ike->sa.logger,
-			     "digsig: looking for signer %s hashes %s matching DIGSIG blob",
-			     signer->name, str_authby(signer_hashes, &sab));
+			     "digsig: signer %s matches authby %s, looking for blob matching DIGSIG hashes %s",
+			     signer->name,
+			     str_authby(remote->authby, &rab),
+			     str_authby(signer_hashes, &sab));
 
-			FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
-				const struct hash_desc *hash = (*hashp);
+			FOR_EACH_ITEM(blob, &signer->digital_signature_blobs) {
 
 				/*
 				 * Do the signer and remote->authby
-				 * allow the hash?
+				 * allow the blob's authentication
+				 * method?
 				 */
-				if (!authby_has_hash(signer_hashes, hash)) {
+				if (!authby_has(signer_hashes, blob->auth)) {
+					name_buf an;
 					authby_buf sab;
-					ldbg(ike->sa.logger, "digsig:   signer %s hash %s does not match authby %s",
+					ldbg(ike->sa.logger, "digsig:   signer %s blob %s:%s does not match authby %s",
 					     signer->name,
-					     hash->common.fqn,
+					     str_name_short(&auth_names, blob->auth, &an),
+					     blob->hash->common.fqn,
 					     str_authby(signer_hashes, &sab));
 					continue;
 				}
 
-				enum digital_signature_blob b = signer->digital_signature_blob;
-				shunk_t blob = hash->digital_signature_blob[b];
-				if (blob.len == 0) {
-					ldbg(ike->sa.logger,
-					     "digsig:     skipping signer %s as no blob for hash %s",
-					     signer->name, hash->common.fqn);
+				PEXPECT(ike->sa.logger, authby_has_hash(signer_hashes, blob->hash));
+				if (pbad(blob->len == 0)) {
 					continue;
 				}
 
-				if (!hunk_starteq(signature, blob)) {
+				if (!hunk_starteq(signature, *blob)) {
+					name_buf an;
 					ldbg(ike->sa.logger,
-					     "digsig:     skipping signer %s as blob for hash %s does not match",
-					     signer->name, hash->common.fqn);
+					     "digsig:     skipping signer %s blob %s:%s as it doesn't match AUTH payload",
+					     signer->name,
+					     str_name_short(&auth_names, blob->auth, &an),
+					     blob->hash->common.fqn);
 					continue;
 				};
 
+				name_buf an;
 				ldbg(ike->sa.logger,
-				     "digsig:    using signer %s and hash %s",
-				     signer->name, hash->common.fqn);
+				     "digsig:    using signer %s and blob %s:%s",
+				     signer->name,
+				     str_name_short(&auth_names, blob->auth, &an),
+				     blob->hash->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
-				diag_t d = pbs_in_shunk(signature_pbs, blob.len, &ignore,
+				diag_t d = pbs_in_shunk(signature_pbs,
+							blob->len,
+							&ignore,
 							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
 					ldbg(ike->sa.logger,
@@ -905,13 +913,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 */
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
-					.pubkey.hash = hash,
+					.pubkey.hash = blob->hash,
 					.pubkey.signer = signer,
 				};
 
 				return verify_v2AUTH_and_log_using_pubkey(ike, idhash_in,
 									  signature_pbs,
-									  hash,
+									  blob->hash,
 									  signer,
 									  "digital signature");
 			}
