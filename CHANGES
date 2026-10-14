@@ -1,5 +1,11 @@
 See also https://libreswan.org/
 
+v5.4.2 (unreleased)
+* Security
+  - fix CVE-2026-110339 - NPE - empty PKCS#7 payload
+    http://libreswan.org/security/CVE-2026-110339
+    [Duc Anh Luu, Andrew]
+
 v5.4.1 (Oct 5, 2026)
 * Security
   - fix CVE-2026-77206 - NPE - unexpected-eap-packet
