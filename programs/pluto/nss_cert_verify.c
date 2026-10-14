@@ -940,16 +940,46 @@ static SECItem *impaired_pkcs7_crl(void)
 	return SECITEM_DupItem(&pkcs7);
 }
 
+static SECItem *impaired_pkcs7(shunk_t x)
+{
+	/* XXX: strips const */
+	SECItem pkcs7 = same_shunk_as_secitem(x, siBuffer);
+	return SECITEM_DupItem(&pkcs7);
+}
+
 SECItem *impaired_pkcs7_blob(const struct cert *mycert,
 			     bool send_full_chain,
 			     struct logger *logger)
 {
-	if (impair.send_pkcs7_thingie == 1) {
+	switch (impair.send_pkcs7_thingie) {
+	case 0:
+		return NULL;
+	case 1:
 		llog(IMPAIR_STREAM, logger, "sending certs as PKCS7 blob");
 		passert(mycert != NULL);
 		return impaired_pkcs7_certs(mycert, send_full_chain, logger);
+	case 2:
+		llog(IMPAIR_STREAM, logger, "sending crl as PKCS7 blob");
+		return impaired_pkcs7_crl();
+	case 3:
+	{
+		llog(IMPAIR_STREAM, logger, "sending empty PKCS7 cert blob");
+		static const uint8_t x[] = {
+			0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
+			0xf7, 0x0d, 0x01, 0x07, 0x02,
+		};
+		/*
+		 * https://lapo.it decodes this as:
+		 *
+		 *   ContentInfo SEQUENCE (2 elem)
+		 *     contentType ContentType OBJECT IDENTIFIER 1.2.840.113549.1.1.5 sha1WithRSAEncryption (PKCS #1)
+		 *     content [0] [?] NULL
+		 */
+		return impaired_pkcs7(THING_AS_SHUNK(x));
 	}
-
-	llog(IMPAIR_STREAM, logger, "sending crl as PKCS7 blob");
-	return impaired_pkcs7_crl();
+	default:
+		llog(IMPAIR_STREAM, logger, "unregognized PKCS7 impair %d",
+		     impair.send_pkcs7_thingie);
+		return NULL;
+	}
 }
