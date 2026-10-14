@@ -334,6 +334,7 @@ struct state {
 	struct v2AUTH_method {
 		enum ikev2_auth_method method;
 		struct {
+			shunk_t blob;
 			const struct hash_desc *hash;
 			const struct pubkey_signer *signer;
 		} pubkey;

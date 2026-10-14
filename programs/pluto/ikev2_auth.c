@@ -297,11 +297,13 @@ struct authby local_v2_authby(struct ike_sa *ike)
  */
 
 static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
+						 shunk_t blob,
 						 const struct hash_desc *hash,
 						 const struct pubkey_signer *signer)
 {
 	return (struct v2AUTH_method) {
 		.method = method,
+		.pubkey.blob = blob,
 		.pubkey.hash = hash,
 		.pubkey.signer = signer,
 	};
@@ -336,7 +338,9 @@ static struct v2AUTH_method pubkey_v2AUTH_digsig_method(enum ikev2_auth_method m
 				     (*signer)->name,
 				     str_name_short(&auth_names, blob->auth, &bab),
 				     blob->hash->common.fqn);
-				return pubkey_v2AUTH_method(method, blob->hash, *signer);
+				return pubkey_v2AUTH_method(method,
+							    HUNK_AS_SHUNK(blob),
+							    blob->hash, *signer);
 			}
 
 			name_buf bab;
@@ -380,6 +384,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 				     ike->sa.st_v2_initiator_auth.pubkey.hash->common.fqn,
 				     ike->sa.st_v2_initiator_auth.pubkey.signer->name);
 				return pubkey_v2AUTH_method(method,
+							    ike->sa.st_v2_initiator_auth.pubkey.blob,
 							    ike->sa.st_v2_initiator_auth.pubkey.hash,
 							    ike->sa.st_v2_initiator_auth.pubkey.signer);
 			}
@@ -394,18 +399,22 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 	}
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return pubkey_v2AUTH_method(method,
+					    (shunk_t) {0},
 					    &ike_alg_hash_sha1,
 					    &signer_pubkey_rsassa_pkcs1_1_5_raw);
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return pubkey_v2AUTH_method(method,
+					    (shunk_t) {0},
 					    &ike_alg_hash_sha2_256,
 					    &signer_pubkey_ecdsa_raw/*_p256*/);
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 		return pubkey_v2AUTH_method(method,
+					    (shunk_t) {0},
 					    &ike_alg_hash_sha2_384,
 					    &signer_pubkey_ecdsa_raw/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		return pubkey_v2AUTH_method(method,
+					    (shunk_t) {0},
 					    &ike_alg_hash_sha2_512,
 					    &signer_pubkey_ecdsa_raw/*_p521*/);
 	case IKEv2_AUTH_SHARED_KEY_MAC:
@@ -574,15 +583,13 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
-		const struct hash_desc *hash = ike->sa.st_v2_local_auth.pubkey.hash;
-		const struct pubkey_signer *signer = ike->sa.st_v2_local_auth.pubkey.signer;
+		shunk_t blob = ike->sa.st_v2_local_auth.pubkey.blob;
 
-		shunk_t b = hash->digital_signature_blob[signer->digital_signature_blob];
-		if (!pexpect(b.len > 0)) {
+		if (pbad(blob.len == 0)) {
 			return false;
 		}
 
-		if (!pbs_out_hunk(&auth_pbs, b, "OID of ASN.1 Algorithm Identifier")) {
+		if (!pbs_out_hunk(&auth_pbs, blob, "OID of ASN.1 Algorithm Identifier")) {
 			/* already logged */
 			return false;
 		}
@@ -886,6 +893,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				 */
 				ike->sa.st_v2_initiator_auth = (struct v2AUTH_method) {
 					.method = recv_auth,
+					.pubkey.blob = HUNK_AS_SHUNK(blob),
 					.pubkey.hash = blob->hash,
 					.pubkey.signer = signer,
 				};

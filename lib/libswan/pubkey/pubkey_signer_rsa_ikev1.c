@@ -119,7 +119,6 @@ static size_t RSA_raw_jam_auth_method(struct jambuf *buf,
 
 const struct pubkey_signer signer_pubkey_rsa_ikev1 = {
 	.name = "raw RSA",
-	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.authby = { AUTHBY_RSASIG_IKEv1, },
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_raw_sign_hash,

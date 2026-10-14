@@ -247,7 +247,6 @@ static const struct pubkey_signer_blob eddsa_pubkey_signer_blobs[] = {
 const struct pubkey_signer signer_pubkey_eddsa_ed25519_blob = {
 	.name = "EDDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_eddsa,
-	.digital_signature_blob = DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
 	.digital_signature_blobs = { LIST_REF(eddsa_pubkey_signer_blobs), },
 	.authby = { AUTHBY_EDDSA, },
 	.sign_message = EDDSA_sign_message,
