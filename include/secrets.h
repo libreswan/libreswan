@@ -88,6 +88,7 @@ enum secret_kind {
 	SECRET_RSA,
 	SECRET_ECDSA, /* should not be needed */
 	SECRET_EDDSA, /* should not be needed */
+	SECRET_MLDSA,
 
 	SECRET_XAUTH,
 	SECRET_PPK,

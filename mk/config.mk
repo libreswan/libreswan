@@ -822,6 +822,11 @@ ifeq ($(USE_EDDSA),true)
 USERLAND_CFLAGS += -DUSE_EDDSA
 endif
 
+USE_MLDSA ?= false
+ifeq ($(USE_MLDSA),true)
+USERLAND_CFLAGS += -DUSE_MLDSA
+endif
+
 #
 # Algorithms (encryption, PRF, DH, ....)
 #
