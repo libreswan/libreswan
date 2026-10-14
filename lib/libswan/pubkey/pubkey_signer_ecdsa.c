@@ -296,11 +296,12 @@ static const uint8_t asn1_ecdsa_sha1_blob[1+ASN1_ECDSA_SHA1_SIZE] = {
 };
 #endif
 
+/* preference order */
 static const struct pubkey_signer_blob ecdsa_pubkey_signer_blobs[] = {
 	{
-		.auth = AUTH_ECDSA_SHA2_256_BLOB,
-		.hash = &ike_alg_hash_sha2_256,
-		HUNK_PTR(asn1_ecdsa_sha2_256_blob),
+		.auth = AUTH_ECDSA_SHA2_512_BLOB,
+		.hash = &ike_alg_hash_sha2_512,
+		HUNK_PTR(asn1_ecdsa_sha2_512_blob),
 	},
 	{
 		.auth = AUTH_ECDSA_SHA2_384_BLOB,
@@ -308,9 +309,9 @@ static const struct pubkey_signer_blob ecdsa_pubkey_signer_blobs[] = {
 		HUNK_PTR(asn1_ecdsa_sha2_384_blob),
 	},
 	{
-		.auth = AUTH_ECDSA_SHA2_512_BLOB,
-		.hash = &ike_alg_hash_sha2_512,
-		HUNK_PTR(asn1_ecdsa_sha2_512_blob),
+		.auth = AUTH_ECDSA_SHA2_256_BLOB,
+		.hash = &ike_alg_hash_sha2_256,
+		HUNK_PTR(asn1_ecdsa_sha2_256_blob),
 	},
 #if 0
 	{

@@ -52,18 +52,6 @@ struct v2AUTH_blobs {
 static const uint8_t v2AUTH_zero_prefix[8] = {0};
 
 /*
- * Map negotiation bit <-> hash algorithm; in preference order.
- */
-
-static const struct hash_desc *negotiated_hash_map[] = {
-	&ike_alg_hash_sha2_512,
-	&ike_alg_hash_sha2_384,
-	&ike_alg_hash_sha2_256,
-	&ike_alg_hash_identity,
-	&ike_alg_hash_sha1,
-};
-
-/*
  * draft-ietf-ipsecme-ikev2-downgrade-prevention-08, "Authentication
  * in IKEv2":
  * https://www.ietf.org/archive/id/draft-ietf-ipsecme-ikev2-downgrade-prevention-08.html#name-authentication-in-ikev2
@@ -319,6 +307,57 @@ static struct v2AUTH_method pubkey_v2AUTH_method(enum ikev2_auth_method method,
 	};
 }
 
+static struct v2AUTH_method pubkey_v2AUTH_digsig_method(enum ikev2_auth_method method,
+							const struct authby negotiated_authby,
+							struct verbose verbose)
+{
+	/*
+	 * Since caller picked digital signature, because the
+	 * masked negotiated_authby had a digsig bit, there
+	 * should be at least one plausible digital signature
+	 * bit.
+	 *
+	 * However, this path can also be reached via an
+	 * impair.  Hence out of an abundance of caution,
+	 * re-mask the policy.
+	 */
+	struct authby digsig_authby =
+		authby_and(negotiated_authby, authby_v2AUTH_digsig_payload());
+
+	vdbg("selecting negotiated signer algorithm");
+	unsigned level = ++verbose.level;
+	FOR_EACH_ITEM(signer, &pubkey_blob_signers) {
+		verbose.level = level+1;
+		FOR_EACH_ITEM(blob, &(*signer)->digital_signature_blobs) {
+			verbose.level = level+2;
+			if (authby_has(digsig_authby, blob->auth)) {
+				name_buf bab;
+				vdbg("selected signer %s and blob %s:%s",
+				     (*signer)->name,
+				     str_name_short(&auth_names, blob->auth, &bab),
+				     blob->hash->common.fqn);
+				return pubkey_v2AUTH_method(method, blob->hash, *signer);
+			}
+
+			name_buf bab;
+			vdbg("skipping signer %s blob %s:%s as not negotiated",
+			     (*signer)->name,
+			     str_name_short(&auth_names, blob->auth, &bab),
+			     blob->hash->common.fqn);
+		}
+		vdbg("skipping signer %s as not negotiated", (*signer)->name);
+	}
+
+	verbose.level = level;
+	authby_buf ab;
+	vlog_pexpect(HERE, "no compatible signature in %s",
+		     str_authby(digsig_authby, &ab));
+
+	return (struct v2AUTH_method) {
+		.method = IKEv2_AUTH_RESERVED,
+	};
+}
+
 static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 					  const struct authby negotiated_authby,
 					  enum ikev2_auth_method method)
@@ -351,73 +390,7 @@ static struct v2AUTH_method v2AUTH_method(struct ike_sa *ike,
 			     str_authby(negotiated_authby, &ab));
 		}
 
-		/*
-		 * This is brute force for now.
-		 * XXX: Should mix in the key's type.  Actually should
-		 * have mixed in the pubkey much earlier.
-		 */
-
-		/*
-		 * Since caller picked digital signature, because the
-		 * masked negotiated_authby had a digsig bit, there
-		 * should be at least one plausible digital signature
-		 * bit.
-		 *
-		 * However, this path can also be reached via an
-		 * impair.  Hence out of an abundance of caution,
-		 * re-mask the policy.
-		 */
-		const struct hash_desc *hash = NULL;
-		struct authby hash_authby =
-			authby_and(negotiated_authby, authby_v2AUTH_digsig_payload());
-		vdbg("selecting negotiated hash algorithm");
-		FOR_EACH_ELEMENT(hashp, negotiated_hash_map) {
-			if (authby_has_hash(hash_authby, (*hashp))) {
-				hash = (*hashp);
-				vdbg("selected hash %s", hash->common.fqn);
-				break;
-			}
-			vdbg("skiping hash %s as not negotiated",
-			     (*hashp)->common.fqn);
-		}
-		if (hash == NULL) {
-			authby_buf ab;
-			vlog_pexpect(HERE, "no compatible hash algo in %s",
-				     str_authby(hash_authby, &ab));
-			return (struct v2AUTH_method) {
-				.method = IKEv2_AUTH_RESERVED,
-			};
-		}
-
-		/*
-		 * Since there's a hash, there must be at least one
-		 * signer that expects to use that hash.
-		 */
-		struct authby signer_authby = authby_and_hash(hash_authby, hash);
-		const struct pubkey_signer *signer = NULL;
-		vdbg("selecting negotiated signer algorithm");
-		FOR_EACH_ITEM(s, &pubkey_blob_signers) {
-			if (authby_has_any(signer_authby, (*s)->authby)) {
-				signer = (*s);
-				vdbg("selected signer %s", signer->name);
-				break;
-			}
-			vdbg("skipping signer %s as not negotiated", (*s)->name);
-		}
-		if (signer == NULL) {
-			authby_buf ab;
-			vlog_pexpect(HERE, "no compatible signature in %s",
-				     str_authby(signer_authby, &ab));
-			return (struct v2AUTH_method) {
-				.method = IKEv2_AUTH_RESERVED,
-			};
-		}
-
-		authby_buf ab;
-		vdbg("picking hash %s signer %s from %s",
-		     hash->common.fqn, signer->name,
-		     str_authby(negotiated_authby, &ab));
-		return pubkey_v2AUTH_method(method, hash, signer);
+		return pubkey_v2AUTH_digsig_method(method, negotiated_authby, verbose);
 	}
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return pubkey_v2AUTH_method(method,
