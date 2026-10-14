@@ -77,6 +77,14 @@ west #
  our auth:eddsa
  their auth:eddsa
 west #
+ authby mldsa
+ ipsec addconn --name authby:mldsa authby=mldsa
+"authby:mldsa": added oriented IKEv2 connection
+ policy: IKEv2+MLDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: IDENTITY;
+ our auth:mldsa
+ their auth:mldsa
+west #
  authby ecdsa
  ipsec addconn --name authby:ecdsa authby=ecdsa
 "authby:ecdsa": added oriented IKEv2 connection
@@ -235,9 +243,17 @@ west #
  our auth:eddsa
  their auth:rsasig
 west #
+ leftauth mldsa
+ ipsec addconn --name leftauth:mldsa leftauth=mldsa
+"leftauth:mldsa": added oriented IKEv2 connection
+ policy: IKEv2+MLDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+ v2-auth-hash-policy: IDENTITY;
+ our auth:mldsa
+ their auth:rsasig
+west #
  leftauth none
  ipsec addconn --name leftauth:none leftauth=none
-"leftauth:none": failed to add connection: "leftauth=none" is invalid, valid options are "digsig", "secret", "rsasig", "ecdsa", "eddsa", "never", "null", and "eaponly"
+"leftauth:none": failed to add connection: "leftauth=none" is invalid, valid options are "digsig", "secret", "rsasig", "ecdsa", "eddsa", "mldsa", "never", "null", and "eaponly"
 no connection or alias named "leftauth:none"
 west #
  leftauth null
