@@ -498,13 +498,6 @@ struct hash_desc {
 		SECOidTag pkcs1_1_5_rsa_oid_tag;
 	} nss;
 
-	/*
-	 * ASN.1 blobs specific to a particular hash algorithm are
-	 * sent in the Auth payload as part of Digital signature
-	 * authentication as per RFC7427
-	 */
-	shunk_t digital_signature_blob[DIGITAL_SIGNATURE_BLOB_ROOF];
-
 	const struct hash_ops *hash_ops;
 };
 
