@@ -60,6 +60,17 @@ struct authby {
 #define AUTHBY_EDDSA				\
 	.authby[AUTH_EDDSA_ED25519] = true
 
+#define AUTHBY_MLDSA_44				\
+	.authby[AUTH_MLDSA_44] = true
+#define AUTHBY_MLDSA_65				\
+	.authby[AUTH_MLDSA_65] = true
+#define AUTHBY_MLDSA_87				\
+	.authby[AUTH_MLDSA_87] = true
+#define AUTHBY_MLDSA				\
+	AUTHBY_MLDSA_44,			\
+	AUTHBY_MLDSA_65,			\
+	AUTHBY_MLDSA_87
+
 #define AUTHBY_RSASIG_IKEv1			\
 	.authby[AUTH_RSASIG_IKEv1] = true
 
@@ -213,9 +224,10 @@ struct authby authby_add(struct authby, enum auth);
 bool authby_has(struct authby, enum auth);
 
 typedef struct {
-	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+AUTH_NEVER+AUTH_NULL+"
+	char buf[sizeof("PSK+RSASIG+ECDSA+EDDSA+MLDSA+AUTH_NEVER+AUTH_NULL+"
 		"RSASIG_v1_5+RSASIG_SHA2_256+RSASIG_SHA2_384+RSASIG_SHA2_512+"
-		"ECDSA_SHA2_256+ECDSA_SHA2_384+ECDSA_SHA2_512") + 1/*canary*/];
+		"ECDSA_SHA2_256+ECDSA_SHA2_384+ECDSA_SHA2_512+"
+		"MLDSA_44+MLDSA_65+MLDSA_87") + 1/*canary*/];
 } authby_buf;
 
 const char *str_authby(struct authby authby, authby_buf *buf);

@@ -2210,6 +2210,7 @@ static const char *const secret_kind_name[] = {
 	S(SECRET_RSA),
 	S(SECRET_ECDSA),
 	S(SECRET_EDDSA),
+	S(SECRET_MLDSA),
 	S(SECRET_XAUTH),
 	S(SECRET_PPK),
 	S(SECRET_NULL),
