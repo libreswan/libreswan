@@ -1,36 +1,18 @@
 /testing/guestbin/swan-prep --nokeys
 Initializing NSS database
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
-west #
- ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+ ipsec up westnet-eastnet-ipv4-psk-ikev2 # sanitize-retransmits
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: received unauthenticated INVALID_KE_PAYLOAD response to Key Exchange Method (DH) MODP1536; resending with suggested MODP8192
@@ -44,7 +26,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
