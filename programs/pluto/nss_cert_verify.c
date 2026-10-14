@@ -454,6 +454,46 @@ static void add_decoded_cert_1(struct certs **certs,
 	add_cert(certs, cert);
 }
 
+static void decode_pkcs7_cert_payload(CERTCertDBHandle *handle,
+				      SEC_PKCS7ContentInfo *contents,
+				      struct certs **certs,
+				      struct logger *logger)
+{
+	/*
+	 * XXX: SEC_PKCS7GetCertificateList() isn't robust when the
+	 * contents are empty.  Hence add some pre-checks here.
+	 *
+	 * See CVE-2026-110339, suggested fix from Anh Lưu Đức.
+	 *
+	 * The type check is the guard for the signedData field.
+	 */
+	if (SEC_PKCS7ContentType(contents) != SEC_OID_PKCS7_SIGNED_DATA) {
+		llog(RC_LOG, logger, "wrapped PKCS7 payload does not contain signed data");
+		return;
+	}
+	if (contents->content.signedData == NULL) {
+		llog(RC_LOG, logger, "wrapped PKCS7 payload is empty");
+		return;
+	}
+
+	/*
+	 * When the content is SEC_OID_PKCS7_SIGNED_DATA, the,
+	 * possibly empty, raw cert array is returned; else NULL.
+	 *
+	 * This points to an internal structure, so no free is needed.
+	 */
+	SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
+	if (cert_list == NULL || (*cert_list) == NULL) {
+		llog(RC_LOG, logger,
+		     "wrapped PKCS7 certificate payload did not contain any certificates");
+		return;
+	}
+
+	for (; *cert_list; cert_list++) {
+		add_decoded_cert(handle, certs, **cert_list, logger);
+	}
+}
+
 /*
  * Decode the cert payloads creating a list of temp certificates.
  */
@@ -504,28 +544,17 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		case CERT_PKCS7_WRAPPED_X509:
 		{
-			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
-									     NULL, NULL, NULL);
+			/* must free */
+			SEC_PKCS7ContentInfo *contents =
+				SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
+						    NULL, NULL, NULL);
 			if (contents == NULL) {
 				llog(RC_LOG, logger,
-					    "wrapped PKCS7 certificate payload could not be decoded");
-				continue;
+				     "wrapped PKCS7 certificate payload could not be decoded");
+				break;
 			}
-			/*
-			 * When the content is
-			 * SEC_OID_PKCS7_SIGNED_DATA, the, possibly
-			 * empty, raw cert array is returned; else
-			 * NULL.
-			 */
-			SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
-			if (cert_list == NULL || (*cert_list) == NULL) {
-				llog(RC_LOG, logger,
-				     "wrapped PKCS7 certificate payload did not contain any certificates");
-			} else {
-				for (; *cert_list; cert_list++) {
-					add_decoded_cert(handle, &certs, **cert_list, logger);
-				}
-			}
+
+			decode_pkcs7_cert_payload(handle, contents, &certs, logger);
 			SEC_PKCS7DestroyContentInfo(contents);
 			break;
 		}
