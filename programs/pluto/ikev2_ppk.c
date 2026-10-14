@@ -33,6 +33,7 @@
 #include "ikev2.h"
 #include "ikev2_ppk.h"
 #include "ike_alg_hash.h"
+#include "secrets.h"
 #include "crypt_mac.h"
 #include "ikev2_auth.h"
 #include "log.h"
@@ -410,10 +411,16 @@ bool v2_IKE_AUTH_ppk_initiator_calc_no_ppk_auth(struct ike_sa *ike,
 			}
 		}
 
-		shunk_t h = hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
+		shunk_t h = null_shunk;
+		FOR_EACH_ITEM(blob, &signer_pubkey_rsassa_pss_blob.digital_signature_blobs) {
+			if (blob->hash == hash_algo) {
+				h = HUNK_AS_SHUNK(blob);
+				break;
+			}
+		}
 		if (h.len == 0) {
 			llog_pexpect(ike->sa.logger, HERE,
-				     "negotiated hash algorithm %s has no RSA ASN1 blob",
+				     "negotiated hash algorithm %s has no RSA-PSS ASN1 blob",
 				     hash_algo->common.fqn);
 			return false;
 		}
