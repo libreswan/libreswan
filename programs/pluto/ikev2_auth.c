@@ -1138,11 +1138,7 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 			AUTHBY_NULL,
 		};
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return (struct authby) {
-			AUTHBY_RSASSA_BLOB,
-			AUTHBY_ECDSA,
-			AUTHBY_EDDSA,
-		};
+		return authby_v2AUTH_digsig_payload();
 	default:
 	{
 		name_buf nb;
