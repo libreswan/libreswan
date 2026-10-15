@@ -2207,9 +2207,7 @@ enum_names ikev2_trans_attr_descs = {
 static const char *const secret_kind_name[] = {
 #define S(E) [E - SECRET_PSK] = #E
 	S(SECRET_PSK),
-	S(SECRET_RSA),
-	S(SECRET_ECDSA),
-	S(SECRET_EDDSA),
+	S(SECRET_PUBKEY),
 	S(SECRET_XAUTH),
 	S(SECRET_PPK),
 	S(SECRET_NULL),
