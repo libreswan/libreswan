@@ -389,7 +389,7 @@ struct authby authby_v2AUTH_digsig_payload(void)
 {
 	return (struct authby) {
 #ifdef USE_EDDSA
-		AUTHBY_EDDSA,
+		AUTHBY_EDDSA_BLOB,
 #endif
 		AUTHBY_RSASSA_BLOB,
 		AUTHBY_ECDSA_BLOB,
