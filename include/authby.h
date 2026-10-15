@@ -58,7 +58,10 @@ struct authby {
 	.authby[AUTH_NEVER] = true
 
 #define AUTHBY_EDDSA				\
-	.authby[AUTH_EDDSA_ED25519] = true
+	.authby[AUTH_EDDSA_ED25519_BLOB] = true
+#if 0
+	.authby[AUTH_EDDSA_ED448_BLOB] = true
+#endif
 
 #define AUTHBY_RSASIG_IKEv1			\
 	.authby[AUTH_RSASIG_IKEv1] = true

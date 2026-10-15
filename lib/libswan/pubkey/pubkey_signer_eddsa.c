@@ -231,13 +231,13 @@ static const uint8_t asn1_eddsa_identity_ed448_blob[1+ASN1_EDDSA_IDENTITY_SIZE] 
 
 static const struct pubkey_signer_blob eddsa_pubkey_signer_blobs[] = {
 	{
-		.auth = AUTH_EDDSA_ED25519,
+		.auth = AUTH_EDDSA_ED25519_BLOB,
 		.hash = &ike_alg_hash_identity,
 		HUNK_PTR(asn1_eddsa_identity_ed25519_blob),
 	},
 #if 0
 	{
-		.auth = AUTH_EDDSA_ED448,
+		.auth = AUTH_EDDSA_ED448_BLOB,
 		.hash = &ike_alg_hash_identity,
 		HUNK_PTR(asn1_eddsa_identity_ed448_blob),
 	},
