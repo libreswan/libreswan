@@ -315,8 +315,8 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				whack_detach(p->connection, p->logger);
 			}
 			break;
-		case IKEv1:
 #ifdef USE_IKEv1
+		case IKEv1:
 		{
 			whack_attach(p->connection, p->logger);
 			struct child_sa *child =

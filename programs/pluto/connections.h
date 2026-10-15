@@ -396,6 +396,7 @@ struct config {
 					 * authorize call on ID */
 	bool ignore_peer_dns;		/* install obtained DNS
 					 * servers locally */
+#ifdef USE_IKEv1
 	struct {
 		bool message;		/* per RFC, pad message to 4
 					 * bytes */
@@ -403,6 +404,7 @@ struct config {
 					 * some modecfg packets to 4
 					 * bytes */
 	} v1_ikepad;
+#endif
 
 	bool require_id_on_certificate;	/* require certificates to
 					 * have IKE ID on cert SAN */
@@ -415,10 +417,12 @@ struct config {
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if
 					 * we are behind NAT */
 
+#ifdef USE_IKEv1
 	enum ikev1_natt_policy ikev1_natt;	/* whether or not to
 						 * send IKEv1
 						 * draft/rfc NATT
 						 * VIDs */
+#endif
 	bool opportunistic;		/* is this opportunistic? */
 
 	enum yna_options encapsulation;	/* encapsulation mode of

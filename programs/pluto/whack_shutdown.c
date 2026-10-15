@@ -48,7 +48,9 @@
 #include "x509_crl.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for shutdown_ifaces() */
 #include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
+#ifdef USE_IKEv1
 #include "virtual_ip.h"		/* for free_virtual_ip() */
+#endif
 #include "server.h"		/* for free_server() */
 #include "revival.h"		/* for free_revivals() */
 #include "demux.h"		/* for free_demux() */
@@ -227,8 +229,9 @@ void exit_epilogue(struct logger *logger)
 
 	free_server_fork(logger);
 	free_server(logger);
-
+#ifdef USE_IKEv1
 	free_virtual_ip();	/* virtual_private= */
+#endif
 	free_global_redirect_dests();
 	free_config_setup();
 	free_pluto_main();	/* our static chars */
