@@ -114,6 +114,7 @@ const struct sparse_names nppi_option_names = {
 	},
 };
 
+#ifdef USE_IKEv1
 /*
  * Values for nat-ikev1-method={drafts,rfc,both,none}
  */
@@ -127,6 +128,7 @@ const struct sparse_names nat_ikev1_method_option_names = {
 		SPARSE_NULL
 	},
 };
+#endif
 
 /*
  * Values for yes/no/auto, used by encapsulation.
@@ -188,7 +190,9 @@ const struct sparse_names type_option_names = {
 
 const struct sparse_names keyexchange_option_names = {
 	.list = {
+#ifdef USE_IKEv1
 		SPARSE("ikev1", IKEv1),
+#endif
 		SPARSE("ikev2", IKEv2),
 		SPARSE("ike",  IKE_VERSION_ROOF),
 		SPARSE_NULL
@@ -236,6 +240,7 @@ const struct sparse_names keyword_pubkey_names = {
 	},
 };
 
+#ifdef USE_IKEv1
 const struct sparse_names global_ikev1_policy_names = {
 	.list = {
 		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
@@ -244,3 +249,4 @@ const struct sparse_names global_ikev1_policy_names = {
 		SPARSE_NULL
 	},
 };
+#endif

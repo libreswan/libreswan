@@ -473,10 +473,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			cert_type = p->payload.v2cert.isac_enc;
 			cert_names = &ikev2_cert_type_names;
 			break;
+#ifdef USE_IKEv1
 		case IKEv1:
 			cert_type = p->payload.cert.isacert_type;
 			cert_names = &ike_cert_type_names;
 			break;
+#endif
 		default:
 			bad_case(ike_version);
 		}

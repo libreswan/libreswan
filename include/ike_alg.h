@@ -283,8 +283,10 @@ struct ike_alg {
 	 * -1 indicates not valid (annoyingly 0 is used by IKEv2 for
 	 * NULL integrity).
 	 */
+#ifdef USE_IKEv1
 #define ikev1_oakley_id common.id[IKEv1_OAKLEY_ID]
 #define ikev1_ipsec_id  common.id[IKEv1_IPSEC_ID]
+#endif
 #define ikev2_alg_id    common.id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
 	const struct ike_alg_type *type;

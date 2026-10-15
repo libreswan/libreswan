@@ -59,6 +59,7 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 	return true;
 }
 
+#ifdef USE_IKEv1
 /*
  * IKEv1:
  */
@@ -75,6 +76,7 @@ const struct proposal_defaults ikev1_ah_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_ah_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev1_ah_proposals,
 };
+#endif
 
 /*
  * IKEv2:
@@ -103,7 +105,7 @@ const struct proposal_defaults ikev2_ah_defaults = {
 /*
  * All together now ...
  */
-
+#ifdef USE_IKEv1
 static const struct proposal_protocol ikev1_ah_proposal_protocol = {
 	.name = "AH",
 	.alg_id = IKEv1_IPSEC_ID,
@@ -112,6 +114,7 @@ static const struct proposal_protocol ikev1_ah_proposal_protocol = {
 	.integ = true,
 	.ke = true,
 };
+#endif
 
 static const struct proposal_protocol ikev2_ah_proposal_protocol = {
 	.name = "AH",
@@ -123,7 +126,9 @@ static const struct proposal_protocol ikev2_ah_proposal_protocol = {
 };
 
 static const struct proposal_protocol *ah_proposal_protocol[] = {
+#ifdef USE_IKEv1
 	[IKEv1] = &ikev1_ah_proposal_protocol,
+#endif
 	[IKEv2] = &ikev2_ah_proposal_protocol,
 };
 

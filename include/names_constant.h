@@ -20,38 +20,52 @@ extern const enum_names debug_names;
 extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
-extern enum_names oakley_attr_names;
-extern enum_names oakley_attr_bit_names;
+#ifdef USE_IKEv1
+extern enum_names oakley_attr_names;	/* #ifdef USE_IKEv1 */
+extern enum_names oakley_attr_bit_names;	/* #ifdef USE_IKEv1 */
+#endif
 extern enum_names encapsulation_mode_names;
 extern enum_names auth_alg_names;
-extern enum_names oakley_lifetime_names;
+#ifdef USE_IKEv1
+extern enum_names oakley_lifetime_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 extern enum_names ike_version_names;
 
 extern enum_names version_names;
+
+/* IKEv1 things still (ab)used by IKEv2 */
 extern enum_names doi_names;
+extern enum_names payload_names_ikev1orv2;
+
 extern enum_names ikev1_payload_names;
+extern enum_names ikev1_protocol_names;
+#ifdef USE_IKEv1
+extern enum_names ikev1_exchange_names;	/* #ifdef USE_IKEv1 */
+extern enum_names xauth_attr_names;	/* #ifdef USE_IKEv1 */
+extern enum_names v1_notification_names;	/* #ifdef USE_IKEv1 */
+extern enum_names isakmp_xchg_type_names;	/* #ifdef USE_IKEv1 */
+#endif
+
 extern enum_names ikev2_payload_names;
 extern enum_enum_names payload_type_names;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
-extern enum_names payload_names_ikev1orv2;
 extern enum_names attr_msg_type_names;
-extern enum_names modecfg_attr_names;
-extern enum_names xauth_attr_names;
-extern enum_names ikev1_exchange_names;
-extern enum_names isakmp_xchg_type_names;
+#ifdef USE_IKEv1
+extern enum_names modecfg_attr_names;	/* #ifdef USE_IKEv1 */
+#endif
 extern enum_enum_names exchange_type_names;
-extern enum_names ikev1_protocol_names;
 extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
 extern enum_names ipsec_ipcomp_algo_names;
 extern enum_names ike_cert_type_names;
-extern enum_names oakley_enc_names;
-extern enum_names oakley_hash_names;
-extern enum_names oakley_auth_names;
-extern enum_names v1_notification_names;
+#ifdef USE_IKEv1
+extern enum_names oakley_enc_names;	/* #ifdef USE_IKEv1 */
+extern enum_names oakley_hash_names;	/* #ifdef USE_IKEv1 */
+extern enum_names oakley_auth_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /* IKEv2 */
 
