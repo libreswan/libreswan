@@ -2023,13 +2023,11 @@ static diag_t extract_host_end(enum end end,
 			}
 			authby = whack_auth;
 
-		} else if (authby_has_any(whack_auth, (struct authby) {
-					AUTHBY_EAPONLY,
-					/* XXX: authby_has_pubkey()? */
-					AUTHBY_RSASSA,
-					AUTHBY_ECDSA,
-					AUTHBY_EDDSA,
-				})) {
+		} else if (authby_has(whack_auth, AUTH_EAPONLY) ||
+			   authby_has_v2AUTH_pubkey(whack_auth)) {
+
+			vexpect(authby_is_set(whack_authby));
+			vexpect(authby_is_set(whack_auth));
 
 			struct authby conflicts;
 			if (authby_conflicts(&conflicts, whack_authby, whack_auth)) {
