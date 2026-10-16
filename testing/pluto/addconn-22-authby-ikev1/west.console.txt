@@ -31,28 +31,28 @@ west #
 west #
  conn defaults
  ipsec addconn --name defaults
-"defaults": added oriented IKEv1 connection
+"defaults": added oriented IKEv1 permanent connection
  policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:rsasig
  their auth:rsasig
 west #
  authby secret
  ipsec addconn --name authby:secret authby=secret
-"authby:secret": added oriented IKEv1 connection
+"authby:secret": added oriented IKEv1 permanent connection
  policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:secret
  their auth:secret
 west #
  authby psk
  ipsec addconn --name authby:psk authby=psk
-"authby:psk": added oriented IKEv1 connection
+"authby:psk": added oriented IKEv1 permanent connection
  policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:secret
  their auth:secret
 west #
  authby rsa
  ipsec addconn --name authby:rsa authby=rsa
-"authby:rsa": added oriented IKEv1 connection
+"authby:rsa": added oriented IKEv1 permanent connection
  policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:rsasig
  their auth:rsasig
@@ -79,7 +79,7 @@ west #
  authby never type=drop
  ipsec addconn --name authby:never authby=never type=drop
 warning: "authby:never": "keyexchange=ikev1" ignored for never-negotiate ("type=drop") connection
-"authby:never": added oriented drop connection
+"authby:never": added oriented drop permanent connection
  policy: IKEv2+AUTH_NEVER+DROP+NEVER_NEGOTIATE;
  v2-auth-hash-policy: none;
  our auth:never
@@ -95,14 +95,14 @@ west #
 west #
  authby rsa leftauthby=secret rightauthby=secret
  ipsec addconn --name authby:rsa authby=rsa leftauthby=secret rightauthby=secret
-"authby:rsa": added oriented IKEv1 connection
+"authby:rsa": added oriented IKEv1 permanent connection
  policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:secret
  their auth:secret
 west #
  conn leftright leftauthby=rsa rightauthby=rsasig
  ipsec addconn --name leftright leftauthby=rsa rightauthby=rsasig
-"leftright": added oriented IKEv1 connection
+"leftright": added oriented IKEv1 permanent connection
  policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:rsasig
  their auth:rsasig
@@ -111,7 +111,7 @@ west #
 west #
  authby rsa leftauthby=secret
  ipsec addconn --name authby:rsa authby=rsa leftauthby=secret
-"authby:rsa": added oriented IKEv1 connection
+"authby:rsa": added oriented IKEv1 permanent connection
  policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
  our auth:secret
  their auth:rsasig

@@ -6,65 +6,65 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
-"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=no
-"addconn--encapsulation=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--encapsulation=no": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=yes
-"addconn--encapsulation=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--encapsulation=yes": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--encapsulation=auto
-"addconn--encapsulation=auto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--encapsulation=auto": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough
-"addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=no
 warning: "addconn--type=passthrough--encapsulation=no": "encapsulation=no" ignored for never-negotiate ("type=passthrough") connection
-"addconn--type=passthrough--encapsulation=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough--encapsulation=no": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=yes
 warning: "addconn--type=passthrough--encapsulation=yes": "encapsulation=yes" ignored for never-negotiate ("type=passthrough") connection
-"addconn--type=passthrough--encapsulation=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough--encapsulation=yes": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--encapsulation=auto
 warning: "addconn--type=passthrough--encapsulation=auto": "encapsulation=auto" ignored for never-negotiate ("type=passthrough") connection
-"addconn--type=passthrough--encapsulation=auto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--type=passthrough--encapsulation=auto": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                            --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation       --encapsulation       --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--encapsulation": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=no    --encapsulation=no    --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--encapsulation=no": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=yes   --encapsulation=yes   --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--encapsulation=yes": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--encapsulation=auto  --encapsulation=auto  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--encapsulation=auto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--encapsulation=auto": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough                                          --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--passthrough": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation      --encapsulation      --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 warning: "whack--passthrough--encapsulation": "encapsulation=yes" ignored for never-negotiate ("type=pass") connection
-"whack--passthrough--encapsulation": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--passthrough--encapsulation": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=no   --encapsulation=no   --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 warning: "whack--passthrough--encapsulation=no": "encapsulation=no" ignored for never-negotiate ("type=pass") connection
-"whack--passthrough--encapsulation=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--passthrough--encapsulation=no": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=yes  --encapsulation=yes  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 warning: "whack--passthrough--encapsulation=yes": "encapsulation=yes" ignored for never-negotiate ("type=pass") connection
-"whack--passthrough--encapsulation=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--passthrough--encapsulation=yes": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--encapsulation=auto --encapsulation=auto --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 warning: "whack--passthrough--encapsulation=auto": "encapsulation=auto" ignored for never-negotiate ("type=pass") connection
-"whack--passthrough--encapsulation=auto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--passthrough--encapsulation=auto": added unoriented passthrough permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(encapsulation:[^;]*\);.*/\1 \2/p' | sort
 "addconn": encapsulation:auto

@@ -26,7 +26,7 @@ road #
 initdone
 road #
  ipsec add road1
-"road1": added oriented IKEv1 connection
+"road1": added oriented IKEv1 permanent connection
 road #
  ipsec up road1 # sanitize-retransmits
 "road1" #1: initiating IKEv1 Main Mode connection
@@ -50,7 +50,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add road2
-"road2": added oriented IKEv1 connection
+"road2": added oriented IKEv1 permanent connection
 road #
  ipsec up road2 # sanitize-retransmits
 "road2" #1: initiating IKEv1 Main Mode connection
