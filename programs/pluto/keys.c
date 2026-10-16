@@ -759,7 +759,7 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 
 	ldbg(logger, "looking for connection %s's %s private key",
 	     c->name, type->name);
-	struct secret *s = lsw_get_secret(c, type->private_key_kind, true);
+	struct secret *s = lsw_get_secret(c, SECRET_PUBKEY, true);
 	if (s == NULL) {
 		llog(RC_LOG, logger, "connection's %s private key not found",
 		     type->name);
