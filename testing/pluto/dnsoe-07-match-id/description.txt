@@ -1,0 +1,18 @@
+DNS Opportunistic Encryption with FQDN id at both ends and dns-match-id validation.
+
+Combines the OE-with-IPSECKEY pattern (the documented use case for
+dns-match-id) with explicit FQDN identities, so the responder (east)
+actually exercises the reverse-A-record / source-IP match that
+dns-match-id=yes is meant to perform.
+
+Symmetric RSASIG auth:
+each side signs with its own private key from NSS (loaded via
+swan-prep --hostkeys from the baseconfig DBs) and verifies the other
+against the matching IPSECKEY RR fetched from the DNSSEC-signed zone
+on nic. No inline public keys -- both leftrsasigkey and rightrsasigkey
+use %dnsondemand.
+
+East has dns-match-id=yes. When road sends IDi=@road.testing.libreswan.org
+east does a reverse A-record query for road.testing.libreswan.org and
+checks that the answer (192.1.3.209) matches road's IKE source
+address. Match -> tunnel established.

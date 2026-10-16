@@ -1,0 +1,51 @@
+setenforce Permissive 2>/dev/null
+nic #
+ /testing/guestbin/nic-dnssec.sh start
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
+nic #
+ # Delay only DNS replies sent to road.  nft marks (and counts) them,
+nic #
+ # tc netem does the actual delaying; everything else is untouched.
+nic #
+ dev=$(ip -o addr show to 192.1.3.254 | awk '{print $2}')
+nic #
+ nft add table inet dly
+nic #
+ nft add counter inet dly delayed
+nic #
+ nft add chain inet dly out '{ type filter hook output priority mangle; }'
+nic #
+ nft add rule inet dly out ip daddr 192.1.3.209 udp sport 53 counter name delayed meta mark set 1
+nic #
+ /sbin/tc qdisc add dev $dev root handle 1: prio
+-bash: /sbin/tc: No such file or directory
+nic #
+ /sbin/tc qdisc add dev $dev parent 1:1 handle 10: netem delay 3000ms
+-bash: /sbin/tc: No such file or directory
+nic #
+ /sbin/tc filter add dev $dev parent 1: protocol ip prio 1 handle 1 fw flowid 1:1
+-bash: /sbin/tc: No such file or directory
+nic #
+ echo done
+done
+nic #
+ # No SA should be left;
+nic #
+ ipsec trafficstatus
+ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+nic #
+ hostname | grep nic && nft list ruleset || true
+nic
+table inet dly {
+	counter delayed {
+		packets 3 bytes 1910
+	}
+	chain out {
+		type filter hook output priority mangle; policy accept;
+		ip daddr 192.1.3.209 udp sport 53 counter name "delayed" meta mark set 0x00000001
+	}
+}
+nic #

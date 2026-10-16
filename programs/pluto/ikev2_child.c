@@ -1019,13 +1019,20 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 
 	if (local->modecfg.server) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
-			llog_sa(RC_LOG, ike,
-				"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored",
-				local->leftright);
-			/* just logged; caller, below, cleans up */
-			return v2N_FAILED_CP_REQUIRED;
-		}
-		if (!process_v2_IKE_AUTH_request_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
+			if (is_opportunistic(ike->sa.st_connection) &&
+			    !ike->sa.hidden_variables.st_nated_host) {
+				/* CP is optional for OE when the responder is not behind NAT */
+				endpoint_buf eb;
+				ldbg_sa(ike, "OE: non-NAT peer %s; CP(CFG_REQUEST) and address request are optional",
+					str_endpoint(&ike->sa.st_remote_endpoint, &eb));
+			} else {
+				llog_sa(RC_LOG, ike,
+					"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored",
+					local->leftright);
+				/* just logged; caller, below, cleans up */
+				return v2N_FAILED_CP_REQUIRED;
+			}
+		} else if (!process_v2_IKE_AUTH_request_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
 			/* already logged; caller, below, cleans up */
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}

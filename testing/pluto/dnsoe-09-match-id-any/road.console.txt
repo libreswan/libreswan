@@ -1,0 +1,53 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+road #
+ cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec whack --listpubkeys
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 3104 RSA Key AwXXXXXXX (loaded private key), until --- -- --:--:-- ---- ok (expires never)
+       FQDN '@road.testing.libreswan.org'
+road #
+ # give OE policies time to load
+road #
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
+Total IPsec connections: loaded 6, routed 1, active 0
+road #
+ echo "initdone"
+initdone
+road #
+ # trigger OE and keep pinging until the tunnel is up
+road #
+ ../../guestbin/fping-short.sh --lossy 5 -I 192.1.3.209 192.1.2.23
+up
+road #
+ ../../guestbin/ipsec-trafficstatus.sh --min 84
+#2: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=XXX, outBytes=XXX, maxBytes=2^63B, id='@east.testing.libreswan.org'
+road #
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ echo done
+done
+road #
+ ipsec whack --listpubkeys
+ 
+List of Public Keys:
+ 
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
+       FQDN '@east.testing.libreswan.org'
+TIMESTAMP, 3104 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
+       FQDN '@road.testing.libreswan.org'
+road #

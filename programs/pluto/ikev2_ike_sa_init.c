@@ -344,7 +344,8 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * IKE_SA_INIT is pretty dodgy.  A connswitch can happen
 	 * during IKE_AUTH, making it a wrong decision.
 	 */
-	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED) &&
+	    ike->sa.st_connection->remote->host.id.kind != ID_NONE) {
 		/*
 		 * This submits a background task?  How is it ever
 		 * synced?
@@ -355,8 +356,13 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		 * XXX: A second request for (hopefully) the same
 		 * IPSEC key will be made during IKE AUTH.  If DNS
 		 * hasn't finished that request will block.
+		 *
+		 * Skip when rightid=%any (id is ID_NONE): we have no name
+		 * to query yet.  The fetch is deferred to IKE_AUTH after
+		 * update_peer_id() learns the responder's IDr.
 		 */
-		if (!initiator_fetch_idr_ipseckey(ike)) {
+		dns_status ret = initiator_fetch_idr_ipseckey(ike, /*md*/NULL, /*callback*/NULL);
+		if (ret == DNS_FATAL) {
 			llog_sa(RC_LOG, ike,
 				"fetching IDr IPsec key using DNS failed");
 			delete_ike_sa(&ike);

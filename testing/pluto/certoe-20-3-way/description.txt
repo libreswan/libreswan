@@ -1,0 +1,15 @@
+OE with certificates and an asymmetric road, NAT'd and non-NAT'd hosts.
+This is a realistic setup of an e-mail client and servers running cert OE.
+OE use base config common part in ikev2-oe.conf and sets
+id and left certiticate in each ipsec.conf.
+
+- road is NAT'd by nic and uses authnull towards east, west and north(asysmetric cert OE).
+- east, west and north authenticate with a certificate, so road to east
+  is asymmetric OE.
+- east and west lease an address (CAT) to road; north is not NAT'd.
+- west to east and north to west use certificates on both ends.
+- north has no OE policy for east, so there is no north-east tunnel.
+
+north, west and road ping their peers with fping --lossy 15 to trigger OE.
+final.sh checks that every tunnel carried traffic, not the exact byte or
+packet counts.

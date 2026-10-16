@@ -33,7 +33,7 @@ if [ "${verbose}" = "yes" ]; then
 fi
 
 if [ $# -gt 0 ]; then
-	OPTIONS=$(getopt  --long min:,max:,help, -- "$@")
+	OPTIONS=$(getopt -o '' --long min:,max:,help -- "$@")
 	if (( $? != 0 )); then
 	    err 4 "Error calling getopt"
 	fi
@@ -43,11 +43,11 @@ if [ $# -gt 0 ]; then
 	    case "$1" in
 		--max )
 		    max=$2
-		    shift
+		    shift 2
 		    ;;
 		--min )
 		    min=$2
-		    shift
+		    shift 2
 		    ;;
 		-- ) shift; break ;;
 
@@ -81,13 +81,27 @@ output=$(${it} 2>&1)
 status=$?
 case "${status}" in
     0)
-	inB=0
-	outB=12
-	inB=$(echo ${output} | sed -e 's/\(.*inBytes=\)\([0-9]*\)\(,.*\)/\2/g')
-	outB=$(echo ${output} | sed -e 's/\(.*outBytes=\)\([0-9]*\)\(,.*\)/\2/g')
-	bytes=$(expr ${inB} + ${outB})
-	if [ ${bytes} -gt ${min} ] && [ ${bytes} -le ${max} ]; then
-		result=success
+	# every connection (line) must have min < inBytes + outBytes <= max
+	result=success
+	nr_lines=0
+	while read -r line ; do
+		if [ -z "${line}" ]; then
+			continue
+		fi
+		inB=$(echo "${line}" | sed -n -e 's/.*inBytes=\([0-9]*\),.*/\1/p')
+		outB=$(echo "${line}" | sed -n -e 's/.*outBytes=\([0-9]*\),.*/\1/p')
+		if [ -z "${inB}" ] || [ -z "${outB}" ]; then
+			result=error
+			continue
+		fi
+		nr_lines=$((nr_lines + 1))
+		bytes=$((inB + outB))
+		if [ ${bytes} -le ${min} ] || [ ${bytes} -gt ${max} ]; then
+			result=error
+		fi
+	done <<< "${output}"
+	if [ ${nr_lines} -eq 0 ]; then
+		result=error
 	fi
 	;;
     1) result=error ;;
@@ -100,7 +114,7 @@ echo ==== tuc ====
 
 case "${result}" in
     success )
-	echo ${output} | sed -e 's/\(.*inBytes=\)\([0-9]*\)\(, outBytes=\)\([0-9]*\)\(.*\)/\1XXX\3XXX\5/g'
+	echo "${output}" | sed -e 's/\(inBytes=\)[0-9]*\(, outBytes=\)[0-9]*/\1XXX\2XXX/'
 	exit 0
 	;;
     error )
@@ -111,7 +125,7 @@ case "${result}" in
 	;;
     * )
         echo unexpected status ${status}
-	echo "# ${ping}"
+	echo "# ${it}"
 	echo "${output}"
 	exit 1 ;;
 esac

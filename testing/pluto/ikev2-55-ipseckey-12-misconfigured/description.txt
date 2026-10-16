@@ -1,0 +1,9 @@
+IKEv2 initiator, road, is misconfigured for DNSSEC.
+
+Road uses rightrsasigkey=%dnsondemand to fetch east's public key from
+DNS, but road.conf has no dnssec-* options (no trust anchor), so unbound
+returns BOGUS for east's IPSECKEY.
+
+The initiator must fail the IKE_AUTH response cleanly: delete the IKE
+SA, including the Child SA already created for IKE_AUTH, without
+tripping the "unexpected Child SA" assertion in delete_state().

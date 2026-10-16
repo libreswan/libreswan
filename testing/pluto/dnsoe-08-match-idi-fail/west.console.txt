@@ -1,0 +1,54 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair drop_inbound:2
+IMPAIR: recording all inbound messages
+IMPAIR: will drop inbound message 2
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west-private.testing.libreswan.org'; Child SA #2 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+IMPAIR: "west-east" #2: drop inbound message 2
+IMPAIR: "west-east" #1: drop inbound message 2
+"west-east" #1: IKE_AUTH_I: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"west-east" #1: deleting IKE SA (sent IKE_AUTH request)
+west #
+ # again, this time east has the A record cached
+west #
+ ipsec up west-east
+"west-east" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature RSASSA-PSS with SHA2_512 and FQDN '@west-private.testing.libreswan.org'; Child SA #4 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"west-east" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"west-east" #3: encountered fatal error in state IKE_AUTH_I
+"west-east" #4: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+IMPAIR: "west-east" #4: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
+"west-east" #3: deleting IKE SA (sent IKE_AUTH request)
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+west #
+ grep -s "forward address validation failed" /tmp/pluto.log
+west #
