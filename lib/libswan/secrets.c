@@ -1274,7 +1274,7 @@ static err_t add_private_key(struct secret **secrets,
 	PEXPECT(logger, content.keyid.keyid[0] != '\0');
 
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
-	s->kind = type->private_key_kind;
+	s->kind = SECRET_PUBKEY;
 	s->line = 0;
 	/* make an unpacked copy of the private key */
 	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, logger, HERE);
