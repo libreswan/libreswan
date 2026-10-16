@@ -1,0 +1,11 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec connectionstatus westnet-eastnet | grep ' routing: '
+"westnet-eastnet":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
+east #

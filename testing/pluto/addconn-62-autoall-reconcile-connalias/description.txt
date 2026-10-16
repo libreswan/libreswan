@@ -1,0 +1,1 @@
+test that ipsec add --autoall keeps a subnets= connection whose name other connections list in connalias=
