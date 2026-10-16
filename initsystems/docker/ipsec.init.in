@@ -70,7 +70,7 @@ fi
 
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-@@IPSEC_CONF@@}"
-IPSEC_EXECDIR="${IPSEC_EXECDIR:-@@IPSEC_EXECDIR@@}"
+IPSEC_LIBEXECDIR="${IPSEC_LIBEXECDIR:-@@IPSEC_LIBEXECDIR@@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
 unset PLUTO_OPTIONS
 
@@ -130,7 +130,7 @@ start() {
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
     touch ${lockpath}
     # Start pluto on foreground, blocking here until it's killed.
-    ${IPSEC_EXECDIR}/pluto --config ${IPSEC_CONF} @@DOCKER_PLUTONOFORK@@ ${PLUTO_OPTIONS}
+    ${IPSEC_LIBEXECDIR}/pluto --config ${IPSEC_CONF} @@DOCKER_PLUTONOFORK@@ ${PLUTO_OPTIONS}
     if [ "${nofork}" = "--nofork " ]; then
 	# Pluto was killed, remove lockfile
 	rm -f ${lockpath}
@@ -159,7 +159,7 @@ stop() {
     if [ -s ${plutopid} ]; then
 	# pluto did not die peacefully
 	echo "Attempt to shut Pluto down failed!  Trying kill"
-	kill -p ${plutopid} ${IPSEC_EXECDIR}/pluto
+	kill -p ${plutopid} ${IPSEC_LIBEXECDIR}/pluto
 	RETVAL=$?
 	[ ${RETVAL} -eq 0 ] && rm -f ${plutopid}
     fi
@@ -221,9 +221,9 @@ case "$1" in
 	RETVAL=$?
 	;;
     status)
-	status -p ${plutopid} -l ${lockfile} ${IPSEC_EXECDIR}/pluto
+	status -p ${plutopid} -l ${lockfile} ${IPSEC_LIBEXECDIR}/pluto
 	RETVAL=$?
-	${IPSEC_EXECDIR}/whack --status | grep Total
+	${IPSEC_LIBEXECDIR}/whack --status | grep Total
 	;;
     version)
 	version
