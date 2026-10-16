@@ -30,7 +30,7 @@ west #
 "ikev2-transcript=auto": added oriented IKEv2 connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\([A-Z_]*IKE_SA_INIT_FULL_TRANSCRIPT_AUTH[A-Z_]*\).*/\1 \2/p' | sort
-"ikev1-transcript=auto":   policy: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_AUTO
-"ikev2-transcript=auto":   policy: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_AUTO
+"ikev1-transcript=no":   policy: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_NO
+"ikev2-transcript=no":   policy: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_NO
 "ikev2-transcript=yes":   policy: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_YES
 west #
