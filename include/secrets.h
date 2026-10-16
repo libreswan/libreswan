@@ -162,7 +162,6 @@ struct hash_signature {
 
 struct pubkey_type {
 	const char *name;
-	enum secret_kind private_key_kind;
 	enum ipseckey_algorithm_type ipseckey_algorithm;
 	/*
 	 * This frees the fields within PKC but NOT PKC (it's assumed
