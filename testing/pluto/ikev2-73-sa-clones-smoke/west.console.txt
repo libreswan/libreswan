@@ -1,0 +1,132 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-clones
+"westnet-eastnet-clones": added oriented IKEv2 connection
+west #
+ ipsec auto --status | grep westnet-eastnet-clones
+"westnet-eastnet-clones": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-clones":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-clones":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"westnet-eastnet-clones":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"westnet-eastnet-clones":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"westnet-eastnet-clones":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-clones":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"westnet-eastnet-clones":   sec_label:unset;
+"westnet-eastnet-clones":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: 3;
+"westnet-eastnet-clones":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"westnet-eastnet-clones":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-clones":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-clones":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-clones":   v2-auth-hash-policy: none;
+"westnet-eastnet-clones":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-clones":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"westnet-eastnet-clones":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"westnet-eastnet-clones":   sendca: all; our sendcert: always; their sendcert: always;
+"westnet-eastnet-clones":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
+"westnet-eastnet-clones":   nat-traversal: encapsulation:auto; keepalive:20s
+"westnet-eastnet-clones":   routing: unrouted;
+"westnet-eastnet-clones":   reqid: REQID;
+"westnet-eastnet-clones":   conn serial: $1;
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ # bring up the connection with clones=3.
+west #
+ #
+west #
+ # West is the initiator, so it creates the Additional Child SAs.  The
+west #
+ # test node has a single CPU, so clones=3 is reduced to 1 Additional
+west #
+ # Child SA (bound to CPU 0); asking the kernel to bind to CPUs that do
+west #
+ # not exist would fail with "pCPU number too big".  Expect the Initial
+west #
+ # Child SA (#2) plus one Additional Child SA (#3).
+west #
+ ipsec auto --up westnet-eastnet-clones
+"westnet-eastnet-clones" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-clones" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-clones" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"westnet-eastnet-clones" #1: sending SA_RESOURCE_INFO (clones=3)
+"westnet-eastnet-clones" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-clones" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(SA_RESOURCE_INFO)}
+"westnet-eastnet-clones" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"westnet-eastnet-clones" #2: per-resource child SA negotiation complete
+"westnet-eastnet-clones" #2: Additional Child SAs count reduced from 3 to 1 (only 1 resource(s) available)
+"westnet-eastnet-clones" #2: creating Additional Child SA 0
+"westnet-eastnet-clones" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+"westnet-eastnet-clones" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-clones" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+west #
+ # wait for the one Additional Child SA (#3) to be established (the
+west #
+ # helper's matched log line is discarded as it carries a timestamp)
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: initiator established Child SA' > /dev/null
+west #
+ # traffic must flow over the tunnel
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet-clones", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#3: "westnet-eastnet-clones", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # rekey the Initial Child SA; this recreates the Additional Child SA
+west #
+ ipsec whack --rekey-child --name westnet-eastnet-clones
+"westnet-eastnet-clones" #4: initiating rekey to replace Child SA #2 using IKE SA #1
+"westnet-eastnet-clones" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-clones" #4: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+"westnet-eastnet-clones" #4: Initial Child SA rekeyed - recreating 1 Additional Child SAs
+"westnet-eastnet-clones" #4: creating Additional Child SA 0 for rekeyed Initial SA
+"westnet-eastnet-clones" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-clones" #5: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
+"westnet-eastnet-clones" #2: deleting Additional Child SA (resource=0) associated with this Initial SA
+"westnet-eastnet-clones" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"westnet-eastnet-clones" #2: ESP traffic information: in=0B out=0B
+west #
+ # wait for the recreated Additional Child SA (#5) to be established
+west #
+ ../../guestbin/wait-for-pluto.sh '#5: initiator established Child SA' > /dev/null
+west #
+ # traffic must still flow after the rekey
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#4: "westnet-eastnet-clones", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#5: "westnet-eastnet-clones", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # tearing down the connection must delete Initial + Additional SAs
+west #
+ ipsec auto --down westnet-eastnet-clones
+"westnet-eastnet-clones": initiating delete of connection's IKE SA #1 (and Child SA #4)
+"westnet-eastnet-clones" #5: ESP traffic information: in=84B out=84B
+"westnet-eastnet-clones" #1: sent INFORMATIONAL request to delete IKE SA
+"westnet-eastnet-clones" #4: ESP traffic information: in=0B out=0B
+"westnet-eastnet-clones" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec whack --trafficstatus
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+west #

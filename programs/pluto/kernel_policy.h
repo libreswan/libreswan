@@ -137,6 +137,7 @@ struct kernel_policy {
 	 */
 	enum kernel_mode mode;
 	bool iptfs;
+	bool cpu_acquire;
 	unsigned nr_rules;
 	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
 	struct nic_offload nic_offload;
