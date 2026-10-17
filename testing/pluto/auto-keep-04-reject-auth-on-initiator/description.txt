@@ -1,0 +1,3 @@
+auto=keep when initiator rejects responder's auth
+
+responder should not "keep"
