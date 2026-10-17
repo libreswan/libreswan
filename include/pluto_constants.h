@@ -321,9 +321,10 @@ typedef enum {
 	STF_SUSPEND,            		/*   suspend     no       no  */
 	STF_OK,                 		/*    yes        no     response? */
 	STF_OK_INITIATOR_DELETE_IKE,		/*    yes        yes      no */
-	STF_OK_INITIATOR_SEND_DELETE_IKE,	/*    yes        yes    request */
-	STF_OK_RESPONDER_DELETE_IKE,		/*    yes        yes    response? */
+	STF_OK_RESPONDER_DELETE_IKE,		/*    yes        yes    response */
 	STF_INTERNAL_ERROR,			/*     no        no      never? */
+	STF_FATAL_INITIATOR_SEND_DELETE_IKE,	/*    yes        yes    request */
+	STF_FATAL_INITIATOR_SEND_AUTHENTICATION_FAILED,	/*    yes        yes    request */
 	STF_FATAL,				/*     no        yes     never */
 	STF_FAIL_v1N,       			/*     no       maybe?   response? */
 #define STF_ROOF (STF_FAIL_v1N + 65536) /* see RFC and above */

@@ -94,6 +94,11 @@ struct payload_summary {
 enum v2_pd {
 	PD_v2_INVALID = 0,
 
+	/*
+	 * XXX: enum v2_pd does not contain errors.  Instead the first
+	 * error is stored in .v2N_error.
+	 */
+
 	/* error notifications */
 	/*UNSUPPORTED_CRITICAL_PAYLOAD*/	/* IKE FATAL */
 	/*INVALID_IKE_SPI*/			/* IKE drop */
