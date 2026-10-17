@@ -139,8 +139,8 @@ void decode_v2N_payload(struct msg_digest *md,
 
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
-		/* if it was supported there'd be space to save it */
-		ldbg(logger, "%s notification %s is not supported", type, name.buf);
+		/* if it was cached there'd be space to save it */
+		ldbg(logger, "%s notification %s is not cached", type, name.buf);
 		return;
 	}
 

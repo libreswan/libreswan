@@ -1608,6 +1608,13 @@ stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
 	return STF_OK;
 }
 
+static bool emit_v2N_AUTHENTICATION_FAILED(struct ike_sa *ike UNUSED,
+					   struct child_sa *child UNUSED,
+					   struct pbs_out *outs)
+{
+	return emit_v2N(v2N_AUTHENTICATION_FAILED, outs);
+}
+
 /*
  * Dependent on RESULT, either complete, suspend, abandon, or abort
  * (delete state) the state transition started by the state-specific
@@ -1764,7 +1771,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(ike == NULL);
 		return;
 
-	case STF_OK_INITIATOR_SEND_DELETE_IKE:
+	case STF_FATAL_INITIATOR_SEND_DELETE_IKE:
 		/*
 		 * Initiator processing response, finish current
 		 * exchange and then record'n'send a fire'n'forget
@@ -1778,13 +1785,51 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * XXX: this should instead jump to a new transition
 		 * that performs a proper delete exchange.
 		 */
-		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_SEND_DELETE_IKE)");
+		dbg_v2_msgid(ike, "finishing old exchange (STF_FATAL_INITIATOR_SEND_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md, HERE);
 		/* do the deed; record'n'send logs */
 		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
 		terminate_ike_family(&ike, REASON_DELETED,
+				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		/* get out of here -- everything is invalid */
+		pexpect(ike == NULL);
+		return;
+
+	case STF_FATAL_INITIATOR_SEND_AUTHENTICATION_FAILED:
+		/*
+		 * Initiator processing response, finish current
+		 * exchange and then record'n'send a fire'n'forget
+		 * delete.
+		 *
+		 * For instance, when the IKE_AUTH response's
+		 * authentication fails the initiator needs to quickly
+		 * send out a delete (this is IKEv2's documented
+		 * violation to the don't respond to a response rule).
+		 *
+		 * XXX: this should instead jump to a new transition
+		 * that performs a proper delete exchange.
+		 */
+		dbg_v2_msgid(ike, "finishing old exchange (STF_FATAL_INITIATOR_SEND_AUTHENTICATION_FAILED)");
+		pexpect(transition->recv_role == MESSAGE_RESPONSE);
+		v2_msgid_finish(ike, md, HERE);
+		/*
+		 * Now record 'n' send the AUTHENTICATION_FAILED
+		 * informational.
+		 */
+		llog(RC_LOG, ike->sa.logger, "sending AUTHENTICATION_FAILED notification and deleting IKE SA");
+		v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_exchange);
+		record_v2_INFORMATIONAL_request("AUTHENTICATION_FAILED",
+						ike->sa.logger,
+						ike, (struct child_sa*)NULL,
+						emit_v2N_AUTHENTICATION_FAILED);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+		v2_msgid_finish(ike, NULL/*MD*/, HERE);
+		/* do the deed */
+		on_delete(&ike->sa, skip_log_message);
+		on_delete(&ike->sa, skip_send_delete);
+		terminate_ike_family(&ike, REASON_AUTH_FAILED,
 				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);

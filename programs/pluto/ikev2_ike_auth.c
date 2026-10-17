@@ -1259,10 +1259,10 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		/*
 		 * We cannot send a response as we are processing
 		 * IKE_AUTH reply the RFC states we pretend IKE_AUTH
-		 * was okay, and then send an INFORMATIONAL DELETE IKE
-		 * SA.
+		 * was okay, and then send an INFORMATIONAL
+		 * AUTHENTICATION_FAILED notification.
 		 */
-		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		return STF_FATAL_INITIATOR_SEND_AUTHENTICATION_FAILED;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -1324,7 +1324,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * was okay, and then send an INFORMATIONAL DELETE IKE
 		 * SA.
 		 */
-		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		return STF_FATAL_INITIATOR_SEND_AUTHENTICATION_FAILED;
 	}
 
 	/*
@@ -1437,7 +1437,7 @@ stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike, stru
 		/*
 		 * This will log that the IKE SA is deleted.
 		 */
-		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		return STF_FATAL_INITIATOR_SEND_DELETE_IKE;
 	}
 
 	if (larval_child == NULL) {

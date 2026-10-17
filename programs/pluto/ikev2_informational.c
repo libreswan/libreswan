@@ -45,9 +45,9 @@
 #include "ikev2_states.h"
 #include "ikev2_notification.h"
 
-static stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
-						   struct child_sa *null_child,
-						   struct msg_digest *md);
+static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_response;
 
 /*
  ***************************************************************
@@ -81,6 +81,16 @@ static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
+stf_status initiate_v2_INFORMATIONAL_request(struct ike_sa *ike,
+					     struct child_sa *child,
+					     struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, child == NULL);
+	PEXPECT(ike->sa.logger, md == NULL);
+	llog_pexpect(ike->sa.logger, HERE, "unexpected call");
+	return STF_OK;
+}
+
 stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md)
@@ -111,6 +121,52 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	}
 
 	/* HDR out */
+
+	if (md->v2N_error != NULL) {
+		/*
+		 * 2.21.2.  Error Handling in IKE_AUTH
+		 *
+		 *   In an IKE_AUTH exchange, or in the INFORMATIONAL
+		 *   exchange immediately following it (in case an
+		 *   error happened when processing a response to
+		 *   IKE_AUTH), the UNSUPPORTED_CRITICAL_PAYLOAD,
+		 *   INVALID_SYNTAX, and AUTHENTICATION_FAILED
+		 *   notifications are the only ones to cause the IKE
+		 *   SA to be deleted or not created, without a Delete
+		 *   payload.
+		 */
+		enum ikev2_notification error =
+			md->v2N_error->payload.v2n.isan_type;
+		switch (error) {
+		case v2N_UNSUPPORTED_CRITICAL_PAYLOAD:
+		case v2N_INVALID_SYNTAX:
+		case v2N_AUTHENTICATION_FAILED:
+		{
+			/*
+			 * Ceate a new response, throwing away the
+			 * above.
+			 */
+			name_buf nb;
+			llog(RC_LOG, ike->sa.logger, "received fatal error notification %s",
+			     str_enum_short(&v2_notification_names, error, &nb));
+			record_v2N_response(ike->sa.logger, ike, md,
+					    error, empty_shunk,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
+		default:
+		{
+			/*
+			 * XXX: should this be fatal?  RFC seems to
+			 * imply no, but the error wasn't solicited.
+			 */
+			name_buf nb;
+			llog(RC_LOG, ike->sa.logger, "unexpected error notification %s",
+			     str_enum_short(&v2_notification_names, error, &nb));
+			break;
+		}
+		}
+	}
 
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		if (!process_v2N_requests(ike, md, response.pbs)) {
@@ -146,6 +202,16 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	mobike_possibly_send_recorded(ike, md);
 
+	return STF_OK;
+}
+
+stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
+					     struct child_sa *child,
+					     struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, child == NULL);
+	PEXPECT(ike->sa.logger, md == NULL);
+	llog_pexpect(ike->sa.logger, HERE, "unexpected call");
 	return STF_OK;
 }
 
@@ -218,6 +284,15 @@ bool record_v2_INFORMATIONAL_response(const char *name,
 	return true;
 }
 
+static const struct v2_transition v2_INFORMATIONAL_initiate_transition = {
+	.story = "initiate Informational exchange",
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_INFORMATIONAL_exchange,
+	.processor = initiate_v2_INFORMATIONAL_request,
+	.llog_success = llog_success_ikev2_exchange_initiator,
+	.timeout_event = EVENT_RETAIN,
+};
+
 static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 
 	/* Informational Exchange */
@@ -245,12 +320,31 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 
 };
 
+static const struct v2_transition v2_INFORMATIONAL_response_transition[] = {
+	{
+		.story = "process Informational response",
+		.to = &state_v2_ESTABLISHED_IKE_SA,
+		.exchange = &v2_INFORMATIONAL_exchange,
+		.recv_role  = MESSAGE_RESPONSE,
+		.message_payloads.required = v2P(SK),
+		.encrypted_payloads.optional = v2P(N),
+		.processor = process_v2_INFORMATIONAL_response,
+		.llog_success = ldbg_success_ikev2,
+		.timeout_event = EVENT_RETAIN,
+	},
+
+};
+
 const struct v2_exchange v2_INFORMATIONAL_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.name = "INFORMATIONAL",
-	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.secured = true,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_INFORMATIONAL_initiate_transition,
 	.transitions.responder = {
 		ARRAY_PTR(v2_INFORMATIONAL_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_PTR(v2_INFORMATIONAL_response_transition),
 	},
 };
