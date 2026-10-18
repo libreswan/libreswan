@@ -1895,7 +1895,7 @@ static diag_t extract_host_end(enum end end,
 		struct kv whack_auth_kv = kv(wm, end, KWS_AUTH);
 		if (whack_auth_kv.value != NULL) {
 			return diag("IKEv1 does not support "PRI_KV,
-				    pri_kv_key(whack_auth_kv), "");
+				    pri_kv(whack_auth_kv));
 		}
 
 		/*
