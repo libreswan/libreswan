@@ -1,0 +1,9 @@
+Initiator authby=ecdsa, responder authby=ecdsa-sha2_512, both with
+P-384 ECDSA certs.
+
+Initiator sets signature-hash-algorithms=no, so both sides use the
+legacy ECDSA methods. Initiator should authenticate using
+ECDSA_SHA2_384_P384, which responder authby=ecdsa-sha2_512 does not
+allow.
+
+Connection should not establish.

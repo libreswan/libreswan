@@ -1,0 +1,6 @@
+Both sides authby=ecdsa with generated P-256 ECDSA raw keys.
+Same as whack-hostkey-05-ikev2-rawkey-ecdsa.
+Both sides set signature-hash-algorithms=no, so they use the legacy
+ECDSA methods.
+Both sides should authenticate using ECDSA_SHA2_256_P256.
+Connection should establish.

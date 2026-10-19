@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ /testing/x509/import.sh real/mainec/west.p12
+ ipsec pk12util -w nss-pw -i real/mainec/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -O -n west
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # expected to fail - initiator's key type is not allowed
+west #
+ ipsec up westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"westnet-eastnet-ikev2" #1: local RSASIG authentication has no usable private key
+"westnet-eastnet-ikev2" #1: authentication method IKEv2_AUTH_RESERVED not supported
+"westnet-eastnet-ikev2" #1: encountered fatal error in state IKE_SA_INIT_IR
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "westnet-eastnet-ikev2" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"westnet-eastnet-ikev2" #1: deleting IKE SA (processed IKE_SA_INIT response)
+west #
+ echo done
+done
+west #

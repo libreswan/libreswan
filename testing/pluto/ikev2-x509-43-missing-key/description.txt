@@ -1,0 +1,5 @@
+Both sides authby=rsa-sha2 with RSA certs. The initiator has its
+certificate but not its private key.
+
+The initiator should fail before sending IKE_AUTH. Connection should
+not establish.

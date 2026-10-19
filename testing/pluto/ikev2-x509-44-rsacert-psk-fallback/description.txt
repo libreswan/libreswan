@@ -1,0 +1,6 @@
+Initiator authby=rsa-sha2,secret with an RSA cert, responder
+auth=secret without a cert.
+The responder sets signature-hash-algorithms=no, so it neither sends
+nor accepts SIGNATURE_HASH_ALGORITHMS.
+Both sides should authenticate with PSK.
+Connection should establish.

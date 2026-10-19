@@ -1,0 +1,8 @@
+Same as interop-ikev2-strongswan-46-responder-ecdsa-384.
+
+Initiator (libreswan) authby=ecdsa with a P-384 ECDSA cert, and
+signature-hash-algorithms=no, so it uses the legacy ECDSA methods.
+Responder (strongSwan) auth=pubkey with a P-384 ECDSA cert.
+Initiator should authenticate using ECDSA_SHA2_384_P384.
+
+Connection should establish.
