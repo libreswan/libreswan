@@ -287,6 +287,7 @@
 <!ENTITY rfc3947 '<ulink url="https://www.rfc-editor.org/info/rfc3947">RFC 3947: Negotiation of NAT-Traversal in the IKE (IKEv1)</ulink>'>
 <!ENTITY rfc3948 '<ulink url="https://www.rfc-editor.org/info/rfc3948">RFC 3948: UDP Encapsulation of IPsec ESP Packets</ulink>'>
 <!ENTITY rfc4025 '<ulink url="https://www.rfc-editor.org/info/rfc4025">RFC 4025: A Method for Storing IPsec Keying Material in DNS</ulink>'>
+<!ENTITY rfc4945 '<ulink url="https://www.rfc-editor.org/info/rfc4945">RFC 4945: The Internet IP Security PKI Profile of IKEv1/ISAKMP, IKEv2, and PKIX</ulink>'>
 <!ENTITY rfc7296 '<ulink url="https://www.rfc-editor.org/info/rfc7296">RFC 7296: Internet Key Exchange Protocol Version 2 (IKEv2)</ulink>'>
 <!ENTITY rfc7427 '<ulink url="https://www.rfc-editor.org/info/rfc7427">RFC 7427: Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)</ulink>'>
 <!ENTITY rfc9395 '<ulink url="https://www.rfc-editor.org/info/rfc9395">RFC 9395: Deprecation of the Internet Key Exchange Version 1 (IKEv1) Protocol and Obsoleted Algorithms</ulink>'>
