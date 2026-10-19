@@ -320,15 +320,15 @@ static void jam_secret_match(struct jambuf *buf, lset_t match)
 	}
 	if (match & match_remote) {
 		jam_string(buf, sep); sep = "+";
-		jam_string(buf, " remote");
+		jam_string(buf, "remote");
 	}
 	if (match & match_any) {
 		jam_string(buf, sep); sep = "+";
-		jam_string(buf, " any");
+		jam_string(buf, "any");
 	}
 	if (match & match_default) {
 		jam_string(buf, sep); sep = "+";
-		jam_string(buf, " default");
+		jam_string(buf, "default");
 	}
 	jam_string(buf, "}");
 }
