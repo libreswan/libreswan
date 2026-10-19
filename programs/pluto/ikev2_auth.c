@@ -440,6 +440,40 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	struct connection *c = ike->sa.st_connection;
 	struct authby negotiated_authby = local_v2_authby(ike);
 
+	/*
+	 * Narrow authby to what the private key can sign with. The
+	 * method, hash and signer picked below must match the key.
+	 *
+	 * Only an end with a certificate or CKAID is narrowed, since
+	 * those identify the key. An end with neither looks for any
+	 * loaded key of the signer's type.
+	 *
+	 * A key whose type authby does not allow is ignored.
+	 * PSK, NULL and EAP bits are kept.
+	 */
+	struct authby signature_authby = authby_v2AUTH_pubkey();
+	bool cert_or_ckaid = (c->local->host.config->cert.nss_cert != NULL ||
+			      c->local->host.config->ckaid != NULL);
+	const struct secret_pubkey_stuff *pks = NULL;
+	if (cert_or_ckaid && authby_has_v2AUTH_pubkey(negotiated_authby)) {
+		pks = get_local_private_key_by_cert_or_ckaid(c, ike->sa.logger);
+		if (pks != NULL) {
+			struct authby key_authby = private_key_authby(pks, negotiated_authby);
+			if (authby_has_any(key_authby, negotiated_authby)) {
+				negotiated_authby = authby_and(negotiated_authby,
+							       authby_or(key_authby,
+									 authby_not(signature_authby)));
+			} else {
+				authby_buf ab;
+				ldbg(ike->sa.logger,
+				     "connection %s's private key has type %s but %s is needed",
+				     c->name, pks->content.type->name,
+				     str_authby(authby_and(negotiated_authby, signature_authby), &ab));
+				pks = NULL;
+			}
+		}
+	}
+
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
 		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
@@ -469,6 +503,27 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	struct authby digsig_authby =
 		authby_and(negotiated_authby,
 			   ike->sa.st_v2_digsig.peer_pubkey_mask);
+
+	/*
+	 * Fail when a signature method below would be picked but the
+	 * certificate or CKAID has no usable private key.
+	 * EAP, PSK and NULL need no key.
+	 */
+	if (cert_or_ckaid && pks == NULL &&
+	    (authby_is_set(digsig_authby) ||
+	     authby_has_any(negotiated_authby, (struct authby) {
+				AUTHBY_RSASSA_PKCS1_V1_5_SHA1_RAW,
+				AUTHBY_ECDSA_RAW,
+			}))) {
+		authby_buf ab;
+		llog(RC_LOG, ike->sa.logger,
+		     "local %s authentication has no usable private key",
+		     str_authby(authby_and(negotiated_authby, signature_authby), &ab));
+		return (struct v2AUTH_method) {
+			.method = IKEv2_AUTH_RESERVED,
+		};
+	}
+
 	if (authby_is_set(digsig_authby)) {
 		return v2AUTH_method(ike, digsig_authby,
 				     IKEv2_AUTH_DIGITAL_SIGNATURE);
@@ -485,16 +540,10 @@ struct v2AUTH_method local_v2AUTH_method(struct ike_sa *ike)
 	}
 
 	/*
-	 * If there are HASH algorithms, prute force pick the
-	 * first and use that.  Note that this doesn't check
-	 * that the ECDSA key matches the Pnnn.  Instead, like
-	 * for Digital Signature Method, it allows any ECDSA
-	 * key.
-	 *
-	 * XXX: this _should_ be looking at the ECDSA key.
-	 *
-	 * XXX: this _should_ be looking at IKE's dynamic
-	 * authby which _should_ be looking at the ECDSA key.
+	 * Legacy ECDSA. For an end with a certificate or CKAID,
+	 * negotiated_authby holds only the method for the key's
+	 * curve if that method is allowed. Otherwise the first
+	 * allowed method is used, and the peer may reject it.
 	 */
 
 	if (authby_has(negotiated_authby, AUTH_ECDSA_SHA2_512_RAW)) {

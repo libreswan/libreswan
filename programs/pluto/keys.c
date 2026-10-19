@@ -778,6 +778,92 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 }
 
 /*
+ * The private key of the connection's certificate or CKAID;
+ * NULL when there is none.
+ */
+
+struct secret_pubkey_stuff *get_local_private_key_by_cert_or_ckaid(const struct connection *c,
+								   struct logger *logger)
+{
+	struct secret_pubkey_stuff *pks = NULL;
+	bool load_needed;
+	err_t err;
+	if (c->local->host.config->cert.nss_cert != NULL) {
+		err = find_or_load_private_key_by_cert(&pluto_secrets,
+						       &c->local->host.config->cert,
+						       &pks, &load_needed, logger);
+	} else if (c->local->host.config->ckaid != NULL) {
+		err = find_or_load_private_key_by_ckaid(&pluto_secrets,
+							c->local->host.config->ckaid,
+							&pks, &load_needed, logger);
+	} else {
+		return NULL;
+	}
+
+	if (err != NULL) {
+		ldbg(logger, "connection %s's private key not found: %s",
+		     c->name, err);
+		return NULL;
+	}
+
+	return pks;
+}
+
+/*
+ * The authby bits for the private key's type (RSA, ECDSA or
+ * EdDSA); empty for any other type.
+ *
+ * For an ECDSA key:
+ * - legacy: return only the method for the key's curve if
+ *   AUTHBY allows it, because RFC 4754 ties each method to one
+ *   curve; otherwise return all three methods.
+ * - Digital Signature: return ECDSA with SHA2-256/384/512,
+ *   because RFC 7427 does not tie the curve to a hash.
+ *
+ * The curve is found by key size; a secp256k1 key also has 256
+ * bits, but NSS's own token can't sign with it.
+ */
+
+struct authby private_key_authby(const struct secret_pubkey_stuff *pks,
+				 struct authby authby)
+{
+	const struct pubkey_type *type = pks->content.type;
+
+	if (type == &pubkey_type_rsa) {
+		return (struct authby) { AUTHBY_RSASSA, };
+	}
+
+	if (type == &pubkey_type_eddsa) {
+		return (struct authby) { AUTHBY_EDDSA, };
+	}
+
+	if (type != &pubkey_type_ecdsa) {
+		return (struct authby) {0};
+	}
+
+	enum auth curve_auth;
+	switch (SECKEY_PublicKeyStrengthInBits(pks->content.public_key)) {
+	case 256:
+		curve_auth = AUTH_ECDSA_SHA2_256_RAW;
+		break;
+	case 384:
+		curve_auth = AUTH_ECDSA_SHA2_384_RAW;
+		break;
+	case 521:
+		curve_auth = AUTH_ECDSA_SHA2_512_RAW;
+		break;
+	default:
+		return (struct authby) { AUTHBY_ECDSA, };
+	}
+
+	if (authby_has(authby, curve_auth)) {
+		return authby_add((struct authby) { AUTHBY_ECDSA_BLOB, }, curve_auth);
+	}
+
+	return (struct authby) { AUTHBY_ECDSA, };
+}
+
+/*
  * public key machinery
  */
 
