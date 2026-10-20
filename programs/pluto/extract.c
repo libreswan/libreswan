@@ -2262,11 +2262,15 @@ static diag_t extract_host_end(enum end end,
 	return NULL;
 }
 
-static bool is_virt(const struct whack_end *we)
+static bool is_virt(const struct whack_end *we UNUSED)
 {
+#ifdef USE_IKEv1
 	return (we->we_subnet != NULL &&
 		(startswith(we->we_subnet, "vhost:") ||
 		 startswith(we->we_subnet, "vnet:")));
+#else
+	return false;
+#endif
 }
 
 
@@ -2458,12 +2462,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			return diag("IKEv%d does not support virtual subnets",
 				    ike_version);
 		}
+#ifdef USE_IKEv1
 		vdbg("%s %s child has a virt-end", wm->name, leftright);
 		diag_t d = create_virtual(leftright, src->we_subnet,
 					  &child_config->virt);
 		if (d != NULL) {
 			return d;
 		}
+#endif
 	}
 
 	/*
@@ -4826,14 +4832,16 @@ diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (is_virt(&wm->end[LEFT_END]) &&
-	    is_virt(&wm->end[RIGHT_END])) {
-		return diag("both leftvirt= and rightvirt= defined");
-	}
+	if (ike_version < IKEv2) {
+		if (is_virt(&wm->end[LEFT_END]) &&
+		    is_virt(&wm->end[RIGHT_END])) {
+			return diag("both leftvirt= and rightvirt= defined");
+		}
 
-	if (is_group_wm(host_addrs) && (is_virt(&wm->end[LEFT_END]) ||
+		if (is_group_wm(host_addrs) && (is_virt(&wm->end[LEFT_END]) ||
 					is_virt(&wm->end[RIGHT_END]))) {
-		return diag("connection groups do not support virtual subnets");
+			return diag("connection groups do not support virtual subnets");
+		}
 	}
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
