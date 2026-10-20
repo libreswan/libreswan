@@ -266,8 +266,8 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	if (md->pd[PD_v2N_REDIRECTED_FROM] == NULL &&
-	    md->pd[PD_v2N_REDIRECT_SUPPORTED] == NULL) {
+	if (md->v2N_status[v2N_status_REDIRECTED_FROM] == NULL &&
+	    md->v2N_status[v2N_status_REDIRECT_SUPPORTED] == NULL) {
 		ldbg(logger, "peer didn't indicate support for redirection");
 		pstats_ikev2_redirect_failed++;
 		return true;
@@ -523,7 +523,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 {
 	struct logger *logger = ike->sa.logger;
 
-	if (md->pd[PD_v2N_REDIRECT] == NULL) {
+	if (md->v2N_status[v2N_status_REDIRECT] == NULL) {
 		ldbg(logger, "redirect: no redirect payload in IKE_AUTH reply");
 		return false;
 	}
@@ -535,7 +535,7 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 	}
 
 	ip_address redirect_ip;
-	diag_t d = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
+	diag_t d = parse_redirect_payload(&md->v2N_status[v2N_status_REDIRECT]->pbs,
 					  ike->sa.st_connection->config->redirect.accept_to,
 					  NULL,
 					  &redirect_ip,
@@ -590,11 +590,11 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *i
 	 *
 	 * It trumps everything else.  Should delete also be ignored?
 	 */
-	if (PBAD(ike->sa.logger, md->pd[PD_v2N_REDIRECT] == NULL)) {
+	if (PBAD(ike->sa.logger, md->v2N_status[v2N_status_REDIRECT] == NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
+	struct pbs_in redirect_pbs = md->v2N_status[v2N_status_REDIRECT]->pbs;
 	ip_address redirect_to;
 	diag_t d = parse_redirect_payload(&redirect_pbs,
 					 ike->sa.st_connection->config->redirect.accept_to,
@@ -718,10 +718,10 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
 	PEXPECT(logger, child == NULL);
-	if (!PEXPECT(logger, md->pd[PD_v2N_REDIRECT] != NULL)) {
+	if (!PEXPECT(logger, md->v2N_status[v2N_status_REDIRECT] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
-	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
+	struct pbs_in redirect_pbs = md->v2N_status[v2N_status_REDIRECT]->pbs;
 	if (!ike->sa.st_connection->config->redirect.accept) {
 		llog(RC_LOG, logger,
 		     "ignoring v2N_REDIRECT, we don't accept being redirected");

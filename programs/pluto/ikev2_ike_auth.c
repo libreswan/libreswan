@@ -730,10 +730,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	/* Only RFC 8784 PPK mechanism here: */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
-		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
+		if (md->v2N_status[v2N_status_PPK_IDENTITY] != NULL) {
 			ldbg(ike->sa.logger, "received PPK_IDENTITY");
 			struct ppk_id_payload payl;
-			if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
+			if (!extract_v2N_ppk_identity(&md->v2N_status[v2N_status_PPK_IDENTITY]->pbs, &payl, ike)) {
 				ldbg(ike->sa.logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 				return STF_FATAL;
 			}
@@ -759,12 +759,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 					"ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 			}
 		}
-		if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
+		if (md->v2N_status[v2N_status_NO_PPK_AUTH] != NULL) {
 			ldbg(ike->sa.logger, "received NO_PPK_AUTH");
 			if (c->config->ppk.insist) {
 				ldbg(ike->sa.logger, "Ignored NO_PPK_AUTH data - connection insists on PPK");
 			} else {
-				struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
+				struct pbs_in pbs = md->v2N_status[v2N_status_NO_PPK_AUTH]->pbs;
 				/* zero length doesn't matter? */
 				shunk_t no_ppk_auth = pbs_in_left(&pbs);
 				replace_chunk(&ike->sa.st_no_ppk_auth,
@@ -787,7 +787,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 
-	ike->sa.st_ike_seen_v2n_initial_contact = md->pd[PD_v2N_INITIAL_CONTACT] != NULL;
+	ike->sa.st_ike_seen_v2n_initial_contact = md->v2N_status[v2N_status_INITIAL_CONTACT] != NULL;
 
 	/*
 	 * Only RFC 8784 PPK mechanism here:
@@ -810,8 +810,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 
-	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
-		if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+	if (md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS]->pbs)) {
 			return STF_FATAL;
 		}
 	}
@@ -900,7 +900,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			return STF_FATAL;
 		}
 		ldbg(ike->sa.logger, "NO_PPK_AUTH verified");
-	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
+	} else if (md->v2N_status[v2N_status_NULL_AUTH] != NULL &&
 		   remote_can_authby_null &&
 		   !remote_can_authby_pubkey) {
 
@@ -914,7 +914,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 * Making a dummy struct pbs_in so we could pass it to
 		 * v2_check_auth()
 		 */
-		struct pbs_in pbs_null_auth = md->pd[PD_v2N_NULL_AUTH]->pbs;
+		struct pbs_in pbs_null_auth = md->v2N_status[v2N_status_NULL_AUTH]->pbs;
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth);
 		if (d != NULL) {
@@ -1147,7 +1147,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * Ticket request is in IKE_AUTH, not IKE_SA_INIT, so no need
 	 * to store it in the state.
 	 */
-	if (md->pd[PD_v2N_TICKET_REQUEST] != NULL) {
+	if (md->v2N_status[v2N_status_TICKET_REQUEST] != NULL) {
 		if (c->config->session_resumption) {
 			if (!emit_v2N_TICKET_LT_OPAQUE(ike, response.pbs)) {
 				return STF_INTERNAL_ERROR;
@@ -1268,7 +1268,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	struct connection *c = ike->sa.st_connection;
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
-		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
+		if (md->v2N_status[v2N_status_PPK_IDENTITY] != NULL) {
 			if (!c->config->ppk.allow) {
 				llog_sa(RC_LOG, ike, "received PPK_IDENTITY but connection does not allow PPK");
 				return STF_FATAL;
@@ -1290,7 +1290,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		* NO_PPK_AUTH payload. We should revert our key material to
 		* NO_PPK versions.
 		*/
-		if (md->pd[PD_v2N_PPK_IDENTITY] == NULL && c->config->ppk.allow) {
+		if (md->v2N_status[v2N_status_PPK_IDENTITY] == NULL && c->config->ppk.allow) {
 			/* discard the PPK based calculations */
 
 			llog_sa(RC_LOG, ike, "peer wants to continue without PPK - switching to NO_PPK");
@@ -1347,16 +1347,16 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		return redirect_status;
 	}
 
-	if (md->pd[PD_v2N_TICKET_NACK] != NULL) {
+	if (md->v2N_status[v2N_status_TICKET_NACK] != NULL) {
 		llog(RC_LOG, ike->sa.logger, "received v2N_TICKET_NACK");
 	}
 
-	if (md->pd[PD_v2N_TICKET_ACK] != NULL) {
+	if (md->v2N_status[v2N_status_TICKET_ACK] != NULL) {
 		llog(RC_LOG, ike->sa.logger, "received v2N_TICKET_ACK");
 	}
 
-	if (md->pd[PD_v2N_TICKET_LT_OPAQUE] != NULL) {
-		if (!process_v2N_TICKET_LT_OPAQUE(ike, md->pd[PD_v2N_TICKET_LT_OPAQUE])) {
+	if (md->v2N_status[v2N_status_TICKET_LT_OPAQUE] != NULL) {
+		if (!process_v2N_TICKET_LT_OPAQUE(ike, md->v2N_status[v2N_status_TICKET_LT_OPAQUE])) {
 			return STF_FATAL;
 		}
 	}

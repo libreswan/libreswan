@@ -386,14 +386,14 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	}
 
 	bool expecting_compression = cc->config->child.ipcomp;
-	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+	if (request_md->v2N_status[v2N_status_IPCOMP_SUPPORTED] != NULL) {
 		if (!expecting_compression) {
 			ldbg(logger, "Ignored IPCOMP request as connection has compress=no");
 			PEXPECT(logger, larval_child->sa.st_ipcomp.protocol == NULL);
 		} else {
 			ldbg(logger, "received v2N_IPCOMP_SUPPORTED");
 
-			struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
+			struct pbs_in pbs = request_md->v2N_status[v2N_status_IPCOMP_SUPPORTED]->pbs;
 			struct ikev2_notify_ipcomp_data n_ipcomp;
 			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
 						 &n_ipcomp, sizeof(n_ipcomp), NULL);
@@ -438,7 +438,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 
 	/* is not not negotiated */
 	larval_child->sa.st_seen_esp_tfc_padding_not_supported =
-		(request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+		(request_md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
 	ldbg(larval_child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
 	     bool_str(larval_child->sa.st_seen_esp_tfc_padding_not_supported));
 
@@ -893,12 +893,12 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	/* not negotiated */
 	child->sa.st_seen_esp_tfc_padding_not_supported =
-		(md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+		(md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
 	ldbg(child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
 	     bool_str(child->sa.st_seen_esp_tfc_padding_not_supported));
 
-	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
-		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
+	if (md->v2N_status[v2N_status_IPCOMP_SUPPORTED] != NULL) {
+		struct pbs_in pbs = md->v2N_status[v2N_status_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
