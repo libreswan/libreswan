@@ -100,6 +100,46 @@ void decode_v2N_payload(struct msg_digest *md,
 	}
 
 	/*
+	 * Get the notification's name.
+	 *
+	 * Even when it is unknown, complain and continue: error
+	 * notifications should always be saved, non-error
+	 * notifications will be dropped when they fail to map onto an
+	 * internal value.
+	 */
+
+	enum notification_type {
+		invalid_notification,
+		error_notification,
+		reserved_notification,
+		status_notification,
+		private_notification,
+	} type = (n >= v2N_PRIVATE_FLOOR ? private_notification :
+		  n >= v2N_STATUS_FLOOR ? status_notification :
+		  n >= v2N_RESERVED_FLOOR ? reserved_notification :
+		  n >= v2N_ERROR_FLOOR ? error_notification :
+		  invalid_notification);
+	/* hack */
+	const char *type_name;
+	switch (type) {
+#define T(T) case T##_notification: type_name = #T; break;
+		T(invalid);
+		T(error);
+		T(reserved);
+		T(status);
+		T(private);
+#undef T
+	default:
+		bad_case (type);
+	}
+
+	name_buf name;
+	if (!enum_long(&v2_notification_names, n, &name)) {
+		limited_llog(logger, limiter,
+			     "%s notification %d is unknown", type_name, n);
+	}
+
+	/*
 	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
 	 *
 	 *   Types in the range 0 - 16383 are intended for reporting
@@ -118,39 +158,35 @@ void decode_v2N_payload(struct msg_digest *md,
 	 * errors seem to abort processing.
 	 */
 
-	const char *type;
-	if (n >= v2N_STATUS_FLOOR) {
-		type = "status";
-	} else if (md->v2N_error == NULL) {
-		md->v2N_error = notify;
-		type = "error";
-	} else {
-		name_buf nb;
-		limited_llog(logger, limiter, "ignoring additional error notification %s",
-			     str_enum_short(&v2_notification_names, n, &nb));
-		return;
-	}
+	if (type == error_notification) {
+		if (md->v2N_error != NULL) {
+			limited_llog(logger, limiter, "ignoring additional error notification %s",
+				     name.buf);
+			return;
+		}
 
-	name_buf name;
-	if (!enum_long(&v2_notification_names, n, &name)) {
-		limited_llog(logger, limiter, "%s notification %d is unknown", type, n);
+		ldbg(logger, "error notification %s saved", name.buf);
+		md->v2N_error = notify;
 		return;
 	}
 
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
-		ldbg(logger, "%s notification %s is not supported", type, name.buf);
+		ldbg(logger, "%s notification %s is not cached",
+		     type_name, name.buf);
 		return;
 	}
 
 	if (md->pd[v2_pd] != NULL) {
-		ldbg(logger, "%s duplicate notification %s ignored", type, name.buf);
+		ldbg(logger, "duplicate %s notification %s ignored",
+		     type_name, name.buf);
 		return;
 	}
 
 	if (LDBGP(DBG_TMI, logger)) {
-		LDBG_log(logger, "%s notification %s saved", type, name.buf);
+		LDBG_log(logger, "%s notification %s saved",
+			 type_name, name.buf);
 	}
 
 	md->pd[v2_pd] = notify;
