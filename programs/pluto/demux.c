@@ -23,57 +23,22 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <poll.h>       /* only used for forensic poll call */
-#include <sys/types.h>
-#include <sys/time.h>   /* only used for belt-and-suspenders select call */
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-#  include <asm/types.h>        /* for __u8, __u32 */
-#  include <linux/errqueue.h>
-#  include <sys/uio.h>          /* struct iovec */
-#endif
-
-
-#include "sysdep.h"
-#include "constants.h"
-
 #include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "connections.h"        /* needs id.h */
-#include "state.h"
-#include "packet.h"
-#include "crypto.h"
-#include "ike_alg.h"
-#include "log.h"
-#include "demux.h"      /* needs packet.h */
+
+#include "demux.h"
 #ifdef USE_IKEv1
 #include "ikev1_demux.h"
 #endif
 #include "ikev2_demux.h"
-#include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "timer.h"
-#include "ip_address.h"
-#include "ip_endpoint.h"
-#include "ip_protocol.h"
-#include "ip_info.h"
+
+#include "log_limiter.h"
+#include "log.h"
 #include "pluto_stats.h"
-#include "ikev2_send.h"
 #include "iface.h"
 #include "impair_message.h"
-#include "log_limiter.h"
-#include "ikev2_notification.h"
-#include "ipsecconf/setup.h"
+#include "message_role.h"
+
+#include "ikev2_notification.h"		/* for send_v2N_response_from_md() */
 
 static callback_cb handle_md_event;		/* type assertion */
 
