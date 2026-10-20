@@ -70,6 +70,7 @@
 #include "root_certs.h"		/* for init_root_certs() */
 #ifdef USE_IKEv1
 #include "ikev1_states.h"	/* for init_ikev1_states() */
+#include "ikev1_demux.h"	/* for init_ikev1_demux() */
 #endif
 #include "ikev2_states.h"	/* for init_ikev2_states() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
@@ -1323,7 +1324,7 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "NSS crypto library initialized");
 
 #ifdef USE_IKEv1
-	ikev1_init_demux(logger);
+	init_ikev1_demux(logger);
 #endif
 
 	if (is_fips_mode()) {

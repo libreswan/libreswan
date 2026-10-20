@@ -21,8 +21,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
- * (all the code that used to be here is now in ikev1.c)
  */
 
 #include <stdio.h>
@@ -60,9 +58,7 @@
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
 #ifdef USE_IKEv1
-#include "ikev1.h"
-#include "ikev1_send.h"
-#include "ikev1_notification.h"
+#include "ikev1_demux.h"
 #endif
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
@@ -79,9 +75,6 @@
 #include "ikev2_notification.h"
 #include "ipsecconf/setup.h"
 
-#ifdef USE_IKEv1
-static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
-#endif
 static callback_cb handle_md_event;		/* type assertion */
 
 /*
@@ -163,53 +156,13 @@ void process_md(struct msg_digest *md)
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
-	{
 #ifdef USE_IKEv1
-		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
-			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
-			pstats_ikev1_dropped++;
-			return;
-		}
-		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
-			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
-			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
-			pstats_ikev1_dropped++;
-			return;
-		}
-
-		if (vmin > ISAKMP_MINOR_VERSION) {
-			/* RFC2408 3.1 ISAKMP Header Format:
-			 *
-			 * Minor Version (4 bits) - indicates the minor
-			 * version of the ISAKMP protocol in use.
-			 * Implementations based on this version of the
-			 * ISAKMP Internet-Draft MUST set the Minor
-			 * Version to 0.  Implementations based on
-			 * previous versions of ISAKMP Internet- Drafts
-			 * MUST set the Minor Version to 1.
-			 * Implementations SHOULD never accept packets
-			 * with a minor version number larger than its
-			 * own, given the major version numbers are
-			 * identical.
-			 */
-			limited_llog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
-			return;
-		}
-		name_buf xb;
-		ldbg(md->logger,
-		     " processing version=%u.%u packet with exchange type=%s (%d)",
-		     vmaj, vmin,
-		     str_enum_short(&ikev1_exchange_names, md->hdr.isa_xchg, &xb),
-		     md->hdr.isa_xchg);
-		process_v1_packet(md);
-		/* our caller will md_delref(mdp) */
+		process_ikev1_md(md, vmaj, vmin);
 #else
-		ldbg(md->logger, "IKEv1 packet dropped"); /* dbg to prevent DoS */
+		limited_llog_md(md, "IKEv1 packet dropped");
 		pstats_ikev1_dropped++;
 #endif
-		break;
-	}
+		return;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
 	{
@@ -468,10 +421,3 @@ void limited_llog_md(const struct msg_digest *md,
 		va_end(ap);
 	}
 }
-
-#ifdef USE_IKEv1
-void ikev1_init_demux(struct logger *logger UNUSED)
-{
-	global_ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
-}
-#endif
