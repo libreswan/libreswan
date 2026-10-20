@@ -117,7 +117,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
 					       const struct msg_digest *md)
 {
-	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] == NULL) {
+	if (md->v2N_status[v2N_status_SIGNATURE_HASH_ALGORITHMS] == NULL) {
 		/* nothing to save */
 		return true;
 	}
@@ -127,7 +127,7 @@ static bool save_v2N_SIGNATURE_HASH_ALGORITHMS(struct ike_sa *ike,
 		return true;
 	}
 
-	struct pbs_in pbs = md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs;
+	struct pbs_in pbs = md->v2N_status[v2N_status_SIGNATURE_HASH_ALGORITHMS]->pbs;
 	ike->sa.st_seen_hashnotify = true;
 	while (pbs_left(&pbs) > 0) {
 
@@ -770,8 +770,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
-					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
+	ike->sa.st_seen_redirect_sup = (md->v2N_status[v2N_status_REDIRECTED_FROM] != NULL ||
+					md->v2N_status[v2N_status_REDIRECT_SUPPORTED] != NULL);
 
 	ike->sa.st_v2_full_transcript_auth =
 		accept_v2_notification(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
@@ -1226,11 +1226,11 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	ike->sa.st_v2_childless_ikev2_supported =
 		(impair.childless_ikev2_supported ? false :
-		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
+		 md->v2N_status[v2N_status_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
 	ike->sa.st_v2_full_transcript_auth =
 		(c->config->ike_sa_init_full_transcript_auth != YNA_NO &&
-		 md->pd[PD_v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH] != NULL);
+		 md->v2N_status[v2N_status_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH] != NULL);
 	if (ike->sa.st_v2_full_transcript_auth) {
 		ldbg(ike->sa.logger,
 		     "responder accepted our proposed IKE_SA_INIT_FULL_TRANSCRIPT_AUTH notification");
@@ -1289,11 +1289,11 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * the full notification in the intermediate exchange, otherwise
 	 * we process the notification.
 	 */
-	if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
-		if (pbs_left(&md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs) == 0) {
+	if (md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS] != NULL) {
+		if (pbs_left(&md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS]->pbs) == 0) {
 			ike->sa.st_supported_auth_methods_intermediate = true;
 		} else {
-			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS]->pbs)) {
 				return STF_FATAL;
 			}
 		}

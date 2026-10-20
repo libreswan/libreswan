@@ -1972,9 +1972,9 @@ bool accept_v2_notification(v2_notification_t n,
 			    struct msg_digest *md,
 			    bool enabled)
 {
-	enum v2_pd pd = v2_pd_from_notification(n);
+	enum v2N_status v2N_status = v2N_status_from_notification(n);
 	bool responder = (v2_msg_role(md) == MESSAGE_REQUEST);
-	bool proposed = (md->pd[pd] != NULL);
+	bool proposed = (md->v2N_status[v2N_status] != NULL);
 
 	if (enabled && proposed) {
 		if (responder) {

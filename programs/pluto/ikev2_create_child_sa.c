@@ -298,7 +298,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	 * required).
 	 */
 
-	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
+	const struct payload_digest *rekey_sa_payload = md->v2N_status[v2N_status_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
 		llog_pexpect(ike->sa.logger, HERE,
 			     "rekey child can't find its rekey_sa payload");

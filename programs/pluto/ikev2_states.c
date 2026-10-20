@@ -419,8 +419,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 	}
 
 	if (payloads->notification >= v2N_STATUS_FLOOR) {
-		enum v2_pd v2_pd = v2_pd_from_notification(payloads->notification);
-		if (md->pd[v2_pd] == NULL) {
+		enum v2N_status v2N_status = v2N_status_from_notification(payloads->notification);
+		if (md->v2N_status[v2N_status] == NULL) {
 			errors.bad = true;
 			errors.notification = payloads->notification;
 		}

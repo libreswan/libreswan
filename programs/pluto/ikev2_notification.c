@@ -41,10 +41,10 @@ static void decode_v2N_payload(struct msg_digest *md,
 			       const struct payload_digest *notify,
 			       struct logger *logger, enum log_limiter limiter);
 
-enum v2_pd v2_pd_from_notification(v2_notification_t n)
+enum v2N_status v2N_status_from_notification(v2_notification_t n)
 {
 	switch (n) {
-#define C(N) case v2N_##N: return PD_v2N_##N;
+#define C(N) case v2N_##N: return v2N_status_##N;
 	C(ADDITIONAL_KEY_EXCHANGE);
 	C(COOKIE);
 	C(COOKIE2);
@@ -81,7 +81,7 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(SA_RESOURCE_INFO);
 	C(TS_MAX_QUEUE);
 #undef C
-	default: return PD_v2_INVALID;
+	default: return v2N_status_IGNORE;
 	}
 }
 
@@ -170,15 +170,15 @@ void decode_v2N_payload(struct msg_digest *md,
 		return;
 	}
 
-	enum v2_pd v2_pd = v2_pd_from_notification(n);
-	if (v2_pd == PD_v2_INVALID) {
+	enum v2N_status v2N_status = v2N_status_from_notification(n);
+	if (v2N_status == v2N_status_IGNORE) {
 		/* if it was supported there'd be space to save it */
 		ldbg(logger, "%s notification %s is not cached",
 		     type_name, name.buf);
 		return;
 	}
 
-	if (md->pd[v2_pd] != NULL) {
+	if (md->v2N_status[v2N_status] != NULL) {
 		ldbg(logger, "duplicate %s notification %s ignored",
 		     type_name, name.buf);
 		return;
@@ -189,7 +189,7 @@ void decode_v2N_payload(struct msg_digest *md,
 			 type_name, name.buf);
 	}
 
-	md->pd[v2_pd] = notify;
+	md->v2N_status[v2N_status] = notify;
 }
 
 void decode_v2N_payloads(struct msg_digest *md,

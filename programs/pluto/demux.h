@@ -91,10 +91,14 @@ struct payload_summary {
  * official numbers, these are contiguous.
  */
 
-enum v2_pd {
-	PD_v2_INVALID = 0,
+enum v2N_status {
+	v2N_status_IGNORE = 0,
 
-	/* error notifications */
+	/*
+	 * XXX: Error notifications are kept separate.  The first
+	 * (there should be only one) is saved in .v2N_error.
+	 */
+
 	/*UNSUPPORTED_CRITICAL_PAYLOAD*/	/* IKE FATAL */
 	/*INVALID_IKE_SPI*/			/* IKE drop */
 	/*INVALID_MAJOR_VERSION*/		/* IKE drop */
@@ -114,44 +118,44 @@ enum v2_pd {
 	/*CHILD_SA_NOT_FOUND*/			/* CHILD informational */
 
 	/* status notifications */
-	PD_v2N_ADDITIONAL_KEY_EXCHANGE,
-	PD_v2N_COOKIE,
-	PD_v2N_COOKIE2,
-	PD_v2N_CHILDLESS_IKEV2_SUPPORTED,
-	PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-	PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED,
-	PD_v2N_INITIAL_CONTACT,
-	PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
-	PD_v2N_IPCOMP_SUPPORTED,
-	PD_v2N_MOBIKE_SUPPORTED,
-	PD_v2N_NAT_DETECTION_DESTINATION_IP,
-	PD_v2N_NAT_DETECTION_SOURCE_IP,
-	PD_v2N_NO_PPK_AUTH,
-	PD_v2N_NULL_AUTH,
-	PD_v2N_PPK_IDENTITY,
-	PD_v2N_PPK_IDENTITY_KEY,
-	PD_v2N_REDIRECT,
-	PD_v2N_REDIRECTED_FROM,
-	PD_v2N_REDIRECT_SUPPORTED,
-	PD_v2N_REKEY_SA,
-	PD_v2N_SIGNATURE_HASH_ALGORITHMS,
-	PD_v2N_SUPPORTED_AUTH_METHODS,
-	PD_v2N_UPDATE_SA_ADDRESSES,
-	PD_v2N_USE_PPK,
-	PD_v2N_USE_PPK_INT,
-	PD_v2N_USE_TRANSPORT_MODE,
-	PD_v2N_USE_AGGFRAG,
-	PD_v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
-	PD_v2N_TICKET_LT_OPAQUE,
-	PD_v2N_TICKET_REQUEST,
-	PD_v2N_TICKET_ACK,
-	PD_v2N_TICKET_NACK,
-	PD_v2N_TICKET_OPAQUE,
+	v2N_status_ADDITIONAL_KEY_EXCHANGE,
+	v2N_status_COOKIE,
+	v2N_status_COOKIE2,
+	v2N_status_CHILDLESS_IKEV2_SUPPORTED,
+	v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED,
+	v2N_status_IKEV2_FRAGMENTATION_SUPPORTED,
+	v2N_status_INITIAL_CONTACT,
+	v2N_status_INTERMEDIATE_EXCHANGE_SUPPORTED,
+	v2N_status_IPCOMP_SUPPORTED,
+	v2N_status_MOBIKE_SUPPORTED,
+	v2N_status_NAT_DETECTION_DESTINATION_IP,
+	v2N_status_NAT_DETECTION_SOURCE_IP,
+	v2N_status_NO_PPK_AUTH,
+	v2N_status_NULL_AUTH,
+	v2N_status_PPK_IDENTITY,
+	v2N_status_PPK_IDENTITY_KEY,
+	v2N_status_REDIRECT,
+	v2N_status_REDIRECTED_FROM,
+	v2N_status_REDIRECT_SUPPORTED,
+	v2N_status_REKEY_SA,
+	v2N_status_SIGNATURE_HASH_ALGORITHMS,
+	v2N_status_SUPPORTED_AUTH_METHODS,
+	v2N_status_UPDATE_SA_ADDRESSES,
+	v2N_status_USE_PPK,
+	v2N_status_USE_PPK_INT,
+	v2N_status_USE_TRANSPORT_MODE,
+	v2N_status_USE_AGGFRAG,
+	v2N_status_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
+	v2N_status_TICKET_LT_OPAQUE,
+	v2N_status_TICKET_REQUEST,
+	v2N_status_TICKET_ACK,
+	v2N_status_TICKET_NACK,
+	v2N_status_TICKET_OPAQUE,
 
-	PD_v2N_SA_RESOURCE_INFO,
-	PD_v2N_TS_MAX_QUEUE,
+	v2N_status_SA_RESOURCE_INFO,
+	v2N_status_TS_MAX_QUEUE,
 
-	PD_v2_ROOF,
+	v2N_status_ROOF,
 };
 
 /* message digest
@@ -187,12 +191,13 @@ struct msg_digest {
 	unsigned v2_frags_total;		/* total fragments */
 
 	/*
-	 * Note that .pd[] is indexed using either enum v1_pd or enum
-	 * v2_pd and not exchange type, v2_notification_t, ....  This
-	 * is because the former is contiguous, while the latter is
-	 * very very sparse.
+	 * Note that .v2N_status[] is indexed using enum v2N_status.
+	 * I.e., NOT exchange type; and NOT_notification_t.
+	 *
+	 * enum v2N_status is contiguous / compact, while the latter
+	 * can be sparse.
 	 */
-	const struct payload_digest *pd[PD_v2_ROOF];
+	const struct payload_digest *v2N_status[v2N_status_ROOF];
 
 	/*
 	 * The first IKEv2 error notification found in the payload

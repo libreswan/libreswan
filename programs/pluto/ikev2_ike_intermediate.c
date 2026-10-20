@@ -831,7 +831,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	const struct secret_ppk_stuff *ppk = NULL;
 	if (task->exchange.ppk) {
 
-		for (const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
+		for (const struct payload_digest *ppk_id_key_payls = md->v2N_status[v2N_status_PPK_IDENTITY_KEY];
 		     ppk_id_key_payls != NULL; ppk_id_key_payls = ppk_id_key_payls->next) {
 
 			ldbg(logger, "received PPK_IDENTITY_KEY");
@@ -1083,7 +1083,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 	 */
 
 	if (task->exchange.ppk) {
-		if (md->pd[PD_v2N_PPK_IDENTITY] == NULL) {
+		if (md->v2N_status[v2N_status_PPK_IDENTITY] == NULL) {
 			if (ike->sa.st_connection->config->ppk.insist) {
 				llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received and connection \
 					      insists on PPK. Abort!");
@@ -1092,7 +1092,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 			llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received, continuing without PPK");
 		} else {
 			struct ppk_id_payload payl;
-			if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
+			if (!extract_v2N_ppk_identity(&md->v2N_status[v2N_status_PPK_IDENTITY]->pbs, &payl, ike)) {
 				ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 				return STF_FATAL;
 			}
@@ -1105,8 +1105,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 	}
 
 	if (task->exchange.supported_auth_methods) {
-		if (md->pd[PD_v2N_SUPPORTED_AUTH_METHODS] != NULL) {
-			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->pd[PD_v2N_SUPPORTED_AUTH_METHODS]->pbs)) {
+		if (md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS] != NULL) {
+			if (!process_v2N_SUPPORTED_AUTH_METHODS(ike, &md->v2N_status[v2N_status_SUPPORTED_AUTH_METHODS]->pbs)) {
 				return STF_FATAL;
 			}
 		}
