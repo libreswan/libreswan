@@ -736,13 +736,13 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
 	/* the transition requires this notify! */
-	if (PBAD(ike->sa.logger, md->pd[PD_v2N_TICKET_OPAQUE] == NULL)) {
+	if (PBAD(ike->sa.logger, md->v2N_status[v2N_status_TICKET_OPAQUE] == NULL)) {
 		/* already exploded */
 		record_v2N_TICKET_NACK(ike, md);
 		return STF_FATAL;
 	}
 
-	struct pbs_in pbs = md->pd[PD_v2N_TICKET_OPAQUE]->pbs;
+	struct pbs_in pbs = md->v2N_status[v2N_status_TICKET_OPAQUE]->pbs;
 	if(!decrypt_ticket(pbs, ike)) {
 		/* already logged */
 		record_v2N_TICKET_NACK(ike, md);

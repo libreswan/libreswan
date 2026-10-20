@@ -135,8 +135,8 @@ void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 	/* check both payloads are present */
 
 	FOR_EACH_ELEMENT(d, detect) {
-		enum v2_pd pd = v2_pd_from_notification(d->n);
-		d->pd = md->pd[pd];
+		enum v2N_status status = v2N_status_from_notification(d->n);
+		d->pd = md->v2N_status[status];
 		if (d->pd == NULL) {
 			name_buf nb;
 			ldbg(ike->sa.logger, "NAT: missing %s payload, NAT ignored",
@@ -370,7 +370,7 @@ void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
 		ldbg(logger, "NAT: can update, IKE SA responder hasn't yet established");
 	} else if (IS_IKE_SA_ESTABLISHED(&ike->sa) &&
 		   ike->sa.st_v2_mobike.enabled &&
-		   md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL) {
+		   md->v2N_status[v2N_status_UPDATE_SA_ADDRESSES] != NULL) {
 		ldbg(logger, "NAT: can update, established MOBIKE responder");
 	} else {
 		/*

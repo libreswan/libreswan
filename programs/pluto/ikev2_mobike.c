@@ -241,37 +241,37 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 #if 0
-	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_NO_NATS_ALLOWED] != NULL) {
+	if (LDBGP(DBG_BASE, logger) && md->v2N_status[v2N_status_NO_NATS_ALLOWED] != NULL) {
 		LDBG_LOG(logger, "NO_NATS_ALLOWED payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_ADDITIONAL_IP4_ADDRESS] != NULL) {
+	if (LDBGP(DBG_BASE, logger) && md->v2N_status[v2N_status_ADDITIONAL_IP4_ADDRESS] != NULL) {
 		LDBG_LOG(logger, "ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_ADDITIONAL_IP6_ADDRESS] != NULL) {
+	if (LDBGP(DBG_BASE, logger) && md->v2N_status[v2N_status_ADDITIONAL_IP6_ADDRESS] != NULL) {
 		LDBG_LOG(logger, "ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_NO_ADDITIONAL_ADDRESSES] != NULL) {
+	if (LDBGP(DBG_BASE, logger) && md->v2N_status[v2N_status_NO_ADDITIONAL_ADDRESSES] != NULL) {
 		LDBG_LOG(logger, "Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
 	}
 #endif
 
-	bool ntfy_update_sa = (md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL);
+	bool ntfy_update_sa = (md->v2N_status[v2N_status_UPDATE_SA_ADDRESSES] != NULL);
 
-	bool ntfy_natd = (md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] != NULL ||
-			  md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] != NULL);
+	bool ntfy_natd = (md->v2N_status[v2N_status_NAT_DETECTION_DESTINATION_IP] != NULL ||
+			  md->v2N_status[v2N_status_NAT_DETECTION_SOURCE_IP] != NULL);
 
 	shunk_t cookie2 = null_shunk;
-	if (md->pd[PD_v2N_COOKIE2] != NULL) {
-		shunk_t tmp = pbs_in_left(&md->pd[PD_v2N_COOKIE2]->pbs);
+	if (md->v2N_status[v2N_status_COOKIE2] != NULL) {
+		shunk_t tmp = pbs_in_left(&md->v2N_status[v2N_status_COOKIE2]->pbs);
 		if (tmp.len > IKEv2_MAX_COOKIE_SIZE) {
 			ldbg(logger, "MOBIKE COOKIE2 notify payload too big - ignored");
 		} else {
@@ -329,8 +329,8 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 	}
 
 	/* ??? there is currently no need for separate natd_[sd] variables */
-	bool natd_s = md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] != NULL;
-	bool natd_d = md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] != NULL;
+	bool natd_s = md->v2N_status[v2N_status_NAT_DETECTION_SOURCE_IP] != NULL;
+	bool natd_d = md->v2N_status[v2N_status_NAT_DETECTION_DESTINATION_IP] != NULL;
 	bool ret = natd_s && natd_d;
 
 	/* XXX: keep testsuite happy */

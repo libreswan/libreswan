@@ -162,7 +162,7 @@ static bool find_v2N_ADDITIONAL_KEY_EXCHANGE_link(struct msg_digest *md,
 						  struct logger *logger)
 {
 	const struct payload_digest *additional_key_exchange_payls =
-		md->pd[PD_v2N_ADDITIONAL_KEY_EXCHANGE];
+		md->v2N_status[v2N_status_ADDITIONAL_KEY_EXCHANGE];
 
 	if (additional_key_exchange_payls == NULL) {
 		llog(RC_LOG, logger, "missing ADDITIONAL_KEY_EXCHANGE notification");

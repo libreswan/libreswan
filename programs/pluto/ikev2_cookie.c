@@ -116,7 +116,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
 	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
 		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
-		pexpect(cookie_digest == md->pd[PD_v2N_COOKIE]);
+		pexpect(cookie_digest == md->v2N_status[v2N_status_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
 		ldbg(logger, "DDOS disabled and no cookie sent, continuing");
@@ -209,10 +209,10 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 						      struct msg_digest *md)
 {
 	PEXPECT(ike->sa.logger, child == NULL);
-	if (!PEXPECT(ike->sa.logger, md->pd[PD_v2N_COOKIE] != NULL)) {
+	if (!PEXPECT(ike->sa.logger, md->v2N_status[v2N_status_COOKIE] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
-	const struct pbs_in *cookie_pbs = &md->pd[PD_v2N_COOKIE]->pbs;
+	const struct pbs_in *cookie_pbs = &md->v2N_status[v2N_status_COOKIE]->pbs;
 
 	/*
 	 * Cookie exchanges are not logged when the connection is OE.

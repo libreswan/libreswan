@@ -1708,6 +1708,7 @@ typedef enum ikev2_notification {
 	 */
 
 	v2N_ERROR_FLOOR = 1,
+
 	v2N_UNSUPPORTED_CRITICAL_PAYLOAD = 1,
 	/* 2-3 Reserved */
 	v2N_INVALID_IKE_SPI = 4,
@@ -1748,11 +1749,14 @@ typedef enum ikev2_notification {
 
 	/* 8192-16384 Reserved for Private Use */
 
+	v2N_RESERVED_FLOOR = 8192,
+
 	/*
 	 * Status notifications.
 	 *
 	 * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-16
 	 */
+
 	v2N_STATUS_FLOOR = 16384,
 
 	v2N_INITIAL_CONTACT = 16384,
@@ -1828,6 +1832,7 @@ typedef enum ikev2_notification {
 
 	/* 40960 - 65535 Private Use */
 
+	v2N_PRIVATE_FLOOR = 40960,
 	v2N_NULL_AUTH = 40960,
 
 } v2_notification_t;

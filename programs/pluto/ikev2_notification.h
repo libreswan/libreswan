@@ -63,7 +63,13 @@ void decode_v2N_payloads(struct msg_digest *md,
 			 struct logger *logger,
 			 enum log_limiter limiter);
 
-enum v2_pd v2_pd_from_notification(v2_notification_t);
+/*
+ * Map useful IKEv2 status notification onto enum v2N_status.
+ *
+ * IKEv2 error notifications, and non-useful notifications, and even
+ * unrecognized notifications are all returned as v2N_status_IGNORE.
+ */
+enum v2N_status v2N_status_from_notification(v2_notification_t);
 
 void record_v2N_response(struct logger *logger,
 			 struct ike_sa *ike,
