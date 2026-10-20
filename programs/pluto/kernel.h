@@ -201,7 +201,12 @@ struct kernel_state {
 	uint32_t tfcpad;
 
 	const struct config_iptfs *iptfs;	/* non-NULL when enabled */
+
+	uint32_t cpu_id; /* Per-Resource Child SAs - CPU resource (RFC 9611) */
 };
+
+/* No CPU bound to the kernel SA (RFC 9611) */
+#define KERNEL_CPU_ID_NONE ((uint32_t)-1)
 
 struct kernel_ops {
 	/*
@@ -306,6 +311,7 @@ struct kernel_ops {
 	bool (*iptfs_ipsec_sa)(struct child_sa *child);
 	err_t (*directional_ipsec_sa_is_enabled)(struct logger *);
 	bool (*directional_ipsec_sa)(struct child_sa *child);
+	err_t (*pcpu_ipsec_sa_is_enabled)(struct logger *);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, const struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
@@ -400,6 +406,7 @@ struct kernel_acquire {
 	shunk_t sec_label;			/* on stack */
 	enum kernel_state_id state_id;		/* matches kernel state's .seq? */
 	enum kernel_policy_id policy_id;	/* matches kernel policy's .index? */
+	uint32_t cpu_id;            /* CPU id from kernel per-CPU ACQUIRE */
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);

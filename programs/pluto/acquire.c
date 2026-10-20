@@ -34,6 +34,9 @@
 #include "orient.h"
 #include "instantiate.h"
 #include "initiate.h"
+#include "state.h"
+#include "connections.h"
+#include "ikev2_create_child_sa.h"
 
 /* (Possibly) Opportunistic Initiation:
  *
@@ -75,6 +78,58 @@ static void cannot_ondemand(enum rc_type rc, const struct kernel_acquire *b, con
 	} else {
 		ldbg(b->logger, "initiate from whack so nothing to kernel policy to expire");
 	}
+}
+
+/*
+ * RFC 9611: handle a per-CPU on-demand ACQUIRE for CPU CPU_ID.
+ *
+ * If the connection has an established Initial Child SA, an Additional
+ * Child SA bound to CPU_ID is negotiated and true returned. If there is
+ * already a Child SA bound to CPU_ID (established or negotiated) also
+ * return true because ACQUIRE is satisfied.
+ *
+ * When there is no established Initial Child SA to attach an Additional
+ * Child SA to, false is returned.
+ */
+static bool create_additional_child_for_cpu(struct connection *cp,
+					    uint32_t cpu_id,
+					    struct logger *logger)
+{
+	if (cp->established_child_sa == SOS_NOBODY ||
+	    cp->established_ike_sa == SOS_NOBODY) {
+		return false;
+	}
+
+	struct child_sa *initial_child = child_sa_by_serialno(cp->established_child_sa);
+	struct ike_sa *ike = ike_sa_by_serialno(cp->established_ike_sa);
+	if (initial_child == NULL || ike == NULL) {
+		return false;
+	}
+
+	struct state_filter sf = {
+		.connection_serialno = cp->serialno,
+		.search = {
+			.order = NEW2OLD,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
+		struct child_sa *child = IS_CHILD_SA(sf.st) ? pexpect_child_sa(sf.st) : NULL;
+		if (child != NULL &&
+		    child->sa.st_v2_resource_info.resource_type == RESOURCE_TYPE_CPU &&
+		    child->sa.st_v2_resource_info.resource_id == cpu_id) {
+			ldbg(logger,
+			     "per-CPU ACQUIRE for CPU %u already has Child SA "PRI_SO"; ignoring",
+			     cpu_id, pri_so(child->sa.st_serialno));
+			return true;
+		}
+	}
+
+	llog_sa(RC_LOG, initial_child,
+		"creating on-demand Additional Child SA for CPU %u", cpu_id);
+	submit_v2_CREATE_CHILD_SA_additional_child(ike, initial_child,
+						   RESOURCE_TYPE_CPU, cpu_id);
+	return true;
 }
 
 void initiate_ondemand(const struct kernel_acquire *b)
@@ -174,6 +229,25 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		jam_kernel_acquire(buf, b);
 	}
 
+	/*
+	 * RFC 9611: per-CPU (per-resource) on-demand ACQUIRE.
+	 *
+	 * The kernel issued this ACQUIRE for a specific CPU that has no
+	 * Child SA yet. If the connection already has an established Initial
+	 * Child SA, negotiate an Additional Child SA bound to that CPU
+	 * instead of bringing the connection up again.
+	 */
+	if (b->cpu_id != KERNEL_CPU_ID_NONE &&
+	    connection_resource_type(cp) == RESOURCE_TYPE_CPU) {
+		if (create_additional_child_for_cpu(cp, b->cpu_id, b->logger)) {
+			whack_detach(cp, b->logger);
+			connection_delref(&cp, b->logger);
+			return;
+		}
+		ldbg(cp->logger,
+		     "per-CPU ACQUIRE for CPU %u but no established Initial Child SA; bringing connection up",
+		     b->cpu_id);
+	}
 
 	if (b->by_acquire) {
 		if (cp->negotiating_child_sa != SOS_NOBODY) {

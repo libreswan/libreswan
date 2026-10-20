@@ -71,6 +71,7 @@
 #include "ikev2_ke.h"
 #include "ikev2_auth.h"
 #include "terminate.h"
+#include "ikev2_create_child_sa.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -292,6 +293,16 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	if (cc->config->child.send.esp_tfc_padding_not_supported &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
+	}
+
+	/* SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
+	if (!ike_auth_exchange &&
+	    larval_child->sa.st_v2_resource_info.resource_id != RESOURCE_ID_NONE) {
+		ldbg(logger, "sending SA_RESOURCE_INFO for Additional Child SA (resource=%u)",
+		     larval_child->sa.st_v2_resource_info.resource_id);
+		if (!emit_v2N(v2N_SA_RESOURCE_INFO, pbs)) {
+			return false;
+		}
 	}
 
 	return true;
@@ -573,6 +584,12 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		return false;
 	}
 
+	/* Echo SA_RESOURCE_INFO for Additional Child SAs (RFC 9611) */
+	if (larval_child->sa.st_v2_resource_info.resource_id != RESOURCE_ID_NONE &&
+	    !emit_v2N(v2N_SA_RESOURCE_INFO, outpbs)) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -804,7 +821,13 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 
 	llog_v2_child_sa_established(ike, child);
 
-	schedule_v2_replace_event(&child->sa);
+	/*
+	 * Only Initial Child SA (RFC 9611) is scheduled for rekey, Additional Child SA
+	 * are tied to their Initial.
+	 */
+	if (child->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE) {
+		schedule_v2_replace_event(&child->sa);
+	}
 
 	/*
 	 * start liveness checks if set, making sure we only schedule
@@ -822,6 +845,35 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	     pri_so(child->sa.st_serialno),
 	     child->sa.st_connection->name);
 	unpend(ike, child->sa.st_connection);
+
+	/*
+	 * If this is a rekeyed Initial SA, recreate Additional SAs (RFC 9611).
+	 *
+	 * Note: Only the rekey initiator does this (the responder handles the requests).
+	 */
+	if (child->sa.st_sa_role == SA_INITIATOR &&
+	    child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+		struct connection *cc = child->sa.st_connection;
+		struct child_sa *predecessor = child_sa_by_serialno(child->sa.st_v2_rekey_pred);
+		if (predecessor != NULL &&
+		    predecessor->sa.st_v2_resource_info.resource_id == RESOURCE_ID_NONE &&
+		    predecessor->sa.st_v2_resource_info.state == RESOURCE_INFO_DONE &&
+		    connection_resource_type(cc) != RESOURCE_TYPE_NONE) {
+			enum ipsec_resource_type resource_type = connection_resource_type(cc);
+			unsigned int num_additional_sas = connection_num_resources(cc);
+			llog_sa(RC_LOG, child, "Initial Child SA rekeyed - recreating %u Additional Child SAs",
+				num_additional_sas);
+
+			/* RESOURCE_INFO negotiation already happened (RESOURCE_ID_NONE set already) */
+			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+
+			/* Recreate Additional SAs for new Initial SA */
+			for (unsigned int i = 0; i < num_additional_sas; i++) {
+				llog_sa(RC_LOG, child, "creating Additional Child SA %u for rekeyed Initial SA", i);
+				submit_v2_CREATE_CHILD_SA_additional_child(ike, child, resource_type, i);
+			}
+		}
+	}
 }
 
 v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct child_sa *child,
@@ -1091,6 +1143,24 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		return n;
 	}
 
+	/* Check if initiator supports per-resource Child SAs (RFC 9611) */
+	if (md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
+		child->sa.st_v2_resource_info.state = RESOURCE_INFO_RECV;
+		ldbg(child->sa.logger, "initiator supports per-resource Child SAs");
+
+		/* Send SA_RESOURCE_INFO back if wanted for the connection */
+		struct connection *c = child->sa.st_connection;
+		if (connection_resource_type(c) != RESOURCE_TYPE_NONE) {
+			llog(RC_LOG, child->sa.logger, "sending SA_RESOURCE_INFO (clones=%u)",
+			     connection_resource_count(c));
+			if (!emit_v2N(v2N_SA_RESOURCE_INFO, sk_pbs)) {
+				return v2N_INVALID_SYNTAX;
+			}
+			child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+			llog_sa(RC_LOG, child, "per-resource SA negotiation complete");
+		}
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1200,6 +1270,46 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 */
 	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
+	/* Check if responder supports per-resource Child SAs (RFC 9611) */
+	if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL &&
+	    child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT) {
+		struct connection *cc = child->sa.st_connection;
+		enum ipsec_resource_type resource_type = connection_resource_type(cc);
+		child->sa.st_v2_resource_info.state = RESOURCE_INFO_DONE;
+		llog_sa(RC_LOG, child, "per-resource child SA negotiation complete");
+
+		/* Note: this Child SA is the Initial SA */
+
+		/*
+		 * Create Additional Child SAs.
+		 *
+		 * Requested count (e.g. clones=) is reduced to the number of resources
+		 * that actually exist locally.
+		 */
+		unsigned int requested = connection_resource_count(cc);
+		unsigned int num_to_create = connection_num_resources(cc);
+
+		if (num_to_create < requested) {
+			llog_sa(RC_LOG, child,
+				"Additional Child SAs count reduced from %u to %u (only %u resource(s) available)",
+				requested, num_to_create, num_to_create);
+		}
+
+		for (unsigned int i = 0; i < num_to_create; i++) {
+			llog_sa(RC_LOG, child, "creating Additional Child SA %u", i);
+			submit_v2_CREATE_CHILD_SA_additional_child(ike, child, resource_type, i);
+		}
+
+	} else if (response_md->pd[PD_v2N_SA_RESOURCE_INFO] != NULL) {
+		/* peer echoed SA_RESOURCE_INFO we never sent - ignore */
+		ldbg(child->sa.logger,
+		     "ignoring unexpected SA_RESOURCE_INFO in response (not requested)");
+	} else {
+		if (child->sa.st_v2_resource_info.state == RESOURCE_INFO_SENT) {
+			llog_sa(RC_LOG, child, "peer does not support per-resource child SA");
+		}
+	}
+
 	/*
 	 * Assume reaching here with an error notification means that
 	 * the Child SA failed (error notifications intended for the
@@ -1238,6 +1348,17 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
 		/* handled */
 		return error;
+	}
+
+	/*
+	 * Check TS_MAX_QUEUE from responder (RFC 9611)
+	 *
+	 * This means the responder reached its limit for number of Additional
+	 * Child SA - no more Additional SAs.
+	 */
+	if (response_md->pd[PD_v2N_TS_MAX_QUEUE] != NULL) {
+		llog_sa(RC_LOG, child,
+			"responder reached maximum Additional Child SAs");
 	}
 
 	/*
