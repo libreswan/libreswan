@@ -21,67 +21,25 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
- * (all the code that used to be here is now in ikev1.c)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <poll.h>       /* only used for forensic poll call */
-#include <sys/types.h>
-#include <sys/time.h>   /* only used for belt-and-suspenders select call */
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-#  include <asm/types.h>        /* for __u8, __u32 */
-#  include <linux/errqueue.h>
-#  include <sys/uio.h>          /* struct iovec */
-#endif
-
-
-#include "sysdep.h"
-#include "constants.h"
-
 #include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "connections.h"        /* needs id.h */
-#include "state.h"
-#include "packet.h"
-#include "crypto.h"
-#include "ike_alg.h"
-#include "log.h"
-#include "demux.h"      /* needs packet.h */
+
+#include "demux.h"
 #ifdef USE_IKEv1
-#include "ikev1.h"
-#include "ikev1_send.h"
-#include "ikev1_notification.h"
+#include "ikev1_demux.h"
 #endif
-#include "ikev2.h"
-#include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "timer.h"
-#include "ip_address.h"
-#include "ip_endpoint.h"
-#include "ip_protocol.h"
-#include "ip_info.h"
+#include "ikev2_demux.h"
+
+#include "log_limiter.h"
+#include "log.h"
 #include "pluto_stats.h"
-#include "ikev2_send.h"
 #include "iface.h"
 #include "impair_message.h"
-#include "log_limiter.h"
-#include "ikev2_notification.h"
-#include "ipsecconf/setup.h"
+#include "message_role.h"
 
-#ifdef USE_IKEv1
-static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
-#endif
+#include "ikev2_notification.h"		/* for send_v2N_response_from_md() */
+
 static callback_cb handle_md_event;		/* type assertion */
 
 /*
@@ -163,71 +121,17 @@ void process_md(struct msg_digest *md)
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
-	{
 #ifdef USE_IKEv1
-		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
-			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
-			pstats_ikev1_dropped++;
-			return;
-		}
-		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
-			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
-			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
-			pstats_ikev1_dropped++;
-			return;
-		}
-
-		if (vmin > ISAKMP_MINOR_VERSION) {
-			/* RFC2408 3.1 ISAKMP Header Format:
-			 *
-			 * Minor Version (4 bits) - indicates the minor
-			 * version of the ISAKMP protocol in use.
-			 * Implementations based on this version of the
-			 * ISAKMP Internet-Draft MUST set the Minor
-			 * Version to 0.  Implementations based on
-			 * previous versions of ISAKMP Internet- Drafts
-			 * MUST set the Minor Version to 1.
-			 * Implementations SHOULD never accept packets
-			 * with a minor version number larger than its
-			 * own, given the major version numbers are
-			 * identical.
-			 */
-			limited_llog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
-			return;
-		}
-		name_buf xb;
-		ldbg(md->logger,
-		     " processing version=%u.%u packet with exchange type=%s (%d)",
-		     vmaj, vmin,
-		     str_enum_short(&ikev1_exchange_names, md->hdr.isa_xchg, &xb),
-		     md->hdr.isa_xchg);
-		process_v1_packet(md);
-		/* our caller will md_delref(mdp) */
+		process_ikev1_md(md, vmaj, vmin);
 #else
-		ldbg(md->logger, "IKEv1 packet dropped"); /* dbg to prevent DoS */
+		limited_llog_md(md, "IKEv1 packet dropped");
 		pstats_ikev1_dropped++;
 #endif
-		break;
-	}
+		return;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
-	{
-		if (vmin != IKEv2_MINOR_VERSION) {
-			/* Unlike IKEv1, for IKEv2 we are supposed to try to
-			 * continue on unknown minors
-			 */
-			limited_llog_md(md, "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
-		}
-		name_buf xb;
-		ldbg(md->logger,
-		     " processing version=%u.%u packet with exchange type=%s (%d)",
-		     vmaj, vmin,
-		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     md->hdr.isa_xchg);
-		ikev2_process_packet(md);
+		process_ikev2_md(md, vmaj, vmin);
 		break;
-	}
 
 	default:
 		/*
@@ -468,10 +372,3 @@ void limited_llog_md(const struct msg_digest *md,
 		va_end(ap);
 	}
 }
-
-#ifdef USE_IKEv1
-void ikev1_init_demux(struct logger *logger UNUSED)
-{
-	global_ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
-}
-#endif

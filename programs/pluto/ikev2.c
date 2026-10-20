@@ -819,7 +819,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * IKE SPIs group .....
  */
 
-void ikev2_process_packet(struct msg_digest *md)
+void process_ikev2_packet(struct msg_digest *md)
 {
 	/*
 	 * Caller did their job?

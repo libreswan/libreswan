@@ -7,6 +7,9 @@
 
 struct child_proposals;
 struct ike_proposals;
+struct child_sa;
+struct child_policy;
+enum sa_role;
 
 /* ikev1.c */
 
