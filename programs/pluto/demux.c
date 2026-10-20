@@ -60,7 +60,7 @@
 #ifdef USE_IKEv1
 #include "ikev1_demux.h"
 #endif
-#include "ikev2.h"
+#include "ikev2_demux.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
 #include "ip_address.h"
@@ -165,22 +165,8 @@ void process_md(struct msg_digest *md)
 		return;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
-	{
-		if (vmin != IKEv2_MINOR_VERSION) {
-			/* Unlike IKEv1, for IKEv2 we are supposed to try to
-			 * continue on unknown minors
-			 */
-			limited_llog_md(md, "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
-		}
-		name_buf xb;
-		ldbg(md->logger,
-		     " processing version=%u.%u packet with exchange type=%s (%d)",
-		     vmaj, vmin,
-		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     md->hdr.isa_xchg);
-		ikev2_process_packet(md);
+		process_ikev2_md(md, vmaj, vmin);
 		break;
-	}
 
 	default:
 		/*

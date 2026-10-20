@@ -32,13 +32,14 @@ struct child_sa;
 struct pbs_in;
 struct ke_desc;
 struct connection;
+struct v2_exchanges;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
 typedef void ikev2_llog_success_fn(struct ike_sa *ike,
 				   const struct msg_digest *md);
 
-void ikev2_process_packet(struct msg_digest *mdp);
+void process_ikev2_packet(struct msg_digest *mdp);
 
 void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md);
 

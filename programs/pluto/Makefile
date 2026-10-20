@@ -309,6 +309,7 @@ OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
 OBJS += pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
+OBJS += ikev2_demux.o
 OBJS += crypt_dh.o
 OBJS += ke_helper.o
 OBJS += crypt_dh_v2.o
