@@ -20,8 +20,8 @@
  * for more details.
  */
 
-#ifndef _DEMUX_H
-#define _DEMUX_H
+#ifndef DEMUX_H
+#define DEMUX_H
 
 #include "server.h"
 #include "packet.h"		/* for struct pbs_in */
@@ -154,13 +154,6 @@ enum v2_pd {
 	PD_v2_ROOF,
 };
 
-#if 0
-enum v1_pb {
-	PD_v1_INVALID,
-	PD_v1_ROOF,
-};
-#endif
-
 /* message digest
  *
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
@@ -287,4 +280,4 @@ void process_md(struct msg_digest *md);
 void ikev1_init_demux(struct logger *logger);
 #endif
 
-#endif /* _DEMUX_H */
+#endif
