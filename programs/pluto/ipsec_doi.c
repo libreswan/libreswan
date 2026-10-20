@@ -52,7 +52,6 @@
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "ikev1_quick.h"
 #include "whack.h"
 #include "asn1.h"
 #include "crypto.h"
@@ -63,14 +62,17 @@
 #include "ike_alg_encrypt.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"
 #include "ikev1_continuations.h"
+#include "ikev1_dpd.h"
+#include "ikev1_quick.h"
+#include "ikev1_xauth.h"
+#endif
 #include "ikev2.h"
 #include "ikev2_send.h"
-#include "ikev1_xauth.h"
 #include "ip_info.h"
 #include "nat_traversal.h"
-#include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
 #include "pluto_stats.h"

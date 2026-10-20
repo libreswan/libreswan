@@ -41,7 +41,13 @@
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
+#ifdef USE_IKEv1
+#include "ikev1.h"			/* for established_isakmp_for_state() */
+#include "ikev1_delete.h"		/* for send_n_log_v1_delete() */
 #include "ikev1_msgid.h"
+#include "ikev1_replace.h"
+#include "ikev1_send.h"			/* for free_v1_messages() */
+#endif
 #include "log.h"
 #include "rnd.h"
 #include "demux.h"	/* needs packet.h */
@@ -55,20 +61,16 @@
 #include "crypt_dh.h"
 #include "kernel.h"
 #include "iface.h"
-#include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */
 #include "pluto_stats.h"
 #include "ip_info.h"
 #include "revival.h"
-#include "ikev1.h"			/* for established_isakmp_for_state() */
-#include "ikev1_delete.h"	/* for send_n_log_v1_delete() */
-#include "ikev2_delete.h"	/* for record_v2_delete() */
+#include "ikev2_delete.h"		/* for record_v2_delete() */
 #include "orient.h"
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
 #include "ikev2_eap.h"			/* for free_eap_state() */
 #include "fips_mode.h"			/* for is_fips_mode() */
 #include "show.h"
-#include "ikev1_replace.h"
 #include "ikev2_replace.h"
 #include "routing.h"
 #include "terminate.h"
@@ -1746,7 +1748,9 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 	ldbg_sa((*ike), "parent is no longer vivable (but can send delete)");
 	(*ike)->sa.st_viable_parent = false;
+#ifdef USE_IKEv1
 	struct ike_sa *established_isakmp = NULL;
+#endif
 
 	/*
 	 * IKEv2 should send out the delete immediately, IKEv1 delays
@@ -1809,10 +1813,12 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		}
 	}
 
+#ifdef USE_IKEv1
 	if (established_isakmp != NULL) {
 		llog_sa_delete_n_send(established_isakmp, &(*ike)->sa);
 		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
 	}
+#endif
 
 	terminate_ike_family(ike, REASON_DELETED,
 			     VERBOSE(DEBUG_STREAM, (*ike)->sa.logger, NULL));

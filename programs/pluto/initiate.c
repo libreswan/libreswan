@@ -35,9 +35,11 @@
 #include "timer.h"
 #include "log.h"
 #include "orient.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
 #include "ikev1_spdb.h"
 #include "ikev1_quick.h"		/* for quick_outI1() */
+#endif
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "instantiate.h"

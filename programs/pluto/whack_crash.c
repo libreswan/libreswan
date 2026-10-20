@@ -30,7 +30,9 @@
 #include "log.h"
 #include "show.h"
 #include "connections.h"
+#ifdef USE_IKEv1
 #include "ikev1_replace.h"
+#endif
 #include "ikev2_replace.h"
 #include "timer.h"
 

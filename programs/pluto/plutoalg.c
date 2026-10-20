@@ -37,10 +37,12 @@
 #include "ike_alg_encrypt.h"
 #include "plutoalg.h"
 #include "crypto.h"
+#ifdef USE_IKEv1
+#include "ikev1.h"		/* for ikev1_quick_dh() */
 #include "ikev1_db_ops.h"
+#endif
 #include "log.h"
 #include "whack.h"
-#include "ikev1.h"	/* for ikev1_quick_dh() */
 #include "show.h"
 
 void show_kernel_alg_status(struct show *s)

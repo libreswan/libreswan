@@ -59,7 +59,11 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
+#ifdef USE_IKEv1
 #include "ikev1.h"
+#include "ikev1_send.h"
+#include "ikev1_notification.h"
+#endif
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
@@ -68,12 +72,10 @@
 #include "ip_protocol.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
-#include "ikev1_send.h"
 #include "ikev2_send.h"
 #include "iface.h"
 #include "impair_message.h"
 #include "log_limiter.h"
-#include "ikev1_notification.h"
 #include "ikev2_notification.h"
 #include "ipsecconf/setup.h"
 

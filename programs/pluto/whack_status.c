@@ -38,7 +38,9 @@
 #include "virtual_ip.h"
 #include "plutoalg.h"
 #include "crypto.h"
+#ifdef USE_IKEv1
 #include "ikev1_db_ops.h"
+#endif
 #include "iface.h"
 #include "show.h"
 #ifdef USE_SECCOMP
@@ -83,7 +85,9 @@ void whack_status(struct show *s, const monotime_t now)
 #endif
 	show_kernel_alg_status(s);
 	show_ike_alg_status(s);
+#ifdef USE_IKEv1
 	show_db_ops_status(s);
+#endif
 	show_connection_statuses(s);
 	whack_briefstatus(NULL/*wm:ignored*/, s);
 	show_states(s, now);

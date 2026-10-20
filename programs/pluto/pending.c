@@ -45,7 +45,9 @@
 #include "log.h"
 #include "state.h"
 #include "demux.h"
+#ifdef USE_IKEv1
 #include "ikev1_quick.h"
+#endif
 #include "timer.h"
 #include "ikev2.h"
 #include "ip_address.h"

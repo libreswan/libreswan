@@ -28,7 +28,9 @@
 #include "defs.h"
 #include "connections.h"
 #include "state.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"		/* for send_v1_delete() et.al. */
+#endif
 #include "log.h"
 #include "show.h"
 

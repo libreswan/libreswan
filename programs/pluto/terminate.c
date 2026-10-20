@@ -53,11 +53,13 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
+#ifdef USE_IKEv1
+#include "ikev1_delete.h"
 #include "ikev1_xauth.h"
+#endif
 #include "nat_traversal.h"
 #include "terminate.h"
 #include "visit_connection.h"		/* for whack_connection() */
-#include "ikev1_delete.h"
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
 #include "revival.h"

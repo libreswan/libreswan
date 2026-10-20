@@ -199,7 +199,9 @@ ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 OBJS += pluto_sd.o
 endif
 
+ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_db_ops.o
+endif
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl

@@ -40,7 +40,9 @@
 #include "virtual_ip.h"
 #include "plutoalg.h"
 #include "crypto.h"
+#ifdef USE_IKEv1
 #include "ikev1_db_ops.h"
+#endif
 #include "ipsec_interface.h"
 #include "iface.h"
 #include "show.h"

@@ -49,28 +49,30 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
+#ifdef USE_IKEv1
 #include "ikev1_dpd.h"
+#include "ikev1_nat.h"
+#include "ikev1_replace.h"
+#include "ikev1_retransmit.h"
+#include "ikev1_xauth.h"
+#endif
 #include "ikev2.h"
 #include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
-#include "ikev1_xauth.h"
 #ifdef USE_PAM_AUTH
 #include "pam_auth.h"
 #endif
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
-#include "ikev1_retransmit.h"
 #include "ikev2_retransmit.h"
 #include "pluto_stats.h"
 #include "iface.h"
 #include "ikev2_liveness.h"
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
-#include "ikev1_replace.h"
 #include "ikev2_replace.h"
 #include "terminate.h"
-#include "ikev1_nat.h"
 #include "ikev2_nat.h"
 
 static timeout_event_cb timer_event_cb;

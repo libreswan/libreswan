@@ -41,7 +41,9 @@
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_replace.h"
 #include "orient.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"	/* for established_isakmp_sa_for_state() */
+#endif
 #include "extract.h"
 #include "resolve_helper.h"
 

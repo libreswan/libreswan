@@ -28,7 +28,9 @@
 #include "show.h"
 #include "connections.h"
 #include "log.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"		/* for send_n_log_v1_delete() */
+#endif
 #include "ikev2_delete.h"
 
 struct connection_visitor_param;

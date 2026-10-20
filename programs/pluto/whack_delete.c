@@ -22,8 +22,10 @@
 #include "connections.h"
 #include "pending.h"
 #include "ikev2_delete.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
+#endif
 #include "connection_event.h"
 #include "terminate.h"			/* for terminate_connection_states() */
 

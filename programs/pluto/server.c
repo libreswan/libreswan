@@ -69,7 +69,9 @@
 #include "keys.h"
 #include "whack.h"              /* for RC_LOG */
 #include "monotime.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"		/* for complete_v1_state_transition() */
+#endif
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "iface.h"
 #include "server_fork.h"

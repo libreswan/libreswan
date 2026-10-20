@@ -30,9 +30,11 @@
 #include "state.h"
 #include "show.h"
 #include "log.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"		/* for send_v1_delete() */
-#include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #include "ikev1_delete.h"	/* for record_n_send_n_log_v2_delete() */
+#endif
+#include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #include "terminate.h"	/* for terminate_ike_family() */
 
 void whack_deletestate(const struct whack_message *wm, struct show *s)

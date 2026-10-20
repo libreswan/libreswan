@@ -31,8 +31,10 @@
 #include "timer.h"
 #include "ipsec_doi.h"
 #include "ikev2_message.h"
+#ifdef USE_IKEv1
 #include "ikev1.h"
 #include "ikev1_send.h"
+#endif
 #include "demux.h"
 #include "pending.h"
 #include "nat_traversal.h"
