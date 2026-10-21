@@ -317,13 +317,17 @@ OBJS += hourly.o
 OBJS += ikev2_vendorid.o
 OBJS += nat_traversal.o
 OBJS += ikev2_nat.o
-OBJS += packet.o pluto_constants.o
+OBJS += pluto_constants.o
 OBJS += nss_cert_verify.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
 OBJS += nss_cert_reread.o
 OBJS += rekeyfuzz.o
 
+OBJS += packet.o
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_packet.o
+endif
 
 # Archives
 

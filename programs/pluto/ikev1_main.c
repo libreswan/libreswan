@@ -47,7 +47,7 @@
 #include "certs.h"
 #include "connections.h" /* needs id.h */
 #include "keys.h"
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "demux.h" /* needs packet.h */
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
