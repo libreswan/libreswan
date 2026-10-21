@@ -137,7 +137,7 @@
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "ikev1_msgid.h"
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"

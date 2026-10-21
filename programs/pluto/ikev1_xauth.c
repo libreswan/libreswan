@@ -56,7 +56,7 @@
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"	/* needs id.h */
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "demux.h"		/* needs packet.h */
 #include "log.h"
 #include "timer.h"

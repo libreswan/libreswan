@@ -17,7 +17,7 @@
 #include "id.h"
 
 #include "connections.h"
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "ikev1_message.h"
 #include "diag.h"
 #include "lswlog.h"

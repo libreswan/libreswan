@@ -2273,8 +2273,14 @@ bool close_pbs_out(struct pbs_out *pbs)
 	if (pbs->header_length_field.loc != NULL) {
 		size_t len = (pbs->cur - pbs->start);
 
-		if (pbs->header_length_field.fp->field_type == ft_lv)
-			len -= sizeof(struct isakmp_attribute);
+		if (pbs->header_length_field.fp->field_type == ft_lv) {
+			/*
+			 * Assume IKEv2's trans_attr is the same size
+			 * as IKEv1's attribute; which is 4 bytes.
+			 */
+			passert(sizeof(struct ikev2_trans_attr) == 4);
+			len -= sizeof(struct ikev2_trans_attr);
+		}
 
 		ldbg(pbs->logger, "emitting length of %s: %zu", pbs->name, len);
 

@@ -22,6 +22,8 @@
 
 #include "proposals.h"
 
+struct isakmp_sa;
+
 /* database of SA properties */
 
 /* Attribute type and value pair.

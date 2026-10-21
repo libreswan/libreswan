@@ -45,7 +45,7 @@
 #include "ikev1_msgid.h"
 #include "ikev1_hash.h"
 #include "ikev1_nat.h"
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "terminate.h"
 
 void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)

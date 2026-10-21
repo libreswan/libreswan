@@ -24,6 +24,9 @@
 #define DEMUX_H
 
 #include "server.h"
+#ifdef USE_IKEv1
+#include "ikev1_packet.h"
+#endif
 #include "packet.h"
 #include "quirks.h"
 #include "chunk.h"

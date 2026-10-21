@@ -18,10 +18,11 @@
  * for more details.
  */
 
+
 #include "pluto_constants.h"
 #include "passert.h"
 
-#include "packet.h"
+#include "ikev1_packet.h"
 
 
 /* ISAKMP Data Attribute (generic representation within payloads)

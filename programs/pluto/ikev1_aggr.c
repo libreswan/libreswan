@@ -28,7 +28,7 @@
 #include "defs.h"
 #include "state.h"
 #include "connections.h"        /* needs id.h */
-#include "packet.h"
+#include "ikev1_packet.h"
 #include "demux.h"      /* needs packet.h */
 #include "log.h"
 #include "ike_spi.h"
