@@ -785,31 +785,31 @@ struct_desc isakmp_ikefrag_desc = {
  * entries NULL
  */
 
-struct_desc *v1_payload_desc(unsigned p)
+const struct struct_desc *ikev1_payload_desc(unsigned p)
 {
-	static struct_desc *const v1_payload_descs[] = {
-		NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
-		&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
-		NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
-		NULL,                           /* 3 ISAKMP_NEXT_T (Transform) */
-		&isakmp_keyex_desc,             /* 4 ISAKMP_NEXT_KE (Key Exchange) */
-		NULL,                           /* 5 ISAKMP_NEXT_ID (Identification) */
-		&isakmp_ipsec_certificate_desc, /* 6 ISAKMP_NEXT_CERT (Certificate) */
-		&isakmp_ipsec_cert_req_desc,    /* 7 ISAKMP_NEXT_CR (Certificate Request) */
-		&isakmp_hash_desc,              /* 8 ISAKMP_NEXT_HASH (Hash) */
-		&isakmp_signature_desc,         /* 9 ISAKMP_NEXT_SIG (Signature) */
-		&isakmp_nonce_desc,             /* 10 ISAKMP_NEXT_NONCE (Nonce) */
-		&isakmp_notification_desc,      /* 11 ISAKMP_NEXT_N (Notification) */
-		&isakmp_delete_desc,            /* 12 ISAKMP_NEXT_D (Delete) */
-		&isakmp_vendor_id_desc,         /* 13 ISAKMP_NEXT_VID (Vendor ID) */
-		&isakmp_attr_desc,              /* 14 ISAKMP_NEXT_MCFG_ATTR (ModeCfg) */
-		NULL,                           /* 15 */
-		NULL,                           /* 16 */
-		NULL,                           /* 17 */
-		NULL,                           /* 18 */
-		NULL,                           /* 19 */
-		&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
-		&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
+	static const struct struct_desc *const v1_payload_descs[] = {
+		[ISAKMP_NEXT_NONE] = NULL,                          /* 0  (No other payload following) */
+		[ISAKMP_NEXT_SA] = &isakmp_sa_desc,                 /* 1 (Security Association) */
+		[ISAKMP_NEXT_P] = NULL,                             /* 2  (Proposal) */
+		[ISAKMP_NEXT_T] = NULL,                             /* 3  (Transform) */
+		[ISAKMP_NEXT_KE] = &isakmp_keyex_desc,              /* 4  (Key Exchange) */
+		[ISAKMP_NEXT_ID] = NULL,                            /* 5  (Identification) */
+		[ISAKMP_NEXT_CERT] = &isakmp_ipsec_certificate_desc, /* 6  (Certificate) */
+		[ISAKMP_NEXT_CR] = &isakmp_ipsec_cert_req_desc,     /* 7  (Certificate Request) */
+		[ISAKMP_NEXT_HASH] = &isakmp_hash_desc,             /* 8  (Hash) */
+		[ISAKMP_NEXT_SIG] = &isakmp_signature_desc,         /* 9  (Signature) */
+		[ISAKMP_NEXT_NONCE] = &isakmp_nonce_desc,           /* 10 (Nonce) */
+		[ISAKMP_NEXT_N] = &isakmp_notification_desc,        /* 11  (Notification) */
+		[ISAKMP_NEXT_D] = &isakmp_delete_desc,              /* 12  (Delete) */
+		[ISAKMP_NEXT_VID] = &isakmp_vendor_id_desc,         /* 13  (Vendor ID) */
+		[ISAKMP_NEXT_MODECFG] = &isakmp_attr_desc,       /* 14  (ModeCfg) */
+		[ISAKMP_NEXT_SAK] = NULL,                           /* 15 */
+		[ISAKMP_NEXT_TEK] = NULL,                           /* 16 */
+		[ISAKMP_NEXT_KD] = NULL,                            /* 17 */
+		[ISAKMP_NEXT_SEQ] = NULL,                           /* 18 */
+		[ISAKMP_NEXT_POP] = NULL,                           /* 19 */
+		[ISAKMP_NEXT_NATD_RFC] = &isakmp_nat_d,             /* 20=130 =ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
+		[ISAKMP_NEXT_NATOA_RFC] = &isakmp_nat_oa,           /* 21=131 =ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
 	};
 	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
 }

@@ -1581,7 +1581,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			"";
 
 		while (np != ISAKMP_NEXT_NONE) {
-			struct_desc *sd = v1_payload_desc(np);
+			const struct struct_desc *sd = ikev1_payload_desc(np);
 
 			if (md->digest_roof >= elemsof(md->digest)) {
 				llog(RC_LOG, LOGGER,
