@@ -24,7 +24,7 @@
 #include "state.h"
 #include "keys.h" /* needs state.h */
 #include "demux.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "ikev2_prf.h"
 #include "crypt_prf.h"
 

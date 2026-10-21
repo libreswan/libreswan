@@ -44,7 +44,7 @@
 #include "ikev2_child.h"
 #include "pluto_stats.h"
 #include "pluto_x509.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "demux.h"
 #include "keys.h"
 #include "secrets.h"

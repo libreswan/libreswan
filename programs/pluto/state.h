@@ -62,7 +62,7 @@
 #include "ikev2_msgid.h"
 #include "message_role.h"
 #include "sa_role.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "state_category.h"
 #include "terminate_reason.h"
 #include "authby.h"

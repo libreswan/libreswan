@@ -19,7 +19,7 @@
 #include "defs.h"
 #include "ikev2_ike_session_resume.h"
 #include "state.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "deltatime.h"
 #include "id.h"
 #include "chunk.h"

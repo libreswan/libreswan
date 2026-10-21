@@ -46,7 +46,7 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "crypto.h"
 #include "crypt_symkey.h"
 #include "ike_alg.h"

@@ -52,7 +52,7 @@
 #include "ike_alg_integ.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "ikev2.h"
 #include "log.h"
 #include "ipsec_doi.h"

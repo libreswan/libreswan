@@ -59,7 +59,7 @@
 #include "unpack.h"
 #include "ikev2_message.h"
 #include "ikev2_send.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "passert.h"
 #include "state.h"
 #include "ikev2.h"		/* for ikev2_state_transition_fn */

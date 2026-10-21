@@ -24,7 +24,7 @@
 #include "id.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "demux.h"
 #include "ip_address.h"
 #include "ipsec_doi.h"

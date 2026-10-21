@@ -24,7 +24,7 @@
 #include "ike_alg.h"
 
 #include "log.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 
 /*
  * package up the calculated KE value, and emit it as a KE payload.

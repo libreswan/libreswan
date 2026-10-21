@@ -787,6 +787,9 @@ struct_desc isakmp_ikefrag_desc = {
 
 const struct struct_desc *ikev1_payload_desc(unsigned p)
 {
+	/* use BUILD_BUG_ON() or static_assert? */
+	passert(sizeof(struct isakmp_attribute) == FT_LV_ATTRIBUTE_PAYLOAD_SIZE);
+
 	static const struct struct_desc *const v1_payload_descs[] = {
 		[ISAKMP_NEXT_NONE] = NULL,                          /* 0  (No other payload following) */
 		[ISAKMP_NEXT_SA] = &isakmp_sa_desc,                 /* 1 (Security Association) */
