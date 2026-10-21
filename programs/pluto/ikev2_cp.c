@@ -360,7 +360,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	struct ikev2_cp *cp =  &cp_digest->payload.v2cp;
 	struct pbs_in *cp_pbs = &cp_digest->pbs;
 
-	ldbg_sa(child, "parsing ISAKMP_NEXT_v2CP payload");
+	ldbg_sa(child, "parsing NEXT_PAYLOAD_v2CP payload");
 
 	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
 		name_buf cpb;
@@ -615,7 +615,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 	struct pbs_in *attrs = &cp_pd->pbs;
 
-	ldbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
+	ldbg(child->sa.logger, "parsing NEXT_PAYLOAD_v2CP payload");
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:

@@ -221,7 +221,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 
 	/*
 	 * ??? zero out the digest descriptors -- might nuke
-	 * ISAKMP_NEXT_v2SK digest!
+	 * NEXT_PAYLOAD_v2SK digest!
 	 *
 	 * XXX: and v2SKF? Safer to leave them as is and just use new
 	 * ones - always add to MD, never take away.
@@ -240,7 +240,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 	 * protected, while not very good, isn't really dangerous.
 	 */
 
-	while (np != ISAKMP_NEXT_v2NONE) {
+	while (np != NEXT_PAYLOAD_v2NONE) {
 		name_buf b;
 		ldbg(logger, "now let's proceed with payload (%s)",
 		     str_enum_long(&ikev2_payload_names, np, &b));
@@ -416,10 +416,10 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		 * here.
 		 */
 		switch (np) {
-		case ISAKMP_NEXT_v2SK:
-		case ISAKMP_NEXT_v2SKF:
+		case NEXT_PAYLOAD_v2SK:
+		case NEXT_PAYLOAD_v2SKF:
 			/* special */
-			np = ISAKMP_NEXT_v2NONE;
+			np = NEXT_PAYLOAD_v2NONE;
 			break;
 		default:
 			np = pd->payload.generic.isag_np;
@@ -575,9 +575,9 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 */
 
 		switch (md->hdr.isa_np) {
-		case ISAKMP_NEXT_v2SK:
+		case NEXT_PAYLOAD_v2SK:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags > 0 &&
-			    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+			    md->hdr.isa_np == NEXT_PAYLOAD_v2SKF) {
 				name_buf xb;
 				llog_sa(RC_LOG, ike,
 					"%s request has duplicate Message ID %jd but original was fragmented; message dropped",
@@ -591,7 +591,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 				msgid);
 			break;
-		case ISAKMP_NEXT_v2SKF:
+		case NEXT_PAYLOAD_v2SKF:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags == 0) {
 				name_buf xb;
 				llog_sa(RC_LOG, ike,
@@ -600,7 +600,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 					msgid);
 				return true;
 			}
-			pexpect(md->chain[ISAKMP_NEXT_v2SKF] == NULL); /* not yet parsed */
+			pexpect(md->chain[NEXT_PAYLOAD_v2SKF] == NULL); /* not yet parsed */
 			struct ikev2_skf skf;
 			struct pbs_in in_pbs = md->message_pbs; /* copy */
 			struct pbs_in ignored;
@@ -1154,7 +1154,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * to reconstructed message (when fragmented) should be
 	 * easier.
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2N] != NULL) {
 		ldbg(ike->sa.logger, "ignoring unencrypted notifications");
 	}
 
@@ -1322,7 +1322,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 * should identify the problem isn't being returned this is
 	 * the least of our problems.
 	 */
-	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	const struct payload_digest *sk = md->chain[NEXT_PAYLOAD_v2SK];
 	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md,
 						       sk->pbs,
 						       sk->payload.generic.isag_np);
@@ -1359,7 +1359,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	if (svm == NULL) {
 		/* already logged */
 		/* count all the error notifications */
-		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+		for (struct payload_digest *ntfy = md->chain[NEXT_PAYLOAD_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
 			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}

@@ -306,7 +306,7 @@ stf_status process_v2_INFORMATIONAL_liveness_request(struct ike_sa *ike,
 	/*
 	 * Expect an empty message; as matched by transition.
 	 */
-	PEXPECT(ike->sa.logger, md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE);
+	PEXPECT(ike->sa.logger, md->chain[NEXT_PAYLOAD_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE);
 
 	/*
 	 * The response is always empty.

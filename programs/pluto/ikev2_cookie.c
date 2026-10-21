@@ -112,10 +112,10 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	 * bother checking for things like duplicates.
 	 */
 	struct payload_digest *cookie_digest = NULL;
-	if (md->hdr.isa_np == ISAKMP_NEXT_v2N &&
-	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
-	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
-		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
+	if (md->hdr.isa_np == NEXT_PAYLOAD_v2N &&
+	    pexpect(md->chain[NEXT_PAYLOAD_v2N] != NULL) &&
+	    md->chain[NEXT_PAYLOAD_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
+		cookie_digest = md->chain[NEXT_PAYLOAD_v2N];
 		pexpect(cookie_digest == md->v2N_status[v2N_status_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
@@ -138,11 +138,11 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	 * least half the key size of the negotiated pseudorandom
 	 * function (PRF) (We can check for minimum 128bit length).
 	 */
-	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2Ni] == NULL) {
 		limited_llog_md(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
-	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	shunk_t Ni = pbs_in_left(&md->chain[NEXT_PAYLOAD_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
 		limited_llog_md(md, "DOS cookie failed as Ni payload invalid - dropping message");
 		return true; /* reject cookie */
@@ -253,7 +253,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 * There's at least this notify payload, is there more than
 	 * one?
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N]->next != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2N]->next != NULL) {
 		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 

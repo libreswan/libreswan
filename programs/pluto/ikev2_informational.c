@@ -93,7 +93,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * Don't expect empty requests; they should be handled by the
 	 * dedicated liveness exchange code.
 	 */
-	PEXPECT(ike->sa.logger, md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np != ISAKMP_NEXT_NONE);
+	PEXPECT(ike->sa.logger, md->chain[NEXT_PAYLOAD_v2SK]->payload.v2gen.isag_np != ISAKMP_NEXT_NONE);
 
 	/*
 	 * Response packet preparation: eg MOBIKE
@@ -112,7 +112,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	/* HDR out */
 
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2N] != NULL) {
 		if (!process_v2N_requests(ike, md, response.pbs)) {
 			/*
 			 * This creates a new response, throwing away

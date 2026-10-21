@@ -196,7 +196,7 @@ void decode_v2N_payloads(struct msg_digest *md,
 			 struct logger *logger,
 			 enum log_limiter limiter)
 {
-	for (struct payload_digest *n = md->chain[ISAKMP_NEXT_v2N];
+	for (struct payload_digest *n = md->chain[NEXT_PAYLOAD_v2N];
 	     n != NULL; n = n->next) {
 		decode_v2N_payload(md, n, logger, limiter);
 	}

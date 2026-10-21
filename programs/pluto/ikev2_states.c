@@ -860,7 +860,7 @@ void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
 	jam_string(buf, " ");
 	jam_enum_human(buf, &message_role_names, v2_msg_role(md));
 	/* we want to print and log the first notify payload */
-	struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	struct payload_digest *ntfy = md->chain[NEXT_PAYLOAD_v2N];
 	if (ntfy != NULL) {
 		jam_string(buf, " containing ");
 		jam_enum_short(buf, &v2_notification_names,

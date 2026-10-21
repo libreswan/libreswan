@@ -827,11 +827,11 @@ static bool v2_parse_tsps(const struct msg_digest *md,
 {
 	tsps->message_role = v2_msg_role(md);
 
-	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSi], &tsps->i, verbose)) {
+	if (!v2_parse_tsp(md->chain[NEXT_PAYLOAD_v2TSi], &tsps->i, verbose)) {
 		return false;
 	}
 
-	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSr], &tsps->r, verbose)) {
+	if (!v2_parse_tsp(md->chain[NEXT_PAYLOAD_v2TSr], &tsps->r, verbose)) {
 		return false;
 	}
 

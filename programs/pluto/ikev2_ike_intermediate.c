@@ -255,9 +255,9 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	struct isakmp_hdr adjusted_message_header;
 	memcpy(&adjusted_message_header, message_header.ptr, message_header.len);
 	hton_thing(adjusted_payload_length, adjusted_message_header.isa_length);
-	if (adjusted_message_header.isa_np == ISAKMP_NEXT_v2SKF) {
+	if (adjusted_message_header.isa_np == NEXT_PAYLOAD_v2SKF) {
 		ldbg(logger, "adjusted fragmented Next Payload to SK");
-		adjusted_message_header.isa_np = ISAKMP_NEXT_v2SK;
+		adjusted_message_header.isa_np = NEXT_PAYLOAD_v2SK;
 	}
 	crypt_prf_update_thing(prf, "IntAuth_[ir](N)A: adjusted message header",
 			       adjusted_message_header);
@@ -344,7 +344,7 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 					     struct msg_digest *md,
 					     chunk_t *intermediate_auth_ir)
 {
-	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	const struct payload_digest *sk = md->chain[NEXT_PAYLOAD_v2SK];
 	chunk_t packet = md->packet;
 
 	shunk_t message_header = {
@@ -445,7 +445,7 @@ bool extract_v2KE_for_ke(const struct ke_desc *ke_alg,
 			 shunk_t *ke_blob,
 			 struct logger *logger)
 {
-	const struct payload_digest *v2ke = md->chain[ISAKMP_NEXT_v2KE];
+	const struct payload_digest *v2ke = md->chain[NEXT_PAYLOAD_v2KE];
 
 	if (v2ke == NULL) {
 		name_buf rb;

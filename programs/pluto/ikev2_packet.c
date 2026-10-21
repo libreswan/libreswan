@@ -42,7 +42,7 @@ struct_desc ikev2_generic_desc = {
 	.name = "IKEv2 Generic Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2NONE,	/* could be any unknown */
+	.pt = NEXT_PAYLOAD_v2NONE,	/* could be any unknown */
 };
 
 /* for IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_* */
@@ -51,7 +51,7 @@ struct_desc ikev2_unknown_payload_desc = {
 	.name = "IKEv2 Unknown Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2UNKNOWN,
+	.pt = NEXT_PAYLOAD_v2UNKNOWN,
 };
 
 /*
@@ -76,7 +76,7 @@ struct_desc ikev2_sa_desc = {
 	.name = "IKEv2 Security Association Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_sa),
-	.pt = ISAKMP_NEXT_v2SA,
+	.pt = NEXT_PAYLOAD_v2SA,
 	.nsst = v2_PROPOSAL_NON_LAST,
 };
 
@@ -217,7 +217,7 @@ struct_desc ikev2_ke_payload_desc = {
 	.name = "IKEv2 Key Exchange Payload",
 	.fields = ikev2_ke_payload_fields,
 	.size = sizeof(struct ikev2_ke_payload),
-	.pt = ISAKMP_NEXT_v2KE,
+	.pt = NEXT_PAYLOAD_v2KE,
 };
 
 /*
@@ -268,14 +268,14 @@ struct_desc ikev2_id_i_desc = {
 	.name ="IKEv2 Identification - Initiator - Payload",
 	.fields = ikev2id_fields,
 	.size = sizeof(struct ikev2_id),
-	.pt = ISAKMP_NEXT_v2IDi,
+	.pt = NEXT_PAYLOAD_v2IDi,
 };
 
 struct_desc ikev2_id_r_desc = {
 	.name ="IKEv2 Identification - Responder - Payload",
 	.fields = ikev2id_fields,
 	.size = sizeof(struct ikev2_id),
-	.pt = ISAKMP_NEXT_v2IDr,
+	.pt = NEXT_PAYLOAD_v2IDr,
 };
 
 /*
@@ -322,7 +322,7 @@ struct_desc ikev2_cp_desc = {
 	.name = "IKEv2 Configuration Payload",
 	.fields = ikev2cp_fields,
 	.size = sizeof(struct ikev2_cp),
-	.pt = ISAKMP_NEXT_v2CP,
+	.pt = NEXT_PAYLOAD_v2CP,
 };
 
 static field_desc ikev2_cp_attrbute_fields[] = {
@@ -366,7 +366,7 @@ struct_desc ikev2_certificate_desc = {
 	.name = "IKEv2 Certificate Payload",
 	.fields = ikev2_cert_fields,
 	.size = IKEV2_CERT_SIZE,
-	.pt = ISAKMP_NEXT_v2CERT,
+	.pt = NEXT_PAYLOAD_v2CERT,
 };
 
 /* section 3.7
@@ -399,7 +399,7 @@ struct_desc ikev2_certificate_req_desc = {
 	.name = "IKEv2 Certificate Request Payload",
 	.fields = ikev2_cert_req_fields,
 	.size = IKEV2_CERT_SIZE,
-	.pt = ISAKMP_NEXT_v2CERTREQ,
+	.pt = NEXT_PAYLOAD_v2CERTREQ,
 };
 
 /*
@@ -434,7 +434,7 @@ struct_desc ikev2_auth_desc = {
 	.name = "IKEv2 Authentication Payload",
 	.fields = ikev2_auth_fields,
 	.size = sizeof(struct ikev2_auth),
-	.pt = ISAKMP_NEXT_v2AUTH,
+	.pt = NEXT_PAYLOAD_v2AUTH,
 };
 
 /*
@@ -464,7 +464,7 @@ struct_desc ikev2_nonce_desc = {
 	.name = "IKEv2 Nonce Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2Ni, /*==ISAKMP_NEXT_v2Nr*/
+	.pt = NEXT_PAYLOAD_v2Ni, /*==NEXT_PAYLOAD_v2Nr*/
 };
 
 /*    3.10 Notify Payload
@@ -502,7 +502,7 @@ struct_desc ikev2_notify_desc = {
 	.name = "IKEv2 Notify Payload",
 	.fields = ikev2_notify_fields,
 	.size = sizeof(struct ikev2_notify),
-	.pt = ISAKMP_NEXT_v2N,
+	.pt = NEXT_PAYLOAD_v2N,
 };
 
 /* IKEv2 Delete Payload
@@ -536,7 +536,7 @@ struct_desc ikev2_delete_desc = {
 	.name = "IKEv2 Delete Payload",
 	.fields = ikev2_delete_fields,
 	.size = sizeof(struct ikev2_delete),
-	.pt = ISAKMP_NEXT_v2D,
+	.pt = NEXT_PAYLOAD_v2D,
 };
 
 /*
@@ -560,7 +560,7 @@ struct_desc ikev2_vendor_id_desc = {
 	.name = "IKEv2 Vendor ID Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2V,
+	.pt = NEXT_PAYLOAD_v2V,
 };
 
 /*
@@ -598,14 +598,14 @@ struct_desc ikev2_ts_i_desc = {
 	.name = "IKEv2 Traffic Selector - Initiator - Payload",
 	.fields = ikev2_ts_fields,
 	.size = sizeof(struct ikev2_ts),
-	.pt = ISAKMP_NEXT_v2TSi,
+	.pt = NEXT_PAYLOAD_v2TSi,
 };
 
 struct_desc ikev2_ts_r_desc = {
 	.name = "IKEv2 Traffic Selector - Responder - Payload",
 	.fields = ikev2_ts_fields,
 	.size = sizeof(struct ikev2_ts),
-	.pt = ISAKMP_NEXT_v2TSr,
+	.pt = NEXT_PAYLOAD_v2TSr,
 };
 
 /*
@@ -706,7 +706,7 @@ struct_desc ikev2_sk_desc = {
 	.name = "IKEv2 Encryption Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2SK,
+	.pt = NEXT_PAYLOAD_v2SK,
 };
 
 /* 3.16.  EAP
@@ -721,7 +721,7 @@ struct_desc ikev2_eap_desc = {
 	.name = "EAP Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.pt = ISAKMP_NEXT_v2EAP,
+	.pt = NEXT_PAYLOAD_v2EAP,
 };
 
 /*
@@ -830,7 +830,7 @@ struct_desc ikev2_skf_desc = {
 	.name = "IKEv2 Encrypted Fragment",
 	.fields = ikev2skf_fields,
 	.size = sizeof(struct ikev2_skf),
-	.pt = ISAKMP_NEXT_v2SKF,
+	.pt = NEXT_PAYLOAD_v2SKF,
 };
 
 /*
@@ -877,7 +877,7 @@ struct_desc ikev2_suggested_kem_desc = {
 	.name = "Suggested KEM",
 	.fields = ikev2_suggested_kem_fields,
 	.size = sizeof(struct ikev2_suggested_kem),
-	.pt = ISAKMP_NEXT_v2NONE,
+	.pt = NEXT_PAYLOAD_v2NONE,
 };
 
 /*
@@ -933,27 +933,27 @@ struct_desc *ikev2_payload_desc(unsigned p)
 
 	static struct_desc *const v2_payload_descs[] = {
 #define A(E,D) [E-ISAKMP_v2PAYLOAD_TYPE_BASE] = D
-		A(ISAKMP_NEXT_v2SA, &ikev2_sa_desc),            /* 33 */
-		A(ISAKMP_NEXT_v2KE, &ikev2_ke_payload_desc),    /* 34 */
-		A(ISAKMP_NEXT_v2IDi, &ikev2_id_i_desc),		/* 35 */
-		A(ISAKMP_NEXT_v2IDr, &ikev2_id_r_desc),		/* 36 */
-		A(ISAKMP_NEXT_v2CERT, &ikev2_certificate_desc), /* 37 */
-		A(ISAKMP_NEXT_v2CERTREQ, &ikev2_certificate_req_desc), /* 38 */
-		A(ISAKMP_NEXT_v2AUTH, &ikev2_auth_desc),        /* 39 */
-		A(ISAKMP_NEXT_v2Ni, &ikev2_nonce_desc),         /* 40 == ISAKMP_NEXT_v2Nr */
-		A(ISAKMP_NEXT_v2N, &ikev2_notify_desc),         /* 41 */
-		A(ISAKMP_NEXT_v2D, &ikev2_delete_desc),         /* 42 */
-		A(ISAKMP_NEXT_v2V, &ikev2_vendor_id_desc),      /* 43 */
-		A(ISAKMP_NEXT_v2TSi, &ikev2_ts_i_desc),		/* 44 */
-		A(ISAKMP_NEXT_v2TSr, &ikev2_ts_r_desc),		/* 45 */
-		A(ISAKMP_NEXT_v2SK, &ikev2_sk_desc),            /* 46 */
-		A(ISAKMP_NEXT_v2CP, &ikev2_cp_desc),		/* 47 */
-		A(ISAKMP_NEXT_v2EAP, &ikev2_eap_desc),		/* 48 */
-		A(ISAKMP_NEXT_v2GSPM, NULL),			/* 49 */
-		A(ISAKMP_NEXT_v2IDG, NULL),			/* 50 */
-		A(ISAKMP_NEXT_v2GSA, NULL),			/* 51 */
-		A(ISAKMP_NEXT_v2KD, NULL),			/* 52 */
-		A(ISAKMP_NEXT_v2SKF, &ikev2_skf_desc),          /* 53 */
+		A(NEXT_PAYLOAD_v2SA, &ikev2_sa_desc),            /* 33 */
+		A(NEXT_PAYLOAD_v2KE, &ikev2_ke_payload_desc),    /* 34 */
+		A(NEXT_PAYLOAD_v2IDi, &ikev2_id_i_desc),		/* 35 */
+		A(NEXT_PAYLOAD_v2IDr, &ikev2_id_r_desc),		/* 36 */
+		A(NEXT_PAYLOAD_v2CERT, &ikev2_certificate_desc), /* 37 */
+		A(NEXT_PAYLOAD_v2CERTREQ, &ikev2_certificate_req_desc), /* 38 */
+		A(NEXT_PAYLOAD_v2AUTH, &ikev2_auth_desc),        /* 39 */
+		A(NEXT_PAYLOAD_v2Ni, &ikev2_nonce_desc),         /* 40 == NEXT_PAYLOAD_v2Nr */
+		A(NEXT_PAYLOAD_v2N, &ikev2_notify_desc),         /* 41 */
+		A(NEXT_PAYLOAD_v2D, &ikev2_delete_desc),         /* 42 */
+		A(NEXT_PAYLOAD_v2V, &ikev2_vendor_id_desc),      /* 43 */
+		A(NEXT_PAYLOAD_v2TSi, &ikev2_ts_i_desc),		/* 44 */
+		A(NEXT_PAYLOAD_v2TSr, &ikev2_ts_r_desc),		/* 45 */
+		A(NEXT_PAYLOAD_v2SK, &ikev2_sk_desc),            /* 46 */
+		A(NEXT_PAYLOAD_v2CP, &ikev2_cp_desc),		/* 47 */
+		A(NEXT_PAYLOAD_v2EAP, &ikev2_eap_desc),		/* 48 */
+		A(NEXT_PAYLOAD_v2GSPM, NULL),			/* 49 */
+		A(NEXT_PAYLOAD_v2IDG, NULL),			/* 50 */
+		A(NEXT_PAYLOAD_v2GSA, NULL),			/* 51 */
+		A(NEXT_PAYLOAD_v2KD, NULL),			/* 52 */
+		A(NEXT_PAYLOAD_v2SKF, &ikev2_skf_desc),          /* 53 */
 	};
 	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 		return NULL;

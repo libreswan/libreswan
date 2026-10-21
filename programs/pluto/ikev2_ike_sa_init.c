@@ -675,7 +675,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	natify_ikev2_ike_responder_endpoints(ike, md);
 
 	/* Vendor ID processing */
-	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
+	for (struct payload_digest *v = md->chain[NEXT_PAYLOAD_v2V]; v != NULL; v = v->next) {
 		handle_v2_vendorid(pbs_in_left(&v->pbs), ike->sa.logger);
 	}
 
@@ -686,7 +686,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * Select the proposal.
 	 */
 	n = process_v2SA_payload("IKE responder",
-				 &md->chain[ISAKMP_NEXT_v2SA]->pbs,
+				 &md->chain[NEXT_PAYLOAD_v2SA]->pbs,
 				 /*expect_ike*/ true,
 				 /*expect_spi*/ false,
 				 /*expect_accepted*/ false,
@@ -1102,7 +1102,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * There's at least this notify payload, is there more than
 	 * one?
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N]->next != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2N]->next != NULL) {
 		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 
@@ -1336,7 +1336,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	{
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
-			md->chain[ISAKMP_NEXT_v2SA];
+			md->chain[NEXT_PAYLOAD_v2SA];
 		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 		n = process_v2SA_payload("IKE initiator (accepting)",

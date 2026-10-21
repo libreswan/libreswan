@@ -72,7 +72,7 @@
 void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* XXX: there should only be one! */
-	struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ];
+	struct payload_digest *p = md->chain[NEXT_PAYLOAD_v2CERTREQ];
 	if (p == NULL) {
 		ldbg_sa(ike, "no CERTREQ");
 		return;

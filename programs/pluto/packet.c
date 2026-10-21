@@ -906,7 +906,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	 * Initialize this payload's next payload chain
 	 */
 	uint8_t n = *inp;
-	if (sd->pt == ISAKMP_NEXT_v2SKF) {
+	if (sd->pt == NEXT_PAYLOAD_v2SKF) {
 		/*
 		 * For v2SKF (IKEv2 secured fragments) assume the
 		 * header next payload type is correct.  The

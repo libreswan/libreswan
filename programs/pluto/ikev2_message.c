@@ -722,12 +722,12 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 		return "total number of fragments must be no more than MAX_IKE_FRAGMENTS";
 	}
 
-	if (skf_hdr->isaskf_number == 1 && skf_hdr->isaskf_np == ISAKMP_NEXT_v2NONE) {
-		return "first fragment's next payload must not be ISAKMP_NEXT_v2NONE";
+	if (skf_hdr->isaskf_number == 1 && skf_hdr->isaskf_np == NEXT_PAYLOAD_v2NONE) {
+		return "first fragment's next payload must not be NEXT_PAYLOAD_v2NONE";
 	}
 
-	if (skf_hdr->isaskf_number > 1 && skf_hdr->isaskf_np != ISAKMP_NEXT_v2NONE) {
-		return "later fragment's next payload must be ISAKMP_NEXT_v2NONE";
+	if (skf_hdr->isaskf_number > 1 && skf_hdr->isaskf_np != NEXT_PAYLOAD_v2NONE) {
+		return "later fragment's next payload must be NEXT_PAYLOAD_v2NONE";
 	}
 
 	/* header's ok; if it's the first it is always good */
@@ -811,7 +811,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		return FRAGMENT_IGNORED;
 	}
 
-	struct ikev2_skf *skf_hdr = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	struct ikev2_skf *skf_hdr = &md->chain[NEXT_PAYLOAD_v2SKF]->payload.v2skf;
 
 	ldbg(ike->sa.logger, "received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
 	     skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
@@ -826,7 +826,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	/* locate what is interesting */
 
 	/* entire SKF pbs; cur points past SKF header */
-	const struct pbs_in *skf_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+	const struct pbs_in *skf_pbs = &md->chain[NEXT_PAYLOAD_v2SKF]->pbs;
 	/* entire payload: AAD+SKF-header+IV+cipher-text) */
 	chunk_t text = chunk2(md->packet.ptr, skf_pbs->roof - md->packet.ptr);
 	/* first thing after SKF header is Initialization Vector */
@@ -998,9 +998,9 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 */
 	struct msg_digest *md = md_addref((*frags)->md);
 
-	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SK] == NULL);
+	PASSERT(logger, md->chain[NEXT_PAYLOAD_v2SK] == NULL);
 	PASSERT(logger, md->digest_roof <= elemsof(md->digest));
-	struct payload_digest *old_skf = md->chain[ISAKMP_NEXT_v2SKF];
+	struct payload_digest *old_skf = md->chain[NEXT_PAYLOAD_v2SKF];
 	PASSERT(logger, old_skf != NULL);
 	PEXPECT(logger, old_skf->payload.v2skf.isaskf_number == 1);
 
@@ -1146,18 +1146,18 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	if (md->digest_roof > 1) {
 		unsigned skf_next_index = md->digest_roof - 2;
 		struct payload_digest *skf_next = &md->digest[skf_next_index];
-		if (!PEXPECT(logger, skf_next->payload.generic.isag_np == ISAKMP_NEXT_v2SKF)) {
+		if (!PEXPECT(logger, skf_next->payload.generic.isag_np == NEXT_PAYLOAD_v2SKF)) {
 			return NULL;
 		}
-		skf_next->payload.generic.isag_np = ISAKMP_NEXT_v2SK;
+		skf_next->payload.generic.isag_np = NEXT_PAYLOAD_v2SK;
 		skf_next_payload_field = chunk2(skf_next->pbs.start, 1); /* in new packet */
 		ldbg(logger, "found Next Payload field in unencrypted payload %u at %p",
 		     skf_next_index, skf_next_payload_field.ptr);
 	} else {
-		if (!PEXPECT(logger, md->hdr.isa_np == ISAKMP_NEXT_v2SKF)) {
+		if (!PEXPECT(logger, md->hdr.isa_np == NEXT_PAYLOAD_v2SKF)) {
 			return NULL;
 		}
-		md->hdr.isa_np = ISAKMP_NEXT_v2SK;
+		md->hdr.isa_np = NEXT_PAYLOAD_v2SK;
 		skf_next_payload_field = chunk_slice(sk_packet,
 						     offsetof(struct isakmp_hdr, isa_np),
 						     offsetof(struct isakmp_hdr, isa_np) + 1);
@@ -1166,10 +1166,10 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	}
 	if (!PEXPECT(logger, skf_next_payload_field.ptr >= sk_packet.ptr) ||
 	    !PEXPECT(logger, skf_next_payload_field.ptr < sk_packet.ptr + sk_packet.len) ||
-	    !PEXPECT(logger, ntoh_hunk(skf_next_payload_field) == ISAKMP_NEXT_v2SKF)) {
+	    !PEXPECT(logger, ntoh_hunk(skf_next_payload_field) == NEXT_PAYLOAD_v2SKF)) {
 		return NULL;
 	}
-	hton_chunk(ISAKMP_NEXT_v2SK, skf_next_payload_field);
+	hton_chunk(NEXT_PAYLOAD_v2SK, skf_next_payload_field);
 
 	/*
 	 * Fix the SK payload type, length fragment length + header),
@@ -1183,10 +1183,10 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 
 	/* SK header Next Field */
 	struct payload_digest *sk_payload = &md->digest[md->digest_roof - 1];
-	if (!PEXPECT(logger, sk_payload->payload_type == ISAKMP_NEXT_v2SKF)) {
+	if (!PEXPECT(logger, sk_payload->payload_type == NEXT_PAYLOAD_v2SKF)) {
 		return NULL;
 	}
-	sk_payload->payload_type = ISAKMP_NEXT_v2SK;
+	sk_payload->payload_type = NEXT_PAYLOAD_v2SK;
 
 	/* end */
 	sk_payload->pbs = pbs_in_from_shunk(sk_body, "decrypted SFK payloads");
@@ -1205,10 +1205,10 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	/*
 	 * Finally switch from an SKF to an SK payload.
 	 */
-	md->chain[ISAKMP_NEXT_v2SK] = md->chain[ISAKMP_NEXT_v2SKF];
-	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
-	md->last[ISAKMP_NEXT_v2SK] = md->last[ISAKMP_NEXT_v2SKF];
-	md->last[ISAKMP_NEXT_v2SKF] = NULL;
+	md->chain[NEXT_PAYLOAD_v2SK] = md->chain[NEXT_PAYLOAD_v2SKF];
+	md->chain[NEXT_PAYLOAD_v2SKF] = NULL;
+	md->last[NEXT_PAYLOAD_v2SK] = md->last[NEXT_PAYLOAD_v2SKF];
+	md->last[NEXT_PAYLOAD_v2SKF] = NULL;
 
 	free_chunk_content(&md->packet);
 	md->packet = sk_packet;
@@ -1235,7 +1235,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
  */
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct pbs_in *sk_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
+	struct pbs_in *sk_pbs = &md->chain[NEXT_PAYLOAD_v2SK]->pbs;
 	/*
 	 * If so impaired, clone the encrypted message before it gets
 	 * decrypted in-place (but only once).
@@ -1344,7 +1344,7 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 		 */
 		next_payload_chain->loc = message_fragment.pbs.start + previous_to_sk_next_payload_offset;
 		next_payload_chain->name = "unencrypted Next Payload";
-		apply_fixup(logger, next_payload_chain, ISAKMP_NEXT_v2NONE);
+		apply_fixup(logger, next_payload_chain, NEXT_PAYLOAD_v2NONE);
 	}
 
 	/*
@@ -1529,7 +1529,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 		}
 	}
 	enum next_payload_types_ikev2 unencrypted_payloads_type = hdr.isa_np;
-	hdr.isa_np = ISAKMP_NEXT_v2NONE; /* clear NP */
+	hdr.isa_np = NEXT_PAYLOAD_v2NONE; /* clear NP */
 
 	/*
 	 * Determine the offset, within the original message, of the
@@ -1576,7 +1576,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 
 		number++;
 
-		skf_np = ISAKMP_NEXT_v2NONE;
+		skf_np = NEXT_PAYLOAD_v2NONE;
 		unencrypted_payloads = null_shunk;
 	} while (clear_cursor.len > 0);
 
