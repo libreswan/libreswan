@@ -1251,39 +1251,6 @@ extern struct_desc ikev2_skf_desc;
  */
 extern struct_desc ikev2_vendor_id_desc;
 
-
-/* union of all payloads */
-
-union payload {
-	struct isakmp_generic generic;
-	struct isakmp_sa sa;
-	struct isakmp_proposal proposal;
-	struct isakmp_transform transform;
-	struct isakmp_id id; /* Main Mode */
-	struct isakmp_cert cert;
-	struct isakmp_cr cr;
-	struct isakmp_ipsec_id ipsec_id; /* Quick Mode */
-	struct isakmp_notification notification;
-	struct isakmp_delete delete;
-	struct isakmp_nat_oa nat_oa;
-	struct isakmp_mode_attr mode_attribute;
-	struct ikev2_generic v2gen;
-	struct ikev2_ke_payload v2ke;
-	struct ikev2_trans v2trans;
-	struct ikev2_prop v2prop;
-	struct ikev2_sa v2sa;
-	struct ikev2_id v2id;
-	struct ikev2_auth v2auth;
-	struct ikev2_ts v2ts;
-	struct ikev2_cert v2cert;
-	struct ikev2_certreq v2certreq;
-	struct ikev2_notify v2n;
-	struct ikev2_delete v2delete;
-	struct ikev2_cp v2cp;
-	struct ikev2_cp_attribute v2cp_attribute;
-	struct ikev2_skf v2skf;
-};
-
 struct ikev2_suggested_kem {
 	uint16_t /*oakley_group_t*/ sk_kem;
 };
