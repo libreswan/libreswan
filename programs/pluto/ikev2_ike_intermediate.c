@@ -706,8 +706,13 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
 
-	if (!PEXPECT(logger, next_ikev2_ike_intermediate_exchange(ike))) {
-		return STF_INTERNAL_ERROR;
+	if (!next_ikev2_ike_intermediate_exchange(ike)) {
+		llog(RC_LOG, ike->sa.logger,
+		     "authentication failed, initiator sent unsolicited IKE_INTERMEDIATE request");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
 	}
 
 	natify_ikev2_ike_responder_endpoints(ike, md);
