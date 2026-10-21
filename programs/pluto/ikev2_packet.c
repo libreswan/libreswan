@@ -932,7 +932,7 @@ struct_desc *ikev2_payload_desc(unsigned p)
 	passert(sizeof(struct ikev2_trans_attr) == FT_LV_ATTRIBUTE_PAYLOAD_SIZE);
 
 	static struct_desc *const v2_payload_descs[] = {
-#define A(E,D) [E-ISAKMP_v2PAYLOAD_TYPE_BASE] = D
+#define A(E,D) [E-NEXT_PAYLOAD_v2_FLOOR] = D
 		A(NEXT_PAYLOAD_v2SA, &ikev2_sa_desc),            /* 33 */
 		A(NEXT_PAYLOAD_v2KE, &ikev2_ke_payload_desc),    /* 34 */
 		A(NEXT_PAYLOAD_v2IDi, &ikev2_id_i_desc),		/* 35 */
@@ -955,10 +955,10 @@ struct_desc *ikev2_payload_desc(unsigned p)
 		A(NEXT_PAYLOAD_v2KD, NULL),			/* 52 */
 		A(NEXT_PAYLOAD_v2SKF, &ikev2_skf_desc),          /* 53 */
 	};
-	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
+	if (p < NEXT_PAYLOAD_v2_FLOOR) {
 		return NULL;
 	}
-	unsigned q = p - ISAKMP_v2PAYLOAD_TYPE_BASE;
+	unsigned q = p - NEXT_PAYLOAD_v2_FLOOR;
 	if (q >= elemsof(v2_payload_descs)) {
 		return NULL;
 	}

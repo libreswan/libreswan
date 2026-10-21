@@ -616,6 +616,7 @@ enum ikev2_last_transform {
 enum next_payload_types_ikev2 {
 	NEXT_PAYLOAD_v2NONE = 0,
 	/* 1 - 32 Reserved for IKEv1 */
+#define NEXT_PAYLOAD_v2_FLOOR NEXT_PAYLOAD_v2SA
 	NEXT_PAYLOAD_v2SA = 33,	/* Security Association */
 	NEXT_PAYLOAD_v2KE = 34,	/* Key Exchange payload */
 	NEXT_PAYLOAD_v2IDi = 35,	/* ID payload - initiator */
@@ -638,14 +639,10 @@ enum next_payload_types_ikev2 {
 	NEXT_PAYLOAD_v2GSA = 51, /* Group Security Association draft-yeung-g-ikev2 */
 	NEXT_PAYLOAD_v2KD = 52, /* Key Download draft-yeung-g-ikev2 */
 	NEXT_PAYLOAD_v2SKF = 53,	/* Encrypted and Authenticated Fragment fragment */
+#define NEXT_PAYLOAD_v2_ROOF (NEXT_PAYLOAD_v2SKF+1)
 	/* 54-127 Unassigned */
 	/* 128 - 255 Private Use */
-	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
-	NEXT_PAYLOAD_v2IKE_FRAGMENTATION = 132,
-	NEXT_PAYLOAD_v2ROOF,	/* roof on payload types */
 };
-
-#define ISAKMP_v2PAYLOAD_TYPE_BASE	NEXT_PAYLOAD_v2SA	/* lowest value of a v2 payload type */
 
 /*
  * Value to use when emitting a payload that the other end won't

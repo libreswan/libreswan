@@ -373,30 +373,12 @@ static const char *const payload_name_ikev2_main[] = {
 #undef S
 };
 
-/*
- * Old IKEv1 method applied to IKEv2, different from IKEv2's RFC7383
- * Can be removed
- */
-static const char *const payload_name_ikev2_private_use[] = {
-#define S(E) [E - NEXT_PAYLOAD_v2IKE_FRAGMENTATION] = #E
-	S(NEXT_PAYLOAD_v2IKE_FRAGMENTATION),
-#undef S
-};
-
-static enum_names payload_names_ikev2_private_use = {
-	NEXT_PAYLOAD_v2IKE_FRAGMENTATION,
-	NEXT_PAYLOAD_v2IKE_FRAGMENTATION,
-	ARRAY_PTR(payload_name_ikev2_private_use),
-	NULL, /* prefix */
-	NULL
-};
-
 static enum_names payload_names_ikev2_main = {
-	NEXT_PAYLOAD_v2SA,
-	NEXT_PAYLOAD_v2SKF,
+	NEXT_PAYLOAD_v2_FLOOR,
+	NEXT_PAYLOAD_v2_ROOF-1,
 	ARRAY_PTR(payload_name_ikev2_main),
 	NULL, /* prefix */
-	&payload_names_ikev2_private_use
+	NULL,
 };
 
 enum_names ikev2_payload_names = {
