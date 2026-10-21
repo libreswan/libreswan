@@ -63,7 +63,7 @@ enum field_type {
 	ft_end,			/* end of field list */
 };
 
-typedef const struct {
+typedef const struct field_desc {
 	enum field_type field_type;
 	size_t size;		/* size, in bytes, of field */
 	const char *name;
@@ -76,7 +76,7 @@ typedef const struct {
 	const void *desc;
 } field_desc;
 
-typedef const struct {
+typedef const struct struct_desc {
 	const char *name;
 	field_desc *fields;
 	size_t size;
