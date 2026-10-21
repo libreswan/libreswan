@@ -18,16 +18,17 @@
 
 struct ike_sa;
 
-/* should the next exchange be IKE_INTERMEDIATE? */
-bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
-
 /*
- * Make next IKE_INTERMEDIATE exchange current.
+ * Must the next exchange be IKE_INTERMEDIATE?
  *
- * Call at start of exchange, then call current*() to get the exchange
- * details.
+ * On the initiator call this at the end of processing the current
+ * exchange to decide what exchange to initiate next.
+ *
+ * On the responder call this before starting processing to confirm
+ * that the exchange is (or is not) expected.
  */
-bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
+
+bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
 
 struct ikev2_ike_intermediate_exchange {
 	struct {

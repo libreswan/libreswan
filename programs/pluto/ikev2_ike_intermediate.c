@@ -380,6 +380,12 @@ bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 		return false;
 	}
 
+	if (impair.skip_v2_IKE_INTERMEDIATE_exchange) {
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "skipping IKE_INTERMEDIATE exchange");
+		return false;
+	}
+
 	unsigned next_exchange = ike->sa.st_v2_ike_intermediate.next_exchange;
 	unsigned nr_exchanges = ike->sa.st_oakley.ta_addke.len;
 	if (nr_exchanges == 0 && ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
@@ -387,10 +393,9 @@ bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 	}
 
 	return (next_exchange < nr_exchanges);
-
 }
 
-bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
+static bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 {
 	if (!PEXPECT(ike->sa.logger, next_is_ikev2_ike_intermediate_exchange(ike))) {
 		return false;

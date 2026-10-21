@@ -403,6 +403,8 @@ struct impairment impairments[] = {
 
 	B(empty_ike_auth_auth, "emit an IKE_AUTH message containing only an empty AUTH payload"),
 
+	B(skip_v2_IKE_INTERMEDIATE_exchange, "go directly to IKE_AUTH, do not pass GO, do not collect additional keying material"),
+
 #undef U
 #undef B
 #undef V
