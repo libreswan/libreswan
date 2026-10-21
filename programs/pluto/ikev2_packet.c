@@ -926,33 +926,34 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 	.size = 3,
 };
 
-struct_desc *v2_payload_desc(unsigned p)
+struct_desc *ikev2_payload_desc(unsigned p)
 {
 	/* use BUILD_BUG_ON() or static_assert? */
 	passert(sizeof(struct ikev2_trans_attr) == FT_LV_ATTRIBUTE_PAYLOAD_SIZE);
 
 	static struct_desc *const v2_payload_descs[] = {
-		&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
-		&ikev2_ke_payload_desc,         /* 34 ISAKMP_NEXT_v2KE */
-		&ikev2_id_i_desc,		/* 35 ISAKMP_NEXT_v2IDi */
-		&ikev2_id_r_desc,		/* 36 ISAKMP_NEXT_v2IDr */
-		&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
-		&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
-		&ikev2_auth_desc,               /* 39 ISAKMP_NEXT_v2AUTH */
-		&ikev2_nonce_desc,              /* 40 ISAKMP_NEXT_v2Ni / ISAKMP_NEXT_v2Nr */
-		&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
-		&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
-		&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
-		&ikev2_ts_i_desc,		/* 44 ISAKMP_NEXT_v2TSi */
-		&ikev2_ts_r_desc,		/* 45 ISAKMP_NEXT_v2TSr */
-		&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
-		&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
-		&ikev2_eap_desc,		/* 48 ISAKMP_NEXT_v2EAP */
-		NULL,				/* 49 */
-		NULL,				/* 50 */
-		NULL,				/* 51 */
-		NULL,				/* 52 */
-		&ikev2_skf_desc,                /* 53 ISAKMP_NEXT_v2SKF */
+#define A(E,D) [E-ISAKMP_v2PAYLOAD_TYPE_BASE] = D
+		A(ISAKMP_NEXT_v2SA, &ikev2_sa_desc),            /* 33 */
+		A(ISAKMP_NEXT_v2KE, &ikev2_ke_payload_desc),    /* 34 */
+		A(ISAKMP_NEXT_v2IDi, &ikev2_id_i_desc),		/* 35 */
+		A(ISAKMP_NEXT_v2IDr, &ikev2_id_r_desc),		/* 36 */
+		A(ISAKMP_NEXT_v2CERT, &ikev2_certificate_desc), /* 37 */
+		A(ISAKMP_NEXT_v2CERTREQ, &ikev2_certificate_req_desc), /* 38 */
+		A(ISAKMP_NEXT_v2AUTH, &ikev2_auth_desc),        /* 39 */
+		A(ISAKMP_NEXT_v2Ni, &ikev2_nonce_desc),         /* 40 == ISAKMP_NEXT_v2Nr */
+		A(ISAKMP_NEXT_v2N, &ikev2_notify_desc),         /* 41 */
+		A(ISAKMP_NEXT_v2D, &ikev2_delete_desc),         /* 42 */
+		A(ISAKMP_NEXT_v2V, &ikev2_vendor_id_desc),      /* 43 */
+		A(ISAKMP_NEXT_v2TSi, &ikev2_ts_i_desc),		/* 44 */
+		A(ISAKMP_NEXT_v2TSr, &ikev2_ts_r_desc),		/* 45 */
+		A(ISAKMP_NEXT_v2SK, &ikev2_sk_desc),            /* 46 */
+		A(ISAKMP_NEXT_v2CP, &ikev2_cp_desc),		/* 47 */
+		A(ISAKMP_NEXT_v2EAP, &ikev2_eap_desc),		/* 48 */
+		A(ISAKMP_NEXT_v2GSPM, NULL),			/* 49 */
+		A(ISAKMP_NEXT_v2IDG, NULL),			/* 50 */
+		A(ISAKMP_NEXT_v2GSA, NULL),			/* 51 */
+		A(ISAKMP_NEXT_v2KD, NULL),			/* 52 */
+		A(ISAKMP_NEXT_v2SKF, &ikev2_skf_desc),          /* 53 */
 	};
 	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 		return NULL;

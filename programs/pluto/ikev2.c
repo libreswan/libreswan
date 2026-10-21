@@ -289,7 +289,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		 * Map the payload onto its payload descriptor which
 		 * describes how to decode it.
 		 */
-		const struct_desc *sd = v2_payload_desc(np);
+		const struct_desc *sd = ikev2_payload_desc(np);
 
 		if (sd == NULL) {
 

@@ -29,7 +29,7 @@
 
 /* descriptor for V2 payload type. */
 
-extern struct_desc *v2_payload_desc(unsigned p);
+extern struct_desc *ikev2_payload_desc(unsigned p);
 
 
 /*
