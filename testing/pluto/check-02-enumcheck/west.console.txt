@@ -2310,168 +2310,161 @@ name for -1 present (should be absent)
          jam_enum_short 3: ESP OK
          jam_enum_human 3: esp OK
          match ESP [short]: OK
-  ikev2_payload_names: [0..133)
-    0 -> ISAKMP_NEXT_v2NONE
-         jam_enum 0: ISAKMP_NEXT_v2NONE OK
-         match ISAKMP_NEXT_v2NONE: OK
+  ikev2_payload_names: [0..54)
+    0 -> NEXT_PAYLOAD_v2NONE
+         jam_enum 0: NEXT_PAYLOAD_v2NONE OK
+         match NEXT_PAYLOAD_v2NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
          jam_enum_human 0: none OK
          match NONE [short]: OK
-   33 -> ISAKMP_NEXT_v2SA
-         jam_enum 33: ISAKMP_NEXT_v2SA OK
-         match ISAKMP_NEXT_v2SA: OK
+   33 -> NEXT_PAYLOAD_v2SA
+         jam_enum 33: NEXT_PAYLOAD_v2SA OK
+         match NEXT_PAYLOAD_v2SA: OK
          short_name 33: SA OK
          jam_enum_short 33: SA OK
          jam_enum_human 33: sa OK
          match SA [short]: OK
-   34 -> ISAKMP_NEXT_v2KE
-         jam_enum 34: ISAKMP_NEXT_v2KE OK
-         match ISAKMP_NEXT_v2KE: OK
+   34 -> NEXT_PAYLOAD_v2KE
+         jam_enum 34: NEXT_PAYLOAD_v2KE OK
+         match NEXT_PAYLOAD_v2KE: OK
          short_name 34: KE OK
          jam_enum_short 34: KE OK
          jam_enum_human 34: ke OK
          match KE [short]: OK
-   35 -> ISAKMP_NEXT_v2IDi
-         jam_enum 35: ISAKMP_NEXT_v2IDi OK
-         match ISAKMP_NEXT_v2IDi: OK
+   35 -> NEXT_PAYLOAD_v2IDi
+         jam_enum 35: NEXT_PAYLOAD_v2IDi OK
+         match NEXT_PAYLOAD_v2IDi: OK
          short_name 35: IDi OK
          jam_enum_short 35: IDi OK
          jam_enum_human 35: idi OK
          match IDi [short]: OK
-   36 -> ISAKMP_NEXT_v2IDr
-         jam_enum 36: ISAKMP_NEXT_v2IDr OK
-         match ISAKMP_NEXT_v2IDr: OK
+   36 -> NEXT_PAYLOAD_v2IDr
+         jam_enum 36: NEXT_PAYLOAD_v2IDr OK
+         match NEXT_PAYLOAD_v2IDr: OK
          short_name 36: IDr OK
          jam_enum_short 36: IDr OK
          jam_enum_human 36: idr OK
          match IDr [short]: OK
-   37 -> ISAKMP_NEXT_v2CERT
-         jam_enum 37: ISAKMP_NEXT_v2CERT OK
-         match ISAKMP_NEXT_v2CERT: OK
+   37 -> NEXT_PAYLOAD_v2CERT
+         jam_enum 37: NEXT_PAYLOAD_v2CERT OK
+         match NEXT_PAYLOAD_v2CERT: OK
          short_name 37: CERT OK
          jam_enum_short 37: CERT OK
          jam_enum_human 37: cert OK
          match CERT [short]: OK
-   38 -> ISAKMP_NEXT_v2CERTREQ
-         jam_enum 38: ISAKMP_NEXT_v2CERTREQ OK
-         match ISAKMP_NEXT_v2CERTREQ: OK
+   38 -> NEXT_PAYLOAD_v2CERTREQ
+         jam_enum 38: NEXT_PAYLOAD_v2CERTREQ OK
+         match NEXT_PAYLOAD_v2CERTREQ: OK
          short_name 38: CERTREQ OK
          jam_enum_short 38: CERTREQ OK
          jam_enum_human 38: certreq OK
          match CERTREQ [short]: OK
-   39 -> ISAKMP_NEXT_v2AUTH
-         jam_enum 39: ISAKMP_NEXT_v2AUTH OK
-         match ISAKMP_NEXT_v2AUTH: OK
+   39 -> NEXT_PAYLOAD_v2AUTH
+         jam_enum 39: NEXT_PAYLOAD_v2AUTH OK
+         match NEXT_PAYLOAD_v2AUTH: OK
          short_name 39: AUTH OK
          jam_enum_short 39: AUTH OK
          jam_enum_human 39: auth OK
          match AUTH [short]: OK
-   40 -> ISAKMP_NEXT_v2Ni
-         jam_enum 40: ISAKMP_NEXT_v2Ni OK
-         match ISAKMP_NEXT_v2Ni: OK
+   40 -> NEXT_PAYLOAD_v2Ni
+         jam_enum 40: NEXT_PAYLOAD_v2Ni OK
+         match NEXT_PAYLOAD_v2Ni: OK
          short_name 40: Ni OK
          jam_enum_short 40: Ni OK
          jam_enum_human 40: ni OK
          match Ni [short]: OK
-   41 -> ISAKMP_NEXT_v2N
-         jam_enum 41: ISAKMP_NEXT_v2N OK
-         match ISAKMP_NEXT_v2N: OK
+   41 -> NEXT_PAYLOAD_v2N
+         jam_enum 41: NEXT_PAYLOAD_v2N OK
+         match NEXT_PAYLOAD_v2N: OK
          short_name 41: N OK
          jam_enum_short 41: N OK
          jam_enum_human 41: n OK
          match N [short]: OK
-   42 -> ISAKMP_NEXT_v2D
-         jam_enum 42: ISAKMP_NEXT_v2D OK
-         match ISAKMP_NEXT_v2D: OK
+   42 -> NEXT_PAYLOAD_v2D
+         jam_enum 42: NEXT_PAYLOAD_v2D OK
+         match NEXT_PAYLOAD_v2D: OK
          short_name 42: D OK
          jam_enum_short 42: D OK
          jam_enum_human 42: d OK
          match D [short]: OK
-   43 -> ISAKMP_NEXT_v2V
-         jam_enum 43: ISAKMP_NEXT_v2V OK
-         match ISAKMP_NEXT_v2V: OK
+   43 -> NEXT_PAYLOAD_v2V
+         jam_enum 43: NEXT_PAYLOAD_v2V OK
+         match NEXT_PAYLOAD_v2V: OK
          short_name 43: V OK
          jam_enum_short 43: V OK
          jam_enum_human 43: v OK
          match V [short]: OK
-   44 -> ISAKMP_NEXT_v2TSi
-         jam_enum 44: ISAKMP_NEXT_v2TSi OK
-         match ISAKMP_NEXT_v2TSi: OK
+   44 -> NEXT_PAYLOAD_v2TSi
+         jam_enum 44: NEXT_PAYLOAD_v2TSi OK
+         match NEXT_PAYLOAD_v2TSi: OK
          short_name 44: TSi OK
          jam_enum_short 44: TSi OK
          jam_enum_human 44: tsi OK
          match TSi [short]: OK
-   45 -> ISAKMP_NEXT_v2TSr
-         jam_enum 45: ISAKMP_NEXT_v2TSr OK
-         match ISAKMP_NEXT_v2TSr: OK
+   45 -> NEXT_PAYLOAD_v2TSr
+         jam_enum 45: NEXT_PAYLOAD_v2TSr OK
+         match NEXT_PAYLOAD_v2TSr: OK
          short_name 45: TSr OK
          jam_enum_short 45: TSr OK
          jam_enum_human 45: tsr OK
          match TSr [short]: OK
-   46 -> ISAKMP_NEXT_v2SK
-         jam_enum 46: ISAKMP_NEXT_v2SK OK
-         match ISAKMP_NEXT_v2SK: OK
+   46 -> NEXT_PAYLOAD_v2SK
+         jam_enum 46: NEXT_PAYLOAD_v2SK OK
+         match NEXT_PAYLOAD_v2SK: OK
          short_name 46: SK OK
          jam_enum_short 46: SK OK
          jam_enum_human 46: sk OK
          match SK [short]: OK
-   47 -> ISAKMP_NEXT_v2CP
-         jam_enum 47: ISAKMP_NEXT_v2CP OK
-         match ISAKMP_NEXT_v2CP: OK
+   47 -> NEXT_PAYLOAD_v2CP
+         jam_enum 47: NEXT_PAYLOAD_v2CP OK
+         match NEXT_PAYLOAD_v2CP: OK
          short_name 47: CP OK
          jam_enum_short 47: CP OK
          jam_enum_human 47: cp OK
          match CP [short]: OK
-   48 -> ISAKMP_NEXT_v2EAP
-         jam_enum 48: ISAKMP_NEXT_v2EAP OK
-         match ISAKMP_NEXT_v2EAP: OK
+   48 -> NEXT_PAYLOAD_v2EAP
+         jam_enum 48: NEXT_PAYLOAD_v2EAP OK
+         match NEXT_PAYLOAD_v2EAP: OK
          short_name 48: EAP OK
          jam_enum_short 48: EAP OK
          jam_enum_human 48: eap OK
          match EAP [short]: OK
-   49 -> ISAKMP_NEXT_v2GSPM
-         jam_enum 49: ISAKMP_NEXT_v2GSPM OK
-         match ISAKMP_NEXT_v2GSPM: OK
+   49 -> NEXT_PAYLOAD_v2GSPM
+         jam_enum 49: NEXT_PAYLOAD_v2GSPM OK
+         match NEXT_PAYLOAD_v2GSPM: OK
          short_name 49: GSPM OK
          jam_enum_short 49: GSPM OK
          jam_enum_human 49: gspm OK
          match GSPM [short]: OK
-   50 -> ISAKMP_NEXT_v2IDG
-         jam_enum 50: ISAKMP_NEXT_v2IDG OK
-         match ISAKMP_NEXT_v2IDG: OK
+   50 -> NEXT_PAYLOAD_v2IDG
+         jam_enum 50: NEXT_PAYLOAD_v2IDG OK
+         match NEXT_PAYLOAD_v2IDG: OK
          short_name 50: IDG OK
          jam_enum_short 50: IDG OK
          jam_enum_human 50: idg OK
          match IDG [short]: OK
-   51 -> ISAKMP_NEXT_v2GSA
-         jam_enum 51: ISAKMP_NEXT_v2GSA OK
-         match ISAKMP_NEXT_v2GSA: OK
+   51 -> NEXT_PAYLOAD_v2GSA
+         jam_enum 51: NEXT_PAYLOAD_v2GSA OK
+         match NEXT_PAYLOAD_v2GSA: OK
          short_name 51: GSA OK
          jam_enum_short 51: GSA OK
          jam_enum_human 51: gsa OK
          match GSA [short]: OK
-   52 -> ISAKMP_NEXT_v2KD
-         jam_enum 52: ISAKMP_NEXT_v2KD OK
-         match ISAKMP_NEXT_v2KD: OK
+   52 -> NEXT_PAYLOAD_v2KD
+         jam_enum 52: NEXT_PAYLOAD_v2KD OK
+         match NEXT_PAYLOAD_v2KD: OK
          short_name 52: KD OK
          jam_enum_short 52: KD OK
          jam_enum_human 52: kd OK
          match KD [short]: OK
-   53 -> ISAKMP_NEXT_v2SKF
-         jam_enum 53: ISAKMP_NEXT_v2SKF OK
-         match ISAKMP_NEXT_v2SKF: OK
+   53 -> NEXT_PAYLOAD_v2SKF
+         jam_enum 53: NEXT_PAYLOAD_v2SKF OK
+         match NEXT_PAYLOAD_v2SKF: OK
          short_name 53: SKF OK
          jam_enum_short 53: SKF OK
          jam_enum_human 53: skf OK
          match SKF [short]: OK
-  132 -> ISAKMP_NEXT_v2IKE_FRAGMENTATION
-         jam_enum 132: ISAKMP_NEXT_v2IKE_FRAGMENTATION OK
-         match ISAKMP_NEXT_v2IKE_FRAGMENTATION: OK
-         short_name 132: IKE_FRAGMENTATION OK
-         jam_enum_short 132: IKE_FRAGMENTATION OK
-         jam_enum_human 132: ike-fragmentation OK
-         match IKE_FRAGMENTATION [short]: OK
   ikev2_ppk_id_type_names: [1..3)
     1 -> PPK_ID_OPAQUE
          jam_enum 1: PPK_ID_OPAQUE OK
@@ -5293,132 +5286,132 @@ name for -1 present (should be absent)
          short_name 22: ISAKMP_NEXT_GAP OK
          jam_enum_short 22: ISAKMP_NEXT_GAP OK
          jam_enum_human 22: isakmp-next-gap OK
-   33 -> ISAKMP_NEXT_v2SA
-         jam_enum 33: ISAKMP_NEXT_v2SA OK
-         match ISAKMP_NEXT_v2SA: OK
-         short_name 33: ISAKMP_NEXT_v2SA OK
-         jam_enum_short 33: ISAKMP_NEXT_v2SA OK
-         jam_enum_human 33: isakmp-next-v2sa OK
-   34 -> ISAKMP_NEXT_v2KE
-         jam_enum 34: ISAKMP_NEXT_v2KE OK
-         match ISAKMP_NEXT_v2KE: OK
-         short_name 34: ISAKMP_NEXT_v2KE OK
-         jam_enum_short 34: ISAKMP_NEXT_v2KE OK
-         jam_enum_human 34: isakmp-next-v2ke OK
-   35 -> ISAKMP_NEXT_v2IDi
-         jam_enum 35: ISAKMP_NEXT_v2IDi OK
-         match ISAKMP_NEXT_v2IDi: OK
-         short_name 35: ISAKMP_NEXT_v2IDi OK
-         jam_enum_short 35: ISAKMP_NEXT_v2IDi OK
-         jam_enum_human 35: isakmp-next-v2idi OK
-   36 -> ISAKMP_NEXT_v2IDr
-         jam_enum 36: ISAKMP_NEXT_v2IDr OK
-         match ISAKMP_NEXT_v2IDr: OK
-         short_name 36: ISAKMP_NEXT_v2IDr OK
-         jam_enum_short 36: ISAKMP_NEXT_v2IDr OK
-         jam_enum_human 36: isakmp-next-v2idr OK
-   37 -> ISAKMP_NEXT_v2CERT
-         jam_enum 37: ISAKMP_NEXT_v2CERT OK
-         match ISAKMP_NEXT_v2CERT: OK
-         short_name 37: ISAKMP_NEXT_v2CERT OK
-         jam_enum_short 37: ISAKMP_NEXT_v2CERT OK
-         jam_enum_human 37: isakmp-next-v2cert OK
-   38 -> ISAKMP_NEXT_v2CERTREQ
-         jam_enum 38: ISAKMP_NEXT_v2CERTREQ OK
-         match ISAKMP_NEXT_v2CERTREQ: OK
-         short_name 38: ISAKMP_NEXT_v2CERTREQ OK
-         jam_enum_short 38: ISAKMP_NEXT_v2CERTREQ OK
-         jam_enum_human 38: isakmp-next-v2certreq OK
-   39 -> ISAKMP_NEXT_v2AUTH
-         jam_enum 39: ISAKMP_NEXT_v2AUTH OK
-         match ISAKMP_NEXT_v2AUTH: OK
-         short_name 39: ISAKMP_NEXT_v2AUTH OK
-         jam_enum_short 39: ISAKMP_NEXT_v2AUTH OK
-         jam_enum_human 39: isakmp-next-v2auth OK
-   40 -> ISAKMP_NEXT_v2Ni
-         jam_enum 40: ISAKMP_NEXT_v2Ni OK
-         match ISAKMP_NEXT_v2Ni: OK
-         short_name 40: ISAKMP_NEXT_v2Ni OK
-         jam_enum_short 40: ISAKMP_NEXT_v2Ni OK
-         jam_enum_human 40: isakmp-next-v2ni OK
-   41 -> ISAKMP_NEXT_v2N
-         jam_enum 41: ISAKMP_NEXT_v2N OK
-         match ISAKMP_NEXT_v2N: OK
-         short_name 41: ISAKMP_NEXT_v2N OK
-         jam_enum_short 41: ISAKMP_NEXT_v2N OK
-         jam_enum_human 41: isakmp-next-v2n OK
-   42 -> ISAKMP_NEXT_v2D
-         jam_enum 42: ISAKMP_NEXT_v2D OK
-         match ISAKMP_NEXT_v2D: OK
-         short_name 42: ISAKMP_NEXT_v2D OK
-         jam_enum_short 42: ISAKMP_NEXT_v2D OK
-         jam_enum_human 42: isakmp-next-v2d OK
-   43 -> ISAKMP_NEXT_v2V
-         jam_enum 43: ISAKMP_NEXT_v2V OK
-         match ISAKMP_NEXT_v2V: OK
-         short_name 43: ISAKMP_NEXT_v2V OK
-         jam_enum_short 43: ISAKMP_NEXT_v2V OK
-         jam_enum_human 43: isakmp-next-v2v OK
-   44 -> ISAKMP_NEXT_v2TSi
-         jam_enum 44: ISAKMP_NEXT_v2TSi OK
-         match ISAKMP_NEXT_v2TSi: OK
-         short_name 44: ISAKMP_NEXT_v2TSi OK
-         jam_enum_short 44: ISAKMP_NEXT_v2TSi OK
-         jam_enum_human 44: isakmp-next-v2tsi OK
-   45 -> ISAKMP_NEXT_v2TSr
-         jam_enum 45: ISAKMP_NEXT_v2TSr OK
-         match ISAKMP_NEXT_v2TSr: OK
-         short_name 45: ISAKMP_NEXT_v2TSr OK
-         jam_enum_short 45: ISAKMP_NEXT_v2TSr OK
-         jam_enum_human 45: isakmp-next-v2tsr OK
-   46 -> ISAKMP_NEXT_v2SK
-         jam_enum 46: ISAKMP_NEXT_v2SK OK
-         match ISAKMP_NEXT_v2SK: OK
-         short_name 46: ISAKMP_NEXT_v2SK OK
-         jam_enum_short 46: ISAKMP_NEXT_v2SK OK
-         jam_enum_human 46: isakmp-next-v2sk OK
-   47 -> ISAKMP_NEXT_v2CP
-         jam_enum 47: ISAKMP_NEXT_v2CP OK
-         match ISAKMP_NEXT_v2CP: OK
-         short_name 47: ISAKMP_NEXT_v2CP OK
-         jam_enum_short 47: ISAKMP_NEXT_v2CP OK
-         jam_enum_human 47: isakmp-next-v2cp OK
-   48 -> ISAKMP_NEXT_v2EAP
-         jam_enum 48: ISAKMP_NEXT_v2EAP OK
-         match ISAKMP_NEXT_v2EAP: OK
-         short_name 48: ISAKMP_NEXT_v2EAP OK
-         jam_enum_short 48: ISAKMP_NEXT_v2EAP OK
-         jam_enum_human 48: isakmp-next-v2eap OK
-   49 -> ISAKMP_NEXT_v2GSPM
-         jam_enum 49: ISAKMP_NEXT_v2GSPM OK
-         match ISAKMP_NEXT_v2GSPM: OK
-         short_name 49: ISAKMP_NEXT_v2GSPM OK
-         jam_enum_short 49: ISAKMP_NEXT_v2GSPM OK
-         jam_enum_human 49: isakmp-next-v2gspm OK
-   50 -> ISAKMP_NEXT_v2IDG
-         jam_enum 50: ISAKMP_NEXT_v2IDG OK
-         match ISAKMP_NEXT_v2IDG: OK
-         short_name 50: ISAKMP_NEXT_v2IDG OK
-         jam_enum_short 50: ISAKMP_NEXT_v2IDG OK
-         jam_enum_human 50: isakmp-next-v2idg OK
-   51 -> ISAKMP_NEXT_v2GSA
-         jam_enum 51: ISAKMP_NEXT_v2GSA OK
-         match ISAKMP_NEXT_v2GSA: OK
-         short_name 51: ISAKMP_NEXT_v2GSA OK
-         jam_enum_short 51: ISAKMP_NEXT_v2GSA OK
-         jam_enum_human 51: isakmp-next-v2gsa OK
-   52 -> ISAKMP_NEXT_v2KD
-         jam_enum 52: ISAKMP_NEXT_v2KD OK
-         match ISAKMP_NEXT_v2KD: OK
-         short_name 52: ISAKMP_NEXT_v2KD OK
-         jam_enum_short 52: ISAKMP_NEXT_v2KD OK
-         jam_enum_human 52: isakmp-next-v2kd OK
-   53 -> ISAKMP_NEXT_v2SKF
-         jam_enum 53: ISAKMP_NEXT_v2SKF OK
-         match ISAKMP_NEXT_v2SKF: OK
-         short_name 53: ISAKMP_NEXT_v2SKF OK
-         jam_enum_short 53: ISAKMP_NEXT_v2SKF OK
-         jam_enum_human 53: isakmp-next-v2skf OK
+   33 -> NEXT_PAYLOAD_v2SA
+         jam_enum 33: NEXT_PAYLOAD_v2SA OK
+         match NEXT_PAYLOAD_v2SA: OK
+         short_name 33: NEXT_PAYLOAD_v2SA OK
+         jam_enum_short 33: NEXT_PAYLOAD_v2SA OK
+         jam_enum_human 33: next-payload-v2sa OK
+   34 -> NEXT_PAYLOAD_v2KE
+         jam_enum 34: NEXT_PAYLOAD_v2KE OK
+         match NEXT_PAYLOAD_v2KE: OK
+         short_name 34: NEXT_PAYLOAD_v2KE OK
+         jam_enum_short 34: NEXT_PAYLOAD_v2KE OK
+         jam_enum_human 34: next-payload-v2ke OK
+   35 -> NEXT_PAYLOAD_v2IDi
+         jam_enum 35: NEXT_PAYLOAD_v2IDi OK
+         match NEXT_PAYLOAD_v2IDi: OK
+         short_name 35: NEXT_PAYLOAD_v2IDi OK
+         jam_enum_short 35: NEXT_PAYLOAD_v2IDi OK
+         jam_enum_human 35: next-payload-v2idi OK
+   36 -> NEXT_PAYLOAD_v2IDr
+         jam_enum 36: NEXT_PAYLOAD_v2IDr OK
+         match NEXT_PAYLOAD_v2IDr: OK
+         short_name 36: NEXT_PAYLOAD_v2IDr OK
+         jam_enum_short 36: NEXT_PAYLOAD_v2IDr OK
+         jam_enum_human 36: next-payload-v2idr OK
+   37 -> NEXT_PAYLOAD_v2CERT
+         jam_enum 37: NEXT_PAYLOAD_v2CERT OK
+         match NEXT_PAYLOAD_v2CERT: OK
+         short_name 37: NEXT_PAYLOAD_v2CERT OK
+         jam_enum_short 37: NEXT_PAYLOAD_v2CERT OK
+         jam_enum_human 37: next-payload-v2cert OK
+   38 -> NEXT_PAYLOAD_v2CERTREQ
+         jam_enum 38: NEXT_PAYLOAD_v2CERTREQ OK
+         match NEXT_PAYLOAD_v2CERTREQ: OK
+         short_name 38: NEXT_PAYLOAD_v2CERTREQ OK
+         jam_enum_short 38: NEXT_PAYLOAD_v2CERTREQ OK
+         jam_enum_human 38: next-payload-v2certreq OK
+   39 -> NEXT_PAYLOAD_v2AUTH
+         jam_enum 39: NEXT_PAYLOAD_v2AUTH OK
+         match NEXT_PAYLOAD_v2AUTH: OK
+         short_name 39: NEXT_PAYLOAD_v2AUTH OK
+         jam_enum_short 39: NEXT_PAYLOAD_v2AUTH OK
+         jam_enum_human 39: next-payload-v2auth OK
+   40 -> NEXT_PAYLOAD_v2Ni
+         jam_enum 40: NEXT_PAYLOAD_v2Ni OK
+         match NEXT_PAYLOAD_v2Ni: OK
+         short_name 40: NEXT_PAYLOAD_v2Ni OK
+         jam_enum_short 40: NEXT_PAYLOAD_v2Ni OK
+         jam_enum_human 40: next-payload-v2ni OK
+   41 -> NEXT_PAYLOAD_v2N
+         jam_enum 41: NEXT_PAYLOAD_v2N OK
+         match NEXT_PAYLOAD_v2N: OK
+         short_name 41: NEXT_PAYLOAD_v2N OK
+         jam_enum_short 41: NEXT_PAYLOAD_v2N OK
+         jam_enum_human 41: next-payload-v2n OK
+   42 -> NEXT_PAYLOAD_v2D
+         jam_enum 42: NEXT_PAYLOAD_v2D OK
+         match NEXT_PAYLOAD_v2D: OK
+         short_name 42: NEXT_PAYLOAD_v2D OK
+         jam_enum_short 42: NEXT_PAYLOAD_v2D OK
+         jam_enum_human 42: next-payload-v2d OK
+   43 -> NEXT_PAYLOAD_v2V
+         jam_enum 43: NEXT_PAYLOAD_v2V OK
+         match NEXT_PAYLOAD_v2V: OK
+         short_name 43: NEXT_PAYLOAD_v2V OK
+         jam_enum_short 43: NEXT_PAYLOAD_v2V OK
+         jam_enum_human 43: next-payload-v2v OK
+   44 -> NEXT_PAYLOAD_v2TSi
+         jam_enum 44: NEXT_PAYLOAD_v2TSi OK
+         match NEXT_PAYLOAD_v2TSi: OK
+         short_name 44: NEXT_PAYLOAD_v2TSi OK
+         jam_enum_short 44: NEXT_PAYLOAD_v2TSi OK
+         jam_enum_human 44: next-payload-v2tsi OK
+   45 -> NEXT_PAYLOAD_v2TSr
+         jam_enum 45: NEXT_PAYLOAD_v2TSr OK
+         match NEXT_PAYLOAD_v2TSr: OK
+         short_name 45: NEXT_PAYLOAD_v2TSr OK
+         jam_enum_short 45: NEXT_PAYLOAD_v2TSr OK
+         jam_enum_human 45: next-payload-v2tsr OK
+   46 -> NEXT_PAYLOAD_v2SK
+         jam_enum 46: NEXT_PAYLOAD_v2SK OK
+         match NEXT_PAYLOAD_v2SK: OK
+         short_name 46: NEXT_PAYLOAD_v2SK OK
+         jam_enum_short 46: NEXT_PAYLOAD_v2SK OK
+         jam_enum_human 46: next-payload-v2sk OK
+   47 -> NEXT_PAYLOAD_v2CP
+         jam_enum 47: NEXT_PAYLOAD_v2CP OK
+         match NEXT_PAYLOAD_v2CP: OK
+         short_name 47: NEXT_PAYLOAD_v2CP OK
+         jam_enum_short 47: NEXT_PAYLOAD_v2CP OK
+         jam_enum_human 47: next-payload-v2cp OK
+   48 -> NEXT_PAYLOAD_v2EAP
+         jam_enum 48: NEXT_PAYLOAD_v2EAP OK
+         match NEXT_PAYLOAD_v2EAP: OK
+         short_name 48: NEXT_PAYLOAD_v2EAP OK
+         jam_enum_short 48: NEXT_PAYLOAD_v2EAP OK
+         jam_enum_human 48: next-payload-v2eap OK
+   49 -> NEXT_PAYLOAD_v2GSPM
+         jam_enum 49: NEXT_PAYLOAD_v2GSPM OK
+         match NEXT_PAYLOAD_v2GSPM: OK
+         short_name 49: NEXT_PAYLOAD_v2GSPM OK
+         jam_enum_short 49: NEXT_PAYLOAD_v2GSPM OK
+         jam_enum_human 49: next-payload-v2gspm OK
+   50 -> NEXT_PAYLOAD_v2IDG
+         jam_enum 50: NEXT_PAYLOAD_v2IDG OK
+         match NEXT_PAYLOAD_v2IDG: OK
+         short_name 50: NEXT_PAYLOAD_v2IDG OK
+         jam_enum_short 50: NEXT_PAYLOAD_v2IDG OK
+         jam_enum_human 50: next-payload-v2idg OK
+   51 -> NEXT_PAYLOAD_v2GSA
+         jam_enum 51: NEXT_PAYLOAD_v2GSA OK
+         match NEXT_PAYLOAD_v2GSA: OK
+         short_name 51: NEXT_PAYLOAD_v2GSA OK
+         jam_enum_short 51: NEXT_PAYLOAD_v2GSA OK
+         jam_enum_human 51: next-payload-v2gsa OK
+   52 -> NEXT_PAYLOAD_v2KD
+         jam_enum 52: NEXT_PAYLOAD_v2KD OK
+         match NEXT_PAYLOAD_v2KD: OK
+         short_name 52: NEXT_PAYLOAD_v2KD OK
+         jam_enum_short 52: NEXT_PAYLOAD_v2KD OK
+         jam_enum_human 52: next-payload-v2kd OK
+   53 -> NEXT_PAYLOAD_v2SKF
+         jam_enum 53: NEXT_PAYLOAD_v2SKF OK
+         match NEXT_PAYLOAD_v2SKF: OK
+         short_name 53: NEXT_PAYLOAD_v2SKF OK
+         jam_enum_short 53: NEXT_PAYLOAD_v2SKF OK
+         jam_enum_human 53: next-payload-v2skf OK
   130 -> ISAKMP_NEXT_NATD_DRAFTS
          jam_enum 130: ISAKMP_NEXT_NATD_DRAFTS OK
          match ISAKMP_NEXT_NATD_DRAFTS: OK
