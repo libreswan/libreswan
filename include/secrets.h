@@ -71,6 +71,7 @@ void free_pubkey_content(struct pubkey_content *pubkey_content,
 /*
  * private key types
  */
+
 enum secret_kind {
 	/* start at one so accidental 0 will not match */
 	SECRET_PSK = 1,
@@ -94,6 +95,8 @@ enum secret_kind {
 	SECRET_NULL,
 	SECRET_INVALID,
 };
+
+extern const struct enum_names secret_kind_names;
 
 /*
  * Pre-shared Secrets, and XAUTH stuff.

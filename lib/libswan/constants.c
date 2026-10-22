@@ -1225,16 +1225,6 @@ static const char *const modecfg_attr_name_draft[] = {
 #undef R
 };
 
-#if 0
-/* this is not used - which is a little strange */
-static enum_names modecfg_attr_names_draft = {
-	INTERNAL_IP4_ADDRESS,
-	HOME_AGENT_ADDRESS,
-	modecfg_attr_name_draft,
-	NULL
-};
-#endif
-
 static const char *const modecfg_cisco_attr_name[] = {
 #define S(E) [E - MODECFG_BANNER] = #E
 	S(MODECFG_BANNER),	/* 28672 */
