@@ -214,6 +214,4 @@ enum name_flags {
 void bad_name(unsigned long val, name_buf *b);
 size_t jam_bad(struct jambuf *buf, const char *prefix, unsigned long val);
 
-typedef const struct enum_names enum_names; /*TBD?*/
-
 #endif

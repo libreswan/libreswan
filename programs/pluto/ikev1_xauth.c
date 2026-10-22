@@ -1463,7 +1463,8 @@ static void xauth_launch_authent(struct ike_sa *ike,
 }
 
 /* log a nice description of an unsupported attribute */
-static void llog_bad_attr(struct logger *logger, const char *kind, enum_names *ed, unsigned val)
+static void llog_bad_attr(struct logger *logger, const char *kind,
+			  const struct enum_names *ed, unsigned val)
 {
 	name_buf b;
 	ldbg(logger, "unsupported %s %s attribute %s received.",

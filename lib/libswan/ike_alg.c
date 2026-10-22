@@ -1034,7 +1034,8 @@ const struct ike_alg_type ike_alg_sn = {
  */
 static void check_enum_name(const char *what,
 			    const struct ike_alg *alg,
-			    int id, enum_names *enum_names,
+			    int id,
+			    const struct enum_names *enum_names,
 			    struct logger *logger)
 {
 	if (id >= 0) {
