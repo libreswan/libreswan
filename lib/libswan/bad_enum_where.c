@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #include "lswlog.h"
+#include "names.h"
 
 void bad_enum_where(const struct logger *logger, const struct enum_names *en,
 		    unsigned long value, where_t where)

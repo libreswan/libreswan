@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "constants.h"
+#include "names.h"
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "jambuf.h"

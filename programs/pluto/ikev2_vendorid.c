@@ -22,6 +22,7 @@
 
 #include "vendorid.h"
 
+#include "names.h"
 #include "defs.h"
 
 #include "log.h"

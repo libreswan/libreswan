@@ -24,7 +24,6 @@
 #include "lswlog.h"
 #include "ip_info.h"
 #include "lmod.h"
-#include "names_constant.h"		/* for debug_lmod_info */
 #include "timescale.h"
 #include "lswversion.h"
 #include "binaryscale-iec-60027-2.h"

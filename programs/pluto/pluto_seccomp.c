@@ -21,6 +21,7 @@
 
 #include "lswseccomp.h"
 #include "ipsecconf/setup.h"
+#include "names.h"
 
 #include "defs.h"
 #include "log.h"

@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "names.h"
 #include "ipsecconf/starterwhack.h"
 #include "whack.h"
 #include "ipsecconf/confread.h"

@@ -19,7 +19,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "constants.h"
+
+#include "names.h"
 #include "lswsd.h"
 
 #include "defs.h"		/* for so_serial_t */

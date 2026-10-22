@@ -18,6 +18,8 @@
 #ifndef LSWNSS_H
 #define LSWNSS_H
 
+#include "names.h"
+
 /*
  * XXX: old comment:
  *

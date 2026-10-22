@@ -27,6 +27,7 @@
 #include "crypt_hash.h"
 #include "ike_alg_hash.h"
 
+#include "names.h"
 #include "vendorid.h"
 #include "lswlog.h"
 #include "lswalloc.h"

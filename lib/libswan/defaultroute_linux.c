@@ -32,7 +32,7 @@
 
 #include "lsw_socket.h"
 
-#include "constants.h"
+#include "names.h"
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
 #include "linux_netlink.h"

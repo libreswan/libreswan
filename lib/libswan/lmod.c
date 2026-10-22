@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "constants.h"
+#include "names.h"
 #include "lmod.h"
 #include "lswlog.h"
 #include "lswalloc.h"
