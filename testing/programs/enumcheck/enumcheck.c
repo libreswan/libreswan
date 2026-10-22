@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "constants.h"
+#include "names.h"
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "jambuf.h"
@@ -253,7 +253,8 @@ static void test_enums(const char *enumname, enum_names *enum_test,
 	printf("\n");
 }
 
-static void test_enum_enum(const char *title, enum_enum_names *een,
+static void test_enum_enum(const char *title,
+			   const struct enum_enum_names *een,
 			   unsigned long table, enum_names *en,
 			   unsigned long val, bool val_ok)
 {

@@ -49,7 +49,7 @@
 #include "ttodata.h"
 #include "lswversion.h"
 #include "lswtool.h"
-#include "constants.h"
+#include "names.h"
 #include "lswlog.h"
 #include "whack.h"
 #include "ip_address.h"

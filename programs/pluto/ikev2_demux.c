@@ -26,6 +26,7 @@
 
 #include "pluto_constants.h"
 #include "ipsecconf/setup.h"
+#include "names.h"
 
 #include "defs.h"
 

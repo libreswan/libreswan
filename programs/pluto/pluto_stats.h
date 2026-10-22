@@ -26,7 +26,7 @@ enum sa_type;
 enum terminate_reason;
 
 struct pluto_stat {
-	const enum_names *names;
+	const struct enum_names *names;
 	const char *what;
 	unsigned long floor;
 	unsigned long *count;

@@ -373,7 +373,8 @@ static void clear_pluto_stat(const struct pluto_stat *stat)
 /*
  * Some arrays start at 1, some start at 0, some start at ...
  */
-static void enum_stats(struct show *s, enum_names *names, unsigned long start,
+static void enum_stats(struct show *s,
+		       const struct enum_names *names, unsigned long start,
 		       unsigned long elemsof_count,
 		       const char *what, unsigned long count[])
 {

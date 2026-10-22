@@ -424,7 +424,7 @@ static enum_names *const payload_type_names_table[] = {
 	[IKEv2 - IKEv1] = &ikev2_payload_names,
 };
 
-enum_enum_names payload_type_names = {
+const struct enum_enum_names payload_type_names = {
 	IKEv1,
 	IKEv2,
 	ARRAY_PTR(payload_type_names_table)
@@ -524,7 +524,7 @@ static enum_names *const exchange_type_names_table[] = {
 	[IKEv2 - IKE_VERSION_FLOOR] = &ikev2_exchange_names,
 };
 
-enum_enum_names exchange_type_names = {
+const struct enum_enum_names exchange_type_names = {
 	IKE_VERSION_FLOOR, IKE_VERSION_ROOF-1,
 	ARRAY_PTR(exchange_type_names_table),
 };
@@ -2184,7 +2184,7 @@ static enum_names *const ikev2_trans_type_transform_enum_names[IKEv2_TRANS_TYPE_
 #undef S
 };
 
-enum_enum_names ikev2_trans_type_transform_names = {
+const struct enum_enum_names ikev2_trans_type_transform_names = {
 	IKEv2_TRANS_TYPE_FLOOR,
 	IKEv2_TRANS_TYPE_ROOF-1,
 	ARRAY_PTR(ikev2_trans_type_transform_enum_names)

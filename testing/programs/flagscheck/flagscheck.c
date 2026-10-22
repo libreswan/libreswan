@@ -16,6 +16,7 @@
 
 #include "flags.h"
 
+#include "names.h"
 #include "lswtool.h"
 #include "lswalloc.h"
 #include "enum_names.h"

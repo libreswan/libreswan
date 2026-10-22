@@ -36,7 +36,7 @@
 #include "lswglob.h"
 #include "lswalloc.h"
 #include "dnssec.h"
-#include "constants.h"
+#include "names.h"
 #include "lswlog.h"
 #include "ip_info.h"
 

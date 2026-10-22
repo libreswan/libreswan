@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "constants.h"
+#include "names.h"
 #include "lmod.h"
 #include "lswlog.h"
 #include "lswalloc.h"
@@ -127,7 +127,9 @@ bool ttolmod(shunk_t args, lmod_t *mod,
 	return ok;
 }
 
-size_t jam_lmod(struct jambuf *buf, enum_names *names, lmod_t mod)
+size_t jam_lmod(struct jambuf *buf,
+		const struct enum_names *names,
+		lmod_t mod)
 {
 	size_t s = 0;
 	static const char separator[] = "+";

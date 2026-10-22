@@ -25,7 +25,7 @@
 #include <string.h>
 #include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
-#include "constants.h"
+#include "names.h"
 #include "lswalloc.h"
 #include "impair.h"
 #include "ip_info.h"		/* used by pbs_in_address() */

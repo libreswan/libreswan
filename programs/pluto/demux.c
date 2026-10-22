@@ -23,6 +23,8 @@
  * for more details.
  */
 
+#include "names.h"
+
 #include "defs.h"
 
 #include "demux.h"

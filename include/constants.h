@@ -144,6 +144,5 @@ extern char *add_str(char *buf, size_t size, const char *src);
 
 #include "ietf_constants.h"
 #include "pluto_constants.h"
-#include "names_constant.h"
 
 #endif /* _CONSTANTS_H_ */

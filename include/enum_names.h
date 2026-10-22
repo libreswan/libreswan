@@ -25,6 +25,8 @@ struct enum_names {
 	const struct enum_names *en_next_range; /* descriptor of next range */
 };
 
+typedef const struct enum_names enum_names; /*TBD?*/
+
 struct enum_enum_names {
 	unsigned long een_first;		/* first value in range */
 	unsigned long een_last;			/* last value in range (inclusive) */

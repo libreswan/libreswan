@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "names.h"
 #include "lswlog.h"
 #include "lswcdefs.h"	/* for UNUSED */
 #include "lswalloc.h"
