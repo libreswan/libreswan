@@ -8,8 +8,4 @@
 
 #include "names.h"
 
-#ifdef KERNEL_XFRM
-extern enum_names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
-#endif
-
 #endif
