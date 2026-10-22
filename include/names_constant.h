@@ -12,7 +12,4 @@
 extern enum_names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
 #endif
 
-/* natt traversal types */
-extern const char *const natt_type_bitnames[];
-
 #endif
