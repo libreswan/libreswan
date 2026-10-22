@@ -82,6 +82,8 @@ typedef const struct ip_protocol *ip_protocol; /* good idea? */
 #define IPCOMP_IPPROTO IPPROTO_IPCOMP /*everything else*/
 #endif
 
+extern const struct enum_names ip_protocol_id_names;	/* aka ipproto_*; in ip_protocol.c */
+
 extern const struct ip_protocol ip_protocols[256];
 
 #define ip_protocol_all ip_protocols[0]				/* "the SA can carry all protocols" */
