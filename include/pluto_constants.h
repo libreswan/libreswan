@@ -52,6 +52,7 @@ enum ike_version {
 #define IKE_VERSION_ROOF 3
 };
 
+extern const struct enum_names ike_version_names;
 extern const struct sparse_names keyexchange_option_names;
 extern const struct sparse_names ikev2_option_names;
 
@@ -138,6 +139,7 @@ enum global_ikev1_policy {
 extern const struct sparse_names global_ikev1_policy_names;
 
 /* corresponding name table is sd_action_names */
+
 enum sd_actions {
 	PLUTO_SD_EXIT = 1,
 	PLUTO_SD_START = 2,
@@ -147,16 +149,21 @@ enum sd_actions {
 	PLUTO_SD_STOPPING = 6,
 };
 
+extern const struct enum_names sd_action_names;
+
 /*
  * NAT-Traversal defines for nat_traveral type from nat_traversal.h.
  * Elements for a set.
  */
+
 enum natt_method {
 	NAT_TRAVERSAL_METHOD_none,	/* unknown or unspecified */
 	NAT_TRAVERSAL_METHOD_IETF_02_03,
 	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC,
 };
+
+extern const struct enum_names natt_method_names;
 
 /* Timer events */
 
@@ -329,6 +336,8 @@ typedef enum {
 #define STF_ROOF (STF_FAIL_v1N + 65536) /* see RFC and above */
 } stf_status;
 
+extern const struct enum_names stf_status_names;
+
 /* Misc. stuff */
 
 #define MAXIMUM_v1_ACCEPTED_DUPLICATES        2
@@ -435,6 +444,10 @@ enum {
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 #define DBG_ADD_STATE	LELEM(DBG_ADD_STATE_IX)
+
+extern const struct enum_names debug_names;
+extern const struct enum_names debug_help;
+extern const struct lmod_info debug_lmod_info;
 
 /* State of exchanges
  *
@@ -844,6 +857,8 @@ enum dns_auth_level {
 
 	DNSSEC_ROOF
 };
+
+extern const struct enum_names dns_auth_level_names;
 
 #define XAUTH_PROMPT_TRIES 3
 #define MAX_XAUTH_USERNAME_LEN 128
