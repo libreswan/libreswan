@@ -511,7 +511,7 @@ $(builddir)/%.c: %.in.c $(top_srcdir)/mk/version.mk
 	mv $@.tmp $@
 
 #
-# generate enum name checklists
+# generate names checklists
 #
 
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*.h)
@@ -520,17 +520,17 @@ ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
 OBJS += enum_names_checklist.o
 enum_names_checklist.o: $(builddir)/enum_names_checklist.c
 
-$(builddir)/enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_names_checklist.c: Makefile names/checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
-	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
+	$(srcdir)/names/checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
 
 OBJS += enum_enum_names_checklist.o
 enum_enum_names_checklist.o: $(builddir)/enum_enum_names_checklist.c
 
-$(builddir)/enum_enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_enum_names_checklist.c: Makefile names/checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
-	$(srcdir)/enum_checklist.sh enum_enum_names $(ENUM_INCLUDES) >$@.tmp
+	$(srcdir)/names/checklist.sh enum_enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
 
 include $(top_srcdir)/mk/library.mk
