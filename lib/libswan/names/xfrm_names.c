@@ -56,17 +56,20 @@ static const char *const xfrm_policy_name[] = {
 #undef S
 };
 
-const struct enum_names xfrm_policy_names = {
+static const struct enum_names xfrm_policy_enum_names = {
 	XFRM_POLICY_IN, XFRM_POLICY_FWD,
 	ARRAY_PTR(xfrm_policy_name),
 	"XFRM_POLICY_", /* prefix */
 	NULL
 };
 
-#define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
+const struct names xfrm_policy_names = {
+	.enum_names = &xfrm_policy_enum_names,
+};
 
-const struct sparse_names xfrm_type_names = {
+static const struct sparse_names xfrm_type_sparse_names = {
 	.list = {
+#define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
 		NE(NLMSG_NOOP),
 		NE(NLMSG_ERROR),
 		NE(NLMSG_DONE),
@@ -96,11 +99,17 @@ const struct sparse_names xfrm_type_names = {
 		NE(XFRM_MSG_MAX),
 
 		SPARSE_NULL
+#undef NE
 	},
 };
 
-const struct sparse_names rtm_type_names = {
+const struct names xfrm_type_names = {
+	.sparse_names = &xfrm_type_sparse_names,
+};
+
+static const struct sparse_names rtm_type_sparse_names = {
 	.list = {
+#define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
 
 		NE(RTM_NEWLINK),
 		NE(RTM_NEWLINK),
@@ -133,6 +142,10 @@ const struct sparse_names rtm_type_names = {
 		NE(RTM_MAX),
 
 		SPARSE_NULL
+#undef NE
 	},
 };
-#undef NE
+
+const struct names rtm_type_names = {
+	.sparse_names = &rtm_type_sparse_names,
+};

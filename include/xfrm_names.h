@@ -20,7 +20,8 @@
 # error "XFRM only"
 #endif
 
-extern const struct enum_names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
-extern const struct sparse_names xfrm_type_names;	/* #ifdef KERNEL_XFRM */
-extern const struct sparse_names rtm_type_names;	/* #ifdef KERNEL_XFRM */
+extern const struct names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
+extern const struct names xfrm_type_names;	/* #ifdef KERNEL_XFRM */
+extern const struct names rtm_type_names;	/* #ifdef KERNEL_XFRM */
+
 #endif
