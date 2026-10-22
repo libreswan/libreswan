@@ -386,6 +386,151 @@ west #
          short_name 4: established Child SA OK
          jam_enum_short 4: established Child SA OK
          jam_enum_human 4: established child sa OK
+  debug_help: [0..11)
+    0 -> enable routing debug logging
+         jam_enum 0: enable routing debug logging OK
+         match enable routing debug logging: OK
+         short_name 0: enable routing debug logging OK
+         jam_enum_short 0: enable routing debug logging OK
+         jam_enum_human 0: enable routing debug logging OK
+    1 -> enable detailed debug logging
+         jam_enum 1: enable detailed debug logging OK
+         match enable detailed debug logging: OK
+         short_name 1: enable detailed debug logging OK
+         jam_enum_short 1: enable detailed debug logging OK
+         jam_enum_human 1: enable detailed debug logging OK
+    2 -> estimate cpu used
+         jam_enum 2: estimate cpu used OK
+         match estimate cpu used: OK
+         short_name 2: estimate cpu used OK
+         jam_enum_short 2: estimate cpu used OK
+         jam_enum_human 2: estimate cpu used OK
+    3 -> debug reference counts
+         jam_enum 3: debug reference counts OK
+         match debug reference counts: OK
+         short_name 3: debug reference counts OK
+         jam_enum_short 3: debug reference counts OK
+         jam_enum_human 3: debug reference counts OK
+    4 -> far too much information
+         jam_enum 4: far too much information OK
+         match far too much information: OK
+         short_name 4: far too much information OK
+         jam_enum_short 4: far too much information OK
+         jam_enum_human 4: far too much information OK
+    5 -> run updown script with 'set -v -x'
+         jam_enum 5: run updown script with 'set -v -x' OK
+         match run updown script with 'set -v -x': OK
+         short_name 5: run updown script with 'set -v -x' OK
+         jam_enum_short 5: run updown script with 'set -v -x' OK
+         jam_enum_human 5: run updown script with 'set -v -x' OK
+    6 -> encryption/decryption of messages: DANGER!
+         jam_enum 6: encryption/decryption of messages: DANGER! OK
+         match encryption/decryption of messages: DANGER!: OK
+         short_name 6: encryption/decryption of messages: DANGER! OK
+         jam_enum_short 6: encryption/decryption of messages: DANGER! OK
+         jam_enum_human 6: encryption/decryption of messages: danger! OK
+    7 -> displays private information: DANGER!
+         jam_enum 7: displays private information: DANGER! OK
+         match displays private information: DANGER!: OK
+         short_name 7: displays private information: DANGER! OK
+         jam_enum_short 7: displays private information: DANGER! OK
+         jam_enum_human 7: displays private information: danger! OK
+    8 -> add the log prefix to debug lines
+         jam_enum 8: add the log prefix to debug lines OK
+         match add the log prefix to debug lines: OK
+         short_name 8: add the log prefix to debug lines OK
+         jam_enum_short 8: add the log prefix to debug lines OK
+         jam_enum_human 8: add the log prefix to debug lines OK
+    9 -> add the SA's state to debug lines
+         jam_enum 9: add the SA's state to debug lines OK
+         match add the SA's state to debug lines: OK
+         short_name 9: add the SA's state to debug lines OK
+         jam_enum_short 9: add the SA's state to debug lines OK
+         jam_enum_human 9: add the sa's state to debug lines OK
+   10 -> never let WHACK go
+         jam_enum 10: never let WHACK go OK
+         match never let WHACK go: OK
+         short_name 10: never let WHACK go OK
+         jam_enum_short 10: never let WHACK go OK
+         jam_enum_human 10: never let whack go OK
+  debug_names: [0..11)
+    0 -> debug-routing
+         jam_enum 0: debug-routing OK
+         match debug-routing: OK
+         short_name 0: routing OK
+         jam_enum_short 0: routing OK
+         jam_enum_human 0: routing OK
+         match routing [short]: OK
+    1 -> debug-base
+         jam_enum 1: debug-base OK
+         match debug-base: OK
+         short_name 1: base OK
+         jam_enum_short 1: base OK
+         jam_enum_human 1: base OK
+         match base [short]: OK
+    2 -> debug-cpu-usage
+         jam_enum 2: debug-cpu-usage OK
+         match debug-cpu-usage: OK
+         short_name 2: cpu-usage OK
+         jam_enum_short 2: cpu-usage OK
+         jam_enum_human 2: cpu-usage OK
+         match cpu-usage [short]: OK
+    3 -> debug-refcnt
+         jam_enum 3: debug-refcnt OK
+         match debug-refcnt: OK
+         short_name 3: refcnt OK
+         jam_enum_short 3: refcnt OK
+         jam_enum_human 3: refcnt OK
+         match refcnt [short]: OK
+    4 -> debug-tmi
+         jam_enum 4: debug-tmi OK
+         match debug-tmi: OK
+         short_name 4: tmi OK
+         jam_enum_short 4: tmi OK
+         jam_enum_human 4: tmi OK
+         match tmi [short]: OK
+    5 -> debug-updown
+         jam_enum 5: debug-updown OK
+         match debug-updown: OK
+         short_name 5: updown OK
+         jam_enum_short 5: updown OK
+         jam_enum_human 5: updown OK
+         match updown [short]: OK
+    6 -> debug-crypt
+         jam_enum 6: debug-crypt OK
+         match debug-crypt: OK
+         short_name 6: crypt OK
+         jam_enum_short 6: crypt OK
+         jam_enum_human 6: crypt OK
+         match crypt [short]: OK
+    7 -> debug-private
+         jam_enum 7: debug-private OK
+         match debug-private: OK
+         short_name 7: private OK
+         jam_enum_short 7: private OK
+         jam_enum_human 7: private OK
+         match private [short]: OK
+    8 -> debug-add-prefix
+         jam_enum 8: debug-add-prefix OK
+         match debug-add-prefix: OK
+         short_name 8: add-prefix OK
+         jam_enum_short 8: add-prefix OK
+         jam_enum_human 8: add-prefix OK
+         match add-prefix [short]: OK
+    9 -> debug-add-state
+         jam_enum 9: debug-add-state OK
+         match debug-add-state: OK
+         short_name 9: add-state OK
+         jam_enum_short 9: add-state OK
+         jam_enum_human 9: add-state OK
+         match add-state [short]: OK
+   10 -> debug-whackwatch
+         jam_enum 10: debug-whackwatch OK
+         match debug-whackwatch: OK
+         short_name 10: whackwatch OK
+         jam_enum_short 10: whackwatch OK
+         jam_enum_human 10: whackwatch OK
+         match whackwatch [short]: OK
   dns_auth_level_names: [1..4)
     1 -> PUBKEY_LOCAL
          jam_enum 1: PUBKEY_LOCAL OK
@@ -7200,28 +7345,6 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
-  xfrm_policy_names: [0..3)
-    0 -> XFRM_POLICY_IN
-         jam_enum 0: XFRM_POLICY_IN OK
-         match XFRM_POLICY_IN: OK
-         short_name 0: IN OK
-         jam_enum_short 0: IN OK
-         jam_enum_human 0: in OK
-         match IN [short]: OK
-    1 -> XFRM_POLICY_OUT
-         jam_enum 1: XFRM_POLICY_OUT OK
-         match XFRM_POLICY_OUT: OK
-         short_name 1: OUT OK
-         jam_enum_short 1: OUT OK
-         jam_enum_human 1: out OK
-         match OUT [short]: OK
-    2 -> XFRM_POLICY_FWD
-         jam_enum 2: XFRM_POLICY_FWD OK
-         match XFRM_POLICY_FWD: OK
-         short_name 2: FWD OK
-         jam_enum_short 2: FWD OK
-         jam_enum_human 2: fwd OK
-         match FWD [short]: OK
 IKEv2 transforms:
          enum_enum_name 1 3: IKEv2_ENCR_3DES OK
          enum_name table 3: OK
