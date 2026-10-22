@@ -1,0 +1,6 @@
+Initiator authby=rsasig with no certificate or CKAID configured: west
+signs with the RSA key loaded by its connection for road, which uses
+an RSA cert. Responder authby=rsasig with an RSA cert and the
+initiator's cert configured.
+
+Connection should establish.

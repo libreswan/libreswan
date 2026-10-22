@@ -1,0 +1,6 @@
+Both sides authby=ecdsa-sha2_384,rsa with ECDSA certs.
+Same as ikev2-auth-mismatch-bug.
+The responder sets signature-hash-algorithms=no, so it neither sends
+nor accepts SIGNATURE_HASH_ALGORITHMS.
+Both sides should authenticate with legacy ECDSA.
+Connection should establish.

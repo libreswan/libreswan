@@ -538,6 +538,12 @@ kvmplutotest	ikev2-x509-38-failureshunt		good
 kvmplutotest	ikev2-x509-40-dn-wildcard		good
 kvmplutotest	ikev2-x509-41-rightid-fromcert-rightid-ip good	github/600
 kvmplutotest	ikev2-x509-42-no-rightca		  wip	github/2437
+kvmplutotest	ikev2-x509-43-missing-key		good
+kvmplutotest	ikev2-x509-43-missing-key-legacy	good
+kvmplutotest	ikev2-x509-44-rsacert-psk-fallback	good
+kvmplutotest	ikev2-x509-44-rsacert-psk-fallback-missing-key	good
+kvmplutotest	ikev2-x509-45-wrong-key-type		good
+kvmplutotest	ikev2-x509-46-no-cert-loaded-key	good
 
 # wildcard ID related tests
 kvmplutotest	ikev1-x509-17-id-any			good
@@ -564,7 +570,8 @@ kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev2	good
 #
 
 kvmplutotest	ikev2-auth-null-01			good
-kvmplutotest	ikev2-auth-mismatch-bug			wip	github/2931
+kvmplutotest	ikev2-auth-mismatch-bug			good	github/2931
+kvmplutotest	ikev2-auth-mismatch-bug-legacy		good
 
 kvmplutotest	ddos-01-ikev2				wip	non-deterministic
 
@@ -680,6 +687,7 @@ kvmplutotest	replay-window-ikev2-pfkeyv2-freebsd	good
 
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
+kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384-legacy	good
 
 kvmplutotest	ikev2-x509-ecdsa-01					good
 kvmplutotest	ikev2-x509-ecdsa-02-mismatch				good
@@ -687,6 +695,8 @@ kvmplutotest	ikev2-x509-ecdsa-03-legacy-initiator			good
 kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			good
 kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				good
 kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
+kvmplutotest	ikev2-ecdsa-08-legacy-p256-rawkey			good
+kvmplutotest	ikev2-x509-ecdsa-08-legacy-sha2_512			good
 
 kvmplutotest	ikev2-x509-eddsa-01-preloaded-cert	skip
 kvmplutotest	ikev2-x509-eddsa-02-sendcerts		skip
@@ -1336,6 +1346,9 @@ kvmplutotest	ikev2-digsig-02-legacy			good
 kvmplutotest	ikev2-digsig-03-rsa-sha2		good
 kvmplutotest	ikev2-digsig-04-mismatch		good
 kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
+kvmplutotest	ikev2-digsig-06-auth-digsig-mixed-certs		good
+kvmplutotest	ikev2-digsig-07-auth-digsig-eddsa-rawkey	good
+kvmplutotest	ikev2-digsig-08-auth-digsig-ecdsa-legacy	good
 
 #################################################################
 # IPSEC KEY (from dns) tests

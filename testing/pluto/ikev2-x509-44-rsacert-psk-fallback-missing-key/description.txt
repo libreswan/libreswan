@@ -1,0 +1,7 @@
+Initiator authby=rsa-sha2,secret with an RSA cert but not its
+private key, responder auth=secret without a cert.
+Same as ikev2-x509-44-rsacert-psk-fallback.
+The responder sets signature-hash-algorithms=no, so it neither sends
+nor accepts SIGNATURE_HASH_ALGORITHMS.
+Both sides should authenticate with PSK.
+Connection should establish.
