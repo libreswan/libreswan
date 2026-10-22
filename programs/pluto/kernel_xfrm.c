@@ -81,6 +81,7 @@
 #include "lsw_socket.h"
 #include "constants.h"
 #include "ipsecconf/setup.h"
+#include "xfrm_names.h"
 
 #include "defs.h"
 #include "id.h"

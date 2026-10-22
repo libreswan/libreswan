@@ -270,9 +270,6 @@ OBJS += ikev2_prf.o
 OBJS += pluto_exit_code_names.o
 OBJS += ipseckey_algorithm_type_names.o
 OBJS += ipseckey_algorithm_config_names.o
-ifneq ($(LINUX_VARIANT),)
-OBJS += xfrm_policy_names.o
-endif
 
 OBJS += autostart_names.o
 
@@ -301,6 +298,10 @@ OBJS += names/ikev2_exchange_names.o
 OBJS += names/ikev2_notification_names.o
 OBJS += names/impair_payload_names.o
 OBJS += names/psk_auth_method_names.o
+
+ifneq ($(LINUX_VARIANT),)
+OBJS += names/xfrm_names.o
+endif
 
 #
 # optarg stuff

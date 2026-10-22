@@ -36,6 +36,8 @@
 #include <netinet/in.h>
 #include "linux/xfrm.h"		/* local (if configured) or system copy */
 
+#include "xfrm_names.h"
+
 #include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
 
