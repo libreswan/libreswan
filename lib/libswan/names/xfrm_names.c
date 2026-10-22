@@ -33,13 +33,18 @@
  * XXX: here this is overkill as there is no convoluted include
  * arrangement.
  */
+
 #include <netinet/in.h>
+
 #include "linux/xfrm.h"		/* local (if configured) or system copy */
+
+#include <linux/rtnetlink.h>
 
 #include "xfrm_names.h"
 
 #include "lswcdefs.h"		/* for ARRAY_PTR() */
 #include "enum_names.h"
+#include "sparse_names.h"
 
 /* XFRM POLICY direction names */
 
@@ -57,3 +62,77 @@ const struct enum_names xfrm_policy_names = {
 	"XFRM_POLICY_", /* prefix */
 	NULL
 };
+
+#define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
+
+const struct sparse_names xfrm_type_names = {
+	.list = {
+		NE(NLMSG_NOOP),
+		NE(NLMSG_ERROR),
+		NE(NLMSG_DONE),
+		NE(NLMSG_OVERRUN),
+
+		NE(XFRM_MSG_NEWSA),
+		NE(XFRM_MSG_DELSA),
+		NE(XFRM_MSG_GETSA),
+
+		NE(XFRM_MSG_NEWPOLICY),
+		NE(XFRM_MSG_DELPOLICY),
+		NE(XFRM_MSG_GETPOLICY),
+
+		NE(XFRM_MSG_ALLOCSPI),
+		NE(XFRM_MSG_ACQUIRE),
+		NE(XFRM_MSG_EXPIRE),
+
+		NE(XFRM_MSG_UPDPOLICY),
+		NE(XFRM_MSG_UPDSA),
+
+		NE(XFRM_MSG_POLEXPIRE),
+
+		NE(XFRM_MSG_FLUSHSA),
+		NE(XFRM_MSG_FLUSHPOLICY),
+
+		NE(XFRM_MSG_BASE),
+		NE(XFRM_MSG_MAX),
+
+		SPARSE_NULL
+	},
+};
+
+const struct sparse_names rtm_type_names = {
+	.list = {
+
+		NE(RTM_NEWLINK),
+		NE(RTM_NEWLINK),
+		NE(RTM_GETLINK),
+		NE(RTM_SETLINK),
+
+		NE(RTM_NEWADDR),
+		NE(RTM_DELADDR),
+		NE(RTM_GETADDR),
+
+		NE(RTM_NEWLINK),
+		NE(RTM_DELLINK),
+		NE(RTM_GETLINK),
+
+		NE(RTM_NEWROUTE),
+		NE(RTM_DELROUTE),
+		NE(RTM_GETROUTE),
+
+		NE(RTM_NEWNEIGH),
+		NE(RTM_DELNEIGH),
+		NE(RTM_GETNEIGH),
+
+		NE(RTM_NEWRULE),
+		NE(RTM_DELRULE),
+		NE(RTM_GETRULE),
+
+		/* and many more */
+
+		NE(RTM_BASE),
+		NE(RTM_MAX),
+
+		SPARSE_NULL
+	},
+};
+#undef NE
