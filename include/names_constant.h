@@ -20,78 +20,15 @@ extern const enum_names debug_names;
 extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
-#ifdef USE_IKEv1
-extern enum_names oakley_attr_names;	/* #ifdef USE_IKEv1 */
-extern enum_names oakley_attr_bit_names;	/* #ifdef USE_IKEv1 */
-#endif
-extern enum_names encapsulation_mode_names;
-extern enum_names auth_alg_names;
-#ifdef USE_IKEv1
-extern enum_names oakley_lifetime_names;	/* #ifdef USE_IKEv1 */
-#endif
-
 extern enum_names ike_version_names;
-
-extern enum_names version_names;
-
-/* IKEv1 things still (ab)used by IKEv2 */
-extern enum_names doi_names;
-extern enum_names payload_names_ikev1orv2;
-
-extern enum_names ikev1_payload_names;
-extern enum_names ikev1_protocol_names;
-#ifdef USE_IKEv1
-extern enum_names ikev1_exchange_names;	/* #ifdef USE_IKEv1 */
-extern enum_names xauth_attr_names;	/* #ifdef USE_IKEv1 */
-extern enum_names v1_notification_names;	/* #ifdef USE_IKEv1 */
-extern enum_names isakmp_xchg_type_names;	/* #ifdef USE_IKEv1 */
-#endif
-
-extern enum_names ikev2_payload_names;
-extern enum_enum_names payload_type_names;
-extern enum_names ikev2_last_proposal_desc;
-extern enum_names ikev2_last_transform_desc;
-extern enum_names attr_msg_type_names;
-#ifdef USE_IKEv1
-extern enum_names modecfg_attr_names;	/* #ifdef USE_IKEv1 */
-#endif
-extern enum_enum_names exchange_type_names;
-extern enum_names isakmp_transformid_names;
-extern enum_names ah_transformid_names;
-extern enum_names esp_transformid_names;
-extern enum_names ipsec_ipcomp_algo_names;
-extern enum_names ike_cert_type_names;
-#ifdef USE_IKEv1
-extern enum_names oakley_enc_names;	/* #ifdef USE_IKEv1 */
-extern enum_names oakley_hash_names;	/* #ifdef USE_IKEv1 */
-extern enum_names oakley_auth_names;	/* #ifdef USE_IKEv1 */
-#endif
 
 /* IKEv2 */
 
-extern enum_names ikev2_hash_algorithm_names;
-extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
-extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
-extern enum_names ikev2_notify_protocol_id_names;	/* NONE=0, 1=IKE, 2=AH, 3=ESP */
-extern enum_names ikev2_trans_type_encr_names;
-extern enum_names ikev2_trans_type_prf_names;
-extern enum_names ikev2_trans_type_integ_names;
-extern enum_names ikev2_trans_attr_descs;
-extern enum_names ikev2_cert_type_names;
-extern enum_names ikev2_ts_type_names;
-extern enum_names ikev2_cp_type_names;
-extern enum_names ikev2_cp_attribute_type_names;
-extern enum_names ikev2_redirect_gw_names;
-
 extern enum_names dns_auth_level_names;
-
-extern enum_names eap_code_names;
-extern enum_names eap_type_names;
 
 extern enum_names natt_method_names;
 
 extern enum_names secret_kind_names;
-extern enum_names ikev2_ppk_id_type_names;
 
 /* natt traversal types */
 extern const char *const natt_type_bitnames[];

@@ -501,7 +501,10 @@
 #define ICMP_NEIGHBOR_DISCOVERY 34816
 #define ICMP_NEIGHBOR_SOLICITATION 34560
 
-/* RFC3748, section 4: EAP Code */
+/*
+ * RFC3748, section 4 (EAP)
+ */
+
 enum eap_code {
 	EAP_CODE_REQUEST = 1,
 	EAP_CODE_RESPONSE,
@@ -509,20 +512,28 @@ enum eap_code {
 	EAP_CODE_FAILURE,
 };
 
-/* EAP Type */
+extern const struct enum_names eap_code_names;
+
 enum eap_type {
 	EAP_TYPE_TLS = 13, /* RFC5216 EAP-TLS */
 };
 
-/* RFC5216, section 3.1: EAP-TLS flags */
+extern const struct enum_names eap_type_names;
+
+/*
+ * RFC5216, section 3.1: EAP-TLS flags.
+ */
+
 enum {
 	EAPTLS_FLAGS_START_IX = 5,
 	EAPTLS_FLAGS_MORE_IX = 6,
 	EAPTLS_FLAGS_LENGTH_IX = 7,
 };
+
 #define EAPTLS_FLAGS_START	(1<<EAPTLS_FLAGS_START_IX)
 #define EAPTLS_FLAGS_MORE	(1<<EAPTLS_FLAGS_MORE_IX)
 #define EAPTLS_FLAGS_LENGTH	(1<<EAPTLS_FLAGS_LENGTH_IX)
+
 extern const struct enum_names eaptls_flag_names;
 
 /* Version numbers - IKEv1 */
@@ -533,9 +544,16 @@ extern const struct enum_names eaptls_flag_names;
 #define IKEv2_MAJOR_VERSION 0x2
 #define IKEv2_MINOR_VERSION 0x0
 
-/* Domain of Interpretation */
+extern const struct enum_names version_names;
+
+/*
+ * Domain of Interpretation.
+ */
+
 #define ISAKMP_DOI_ISAKMP 0
 #define ISAKMP_DOI_IPSEC 1
+
+extern const struct enum_names doi_names;	/* IKEv1 thing still (ab)used by IKEv2 */
 
 /* IPsec DOI things */
 
@@ -601,17 +619,23 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_ROOF /* roof on payload types */
 };
 
+extern const struct enum_names ikev1_payload_names;	/* IKEv1 thing still (ab)used by IKEv2 */
+
 enum ikev2_last_proposal {
 	/* if there is a next proposal, then the lp needs to be set right */
 	v2_PROPOSAL_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
 };
 
+extern const struct enum_names ikev2_last_proposal_desc;
+
 enum ikev2_last_transform {
 	/* if there is a next transform, then the lt needs to be set right */
 	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
 };
+
+extern const struct enum_names ikev2_last_transform_desc;
 
 enum next_payload_types_ikev2 {
 	NEXT_PAYLOAD_v2NONE = 0,
@@ -644,6 +668,10 @@ enum next_payload_types_ikev2 {
 	/* 128 - 255 Private Use */
 };
 
+extern const struct enum_names ikev2_payload_names;
+extern const struct enum_enum_names payload_type_names;	/* IKEv1 things still (ab)used by IKEv2 */
+extern const struct enum_names payload_names_ikev1orv2;	/* IKEv1 thing still (ab)used by IKEv2 */
+
 /*
  * Value to use when emitting a payload that the other end won't
  * recognize forcing it down the unknown (and not just unsupported)
@@ -663,12 +691,16 @@ enum next_payload_types_ikev2 {
  * These values are to be used within the Type field of an Attribute (14)
  * ISAKMP payload.
  */
+
 #define ISAKMP_CFG_REQUEST 1
 #define ISAKMP_CFG_REPLY 2
 #define ISAKMP_CFG_SET 3
 #define ISAKMP_CFG_ACK 4
 
+extern const struct enum_names attr_msg_type_names;
+
 /* Mode Config attribute values */
+
 #define IKEv1_INTERNAL_IP4_ADDRESS 1
 #define IKEv1_INTERNAL_IP4_NETMASK 2
 #define IKEv1_INTERNAL_IP4_DNS 3
@@ -689,6 +721,9 @@ enum next_payload_types_ikev2 {
 #define IKEv1_INTERNAL_IP6_PREFIX 18
 #define IKEv1_HOME_AGENT_ADDRESS 19
 
+#ifdef USE_IKEv1
+extern const struct enum_names modecfg_attr_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /* 65001 - 65535 Private Use */
 #define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I 65500
@@ -737,6 +772,10 @@ enum ikev1_attr_xauth {
 	IKEv1_ATTR_XAUTH_NEXT_PIN = 16528,
 	IKEv1_ATTR_XAUTH_ANSWER = 16529,
 };
+
+#ifdef USE_IKEv1
+extern const struct enum_names xauth_attr_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
 #define XAUTH_STATUS_FAIL	0
@@ -821,6 +860,11 @@ enum isakmp_xchg_type {
 	ISAKMP_XCHG_NGRP = 33, /* Oakley New Group Mode */
 };
 
+#ifdef USE_IKEv1
+extern const struct enum_names ikev1_exchange_names;	/* #ifdef USE_IKEv1 */
+extern const struct enum_names isakmp_xchg_type_names;	/* #ifdef USE_IKEv1 */
+#endif
+
 enum ikev2_exchange {
 	/*
 	 * IKEv2 things.
@@ -844,6 +888,7 @@ enum ikev2_exchange {
 
 extern const struct enum_names ikev2_exchange_names;
 extern const struct names ikev2_exchange_nom;
+extern const struct enum_enum_names exchange_type_names;	/* IKEv1 thing still (ab)used by IKEv2 */
 
 /*
  * ISAKMP header flag bits
@@ -912,11 +957,14 @@ enum {
 /*
  * extern enum_names protocol_names;
  */
+
 #define PROTO_RESERVED 0
 #define PROTO_ISAKMP 1
 #define PROTO_IPSEC_AH 2
 #define PROTO_IPSEC_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+extern const struct enum_names ikev1_protocol_names;	/* IKEv1 things still (ab)used by IKEv2 */
 
 /*
  * IKEv2 Security Protocol Identifiers - RFC 5996
@@ -931,6 +979,7 @@ enum {
  * notify payload must use that value for notifications that do not
  * include an SPI.  Hence 'NONE' is used.
  */
+
 enum ikev2_sec_proto_id {
 	IKEv2_SEC_PROTO_NONE = 0,
 #define PROTO_v2_RESERVED IKEv2_SEC_PROTO_NONE
@@ -944,6 +993,10 @@ enum ikev2_sec_proto_id {
 	/* 6 - 200 Unassigned */
 	/* 201 - 255 Private use */
 };
+
+extern const struct enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
+extern const struct enum_names ikev2_delete_protocol_id_names;		/* 1=IKE SA, 2=AH, 3=ESP */
+extern const struct enum_names ikev2_notify_protocol_id_names;		/* NONE=0, 1=IKE, 2=AH, 3=ESP */
 
 /*
  * IKEv2 proposal
@@ -976,6 +1029,7 @@ enum ikev2_trans_type {
 #define IKEv2_TRANS_TYPE_IMPAIR_ROOF_STRING "0xEE"
 };
 
+extern const struct enum_names ikev2_trans_attr_descs;
 extern const struct enum_names ikev2_trans_type_names;
 extern const struct enum_enum_names ikev2_trans_type_transform_names;
 
@@ -984,6 +1038,7 @@ extern const struct enum_enum_names ikev2_trans_type_transform_names;
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  * (TODO: rename this to ikev2_encr_esp_ike)
  */
+
 enum ikev2_trans_type_encr {
 	IKEv2_ENCR_reserved = 0,
 	IKEv2_ENCR_DES_IV64 = 1,
@@ -1033,6 +1088,8 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_INVALID = 65536,
 };
 
+extern const struct enum_names ikev2_trans_type_encr_names;
+
 enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */
 	IKEv2_PRF_HMAC_SHA1 = 2, /* RFC2104 */
@@ -1050,6 +1107,8 @@ enum ikev2_trans_type_prf {
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_PRF_INVALID = 65536
 };
+
+extern const struct enum_names ikev2_trans_type_prf_names;
 
 enum ikev2_trans_type_integ {
 	IKEv2_INTEG_NONE = 0, /* RFC4306 */
@@ -1074,6 +1133,8 @@ enum ikev2_trans_type_integ {
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_INTEG_INVALID = 65536
 };
+
+extern const struct enum_names ikev2_trans_type_integ_names;
 
 /*
  * Transform Type 4 - Key Exchange Method Transform IDs
@@ -1194,7 +1255,11 @@ enum ikev2_ts_type {
 	/* 241-255 Private use */
 };
 
+extern const struct enum_names ikev2_ts_type_names;
+
 #define KEY_IKE 1
+
+extern const struct enum_names isakmp_transformid_names;
 
 /* the following are from RFC 2393/draft-shacham-ippcp-rfc2393bis-05.txt 3.3 */
 typedef uint16_t cpi_t;
@@ -1232,6 +1297,8 @@ enum ikev1_oakley_attr {
 };
 
 #ifdef USE_IKEv1
+extern const struct enum_names oakley_attr_names;	/* #ifdef USE_IKEv1 */
+extern const struct enum_names oakley_attr_bit_names;	/* #ifdef USE_IKEv1 */
 extern const struct enum_enum_names ikev1_oakley_attr_value_names;	/* #ifdef USE_IKEv1 */
 #endif
 
@@ -1300,8 +1367,14 @@ enum encapsulation_mode {
 	ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS = 61444,
 };
 
-/* Auth Algorithm attribute */
-/* https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20 */
+extern const struct enum_names encapsulation_mode_names;
+
+/*
+ * Auth Algorithm attribute.
+ *
+ * https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20.
+ */
+
 enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_NONE = 0, /* our private designation */
 	AUTH_ALGORITHM_HMAC_MD5 = 1,
@@ -1328,6 +1401,8 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
 
+extern const struct enum_names auth_alg_names;
+
 typedef uint16_t ipsec_auth_t;
 
 /*
@@ -1341,6 +1416,10 @@ typedef uint16_t ipsec_auth_t;
 
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
+
+#ifdef USE_IKEv1
+extern const struct enum_names oakley_lifetime_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /*
  * Oakley PRF attribute (none defined)
@@ -1407,6 +1486,10 @@ enum ikev1_encr_attribute  {
 
 #define OAKLEY_ENCRYPT_MAX 65535 /* pretty useless :) */
 
+#ifdef USE_IKEv1
+extern const struct enum_names oakley_enc_names;	/* #ifdef USE_IKEv1 */
+#endif
+
 /*
  * IKEv1 Oakley Hash Algorithm attribute
  * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
@@ -1424,7 +1507,12 @@ enum ikev1_hash_attribute  {
 
 	OAKLEY_HASH_PSTATS_ROOF,
 };
+
 #define OAKLEY_HASH_MAX 9
+
+#ifdef USE_IKEv1
+extern const struct enum_names oakley_hash_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /*
  * Oakley Authentication Method attribute
@@ -1469,6 +1557,10 @@ enum ikev1_auth_method {
 	XAUTHInitRSARevisedEncryption = 65009,
 	XAUTHRespRSARevisedEncryption = 65010,
 };
+
+#ifdef USE_IKEv1
+extern const struct enum_names oakley_auth_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /*
  * IKEv1's oakley key method (aka DH).
@@ -1566,14 +1658,18 @@ enum ikev2_cp_attribute_type {
 	IKEv2_INTERNAL_DNSSEC_TA = 26
 };
 
+extern const struct enum_names ikev2_cp_attribute_type_names;
 
 /* extern enum_names ikev2_cp_names; */
+
 enum ikev2_cp_type {
 	IKEv2_CP_CFG_REQUEST = 1,
 	IKEv2_CP_CFG_REPLY = 2,
 	IKEv2_CP_CFG_SET = 3,
 	IKEv2_CP_CFG_ACK = 4
 };
+
+extern const struct enum_names ikev2_cp_type_names;
 
 /*
  * https://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
@@ -1682,6 +1778,10 @@ typedef enum {
 	v1N_NETSCREEN_NHTB_INFORM = 40001,
 
 } v1_notification_t;
+
+#ifdef USE_IKEv1
+extern const struct enum_names v1_notification_names;	/* #ifdef USE_IKEv1 */
+#endif
 
 /*
  * IKEv2, while similar, is different.  Let's not re-use and confuse.
@@ -1838,6 +1938,7 @@ extern const struct enum_names v2_notification_names;
 extern const struct names ikev2_notification_names;
 
 /* RFC 8784 created registry */
+
 enum ikev2_ppk_id_type {
 	PPK_ID_OPAQUE = 1,
 	PPK_ID_FIXED = 2,
@@ -1845,6 +1946,8 @@ enum ikev2_ppk_id_type {
 	/* 3 - 127      Reserved for IANA */
 	/* 128 - 255    Private Use */
 };
+
+extern const struct enum_names ikev2_ppk_id_type_names;
 
 /* IKEv2 Redirect Mechanism - RFC 5685 */
 enum gw_identity_type {
@@ -1856,6 +1959,8 @@ enum gw_identity_type {
 	/* 4 - 240	Unassigned */
 	/* 241 - 255	Private Use */
 };
+
+extern const struct enum_names ikev2_redirect_gw_names;
 
 #define MAX_REDIRECTS 5
 #define REDIRECT_LOOP_DETECT_PERIOD 300
@@ -1924,6 +2029,7 @@ extern const struct enum_names ikev2_ike_id_type_names;
  * IKEv2 Certificate Encodings
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-11
  */
+
 enum ike_cert_type {
 	CERT_NONE = 0,	/* (non-RFC) none, or guess from file contents */
 	CERT_PKCS7_WRAPPED_X509 = 1, /* self-signed certificate from disk */
@@ -1947,6 +2053,9 @@ enum ike_cert_type {
 	/* 201 - 255 Private use */
 };
 
+extern const struct enum_names ike_cert_type_names;
+extern const struct enum_names ikev2_cert_type_names;
+
 /*
  * (IKEv1) IPsec AH transform values
  *
@@ -1956,6 +2065,7 @@ enum ike_cert_type {
  * IKEv1 and IKEv2 versions are very different :(
  * See: ikev2_trans_type_integ
  */
+
 enum ikev1_ah_transform {
 	IKEv1_AH_NONE = 0, /* Internal use - IKEv1 is reserved */
 	/* 1 IKEv1 RESERVED, IKEv2 AUTH_HMAC_MD5_96 */
@@ -1983,6 +2093,8 @@ enum ikev1_ah_transform {
 	IKEv1_AH_NULL = 251,		/* comes from kame? */
 	IKEv1_AH_SHA2_256_TRUNCBUG = 252,	/* our own stolen value */
 };
+
+extern const struct enum_names ah_transformid_names;
 
 /*
  * IKEv1 IPsec ESP transform values
@@ -2040,6 +2152,8 @@ enum ikev1_esp_transform {
 	IKEv1_ESP_TWOFISH = 253,
 };
 
+extern const struct enum_names esp_transformid_names;
+
 /*
  * IPCOMP transform values are (currently) identical for IKEv1 and IKEv2
  * IKEv1: RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5
@@ -2056,6 +2170,8 @@ enum ipsec_ipcomp_algo {
 	/* 48-63 Reserved for private use */
 	/* 64-255 Unassigned */
 };
+
+extern const struct enum_names ipsec_ipcomp_algo_names;
 
 /*
  * Internet Key Exchange Version 2 (IKEv2) Parameters: IKEv2 Hash Algorithms
@@ -2084,6 +2200,8 @@ enum ikev2_hash_algorithm {
 	/* 1024-65535 Reserved for private use */
 #define IKEv2_HASH_ALGORITHM_ROOF (IKEv2_HASH_ALGORITHM_IDENTITY + 1)
 };
+
+extern const struct enum_names ikev2_hash_algorithm_names;
 
 /*
  * RFC 7427: Signature Authentication in the Internet Key Exchange
