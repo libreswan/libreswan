@@ -6,6 +6,7 @@ v5.5 (unreleased)
 * IKEv2:
   - Fix Redirect error logging [Paul de Lange, GenDigital]
   - support auth=digsig and selecting auth-from-key [RuiL, #2708, #2503, #3068]
+  - add RFC 9593 Announcing Supported Authentication Methods [Osema, Vukašin]
 * Building:
   - Fix USE_IKEv1=false [Paul]
 * Testing:
