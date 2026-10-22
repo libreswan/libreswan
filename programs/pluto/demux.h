@@ -27,7 +27,7 @@
 #ifdef USE_IKEv1
 #include "ikev1_packet.h"
 #endif
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "quirks.h"
 #include "chunk.h"
 #include "ip_address.h"

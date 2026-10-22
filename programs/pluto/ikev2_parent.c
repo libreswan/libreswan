@@ -52,7 +52,7 @@
 #include "ike_alg_integ.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "ikev2.h"
 #include "log.h"
 #include "ipsec_doi.h"
@@ -104,10 +104,10 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name)
 {
 	/*
-	 * note ISAKMP_NEXT_v2Ni == ISAKMP_NEXT_v2Nr
-	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
+	 * note NEXT_PAYLOAD_v2Ni == NEXT_PAYLOAD_v2Nr
+	 * so when we refer to NEXT_PAYLOAD_v2Ni, it might be NEXT_PAYLOAD_v2Nr
 	 */
-	struct pbs_in *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	struct pbs_in *nonce_pbs = &md->chain[NEXT_PAYLOAD_v2Ni]->pbs;
 	shunk_t nonce = pbs_in_left(nonce_pbs);
 
 	/*
@@ -191,8 +191,8 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       const struct ke_desc *accepted_kem,
 			       enum payload_security security)
 {
-	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-	int ke_kem = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_ke;
+	passert(md->chain[NEXT_PAYLOAD_v2KE] != NULL);
+	int ke_kem = md->chain[NEXT_PAYLOAD_v2KE]->payload.v2ke.isak_ke;
 
 	if (accepted_kem->ikev2_alg_id != ke_kem) {
 		name_buf ke_esb;
@@ -533,7 +533,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		/*
 		 * Already accumulating fragments, keep going?
 		 */
-		if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
+		if (md->chain[NEXT_PAYLOAD_v2SK] != NULL) {
 			ldbg(ike->sa.logger, "received IKE encrypted message");
 			if ((*frags)->total == 0) {
 				ldbg(ike->sa.logger, "  ignoring message; collecting fragments");
@@ -541,7 +541,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 				ldbg(ike->sa.logger, "  ignoring message; already collected");
 			}
 			pexpect((*frags)->md != NULL);
-		} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
+		} else if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
 			collect_v2_incoming_fragment(ike, md, frags);
 		} else {
 			llog_pexpect(ike->sa.logger, HERE,
@@ -555,13 +555,13 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * as fragments and start crypto (for SK there's only one
 	 * fragment).
 	 */
-	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2SK] != NULL) {
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
 		llog_v2_first_encrypted_request_starts_skeyseed(ike, md, "SK payload");
-	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
-		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	} else if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
+		struct ikev2_skf *skf = &md->chain[NEXT_PAYLOAD_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
 			ldbg(ike->sa.logger, "no fragments accumulated; skipping SKEYSEED");

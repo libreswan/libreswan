@@ -328,6 +328,7 @@ OBJS += packet.o
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_packet.o
 endif
+OBJS += ikev2_packet.o
 
 # Archives
 

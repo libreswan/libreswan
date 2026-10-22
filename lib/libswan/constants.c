@@ -341,76 +341,58 @@ enum_names ikev1_payload_names = {
 };
 
 static const char *const payload_name_ikev2[] = {
-#define S(E) [E - ISAKMP_NEXT_v2NONE] = #E
-	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
+#define S(E) [E - NEXT_PAYLOAD_v2NONE] = #E
+	"NEXT_PAYLOAD_v2NONE", /* same for IKEv1 */
 #undef S
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 static const char *const payload_name_ikev2_main[] = {
-#define S(E) [E - ISAKMP_NEXT_v2SA] = #E
-	S(ISAKMP_NEXT_v2SA),	/* 33 */
-	S(ISAKMP_NEXT_v2KE),
-	S(ISAKMP_NEXT_v2IDi),
-	S(ISAKMP_NEXT_v2IDr),
-	S(ISAKMP_NEXT_v2CERT),
-	S(ISAKMP_NEXT_v2CERTREQ),
-	S(ISAKMP_NEXT_v2AUTH),
-	S(ISAKMP_NEXT_v2Ni),
-	S(ISAKMP_NEXT_v2N),
-	S(ISAKMP_NEXT_v2D),
-	S(ISAKMP_NEXT_v2V),
-	S(ISAKMP_NEXT_v2TSi),
-	S(ISAKMP_NEXT_v2TSr),
-	S(ISAKMP_NEXT_v2SK),
-	S(ISAKMP_NEXT_v2CP),
-	S(ISAKMP_NEXT_v2EAP),
-	S(ISAKMP_NEXT_v2GSPM), /* RFC 6467 */
-	S(ISAKMP_NEXT_v2IDG), /* [draft-yeung-g-ikev2] */
-	S(ISAKMP_NEXT_v2GSA), /* [draft-yeung-g-ikev2] */
-	S(ISAKMP_NEXT_v2KD), /* [draft-yeung-g-ikev2] */
-	S(ISAKMP_NEXT_v2SKF), /* RFC 7383 */
+#define S(E) [E - NEXT_PAYLOAD_v2SA] = #E
+	S(NEXT_PAYLOAD_v2SA),	/* 33 */
+	S(NEXT_PAYLOAD_v2KE),
+	S(NEXT_PAYLOAD_v2IDi),
+	S(NEXT_PAYLOAD_v2IDr),
+	S(NEXT_PAYLOAD_v2CERT),
+	S(NEXT_PAYLOAD_v2CERTREQ),
+	S(NEXT_PAYLOAD_v2AUTH),
+	S(NEXT_PAYLOAD_v2Ni),
+	S(NEXT_PAYLOAD_v2N),
+	S(NEXT_PAYLOAD_v2D),
+	S(NEXT_PAYLOAD_v2V),
+	S(NEXT_PAYLOAD_v2TSi),
+	S(NEXT_PAYLOAD_v2TSr),
+	S(NEXT_PAYLOAD_v2SK),
+	S(NEXT_PAYLOAD_v2CP),
+	S(NEXT_PAYLOAD_v2EAP),
+	S(NEXT_PAYLOAD_v2GSPM), /* RFC 6467 */
+	S(NEXT_PAYLOAD_v2IDG), /* [draft-yeung-g-ikev2] */
+	S(NEXT_PAYLOAD_v2GSA), /* [draft-yeung-g-ikev2] */
+	S(NEXT_PAYLOAD_v2KD), /* [draft-yeung-g-ikev2] */
+	S(NEXT_PAYLOAD_v2SKF), /* RFC 7383 */
 #undef S
-};
-
-/*
- * Old IKEv1 method applied to IKEv2, different from IKEv2's RFC7383
- * Can be removed
- */
-static const char *const payload_name_ikev2_private_use[] = {
-#define S(E) [E - ISAKMP_NEXT_v2IKE_FRAGMENTATION] = #E
-	S(ISAKMP_NEXT_v2IKE_FRAGMENTATION),
-#undef S
-};
-
-static enum_names payload_names_ikev2_private_use = {
-	ISAKMP_NEXT_v2IKE_FRAGMENTATION,
-	ISAKMP_NEXT_v2IKE_FRAGMENTATION,
-	ARRAY_PTR(payload_name_ikev2_private_use),
-	NULL, /* prefix */
-	NULL
 };
 
 static enum_names payload_names_ikev2_main = {
-	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2SKF,
+	NEXT_PAYLOAD_v2_FLOOR,
+	NEXT_PAYLOAD_v2_ROOF-1,
 	ARRAY_PTR(payload_name_ikev2_main),
 	NULL, /* prefix */
-	&payload_names_ikev2_private_use
+	NULL,
 };
 
 enum_names ikev2_payload_names = {
-	ISAKMP_NEXT_v2NONE,
-	ISAKMP_NEXT_v2NONE,
+	NEXT_PAYLOAD_v2NONE,
+	NEXT_PAYLOAD_v2NONE,
 	ARRAY_PTR(payload_name_ikev2),
-	"ISAKMP_NEXT_v2", /* prefix */
+	"NEXT_PAYLOAD_v2", /* prefix */
 	&payload_names_ikev2_main
 };
 
 /* either V1 or V2 payload kind */
 static enum_names payload_names_ikev2copy_main = {
-	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2SKF,
+	NEXT_PAYLOAD_v2SA,
+	NEXT_PAYLOAD_v2SKF,
 	ARRAY_PTR(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev1_private_use
@@ -426,8 +408,8 @@ enum_names payload_names_ikev1orv2 = {
 };
 #else
 enum_names payload_names_ikev1orv2 = {
-	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2SKF,
+	NEXT_PAYLOAD_v2SA,
+	NEXT_PAYLOAD_v2SKF,
         ARRAY_PTR(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev2copy_main

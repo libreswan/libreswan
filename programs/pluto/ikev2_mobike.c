@@ -524,7 +524,7 @@ static stf_status process_v2_INFORMATIONAL_mobike_response(struct ike_sa *ike,
 	 * Process NOTIFY payloads
 	 */
 
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2N] != NULL) {
 		process_v2N_mobike_responses(ike, md);
 	}
 	return STF_OK;

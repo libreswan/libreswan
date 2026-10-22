@@ -19,7 +19,7 @@
 #include "chunk.h"
 
 #include "message_role.h"
-#include "packet.h"		/* for struct pbs_out; */
+#include "ikev2_packet.h"		/* for struct pbs_out; */
 
 struct msg_digest;
 struct ke_desc;

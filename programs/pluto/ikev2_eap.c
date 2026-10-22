@@ -44,7 +44,7 @@
 #include "ikev2_child.h"
 #include "pluto_stats.h"
 #include "pluto_x509.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "demux.h"
 #include "keys.h"
 #include "secrets.h"
@@ -656,7 +656,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 
 	pexpect(eap != NULL);
 
-	struct pbs_in pbs = md->chain[ISAKMP_NEXT_v2EAP]->pbs;
+	struct pbs_in pbs = md->chain[NEXT_PAYLOAD_v2EAP]->pbs;
 	struct pbs_in data;
 	struct eap_tls eaptls;
 
@@ -774,7 +774,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	diag_t d = verify_v2AUTH_and_log_using_psk(PSK_AUTH_SHARED_KEY, ike, &idhash_in,
-						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						   &md->chain[NEXT_PAYLOAD_v2AUTH]->pbs,
 						   &msk);
 
 	if (d != NULL) {

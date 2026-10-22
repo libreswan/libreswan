@@ -24,7 +24,7 @@
 #include "id.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "demux.h"
 #include "ip_address.h"
 #include "ipsec_doi.h"
@@ -259,7 +259,7 @@ bool redirect_global(struct msg_digest *md)
 	 * log message.
 	 */
 
-	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2Ni] == NULL) {
 		/* Ni is used as cookie to protect REDIRECT in IKE_SA_INIT */
 		ldbg(logger, "Ni payload required for REDIRECT is missing");
 		pstats_ikev2_redirect_failed++;
@@ -273,7 +273,7 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	shunk_t Ni = pbs_in_left(&md->chain[NEXT_PAYLOAD_v2Ni]->pbs);
 	if (Ni.len == 0) {
 		ldbg(logger, "Initiator nonce should not be zero length");
 		pstats_ikev2_redirect_failed++;

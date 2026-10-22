@@ -312,7 +312,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * XXX: this is forcing us to double parse the VIDs!
 	 */
 	if (pluto_drop_oppo_null) {
-		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
+		for (struct payload_digest *p = md->chain[NEXT_PAYLOAD_v2V]; p != NULL; p = p->next) {
 			if (vid_is_oppo(pbs_in_left(&p->pbs))) {
 				limited_llog_md(md, "dropped IKE request for Opportunistic IPsec by global policy");
 				return;

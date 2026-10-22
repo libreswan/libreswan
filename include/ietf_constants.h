@@ -614,38 +614,35 @@ enum ikev2_last_transform {
 };
 
 enum next_payload_types_ikev2 {
-	ISAKMP_NEXT_v2NONE = 0,
+	NEXT_PAYLOAD_v2NONE = 0,
 	/* 1 - 32 Reserved for IKEv1 */
-	ISAKMP_NEXT_v2SA = 33,	/* Security Association */
-	ISAKMP_NEXT_v2KE = 34,	/* Key Exchange payload */
-	ISAKMP_NEXT_v2IDi = 35,	/* ID payload - initiator */
-	ISAKMP_NEXT_v2IDr = 36,	/* ID payload - responder */
-	ISAKMP_NEXT_v2CERT = 37,	/* CERTificate */
-	ISAKMP_NEXT_v2CERTREQ = 38,	/* CERTificate REQuest */
-	ISAKMP_NEXT_v2AUTH = 39,	/* AUTHentication */
-	ISAKMP_NEXT_v2Ni = 40,	/* Nonce - initiator */
-	ISAKMP_NEXT_v2Nr = ISAKMP_NEXT_v2Ni,	/* Nonce - responder */
-	ISAKMP_NEXT_v2N = 41,	/* Notify */
-	ISAKMP_NEXT_v2D = 42,	/* Delete */
-	ISAKMP_NEXT_v2V = 43,	/* Vendor ID */
-	ISAKMP_NEXT_v2TSi = 44,	/* Traffic Selector - initiator */
-	ISAKMP_NEXT_v2TSr = 45,	/* Traffic Selector - responder */
-	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
-	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
-	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
-	ISAKMP_NEXT_v2GSPM = 49, /* RFC-6467 Generic Secure Password Method */
-	ISAKMP_NEXT_v2IDG = 50, /* Group Identification draft-yeung-g-ikev2 */
-	ISAKMP_NEXT_v2GSA = 51, /* Group Security Association draft-yeung-g-ikev2 */
-	ISAKMP_NEXT_v2KD = 52, /* Key Download draft-yeung-g-ikev2 */
-	ISAKMP_NEXT_v2SKF = 53,	/* Encrypted and Authenticated Fragment fragment */
+#define NEXT_PAYLOAD_v2_FLOOR NEXT_PAYLOAD_v2SA
+	NEXT_PAYLOAD_v2SA = 33,	/* Security Association */
+	NEXT_PAYLOAD_v2KE = 34,	/* Key Exchange payload */
+	NEXT_PAYLOAD_v2IDi = 35,	/* ID payload - initiator */
+	NEXT_PAYLOAD_v2IDr = 36,	/* ID payload - responder */
+	NEXT_PAYLOAD_v2CERT = 37,	/* CERTificate */
+	NEXT_PAYLOAD_v2CERTREQ = 38,	/* CERTificate REQuest */
+	NEXT_PAYLOAD_v2AUTH = 39,	/* AUTHentication */
+	NEXT_PAYLOAD_v2Ni = 40,	/* Nonce - initiator */
+	NEXT_PAYLOAD_v2Nr = NEXT_PAYLOAD_v2Ni,	/* Nonce - responder */
+	NEXT_PAYLOAD_v2N = 41,	/* Notify */
+	NEXT_PAYLOAD_v2D = 42,	/* Delete */
+	NEXT_PAYLOAD_v2V = 43,	/* Vendor ID */
+	NEXT_PAYLOAD_v2TSi = 44,	/* Traffic Selector - initiator */
+	NEXT_PAYLOAD_v2TSr = 45,	/* Traffic Selector - responder */
+	NEXT_PAYLOAD_v2SK = 46,	/* Encrypted payload */
+	NEXT_PAYLOAD_v2CP = 47,	/* Configuration Payload (MODECFG) */
+	NEXT_PAYLOAD_v2EAP = 48,	/* Extensible Authentication Payload */
+	NEXT_PAYLOAD_v2GSPM = 49, /* RFC-6467 Generic Secure Password Method */
+	NEXT_PAYLOAD_v2IDG = 50, /* Group Identification draft-yeung-g-ikev2 */
+	NEXT_PAYLOAD_v2GSA = 51, /* Group Security Association draft-yeung-g-ikev2 */
+	NEXT_PAYLOAD_v2KD = 52, /* Key Download draft-yeung-g-ikev2 */
+	NEXT_PAYLOAD_v2SKF = 53,	/* Encrypted and Authenticated Fragment fragment */
+#define NEXT_PAYLOAD_v2_ROOF (NEXT_PAYLOAD_v2SKF+1)
 	/* 54-127 Unassigned */
 	/* 128 - 255 Private Use */
-	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
-	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_v2ROOF,	/* roof on payload types */
 };
-
-#define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
  * Value to use when emitting a payload that the other end won't
@@ -660,7 +657,7 @@ enum next_payload_types_ikev2 {
  *
  * - since it isn't known, it is also, by definition unsupported
  */
-#define ISAKMP_NEXT_v2UNKNOWN		255
+#define NEXT_PAYLOAD_v2UNKNOWN		255
 
 /*
  * These values are to be used within the Type field of an Attribute (14)

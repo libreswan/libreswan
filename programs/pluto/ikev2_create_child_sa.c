@@ -1152,7 +1152,7 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	 * it's not known to exist in the wild.
 	 */
 
-	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2CP] != NULL) {
 		llog_sa(RC_LOG, larval_child, "ignoring CREATE_CHILD_SA CP payload");
 	}
 
@@ -1891,7 +1891,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	/* Get the proposals ready. */
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
-	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
+	struct payload_digest *const sa_pd = request_md->chain[NEXT_PAYLOAD_v2SA];
 	n = process_v2SA_payload("IKE Rekey responder child",
 				 &sa_pd->pbs,
 				 /*expect_ike*/ true,
@@ -1968,7 +1968,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 	     __func__, pri_so(larval_ike->sa.st_serialno), larval_ike->sa.st_state->name);
 
 	pexpect(local_secret != NULL);
-	pexpect(request_md->chain[ISAKMP_NEXT_v2KE] != NULL);
+	pexpect(request_md->chain[NEXT_PAYLOAD_v2KE] != NULL);
 	unpack_nonce(&larval_ike->sa.st_nr, nonce);
 	unpack_KE_from_helper(&larval_ike->sa, local_secret, &larval_ike->sa.st_gr);
 
@@ -2103,7 +2103,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	 * Parse the proposal, determining what was accepted, and confirm
 	 * that it matches the rekey proposal originally sent.
 	 */
-	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
+	struct payload_digest *const sa_pd = response_md->chain[NEXT_PAYLOAD_v2SA];
 	n = process_v2SA_payload("IKE initiator (accepting)",
 				 &sa_pd->pbs,
 				 /*expect_ike*/ true,

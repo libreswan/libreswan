@@ -259,7 +259,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 	 */
 	unsigned ndp = 0;		/* nr child deletes */
 
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
+	for (struct payload_digest *p = md->chain[NEXT_PAYLOAD_v2D];
 	     p != NULL; p = p->next) {
 		struct ikev2_delete *v2del = &p->payload.v2delete;
 
@@ -326,7 +326,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 	 * If there is no payload, this loop is a no-op.
 	 */
 
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
+	for (struct payload_digest *p = md->chain[NEXT_PAYLOAD_v2D];
 	     p != NULL; p = p->next) {
 		struct ikev2_delete *v2del = &p->payload.v2delete;
 
@@ -471,7 +471,7 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_response(struct ike_sa *ike,
 		 * Delete payloads are bogus (message should be empty)
 		 * and can be ignored.
 		 */
-		if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
+		if (md->chain[NEXT_PAYLOAD_v2D] != NULL) {
 			ldbg(ike->sa.logger, "deleting IKE SA, ignoring delete payloads in response");
 		}
 		return STF_OK_INITIATOR_DELETE_IKE;
@@ -484,7 +484,7 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_response(struct ike_sa *ike,
 		return STF_OK;
 	}
 
-	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2D] == NULL) {
 		/*
 		 * A Child SA delete response always contains a DELETE
 		 * payload, it's just that sometimes it is empty.

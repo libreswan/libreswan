@@ -74,7 +74,7 @@ diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike,
 	zero(initiator_id);
 	zero(responder_id);
 
-	const struct payload_digest *const IDi = md->chain[ISAKMP_NEXT_v2IDi];
+	const struct payload_digest *const IDi = md->chain[NEXT_PAYLOAD_v2IDi];
 	if (IDi == NULL) {
 		return diag("authentication failed: initiator did not include IDi payload");
 	}
@@ -85,7 +85,7 @@ diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike,
 	}
 
 	/* You Tarzan, me Jane? */
-	const struct payload_digest *IDr = md->chain[ISAKMP_NEXT_v2IDr];
+	const struct payload_digest *IDr = md->chain[NEXT_PAYLOAD_v2IDr];
 	if (IDr != NULL) {
 		diag_t d = decode_v2ID("responder", IDr, responder_id, ike->sa.logger);
 		if (d != NULL) {
@@ -103,7 +103,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 {
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 
-	const struct payload_digest *const IDr = md->chain[ISAKMP_NEXT_v2IDr];
+	const struct payload_digest *const IDr = md->chain[NEXT_PAYLOAD_v2IDr];
 	if (IDr == NULL) {
 		return diag("authentication failed: responder did not include IDr payload");
 	}

@@ -327,7 +327,7 @@ void jam_msg_digest_payloads(struct jambuf *buf,
 		jam_string(buf, sep);
 		if (ike_version == IKEv2 &&
 		    d+1 < md->digest_roof &&
-		    pd->payload_type == ISAKMP_NEXT_v2SK) {
+		    pd->payload_type == NEXT_PAYLOAD_v2SK) {
 			/*
 			 * HACK to dump decrypted SK payload contents
 			 * (which come after the SK payload).
@@ -346,7 +346,7 @@ void jam_msg_digest_payloads(struct jambuf *buf,
 		}
 		/* go deeper? */
 		switch (pd->payload_type) {
-		case ISAKMP_NEXT_v2N:
+		case NEXT_PAYLOAD_v2N:
 		{
 			name_buf name;
 			if (enum_short(&v2_notification_names,

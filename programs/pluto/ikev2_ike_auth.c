@@ -539,7 +539,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
 	}
 
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	struct payload_digest *cert_payloads = md->chain[NEXT_PAYLOAD_v2CERT];
 	if (cert_payloads == NULL) {
 		ldbg(ike->sa.logger, "skipping cert decode; there are none");
 		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
@@ -597,7 +597,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 */
 
 	struct authby proposed_initiator_auths;
-	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
+	if (md->chain[NEXT_PAYLOAD_v2AUTH] == NULL) {
 		/*
 		 * Can only be EAP.
 		 *
@@ -614,7 +614,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		ldbg(ike->sa.logger,
 		     "session resume ignores v2AUTH method %s and uses %s for connection match, PSK-like for auth",
 		     str_enum_short(&ikev2_auth_method_names,
-				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
+				    md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
 		     str_authby(proposed_initiator_auths, &pia));
 	} else {
 		proposed_initiator_auths = proposed_v2AUTH(ike, md);
@@ -828,7 +828,7 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 	if (s != STF_OK)
 		return s;
 
-	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	enum ikev2_auth_method atype = md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method;
 	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, atype)) {
 		dns_status ret = responder_fetch_idi_ipseckey(ike, md, process_v2_IKE_AUTH_request_ipseckey_continue);
 		switch (ret) {
@@ -881,13 +881,13 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 * Making a dummy struct pbs_in so we could pass it to
 		 * v2_check_auth.
 		 */
-		struct pbs_in pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
+		struct pbs_in pbs = md->chain[NEXT_PAYLOAD_v2AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		struct pbs_in pbs_no_ppk_auth =
 			pbs_in_from_shunk(HUNK_AS_SHUNK(&ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
-		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+		diag_t d = verify_v2AUTH_and_log(md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
@@ -930,9 +930,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		ldbg(ike->sa.logger, "NULL_AUTH verified");
 	} else {
 		ldbg(ike->sa.logger, "responder verifying AUTH payload");
-		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+		diag_t d = verify_v2AUTH_and_log(md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in,
-						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+						 &md->chain[NEXT_PAYLOAD_v2AUTH]->pbs);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -1233,7 +1233,7 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 	 * If the initiator rejects the responders authentication it
 	 * should immediately send a delete notification and wipe the SA.
 	 */
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	struct payload_digest *cert_payloads = md->chain[NEXT_PAYLOAD_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_v2_cert_decode(ike, md, cert_payloads,
 				      process_v2_IKE_AUTH_response_post_cert_decode, HERE);
@@ -1311,9 +1311,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	/* process AUTH payload */
 
 	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
-	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+	d = verify_v2AUTH_and_log(md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in,
-				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
+				  &md->chain[NEXT_PAYLOAD_v2AUTH]->pbs);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -1535,12 +1535,12 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 	enum ikev2_notification status =
 		(md->v2N_error != NULL ? v2N_NOTHING_WRONG :
-		 md->chain[ISAKMP_NEXT_v2N] == NULL ? v2N_NOTHING_WRONG :
-		 md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type);
+		 md->chain[NEXT_PAYLOAD_v2N] == NULL ? v2N_NOTHING_WRONG :
+		 md->chain[NEXT_PAYLOAD_v2N]->payload.v2n.isan_type);
 
 	const char *multiple_notifications =
-		((md->chain[ISAKMP_NEXT_v2N] != NULL &&
-		  md->chain[ISAKMP_NEXT_v2N]->next != NULL) ? "; additional notifications ignored" : "");
+		((md->chain[NEXT_PAYLOAD_v2N] != NULL &&
+		  md->chain[NEXT_PAYLOAD_v2N]->next != NULL) ? "; additional notifications ignored" : "");
 
 	/*
 	 * Try to print a meaningful log of the error notification

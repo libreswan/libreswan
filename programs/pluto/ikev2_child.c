@@ -38,7 +38,7 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "packet.h"
+#include "ikev2_packet.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "log.h"
@@ -100,9 +100,9 @@ void set_larval_v2_transition(struct child_sa *larval,
 
 static bool has_v2_IKE_AUTH_child_payloads(const struct msg_digest *md)
 {
-	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
-		md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
-		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
+	return (md->chain[NEXT_PAYLOAD_v2SA] != NULL &&
+		md->chain[NEXT_PAYLOAD_v2TSi] != NULL &&
+		md->chain[NEXT_PAYLOAD_v2TSr] != NULL);
 }
 
 static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
@@ -491,7 +491,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	enum ikev2_exchange isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *cc = larval_child->sa.st_connection;
 
-	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (request_md->chain[NEXT_PAYLOAD_v2CP] != NULL) {
 		if (nr_child_leases(cc->remote) > 0) {
 			if (!emit_v2CP_response(larval_child, outpbs)) {
 				return false;
@@ -539,7 +539,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		 * XXX: shouldn't this be conditional on the local end
 		 * having computed KE and not what the remote sent?
 		 */
-		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL &&
+		if (request_md->chain[NEXT_PAYLOAD_v2KE] != NULL &&
 		    !emit_v2KE(HUNK_AS_SHUNK(&larval_child->sa.st_gr), larval_child->sa.st_oakley.ta_dh, outpbs)) {
 			return false;
 		}
@@ -586,7 +586,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
 
 	struct connection *c = child->sa.st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	struct payload_digest *const sa_pd = md->chain[NEXT_PAYLOAD_v2SA];
 	enum ikev2_exchange isa_xchg = md->hdr.isa_xchg;
 	v2_notification_t n;
 
@@ -1011,21 +1011,21 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		 child->sa.st_connection->pool[IPv6] != NULL ? &ipv6_info :
 		 NULL);
 	bool oe_server = (is_opportunistic(ike->sa.st_connection) &&
-			  md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL);
+			  md->chain[NEXT_PAYLOAD_v2CP] != NULL && pool_afi != NULL);
 
 	ldbg_cp(child->sa.logger, child->sa.st_connection,
 		"oe_server %s; processing v2CP and leasing addresses: %s",
 		bool_str(oe_server), bool_str(local->modecfg.server));
 
 	if (local->modecfg.server) {
-		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+		if (md->chain[NEXT_PAYLOAD_v2CP] == NULL) {
 			llog_sa(RC_LOG, ike,
 				"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored",
 				local->leftright);
 			/* just logged; caller, below, cleans up */
 			return v2N_FAILED_CP_REQUIRED;
 		}
-		if (!process_v2_IKE_AUTH_request_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
+		if (!process_v2_IKE_AUTH_request_v2CP_request_payload(ike, child, md->chain[NEXT_PAYLOAD_v2CP])) {
 			/* already logged; caller, below, cleans up */
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
@@ -1266,7 +1266,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	if (need_v2CP_response(child->sa.st_connection,
 			       ike->sa.hidden_variables.st_nated_host)) {
-		if (response_md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+		if (response_md->chain[NEXT_PAYLOAD_v2CP] == NULL) {
 			/*
 			 * not really anything to here... but it would
 			 * be worth unpending again.
@@ -1275,7 +1275,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 				  "missing v2CP reply, not attempting to setup child SA");
 			return v2N_TS_UNACCEPTABLE;
 		}
-		if (!process_v2CP_response_payload(ike, child, response_md->chain[ISAKMP_NEXT_v2CP])) {
+		if (!process_v2CP_response_payload(ike, child, response_md->chain[NEXT_PAYLOAD_v2CP])) {
 			return v2N_TS_UNACCEPTABLE;
 		}
 	}

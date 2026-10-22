@@ -1075,13 +1075,13 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
 		key_name = "st_skey_pr_nss";
 		key = ike->sa.st_skey_pr_nss;
 		id_name = "IDr";
-		id_pbs = &md->chain[ISAKMP_NEXT_v2IDr]->pbs;
+		id_pbs = &md->chain[NEXT_PAYLOAD_v2IDr]->pbs;
 		break;
 	case SA_RESPONDER:
 		key_name = "st_skey_pi_nss";
 		key = ike->sa.st_skey_pi_nss;
 		id_name = "IDi";
-		id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;
+		id_pbs = &md->chain[NEXT_PAYLOAD_v2IDi]->pbs;
 		break;
 	default:
 		bad_case(ike->sa.st_sa_role);
@@ -1115,7 +1115,7 @@ struct authby proposed_v2AUTH(struct ike_sa *ike,
 			      struct msg_digest *md)
 {
 	enum ikev2_auth_method atype =
-		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+		md->chain[NEXT_PAYLOAD_v2AUTH]->payload.v2auth.isaa_auth_method;
 	name_buf nb;
 	ldbg(ike->sa.logger, "converting v2AUTH %s into authbys set",
 	     str_enum_short(&ikev2_auth_method_names, atype, &nb));
