@@ -65,16 +65,10 @@ enum_names direction_names = {
 
 static const struct enum_names_check pluto_enum_names_check[] = {
 #define S(V) { #V, &V, }
-	S(sd_action_names),
-	S(natt_method_names),
 	S(routing_tails),
 	S(routing_names),
-	S(stf_status_names),
-	S(perspective_names),
 	S(kernel_policy_op_names),
 	S(direction_names),
-	S(shunt_kind_names),
-	S(shunt_policy_names),
 };
 
 static const struct enum_names_checklist pluto_enum_names_checklist = {
