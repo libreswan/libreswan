@@ -59,7 +59,6 @@
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"
-#include "enum_names.h"
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
 #include "connection_db.h"	/* for init_connection_db() */
@@ -1307,7 +1306,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "secrets file: %s", secretsfile);
 	}
 
-	init_enum_names();
+	init_names();
 	init_pluto_constants();
 
 #ifdef USE_IKEv1

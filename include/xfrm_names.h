@@ -16,8 +16,15 @@
 #ifndef XFRM_NAMES_H
 #define XFRM_NAMES_H
 
-#ifndef KERNEL_XFRM
-# error "XFRM only"
+#if 0
+/*
+ * XXX: breaks builds on FreeBSD et.al. because check_names.c needs to
+ * #include this file unconditionally - the script can see that the
+ * individual names have #ifdef, but not the file.
+ */
+# ifndef KERNEL_XFRM
+#  error "XFRM only"
+# endif
 #endif
 
 extern const struct names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */

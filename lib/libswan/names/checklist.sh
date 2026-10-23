@@ -37,6 +37,11 @@ list()
 
 echo $(list "$@") 1>&2
 
+println()
+{
+    printf "$@"
+    printf '\n'
+}
 
 cat <<EOF
 /* enum name checklist, for libreswan
@@ -56,11 +61,13 @@ cat <<EOF
 EOF
 
 echo
-echo '#include "constants.h" /* for typedef ${names} */'
+echo '#include "names.h"'
 echo '#include "enum_names.h"'
 echo
 
-grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
+# gnerate a list of #includes so all declarations are visible
+
+grep -e "^extern const struct ${names} " "$@" | \
     cut -d: -f1 | \
     cut -d/ -f4- | \
     sort -u | \
@@ -70,11 +77,18 @@ grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
 
 echo
 
-echo "const struct ${names}_check ${names}_checklist[] = {"
+# generate the structure proper
+
+println 'static const struct '${names}'_check '${names}'_check[] = {'
 list "$@" | while read name ifdef ; do
-    test -z "${ifdef}" || echo "#ifdef ${ifdef}"
-    echo "  { \"${name}\", &${name}, },"
-    test -z "${ifdef}" || echo "#endif"
+    test -z "${ifdef}" || println '#ifdef '${ifdef}''
+    println '\t{ "'${name}'", &'${name}', },'
+    test -z "${ifdef}" || println '#endif'
 done
-echo "  { NULL, NULL, }"
-echo "};"
+println '};'
+
+println ''
+println 'const struct '${names}'_checklist '${names}'_checklist = {'
+println '\tARRAY_PTR('${names}'_check),'
+println '};'
+

@@ -63,7 +63,7 @@ enum_names direction_names = {
 
 /* */
 
-static const struct enum_names_check pluto_enum_names_checklist[] = {
+static const struct enum_names_check pluto_enum_names_check[] = {
 #define S(V) { #V, &V, }
 	S(sd_action_names),
 	S(natt_method_names),
@@ -75,9 +75,12 @@ static const struct enum_names_check pluto_enum_names_checklist[] = {
 	S(direction_names),
 	S(shunt_kind_names),
 	S(shunt_policy_names),
-	{ NULL, NULL, },
+};
+
+static const struct enum_names_checklist pluto_enum_names_checklist = {
+	ARRAY_PTR(pluto_enum_names_check),
 };
 
 void init_pluto_constants(void) {
-	check_enum_names(pluto_enum_names_checklist);
+	check_enum_names(&pluto_enum_names_checklist);
 }
