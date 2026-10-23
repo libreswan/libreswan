@@ -36,22 +36,25 @@ struct enum_enum_names {
 
 /* arrays are null terminated */
 
-struct enum_names_check {
-	const char *name;
-	const struct enum_names *enum_names;
-};
+extern const struct enum_names_checklist {
+	unsigned len;
+	const struct enum_names_check {
+		const char *name;
+		const struct enum_names *enum_names;
+	} *const data COUNTED_BY_PTR(len);
+} enum_names_checklist;
 
-extern const struct enum_names_check enum_names_checklist[]; /* NULL terminated*/
+extern void check_enum_names(const struct enum_names_checklist *checklist);
 
-struct enum_enum_names_check {
-	const char *name;
-	const struct enum_enum_names *enum_enum_names;
-};
+extern const struct enum_enum_names_checklist {
+	unsigned len;
+	const struct enum_enum_names_check {
+		const char *name;
+		const struct enum_enum_names *enum_enum_names;
+	} *const data COUNTED_BY_PTR(len);
+} enum_enum_names_checklist;
 
-extern const struct enum_enum_names_check enum_enum_names_checklist[]; /* NULL terminated*/
-
-extern void check_enum_names(const struct enum_names_check *checklist);
-extern void check_enum_enum_names(const struct enum_enum_names_check *checklist);
+extern void check_enum_enum_names(const struct enum_enum_names_checklist *checklist);
 
 extern void init_enum_names(void);
 

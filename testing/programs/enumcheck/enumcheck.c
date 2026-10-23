@@ -354,8 +354,7 @@ int main(int argc UNUSED, char *argv[])
 
 	init_enum_names();
 
-	for (const struct enum_names_check *c = enum_names_checklist;
-	     c->name != NULL && c->enum_names != NULL; c++) {
+	DATA_FOR_EACH(c, &enum_names_checklist) {
 		if (c->enum_names == &encapsulation_mode_names) {
 			test_enum_range("encapsulation_mode_names", &encapsulation_mode_names, 0, 256);
 		} else if (c->enum_names == &event_type_names) {
