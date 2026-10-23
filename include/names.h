@@ -215,6 +215,7 @@ size_t jam_bad(struct jambuf *buf, const char *prefix, unsigned long val);
 extern const struct names_checklist {
 	unsigned len;
 	const struct names_check {
+		const char *kind;
 		const char *name;
 		const struct names *names;
 	} *const data COUNTED_BY_PTR(len);

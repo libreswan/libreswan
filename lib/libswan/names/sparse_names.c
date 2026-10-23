@@ -229,7 +229,7 @@ long next_sparse(const struct sparse_names *names, long l)
 			return e;
 		}
 		if (sn->value > e) {
-			if (n == e || n < sn->value) {
+			if (n == e || sn->value < n) {
 				n = sn->value;
 			}
 		}

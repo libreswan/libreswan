@@ -523,17 +523,9 @@ ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
 OBJS += names_checklist.o
 names_checklist.o: $(builddir)/names_checklist.c
 
-$(builddir)/names_checklist.c: Makefile names/checklist.sh $(ENUM_INCLUDES)
+$(builddir)/names_checklist.c: Makefile names/names_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
-	$(srcdir)/names/checklist.sh names $(ENUM_INCLUDES) >$@.tmp
-	mv $@.tmp $@
-
-OBJS += enum_names_checklist.o
-enum_names_checklist.o: $(builddir)/enum_names_checklist.c
-
-$(builddir)/enum_names_checklist.c: Makefile names/checklist.sh $(ENUM_INCLUDES)
-	rm -f $@.tmp
-	$(srcdir)/names/checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
+	$(srcdir)/names/names_checklist.sh $(top_srcdir)/include $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
 
 OBJS += enum_enum_names_checklist.o

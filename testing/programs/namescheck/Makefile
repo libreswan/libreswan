@@ -1,6 +1,6 @@
-# enumcheck Makefile, for libreswan
+# namecheck Makefile, for libreswan
 #
-# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2017, 2026 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,9 +15,9 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = _enumcheck
+PROGRAM = _namecheck
 
-OBJS += enumcheck.o
+OBJS += namecheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
