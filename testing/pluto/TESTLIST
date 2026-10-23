@@ -54,7 +54,7 @@
 
 # various self-check programs
 kvmplutotest	check-01			good
-kvmplutotest	check-02-enumcheck		good
+kvmplutotest	check-02-namecheck		good
 kvmplutotest	check-03-vendoridcheck		good
 kvmplutotest	check-04-pki			good
 kvmplutotest	check-05-checksec		good
