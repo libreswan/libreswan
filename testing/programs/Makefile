@@ -18,13 +18,13 @@ include $(top_srcdir)/mk/config.mk
 SUBDIRS += asn1check
 SUBDIRS += authbycheck
 SUBDIRS += dncheck
-SUBDIRS += enumcheck
 SUBDIRS += flagscheck
 SUBDIRS += hunkcheck
 SUBDIRS += ipcheck
 SUBDIRS += jambufcheck
 SUBDIRS += kernel
 SUBDIRS += keyidcheck
+SUBDIRS += namescheck
 SUBDIRS += seedbitscheck
 SUBDIRS += timecheck
 SUBDIRS += ttodatacheck

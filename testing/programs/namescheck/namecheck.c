@@ -15,7 +15,7 @@
 
 unsigned errors;
 
-enum enum_name_expectation {
+enum name_expectation {
 	OPTIONAL,
 	PRESENT,
 	ABSENT,
@@ -26,15 +26,37 @@ struct clash {
 	int short_match; /* returned by match(short_name) */
 };
 
-static void test_enum(enum_names *enum_test, int i,
-		      enum enum_name_expectation expect,
+struct bounds {
+	long int floor;
+	long int roof;
+};
+
+static struct bounds name_bounds(const struct names *en)
+{
+	/* find lower and upper bounds; might contain gaps */
+	long int first = next_name(en, -1);
+	struct bounds b = {
+		.floor = first,
+		.roof = first+1,
+	};
+	for (int e = next_name(en, first);
+	     e >= 0; e = next_name(en, e)) {
+		b.roof = e+1;
+	}
+	return b;
+}
+
+static void test_name(const char *kind,
+		      const struct names *names,
+		      int i,
+		      enum name_expectation expect,
 		      const struct clash *clash)
 {
 	char scratch[100];
 
 	/* find a name, if any, for this value */
 	name_buf name;
-	bool found = enum_long(enum_test, i, &name);
+	bool found = name_long(names, i, &name);
 	switch (expect) {
 	case OPTIONAL:
 		if (!found) {
@@ -66,9 +88,9 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "jam_enum %d: ", i);
+		printf(PREFIX "jam_%s %d: ", kind, i);
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum_long(&buf, enum_test, i);
+		jam_name_long(&buf, names, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (hunk_streq(s, name.buf)) {
@@ -81,7 +103,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s: ", name.buf);
-		int e = enum_byname(enum_test, shunk1(name.buf));
+		int e = index_byname(names, shunk1(name.buf));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -92,7 +114,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	printf(PREFIX "short_name %d: ", i);
 	name_buf short_name;
-	if (!enum_short(enum_test, i, &short_name)) {
+	if (!name_short(names, i, &short_name)) {
 		printf("ERROR\n");
 		errors++;
 		return;
@@ -101,9 +123,9 @@ static void test_enum(enum_names *enum_test, int i,
 	printf("OK\n");
 
 	{
-		printf(PREFIX "jam_enum_short %d: ", i);
+		printf(PREFIX "jam_%s_short %d: ", kind, i);
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum_short(&buf, enum_test, i);
+		jam_name_short(&buf, names, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (hunk_streq(s, short_name.buf)) {
@@ -115,9 +137,9 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "jam_enum_human %d: ", i);
+		printf(PREFIX "jam_%s_human %d: ", kind, i);
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum_human(&buf, enum_test, i);
+		jam_name_human(&buf, names, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (strchr(short_name.buf, '_') == NULL) {
@@ -132,7 +154,6 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-
 	if (streq(short_name.buf, name.buf)) {
 		/* remaining tests redundant */
 		return;
@@ -140,7 +161,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s [short]: ", short_name.buf);
-		int e = enum_byname(enum_test, shunk1(short_name.buf));
+		int e = index_byname(names, shunk1(short_name.buf));
 		int short_match = (clash == NULL ? -1 : clash->short_match);
 		if (short_match >= 0 && e == short_match) {
 			printf("OK (clashed with %d)\n", short_match);
@@ -157,56 +178,19 @@ static void test_enum(enum_names *enum_test, int i,
 
 }
 
-struct bounds {
-	long int floor;
-	long int roof;
-};
-
-static struct bounds enum_bounds(const struct enum_names *en)
+static void test_names(const char *kind,
+		       const char *name,
+		       const struct names *names,
+		       const struct clash *clashes,
+		       struct logger *logger)
 {
-	/* find lower and upper bounds; might contain gaps */
-	long int first = next_enum(en, -1);
-	struct bounds b = {
-		.floor = first,
-		.roof = first+1,
-	};
-	for (int e = next_enum(en, first);
-	     e >= 0; e = next_enum(en, e)) {
-		b.roof = e+1;
-	}
-	return b;
-}
-
-static void test_enum_range(char *enumname, enum_names *enum_test, long int floor, long int roof)
-{
-	struct bounds b = enum_bounds(enum_test);
-	printf("  %s: ", enumname);
-	printf("[%ld", b.floor);
-	if (b.floor != floor) {
-		printf("(%ld)", floor);
-	}
-	printf("..");
-	printf("%ld", b.roof);
-	if (b.roof != roof) {
-		printf("(%ld)", roof);
-	}
-	printf(")\n");
-	for (int i = floor; i < roof; i++) {
-		test_enum(enum_test, i, OPTIONAL, NULL);
-	}
-	printf("\n");
-}
-
-static void test_enums(const char *enumname, enum_names *enum_test,
-		       const struct clash *clashes, struct logger *logger)
-{
-	struct bounds b = enum_bounds(enum_test);
-	printf("  %s: [%ld..%ld)\n", enumname, b.floor, b.roof);
+	struct bounds b = name_bounds(names);
+	printf("  %s: [%ld..%ld)\n", name, b.floor, b.roof);
 
 	/* test those next_enum() returns */
 	int clashed = 0;
-	for (int i = next_enum(enum_test, -1);
-	     i >= 0; i = next_enum(enum_test, i)) {
+	for (int i = next_name(names, -1);
+	     i >= 0; i = next_name(names, i)) {
 		const struct clash *clash = NULL;
 		for (const struct clash *c = clashes; c != NULL && c->e >= 0; c++) {
  			if (c->e == i) {
@@ -215,11 +199,11 @@ static void test_enums(const char *enumname, enum_names *enum_test,
  				break;
  			}
  		}
-		test_enum(enum_test, i, PRESENT, clash);
+		test_name(kind, names, i, PRESENT, clash);
 	}
 
-	test_enum(enum_test, b.floor-1, ABSENT, NULL);
-	test_enum(enum_test, b.roof, ABSENT, NULL);
+	test_name(kind, names, b.floor-1, ABSENT, NULL);
+	test_name(kind, names, b.roof, ABSENT, NULL);
 
 	for (const struct clash *c = clashes; c != NULL && c->e >= 0; c++) {
 		clashed--;
@@ -231,7 +215,7 @@ static void test_enums(const char *enumname, enum_names *enum_test,
 
 	/* check tables are not empty */
 	unsigned level = 0;
-	for (const struct enum_names *en = enum_test; en != NULL; en = en->en_next_range) {
+	for (const struct enum_names *en = names->enum_names; en != NULL; en = en->en_next_range) {
 		unsigned count = 0;
 		for (unsigned i = 0; i < en->en_checklen; i++) {
 			if (en->en_names[i] != NULL) {
@@ -245,12 +229,51 @@ static void test_enums(const char *enumname, enum_names *enum_test,
 		if (count * 10 < en->en_checklen) {
 			llog_pexpect(logger, HERE,
 				     "enum table %s at level %u of size %zu only contains %u names",
-				     enumname, level, en->en_checklen, count);
+				     name, level, en->en_checklen, count);
 		}
 		level++;
 	}
 
 	printf("\n");
+}
+
+static void test_enum_range(const char *name,
+			    const struct enum_names *enum_names,
+			    long int floor,
+			    long int roof)
+{
+	struct names names = {
+		.enum_names = enum_names,
+	};
+
+	struct bounds b = name_bounds(&names);
+	printf("  %s: ", name);
+	printf("[%ld", b.floor);
+	if (b.floor != floor) {
+		printf("(%ld)", floor);
+	}
+	printf("..");
+	printf("%ld", b.roof);
+	if (b.roof != roof) {
+		printf("(%ld)", roof);
+	}
+	printf(")\n");
+	for (int i = floor; i < roof; i++) {
+		test_name("enum", &names, i, OPTIONAL, NULL);
+	}
+	printf("\n");
+}
+
+static void test_enums(const char *name,
+		       const struct enum_names *enum_names,
+		       const struct clash *clashes,
+		       struct logger *logger)
+{
+	struct names names = {
+		.enum_names = enum_names,
+	};
+
+	test_names("enum", name, &names, clashes, logger);
 }
 
 static void test_enum_enum(const char *title,
@@ -370,6 +393,10 @@ int main(int argc UNUSED, char *argv[])
 		} else {
 			test_enums(c->name, c->enum_names, NULL, logger);
 		}
+	}
+
+	DATA_FOR_EACH(c, &names_checklist) {
+		test_names("name", c->name, c->names, NULL, logger);
 	}
 
 	/*
