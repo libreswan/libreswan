@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 west #
- valgrind --quiet $(ipsec -n _enumcheck)
-  ah_transformid_names: [2..253)
+ valgrind --quiet $(ipsec -n _namecheck)
+  ah_transformid_names: [2..252]
     2 -> IKEv1_AH_MD5
          jam_enum 2: IKEv1_AH_MD5 OK
          match IKEv1_AH_MD5: OK
@@ -107,7 +107,7 @@ west #
          jam_enum_short 252: SHA2_256_TRUNCBUG OK
          jam_enum_human 252: sha2-256-truncbug OK
          match SHA2_256_TRUNCBUG [short]: OK
-  attr_msg_type_names: [1..5)
+  attr_msg_type_names: [1..4]
     1 -> ISAKMP_CFG_REQUEST
          jam_enum 1: ISAKMP_CFG_REQUEST OK
          match ISAKMP_CFG_REQUEST: OK
@@ -132,7 +132,7 @@ west #
          short_name 4: ISAKMP_CFG_ACK OK
          jam_enum_short 4: ISAKMP_CFG_ACK OK
          jam_enum_human 4: isakmp-cfg-ack OK
-  auth_alg_names: [0..253)
+  auth_alg_names: [0..252]
     0 -> AUTH_ALGORITHM_NONE
          jam_enum 0: AUTH_ALGORITHM_NONE OK
          match AUTH_ALGORITHM_NONE: OK
@@ -252,7 +252,185 @@ west #
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
-  connection_event_kind_names: [1..3)
+  auth_names: [0..19]
+    0 -> AUTH_PSK
+         jam_names 0: AUTH_PSK OK
+         match AUTH_PSK: OK
+         short_name 0: PSK OK
+         jam_names_short 0: PSK OK
+         jam_names_human 0: psk OK
+         match PSK [short]: OK
+    1 -> AUTH_NULL
+         jam_names 1: AUTH_NULL OK
+         match AUTH_NULL: OK
+         short_name 1: NULL OK
+         jam_names_short 1: NULL OK
+         jam_names_human 1: null OK
+         match NULL [short]: OK
+    2 -> AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW
+         jam_names 2: AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW OK
+         match AUTH_RSASSA_PKCS1_V1_5_SHA1_RAW: OK
+         short_name 2: RSASSA_PKCS1_V1_5_SHA1_RAW OK
+         jam_names_short 2: RSASSA_PKCS1_V1_5_SHA1_RAW OK
+         jam_names_human 2: rsassa-pkcs1-v1-5-sha1-raw OK
+         match RSASSA_PKCS1_V1_5_SHA1_RAW [short]: OK
+    3 -> AUTH_ECDSA_SHA2_256_RAW
+         jam_names 3: AUTH_ECDSA_SHA2_256_RAW OK
+         match AUTH_ECDSA_SHA2_256_RAW: OK
+         short_name 3: ECDSA_SHA2_256_RAW OK
+         jam_names_short 3: ECDSA_SHA2_256_RAW OK
+         jam_names_human 3: ecdsa-sha2-256-raw OK
+         match ECDSA_SHA2_256_RAW [short]: OK
+    4 -> AUTH_ECDSA_SHA2_384_RAW
+         jam_names 4: AUTH_ECDSA_SHA2_384_RAW OK
+         match AUTH_ECDSA_SHA2_384_RAW: OK
+         short_name 4: ECDSA_SHA2_384_RAW OK
+         jam_names_short 4: ECDSA_SHA2_384_RAW OK
+         jam_names_human 4: ecdsa-sha2-384-raw OK
+         match ECDSA_SHA2_384_RAW [short]: OK
+    5 -> AUTH_ECDSA_SHA2_512_RAW
+         jam_names 5: AUTH_ECDSA_SHA2_512_RAW OK
+         match AUTH_ECDSA_SHA2_512_RAW: OK
+         short_name 5: ECDSA_SHA2_512_RAW OK
+         jam_names_short 5: ECDSA_SHA2_512_RAW OK
+         jam_names_human 5: ecdsa-sha2-512-raw OK
+         match ECDSA_SHA2_512_RAW [short]: OK
+    6 -> AUTH_RSASSA_PSS_SHA2_512_BLOB
+         jam_names 6: AUTH_RSASSA_PSS_SHA2_512_BLOB OK
+         match AUTH_RSASSA_PSS_SHA2_512_BLOB: OK
+         short_name 6: RSASSA_PSS_SHA2_512_BLOB OK
+         jam_names_short 6: RSASSA_PSS_SHA2_512_BLOB OK
+         jam_names_human 6: rsassa-pss-sha2-512-blob OK
+         match RSASSA_PSS_SHA2_512_BLOB [short]: OK
+    7 -> AUTH_RSASSA_PSS_SHA2_384_BLOB
+         jam_names 7: AUTH_RSASSA_PSS_SHA2_384_BLOB OK
+         match AUTH_RSASSA_PSS_SHA2_384_BLOB: OK
+         short_name 7: RSASSA_PSS_SHA2_384_BLOB OK
+         jam_names_short 7: RSASSA_PSS_SHA2_384_BLOB OK
+         jam_names_human 7: rsassa-pss-sha2-384-blob OK
+         match RSASSA_PSS_SHA2_384_BLOB [short]: OK
+    8 -> AUTH_RSASSA_PSS_SHA2_256_BLOB
+         jam_names 8: AUTH_RSASSA_PSS_SHA2_256_BLOB OK
+         match AUTH_RSASSA_PSS_SHA2_256_BLOB: OK
+         short_name 8: RSASSA_PSS_SHA2_256_BLOB OK
+         jam_names_short 8: RSASSA_PSS_SHA2_256_BLOB OK
+         jam_names_human 8: rsassa-pss-sha2-256-blob OK
+         match RSASSA_PSS_SHA2_256_BLOB [short]: OK
+    9 -> AUTH_ECDSA_SHA2_256_BLOB
+         jam_names 9: AUTH_ECDSA_SHA2_256_BLOB OK
+         match AUTH_ECDSA_SHA2_256_BLOB: OK
+         short_name 9: ECDSA_SHA2_256_BLOB OK
+         jam_names_short 9: ECDSA_SHA2_256_BLOB OK
+         jam_names_human 9: ecdsa-sha2-256-blob OK
+         match ECDSA_SHA2_256_BLOB [short]: OK
+   10 -> AUTH_ECDSA_SHA2_384_BLOB
+         jam_names 10: AUTH_ECDSA_SHA2_384_BLOB OK
+         match AUTH_ECDSA_SHA2_384_BLOB: OK
+         short_name 10: ECDSA_SHA2_384_BLOB OK
+         jam_names_short 10: ECDSA_SHA2_384_BLOB OK
+         jam_names_human 10: ecdsa-sha2-384-blob OK
+         match ECDSA_SHA2_384_BLOB [short]: OK
+   11 -> AUTH_ECDSA_SHA2_512_BLOB
+         jam_names 11: AUTH_ECDSA_SHA2_512_BLOB OK
+         match AUTH_ECDSA_SHA2_512_BLOB: OK
+         short_name 11: ECDSA_SHA2_512_BLOB OK
+         jam_names_short 11: ECDSA_SHA2_512_BLOB OK
+         jam_names_human 11: ecdsa-sha2-512-blob OK
+         match ECDSA_SHA2_512_BLOB [short]: OK
+   12 -> AUTH_EDDSA_ED25519_BLOB
+         jam_names 12: AUTH_EDDSA_ED25519_BLOB OK
+         match AUTH_EDDSA_ED25519_BLOB: OK
+         short_name 12: EDDSA_ED25519_BLOB OK
+         jam_names_short 12: EDDSA_ED25519_BLOB OK
+         jam_names_human 12: eddsa-ed25519-blob OK
+         match EDDSA_ED25519_BLOB [short]: OK
+   13 -> AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB
+         jam_names 13: AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB OK
+         match AUTH_RSASSA_PKCS1_V1_5_SHA2_512_BLOB: OK
+         short_name 13: RSASSA_PKCS1_V1_5_SHA2_512_BLOB OK
+         jam_names_short 13: RSASSA_PKCS1_V1_5_SHA2_512_BLOB OK
+         jam_names_human 13: rsassa-pkcs1-v1-5-sha2-512-blob OK
+         match RSASSA_PKCS1_V1_5_SHA2_512_BLOB [short]: OK
+   14 -> AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB
+         jam_names 14: AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB OK
+         match AUTH_RSASSA_PKCS1_V1_5_SHA2_384_BLOB: OK
+         short_name 14: RSASSA_PKCS1_V1_5_SHA2_384_BLOB OK
+         jam_names_short 14: RSASSA_PKCS1_V1_5_SHA2_384_BLOB OK
+         jam_names_human 14: rsassa-pkcs1-v1-5-sha2-384-blob OK
+         match RSASSA_PKCS1_V1_5_SHA2_384_BLOB [short]: OK
+   15 -> AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB
+         jam_names 15: AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB OK
+         match AUTH_RSASSA_PKCS1_V1_5_SHA2_256_BLOB: OK
+         short_name 15: RSASSA_PKCS1_V1_5_SHA2_256_BLOB OK
+         jam_names_short 15: RSASSA_PKCS1_V1_5_SHA2_256_BLOB OK
+         jam_names_human 15: rsassa-pkcs1-v1-5-sha2-256-blob OK
+         match RSASSA_PKCS1_V1_5_SHA2_256_BLOB [short]: OK
+   16 -> AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB
+         jam_names 16: AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB OK
+         match AUTH_RSASSA_PKCS1_V1_5_SHA1_BLOB: OK
+         short_name 16: RSASSA_PKCS1_V1_5_SHA1_BLOB OK
+         jam_names_short 16: RSASSA_PKCS1_V1_5_SHA1_BLOB OK
+         jam_names_human 16: rsassa-pkcs1-v1-5-sha1-blob OK
+         match RSASSA_PKCS1_V1_5_SHA1_BLOB [short]: OK
+   17 -> AUTH_RSASIG_IKEv1
+         jam_names 17: AUTH_RSASIG_IKEv1 OK
+         match AUTH_RSASIG_IKEv1: OK
+         short_name 17: RSASIG_IKEv1 OK
+         jam_names_short 17: RSASIG_IKEv1 OK
+         jam_names_human 17: rsasig-ikev1 OK
+         match RSASIG_IKEv1 [short]: OK
+   18 -> AUTH_NEVER
+         jam_names 18: AUTH_NEVER OK
+         match AUTH_NEVER: OK
+         short_name 18: NEVER OK
+         jam_names_short 18: NEVER OK
+         jam_names_human 18: never OK
+         match NEVER [short]: OK
+   19 -> AUTH_EAPONLY
+         jam_names 19: AUTH_EAPONLY OK
+         match AUTH_EAPONLY: OK
+         short_name 19: EAPONLY OK
+         jam_names_short 19: EAPONLY OK
+         jam_names_human 19: eaponly OK
+         match EAPONLY [short]: OK
+  autostart_names: [1..6]
+    1 -> ignore
+         jam_sparse 1: ignore OK
+         match ignore: OK
+         short_name 1: ignore OK
+         jam_sparse_short 1: ignore OK
+         jam_sparse_human 1: ignore OK
+    2 -> add
+         jam_sparse 2: add OK
+         match add: OK
+         short_name 2: add OK
+         jam_sparse_short 2: add OK
+         jam_sparse_human 2: add OK
+    3 -> route
+         jam_sparse 3: route OK
+         match route: OK
+         short_name 3: route OK
+         jam_sparse_short 3: route OK
+         jam_sparse_human 3: route OK
+    4 -> ondemand
+         jam_sparse 4: ondemand OK
+         match ondemand: OK
+         short_name 4: ondemand OK
+         jam_sparse_short 4: ondemand OK
+         jam_sparse_human 4: ondemand OK
+    5 -> up
+         jam_sparse 5: up OK
+         match up: OK
+         short_name 5: up OK
+         jam_sparse_short 5: up OK
+         jam_sparse_human 5: up OK
+    6 -> keep
+         jam_sparse 6: keep OK
+         match keep: OK
+         short_name 6: keep OK
+         jam_sparse_short 6: keep OK
+         jam_sparse_human 6: keep OK
+  connection_event_kind_names: [1..2]
     1 -> CONNECTION_REVIVAL
          jam_enum 1: CONNECTION_REVIVAL OK
          match CONNECTION_REVIVAL: OK
@@ -267,7 +445,7 @@ west #
          jam_enum_short 2: CHECK_DDNS OK
          jam_enum_human 2: check-ddns OK
          match CHECK_DDNS [short]: OK
-  connection_kind_names: [0..8)
+  connection_kind_names: [0..7]
     0 -> CK_INVALID
          jam_enum 0: CK_INVALID OK
          match CK_INVALID: OK
@@ -324,7 +502,7 @@ west #
          jam_enum_short 7: LABELED_CHILD OK
          jam_enum_human 7: labeled-child OK
          match LABELED_CHILD [short]: OK
-  connection_owner_names: [0..5)
+  connection_owner_names: [0..4]
     0 -> routing_sa
          jam_enum 0: routing_sa OK
          match routing_sa: OK
@@ -355,7 +533,7 @@ west #
          short_name 4: established_child_sa OK
          jam_enum_short 4: established_child_sa OK
          jam_enum_human 4: established-child-sa OK
-  connection_owner_stories: [0..5)
+  connection_owner_stories: [0..4]
     0 -> routing SA
          jam_enum 0: routing SA OK
          match routing SA: OK
@@ -386,7 +564,26 @@ west #
          short_name 4: established Child SA OK
          jam_enum_short 4: established Child SA OK
          jam_enum_human 4: established child sa OK
-  debug_help: [0..11)
+  ddos_mode_names: [1..3]
+    1 -> auto
+         jam_sparse 1: auto OK
+         match auto: OK
+         short_name 1: auto OK
+         jam_sparse_short 1: auto OK
+         jam_sparse_human 1: auto OK
+    2 -> busy
+         jam_sparse 2: busy OK
+         match busy: OK
+         short_name 2: busy OK
+         jam_sparse_short 2: busy OK
+         jam_sparse_human 2: busy OK
+    3 -> unlimited
+         jam_sparse 3: unlimited OK
+         match unlimited: OK
+         short_name 3: unlimited OK
+         jam_sparse_short 3: unlimited OK
+         jam_sparse_human 3: unlimited OK
+  debug_help: [0..10]
     0 -> enable routing debug logging
          jam_enum 0: enable routing debug logging OK
          match enable routing debug logging: OK
@@ -453,7 +650,7 @@ west #
          short_name 10: never let WHACK go OK
          jam_enum_short 10: never let WHACK go OK
          jam_enum_human 10: never let whack go OK
-  debug_names: [0..11)
+  debug_names: [0..10]
     0 -> debug-routing
          jam_enum 0: debug-routing OK
          match debug-routing: OK
@@ -531,7 +728,7 @@ west #
          jam_enum_short 10: whackwatch OK
          jam_enum_human 10: whackwatch OK
          match whackwatch [short]: OK
-  dns_auth_level_names: [1..4)
+  dns_auth_level_names: [1..3]
     1 -> PUBKEY_LOCAL
          jam_enum 1: PUBKEY_LOCAL OK
          match PUBKEY_LOCAL: OK
@@ -550,7 +747,128 @@ west #
          short_name 3: DNSSEC_SECURE OK
          jam_enum_short 3: DNSSEC_SECURE OK
          jam_enum_human 3: dnssec-secure OK
-  doi_names: [0..2)
+  dnssec_rcode_stories: [0..23]
+    0 -> No Error
+         jam_sparse 0: No Error OK
+         match No Error: OK
+         short_name 0: No Error OK
+         jam_sparse_short 0: No Error OK
+         jam_sparse_human 0: no error OK
+    1 -> Format Error
+         jam_sparse 1: Format Error OK
+         match Format Error: OK
+         short_name 1: Format Error OK
+         jam_sparse_short 1: Format Error OK
+         jam_sparse_human 1: format error OK
+    2 -> Server Failure
+         jam_sparse 2: Server Failure OK
+         match Server Failure: OK
+         short_name 2: Server Failure OK
+         jam_sparse_short 2: Server Failure OK
+         jam_sparse_human 2: server failure OK
+    3 -> Non-Existent Domain
+         jam_sparse 3: Non-Existent Domain OK
+         match Non-Existent Domain: OK
+         short_name 3: Non-Existent Domain OK
+         jam_sparse_short 3: Non-Existent Domain OK
+         jam_sparse_human 3: non-existent domain OK
+    4 -> Not Implemented
+         jam_sparse 4: Not Implemented OK
+         match Not Implemented: OK
+         short_name 4: Not Implemented OK
+         jam_sparse_short 4: Not Implemented OK
+         jam_sparse_human 4: not implemented OK
+    5 -> Query Refused
+         jam_sparse 5: Query Refused OK
+         match Query Refused: OK
+         short_name 5: Query Refused OK
+         jam_sparse_short 5: Query Refused OK
+         jam_sparse_human 5: query refused OK
+    6 -> Name Exists when it should not
+         jam_sparse 6: Name Exists when it should not OK
+         match Name Exists when it should not: OK
+         short_name 6: Name Exists when it should not OK
+         jam_sparse_short 6: Name Exists when it should not OK
+         jam_sparse_human 6: name exists when it should not OK
+    7 -> RR Set Exists when it should not
+         jam_sparse 7: RR Set Exists when it should not OK
+         match RR Set Exists when it should not: OK
+         short_name 7: RR Set Exists when it should not OK
+         jam_sparse_short 7: RR Set Exists when it should not OK
+         jam_sparse_human 7: rr set exists when it should not OK
+    8 -> RR Set that should exist does not
+         jam_sparse 8: RR Set that should exist does not OK
+         match RR Set that should exist does not: OK
+         short_name 8: RR Set that should exist does not OK
+         jam_sparse_short 8: RR Set that should exist does not OK
+         jam_sparse_human 8: rr set that should exist does not OK
+    9 -> Server Not Authoritative for zone
+         jam_sparse 9: Server Not Authoritative for zone OK
+         match Server Not Authoritative for zone: OK
+         short_name 9: Server Not Authoritative for zone OK
+         jam_sparse_short 9: Server Not Authoritative for zone OK
+         jam_sparse_human 9: server not authoritative for zone OK
+   10 -> Name not contained in zone
+         jam_sparse 10: Name not contained in zone OK
+         match Name not contained in zone: OK
+         short_name 10: Name not contained in zone OK
+         jam_sparse_short 10: Name not contained in zone OK
+         jam_sparse_human 10: name not contained in zone OK
+   11 -> DSO-TYPE Not Implemented
+         jam_sparse 11: DSO-TYPE Not Implemented OK
+         match DSO-TYPE Not Implemented: OK
+         short_name 11: DSO-TYPE Not Implemented OK
+         jam_sparse_short 11: DSO-TYPE Not Implemented OK
+         jam_sparse_human 11: dso-type not implemented OK
+   16 -> Bad OPT Version
+         jam_sparse 16: Bad OPT Version OK
+         match Bad OPT Version: OK
+         short_name 16: Bad OPT Version OK
+         jam_sparse_short 16: Bad OPT Version OK
+         jam_sparse_human 16: bad opt version OK
+   17 -> Key not recognized
+         jam_sparse 17: Key not recognized OK
+         match Key not recognized: OK
+         short_name 17: Key not recognized OK
+         jam_sparse_short 17: Key not recognized OK
+         jam_sparse_human 17: key not recognized OK
+   18 -> Signature out of time window
+         jam_sparse 18: Signature out of time window OK
+         match Signature out of time window: OK
+         short_name 18: Signature out of time window OK
+         jam_sparse_short 18: Signature out of time window OK
+         jam_sparse_human 18: signature out of time window OK
+   19 -> Bad TKEY Mode
+         jam_sparse 19: Bad TKEY Mode OK
+         match Bad TKEY Mode: OK
+         short_name 19: Bad TKEY Mode OK
+         jam_sparse_short 19: Bad TKEY Mode OK
+         jam_sparse_human 19: bad tkey mode OK
+   20 -> Duplicate key name
+         jam_sparse 20: Duplicate key name OK
+         match Duplicate key name: OK
+         short_name 20: Duplicate key name OK
+         jam_sparse_short 20: Duplicate key name OK
+         jam_sparse_human 20: duplicate key name OK
+   21 -> Algorithm not supported
+         jam_sparse 21: Algorithm not supported OK
+         match Algorithm not supported: OK
+         short_name 21: Algorithm not supported OK
+         jam_sparse_short 21: Algorithm not supported OK
+         jam_sparse_human 21: algorithm not supported OK
+   22 -> Bad Truncation
+         jam_sparse 22: Bad Truncation OK
+         match Bad Truncation: OK
+         short_name 22: Bad Truncation OK
+         jam_sparse_short 22: Bad Truncation OK
+         jam_sparse_human 22: bad truncation OK
+   23 -> Bad/missing Server Cookie
+         jam_sparse 23: Bad/missing Server Cookie OK
+         match Bad/missing Server Cookie: OK
+         short_name 23: Bad/missing Server Cookie OK
+         jam_sparse_short 23: Bad/missing Server Cookie OK
+         jam_sparse_human 23: bad/missing server cookie OK
+  doi_names: [0..1]
     0 -> ISAKMP_DOI_ISAKMP
          jam_enum 0: ISAKMP_DOI_ISAKMP OK
          match ISAKMP_DOI_ISAKMP: OK
@@ -563,7 +881,7 @@ west #
          short_name 1: ISAKMP_DOI_IPSEC OK
          jam_enum_short 1: ISAKMP_DOI_IPSEC OK
          jam_enum_human 1: isakmp-doi-ipsec OK
-  eap_code_names: [1..5)
+  eap_code_names: [1..4]
     1 -> EAP_CODE_REQUEST
          jam_enum 1: EAP_CODE_REQUEST OK
          match EAP_CODE_REQUEST: OK
@@ -592,7 +910,20 @@ west #
          jam_enum_short 4: FAILURE OK
          jam_enum_human 4: failure OK
          match FAILURE [short]: OK
-  eaptls_flag_names: [5..8)
+  eap_option_names: [0..1]
+    0 -> none
+         jam_sparse 0: none OK
+         match none: OK
+         short_name 0: none OK
+         jam_sparse_short 0: none OK
+         jam_sparse_human 0: none OK
+    1 -> tls
+         jam_sparse 1: tls OK
+         match tls: OK
+         short_name 1: tls OK
+         jam_sparse_short 1: tls OK
+         jam_sparse_human 1: tls OK
+  eaptls_flag_names: [5..7]
     5 -> EAPTLS_FLAG_START
          jam_enum 5: EAPTLS_FLAG_START OK
          match EAPTLS_FLAG_START: OK
@@ -614,7 +945,7 @@ west #
          jam_enum_short 7: LENGTH OK
          jam_enum_human 7: length OK
          match LENGTH [short]: OK
-  eap_type_names: [13..14)
+  eap_type_names: [13..13]
    13 -> EAP_TYPE_TLS
          jam_enum 13: EAP_TYPE_TLS OK
          match EAP_TYPE_TLS: OK
@@ -622,7 +953,7 @@ west #
          jam_enum_short 13: TLS OK
          jam_enum_human 13: tls OK
          match TLS [short]: OK
-  encap_mode_names: [2..4)
+  encap_mode_names: [2..3]
     2 -> ENCAP_MODE_TRANSPORT
          jam_enum 2: ENCAP_MODE_TRANSPORT OK
          match ENCAP_MODE_TRANSPORT: OK
@@ -637,7 +968,7 @@ west #
          jam_enum_short 3: TUNNEL OK
          jam_enum_human 3: tunnel OK
          match TUNNEL [short]: OK
-  encap_mode_story: [2..4)
+  encap_mode_story: [2..3]
     2 -> transport
          jam_enum 2: transport OK
          match transport: OK
@@ -650,7 +981,7 @@ west #
          short_name 3: tunnel OK
          jam_enum_short 3: tunnel OK
          jam_enum_human 3: tunnel OK
-  encap_proto_names: [1..3)
+  encap_proto_names: [1..2]
     1 -> ENCAP_PROTO_ESP
          jam_enum 1: ENCAP_PROTO_ESP OK
          match ENCAP_PROTO_ESP: OK
@@ -665,7 +996,7 @@ west #
          jam_enum_short 2: AH OK
          jam_enum_human 2: ah OK
          match AH [short]: OK
-  encap_proto_story: [1..3)
+  encap_proto_story: [1..2]
     1 -> esp
          jam_enum 1: esp OK
          match esp: OK
@@ -678,7 +1009,7 @@ west #
          short_name 2: ah OK
          jam_enum_short 2: ah OK
          jam_enum_human 2: ah OK
-  encapsulation_mode_names: [1(0)..61445(256))
+  encapsulation_mode_names: [1(0)..61444(256)]
     1 -> ENCAPSULATION_MODE_TUNNEL
          jam_enum 1: ENCAPSULATION_MODE_TUNNEL OK
          match ENCAPSULATION_MODE_TUNNEL: OK
@@ -707,7 +1038,7 @@ west #
          jam_enum_short 4: UDP_TRANSPORT_RFC OK
          jam_enum_human 4: udp-transport-rfc OK
          match UDP_TRANSPORT_RFC [short]: OK
-  encap_type_names: [1..5)
+  encap_type_names: [1..4]
     1 -> ENCAP_TYPE_TRAP
          jam_enum 1: ENCAP_TYPE_TRAP OK
          match ENCAP_TYPE_TRAP: OK
@@ -736,7 +1067,7 @@ west #
          jam_enum_short 4: DROP OK
          jam_enum_human 4: drop OK
          match DROP [short]: OK
-  end_names: [0..2)
+  end_names: [0..1]
     0 -> LEFT_END
          jam_enum 0: LEFT_END OK
          match LEFT_END: OK
@@ -749,7 +1080,7 @@ west #
          short_name 1: RIGHT_END OK
          jam_enum_short 1: RIGHT_END OK
          jam_enum_human 1: right-end OK
-  end_stories: [0..2)
+  end_stories: [0..1]
     0 -> left
          jam_enum 0: left OK
          match left: OK
@@ -762,7 +1093,7 @@ west #
          short_name 1: right OK
          jam_enum_short 1: right OK
          jam_enum_human 1: right OK
-  esp_transformid_names: [1..254)
+  esp_transformid_names: [1..253]
     1 -> IKEv1_ESP_DES_IV64
          jam_enum 1: IKEv1_ESP_DES_IV64 OK
          match IKEv1_ESP_DES_IV64: OK
@@ -980,7 +1311,7 @@ west #
          jam_enum_short 253: TWOFISH OK
          jam_enum_human 253: twofish OK
          match TWOFISH [short]: OK
-  event_type_names: [0..23)
+  event_type_names: [0..22]
     0 -> EVENT_NULL
          jam_enum 0: EVENT_NULL OK
          match EVENT_NULL: OK
@@ -1142,7 +1473,32 @@ west #
          jam_enum_short 22: RETAIN OK
          jam_enum_human 22: retain OK
          match RETAIN [short]: OK
-  fips_mode_names: [1..3)
+  failure_shunt_names: [2..1073741829]
+    2 -> none
+         jam_sparse 2: none OK
+         match none: OK
+         short_name 2: none OK
+         jam_sparse_short 2: none OK
+         jam_sparse_human 2: none OK
+    4 -> pass
+         jam_sparse 4: pass OK
+         match pass: OK
+         short_name 4: pass OK
+         jam_sparse_short 4: pass OK
+         jam_sparse_human 4: pass OK
+    5 -> drop
+         jam_sparse 5: drop OK
+         match drop: OK
+         short_name 5: drop OK
+         jam_sparse_short 5: drop OK
+         jam_sparse_human 5: drop OK
+  1073741829 -> hold
+         jam_sparse 1073741829: hold OK
+         match hold: OK
+         short_name 1073741829: hold OK
+         jam_sparse_short 1073741829: hold OK
+         jam_sparse_human 1073741829: hold OK
+  fips_mode_names: [1..2]
     1 -> FIPS_MODE_OFF
          jam_enum 1: FIPS_MODE_OFF OK
          match FIPS_MODE_OFF: OK
@@ -1157,7 +1513,45 @@ west #
          jam_enum_short 2: ON OK
          jam_enum_human 2: on OK
          match ON [short]: OK
-  global_timer_enum_names: [0..6)
+  global_ikev1_policy_names: [0..2]
+    0 -> accept
+         jam_sparse 0: accept OK
+         match accept: OK
+         short_name 0: accept OK
+         jam_sparse_short 0: accept OK
+         jam_sparse_human 0: accept OK
+    1 -> reject
+         jam_sparse 1: reject OK
+         match reject: OK
+         short_name 1: reject OK
+         jam_sparse_short 1: reject OK
+         jam_sparse_human 1: reject OK
+    2 -> drop
+         jam_sparse 2: drop OK
+         match drop: OK
+         short_name 2: drop OK
+         jam_sparse_short 2: drop OK
+         jam_sparse_human 2: drop OK
+  global_redirect_names: [1..3]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
+    3 -> auto
+         jam_sparse 3: auto OK
+         match auto: OK
+         short_name 3: auto OK
+         jam_sparse_short 3: auto OK
+         jam_sparse_human 3: auto OK
+  global_timer_enum_names: [0..5]
     0 -> EVENT_REINIT_SECRET
          jam_enum 0: EVENT_REINIT_SECRET OK
          match EVENT_REINIT_SECRET: OK
@@ -1200,7 +1594,50 @@ west #
          jam_enum_short 5: RESET_LOG_LIMITER OK
          jam_enum_human 5: reset-log-limiter OK
          match RESET_LOG_LIMITER [short]: OK
-  ike_cert_type_names: [1..11)
+  global_timer_names: [0..5]
+    0 -> EVENT_REINIT_SECRET
+         jam_names 0: EVENT_REINIT_SECRET OK
+         match EVENT_REINIT_SECRET: OK
+         short_name 0: REINIT_SECRET OK
+         jam_names_short 0: REINIT_SECRET OK
+         jam_names_human 0: reinit-secret OK
+         match REINIT_SECRET [short]: OK
+    1 -> EVENT_SHUNT_SCAN
+         jam_names 1: EVENT_SHUNT_SCAN OK
+         match EVENT_SHUNT_SCAN: OK
+         short_name 1: SHUNT_SCAN OK
+         jam_names_short 1: SHUNT_SCAN OK
+         jam_names_human 1: shunt-scan OK
+         match SHUNT_SCAN [short]: OK
+    2 -> EVENT_SD_WATCHDOG
+         jam_names 2: EVENT_SD_WATCHDOG OK
+         match EVENT_SD_WATCHDOG: OK
+         short_name 2: SD_WATCHDOG OK
+         jam_names_short 2: SD_WATCHDOG OK
+         jam_names_human 2: sd-watchdog OK
+         match SD_WATCHDOG [short]: OK
+    3 -> EVENT_CHECK_CRLS
+         jam_names 3: EVENT_CHECK_CRLS OK
+         match EVENT_CHECK_CRLS: OK
+         short_name 3: CHECK_CRLS OK
+         jam_names_short 3: CHECK_CRLS OK
+         jam_names_human 3: check-crls OK
+         match CHECK_CRLS [short]: OK
+    4 -> EVENT_FREE_ROOT_CERTS
+         jam_names 4: EVENT_FREE_ROOT_CERTS OK
+         match EVENT_FREE_ROOT_CERTS: OK
+         short_name 4: FREE_ROOT_CERTS OK
+         jam_names_short 4: FREE_ROOT_CERTS OK
+         jam_names_human 4: free-root-certs OK
+         match FREE_ROOT_CERTS [short]: OK
+    5 -> EVENT_RESET_LOG_LIMITER
+         jam_names 5: EVENT_RESET_LOG_LIMITER OK
+         match EVENT_RESET_LOG_LIMITER: OK
+         short_name 5: RESET_LOG_LIMITER OK
+         jam_names_short 5: RESET_LOG_LIMITER OK
+         jam_names_human 5: reset-log-limiter OK
+         match RESET_LOG_LIMITER [short]: OK
+  ike_cert_type_names: [1..10]
     1 -> CERT_PKCS7_WRAPPED_X509
          jam_enum 1: CERT_PKCS7_WRAPPED_X509 OK
          match CERT_PKCS7_WRAPPED_X509: OK
@@ -1271,7 +1708,7 @@ west #
          jam_enum_short 10: X509_ATTRIBUTE OK
          jam_enum_human 10: x509-attribute OK
          match X509_ATTRIBUTE [short]: OK
-  ike_id_type_names: [0..14)
+  ike_id_type_names: [0..13]
     0 -> %none
          jam_enum 0: %none OK
          match %none: OK
@@ -1370,7 +1807,7 @@ west #
          jam_enum_human 13: null OK
          match NULL [short]: OK
 name for -1 present (should be absent)
-  ikev1_exchange_names: [0..34)
+  ikev1_exchange_names: [0..33]
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
          match ISAKMP_XCHG_NONE: OK
@@ -1434,7 +1871,7 @@ name for -1 present (should be absent)
          jam_enum_short 33: NGRP OK
          jam_enum_human 33: ngrp OK
          match NGRP [short]: OK
-  ikev1_ike_id_type_names: [1..14)
+  ikev1_ike_id_type_names: [1..13]
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
          match ID_IPV4_ADDR: OK
@@ -1526,7 +1963,7 @@ name for -1 present (should be absent)
          jam_enum_short 13: NULL OK
          jam_enum_human 13: null OK
          match NULL [short]: OK
-  ikev1_ipsec_attr_names: [1..32002)
+  ikev1_ipsec_attr_names: [1..32001]
     1 -> SA_LIFE_TYPE
          jam_enum 1: SA_LIFE_TYPE OK
          match SA_LIFE_TYPE: OK
@@ -1617,7 +2054,7 @@ name for -1 present (should be absent)
          short_name 32001: SECCTX OK
          jam_enum_short 32001: SECCTX OK
          jam_enum_human 32001: secctx OK
-  ikev1_payload_names: [0..133)
+  ikev1_payload_names: [0..132]
     0 -> ISAKMP_NEXT_NONE
          jam_enum 0: ISAKMP_NEXT_NONE OK
          match ISAKMP_NEXT_NONE: OK
@@ -1800,7 +2237,7 @@ name for -1 present (should be absent)
          jam_enum_short 132: IKE_FRAGMENTATION OK
          jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
-  ikev1_protocol_names: [0..5)
+  ikev1_protocol_names: [0..4]
     0 -> PROTO_RESERVED
          jam_enum 0: PROTO_RESERVED OK
          match PROTO_RESERVED: OK
@@ -1831,7 +2268,7 @@ name for -1 present (should be absent)
          short_name 4: PROTO_IPCOMP OK
          jam_enum_short 4: PROTO_IPCOMP OK
          jam_enum_human 4: proto-ipcomp OK
-  ikev1_xauth_type_names: [0..4)
+  ikev1_xauth_type_names: [0..3]
     0 -> IKEv1_XAUTH_TYPE_GENERIC
          jam_enum 0: IKEv1_XAUTH_TYPE_GENERIC OK
          match IKEv1_XAUTH_TYPE_GENERIC: OK
@@ -1860,7 +2297,7 @@ name for -1 present (should be absent)
          jam_enum_short 3: SKEY OK
          jam_enum_human 3: skey OK
          match SKEY [short]: OK
-  ikev2_auth_method_names: [0..15)
+  ikev2_auth_method_names: [0..14]
     0 -> IKEv2_AUTH_RESERVED
          jam_enum 0: IKEv2_AUTH_RESERVED OK
          match IKEv2_AUTH_RESERVED: OK
@@ -1931,7 +2368,78 @@ name for -1 present (should be absent)
          jam_enum_short 14: DIGITAL_SIGNATURE OK
          jam_enum_human 14: digital-signature OK
          match DIGITAL_SIGNATURE [short]: OK
-  ikev2_cert_type_names: [1..16)
+  ikev2_auth_method_nom: [0..14]
+    0 -> IKEv2_AUTH_RESERVED
+         jam_names 0: IKEv2_AUTH_RESERVED OK
+         match IKEv2_AUTH_RESERVED: OK
+         short_name 0: RESERVED OK
+         jam_names_short 0: RESERVED OK
+         jam_names_human 0: reserved OK
+         match RESERVED [short]: OK
+    1 -> IKEv2_AUTH_RSA_DIGITAL_SIGNATURE
+         jam_names 1: IKEv2_AUTH_RSA_DIGITAL_SIGNATURE OK
+         match IKEv2_AUTH_RSA_DIGITAL_SIGNATURE: OK
+         short_name 1: RSA_DIGITAL_SIGNATURE OK
+         jam_names_short 1: RSA_DIGITAL_SIGNATURE OK
+         jam_names_human 1: rsa-digital-signature OK
+         match RSA_DIGITAL_SIGNATURE [short]: OK
+    2 -> IKEv2_AUTH_SHARED_KEY_MAC
+         jam_names 2: IKEv2_AUTH_SHARED_KEY_MAC OK
+         match IKEv2_AUTH_SHARED_KEY_MAC: OK
+         short_name 2: SHARED_KEY_MAC OK
+         jam_names_short 2: SHARED_KEY_MAC OK
+         jam_names_human 2: shared-key-mac OK
+         match SHARED_KEY_MAC [short]: OK
+    3 -> IKEv2_AUTH_DSS_DIGITAL_SIGNATURE
+         jam_names 3: IKEv2_AUTH_DSS_DIGITAL_SIGNATURE OK
+         match IKEv2_AUTH_DSS_DIGITAL_SIGNATURE: OK
+         short_name 3: DSS_DIGITAL_SIGNATURE OK
+         jam_names_short 3: DSS_DIGITAL_SIGNATURE OK
+         jam_names_human 3: dss-digital-signature OK
+         match DSS_DIGITAL_SIGNATURE [short]: OK
+    9 -> IKEv2_AUTH_ECDSA_SHA2_256_P256
+         jam_names 9: IKEv2_AUTH_ECDSA_SHA2_256_P256 OK
+         match IKEv2_AUTH_ECDSA_SHA2_256_P256: OK
+         short_name 9: ECDSA_SHA2_256_P256 OK
+         jam_names_short 9: ECDSA_SHA2_256_P256 OK
+         jam_names_human 9: ecdsa-sha2-256-p256 OK
+         match ECDSA_SHA2_256_P256 [short]: OK
+   10 -> IKEv2_AUTH_ECDSA_SHA2_384_P384
+         jam_names 10: IKEv2_AUTH_ECDSA_SHA2_384_P384 OK
+         match IKEv2_AUTH_ECDSA_SHA2_384_P384: OK
+         short_name 10: ECDSA_SHA2_384_P384 OK
+         jam_names_short 10: ECDSA_SHA2_384_P384 OK
+         jam_names_human 10: ecdsa-sha2-384-p384 OK
+         match ECDSA_SHA2_384_P384 [short]: OK
+   11 -> IKEv2_AUTH_ECDSA_SHA2_512_P521
+         jam_names 11: IKEv2_AUTH_ECDSA_SHA2_512_P521 OK
+         match IKEv2_AUTH_ECDSA_SHA2_512_P521: OK
+         short_name 11: ECDSA_SHA2_512_P521 OK
+         jam_names_short 11: ECDSA_SHA2_512_P521 OK
+         jam_names_human 11: ecdsa-sha2-512-p521 OK
+         match ECDSA_SHA2_512_P521 [short]: OK
+   12 -> IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD
+         jam_names 12: IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         match IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD: OK
+         short_name 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         jam_names_short 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         jam_names_human 12: generic-secure-password-authentication-method OK
+         match GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD [short]: OK
+   13 -> IKEv2_AUTH_NULL
+         jam_names 13: IKEv2_AUTH_NULL OK
+         match IKEv2_AUTH_NULL: OK
+         short_name 13: NULL OK
+         jam_names_short 13: NULL OK
+         jam_names_human 13: null OK
+         match NULL [short]: OK
+   14 -> IKEv2_AUTH_DIGITAL_SIGNATURE
+         jam_names 14: IKEv2_AUTH_DIGITAL_SIGNATURE OK
+         match IKEv2_AUTH_DIGITAL_SIGNATURE: OK
+         short_name 14: DIGITAL_SIGNATURE OK
+         jam_names_short 14: DIGITAL_SIGNATURE OK
+         jam_names_human 14: digital-signature OK
+         match DIGITAL_SIGNATURE [short]: OK
+  ikev2_cert_type_names: [1..15]
     1 -> CERT_PKCS7_WRAPPED_X509
          jam_enum 1: CERT_PKCS7_WRAPPED_X509 OK
          match CERT_PKCS7_WRAPPED_X509: OK
@@ -2030,7 +2538,7 @@ name for -1 present (should be absent)
          jam_enum_short 15: RAW_PUBLIC_KEY OK
          jam_enum_human 15: raw-public-key OK
          match RAW_PUBLIC_KEY [short]: OK
-  ikev2_cp_attribute_type_names: [0..27)
+  ikev2_cp_attribute_type_names: [0..26]
     0 -> IKEv2_CP_ATTR_RESERVED
          jam_enum 0: IKEv2_CP_ATTR_RESERVED OK
          match IKEv2_CP_ATTR_RESERVED: OK
@@ -2175,7 +2683,7 @@ name for -1 present (should be absent)
          short_name 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_short 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_human 26: ikev2-internal-dnssec-ta OK
-  ikev2_cp_type_names: [1..5)
+  ikev2_cp_type_names: [1..4]
     1 -> IKEv2_CP_CFG_REQUEST
          jam_enum 1: IKEv2_CP_CFG_REQUEST OK
          match IKEv2_CP_CFG_REQUEST: OK
@@ -2200,7 +2708,7 @@ name for -1 present (should be absent)
          short_name 4: IKEv2_CP_CFG_ACK OK
          jam_enum_short 4: IKEv2_CP_CFG_ACK OK
          jam_enum_human 4: ikev2-cp-cfg-ack OK
-  ikev2_delete_protocol_id_names: [1..4)
+  ikev2_delete_protocol_id_names: [1..3]
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
          match IKEv2_SEC_PROTO_IKE: OK
@@ -2222,7 +2730,7 @@ name for -1 present (should be absent)
          jam_enum_short 3: ESP OK
          jam_enum_human 3: esp OK
          match ESP [short]: OK
-  ikev2_exchange_names: [34..45)
+  ikev2_exchange_names: [34..44]
    34 -> ISAKMP_v2_IKE_SA_INIT
          jam_enum 34: ISAKMP_v2_IKE_SA_INIT OK
          match ISAKMP_v2_IKE_SA_INIT: OK
@@ -2293,7 +2801,78 @@ name for -1 present (should be absent)
          jam_enum_short 44: IKE_FOLLOWUP_KE OK
          jam_enum_human 44: ike-followup-ke OK
          match IKE_FOLLOWUP_KE [short]: OK
-  ikev2_hash_algorithm_names: [0..6)
+  ikev2_exchange_nom: [34..44]
+   34 -> ISAKMP_v2_IKE_SA_INIT
+         jam_names 34: ISAKMP_v2_IKE_SA_INIT OK
+         match ISAKMP_v2_IKE_SA_INIT: OK
+         short_name 34: IKE_SA_INIT OK
+         jam_names_short 34: IKE_SA_INIT OK
+         jam_names_human 34: ike-sa-init OK
+         match IKE_SA_INIT [short]: OK
+   35 -> ISAKMP_v2_IKE_AUTH
+         jam_names 35: ISAKMP_v2_IKE_AUTH OK
+         match ISAKMP_v2_IKE_AUTH: OK
+         short_name 35: IKE_AUTH OK
+         jam_names_short 35: IKE_AUTH OK
+         jam_names_human 35: ike-auth OK
+         match IKE_AUTH [short]: OK
+   36 -> ISAKMP_v2_CREATE_CHILD_SA
+         jam_names 36: ISAKMP_v2_CREATE_CHILD_SA OK
+         match ISAKMP_v2_CREATE_CHILD_SA: OK
+         short_name 36: CREATE_CHILD_SA OK
+         jam_names_short 36: CREATE_CHILD_SA OK
+         jam_names_human 36: create-child-sa OK
+         match CREATE_CHILD_SA [short]: OK
+   37 -> ISAKMP_v2_INFORMATIONAL
+         jam_names 37: ISAKMP_v2_INFORMATIONAL OK
+         match ISAKMP_v2_INFORMATIONAL: OK
+         short_name 37: INFORMATIONAL OK
+         jam_names_short 37: INFORMATIONAL OK
+         jam_names_human 37: informational OK
+         match INFORMATIONAL [short]: OK
+   38 -> ISAKMP_v2_IKE_SESSION_RESUME
+         jam_names 38: ISAKMP_v2_IKE_SESSION_RESUME OK
+         match ISAKMP_v2_IKE_SESSION_RESUME: OK
+         short_name 38: IKE_SESSION_RESUME OK
+         jam_names_short 38: IKE_SESSION_RESUME OK
+         jam_names_human 38: ike-session-resume OK
+         match IKE_SESSION_RESUME [short]: OK
+   39 -> ISAKMP_v2_GSA_AUTH
+         jam_names 39: ISAKMP_v2_GSA_AUTH OK
+         match ISAKMP_v2_GSA_AUTH: OK
+         short_name 39: GSA_AUTH OK
+         jam_names_short 39: GSA_AUTH OK
+         jam_names_human 39: gsa-auth OK
+         match GSA_AUTH [short]: OK
+   40 -> ISAKMP_v2_GSA_REGISTRATION
+         jam_names 40: ISAKMP_v2_GSA_REGISTRATION OK
+         match ISAKMP_v2_GSA_REGISTRATION: OK
+         short_name 40: GSA_REGISTRATION OK
+         jam_names_short 40: GSA_REGISTRATION OK
+         jam_names_human 40: gsa-registration OK
+         match GSA_REGISTRATION [short]: OK
+   41 -> ISAKMP_v2_GSA_REKEY
+         jam_names 41: ISAKMP_v2_GSA_REKEY OK
+         match ISAKMP_v2_GSA_REKEY: OK
+         short_name 41: GSA_REKEY OK
+         jam_names_short 41: GSA_REKEY OK
+         jam_names_human 41: gsa-rekey OK
+         match GSA_REKEY [short]: OK
+   43 -> ISAKMP_v2_IKE_INTERMEDIATE
+         jam_names 43: ISAKMP_v2_IKE_INTERMEDIATE OK
+         match ISAKMP_v2_IKE_INTERMEDIATE: OK
+         short_name 43: IKE_INTERMEDIATE OK
+         jam_names_short 43: IKE_INTERMEDIATE OK
+         jam_names_human 43: ike-intermediate OK
+         match IKE_INTERMEDIATE [short]: OK
+   44 -> ISAKMP_v2_IKE_FOLLOWUP_KE
+         jam_names 44: ISAKMP_v2_IKE_FOLLOWUP_KE OK
+         match ISAKMP_v2_IKE_FOLLOWUP_KE: OK
+         short_name 44: IKE_FOLLOWUP_KE OK
+         jam_names_short 44: IKE_FOLLOWUP_KE OK
+         jam_names_human 44: ike-followup-ke OK
+         match IKE_FOLLOWUP_KE [short]: OK
+  ikev2_hash_algorithm_names: [0..5]
     0 -> IKEv2_HASH_ALGORITHM_RESERVED
          jam_enum 0: IKEv2_HASH_ALGORITHM_RESERVED OK
          match IKEv2_HASH_ALGORITHM_RESERVED: OK
@@ -2336,7 +2915,7 @@ name for -1 present (should be absent)
          jam_enum_short 5: IDENTITY OK
          jam_enum_human 5: identity OK
          match IDENTITY [short]: OK
-  ikev2_ike_id_type_names: [1..14)
+  ikev2_ike_id_type_names: [1..13]
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
          match ID_IPV4_ADDR: OK
@@ -2400,7 +2979,7 @@ name for -1 present (should be absent)
          jam_enum_short 13: NULL OK
          jam_enum_human 13: null OK
          match NULL [short]: OK
-  ikev2_last_proposal_desc: [0..3)
+  ikev2_last_proposal_desc: [0..2]
     0 -> v2_PROPOSAL_LAST
          jam_enum 0: v2_PROPOSAL_LAST OK
          match v2_PROPOSAL_LAST: OK
@@ -2413,7 +2992,7 @@ name for -1 present (should be absent)
          short_name 2: v2_PROPOSAL_NON_LAST OK
          jam_enum_short 2: v2_PROPOSAL_NON_LAST OK
          jam_enum_human 2: v2-proposal-non-last OK
-  ikev2_last_transform_desc: [0..4)
+  ikev2_last_transform_desc: [0..3]
     0 -> v2_TRANSFORM_LAST
          jam_enum 0: v2_TRANSFORM_LAST OK
          match v2_TRANSFORM_LAST: OK
@@ -2426,7 +3005,638 @@ name for -1 present (should be absent)
          short_name 3: v2_TRANSFORM_NON_LAST OK
          jam_enum_short 3: v2_TRANSFORM_NON_LAST OK
          jam_enum_human 3: v2-transform-non-last OK
-  ikev2_notify_protocol_id_names: [0..4)
+  ikev2_notification_names: [1..40960]
+    1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
+         jam_names 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
+         match v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
+         short_name 1: UNSUPPORTED_CRITICAL_PAYLOAD OK
+         jam_names_short 1: UNSUPPORTED_CRITICAL_PAYLOAD OK
+         jam_names_human 1: unsupported-critical-payload OK
+         match UNSUPPORTED_CRITICAL_PAYLOAD [short]: OK
+    4 -> v2N_INVALID_IKE_SPI
+         jam_names 4: v2N_INVALID_IKE_SPI OK
+         match v2N_INVALID_IKE_SPI: OK
+         short_name 4: INVALID_IKE_SPI OK
+         jam_names_short 4: INVALID_IKE_SPI OK
+         jam_names_human 4: invalid-ike-spi OK
+         match INVALID_IKE_SPI [short]: OK
+    5 -> v2N_INVALID_MAJOR_VERSION
+         jam_names 5: v2N_INVALID_MAJOR_VERSION OK
+         match v2N_INVALID_MAJOR_VERSION: OK
+         short_name 5: INVALID_MAJOR_VERSION OK
+         jam_names_short 5: INVALID_MAJOR_VERSION OK
+         jam_names_human 5: invalid-major-version OK
+         match INVALID_MAJOR_VERSION [short]: OK
+    7 -> v2N_INVALID_SYNTAX
+         jam_names 7: v2N_INVALID_SYNTAX OK
+         match v2N_INVALID_SYNTAX: OK
+         short_name 7: INVALID_SYNTAX OK
+         jam_names_short 7: INVALID_SYNTAX OK
+         jam_names_human 7: invalid-syntax OK
+         match INVALID_SYNTAX [short]: OK
+    9 -> v2N_INVALID_MESSAGE_ID
+         jam_names 9: v2N_INVALID_MESSAGE_ID OK
+         match v2N_INVALID_MESSAGE_ID: OK
+         short_name 9: INVALID_MESSAGE_ID OK
+         jam_names_short 9: INVALID_MESSAGE_ID OK
+         jam_names_human 9: invalid-message-id OK
+         match INVALID_MESSAGE_ID [short]: OK
+   11 -> v2N_INVALID_SPI
+         jam_names 11: v2N_INVALID_SPI OK
+         match v2N_INVALID_SPI: OK
+         short_name 11: INVALID_SPI OK
+         jam_names_short 11: INVALID_SPI OK
+         jam_names_human 11: invalid-spi OK
+         match INVALID_SPI [short]: OK
+   14 -> v2N_NO_PROPOSAL_CHOSEN
+         jam_names 14: v2N_NO_PROPOSAL_CHOSEN OK
+         match v2N_NO_PROPOSAL_CHOSEN: OK
+         short_name 14: NO_PROPOSAL_CHOSEN OK
+         jam_names_short 14: NO_PROPOSAL_CHOSEN OK
+         jam_names_human 14: no-proposal-chosen OK
+         match NO_PROPOSAL_CHOSEN [short]: OK
+   17 -> v2N_INVALID_KE_PAYLOAD
+         jam_names 17: v2N_INVALID_KE_PAYLOAD OK
+         match v2N_INVALID_KE_PAYLOAD: OK
+         short_name 17: INVALID_KE_PAYLOAD OK
+         jam_names_short 17: INVALID_KE_PAYLOAD OK
+         jam_names_human 17: invalid-ke-payload OK
+         match INVALID_KE_PAYLOAD [short]: OK
+   24 -> v2N_AUTHENTICATION_FAILED
+         jam_names 24: v2N_AUTHENTICATION_FAILED OK
+         match v2N_AUTHENTICATION_FAILED: OK
+         short_name 24: AUTHENTICATION_FAILED OK
+         jam_names_short 24: AUTHENTICATION_FAILED OK
+         jam_names_human 24: authentication-failed OK
+         match AUTHENTICATION_FAILED [short]: OK
+   34 -> v2N_SINGLE_PAIR_REQUIRED
+         jam_names 34: v2N_SINGLE_PAIR_REQUIRED OK
+         match v2N_SINGLE_PAIR_REQUIRED: OK
+         short_name 34: SINGLE_PAIR_REQUIRED OK
+         jam_names_short 34: SINGLE_PAIR_REQUIRED OK
+         jam_names_human 34: single-pair-required OK
+         match SINGLE_PAIR_REQUIRED [short]: OK
+   35 -> v2N_NO_ADDITIONAL_SAS
+         jam_names 35: v2N_NO_ADDITIONAL_SAS OK
+         match v2N_NO_ADDITIONAL_SAS: OK
+         short_name 35: NO_ADDITIONAL_SAS OK
+         jam_names_short 35: NO_ADDITIONAL_SAS OK
+         jam_names_human 35: no-additional-sas OK
+         match NO_ADDITIONAL_SAS [short]: OK
+   36 -> v2N_INTERNAL_ADDRESS_FAILURE
+         jam_names 36: v2N_INTERNAL_ADDRESS_FAILURE OK
+         match v2N_INTERNAL_ADDRESS_FAILURE: OK
+         short_name 36: INTERNAL_ADDRESS_FAILURE OK
+         jam_names_short 36: INTERNAL_ADDRESS_FAILURE OK
+         jam_names_human 36: internal-address-failure OK
+         match INTERNAL_ADDRESS_FAILURE [short]: OK
+   37 -> v2N_FAILED_CP_REQUIRED
+         jam_names 37: v2N_FAILED_CP_REQUIRED OK
+         match v2N_FAILED_CP_REQUIRED: OK
+         short_name 37: FAILED_CP_REQUIRED OK
+         jam_names_short 37: FAILED_CP_REQUIRED OK
+         jam_names_human 37: failed-cp-required OK
+         match FAILED_CP_REQUIRED [short]: OK
+   38 -> v2N_TS_UNACCEPTABLE
+         jam_names 38: v2N_TS_UNACCEPTABLE OK
+         match v2N_TS_UNACCEPTABLE: OK
+         short_name 38: TS_UNACCEPTABLE OK
+         jam_names_short 38: TS_UNACCEPTABLE OK
+         jam_names_human 38: ts-unacceptable OK
+         match TS_UNACCEPTABLE [short]: OK
+   39 -> v2N_INVALID_SELECTORS
+         jam_names 39: v2N_INVALID_SELECTORS OK
+         match v2N_INVALID_SELECTORS: OK
+         short_name 39: INVALID_SELECTORS OK
+         jam_names_short 39: INVALID_SELECTORS OK
+         jam_names_human 39: invalid-selectors OK
+         match INVALID_SELECTORS [short]: OK
+   40 -> v2N_UNACCEPTABLE_ADDRESSES
+         jam_names 40: v2N_UNACCEPTABLE_ADDRESSES OK
+         match v2N_UNACCEPTABLE_ADDRESSES: OK
+         short_name 40: UNACCEPTABLE_ADDRESSES OK
+         jam_names_short 40: UNACCEPTABLE_ADDRESSES OK
+         jam_names_human 40: unacceptable-addresses OK
+         match UNACCEPTABLE_ADDRESSES [short]: OK
+   41 -> v2N_UNEXPECTED_NAT_DETECTED
+         jam_names 41: v2N_UNEXPECTED_NAT_DETECTED OK
+         match v2N_UNEXPECTED_NAT_DETECTED: OK
+         short_name 41: UNEXPECTED_NAT_DETECTED OK
+         jam_names_short 41: UNEXPECTED_NAT_DETECTED OK
+         jam_names_human 41: unexpected-nat-detected OK
+         match UNEXPECTED_NAT_DETECTED [short]: OK
+   42 -> v2N_USE_ASSIGNED_HoA
+         jam_names 42: v2N_USE_ASSIGNED_HoA OK
+         match v2N_USE_ASSIGNED_HoA: OK
+         short_name 42: USE_ASSIGNED_HoA OK
+         jam_names_short 42: USE_ASSIGNED_HoA OK
+         jam_names_human 42: use-assigned-hoa OK
+         match USE_ASSIGNED_HoA [short]: OK
+   43 -> v2N_TEMPORARY_FAILURE
+         jam_names 43: v2N_TEMPORARY_FAILURE OK
+         match v2N_TEMPORARY_FAILURE: OK
+         short_name 43: TEMPORARY_FAILURE OK
+         jam_names_short 43: TEMPORARY_FAILURE OK
+         jam_names_human 43: temporary-failure OK
+         match TEMPORARY_FAILURE [short]: OK
+   44 -> v2N_CHILD_SA_NOT_FOUND
+         jam_names 44: v2N_CHILD_SA_NOT_FOUND OK
+         match v2N_CHILD_SA_NOT_FOUND: OK
+         short_name 44: CHILD_SA_NOT_FOUND OK
+         jam_names_short 44: CHILD_SA_NOT_FOUND OK
+         jam_names_human 44: child-sa-not-found OK
+         match CHILD_SA_NOT_FOUND [short]: OK
+   45 -> v2N_INVALID_GROUP_ID
+         jam_names 45: v2N_INVALID_GROUP_ID OK
+         match v2N_INVALID_GROUP_ID: OK
+         short_name 45: INVALID_GROUP_ID OK
+         jam_names_short 45: INVALID_GROUP_ID OK
+         jam_names_human 45: invalid-group-id OK
+         match INVALID_GROUP_ID [short]: OK
+   46 -> v2N_AUTHORIZATION_FAILED
+         jam_names 46: v2N_AUTHORIZATION_FAILED OK
+         match v2N_AUTHORIZATION_FAILED: OK
+         short_name 46: AUTHORIZATION_FAILED OK
+         jam_names_short 46: AUTHORIZATION_FAILED OK
+         jam_names_human 46: authorization-failed OK
+         match AUTHORIZATION_FAILED [short]: OK
+   47 -> v2N_STATE_NOT_FOUND
+         jam_names 47: v2N_STATE_NOT_FOUND OK
+         match v2N_STATE_NOT_FOUND: OK
+         short_name 47: STATE_NOT_FOUND OK
+         jam_names_short 47: STATE_NOT_FOUND OK
+         jam_names_human 47: state-not-found OK
+         match STATE_NOT_FOUND [short]: OK
+   48 -> v2N_TS_MAX_QUEUE
+         jam_names 48: v2N_TS_MAX_QUEUE OK
+         match v2N_TS_MAX_QUEUE: OK
+         short_name 48: TS_MAX_QUEUE OK
+         jam_names_short 48: TS_MAX_QUEUE OK
+         jam_names_human 48: ts-max-queue OK
+         match TS_MAX_QUEUE [short]: OK
+   49 -> v2N_REGISTRATION_FAILED
+         jam_names 49: v2N_REGISTRATION_FAILED OK
+         match v2N_REGISTRATION_FAILED: OK
+         short_name 49: REGISTRATION_FAILED OK
+         jam_names_short 49: REGISTRATION_FAILED OK
+         jam_names_human 49: registration-failed OK
+         match REGISTRATION_FAILED [short]: OK
+  16384 -> v2N_INITIAL_CONTACT
+         jam_names 16384: v2N_INITIAL_CONTACT OK
+         match v2N_INITIAL_CONTACT: OK
+         short_name 16384: INITIAL_CONTACT OK
+         jam_names_short 16384: INITIAL_CONTACT OK
+         jam_names_human 16384: initial-contact OK
+         match INITIAL_CONTACT [short]: OK
+  16385 -> v2N_SET_WINDOW_SIZE
+         jam_names 16385: v2N_SET_WINDOW_SIZE OK
+         match v2N_SET_WINDOW_SIZE: OK
+         short_name 16385: SET_WINDOW_SIZE OK
+         jam_names_short 16385: SET_WINDOW_SIZE OK
+         jam_names_human 16385: set-window-size OK
+         match SET_WINDOW_SIZE [short]: OK
+  16386 -> v2N_ADDITIONAL_TS_POSSIBLE
+         jam_names 16386: v2N_ADDITIONAL_TS_POSSIBLE OK
+         match v2N_ADDITIONAL_TS_POSSIBLE: OK
+         short_name 16386: ADDITIONAL_TS_POSSIBLE OK
+         jam_names_short 16386: ADDITIONAL_TS_POSSIBLE OK
+         jam_names_human 16386: additional-ts-possible OK
+         match ADDITIONAL_TS_POSSIBLE [short]: OK
+  16387 -> v2N_IPCOMP_SUPPORTED
+         jam_names 16387: v2N_IPCOMP_SUPPORTED OK
+         match v2N_IPCOMP_SUPPORTED: OK
+         short_name 16387: IPCOMP_SUPPORTED OK
+         jam_names_short 16387: IPCOMP_SUPPORTED OK
+         jam_names_human 16387: ipcomp-supported OK
+         match IPCOMP_SUPPORTED [short]: OK
+  16388 -> v2N_NAT_DETECTION_SOURCE_IP
+         jam_names 16388: v2N_NAT_DETECTION_SOURCE_IP OK
+         match v2N_NAT_DETECTION_SOURCE_IP: OK
+         short_name 16388: NAT_DETECTION_SOURCE_IP OK
+         jam_names_short 16388: NAT_DETECTION_SOURCE_IP OK
+         jam_names_human 16388: nat-detection-source-ip OK
+         match NAT_DETECTION_SOURCE_IP [short]: OK
+  16389 -> v2N_NAT_DETECTION_DESTINATION_IP
+         jam_names 16389: v2N_NAT_DETECTION_DESTINATION_IP OK
+         match v2N_NAT_DETECTION_DESTINATION_IP: OK
+         short_name 16389: NAT_DETECTION_DESTINATION_IP OK
+         jam_names_short 16389: NAT_DETECTION_DESTINATION_IP OK
+         jam_names_human 16389: nat-detection-destination-ip OK
+         match NAT_DETECTION_DESTINATION_IP [short]: OK
+  16390 -> v2N_COOKIE
+         jam_names 16390: v2N_COOKIE OK
+         match v2N_COOKIE: OK
+         short_name 16390: COOKIE OK
+         jam_names_short 16390: COOKIE OK
+         jam_names_human 16390: cookie OK
+         match COOKIE [short]: OK
+  16391 -> v2N_USE_TRANSPORT_MODE
+         jam_names 16391: v2N_USE_TRANSPORT_MODE OK
+         match v2N_USE_TRANSPORT_MODE: OK
+         short_name 16391: USE_TRANSPORT_MODE OK
+         jam_names_short 16391: USE_TRANSPORT_MODE OK
+         jam_names_human 16391: use-transport-mode OK
+         match USE_TRANSPORT_MODE [short]: OK
+  16392 -> v2N_HTTP_CERT_LOOKUP_SUPPORTED
+         jam_names 16392: v2N_HTTP_CERT_LOOKUP_SUPPORTED OK
+         match v2N_HTTP_CERT_LOOKUP_SUPPORTED: OK
+         short_name 16392: HTTP_CERT_LOOKUP_SUPPORTED OK
+         jam_names_short 16392: HTTP_CERT_LOOKUP_SUPPORTED OK
+         jam_names_human 16392: http-cert-lookup-supported OK
+         match HTTP_CERT_LOOKUP_SUPPORTED [short]: OK
+  16393 -> v2N_REKEY_SA
+         jam_names 16393: v2N_REKEY_SA OK
+         match v2N_REKEY_SA: OK
+         short_name 16393: REKEY_SA OK
+         jam_names_short 16393: REKEY_SA OK
+         jam_names_human 16393: rekey-sa OK
+         match REKEY_SA [short]: OK
+  16394 -> v2N_ESP_TFC_PADDING_NOT_SUPPORTED
+         jam_names 16394: v2N_ESP_TFC_PADDING_NOT_SUPPORTED OK
+         match v2N_ESP_TFC_PADDING_NOT_SUPPORTED: OK
+         short_name 16394: ESP_TFC_PADDING_NOT_SUPPORTED OK
+         jam_names_short 16394: ESP_TFC_PADDING_NOT_SUPPORTED OK
+         jam_names_human 16394: esp-tfc-padding-not-supported OK
+         match ESP_TFC_PADDING_NOT_SUPPORTED [short]: OK
+  16395 -> v2N_NON_FIRST_FRAGMENTS_ALSO
+         jam_names 16395: v2N_NON_FIRST_FRAGMENTS_ALSO OK
+         match v2N_NON_FIRST_FRAGMENTS_ALSO: OK
+         short_name 16395: NON_FIRST_FRAGMENTS_ALSO OK
+         jam_names_short 16395: NON_FIRST_FRAGMENTS_ALSO OK
+         jam_names_human 16395: non-first-fragments-also OK
+         match NON_FIRST_FRAGMENTS_ALSO [short]: OK
+  16396 -> v2N_MOBIKE_SUPPORTED
+         jam_names 16396: v2N_MOBIKE_SUPPORTED OK
+         match v2N_MOBIKE_SUPPORTED: OK
+         short_name 16396: MOBIKE_SUPPORTED OK
+         jam_names_short 16396: MOBIKE_SUPPORTED OK
+         jam_names_human 16396: mobike-supported OK
+         match MOBIKE_SUPPORTED [short]: OK
+  16397 -> v2N_ADDITIONAL_IP4_ADDRESS
+         jam_names 16397: v2N_ADDITIONAL_IP4_ADDRESS OK
+         match v2N_ADDITIONAL_IP4_ADDRESS: OK
+         short_name 16397: ADDITIONAL_IP4_ADDRESS OK
+         jam_names_short 16397: ADDITIONAL_IP4_ADDRESS OK
+         jam_names_human 16397: additional-ip4-address OK
+         match ADDITIONAL_IP4_ADDRESS [short]: OK
+  16398 -> v2N_ADDITIONAL_IP6_ADDRESS
+         jam_names 16398: v2N_ADDITIONAL_IP6_ADDRESS OK
+         match v2N_ADDITIONAL_IP6_ADDRESS: OK
+         short_name 16398: ADDITIONAL_IP6_ADDRESS OK
+         jam_names_short 16398: ADDITIONAL_IP6_ADDRESS OK
+         jam_names_human 16398: additional-ip6-address OK
+         match ADDITIONAL_IP6_ADDRESS [short]: OK
+  16399 -> v2N_NO_ADDITIONAL_ADDRESSES
+         jam_names 16399: v2N_NO_ADDITIONAL_ADDRESSES OK
+         match v2N_NO_ADDITIONAL_ADDRESSES: OK
+         short_name 16399: NO_ADDITIONAL_ADDRESSES OK
+         jam_names_short 16399: NO_ADDITIONAL_ADDRESSES OK
+         jam_names_human 16399: no-additional-addresses OK
+         match NO_ADDITIONAL_ADDRESSES [short]: OK
+  16400 -> v2N_UPDATE_SA_ADDRESSES
+         jam_names 16400: v2N_UPDATE_SA_ADDRESSES OK
+         match v2N_UPDATE_SA_ADDRESSES: OK
+         short_name 16400: UPDATE_SA_ADDRESSES OK
+         jam_names_short 16400: UPDATE_SA_ADDRESSES OK
+         jam_names_human 16400: update-sa-addresses OK
+         match UPDATE_SA_ADDRESSES [short]: OK
+  16401 -> v2N_COOKIE2
+         jam_names 16401: v2N_COOKIE2 OK
+         match v2N_COOKIE2: OK
+         short_name 16401: COOKIE2 OK
+         jam_names_short 16401: COOKIE2 OK
+         jam_names_human 16401: cookie2 OK
+         match COOKIE2 [short]: OK
+  16402 -> v2N_NO_NATS_ALLOWED
+         jam_names 16402: v2N_NO_NATS_ALLOWED OK
+         match v2N_NO_NATS_ALLOWED: OK
+         short_name 16402: NO_NATS_ALLOWED OK
+         jam_names_short 16402: NO_NATS_ALLOWED OK
+         jam_names_human 16402: no-nats-allowed OK
+         match NO_NATS_ALLOWED [short]: OK
+  16403 -> v2N_AUTH_LIFETIME
+         jam_names 16403: v2N_AUTH_LIFETIME OK
+         match v2N_AUTH_LIFETIME: OK
+         short_name 16403: AUTH_LIFETIME OK
+         jam_names_short 16403: AUTH_LIFETIME OK
+         jam_names_human 16403: auth-lifetime OK
+         match AUTH_LIFETIME [short]: OK
+  16404 -> v2N_MULTIPLE_AUTH_SUPPORTED
+         jam_names 16404: v2N_MULTIPLE_AUTH_SUPPORTED OK
+         match v2N_MULTIPLE_AUTH_SUPPORTED: OK
+         short_name 16404: MULTIPLE_AUTH_SUPPORTED OK
+         jam_names_short 16404: MULTIPLE_AUTH_SUPPORTED OK
+         jam_names_human 16404: multiple-auth-supported OK
+         match MULTIPLE_AUTH_SUPPORTED [short]: OK
+  16405 -> v2N_ANOTHER_AUTH_FOLLOWS
+         jam_names 16405: v2N_ANOTHER_AUTH_FOLLOWS OK
+         match v2N_ANOTHER_AUTH_FOLLOWS: OK
+         short_name 16405: ANOTHER_AUTH_FOLLOWS OK
+         jam_names_short 16405: ANOTHER_AUTH_FOLLOWS OK
+         jam_names_human 16405: another-auth-follows OK
+         match ANOTHER_AUTH_FOLLOWS [short]: OK
+  16406 -> v2N_REDIRECT_SUPPORTED
+         jam_names 16406: v2N_REDIRECT_SUPPORTED OK
+         match v2N_REDIRECT_SUPPORTED: OK
+         short_name 16406: REDIRECT_SUPPORTED OK
+         jam_names_short 16406: REDIRECT_SUPPORTED OK
+         jam_names_human 16406: redirect-supported OK
+         match REDIRECT_SUPPORTED [short]: OK
+  16407 -> v2N_REDIRECT
+         jam_names 16407: v2N_REDIRECT OK
+         match v2N_REDIRECT: OK
+         short_name 16407: REDIRECT OK
+         jam_names_short 16407: REDIRECT OK
+         jam_names_human 16407: redirect OK
+         match REDIRECT [short]: OK
+  16408 -> v2N_REDIRECTED_FROM
+         jam_names 16408: v2N_REDIRECTED_FROM OK
+         match v2N_REDIRECTED_FROM: OK
+         short_name 16408: REDIRECTED_FROM OK
+         jam_names_short 16408: REDIRECTED_FROM OK
+         jam_names_human 16408: redirected-from OK
+         match REDIRECTED_FROM [short]: OK
+  16409 -> v2N_TICKET_LT_OPAQUE
+         jam_names 16409: v2N_TICKET_LT_OPAQUE OK
+         match v2N_TICKET_LT_OPAQUE: OK
+         short_name 16409: TICKET_LT_OPAQUE OK
+         jam_names_short 16409: TICKET_LT_OPAQUE OK
+         jam_names_human 16409: ticket-lt-opaque OK
+         match TICKET_LT_OPAQUE [short]: OK
+  16410 -> v2N_TICKET_REQUEST
+         jam_names 16410: v2N_TICKET_REQUEST OK
+         match v2N_TICKET_REQUEST: OK
+         short_name 16410: TICKET_REQUEST OK
+         jam_names_short 16410: TICKET_REQUEST OK
+         jam_names_human 16410: ticket-request OK
+         match TICKET_REQUEST [short]: OK
+  16411 -> v2N_TICKET_ACK
+         jam_names 16411: v2N_TICKET_ACK OK
+         match v2N_TICKET_ACK: OK
+         short_name 16411: TICKET_ACK OK
+         jam_names_short 16411: TICKET_ACK OK
+         jam_names_human 16411: ticket-ack OK
+         match TICKET_ACK [short]: OK
+  16412 -> v2N_TICKET_NACK
+         jam_names 16412: v2N_TICKET_NACK OK
+         match v2N_TICKET_NACK: OK
+         short_name 16412: TICKET_NACK OK
+         jam_names_short 16412: TICKET_NACK OK
+         jam_names_human 16412: ticket-nack OK
+         match TICKET_NACK [short]: OK
+  16413 -> v2N_TICKET_OPAQUE
+         jam_names 16413: v2N_TICKET_OPAQUE OK
+         match v2N_TICKET_OPAQUE: OK
+         short_name 16413: TICKET_OPAQUE OK
+         jam_names_short 16413: TICKET_OPAQUE OK
+         jam_names_human 16413: ticket-opaque OK
+         match TICKET_OPAQUE [short]: OK
+  16414 -> v2N_LINK_ID
+         jam_names 16414: v2N_LINK_ID OK
+         match v2N_LINK_ID: OK
+         short_name 16414: LINK_ID OK
+         jam_names_short 16414: LINK_ID OK
+         jam_names_human 16414: link-id OK
+         match LINK_ID [short]: OK
+  16415 -> v2N_USE_WESP_MODE
+         jam_names 16415: v2N_USE_WESP_MODE OK
+         match v2N_USE_WESP_MODE: OK
+         short_name 16415: USE_WESP_MODE OK
+         jam_names_short 16415: USE_WESP_MODE OK
+         jam_names_human 16415: use-wesp-mode OK
+         match USE_WESP_MODE [short]: OK
+  16416 -> v2N_ROHC_SUPPORTED
+         jam_names 16416: v2N_ROHC_SUPPORTED OK
+         match v2N_ROHC_SUPPORTED: OK
+         short_name 16416: ROHC_SUPPORTED OK
+         jam_names_short 16416: ROHC_SUPPORTED OK
+         jam_names_human 16416: rohc-supported OK
+         match ROHC_SUPPORTED [short]: OK
+  16417 -> v2N_EAP_ONLY_AUTHENTICATION
+         jam_names 16417: v2N_EAP_ONLY_AUTHENTICATION OK
+         match v2N_EAP_ONLY_AUTHENTICATION: OK
+         short_name 16417: EAP_ONLY_AUTHENTICATION OK
+         jam_names_short 16417: EAP_ONLY_AUTHENTICATION OK
+         jam_names_human 16417: eap-only-authentication OK
+         match EAP_ONLY_AUTHENTICATION [short]: OK
+  16418 -> v2N_CHILDLESS_IKEV2_SUPPORTED
+         jam_names 16418: v2N_CHILDLESS_IKEV2_SUPPORTED OK
+         match v2N_CHILDLESS_IKEV2_SUPPORTED: OK
+         short_name 16418: CHILDLESS_IKEV2_SUPPORTED OK
+         jam_names_short 16418: CHILDLESS_IKEV2_SUPPORTED OK
+         jam_names_human 16418: childless-ikev2-supported OK
+         match CHILDLESS_IKEV2_SUPPORTED [short]: OK
+  16419 -> v2N_QUICK_CRASH_DETECTION
+         jam_names 16419: v2N_QUICK_CRASH_DETECTION OK
+         match v2N_QUICK_CRASH_DETECTION: OK
+         short_name 16419: QUICK_CRASH_DETECTION OK
+         jam_names_short 16419: QUICK_CRASH_DETECTION OK
+         jam_names_human 16419: quick-crash-detection OK
+         match QUICK_CRASH_DETECTION [short]: OK
+  16420 -> v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED
+         jam_names 16420: v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         match v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED: OK
+         short_name 16420: IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         jam_names_short 16420: IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         jam_names_human 16420: ikev2-message-id-sync-supported OK
+         match IKEV2_MESSAGE_ID_SYNC_SUPPORTED [short]: OK
+  16421 -> v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED
+         jam_names 16421: v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         match v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED: OK
+         short_name 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         jam_names_short 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         jam_names_human X: ipsec-replay-counter-sync-supported OK
+         match IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED [short]: OK
+  16422 -> v2N_IKEV2_MESSAGE_ID_SYNC
+         jam_names 16422: v2N_IKEV2_MESSAGE_ID_SYNC OK
+         match v2N_IKEV2_MESSAGE_ID_SYNC: OK
+         short_name 16422: IKEV2_MESSAGE_ID_SYNC OK
+         jam_names_short 16422: IKEV2_MESSAGE_ID_SYNC OK
+         jam_names_human 16422: ikev2-message-id-sync OK
+         match IKEV2_MESSAGE_ID_SYNC [short]: OK
+  16423 -> v2N_IPSEC_REPLAY_COUNTER_SYNC
+         jam_names 16423: v2N_IPSEC_REPLAY_COUNTER_SYNC OK
+         match v2N_IPSEC_REPLAY_COUNTER_SYNC: OK
+         short_name 16423: IPSEC_REPLAY_COUNTER_SYNC OK
+         jam_names_short 16423: IPSEC_REPLAY_COUNTER_SYNC OK
+         jam_names_human X: ipsec-replay-counter-sync OK
+         match IPSEC_REPLAY_COUNTER_SYNC [short]: OK
+  16424 -> v2N_SECURE_PASSWORD_METHODS
+         jam_names 16424: v2N_SECURE_PASSWORD_METHODS OK
+         match v2N_SECURE_PASSWORD_METHODS: OK
+         short_name 16424: SECURE_PASSWORD_METHODS OK
+         jam_names_short 16424: SECURE_PASSWORD_METHODS OK
+         jam_names_human 16424: secure-password-methods OK
+         match SECURE_PASSWORD_METHODS [short]: OK
+  16425 -> v2N_PSK_PERSIST
+         jam_names 16425: v2N_PSK_PERSIST OK
+         match v2N_PSK_PERSIST: OK
+         short_name 16425: PSK_PERSIST OK
+         jam_names_short 16425: PSK_PERSIST OK
+         jam_names_human 16425: psk-persist OK
+         match PSK_PERSIST [short]: OK
+  16426 -> v2N_PSK_CONFIRM
+         jam_names 16426: v2N_PSK_CONFIRM OK
+         match v2N_PSK_CONFIRM: OK
+         short_name 16426: PSK_CONFIRM OK
+         jam_names_short 16426: PSK_CONFIRM OK
+         jam_names_human 16426: psk-confirm OK
+         match PSK_CONFIRM [short]: OK
+  16427 -> v2N_ERX_SUPPORTED
+         jam_names 16427: v2N_ERX_SUPPORTED OK
+         match v2N_ERX_SUPPORTED: OK
+         short_name 16427: ERX_SUPPORTED OK
+         jam_names_short 16427: ERX_SUPPORTED OK
+         jam_names_human 16427: erx-supported OK
+         match ERX_SUPPORTED [short]: OK
+  16428 -> v2N_IFOM_CAPABILITY
+         jam_names 16428: v2N_IFOM_CAPABILITY OK
+         match v2N_IFOM_CAPABILITY: OK
+         short_name 16428: IFOM_CAPABILITY OK
+         jam_names_short 16428: IFOM_CAPABILITY OK
+         jam_names_human 16428: ifom-capability OK
+         match IFOM_CAPABILITY [short]: OK
+  16429 -> v2N_GROUP_SENDER
+         jam_names 16429: v2N_GROUP_SENDER OK
+         match v2N_GROUP_SENDER: OK
+         short_name 16429: GROUP_SENDER OK
+         jam_names_short 16429: GROUP_SENDER OK
+         jam_names_human 16429: group-sender OK
+         match GROUP_SENDER [short]: OK
+  16430 -> v2N_IKEV2_FRAGMENTATION_SUPPORTED
+         jam_names 16430: v2N_IKEV2_FRAGMENTATION_SUPPORTED OK
+         match v2N_IKEV2_FRAGMENTATION_SUPPORTED: OK
+         short_name 16430: IKEV2_FRAGMENTATION_SUPPORTED OK
+         jam_names_short 16430: IKEV2_FRAGMENTATION_SUPPORTED OK
+         jam_names_human 16430: ikev2-fragmentation-supported OK
+         match IKEV2_FRAGMENTATION_SUPPORTED [short]: OK
+  16431 -> v2N_SIGNATURE_HASH_ALGORITHMS
+         jam_names 16431: v2N_SIGNATURE_HASH_ALGORITHMS OK
+         match v2N_SIGNATURE_HASH_ALGORITHMS: OK
+         short_name 16431: SIGNATURE_HASH_ALGORITHMS OK
+         jam_names_short 16431: SIGNATURE_HASH_ALGORITHMS OK
+         jam_names_human 16431: signature-hash-algorithms OK
+         match SIGNATURE_HASH_ALGORITHMS [short]: OK
+  16432 -> v2N_CLONE_IKE_SA_SUPPORTED
+         jam_names 16432: v2N_CLONE_IKE_SA_SUPPORTED OK
+         match v2N_CLONE_IKE_SA_SUPPORTED: OK
+         short_name 16432: CLONE_IKE_SA_SUPPORTED OK
+         jam_names_short 16432: CLONE_IKE_SA_SUPPORTED OK
+         jam_names_human 16432: clone-ike-sa-supported OK
+         match CLONE_IKE_SA_SUPPORTED [short]: OK
+  16433 -> v2N_CLONE_IKE_SA
+         jam_names 16433: v2N_CLONE_IKE_SA OK
+         match v2N_CLONE_IKE_SA: OK
+         short_name 16433: CLONE_IKE_SA OK
+         jam_names_short 16433: CLONE_IKE_SA OK
+         jam_names_human 16433: clone-ike-sa OK
+         match CLONE_IKE_SA [short]: OK
+  16434 -> v2N_PUZZLE
+         jam_names 16434: v2N_PUZZLE OK
+         match v2N_PUZZLE: OK
+         short_name 16434: PUZZLE OK
+         jam_names_short 16434: PUZZLE OK
+         jam_names_human 16434: puzzle OK
+         match PUZZLE [short]: OK
+  16435 -> v2N_USE_PPK
+         jam_names 16435: v2N_USE_PPK OK
+         match v2N_USE_PPK: OK
+         short_name 16435: USE_PPK OK
+         jam_names_short 16435: USE_PPK OK
+         jam_names_human 16435: use-ppk OK
+         match USE_PPK [short]: OK
+  16436 -> v2N_PPK_IDENTITY
+         jam_names 16436: v2N_PPK_IDENTITY OK
+         match v2N_PPK_IDENTITY: OK
+         short_name 16436: PPK_IDENTITY OK
+         jam_names_short 16436: PPK_IDENTITY OK
+         jam_names_human 16436: ppk-identity OK
+         match PPK_IDENTITY [short]: OK
+  16437 -> v2N_NO_PPK_AUTH
+         jam_names 16437: v2N_NO_PPK_AUTH OK
+         match v2N_NO_PPK_AUTH: OK
+         short_name 16437: NO_PPK_AUTH OK
+         jam_names_short 16437: NO_PPK_AUTH OK
+         jam_names_human 16437: no-ppk-auth OK
+         match NO_PPK_AUTH [short]: OK
+  16438 -> v2N_INTERMEDIATE_EXCHANGE_SUPPORTED
+         jam_names 16438: v2N_INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         match v2N_INTERMEDIATE_EXCHANGE_SUPPORTED: OK
+         short_name 16438: INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         jam_names_short 16438: INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         jam_names_human 16438: intermediate-exchange-supported OK
+         match INTERMEDIATE_EXCHANGE_SUPPORTED [short]: OK
+  16439 -> v2N_IP4_ALLOWED
+         jam_names 16439: v2N_IP4_ALLOWED OK
+         match v2N_IP4_ALLOWED: OK
+         short_name 16439: IP4_ALLOWED OK
+         jam_names_short 16439: IP4_ALLOWED OK
+         jam_names_human 16439: ip4-allowed OK
+         match IP4_ALLOWED [short]: OK
+  16440 -> v2N_IP6_ALLOWED
+         jam_names 16440: v2N_IP6_ALLOWED OK
+         match v2N_IP6_ALLOWED: OK
+         short_name 16440: IP6_ALLOWED OK
+         jam_names_short 16440: IP6_ALLOWED OK
+         jam_names_human 16440: ip6-allowed OK
+         match IP6_ALLOWED [short]: OK
+  16441 -> v2N_ADDITIONAL_KEY_EXCHANGE
+         jam_names 16441: v2N_ADDITIONAL_KEY_EXCHANGE OK
+         match v2N_ADDITIONAL_KEY_EXCHANGE: OK
+         short_name 16441: ADDITIONAL_KEY_EXCHANGE OK
+         jam_names_short 16441: ADDITIONAL_KEY_EXCHANGE OK
+         jam_names_human 16441: additional-key-exchange OK
+         match ADDITIONAL_KEY_EXCHANGE [short]: OK
+  16442 -> v2N_USE_AGGFRAG
+         jam_names 16442: v2N_USE_AGGFRAG OK
+         match v2N_USE_AGGFRAG: OK
+         short_name 16442: USE_AGGFRAG OK
+         jam_names_short 16442: USE_AGGFRAG OK
+         jam_names_human 16442: use-aggfrag OK
+         match USE_AGGFRAG [short]: OK
+  16443 -> v2N_SUPPORTED_AUTH_METHODS
+         jam_names 16443: v2N_SUPPORTED_AUTH_METHODS OK
+         match v2N_SUPPORTED_AUTH_METHODS: OK
+         short_name 16443: SUPPORTED_AUTH_METHODS OK
+         jam_names_short 16443: SUPPORTED_AUTH_METHODS OK
+         jam_names_human 16443: supported-auth-methods OK
+         match SUPPORTED_AUTH_METHODS [short]: OK
+  16444 -> v2N_SA_RESOURCE_INFO
+         jam_names 16444: v2N_SA_RESOURCE_INFO OK
+         match v2N_SA_RESOURCE_INFO: OK
+         short_name 16444: SA_RESOURCE_INFO OK
+         jam_names_short 16444: SA_RESOURCE_INFO OK
+         jam_names_human 16444: sa-resource-info OK
+         match SA_RESOURCE_INFO [short]: OK
+  16445 -> v2N_USE_PPK_INT
+         jam_names 16445: v2N_USE_PPK_INT OK
+         match v2N_USE_PPK_INT: OK
+         short_name 16445: USE_PPK_INT OK
+         jam_names_short 16445: USE_PPK_INT OK
+         jam_names_human 16445: use-ppk-int OK
+         match USE_PPK_INT [short]: OK
+  16446 -> v2N_PPK_IDENTITY_KEY
+         jam_names 16446: v2N_PPK_IDENTITY_KEY OK
+         match v2N_PPK_IDENTITY_KEY: OK
+         short_name 16446: PPK_IDENTITY_KEY OK
+         jam_names_short 16446: PPK_IDENTITY_KEY OK
+         jam_names_human 16446: ppk-identity-key OK
+         match PPK_IDENTITY_KEY [short]: OK
+  16447 -> v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH
+         jam_names 16447: v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH OK
+         match v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH: OK
+         short_name 16447: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH OK
+         jam_names_short 16447: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH OK
+         jam_names_human 16447: ike-sa-init-full-transcript-auth OK
+         match IKE_SA_INIT_FULL_TRANSCRIPT_AUTH [short]: OK
+  40960 -> v2N_NULL_AUTH
+         jam_names 40960: v2N_NULL_AUTH OK
+         match v2N_NULL_AUTH: OK
+         short_name 40960: NULL_AUTH OK
+         jam_names_short 40960: NULL_AUTH OK
+         jam_names_human 40960: null-auth OK
+         match NULL_AUTH [short]: OK
+  ikev2_notify_protocol_id_names: [0..3]
     0 -> IKEv2_SEC_PROTO_NONE
          jam_enum 0: IKEv2_SEC_PROTO_NONE OK
          match IKEv2_SEC_PROTO_NONE: OK
@@ -2455,7 +3665,20 @@ name for -1 present (should be absent)
          jam_enum_short 3: ESP OK
          jam_enum_human 3: esp OK
          match ESP [short]: OK
-  ikev2_payload_names: [0..54)
+  ikev2_option_names: [1..2]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
+  ikev2_payload_names: [0..53]
     0 -> NEXT_PAYLOAD_v2NONE
          jam_enum 0: NEXT_PAYLOAD_v2NONE OK
          match NEXT_PAYLOAD_v2NONE: OK
@@ -2610,7 +3833,7 @@ name for -1 present (should be absent)
          jam_enum_short 53: SKF OK
          jam_enum_human 53: skf OK
          match SKF [short]: OK
-  ikev2_ppk_id_type_names: [1..3)
+  ikev2_ppk_id_type_names: [1..2]
     1 -> PPK_ID_OPAQUE
          jam_enum 1: PPK_ID_OPAQUE OK
          match PPK_ID_OPAQUE: OK
@@ -2625,7 +3848,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: FIXED OK
          jam_enum_human 2: fixed OK
          match FIXED [short]: OK
-  ikev2_proposal_protocol_id_names: [1..6)
+  ikev2_proposal_protocol_id_names: [1..5]
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
          match IKEv2_SEC_PROTO_IKE: OK
@@ -2659,7 +3882,7 @@ name for -1 present (should be absent)
          short_name 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_short 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_human 5: ikev2-sec-fc-ct-authentication OK
-  ikev2_redirect_gw_names: [1..4)
+  ikev2_redirect_gw_names: [1..3]
     1 -> GW_IPv4
          jam_enum 1: GW_IPv4 OK
          match GW_IPv4: OK
@@ -2681,14 +3904,14 @@ name for -1 present (should be absent)
          jam_enum_short 3: FQDN OK
          jam_enum_human 3: fqdn OK
          match FQDN [short]: OK
-  ikev2_trans_attr_descs: [32782..32783)
+  ikev2_trans_attr_descs: [32782..32782]
   32782 -> IKEv2_KEY_LENGTH
          jam_enum 32782: IKEv2_KEY_LENGTH OK
          match IKEv2_KEY_LENGTH: OK
          short_name 32782: IKEv2_KEY_LENGTH OK
          jam_enum_short 32782: IKEv2_KEY_LENGTH OK
          jam_enum_human 32782: ikev2-key-length OK
-  ikev2_trans_type_encr_names: [1..65290)
+  ikev2_trans_type_encr_names: [1..65289]
     1 -> IKEv2_ENCR_DES_IV64
          jam_enum 1: IKEv2_ENCR_DES_IV64 OK
          match IKEv2_ENCR_DES_IV64: OK
@@ -2934,7 +4157,7 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-  ikev2_trans_type_gcauth_names: [1..3)
+  ikev2_trans_type_gcauth_names: [1..2]
     1 -> IKEv2_GCAUTH_IMPLICIT
          jam_enum 1: IKEv2_GCAUTH_IMPLICIT OK
          match IKEv2_GCAUTH_IMPLICIT: OK
@@ -2949,7 +4172,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: DIGITAL_SIGNATURE OK
          jam_enum_human 2: digital-signature OK
          match DIGITAL_SIGNATURE [short]: OK
-  ikev2_trans_type_integ_names: [0..15)
+  ikev2_trans_type_integ_names: [0..14]
     0 -> IKEv2_INTEG_NONE
          jam_enum 0: IKEv2_INTEG_NONE OK
          match IKEv2_INTEG_NONE: OK
@@ -3055,7 +4278,7 @@ name for -1 present (should be absent)
          jam_enum_short 14: HMAC_SHA2_512_256 OK
          jam_enum_human 14: hmac-sha2-512-256 OK
          match HMAC_SHA2_512_256 [short]: OK
-  ikev2_trans_type_ke_names: [0..38)
+  ikev2_trans_type_ke_names: [0..37]
     0 -> IKEv2_KE_NONE
          jam_enum 0: IKEv2_KE_NONE OK
          match IKEv2_KE_NONE: OK
@@ -3322,7 +4545,7 @@ name for -1 present (should be absent)
          jam_enum_short 37: ML_KEM_1024 OK
          jam_enum_human 37: ml-kem-1024 OK
          match ML_KEM_1024 [short]: OK
-  ikev2_trans_type_kwa_names: [1..5)
+  ikev2_trans_type_kwa_names: [1..4]
     1 -> IKEv2_KWA_KW_5649_128
          jam_enum 1: IKEv2_KWA_KW_5649_128 OK
          match IKEv2_KWA_KW_5649_128: OK
@@ -3351,7 +4574,7 @@ name for -1 present (should be absent)
          jam_enum_short 4: KW_ARX OK
          jam_enum_human 4: kw-arx OK
          match KW_ARX [short]: OK
-  ikev2_trans_type_names: [1..15)
+  ikev2_trans_type_names: [1..14]
     1 -> IKEv2_TRANS_TYPE_ENCR
          jam_enum 1: IKEv2_TRANS_TYPE_ENCR OK
          match IKEv2_TRANS_TYPE_ENCR: OK
@@ -3450,7 +4673,7 @@ name for -1 present (should be absent)
          jam_enum_short 14: GCAUTH OK
          jam_enum_human 14: gcauth OK
          match GCAUTH [short]: OK
-  ikev2_trans_type_prf_names: [1..10)
+  ikev2_trans_type_prf_names: [1..9]
     1 -> IKEv2_PRF_HMAC_MD5
          jam_enum 1: IKEv2_PRF_HMAC_MD5 OK
          match IKEv2_PRF_HMAC_MD5: OK
@@ -3514,7 +4737,7 @@ name for -1 present (should be absent)
          jam_enum_short 9: HMAC_STREEBOG_512 OK
          jam_enum_human 9: hmac-streebog-512 OK
          match HMAC_STREEBOG_512 [short]: OK
-  ikev2_trans_type_sn_names: [0..3)
+  ikev2_trans_type_sn_names: [0..2]
     0 -> IKEv2_SN_32_BIT_SEQUENTIAL
          jam_enum 0: IKEv2_SN_32_BIT_SEQUENTIAL OK
          match IKEv2_SN_32_BIT_SEQUENTIAL: OK
@@ -3536,7 +4759,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: 32_BIT_UNSPECIFIED OK
          jam_enum_human 2: 32-bit-unspecified OK
          match 32_BIT_UNSPECIFIED [short]: OK
-  ikev2_ts_type_names: [7..11)
+  ikev2_ts_type_names: [7..10]
     7 -> IKEv2_TS_IPV4_ADDR_RANGE
          jam_enum 7: IKEv2_TS_IPV4_ADDR_RANGE OK
          match IKEv2_TS_IPV4_ADDR_RANGE: OK
@@ -3561,7 +4784,7 @@ name for -1 present (should be absent)
          short_name 10: IKEv2_TS_SECLABEL OK
          jam_enum_short 10: IKEv2_TS_SECLABEL OK
          jam_enum_human 10: ikev2-ts-seclabel OK
-  ike_version_names: [0..3)
+  ike_version_names: [0..2]
     0 -> <do-not-negotiate>
          jam_enum 0: <do-not-negotiate> OK
          match <do-not-negotiate>: OK
@@ -3582,7 +4805,36 @@ name for -1 present (should be absent)
          jam_enum_short 2: v2 OK
          jam_enum_human 2: v2 OK
          match v2 [short]: OK
-  initiated_by_names: [0..8)
+  impair_payload_names: [0..4]
+    0 -> IMPAIR_PAYLOAD_EMIT_NEVER
+         jam_names 0: IMPAIR_PAYLOAD_EMIT_NEVER OK
+         match IMPAIR_PAYLOAD_EMIT_NEVER: OK
+         short_name 0: EMIT_NEVER OK
+         jam_names_short 0: EMIT_NEVER OK
+         jam_names_human 0: emit-never OK
+         match EMIT_NEVER [short]: OK
+    2 -> IMPAIR_PAYLOAD_EMIT_EMPTY
+         jam_names 2: IMPAIR_PAYLOAD_EMIT_EMPTY OK
+         match IMPAIR_PAYLOAD_EMIT_EMPTY: OK
+         short_name 2: EMIT_EMPTY OK
+         jam_names_short 2: EMIT_EMPTY OK
+         jam_names_human 2: emit-empty OK
+         match EMIT_EMPTY [short]: OK
+    3 -> IMPAIR_PAYLOAD_EMIT_DUPLICATE
+         jam_names 3: IMPAIR_PAYLOAD_EMIT_DUPLICATE OK
+         match IMPAIR_PAYLOAD_EMIT_DUPLICATE: OK
+         short_name 3: EMIT_DUPLICATE OK
+         jam_names_short 3: EMIT_DUPLICATE OK
+         jam_names_human 3: emit-duplicate OK
+         match EMIT_DUPLICATE [short]: OK
+    4 -> IMPAIR_PAYLOAD_IGNORE
+         jam_names 4: IMPAIR_PAYLOAD_IGNORE OK
+         match IMPAIR_PAYLOAD_IGNORE: OK
+         short_name 4: IGNORE OK
+         jam_names_short 4: IGNORE OK
+         jam_names_human 4: ignore OK
+         match IGNORE [short]: OK
+  initiated_by_names: [0..7]
     0 -> INITIATED_BY_UNKNOWN
          jam_enum 0: INITIATED_BY_UNKNOWN OK
          match INITIATED_BY_UNKNOWN: OK
@@ -3639,7 +4891,7 @@ name for -1 present (should be absent)
          jam_enum_short 7: PEER OK
          jam_enum_human 7: peer OK
          match PEER [short]: OK
-  ip_protocol_id_names: [0..18)
+  ip_protocol_id_names: [0..17]
     0 -> ALL
          jam_enum 0: ALL OK
          match ALL: OK
@@ -3664,7 +4916,7 @@ name for -1 present (should be absent)
          short_name 17: UDP OK
          jam_enum_short 17: UDP OK
          jam_enum_human 17: udp OK
-  ipsec_attr_names: [2..64770)
+  ipsec_attr_names: [2..64769]
     2 -> SA_LIFE_DURATION (variable length)
          jam_enum 2: SA_LIFE_DURATION (variable length) OK
          match SA_LIFE_DURATION (variable length): OK
@@ -3779,7 +5031,7 @@ name for -1 present (should be absent)
          short_name 64769: SECCTX OK
          jam_enum_short 64769: SECCTX OK
          jam_enum_human 64769: secctx OK
-  ipsec_ipcomp_algo_names: [0..5)
+  ipsec_ipcomp_algo_names: [0..4]
     0 -> IPCOMP_NONE
          jam_enum 0: IPCOMP_NONE OK
          match IPCOMP_NONE: OK
@@ -3815,7 +5067,7 @@ name for -1 present (should be absent)
          jam_enum_short 4: LZJH OK
          jam_enum_human 4: lzjh OK
          match LZJH [short]: OK
-  ipseckey_algorithm_config_names: [2..6)
+  ipseckey_algorithm_config_names: [2..5]
     2 -> rsasigkey
          jam_enum 2: rsasigkey OK
          match rsasigkey: OK
@@ -3840,7 +5092,7 @@ name for -1 present (should be absent)
          short_name 5: pubkey OK
          jam_enum_short 5: pubkey OK
          jam_enum_human 5: pubkey OK
-  ipseckey_algorithm_type_names: [1..6)
+  ipseckey_algorithm_type_names: [1..5]
     1 -> IPSECKEY_ALGORITHM_DSA
          jam_enum 1: IPSECKEY_ALGORITHM_DSA OK
          match IPSECKEY_ALGORITHM_DSA: OK
@@ -3876,7 +5128,7 @@ name for -1 present (should be absent)
          jam_enum_short 5: X_PUBKEY OK
          jam_enum_human 5: x-pubkey OK
          match X_PUBKEY [short]: OK
-  isakmp_flag_names: [0..8)
+  isakmp_flag_names: [0..7]
     0 -> ISAKMP_FLAG_v1_ENCRYPTION
          jam_enum 0: ISAKMP_FLAG_v1_ENCRYPTION OK
          match ISAKMP_FLAG_v1_ENCRYPTION: OK
@@ -3925,14 +5177,14 @@ name for -1 present (should be absent)
          short_name 7: ISAKMP_FLAG_MSG_RESERVED_BIT7 OK
          jam_enum_short 7: ISAKMP_FLAG_MSG_RESERVED_BIT7 OK
          jam_enum_human 7: isakmp-flag-msg-reserved-bit7 OK
-  isakmp_transformid_names: [1..2)
+  isakmp_transformid_names: [1..1]
     1 -> KEY_IKE
          jam_enum 1: KEY_IKE OK
          match KEY_IKE: OK
          short_name 1: KEY_IKE OK
          jam_enum_short 1: KEY_IKE OK
          jam_enum_human 1: key-ike OK
-  isakmp_xchg_type_names: [0..45)
+  isakmp_xchg_type_names: [0..44]
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
          match ISAKMP_XCHG_NONE: OK
@@ -4057,7 +5309,7 @@ name for -1 present (should be absent)
          jam_enum_short 44: IKE_FOLLOWUP_KE OK
          jam_enum_human 44: ike-followup-ke OK
          match IKE_FOLLOWUP_KE [short]: OK
-  kernel_mode_names: [1..4)
+  kernel_mode_names: [1..3]
     1 -> KERNEL_MODE_TRANSPORT
          jam_enum 1: KERNEL_MODE_TRANSPORT OK
          match KERNEL_MODE_TRANSPORT: OK
@@ -4079,7 +5331,7 @@ name for -1 present (should be absent)
          jam_enum_short 3: IPTFS OK
          jam_enum_human 3: iptfs OK
          match IPTFS [short]: OK
-  kernel_mode_stories: [1..4)
+  kernel_mode_stories: [1..3]
     1 -> Transport Mode
          jam_enum 1: Transport Mode OK
          match Transport Mode: OK
@@ -4098,7 +5350,94 @@ name for -1 present (should be absent)
          short_name 3: IP-TFS Mode OK
          jam_enum_short 3: IP-TFS Mode OK
          jam_enum_human 3: ip-tfs mode OK
-  keyword_type_names: [0..7)
+  keyexchange_option_names: [1..3]
+    1 -> ikev1
+         jam_sparse 1: ikev1 OK
+         match ikev1: OK
+         short_name 1: ikev1 OK
+         jam_sparse_short 1: ikev1 OK
+         jam_sparse_human 1: ikev1 OK
+    2 -> ikev2
+         jam_sparse 2: ikev2 OK
+         match ikev2: OK
+         short_name 2: ikev2 OK
+         jam_sparse_short 2: ikev2 OK
+         jam_sparse_human 2: ikev2 OK
+    3 -> ike
+         jam_sparse 3: ike OK
+         match ike: OK
+         short_name 3: ike OK
+         jam_sparse_short 3: ike OK
+         jam_sparse_human 3: ike OK
+  keyword_host_names: [0..9]
+    0 -> <not-set>
+         jam_sparse 0: <not-set> OK
+         match <not-set>: OK
+         short_name 0: <not-set> OK
+         jam_sparse_short 0: <not-set> OK
+         jam_sparse_human 0: <not-set> OK
+    1 -> %defaultroute
+         jam_sparse 1: %defaultroute OK
+         match %defaultroute: OK
+         short_name 1: %defaultroute OK
+         jam_sparse_short 1: %defaultroute OK
+         jam_sparse_human 1: %defaultroute OK
+    2 -> %any
+         jam_sparse 2: %any OK
+         match %any: OK
+         short_name 2: %any OK
+         jam_sparse_short 2: %any OK
+         jam_sparse_human 2: %any OK
+    4 -> %oppo
+         jam_sparse 4: %oppo OK
+         match %oppo: OK
+         short_name 4: %oppo OK
+         jam_sparse_short 4: %oppo OK
+         jam_sparse_human 4: %oppo OK
+    5 -> %opportunisticgroup
+         jam_sparse 5: %opportunisticgroup OK
+         match %opportunisticgroup: OK
+         short_name 5: %opportunisticgroup OK
+         jam_sparse_short 5: %opportunisticgroup OK
+         jam_sparse_human 5: %opportunisticgroup OK
+    6 -> %group
+         jam_sparse 6: %group OK
+         match %group: OK
+         short_name 6: %group OK
+         jam_sparse_short 6: %group OK
+         jam_sparse_human 6: %group OK
+    7 -> <hostname>
+         jam_sparse 7: <hostname> OK
+         match <hostname>: OK
+         short_name 7: <hostname> OK
+         jam_sparse_short 7: <hostname> OK
+         jam_sparse_human 7: <hostname> OK
+    8 -> <address>
+         jam_sparse 8: <address> OK
+         match <address>: OK
+         short_name 8: <address> OK
+         jam_sparse_short 8: <address> OK
+         jam_sparse_human 8: <address> OK
+    9 -> %direct
+         jam_sparse 9: %direct OK
+         match %direct: OK
+         short_name 9: %direct OK
+         jam_sparse_short 9: %direct OK
+         jam_sparse_human 9: %direct OK
+  keyword_pubkey_names: [1..2]
+    1 -> %dns
+         jam_sparse 1: %dns OK
+         match %dns: OK
+         short_name 1: %dns OK
+         jam_sparse_short 1: %dns OK
+         jam_sparse_human 1: %dns OK
+    2 -> %cert
+         jam_sparse 2: %cert OK
+         match %cert: OK
+         short_name 2: %cert OK
+         jam_sparse_short 2: %cert OK
+         jam_sparse_human 2: %cert OK
+  keyword_type_names: [0..6]
     0 -> kt_string
          jam_enum 0: kt_string OK
          match kt_string: OK
@@ -4148,7 +5487,7 @@ name for -1 present (should be absent)
          jam_enum_short 6: obsolete OK
          jam_enum_human 6: obsolete OK
          match obsolete [short]: OK
-  message_role_names: [0..3)
+  message_role_names: [0..2]
     0 -> NO_MESSAGE
          jam_enum 0: NO_MESSAGE OK
          match NO_MESSAGE: OK
@@ -4169,7 +5508,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: RESPONSE OK
          jam_enum_human 2: response OK
          match RESPONSE [short]: OK
-  modecfg_attr_names: [1..28684)
+  modecfg_attr_names: [1..28683]
     1 -> INTERNAL_IP4_ADDRESS
          jam_enum 1: INTERNAL_IP4_ADDRESS OK
          match INTERNAL_IP4_ADDRESS: OK
@@ -4440,7 +5779,32 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
-  natt_method_names: [0..4)
+  nat_ikev1_method_option_names: [1..4]
+    1 -> both
+         jam_sparse 1: both OK
+         match both: OK
+         short_name 1: both OK
+         jam_sparse_short 1: both OK
+         jam_sparse_human 1: both OK
+    2 -> rfc
+         jam_sparse 2: rfc OK
+         match rfc: OK
+         short_name 2: rfc OK
+         jam_sparse_short 2: rfc OK
+         jam_sparse_human 2: rfc OK
+    3 -> drafts
+         jam_sparse 3: drafts OK
+         match drafts: OK
+         short_name 3: drafts OK
+         jam_sparse_short 3: drafts OK
+         jam_sparse_human 3: drafts OK
+    4 -> none
+         jam_sparse 4: none OK
+         match none: OK
+         short_name 4: none OK
+         jam_sparse_short 4: none OK
+         jam_sparse_human 4: none OK
+  natt_method_names: [0..3]
     0 -> none
          jam_enum 0: none OK
          match none: OK
@@ -4465,7 +5829,89 @@ name for -1 present (should be absent)
          short_name 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_short 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_human 3: rfc 3947 (nat-traversal) OK
-  oakley_attr_bit_names: [1..17)
+  negotiation_shunt_names: [4..1073741829]
+    4 -> pass
+         jam_sparse 4: pass OK
+         match pass: OK
+         short_name 4: pass OK
+         jam_sparse_short 4: pass OK
+         jam_sparse_human 4: pass OK
+    5 -> drop
+         jam_sparse 5: drop OK
+         match drop: OK
+         short_name 5: drop OK
+         jam_sparse_short 5: drop OK
+         jam_sparse_human 5: drop OK
+  1073741829 -> hold
+         jam_sparse 1073741829: hold OK
+         match hold: OK
+         short_name 1073741829: hold OK
+         jam_sparse_short 1073741829: hold OK
+         jam_sparse_human 1073741829: hold OK
+  never_negotiate_shunt_names: [4..1073741829]
+    4 -> pass
+         jam_sparse 4: pass OK
+         match pass: OK
+         short_name 4: pass OK
+         jam_sparse_short 4: pass OK
+         jam_sparse_human 4: pass OK
+    5 -> drop
+         jam_sparse 5: drop OK
+         match drop: OK
+         short_name 5: drop OK
+         jam_sparse_short 5: drop OK
+         jam_sparse_human 5: drop OK
+  1073741829 -> reject
+         jam_sparse 1073741829: reject OK
+         match reject: OK
+         short_name 1073741829: reject OK
+         jam_sparse_short 1073741829: reject OK
+         jam_sparse_human 1073741829: reject OK
+  nic_offload_option_names: [1..3]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> crypto
+         jam_sparse 2: crypto OK
+         match crypto: OK
+         short_name 2: crypto OK
+         jam_sparse_short 2: crypto OK
+         jam_sparse_human 2: crypto OK
+    3 -> packet
+         jam_sparse 3: packet OK
+         match packet: OK
+         short_name 3: packet OK
+         jam_sparse_short 3: packet OK
+         jam_sparse_human 3: packet OK
+  nppi_option_names: [1..4]
+    1 -> never
+         jam_sparse 1: never OK
+         match never: OK
+         short_name 1: never OK
+         jam_sparse_short 1: never OK
+         jam_sparse_human 1: never OK
+    2 -> permit
+         jam_sparse 2: permit OK
+         match permit: OK
+         short_name 2: permit OK
+         jam_sparse_short 2: permit OK
+         jam_sparse_human 2: permit OK
+    3 -> propose
+         jam_sparse 3: propose OK
+         match propose: OK
+         short_name 3: propose OK
+         jam_sparse_short 3: propose OK
+         jam_sparse_human 3: propose OK
+    4 -> insist
+         jam_sparse 4: insist OK
+         match insist: OK
+         short_name 4: insist OK
+         jam_sparse_short 4: insist OK
+         jam_sparse_human 4: insist OK
+  oakley_attr_bit_names: [1..16]
     1 -> OAKLEY_ENCRYPTION_ALGORITHM
          jam_enum 1: OAKLEY_ENCRYPTION_ALGORITHM OK
          match OAKLEY_ENCRYPTION_ALGORITHM: OK
@@ -4562,7 +6008,7 @@ name for -1 present (should be absent)
          short_name 16: OAKLEY_GROUP_ORDER OK
          jam_enum_short 16: OAKLEY_GROUP_ORDER OK
          jam_enum_human 16: oakley-group-order OK
-  oakley_attr_names: [6..32785)
+  oakley_attr_names: [6..32784]
     6 -> OAKLEY_GROUP_PRIME (variable length)
          jam_enum 6: OAKLEY_GROUP_PRIME (variable length) OK
          match OAKLEY_GROUP_PRIME (variable length): OK
@@ -4701,7 +6147,7 @@ name for -1 present (should be absent)
          short_name 32784: OAKLEY_GROUP_ORDER OK
          jam_enum_short 32784: OAKLEY_GROUP_ORDER OK
          jam_enum_human 32784: oakley-group-order OK
-  oakley_auth_names: [1..65011)
+  oakley_auth_names: [1..65010]
     1 -> OAKLEY_PRESHARED_KEY
          jam_enum 1: OAKLEY_PRESHARED_KEY OK
          match OAKLEY_PRESHARED_KEY: OK
@@ -4842,7 +6288,7 @@ name for -1 present (should be absent)
          short_name 65010: XAUTHRespRSARevisedEncryption OK
          jam_enum_short 65010: XAUTHRespRSARevisedEncryption OK
          jam_enum_human 65010: xauthresprsarevisedencryption OK
-  oakley_enc_names: [1..65290)
+  oakley_enc_names: [1..65289]
     1 -> OAKLEY_DES_CBC
          jam_enum 1: OAKLEY_DES_CBC OK
          match OAKLEY_DES_CBC: OK
@@ -5011,7 +6457,7 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-  oakley_group_names: [1..33)
+  oakley_group_names: [1..32]
     1 -> OAKLEY_GROUP_MODP768
          jam_enum 1: OAKLEY_GROUP_MODP768 OK
          match OAKLEY_GROUP_MODP768: OK
@@ -5236,7 +6682,7 @@ name for -1 present (should be absent)
          jam_enum_short 32: CURVE448 OK
          jam_enum_human 32: curve448 OK
          match CURVE448 [short]: OK
-  oakley_hash_names: [1..7)
+  oakley_hash_names: [1..6]
     1 -> OAKLEY_MD5
          jam_enum 1: OAKLEY_MD5 OK
          match OAKLEY_MD5: OK
@@ -5279,7 +6725,7 @@ name for -1 present (should be absent)
          jam_enum_short 6: SHA2_512 OK
          jam_enum_human 6: sha2-512 OK
          match SHA2_512 [short]: OK
-  oakley_lifetime_names: [1..3)
+  oakley_lifetime_names: [1..2]
     1 -> OAKLEY_LIFE_SECONDS
          jam_enum 1: OAKLEY_LIFE_SECONDS OK
          match OAKLEY_LIFE_SECONDS: OK
@@ -5292,7 +6738,20 @@ name for -1 present (should be absent)
          short_name 2: OAKLEY_LIFE_KILOBYTES OK
          jam_enum_short 2: OAKLEY_LIFE_KILOBYTES OK
          jam_enum_human 2: oakley-life-kilobytes OK
-  payload_names_ikev1orv2: [0..133)
+  ocsp_method_names: [1..2]
+    1 -> get
+         jam_sparse 1: get OK
+         match get: OK
+         short_name 1: get OK
+         jam_sparse_short 1: get OK
+         jam_sparse_human 1: get OK
+    2 -> post
+         jam_sparse 2: post OK
+         match post: OK
+         short_name 2: post OK
+         jam_sparse_short 2: post OK
+         jam_sparse_human 2: post OK
+  payload_names_ikev1orv2: [0..132]
     0 -> ISAKMP_NEXT_NONE
          jam_enum 0: ISAKMP_NEXT_NONE OK
          match ISAKMP_NEXT_NONE: OK
@@ -5578,7 +7037,7 @@ name for -1 present (should be absent)
          jam_enum_short 132: IKE_FRAGMENTATION OK
          jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
-  perspective_names: [0..3)
+  perspective_names: [0..2]
     0 -> NO_PERSPECTIVE
          jam_enum 0: NO_PERSPECTIVE OK
          match NO_PERSPECTIVE: OK
@@ -5597,7 +7056,7 @@ name for -1 present (should be absent)
          short_name 2: REMOTE_PERSPECTIVE OK
          jam_enum_short 2: REMOTE_PERSPECTIVE OK
          jam_enum_human 2: remote-perspective OK
-  pluto_exit_code_names: [0..128)
+  pluto_exit_code_names: [0..127]
     0 -> PLUTO_EXIT_OK
          jam_enum 0: PLUTO_EXIT_OK OK
          match PLUTO_EXIT_OK: OK
@@ -5703,7 +7162,7 @@ name for -1 present (should be absent)
          jam_enum_short 127: SHELL_COMMAND_NOT_EXECUTABLE OK
          jam_enum_human 127: shell-command-not-executable OK
          match SHELL_COMMAND_NOT_EXECUTABLE [short]: OK
-  proposal_transform_names: [1..13)
+  proposal_transform_names: [1..12]
     1 -> PROPOSAL_TRANSFORM_encrypt
          jam_enum 1: PROPOSAL_TRANSFORM_encrypt OK
          match PROPOSAL_TRANSFORM_encrypt: OK
@@ -5788,7 +7247,151 @@ name for -1 present (should be absent)
          jam_enum_short 12: addke7 OK
          jam_enum_human 12: addke7 OK
          match addke7 [short]: OK
-  sa_kind_names: [0..2)
+  psk_auth_method_names: [1..2]
+    1 -> PSK_AUTH_NULL
+         jam_names 1: PSK_AUTH_NULL OK
+         match PSK_AUTH_NULL: OK
+         short_name 1: NULL OK
+         jam_names_short 1: NULL OK
+         jam_names_human 1: null OK
+         match NULL [short]: OK
+    2 -> PSK_AUTH_SHARED_KEY
+         jam_names 2: PSK_AUTH_SHARED_KEY OK
+         match PSK_AUTH_SHARED_KEY: OK
+         short_name 2: SHARED_KEY OK
+         jam_names_short 2: SHARED_KEY OK
+         jam_names_human 2: shared-key OK
+         match SHARED_KEY [short]: OK
+  psk_auth_method_stories: [1..2]
+    1 -> null
+         jam_names 1: null OK
+         match null: OK
+         short_name 1: null OK
+         jam_names_short 1: null OK
+         jam_names_human 1: null OK
+    2 -> secret
+         jam_names 2: secret OK
+         match secret: OK
+         short_name 2: secret OK
+         jam_names_short 2: secret OK
+         jam_names_human 2: secret OK
+  remote_peer_type_names: [1..2]
+    1 -> ietf
+         jam_sparse 1: ietf OK
+         match ietf: OK
+         short_name 1: ietf OK
+         jam_sparse_short 1: ietf OK
+         jam_sparse_human 1: ietf OK
+    2 -> cisco
+         jam_sparse 2: cisco OK
+         match cisco: OK
+         short_name 2: cisco OK
+         jam_sparse_short 2: cisco OK
+         jam_sparse_human 2: cisco OK
+  rtm_type_names: [16..123]
+   16 -> RTM_NEWLINK
+         jam_names 16: RTM_NEWLINK OK
+         match RTM_NEWLINK: OK
+         short_name 16: RTM_NEWLINK OK
+         jam_names_short 16: RTM_NEWLINK OK
+         jam_names_human 16: rtm-newlink OK
+   17 -> RTM_DELLINK
+         jam_names 17: RTM_DELLINK OK
+         match RTM_DELLINK: OK
+         short_name 17: RTM_DELLINK OK
+         jam_names_short 17: RTM_DELLINK OK
+         jam_names_human 17: rtm-dellink OK
+   18 -> RTM_GETLINK
+         jam_names 18: RTM_GETLINK OK
+         match RTM_GETLINK: OK
+         short_name 18: RTM_GETLINK OK
+         jam_names_short 18: RTM_GETLINK OK
+         jam_names_human 18: rtm-getlink OK
+   19 -> RTM_SETLINK
+         jam_names 19: RTM_SETLINK OK
+         match RTM_SETLINK: OK
+         short_name 19: RTM_SETLINK OK
+         jam_names_short 19: RTM_SETLINK OK
+         jam_names_human 19: rtm-setlink OK
+   20 -> RTM_NEWADDR
+         jam_names 20: RTM_NEWADDR OK
+         match RTM_NEWADDR: OK
+         short_name 20: RTM_NEWADDR OK
+         jam_names_short 20: RTM_NEWADDR OK
+         jam_names_human 20: rtm-newaddr OK
+   21 -> RTM_DELADDR
+         jam_names 21: RTM_DELADDR OK
+         match RTM_DELADDR: OK
+         short_name 21: RTM_DELADDR OK
+         jam_names_short 21: RTM_DELADDR OK
+         jam_names_human 21: rtm-deladdr OK
+   22 -> RTM_GETADDR
+         jam_names 22: RTM_GETADDR OK
+         match RTM_GETADDR: OK
+         short_name 22: RTM_GETADDR OK
+         jam_names_short 22: RTM_GETADDR OK
+         jam_names_human 22: rtm-getaddr OK
+   24 -> RTM_NEWROUTE
+         jam_names 24: RTM_NEWROUTE OK
+         match RTM_NEWROUTE: OK
+         short_name 24: RTM_NEWROUTE OK
+         jam_names_short 24: RTM_NEWROUTE OK
+         jam_names_human 24: rtm-newroute OK
+   25 -> RTM_DELROUTE
+         jam_names 25: RTM_DELROUTE OK
+         match RTM_DELROUTE: OK
+         short_name 25: RTM_DELROUTE OK
+         jam_names_short 25: RTM_DELROUTE OK
+         jam_names_human 25: rtm-delroute OK
+   26 -> RTM_GETROUTE
+         jam_names 26: RTM_GETROUTE OK
+         match RTM_GETROUTE: OK
+         short_name 26: RTM_GETROUTE OK
+         jam_names_short 26: RTM_GETROUTE OK
+         jam_names_human 26: rtm-getroute OK
+   28 -> RTM_NEWNEIGH
+         jam_names 28: RTM_NEWNEIGH OK
+         match RTM_NEWNEIGH: OK
+         short_name 28: RTM_NEWNEIGH OK
+         jam_names_short 28: RTM_NEWNEIGH OK
+         jam_names_human 28: rtm-newneigh OK
+   29 -> RTM_DELNEIGH
+         jam_names 29: RTM_DELNEIGH OK
+         match RTM_DELNEIGH: OK
+         short_name 29: RTM_DELNEIGH OK
+         jam_names_short 29: RTM_DELNEIGH OK
+         jam_names_human 29: rtm-delneigh OK
+   30 -> RTM_GETNEIGH
+         jam_names 30: RTM_GETNEIGH OK
+         match RTM_GETNEIGH: OK
+         short_name 30: RTM_GETNEIGH OK
+         jam_names_short 30: RTM_GETNEIGH OK
+         jam_names_human 30: rtm-getneigh OK
+   32 -> RTM_NEWRULE
+         jam_names 32: RTM_NEWRULE OK
+         match RTM_NEWRULE: OK
+         short_name 32: RTM_NEWRULE OK
+         jam_names_short 32: RTM_NEWRULE OK
+         jam_names_human 32: rtm-newrule OK
+   33 -> RTM_DELRULE
+         jam_names 33: RTM_DELRULE OK
+         match RTM_DELRULE: OK
+         short_name 33: RTM_DELRULE OK
+         jam_names_short 33: RTM_DELRULE OK
+         jam_names_human 33: rtm-delrule OK
+   34 -> RTM_GETRULE
+         jam_names 34: RTM_GETRULE OK
+         match RTM_GETRULE: OK
+         short_name 34: RTM_GETRULE OK
+         jam_names_short 34: RTM_GETRULE OK
+         jam_names_human 34: rtm-getrule OK
+  123 -> RTM_MAX
+         jam_names 123: RTM_MAX OK
+         match RTM_MAX: OK
+         short_name 123: RTM_MAX OK
+         jam_names_short 123: RTM_MAX OK
+         jam_names_human 123: rtm-max OK
+  sa_kind_names: [0..1]
     0 -> IKE_SA
          jam_enum 0: IKE_SA OK
          match IKE_SA: OK
@@ -5801,7 +7404,7 @@ name for -1 present (should be absent)
          short_name 1: CHILD_SA OK
          jam_enum_short 1: CHILD_SA OK
          jam_enum_human 1: child-sa OK
-  sa_lifetime_names: [1..3)
+  sa_lifetime_names: [1..2]
     1 -> SA_LIFE_TYPE_SECONDS
          jam_enum 1: SA_LIFE_TYPE_SECONDS OK
          match SA_LIFE_TYPE_SECONDS: OK
@@ -5814,7 +7417,7 @@ name for -1 present (should be absent)
          short_name 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_short 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_human 2: sa-life-type-kbytes OK
-  sa_role_names: [1..3)
+  sa_role_names: [1..2]
     1 -> SA_INITIATOR
          jam_enum 1: SA_INITIATOR OK
          match SA_INITIATOR: OK
@@ -5829,7 +7432,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: RESPONDER OK
          jam_enum_human 2: responder OK
          match RESPONDER [short]: OK
-  sd_action_names: [1..7)
+  sd_action_names: [1..6]
     1 -> action: exit
          jam_enum 1: action: exit OK
          match action: exit: OK
@@ -5866,7 +7469,26 @@ name for -1 present (should be absent)
          short_name 6: action: stopping OK
          jam_enum_short 6: action: stopping OK
          jam_enum_human 6: action: stopping OK
-  secret_kind_names: [1..9)
+  seccomp_mode_names: [1..3]
+    1 -> enabled
+         jam_sparse 1: enabled OK
+         match enabled: OK
+         short_name 1: enabled OK
+         jam_sparse_short 1: enabled OK
+         jam_sparse_human 1: enabled OK
+    2 -> tolerant
+         jam_sparse 2: tolerant OK
+         match tolerant: OK
+         short_name 2: tolerant OK
+         jam_sparse_short 2: tolerant OK
+         jam_sparse_human 2: tolerant OK
+    3 -> disabled
+         jam_sparse 3: disabled OK
+         match disabled: OK
+         short_name 3: disabled OK
+         jam_sparse_short 3: disabled OK
+         jam_sparse_human 3: disabled OK
+  secret_kind_names: [1..8]
     1 -> SECRET_PSK
          jam_enum 1: SECRET_PSK OK
          match SECRET_PSK: OK
@@ -5923,7 +7545,7 @@ name for -1 present (should be absent)
          jam_enum_short 8: INVALID OK
          jam_enum_human 8: invalid OK
          match INVALID [short]: OK
-  send_ca_policy_names: [0..3)
+  send_ca_policy_names: [0..2]
     0 -> CA_SEND_NONE
          jam_enum 0: CA_SEND_NONE OK
          match CA_SEND_NONE: OK
@@ -5945,7 +7567,26 @@ name for -1 present (should be absent)
          jam_enum_short 2: ALL OK
          jam_enum_human 2: all OK
          match ALL [short]: OK
-  shunt_kind_names: [0..7)
+  sendcert_policy_names: [1..3]
+    1 -> never
+         jam_sparse 1: never OK
+         match never: OK
+         short_name 1: never OK
+         jam_sparse_short 1: never OK
+         jam_sparse_human 1: never OK
+    2 -> sendifasked
+         jam_sparse 2: sendifasked OK
+         match sendifasked: OK
+         short_name 2: sendifasked OK
+         jam_sparse_short 2: sendifasked OK
+         jam_sparse_human 2: sendifasked OK
+    3 -> always
+         jam_sparse 3: always OK
+         match always: OK
+         short_name 3: always OK
+         jam_sparse_short 3: always OK
+         jam_sparse_human 3: always OK
+  shunt_kind_names: [0..6]
     0 -> SHUNT_KIND_NONE
          jam_enum 0: SHUNT_KIND_NONE OK
          match SHUNT_KIND_NONE: OK
@@ -5995,7 +7636,7 @@ name for -1 present (should be absent)
          jam_enum_short 6: BLOCK OK
          jam_enum_human 6: block OK
          match BLOCK [short]: OK
-  shunt_policy_names: [0..6)
+  shunt_policy_names: [0..5]
     0 -> SHUNT_UNSET
          jam_enum 0: SHUNT_UNSET OK
          match SHUNT_UNSET: OK
@@ -6038,7 +7679,7 @@ name for -1 present (should be absent)
          jam_enum_short 5: DROP OK
          jam_enum_human 5: drop OK
          match DROP [short]: OK
-  sit_bit_names: [0..3)
+  sit_bit_names: [0..2]
     0 -> SIT_IDENTITY_ONLY
          jam_enum 0: SIT_IDENTITY_ONLY OK
          match SIT_IDENTITY_ONLY: OK
@@ -6057,7 +7698,7 @@ name for -1 present (should be absent)
          short_name 2: SIT_INTEGRITY OK
          jam_enum_short 2: SIT_INTEGRITY OK
          jam_enum_human 2: sit-integrity OK
-  state_category_names: [0..8)
+  state_category_names: [0..7]
     0 -> unknown
          jam_enum 0: unknown OK
          match unknown: OK
@@ -6106,7 +7747,7 @@ name for -1 present (should be absent)
          short_name 7: ignore OK
          jam_enum_short 7: ignore OK
          jam_enum_human 7: ignore OK
-  stf_status_names: [0..10)
+  stf_status_names: [0..9]
     0 -> STF_SKIP_COMPLETE_STATE_TRANSITION
          jam_enum 0: STF_SKIP_COMPLETE_STATE_TRANSITION OK
          match STF_SKIP_COMPLETE_STATE_TRANSITION: OK
@@ -6167,7 +7808,26 @@ name for -1 present (should be absent)
          short_name 9: STF_FAIL_v1N OK
          jam_enum_short 9: STF_FAIL_v1N OK
          jam_enum_human 9: stf-fail-v1n OK
-  terminate_reason_names: [0..10)
+  tcp_option_names: [1..3]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
+    3 -> fallback
+         jam_sparse 3: fallback OK
+         match fallback: OK
+         short_name 3: fallback OK
+         jam_sparse_short 3: fallback OK
+         jam_sparse_human 3: fallback OK
+  terminate_reason_names: [0..9]
     0 -> other
          jam_enum 0: other OK
          match other: OK
@@ -6228,7 +7888,38 @@ name for -1 present (should be absent)
          short_name 9: completed OK
          jam_enum_short 9: completed OK
          jam_enum_human 9: completed OK
-  v1_notification_names: [1..40504)
+  type_option_names: [1..1073741828]
+    1 -> tunnel
+         jam_sparse 1: tunnel OK
+         match tunnel: OK
+         short_name 1: tunnel OK
+         jam_sparse_short 1: tunnel OK
+         jam_sparse_human 1: tunnel OK
+    2 -> transport
+         jam_sparse 2: transport OK
+         match transport: OK
+         short_name 2: transport OK
+         jam_sparse_short 2: transport OK
+         jam_sparse_human 2: transport OK
+    3 -> pass
+         jam_sparse 3: pass OK
+         match pass: OK
+         short_name 3: pass OK
+         jam_sparse_short 3: pass OK
+         jam_sparse_human 3: pass OK
+    4 -> drop
+         jam_sparse 4: drop OK
+         match drop: OK
+         short_name 4: drop OK
+         jam_sparse_short 4: drop OK
+         jam_sparse_human 4: drop OK
+  1073741828 -> reject
+         jam_sparse 1073741828: reject OK
+         match reject: OK
+         short_name 1073741828: reject OK
+         jam_sparse_short 1073741828: reject OK
+         jam_sparse_human 1073741828: reject OK
+  v1_notification_names: [1..40503]
     1 -> v1N_INVALID_PAYLOAD_TYPE
          jam_enum 1: v1N_INVALID_PAYLOAD_TYPE OK
          match v1N_INVALID_PAYLOAD_TYPE: OK
@@ -6544,7 +8235,7 @@ name for -1 present (should be absent)
          jam_enum_short 40503: ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
          jam_enum_human 40503: isakmp-n-cisco-preshared-key-hash OK
          match ISAKMP_N_CISCO_PRESHARED_KEY_HASH [short]: OK
-  v2_notification_names: [1..40961)
+  v2_notification_names: [1..40960]
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
          match v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
@@ -7175,7 +8866,7 @@ name for -1 present (should be absent)
          jam_enum_short 40960: NULL_AUTH OK
          jam_enum_human 40960: null-auth OK
          match NULL_AUTH [short]: OK
-  version_names: [16..33)
+  version_names: [16..32]
    16 -> ISAKMP Version 1.0 (rfc2407)
          jam_enum 16: ISAKMP Version 1.0 (rfc2407) OK
          match ISAKMP Version 1.0 (rfc2407): OK
@@ -7188,7 +8879,7 @@ name for -1 present (should be absent)
          short_name 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_short 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK
-  xauth_attr_names: [16520..28684)
+  xauth_attr_names: [16520..28683]
   16520 -> IKEv1_ATTR_XAUTH_TYPE
          jam_enum 16520: IKEv1_ATTR_XAUTH_TYPE OK
          match IKEv1_ATTR_XAUTH_TYPE: OK
@@ -7345,6 +9036,258 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
+  xauthby_names: [1..3]
+    1 -> file
+         jam_sparse 1: file OK
+         match file: OK
+         short_name 1: file OK
+         jam_sparse_short 1: file OK
+         jam_sparse_human 1: file OK
+    2 -> pam
+         jam_sparse 2: pam OK
+         match pam: OK
+         short_name 2: pam OK
+         jam_sparse_short 2: pam OK
+         jam_sparse_human 2: pam OK
+    3 -> alwaysok
+         jam_sparse 3: alwaysok OK
+         match alwaysok: OK
+         short_name 3: alwaysok OK
+         jam_sparse_short 3: alwaysok OK
+         jam_sparse_human 3: alwaysok OK
+  xauthfail_names: [1..2]
+    1 -> hard
+         jam_sparse 1: hard OK
+         match hard: OK
+         short_name 1: hard OK
+         jam_sparse_short 1: hard OK
+         jam_sparse_human 1: hard OK
+    2 -> soft
+         jam_sparse 2: soft OK
+         match soft: OK
+         short_name 2: soft OK
+         jam_sparse_short 2: soft OK
+         jam_sparse_human 2: soft OK
+  xfrm_policy_names: [0..2]
+    0 -> XFRM_POLICY_IN
+         jam_names 0: XFRM_POLICY_IN OK
+         match XFRM_POLICY_IN: OK
+         short_name 0: IN OK
+         jam_names_short 0: IN OK
+         jam_names_human 0: in OK
+         match IN [short]: OK
+    1 -> XFRM_POLICY_OUT
+         jam_names 1: XFRM_POLICY_OUT OK
+         match XFRM_POLICY_OUT: OK
+         short_name 1: OUT OK
+         jam_names_short 1: OUT OK
+         jam_names_human 1: out OK
+         match OUT [short]: OK
+    2 -> XFRM_POLICY_FWD
+         jam_names 2: XFRM_POLICY_FWD OK
+         match XFRM_POLICY_FWD: OK
+         short_name 2: FWD OK
+         jam_names_short 2: FWD OK
+         jam_names_human 2: fwd OK
+         match FWD [short]: OK
+  xfrm_type_names: [1..40]
+    1 -> NLMSG_NOOP
+         jam_names 1: NLMSG_NOOP OK
+         match NLMSG_NOOP: OK
+         short_name 1: NLMSG_NOOP OK
+         jam_names_short 1: NLMSG_NOOP OK
+         jam_names_human 1: nlmsg-noop OK
+    2 -> NLMSG_ERROR
+         jam_names 2: NLMSG_ERROR OK
+         match NLMSG_ERROR: OK
+         short_name 2: NLMSG_ERROR OK
+         jam_names_short 2: NLMSG_ERROR OK
+         jam_names_human 2: nlmsg-error OK
+    3 -> NLMSG_DONE
+         jam_names 3: NLMSG_DONE OK
+         match NLMSG_DONE: OK
+         short_name 3: NLMSG_DONE OK
+         jam_names_short 3: NLMSG_DONE OK
+         jam_names_human 3: nlmsg-done OK
+    4 -> NLMSG_OVERRUN
+         jam_names 4: NLMSG_OVERRUN OK
+         match NLMSG_OVERRUN: OK
+         short_name 4: NLMSG_OVERRUN OK
+         jam_names_short 4: NLMSG_OVERRUN OK
+         jam_names_human 4: nlmsg-overrun OK
+   16 -> XFRM_MSG_NEWSA
+         jam_names 16: XFRM_MSG_NEWSA OK
+         match XFRM_MSG_NEWSA: OK
+         short_name 16: XFRM_MSG_NEWSA OK
+         jam_names_short 16: XFRM_MSG_NEWSA OK
+         jam_names_human 16: xfrm-msg-newsa OK
+   17 -> XFRM_MSG_DELSA
+         jam_names 17: XFRM_MSG_DELSA OK
+         match XFRM_MSG_DELSA: OK
+         short_name 17: XFRM_MSG_DELSA OK
+         jam_names_short 17: XFRM_MSG_DELSA OK
+         jam_names_human 17: xfrm-msg-delsa OK
+   18 -> XFRM_MSG_GETSA
+         jam_names 18: XFRM_MSG_GETSA OK
+         match XFRM_MSG_GETSA: OK
+         short_name 18: XFRM_MSG_GETSA OK
+         jam_names_short 18: XFRM_MSG_GETSA OK
+         jam_names_human 18: xfrm-msg-getsa OK
+   19 -> XFRM_MSG_NEWPOLICY
+         jam_names 19: XFRM_MSG_NEWPOLICY OK
+         match XFRM_MSG_NEWPOLICY: OK
+         short_name 19: XFRM_MSG_NEWPOLICY OK
+         jam_names_short 19: XFRM_MSG_NEWPOLICY OK
+         jam_names_human 19: xfrm-msg-newpolicy OK
+   20 -> XFRM_MSG_DELPOLICY
+         jam_names 20: XFRM_MSG_DELPOLICY OK
+         match XFRM_MSG_DELPOLICY: OK
+         short_name 20: XFRM_MSG_DELPOLICY OK
+         jam_names_short 20: XFRM_MSG_DELPOLICY OK
+         jam_names_human 20: xfrm-msg-delpolicy OK
+   21 -> XFRM_MSG_GETPOLICY
+         jam_names 21: XFRM_MSG_GETPOLICY OK
+         match XFRM_MSG_GETPOLICY: OK
+         short_name 21: XFRM_MSG_GETPOLICY OK
+         jam_names_short 21: XFRM_MSG_GETPOLICY OK
+         jam_names_human 21: xfrm-msg-getpolicy OK
+   22 -> XFRM_MSG_ALLOCSPI
+         jam_names 22: XFRM_MSG_ALLOCSPI OK
+         match XFRM_MSG_ALLOCSPI: OK
+         short_name 22: XFRM_MSG_ALLOCSPI OK
+         jam_names_short 22: XFRM_MSG_ALLOCSPI OK
+         jam_names_human 22: xfrm-msg-allocspi OK
+   23 -> XFRM_MSG_ACQUIRE
+         jam_names 23: XFRM_MSG_ACQUIRE OK
+         match XFRM_MSG_ACQUIRE: OK
+         short_name 23: XFRM_MSG_ACQUIRE OK
+         jam_names_short 23: XFRM_MSG_ACQUIRE OK
+         jam_names_human 23: xfrm-msg-acquire OK
+   24 -> XFRM_MSG_EXPIRE
+         jam_names 24: XFRM_MSG_EXPIRE OK
+         match XFRM_MSG_EXPIRE: OK
+         short_name 24: XFRM_MSG_EXPIRE OK
+         jam_names_short 24: XFRM_MSG_EXPIRE OK
+         jam_names_human 24: xfrm-msg-expire OK
+   25 -> XFRM_MSG_UPDPOLICY
+         jam_names 25: XFRM_MSG_UPDPOLICY OK
+         match XFRM_MSG_UPDPOLICY: OK
+         short_name 25: XFRM_MSG_UPDPOLICY OK
+         jam_names_short 25: XFRM_MSG_UPDPOLICY OK
+         jam_names_human 25: xfrm-msg-updpolicy OK
+   26 -> XFRM_MSG_UPDSA
+         jam_names 26: XFRM_MSG_UPDSA OK
+         match XFRM_MSG_UPDSA: OK
+         short_name 26: XFRM_MSG_UPDSA OK
+         jam_names_short 26: XFRM_MSG_UPDSA OK
+         jam_names_human 26: xfrm-msg-updsa OK
+   27 -> XFRM_MSG_POLEXPIRE
+         jam_names 27: XFRM_MSG_POLEXPIRE OK
+         match XFRM_MSG_POLEXPIRE: OK
+         short_name 27: XFRM_MSG_POLEXPIRE OK
+         jam_names_short 27: XFRM_MSG_POLEXPIRE OK
+         jam_names_human 27: xfrm-msg-polexpire OK
+   28 -> XFRM_MSG_FLUSHSA
+         jam_names 28: XFRM_MSG_FLUSHSA OK
+         match XFRM_MSG_FLUSHSA: OK
+         short_name 28: XFRM_MSG_FLUSHSA OK
+         jam_names_short 28: XFRM_MSG_FLUSHSA OK
+         jam_names_human 28: xfrm-msg-flushsa OK
+   29 -> XFRM_MSG_FLUSHPOLICY
+         jam_names 29: XFRM_MSG_FLUSHPOLICY OK
+         match XFRM_MSG_FLUSHPOLICY: OK
+         short_name 29: XFRM_MSG_FLUSHPOLICY OK
+         jam_names_short 29: XFRM_MSG_FLUSHPOLICY OK
+         jam_names_human 29: xfrm-msg-flushpolicy OK
+   40 -> XFRM_MSG_MAX
+         jam_names 40: XFRM_MSG_MAX OK
+         match XFRM_MSG_MAX: OK
+         short_name 40: XFRM_MSG_MAX OK
+         jam_names_short 40: XFRM_MSG_MAX OK
+         jam_names_human 40: xfrm-msg-max OK
+  yna_option_names: [1..3]
+    1 -> auto
+         jam_sparse 1: auto OK
+         match auto: OK
+         short_name 1: auto OK
+         jam_sparse_short 1: auto OK
+         jam_sparse_human 1: auto OK
+    2 -> no
+         jam_sparse 2: no OK
+         match no: OK
+         short_name 2: no OK
+         jam_sparse_short 2: no OK
+         jam_sparse_human 2: no OK
+    3 -> yes
+         jam_sparse 3: yes OK
+         match yes: OK
+         short_name 3: yes OK
+         jam_sparse_short 3: yes OK
+         jam_sparse_human 3: yes OK
+  yne_option_names: [1..3]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
+    3 -> either
+         jam_sparse 3: either OK
+         match either: OK
+         short_name 3: either OK
+         jam_sparse_short 3: either OK
+         jam_sparse_human 3: either OK
+  ynf_option_names: [1..3]
+    1 -> yes
+         jam_sparse 1: yes OK
+         match yes: OK
+         short_name 1: yes OK
+         jam_sparse_short 1: yes OK
+         jam_sparse_human 1: yes OK
+    2 -> no
+         jam_sparse 2: no OK
+         match no: OK
+         short_name 2: no OK
+         jam_sparse_short 2: no OK
+         jam_sparse_human 2: no OK
+    3 -> force
+         jam_sparse 3: force OK
+         match force: OK
+         short_name 3: force OK
+         jam_sparse_short 3: force OK
+         jam_sparse_human 3: force OK
+  yn_option_names: [1..2]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
+  yn_text_option_names: [1..2]
+    1 -> no
+         jam_sparse 1: no OK
+         match no: OK
+         short_name 1: no OK
+         jam_sparse_short 1: no OK
+         jam_sparse_human 1: no OK
+    2 -> yes
+         jam_sparse 2: yes OK
+         match yes: OK
+         short_name 2: yes OK
+         jam_sparse_short 2: yes OK
+         jam_sparse_human 2: yes OK
 IKEv2 transforms:
          enum_enum_name 1 3: IKEv2_ENCR_3DES OK
          enum_name table 3: OK
@@ -7363,5 +9306,5 @@ IKEv2 transforms:
 jam_enum_lset_short:
   debug 44:
 	<<cpu-usage+crypt>>
-ipsec _enumcheck: leak detective found no leaks
+ipsec _namecheck: leak detective found no leaks
 west #
