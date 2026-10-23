@@ -19,6 +19,7 @@
 #include "names.h"
 #include "jambuf.h"
 #include "passert.h"
+#include "enum_names.h"
 
 void bad_name(unsigned long val, name_buf *b)
 {

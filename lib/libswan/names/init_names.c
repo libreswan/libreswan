@@ -18,6 +18,7 @@
 
 void init_names(void)
 {
+	check_names(&names_checklist);
 	check_enum_names(&enum_names_checklist);
 	check_enum_enum_names(&enum_enum_names_checklist);
 }

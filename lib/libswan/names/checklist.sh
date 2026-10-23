@@ -61,13 +61,13 @@ cat <<EOF
 EOF
 
 echo
-echo '#include "constants.h" /* for typedef ${names} */'
+echo '#include "names.h"'
 echo '#include "enum_names.h"'
 echo
 
 # gnerate a list of #includes so all declarations are visible
 
-grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
+grep -e "^extern const struct ${names} " "$@" | \
     cut -d: -f1 | \
     cut -d/ -f4- | \
     sort -u | \

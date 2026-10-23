@@ -289,6 +289,7 @@ $(builddir)/%/:
 $(OBJS): | $(builddir)/names/
 
 OBJS += names/init_names.o
+OBJS += names/check_names.o
 
 OBJS += names/sparse_names.o
 OBJS += names/enum_names.o
@@ -518,6 +519,14 @@ $(builddir)/%.c: %.in.c $(top_srcdir)/mk/version.mk
 
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*.h)
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
+
+OBJS += names_checklist.o
+names_checklist.o: $(builddir)/names_checklist.c
+
+$(builddir)/names_checklist.c: Makefile names/checklist.sh $(ENUM_INCLUDES)
+	rm -f $@.tmp
+	$(srcdir)/names/checklist.sh names $(ENUM_INCLUDES) >$@.tmp
+	mv $@.tmp $@
 
 OBJS += enum_names_checklist.o
 enum_names_checklist.o: $(builddir)/enum_names_checklist.c

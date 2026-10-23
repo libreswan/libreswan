@@ -212,6 +212,16 @@ enum name_flags {
 void bad_name(unsigned long val, name_buf *b);
 size_t jam_bad(struct jambuf *buf, const char *prefix, unsigned long val);
 
+extern const struct names_checklist {
+	unsigned len;
+	const struct names_check {
+		const char *name;
+		const struct names *names;
+	} *const data COUNTED_BY_PTR(len);
+} names_checklist;
+
+void check_names(const struct names_checklist *checklist);
+
 extern void init_names(void);
 
 #endif
