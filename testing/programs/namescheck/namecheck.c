@@ -28,7 +28,7 @@ struct clash {
 
 struct bounds {
 	long int floor;
-	long int roof;
+	long int ceiling;
 };
 
 static struct bounds name_bounds(const struct names *en)
@@ -37,11 +37,11 @@ static struct bounds name_bounds(const struct names *en)
 	long int first = next_name(en, -1);
 	struct bounds b = {
 		.floor = first,
-		.roof = first+1,
+		.ceiling = first,
 	};
 	for (int e = next_name(en, first);
 	     e >= 0; e = next_name(en, e)) {
-		b.roof = e+1;
+		b.ceiling = e;
 	}
 	return b;
 }
@@ -185,7 +185,7 @@ static void test_names(const char *kind,
 		       struct logger *logger)
 {
 	struct bounds b = name_bounds(names);
-	printf("  %s: [%ld..%ld)\n", name, b.floor, b.roof);
+	printf("  %s: [%ld..%ld]\n", name, b.floor, b.ceiling);
 
 	/* test those next_enum() returns */
 	int clashed = 0;
@@ -203,7 +203,7 @@ static void test_names(const char *kind,
 	}
 
 	test_name(kind, names, b.floor-1, ABSENT, NULL);
-	test_name(kind, names, b.roof, ABSENT, NULL);
+	test_name(kind, names, b.ceiling+1, ABSENT, NULL);
 
 	for (const struct clash *c = clashes; c != NULL && c->e >= 0; c++) {
 		clashed--;
@@ -253,27 +253,15 @@ static void test_enum_range(const char *name,
 		printf("(%ld)", floor);
 	}
 	printf("..");
-	printf("%ld", b.roof);
-	if (b.roof != roof) {
+	printf("%ld", b.ceiling);
+	if (b.ceiling+1 != roof) {
 		printf("(%ld)", roof);
 	}
-	printf(")\n");
+	printf("]\n");
 	for (int i = floor; i < roof; i++) {
 		test_name("enum", &names, i, OPTIONAL, NULL);
 	}
 	printf("\n");
-}
-
-static void test_enums(const char *name,
-		       const struct enum_names *enum_names,
-		       const struct clash *clashes,
-		       struct logger *logger)
-{
-	struct names names = {
-		.enum_names = enum_names,
-	};
-
-	test_names("enum", name, &names, clashes, logger);
 }
 
 static void test_enum_enum(const char *title,
@@ -377,10 +365,12 @@ int main(int argc UNUSED, char *argv[])
 
 	init_names();
 
-	DATA_FOR_EACH(c, &enum_names_checklist) {
-		if (c->enum_names == &encapsulation_mode_names) {
-			test_enum_range("encapsulation_mode_names", &encapsulation_mode_names, 0, 256);
-		} else if (c->enum_names == &event_type_names) {
+	DATA_FOR_EACH(c, &names_checklist) {
+		if (c->names->enum_names == &encapsulation_mode_names) {
+			test_enum_range("encapsulation_mode_names",
+					&encapsulation_mode_names,
+					0, 256);
+		} else if (c->names->enum_names == &event_type_names) {
 			static const struct clash clash[] = {
 				{ EVENT_v1_EXPIRE, EVENT_v2_EXPIRE, },
 				{ EVENT_v1_DISCARD, EVENT_v2_DISCARD, },
@@ -389,14 +379,10 @@ int main(int argc UNUSED, char *argv[])
 				{ EVENT_v1_NAT_KEEPALIVE, EVENT_v2_NAT_KEEPALIVE, },
 				{ -1, -1, },
 			};
-			test_enums("event_type_names", c->enum_names, clash, logger);
+			test_names(c->kind, c->name, c->names, clash, logger);
 		} else {
-			test_enums(c->name, c->enum_names, NULL, logger);
+			test_names(c->kind, c->name, c->names, NULL, logger);
 		}
-	}
-
-	DATA_FOR_EACH(c, &names_checklist) {
-		test_names("name", c->name, c->names, NULL, logger);
 	}
 
 	/*
