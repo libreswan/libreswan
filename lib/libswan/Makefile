@@ -288,6 +288,8 @@ $(builddir)/%/:
 
 $(OBJS): | $(builddir)/names/
 
+OBJS += names/init_names.o
+
 OBJS += names/sparse_names.o
 OBJS += names/enum_names.o
 OBJS += names/names.o

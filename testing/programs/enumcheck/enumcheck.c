@@ -352,7 +352,7 @@ int main(int argc UNUSED, char *argv[])
 	/* don't hold back */
 	setbuf(stdout, NULL);
 
-	init_enum_names();
+	init_names();
 
 	DATA_FOR_EACH(c, &enum_names_checklist) {
 		if (c->enum_names == &encapsulation_mode_names) {

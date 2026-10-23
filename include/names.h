@@ -212,4 +212,6 @@ enum name_flags {
 void bad_name(unsigned long val, name_buf *b);
 size_t jam_bad(struct jambuf *buf, const char *prefix, unsigned long val);
 
+extern void init_names(void);
+
 #endif

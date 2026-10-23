@@ -428,9 +428,3 @@ void check_enum_enum_names(const struct enum_enum_names_checklist *checklist)
 		enum_enum_table(c->enum_enum_names, -42UL);
 	}
 }
-
-void init_enum_names(void)
-{
-	check_enum_names(&enum_names_checklist);
-	check_enum_enum_names(&enum_enum_names_checklist);
-}
