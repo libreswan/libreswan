@@ -5365,6 +5365,21 @@ name for -1 present (should be absent)
          short_name 3: IP-TFS Mode OK
          jam_enum_short 3: IP-TFS Mode OK
          jam_enum_human 3: ip-tfs mode OK
+  kernel_policy_op_names: [1..2]
+    1 -> KERNEL_POLICY_OP_ADD
+         jam_names 1: KERNEL_POLICY_OP_ADD OK
+         match KERNEL_POLICY_OP_ADD: OK
+         short_name 1: ADD OK
+         jam_names_short 1: ADD OK
+         jam_names_human 1: add OK
+         match ADD [short]: OK
+    2 -> KERNEL_POLICY_OP_REPLACE
+         jam_names 2: KERNEL_POLICY_OP_REPLACE OK
+         match KERNEL_POLICY_OP_REPLACE: OK
+         short_name 2: REPLACE OK
+         jam_names_short 2: REPLACE OK
+         jam_names_human 2: replace OK
+         match REPLACE [short]: OK
   keyexchange_option_names: [1..3]
     1 -> ikev1
          jam_sparse 1: ikev1 OK
