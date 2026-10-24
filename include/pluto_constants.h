@@ -901,8 +901,6 @@ enum sa_expire_kind {
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
-extern void init_pluto_constants(void);
-
 /*
  * Maximum data (including IKE HDR) allowed in a packet.
  *
