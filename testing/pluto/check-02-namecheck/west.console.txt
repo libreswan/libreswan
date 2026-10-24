@@ -728,6 +728,21 @@ west #
          jam_enum_short 10: whackwatch OK
          jam_enum_human 10: whackwatch OK
          match whackwatch [short]: OK
+  direction_names: [2..4]
+    2 -> DIRECTION_INBOUND
+         jam_names 2: DIRECTION_INBOUND OK
+         match DIRECTION_INBOUND: OK
+         short_name 2: INBOUND OK
+         jam_names_short 2: INBOUND OK
+         jam_names_human 2: inbound OK
+         match INBOUND [short]: OK
+    4 -> DIRECTION_OUTBOUND
+         jam_names 4: DIRECTION_OUTBOUND OK
+         match DIRECTION_OUTBOUND: OK
+         short_name 4: OUTBOUND OK
+         jam_names_short 4: OUTBOUND OK
+         jam_names_human 4: outbound OK
+         match OUTBOUND [short]: OK
   dns_auth_level_names: [1..3]
     1 -> PUBKEY_LOCAL
          jam_enum 1: PUBKEY_LOCAL OK
