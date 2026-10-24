@@ -9,7 +9,7 @@ east #
  # connalias
 east #
  ipsec add franklin
-"westnet-eastnet-first": added oriented IKEv1 connection
+"westnet-eastnet-first": added oriented IKEv1 permanent connection
 east #
  echo "initdone"
 initdone

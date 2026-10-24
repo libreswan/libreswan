@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added unoriented IKEv2 connection (neither left=192.1.2.46 nor right=192.1.2.24 match an interface)
+"westnet-eastnet-ikev2": added unoriented IKEv2 permanent connection (neither left=192.1.2.46 nor right=192.1.2.24 match an interface)
 east #
  # should be unoriented
 east #
@@ -20,7 +20,7 @@ east #
 listening for IKE messages
 adding interface eth1 192.1.2.24:UDP/500
 adding interface eth1 192.1.2.24:UDP/4500 (NAT)
-"westnet-eastnet-ikev2": oriented IKEv2 connection (local: right=192.1.2.24 remote: left=192.1.2.46)
+"westnet-eastnet-ikev2": oriented IKEv2 permanent connection (local: right=192.1.2.24 remote: left=192.1.2.46)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 east #

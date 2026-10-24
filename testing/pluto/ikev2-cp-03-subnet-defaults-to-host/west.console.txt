@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-eastnet
-"west-eastnet": added oriented IKEv2 connection
+"west-eastnet": added oriented IKEv2 template connection
 west #
  # confirm we have stock resolv.conf
 west #

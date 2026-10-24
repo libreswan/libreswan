@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ../../guestbin/wait-for-pluto.sh --match '"named": oriented'
-"named": oriented IKEv2 connection (local: left=192.1.2.45 remote: right=right.testing.libreswan.org requires DNS lookup)
+"named": oriented IKEv2 permanent connection (local: left=192.1.2.45 remote: right=right.testing.libreswan.org requires DNS lookup)
 west #
  ../../guestbin/wait-for-pluto.sh --match '"named": cannot initiate'
 "named": cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=CK_PERMANENT)

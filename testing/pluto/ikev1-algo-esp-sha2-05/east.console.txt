@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 permanent connection
 east #
  ipsec connectionstatus $1
 Connection list:

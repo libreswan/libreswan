@@ -29,7 +29,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec add northnet-eastnet
-"northnet-eastnet": added oriented IKEv2 connection
+"northnet-eastnet": added oriented IKEv2 permanent connection
 north #
  echo "initdone"
 initdone

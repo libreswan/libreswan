@@ -508,6 +508,12 @@ void jam_orientation(struct jambuf *buf,
 		(never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
 		 c->config->ike_info->version_name);
 	jam_string(buf, what);
+
+	/*
+	 * Appending type of connection
+	 */
+	jam_string(buf, " ");
+	jam_enum_human(buf, &connection_kind_names, c->local->kind);
 	jam_string(buf, " connection");
 
 	/*

@@ -21,7 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add v6-tunnel
-"v6-tunnel": added oriented IKEv2 connection
+"v6-tunnel": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone
