@@ -58,6 +58,7 @@
 #include "routing.h"
 #include "connection_owner.h"
 #include "connection_kind.h"
+#include "connection_routing.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
@@ -934,7 +935,7 @@ struct connection {
 	 * triggers revival
 	 */
 	struct {
-		enum routing state; /* level of routing in place */
+		enum connection_routing state; /* level of routing in place */
 		so_serial_t owner[CONNECTION_OWNER_ROOF];
 #define routing_sa routing.owner[ROUTING_SA] /* IKE or Child SA! */
 #define negotiating_ike_sa routing.owner[NEGOTIATING_IKE_SA]

@@ -476,7 +476,7 @@ static bool restore_spd_kernel_policy(const struct spd *spd,
 				      where_t where, const char *what)
 {
 	struct connection *c = spd->connection;
-	enum routing routing = c->routing.state;
+	enum connection_routing routing = c->routing.state;
 	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 	struct nic_offload nic_offload = {};
 	selector_pair_buf spb;
@@ -897,7 +897,8 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
 		     str_selector(&spd->local->client, &db),
-		     str_enum_short(&routing_names, c->routing.state, &eb));
+		     str_name_short(&connection_routing_names,
+				    c->routing.state, &eb));
 
 		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
 		    llog(RC_LOG, child->sa.logger, "installing IPsec SA failed - check logs or dmesg");
@@ -914,7 +915,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 }
 
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-					    enum routing new_routing,
+					    enum connection_routing new_routing,
 					    struct do_updown updown)
 {
 	struct logger *logger = child->sa.logger;
@@ -952,7 +953,8 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		     /* outbound */
 		     str_selector(&spd->local->client, &db),
 		     str_selector(&spd->remote->client, &sb),
-		     str_enum_short(&routing_names, c->routing.state, &eb),
+		     str_name_short(&connection_routing_names,
+				    c->routing.state, &eb),
 		     bool_str(updown.route),
 		     bool_str(updown.up));
 

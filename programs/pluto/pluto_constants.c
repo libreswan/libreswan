@@ -34,8 +34,6 @@
 
 static const struct enum_names_check pluto_enum_names_check[] = {
 #define S(V) { #V, &V, }
-	S(routing_tails),
-	S(routing_names),
 };
 
 static const struct enum_names_checklist pluto_enum_names_checklist = {

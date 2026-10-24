@@ -253,8 +253,6 @@ OBJS += connection_event.o
 OBJS += spd_db.o
 
 OBJS += routing.o
-OBJS += routing_names.o
-OBJS += routing_story.o
 
 OBJS += acquire.o
 OBJS += initiate.o

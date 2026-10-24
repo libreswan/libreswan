@@ -1,6 +1,6 @@
 /* tables of names for values defined in constants.h
  *
- * Copyright (C) 2022 Andrew Cagney
+ * Copyright (C) 2022,2026 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,12 +13,11 @@
  * for more details.
  */
 
-#include "lswcdefs.h"		/* for ARRAY_PTR() */
+#include "connection_routing.h"
 #include "enum_names.h"
-#include "defs.h"
-#include "routing.h"		/* for enum routing */
+#include "names.h"
 
-static const char *routing_name[] = {
+static const char *connection_routing_enum_name[] = {
 #define S(E) [E] = #E
 	S(RT_UNROUTED),
 	S(RT_ROUTED_NEVER_NEGOTIATE),
@@ -38,8 +37,12 @@ static const char *routing_name[] = {
 #undef S
 };
 
-const struct enum_names routing_names = {
+static const struct enum_names connection_routing_enum_names = {
 	0, CONNECTION_ROUTING_ROOF-1,
-	ARRAY_PTR(routing_name),
+	ARRAY_PTR(connection_routing_enum_name),
 	"RT_", NULL,
+};
+
+const struct names connection_routing_names = {
+	.enum_names = &connection_routing_enum_names,
 };

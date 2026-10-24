@@ -330,14 +330,14 @@ extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 				 struct logger *logger/*state*/);
 
-bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where);
+bool unrouted_to_routed(struct connection *c, enum connection_routing new_routing, where_t where);
 
-bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, where_t where);
+bool install_inbound_ipsec_sa(struct child_sa *child, enum connection_routing new_routing, where_t where);
 struct do_updown {
 	bool up;
 	bool route;
 };
-bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
+bool install_outbound_ipsec_sa(struct child_sa *child, enum connection_routing new_routing,
 			       struct do_updown updown, where_t where);
 
 void teardown_ipsec_kernel_states(struct child_sa *child);
@@ -377,12 +377,12 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
 			   const struct logger *logger);
 
-struct spd_owner spd_owner(const struct spd *spd, enum routing new_routing,
+struct spd_owner spd_owner(const struct spd *spd, enum connection_routing new_routing,
 			   struct logger *logger, where_t where);
 
 void clear_connection_spd_conflicts(struct connection *c);
 bool get_connection_spd_conflicts(struct connection *c,
-				  enum routing new_routing);
+				  enum connection_routing new_routing);
 
 void clear_narrow_holds(const ip_selector *src_client,
 			const ip_selector *dst_client,
