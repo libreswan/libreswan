@@ -30,28 +30,12 @@
 #include "defs.h"
 #include "kernel.h"
 
-/* enum kernel_policy_op_names */
-
-static const char *kernel_policy_op_name[] = {
-#define S(E) [E] = #E
-	S(KERNEL_POLICY_OP_ADD),
-	S(KERNEL_POLICY_OP_REPLACE),
-#undef S
-};
-
-enum_names kernel_policy_op_names = {
-	0, elemsof(kernel_policy_op_name)-1,
-	ARRAY_PTR(kernel_policy_op_name),
-	.en_prefix = "KERNEL_POLICY_OP_",
-};
-
 /* */
 
 static const struct enum_names_check pluto_enum_names_check[] = {
 #define S(V) { #V, &V, }
 	S(routing_tails),
 	S(routing_names),
-	S(kernel_policy_op_names),
 };
 
 static const struct enum_names_checklist pluto_enum_names_checklist = {

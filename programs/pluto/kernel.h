@@ -34,6 +34,7 @@
 #include "kernel_mode.h"
 #include "direction.h"
 
+enum kernel_policy_op;
 struct config_setup;
 struct sa_marks;
 struct spd;
@@ -44,25 +45,6 @@ struct kernel_policy;
 
 enum kernel_state_id { DEFAULT_KERNEL_STATE_ID, };	/* sizeof() >= sizeof(uint32_t) */
 enum kernel_policy_id { DEFAULT_KERNEL_POLICY_ID, };	/* sizeof() >= sizeof(uint32_t) */
-
-/*
- * Declare policy things early enough for uses.
- * Some of these things, while they seem like they are KLIPS-only, the
- * definitions are in fact needed by all kernel interfaces at this time.
- *
- * Flags are encoded above the low-order byte of verbs.
- * "real" eroutes are only outbound.  Inbound eroutes don't exist,
- * but an addflow with an INBOUND flag allows IPIP tunnels to be
- * limited to appropriate source and destination addresses.
- */
-
-enum kernel_policy_op {
-	/* three bits */
-	KERNEL_POLICY_OP_ADD = 1,
-	KERNEL_POLICY_OP_REPLACE = 2,
-};
-
-extern const struct enum_names kernel_policy_op_names;
 
 /*
  * What to do when the kernel policy operation returns ENOENT?

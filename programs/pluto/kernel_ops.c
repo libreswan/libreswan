@@ -45,7 +45,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam(buf, "routing:  %s()", __func__);
 
 			jam_string(buf, " ");
-			jam_enum_short(buf, &kernel_policy_op_names, op);
+			jam_name_short(buf, &kernel_policy_op_names, op);
 			jam_string(buf, "+");
 			jam_name_short(buf, &direction_names, dir);
 
