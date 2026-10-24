@@ -32,6 +32,7 @@
 #include "ip_said.h"		/* for SA_AH et.al. */
 #include "ip_packet.h"
 #include "kernel_mode.h"
+#include "direction.h"
 
 struct config_setup;
 struct sa_marks;
@@ -62,19 +63,6 @@ enum kernel_policy_op {
 };
 
 extern const struct enum_names kernel_policy_op_names;
-
-enum direction {
-	DIRECTION_INBOUND = 2, /*>true*/
-	DIRECTION_OUTBOUND = 4, /* so lset_t works */
-};
-
-extern const struct enum_names direction_names;
-
-enum directions {
-	DIRECTIONS_INBOUND = DIRECTION_INBOUND,
-	DIRECTIONS_OUTBOUND = DIRECTION_OUTBOUND,
-	DIRECTIONS_INBOUND_AND_OUTBOUND = DIRECTION_INBOUND|DIRECTION_OUTBOUND,
-};
 
 /*
  * What to do when the kernel policy operation returns ENOENT?

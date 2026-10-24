@@ -45,22 +45,6 @@ enum_names kernel_policy_op_names = {
 	.en_prefix = "KERNEL_POLICY_OP_",
 };
 
-/* enum direction_names */
-
-static const char *direction_name[] = {
-#define S(E) [E-DIRECTION_INBOUND] = #E
-	S(DIRECTION_OUTBOUND),
-	S(DIRECTION_INBOUND),
-#undef S
-};
-
-enum_names direction_names = {
-	DIRECTION_INBOUND,
-	DIRECTION_OUTBOUND,
-	ARRAY_PTR(direction_name),
-	.en_prefix = "DIRECTION_",
-};
-
 /* */
 
 static const struct enum_names_check pluto_enum_names_check[] = {
@@ -68,7 +52,6 @@ static const struct enum_names_check pluto_enum_names_check[] = {
 	S(routing_tails),
 	S(routing_names),
 	S(kernel_policy_op_names),
-	S(direction_names),
 };
 
 static const struct enum_names_checklist pluto_enum_names_checklist = {

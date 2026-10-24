@@ -1273,7 +1273,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	name_buf dnb, rmb;
 	ldbg(c->logger, "kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	     __func__,
-	     str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
+	     str_name_short(&direction_names, said_boilerplate.direction, &dnb),
 	     str_selector(&said_boilerplate.src.route, &scb),
 	     str_address(&said_boilerplate.src.address, &sab),
 	     str_enum_short(&kernel_mode_names, route.mode, &rmb),
@@ -1688,13 +1688,12 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 			return append_spi(dead, "inbound", &proto->inbound,
 					  effective_remote_address, host_addr,
 					  logger);
-			break;
 		case DIRECTION_OUTBOUND:
 			return append_spi(dead, "outbound", &proto->outbound,
 					  host_addr, effective_remote_address,
 					  logger);
 		}
-		bad_enum(logger, &direction_names, direction);
+		bad_case(direction);
 	}
 	return 0;
 }
@@ -1710,7 +1709,7 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	struct connection *const c = child->sa.st_connection;
 	name_buf db;
 	ldbg_sa(child, "kernel: %s() deleting %s",
-		__func__, str_enum_short(&direction_names, direction, &db));
+		__func__, str_name_short(&direction_names, direction, &db));
 
 	/*
 	 * If we have a new address in c->remote->host.addr,
@@ -2061,7 +2060,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 		name_buf db;
 		ldbg_sa(child,
 			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-			__func__, str_enum_short(&direction_names, direction, &db),
+			__func__, str_name_short(&direction_names, direction, &db),
 			pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}
