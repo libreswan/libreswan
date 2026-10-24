@@ -3,13 +3,6 @@
     <option>ike-sa-init-full-transcript-auth=&yna_option;</option>
   </term>
   <listitem>
-    <caution>
-      <para>
-      This feature is in progress. Contrary to the
-      description below the default is currently &no;, and the
-      extension is not yet negotiated.
-      </para>
-    </caution>
     <para>
       Whether to negotiate the IKEv2 downgrade-prevention extension
       (draft-ietf-ipsecme-ikev2-downgrade-prevention).  Normally each
