@@ -564,6 +564,91 @@ west #
          short_name 4: established Child SA OK
          jam_enum_short 4: established Child SA OK
          jam_enum_human 4: established child sa OK
+  connection_routing_names: [0..11]
+    0 -> RT_UNROUTED
+         jam_names 0: RT_UNROUTED OK
+         match RT_UNROUTED: OK
+         short_name 0: UNROUTED OK
+         jam_names_short 0: UNROUTED OK
+         jam_names_human 0: unrouted OK
+         match UNROUTED [short]: OK
+    1 -> RT_ROUTED_NEVER_NEGOTIATE
+         jam_names 1: RT_ROUTED_NEVER_NEGOTIATE OK
+         match RT_ROUTED_NEVER_NEGOTIATE: OK
+         short_name 1: ROUTED_NEVER_NEGOTIATE OK
+         jam_names_short 1: ROUTED_NEVER_NEGOTIATE OK
+         jam_names_human 1: routed-never-negotiate OK
+         match ROUTED_NEVER_NEGOTIATE [short]: OK
+    2 -> RT_ROUTED_ONDEMAND
+         jam_names 2: RT_ROUTED_ONDEMAND OK
+         match RT_ROUTED_ONDEMAND: OK
+         short_name 2: ROUTED_ONDEMAND OK
+         jam_names_short 2: ROUTED_ONDEMAND OK
+         jam_names_human 2: routed-ondemand OK
+         match ROUTED_ONDEMAND [short]: OK
+    3 -> RT_UNROUTED_BARE_NEGOTIATION
+         jam_names 3: RT_UNROUTED_BARE_NEGOTIATION OK
+         match RT_UNROUTED_BARE_NEGOTIATION: OK
+         short_name 3: UNROUTED_BARE_NEGOTIATION OK
+         jam_names_short 3: UNROUTED_BARE_NEGOTIATION OK
+         jam_names_human 3: unrouted-bare-negotiation OK
+         match UNROUTED_BARE_NEGOTIATION [short]: OK
+    4 -> RT_UNROUTED_NEGOTIATION
+         jam_names 4: RT_UNROUTED_NEGOTIATION OK
+         match RT_UNROUTED_NEGOTIATION: OK
+         short_name 4: UNROUTED_NEGOTIATION OK
+         jam_names_short 4: UNROUTED_NEGOTIATION OK
+         jam_names_human 4: unrouted-negotiation OK
+         match UNROUTED_NEGOTIATION [short]: OK
+    5 -> RT_ROUTED_NEGOTIATION
+         jam_names 5: RT_ROUTED_NEGOTIATION OK
+         match RT_ROUTED_NEGOTIATION: OK
+         short_name 5: ROUTED_NEGOTIATION OK
+         jam_names_short 5: ROUTED_NEGOTIATION OK
+         jam_names_human 5: routed-negotiation OK
+         match ROUTED_NEGOTIATION [short]: OK
+    6 -> RT_ROUTED_FAILURE
+         jam_names 6: RT_ROUTED_FAILURE OK
+         match RT_ROUTED_FAILURE: OK
+         short_name 6: ROUTED_FAILURE OK
+         jam_names_short 6: ROUTED_FAILURE OK
+         jam_names_human 6: routed-failure OK
+         match ROUTED_FAILURE [short]: OK
+    7 -> RT_UNROUTED_INBOUND
+         jam_names 7: RT_UNROUTED_INBOUND OK
+         match RT_UNROUTED_INBOUND: OK
+         short_name 7: UNROUTED_INBOUND OK
+         jam_names_short 7: UNROUTED_INBOUND OK
+         jam_names_human 7: unrouted-inbound OK
+         match UNROUTED_INBOUND [short]: OK
+    8 -> RT_UNROUTED_INBOUND_NEGOTIATION
+         jam_names 8: RT_UNROUTED_INBOUND_NEGOTIATION OK
+         match RT_UNROUTED_INBOUND_NEGOTIATION: OK
+         short_name 8: UNROUTED_INBOUND_NEGOTIATION OK
+         jam_names_short 8: UNROUTED_INBOUND_NEGOTIATION OK
+         jam_names_human 8: unrouted-inbound-negotiation OK
+         match UNROUTED_INBOUND_NEGOTIATION [short]: OK
+    9 -> RT_ROUTED_INBOUND_NEGOTIATION
+         jam_names 9: RT_ROUTED_INBOUND_NEGOTIATION OK
+         match RT_ROUTED_INBOUND_NEGOTIATION: OK
+         short_name 9: ROUTED_INBOUND_NEGOTIATION OK
+         jam_names_short 9: ROUTED_INBOUND_NEGOTIATION OK
+         jam_names_human 9: routed-inbound-negotiation OK
+         match ROUTED_INBOUND_NEGOTIATION [short]: OK
+   10 -> RT_ROUTED_TUNNEL
+         jam_names 10: RT_ROUTED_TUNNEL OK
+         match RT_ROUTED_TUNNEL: OK
+         short_name 10: ROUTED_TUNNEL OK
+         jam_names_short 10: ROUTED_TUNNEL OK
+         jam_names_human 10: routed-tunnel OK
+         match ROUTED_TUNNEL [short]: OK
+   11 -> RT_UNROUTED_TUNNEL
+         jam_names 11: RT_UNROUTED_TUNNEL OK
+         match RT_UNROUTED_TUNNEL: OK
+         short_name 11: UNROUTED_TUNNEL OK
+         jam_names_short 11: UNROUTED_TUNNEL OK
+         jam_names_human 11: unrouted-tunnel OK
+         match UNROUTED_TUNNEL [short]: OK
   ddos_mode_names: [1..3]
     1 -> auto
          jam_sparse 1: auto OK
