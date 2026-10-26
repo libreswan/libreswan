@@ -535,19 +535,28 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		 * Already accumulating fragments, keep going?
 		 */
 		if (md->chain[NEXT_PAYLOAD_v2SK] != NULL) {
-			ldbg(ike->sa.logger, "received IKE encrypted message");
 			if ((*frags)->total == 0) {
-				ldbg(ike->sa.logger, "  ignoring message; collecting fragments");
+				ldbg(ike->sa.logger, "  ignoring encrypted message; already collected");
 			} else {
-				ldbg(ike->sa.logger, "  ignoring message; already collected");
+				ldbg(ike->sa.logger, "  ignoring encrypted message; collecting fragments");
 			}
 			pexpect((*frags)->md != NULL);
-		} else if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
-			collect_v2_incoming_fragment(ike, md, frags);
-		} else {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "message has neither SK nor SKF payload");
+			return;
 		}
+
+		if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
+			/*
+			 * Since there's no way to validate the packet
+			 * (decryption isn't yet possible), this call
+			 * can only save or drop the fragment.  call
+			 * either saves or drops the fragment.
+			 */
+			collect_v2_incoming_fragment(ike, md, frags);
+			return;
+		}
+
+		llog_pexpect(ike->sa.logger, HERE,
+			     "message has neither SK nor SKF payload");
 		return;
 	}
 
