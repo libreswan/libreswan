@@ -1,6 +1,6 @@
 /* updown names, for libreswan
  *
- * Copyright (C) 2025  Andrew Cagney
+ * Copyright (C) 2025-2026  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,42 +14,8 @@
  */
 
 #include "updown.h"
-#include "lswcdefs.h"		/* for ARRAY_PTR() */
-#include "names.h"
 #include "enum_names.h"
 #include "names.h"
-
-static const char *updown_story[] = {
-#define C(E,V) [E-UPDOWN_FLOOR] = V
-	C(UPDOWN_PREPARE, "prepare"),
-	C(UPDOWN_ROUTE, "route"),
-	C(UPDOWN_UNROUTE, "unroute"),
-	C(UPDOWN_UP, "up"),
-	C(UPDOWN_DOWN, "down"),
-#undef C
-};
-
-const struct enum_names updown_stories = {
-	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_PTR(updown_story),
-	NULL, NULL,
-};
-
-static const char *updown_name[] = {
-#define C(E) [E-UPDOWN_FLOOR] = #E
-	C(UPDOWN_PREPARE),
-	C(UPDOWN_ROUTE),
-	C(UPDOWN_UNROUTE),
-	C(UPDOWN_UP),
-	C(UPDOWN_DOWN),
-#undef C
-};
-
-const struct enum_names updown_names = {
-	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_PTR(updown_name),
-	"UPDOWN_", NULL,
-};
 
 static const char *updown_config_name[] = {
 #define C(E) [E] = #E

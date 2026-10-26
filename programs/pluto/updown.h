@@ -31,6 +31,8 @@
 
 #include <stdbool.h>
 
+#include "updown_verb.h"
+
 struct jambuf;
 struct state;
 struct connection;
@@ -40,21 +42,7 @@ struct spds;
 struct logger;
 struct child_sa;
 struct spd_owner;
-
-/* many bits reach in to use this, but maybe shouldn't */
-
-enum updown {
-#define UPDOWN_FLOOR UPDOWN_PREPARE
-	UPDOWN_PREPARE,
-	UPDOWN_ROUTE,
-	UPDOWN_UNROUTE,
-	UPDOWN_UP,
-	UPDOWN_DOWN,
-#define UPDOWN_ROOF (UPDOWN_DOWN+1)
-};
-
-extern const struct enum_names updown_stories;
-extern const struct enum_names updown_names;
+enum updown_verb;
 
 enum updown_configs {
 	UPDOWN_CONFIG_ASYNC,
@@ -67,7 +55,7 @@ enum updown_configs {
 
 extern const struct names updown_config_names;
 
-bool updown_connection_spd(enum updown updown_verb,
+bool updown_connection_spd(enum updown_verb updown_verb,
 			   const struct connection *c,
 			   const struct spd *spd,
 			   struct logger *logger/*state-or-connection*/);
@@ -95,7 +83,7 @@ struct updown_config {
 	bool down_wip_installed_up;
 };
 
-bool updown_child_spds(enum updown updown_verb,
+bool updown_child_spds(enum updown_verb updown_verb,
 		       struct child_sa *child,
 		       struct updown_config config);
 
