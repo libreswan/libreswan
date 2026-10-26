@@ -505,7 +505,7 @@ static void update_wip(struct spd *spd, enum updown_verb updown_verb, bool ok)
 
 bool updown_child_spds(enum updown_verb updown_verb,
 		       struct child_sa *child,
-		       struct updown_config config)
+		       struct updown_configs config)
 {
 	const char *verb;
 	struct verbose verbose = verbose_updown(child->sa.logger, updown_verb, &verb);

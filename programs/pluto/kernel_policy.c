@@ -987,7 +987,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	if (ok && (updown.route || updown.up) &&
 	    !c->local->config->child.updown.updown_config_async) {
 		updown_child_spds(UPDOWN_PREPARE, child,
-				  (struct updown_config) {
+				  (struct updown_configs) {
 					  .return_error = false,
 					  .skip_wip_conflicting_owner_bare_route = true,
 				  });
@@ -999,7 +999,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	if (ok && updown.route &&
 	    !c->local->config->child.updown.updown_config_async) {
 		ok = updown_child_spds(UPDOWN_ROUTE, child,
-				       (struct updown_config) {
+				       (struct updown_configs) {
 					       .return_error = true,
 					       .skip_wip_conflicting_owner_bare_route = true,
 				       });
@@ -1019,7 +1019,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	if (ok && updown.up &&
 	    !c->local->config->child.updown.updown_config_async) {
 		ok = updown_child_spds(UPDOWN_UP, child,
-				       (struct updown_config) {
+				       (struct updown_configs) {
 					       .return_error = true,
 					       .skip_wip_conflicting_owner_bare_route = false,
 				       });
@@ -1049,7 +1049,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		}
 
 		updown_child_spds(UPDOWN_DOWN, child,
-				  (struct updown_config) {
+				  (struct updown_configs) {
 					  .down_wip_installed_up = true,
 				  });
 

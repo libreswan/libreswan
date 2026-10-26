@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "updown.h"
+#include "updown_config.h"
 #include "enum_names.h"
 #include "names.h"
 
