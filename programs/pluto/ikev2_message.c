@@ -1607,10 +1607,12 @@ static bool emit_v2UNKNOWN(const char *victim,
 		count = 1;
 	}
 
+	unsigned size = impairment->annex;
+
 	name_buf xb;
 	llog(IMPAIR_STREAM, outs->logger,
-	     "adding %u %s unknown%s payload(s) of type %d to %s message containing %u payloads",
-	     count, victim,
+	     "adding %u %u-byte %s unknown%s payload(s) of type %d to %s message containing %u payloads",
+	     count, size, victim,
 	     (impair.unknown_v2_payload_critical ? " critical" : ""),
 	     ikev2_unknown_payload_desc.pt,
 	     str_enum_short(&ikev2_exchange_names, exchange_type, &xb),
@@ -1626,7 +1628,12 @@ static bool emit_v2UNKNOWN(const char *victim,
 			/* already logged */
 			return false; /*fatal*/
 		}
-		close_pbs_out(&pbs);
+		if (!pbs_out_zero(&pbs, size, "filler")) {
+			return false; /*fatal*/
+		}
+		if (!close_pbs_out(&pbs)) {
+			return false; /*fatal*/
+		}
 	}
 	return true;
 }
