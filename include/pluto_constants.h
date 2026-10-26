@@ -130,13 +130,17 @@ extern const struct sparse_names keyword_pubkey_names;
 #define OCSP_DEFAULT_CACHE_MAX_AGE "1d"
 #define OCSP_DEFAULT_TIMEOUT "2s"
 
+#ifdef USE_IKEv1
 enum global_ikev1_policy {
 	GLOBAL_IKEv1_ACCEPT = 0,
 	GLOBAL_IKEv1_REJECT = 1,
 	GLOBAL_IKEv1_DROP = 2,
 };
+#endif
 
-extern const struct sparse_names global_ikev1_policy_names;
+#ifdef USE_IKEv1
+extern const struct sparse_names global_ikev1_policy_names; /* #ifdef USE_IKEv1 */
+#endif
 
 /* corresponding name table is sd_action_names */
 
@@ -729,8 +733,10 @@ enum ikev1_natt_policy {
 	NATT_DRAFTS = 3, /* Workaround for Cisco NAT-T bug */
 	NATT_NONE = 4 /* Workaround for forcing non-encaps */
 };
+#endif
 
-extern const struct sparse_names nat_ikev1_method_option_names;
+#ifdef USE_IKEv1
+extern const struct sparse_names nat_ikev1_method_option_names; /* #ifdef USE_IKEv1 */
 #endif
 
 enum nppi_options {
