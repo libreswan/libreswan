@@ -750,6 +750,10 @@ static const char *invalid_ikev2_incoming_fragment(struct v2_incoming_fragments 
 		return "fragment total changed";
 	}
 
+	if (frags->fragment_total_packet_size + md->packet.len > MAX_IKEv2_FRAGMENTS_TOTAL_PACKET_SIZE) {
+		return "accumulated fragments are too big";
+	}
+
 	return NULL;
 }
 
@@ -823,7 +827,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* entire SKF pbs; cur points past SKF header */
 	const struct pbs_in *skf_pbs = &md->chain[NEXT_PAYLOAD_v2SKF]->pbs;
-	/* entire payload: AAD+SKF-header+IV+cipher-text) */
+	/* entire payload: AAD+SKF_header+IV+cipher_text) */
 	chunk_t text = chunk2(md->packet.ptr, skf_pbs->roof - md->packet.ptr);
 	/* first thing after SKF header is Initialization Vector */
 	unsigned iv_offset = skf_pbs->cur - md->packet.ptr;
@@ -905,6 +909,9 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	PASSERT(ike->sa.logger, frag->plain.len == 0);
 	frag->text = clone_hunk_as_chunk(&text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
+
+	(*frags)->fragment_total_packet_size += md->packet.len;
+
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
 		 * Since TEXT has been decrypted (PLAIN points into
