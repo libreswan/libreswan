@@ -522,7 +522,8 @@ static void vdbg_spd(struct verbose verbose,
 		jam_string(buf, " ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		jam_string(buf, " ");
-		jam_enum_short(buf, &routing_names, spd->connection->routing.state);
+		jam_name_short(buf, &connection_routing_names,
+			       spd->connection->routing.state);
 		jam_string(buf, "[");
 		jam_enum_short(buf, &shunt_kind_names, spd_shunt_kind(spd));
 		jam_string(buf, "] ");
@@ -545,7 +546,7 @@ static void vdbg_owners(struct verbose verbose,
 			const struct spd_owner *owner,
 			const ip_selector *local,
 			const ip_selector *remote,
-			enum routing routing,
+			enum connection_routing routing,
 			where_t where)
 {
 	if (!LDBGP(DBG_BASE, verbose.logger)) {
@@ -558,7 +559,7 @@ static void vdbg_owners(struct verbose verbose,
 	name_buf rb, sb;
 	VDBG_log("%s() owners of %s routing >= %s[%s]",
 		 where->func, str_selector_pair(local, remote, &spb),
-		 str_enum_short(&routing_names, routing, &rb),
+		 str_name_short(&connection_routing_names, routing, &rb),
 		 str_enum_short(&shunt_kind_names, shunt_kind, &sb));
 
 	verbose.level++;
@@ -585,12 +586,12 @@ static void save_spd_owner(const struct spd **owner, const char *name,
 }
 
 struct spd_owner spd_owner(const struct spd *c_spd,
-			   const enum routing new_c_routing,
+			   const enum connection_routing new_c_routing,
 			   struct logger *logger, where_t where)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 
-	enum routing c_routing = new_c_routing;
+	enum connection_routing c_routing = new_c_routing;
 	const struct connection *c = c_spd->connection;
 	const ip_selector *c_local = &c_spd->local->client;
 	const ip_selector *c_remote = &c_spd->remote->client;
@@ -601,7 +602,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 	vdbg("%s() looking for SPD owner of %s with routing >= %s[%s]",
 	     __func__,
 	     str_selector_pair(c_local, c_remote, &spb),
-	     str_enum_short(&routing_names, c_routing, &rb),
+	     str_name_short(&connection_routing_names, c_routing, &rb),
 	     str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 
 	struct spd_owner owner = {0};
@@ -752,14 +753,16 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 				name_buf rb, sb;
 				vdbg_spd(verbose, d_spd, "skipped %s; < %s[%s]",
 					 checking,
-					 str_enum_short(&routing_names, c_routing, &rb),
+					 str_name_short(&connection_routing_names,
+							c_routing, &rb),
 					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 			} else if (d_shunt_kind == c_shunt_kind && c->clonedfrom == d) {
 				name_buf rb, sb;
 				vdbg_spd(verbose, d_spd,
 					 "skipped %s; is connection parent with routing = %s[%s] %s",
 					 checking,
-					 str_enum_short(&routing_names, c_routing, &rb),
+					 str_name_short(&connection_routing_names,
+							c_routing, &rb),
 					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb),
 					 bool_str(d->routing.state >= c_routing));
 			} else if (c->config->overlapip && d->config->overlapip) {
@@ -800,12 +803,12 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 			jam_connection(buf, d);
 		}
 		jam_string(buf, " with routing ");
-		jam_enum_human(buf, &routing_names, d->routing.state);
+		jam_name_human(buf, &connection_routing_names, d->routing.state);
 	}
 }
 
 static bool get_connection_spd_conflict(struct spd *spd,
-					const enum routing new_routing,
+					const enum connection_routing new_routing,
 					struct logger *logger)
 {
 	struct spd_owner *owner = &spd->wip.conflicting.owner;
@@ -844,7 +847,7 @@ static bool get_connection_spd_conflict(struct spd *spd,
 }
 
 bool get_connection_spd_conflicts(struct connection *c,
-				  enum routing new_routing)
+				  enum connection_routing new_routing)
 {
 	TABLE_FOR_EACH(spd, c->child.spds) {
 		if (!get_connection_spd_conflict(spd, new_routing, c->logger)) {
@@ -928,7 +931,7 @@ void revert_kernel_policy(struct spd *spd,
 	}
 }
 
-bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
+bool unrouted_to_routed(struct connection *c, enum connection_routing new_routing, where_t where)
 {
 	/*
 	 * Still call spd_conflicts() when a sec_label so that the
@@ -1273,7 +1276,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	name_buf dnb, rmb;
 	ldbg(c->logger, "kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	     __func__,
-	     str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
+	     str_name_short(&direction_names, said_boilerplate.direction, &dnb),
 	     str_selector(&said_boilerplate.src.route, &scb),
 	     str_address(&said_boilerplate.src.address, &sab),
 	     str_enum_short(&kernel_mode_names, route.mode, &rmb),
@@ -1688,13 +1691,12 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 			return append_spi(dead, "inbound", &proto->inbound,
 					  effective_remote_address, host_addr,
 					  logger);
-			break;
 		case DIRECTION_OUTBOUND:
 			return append_spi(dead, "outbound", &proto->outbound,
 					  host_addr, effective_remote_address,
 					  logger);
 		}
-		bad_enum(logger, &direction_names, direction);
+		bad_case(direction);
 	}
 	return 0;
 }
@@ -1710,7 +1712,7 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	struct connection *const c = child->sa.st_connection;
 	name_buf db;
 	ldbg_sa(child, "kernel: %s() deleting %s",
-		__func__, str_enum_short(&direction_names, direction, &db));
+		__func__, str_name_short(&direction_names, direction, &db));
 
 	/*
 	 * If we have a new address in c->remote->host.addr,
@@ -1760,7 +1762,7 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 }
 
 static bool connection_has_policy_conflicts(const struct connection *c,
-					    enum routing new_routing,
+					    enum connection_routing new_routing,
 					    struct logger *logger, where_t where)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
@@ -1779,7 +1781,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 	return false;
 }
 
-bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, where_t where)
+bool install_inbound_ipsec_sa(struct child_sa *child, enum connection_routing new_routing, where_t where)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
@@ -1814,7 +1816,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 	return true;
 }
 
-bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
+bool install_outbound_ipsec_sa(struct child_sa *child, enum connection_routing new_routing,
 			       struct do_updown updown, where_t where)
 {
 	struct logger *logger = child->sa.logger;
@@ -2061,7 +2063,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 		name_buf db;
 		ldbg_sa(child,
 			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-			__func__, str_enum_short(&direction_names, direction, &db),
+			__func__, str_name_short(&direction_names, direction, &db),
 			pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}

@@ -24,6 +24,7 @@
 #include "ip_packet.h"
 #include "pluto_timing.h"	/* for threadtime_t */
 #include "connection_owner.h"
+#include "connection_routing.h"
 
 enum terminate_reason;
 struct connection;
@@ -36,42 +37,7 @@ enum direction;
 enum initiated_by;
 struct spd;
 
-/*
- * Routing status.
- *
- * Note: routing ignores the source address, but kernel policies do
- * not!
- *
- * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
- * HAS_IPSEC_POLICY.
- *
- * Note: UNROUTED can be misleading.  .  A CK_INSTANCE is UNROUTED
- * while the CK_TEMPLATE has prospective route.
- */
-
-enum routing {
-	RT_UNROUTED,				/* unrouted, inbound: none,        outbound: none */
-	RT_ROUTED_NEVER_NEGOTIATE,		/* routed,   inbound: ?,           outbound: never */
-	RT_ROUTED_ONDEMAND,			/* routed,   inbound: none,        outbound: ondemand */
-	RT_UNROUTED_BARE_NEGOTIATION,		/* unrouted, inbound: none,        outbound: none */
-	RT_UNROUTED_NEGOTIATION,		/* unrouted, inbound: none,        outbound: negotiation */
-	RT_ROUTED_NEGOTIATION,			/* routed,   inbound: none,        outbound: negotiation */
-	/* failed */
-	RT_ROUTED_FAILURE,      		/* routed,   inbound: ?,           outbound: failure */
-	/* half established */
-	RT_UNROUTED_INBOUND,			/* unrouted, inbound: established, outbound: none */
-	RT_UNROUTED_INBOUND_NEGOTIATION,	/* unrouted, inbound: established, outbound: negotiation */
-	RT_ROUTED_INBOUND_NEGOTIATION,		/* routed,   inbound: established, outbound: negotiation */
-	/* fully established */
-	RT_ROUTED_TUNNEL,       		/* routed,   inbound: established, outbound: established */
-	RT_UNROUTED_TUNNEL,			/* unrouted, inbound: established, outbound: established; used by MOBIKE */
-#define CONNECTION_ROUTING_ROOF (RT_UNROUTED_TUNNEL+1)
-};
-
-extern const struct enum_names routing_names;
-extern const struct enum_names routing_tails;
-
-enum shunt_kind routing_shunt_kind(enum routing routing);
+enum shunt_kind routing_shunt_kind(enum connection_routing routing);
 enum shunt_kind spd_shunt_kind(const struct spd *spd);
 
 bool kernel_route_installed(const struct connection *c);

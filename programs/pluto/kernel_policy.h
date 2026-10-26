@@ -23,6 +23,7 @@
 #include "lset.h"
 #include "ip_selector.h"
 #include "encap_mode.h"
+#include "kernel_policy_op.h"
 
 #include "kernel.h"		/* for kernel_priority_t and kernel_mode */
 
@@ -255,7 +256,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
  */
 bool install_inbound_ipsec_kernel_policies(struct child_sa *child);
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-					    enum routing new_routing,
+					    enum connection_routing new_routing,
 					    struct do_updown updown);
 
 /*

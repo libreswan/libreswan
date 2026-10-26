@@ -253,8 +253,6 @@ OBJS += connection_event.o
 OBJS += spd_db.o
 
 OBJS += routing.o
-OBJS += routing_names.o
-OBJS += routing_story.o
 
 OBJS += acquire.o
 OBJS += initiate.o
@@ -317,7 +315,6 @@ OBJS += hourly.o
 OBJS += ikev2_vendorid.o
 OBJS += nat_traversal.o
 OBJS += ikev2_nat.o
-OBJS += pluto_constants.o
 OBJS += nss_cert_verify.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o

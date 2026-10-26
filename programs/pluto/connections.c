@@ -161,7 +161,7 @@ void vdbg_connection(const struct connection *c,
 	/* routing+kind ... */
 	VERBOSE_JAMBUF(buf) {
 		jam_string(buf, "routing+kind: ");
-		jam_enum_short(buf, &routing_names, c->routing.state);
+		jam_name_short(buf, &connection_routing_names, c->routing.state);
 		jam_string(buf, " ");
 		jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	}

@@ -45,9 +45,9 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam(buf, "routing:  %s()", __func__);
 
 			jam_string(buf, " ");
-			jam_enum_short(buf, &kernel_policy_op_names, op);
+			jam_name_short(buf, &kernel_policy_op_names, op);
 			jam_string(buf, "+");
-			jam_enum_short(buf, &direction_names, dir);
+			jam_name_short(buf, &direction_names, dir);
 
 			jam(buf, " ");
 			jam_string(buf, story);
@@ -231,7 +231,7 @@ bool kernel_ops_policy_del(enum direction dir,
 			jam(buf, "routing:  %s()", __func__);
 
 			jam_string(buf, " ");
-			jam_enum_short(buf, &direction_names, dir);
+			jam_name_short(buf, &direction_names, dir);
 
 			jam_string(buf, " ");
 			jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
@@ -304,7 +304,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 
 			jam(buf, " level=%d", sa->level);
 			jam_string(buf, " ");
-			jam_enum_short(buf, &direction_names, sa->direction);
+			jam_name_short(buf, &direction_names, sa->direction);
 			jam_string(buf, " ");
 			jam_enum_short(buf, &kernel_mode_names, sa->mode);
 			jam_string(buf, " ");

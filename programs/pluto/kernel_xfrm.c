@@ -843,9 +843,9 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   struct logger *logger, const char *func)
 {
 	name_buf op_str;
-	enum_short(&kernel_policy_op_names, op, &op_str);
+	name_short(&kernel_policy_op_names, op, &op_str);
 	name_buf dir_str;
-	enum_short(&direction_names, dir, &dir_str);
+	name_short(&direction_names, dir, &dir_str);
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	PEXPECT(logger, selector_protocol(*dst_client) == client_proto);

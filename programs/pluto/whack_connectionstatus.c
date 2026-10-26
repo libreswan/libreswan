@@ -320,7 +320,7 @@ static void jam_routing(struct jambuf *buf, const struct connection *c)
 		jam_string(buf, "unoriented");
  		pexpect(c->routing.state == RT_UNROUTED);
 	} else {
-		jam_enum_human(buf, &routing_names, c->routing.state);
+		jam_name_human(buf, &connection_routing_names, c->routing.state);
 	}
 }
 
@@ -1037,7 +1037,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ":  ");
 		/* routing */
 		jam_string(buf, " routing: ");
-		jam_enum_human(buf, &routing_names, c->routing.state);
+		jam_name_human(buf, &connection_routing_names, c->routing.state);
 		jam_string(buf, ";");
 		struct state *sa = state_by_serialno(c->routing_sa);
 		if (sa != NULL) {

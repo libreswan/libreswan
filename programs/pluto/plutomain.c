@@ -1307,7 +1307,6 @@ int main(int argc, char **argv)
 	}
 
 	init_names();
-	init_pluto_constants();
 
 #ifdef USE_IKEv1
 	init_ikev1_states(logger);
