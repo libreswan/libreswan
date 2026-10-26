@@ -92,6 +92,7 @@ bool close_and_record_v2_message(struct v2_message *message);
  */
 
 enum  collected_fragment {
+	FRAGMENT_INVALID,
 	FRAGMENT_IGNORED,
 	FRAGMENTS_MISSING,
 	FRAGMENTS_COMPLETE,
