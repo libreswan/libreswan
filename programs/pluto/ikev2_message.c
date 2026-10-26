@@ -704,9 +704,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
  * Incoming IKEv2 fragments.
  */
 
-static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *frags,
-					       struct msg_digest *md,
-					       struct ikev2_skf *skf_hdr)
+static const char *invalid_ikev2_incoming_fragment(struct v2_incoming_fragments *frags,
+						   struct msg_digest *md,
+						   struct ikev2_skf *skf_hdr)
 {
 	/* Sanity check header */
 
@@ -748,11 +748,6 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 
 	if (skf_hdr->isaskf_total != frags->total) {
 		return "fragment total changed";
-	}
-
-	if (frags->frags[skf_hdr->isaskf_number].text.ptr != NULL) {
-		/* retain earlier fragment with same index */
-		return "repeat";
 	}
 
 	return NULL;
@@ -881,11 +876,11 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		return FRAGMENT_IGNORED;
 	}
 
-	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
+	const char *why = invalid_ikev2_incoming_fragment((*frags), md, skf_hdr);
 	if (why != NULL) {
-		llog_sa(RC_LOG, ike, "dropping fragment %u of %u as %s",
+		llog_sa(RC_LOG, ike, "dropping invalid fragment %u of %u, %s",
 			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
-		return FRAGMENT_IGNORED;
+		return FRAGMENT_INVALID;
 	}
 
 	/* make space for the fragment (it's worth saving) */

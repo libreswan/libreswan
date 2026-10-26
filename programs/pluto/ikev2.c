@@ -1245,7 +1245,24 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		struct v2_msgid_window *window = v2_msgid_window(ike, v2_msg_role(md));
 		struct v2_incoming_fragments **frags = &window->incoming_fragments;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
+		case FRAGMENT_INVALID:
+			/*
+			 * For instance, the decrypted payload
+			 * contained crud such as bad exchange bad
+			 * total, ...
+			 *
+			 * Since the packet did decrypt, it must be
+			 * from the initiator; hence conclude that the
+			 * initiator is broken and abort the exchange.
+			 */
+			complete_protected_but_fatal_exchange(ike, md,
+							      v2N_INVALID_SYNTAX,
+							      (shunk_t) {0});
+			return;
 		case FRAGMENT_IGNORED:
+			/*
+			 * For instance, the packet didn't decrypt.
+			 */
 			return;
 		case FRAGMENTS_MISSING:
 			ldbg(logger, "waiting for more fragments");
