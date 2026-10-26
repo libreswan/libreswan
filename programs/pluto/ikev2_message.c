@@ -806,24 +806,25 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct msg_digest *md,
 						     struct v2_incoming_fragments **frags)
 {
-	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
-		llog_sa(RC_LOG, ike, "ignoring fragment as peer never proposed fragmentation");
-		return FRAGMENT_IGNORED;
-	}
+	/* locate what is interesting */
 
 	struct ikev2_skf *skf_hdr = &md->chain[NEXT_PAYLOAD_v2SKF]->payload.v2skf;
+	ldbg(ike->sa.logger,
+	     "received %zu-byte encrypted fragment '%u', total number '%u', next payload '%u'",
+	     md->packet.len,
+	     skf_hdr->isaskf_number,
+	     skf_hdr->isaskf_total,
+	     skf_hdr->isaskf_np);
 
-	ldbg(ike->sa.logger, "received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
-	     skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
-
-	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
-	if (why != NULL) {
-		llog_sa(RC_LOG, ike, "dropping fragment %u of %u as %s",
-			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
-		return FRAGMENT_IGNORED;
-	}
-
-	/* locate what is interesting */
+	/*
+	 * When possible, decrypt (in place) and FIRST.
+	 *
+	 * Any attacker, worth their salt (...), will craft packets
+	 * that get past any pre-decrypt checks.
+	 *
+	 * And a packet that validates but is then found to contain
+	 * crud should cause the exchange to abort.
+	 */
 
 	/* entire SKF pbs; cur points past SKF header */
 	const struct pbs_in *skf_pbs = &md->chain[NEXT_PAYLOAD_v2SKF]->pbs;
@@ -832,7 +833,24 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	/* first thing after SKF header is Initialization Vector */
 	unsigned iv_offset = skf_pbs->cur - md->packet.ptr;
 
-	/* if possible, decrypt (in place) */
+	/*
+	 * If the slot for this packet is already full, drop it.
+	 *
+	 * This should be minimal and cheap (and hopefully not dump
+	 * core).  Proper validation occures after the packet has been
+	 * decrypted.
+	 */
+	if ((*frags) != NULL &&
+	    skf_hdr->isaskf_number > 0 &&
+	    skf_hdr->isaskf_number <= (*frags)->total &&
+	    (*frags)->frags[skf_hdr->isaskf_number].text.ptr != NULL) {
+		/* retain earlier fragment with same index */
+		llog(RC_LOG, ike->sa.logger,
+		     "fragment %u of %u is a duplicate",
+		     skf_hdr->isaskf_number,
+		     skf_hdr->isaskf_total);
+		return FRAGMENT_IGNORED;
+	}
 
 	shunk_t plain = null_shunk;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
@@ -856,6 +874,18 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		ldbg(ike->sa.logger, "fragment %u of %u decrypted",
 		     skf_hdr->isaskf_number,
 		     skf_hdr->isaskf_total);
+	}
+
+	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
+		llog_sa(RC_LOG, ike, "ignoring fragment as peer never proposed fragmentation");
+		return FRAGMENT_IGNORED;
+	}
+
+	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
+	if (why != NULL) {
+		llog_sa(RC_LOG, ike, "dropping fragment %u of %u as %s",
+			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
+		return FRAGMENT_IGNORED;
 	}
 
 	/* make space for the fragment (it's worth saving) */
