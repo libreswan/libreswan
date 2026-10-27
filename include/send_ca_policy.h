@@ -23,6 +23,6 @@ enum send_ca_policy {
 	CA_SEND_ALL = 2,
 };
 
-extern const struct enum_names send_ca_policy_names;
+extern const struct names send_ca_policy_names;
 
 #endif

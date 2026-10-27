@@ -812,6 +812,40 @@ static unsigned extract_enum_name(struct kv kv,
 	return match;
 }
 
+static unsigned extract_name(struct kv kv,
+			     unsigned value_when_unset,
+			     unsigned value_when_never_negotiate,
+			     const struct names *names,
+			     diag_t *d,
+			     struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	if (never_negotiate_string_option(kv, verbose)) {
+		return value_when_never_negotiate;
+	}
+
+	if (kv.value == NULL) {
+		return value_when_unset;
+	}
+
+	long match = index_byname(names, shunk1(kv.value));
+	if (match < 0) {
+		JAMBUF(buf) {
+			jam(buf, PRI_KV, pri_kv(kv));
+			jam_string(buf, " is invalid, valid options are ");
+			jam_names_quoted(buf, names);
+			(*d) = diag_jambuf(buf);
+		}
+		return 0;
+	}
+
+	return match;
+}
+
 /*
  * Use this when the lookup needs to work with both never-negotiate
  * and normal fields.
@@ -4584,11 +4618,11 @@ diag_t extract_connection(const struct whack_message *wm,
 				     &d, verbose);
 
 		config->host.send_ca =
-			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
-					  /*value_when_unset*/CA_SEND_ALL,
-					  /*value_when_never_negotiate*/CA_SEND_ALL,
-					  &send_ca_policy_names,
-					  &d, verbose);
+			extract_name(kv(wm, END_ROOF, KWS_SENDCA),
+				     /*value_when_unset*/CA_SEND_ALL,
+				     /*value_when_never_negotiate*/CA_SEND_ALL,
+				     &send_ca_policy_names,
+				     &d, verbose);
 
 		config->xauthby =
 			extract_sparse_name(kv(wm, END_ROOF, KWS_XAUTHBY),
