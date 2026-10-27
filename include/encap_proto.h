@@ -29,7 +29,7 @@ enum encap_proto {
 	ENCAP_PROTO_AH,
 };
 
-extern const struct enum_names encap_proto_names;
+extern const struct names encap_proto_names;
 extern const struct enum_names encap_proto_story; /* lower-case */
 
 #endif

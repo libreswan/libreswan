@@ -17,19 +17,24 @@
 
 #include "lswcdefs.h"		/* for ARRAY_PTR */
 #include "enum_names.h"
+#include "names.h"
 
-static const char *encap_proto_name[] = {
+static const char *encap_proto_enum_name[] = {
 #define S(E) [E - ENCAP_PROTO_ESP] = #E
 	S(ENCAP_PROTO_ESP),
 	S(ENCAP_PROTO_AH),
 #undef S
 };
 
-const struct enum_names encap_proto_names = {
+static const struct enum_names encap_proto_enum_names = {
 	ENCAP_PROTO_ESP,
 	ENCAP_PROTO_AH,
-	ARRAY_PTR(encap_proto_name),
+	ARRAY_PTR(encap_proto_enum_name),
 	.en_prefix = "ENCAP_PROTO_",
+};
+
+const struct names encap_proto_names = {
+	.enum_names = &encap_proto_enum_names,
 };
 
 static const char *encap_proto_story_name[] = {

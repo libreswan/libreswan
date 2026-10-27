@@ -943,7 +943,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
 		jam_string(buf, " sendca: ");
-		jam_enum_human(buf, &send_ca_policy_names, c->config->host.send_ca);
+		jam_name_human(buf, &send_ca_policy_names, c->config->host.send_ca);
 		jam_string(buf, ";");
 		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {

@@ -778,12 +778,12 @@ static deltatime_t extract_deltatimescale(struct kv kv,
 	return deltatime;
 }
 
-static unsigned extract_enum_name(struct kv kv,
-				  unsigned value_when_unset,
-				  unsigned value_when_never_negotiate,
-				  const struct enum_names *names,
-				  diag_t *d,
-				  struct verbose verbose)
+static unsigned extract_name(struct kv kv,
+			     unsigned value_when_unset,
+			     unsigned value_when_never_negotiate,
+			     const struct names *names,
+			     diag_t *d,
+			     struct verbose verbose)
 {
 	if (*d != NULL) {
 		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
@@ -798,12 +798,12 @@ static unsigned extract_enum_name(struct kv kv,
 		return value_when_unset;
 	}
 
-	int match = enum_byname(names, shunk1(kv.value));
+	long match = index_byname(names, shunk1(kv.value));
 	if (match < 0) {
 		JAMBUF(buf) {
 			jam(buf, PRI_KV, pri_kv(kv));
 			jam_string(buf, " is invalid, valid options are ");
-			jam_enum_names_quoted(buf, names);
+			jam_names_quoted(buf, names);
 			(*d) = diag_jambuf(buf);
 		}
 		return 0;
@@ -3052,11 +3052,11 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto,
 
 	diag_t d = NULL;
 	enum encap_proto phase2 =
-		extract_enum_name(kv(wm, END_ROOF, KWS_PHASE2),
-				  /*value_when_unset*/default_proto,
-				  /*value_when_never_negotiate*/ENCAP_PROTO_UNSET,
-				  &encap_proto_names,
-				  &d, verbose);
+		extract_name(kv(wm, END_ROOF, KWS_PHASE2),
+			     /*value_when_unset*/default_proto,
+			     /*value_when_never_negotiate*/ENCAP_PROTO_UNSET,
+			     &encap_proto_names,
+			     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -4584,11 +4584,11 @@ diag_t extract_connection(const struct whack_message *wm,
 				     &d, verbose);
 
 		config->host.send_ca =
-			extract_enum_name(kv(wm, END_ROOF, KWS_SENDCA),
-					  /*value_when_unset*/CA_SEND_ALL,
-					  /*value_when_never_negotiate*/CA_SEND_ALL,
-					  &send_ca_policy_names,
-					  &d, verbose);
+			extract_name(kv(wm, END_ROOF, KWS_SENDCA),
+				     /*value_when_unset*/CA_SEND_ALL,
+				     /*value_when_never_negotiate*/CA_SEND_ALL,
+				     &send_ca_policy_names,
+				     &d, verbose);
 
 		config->xauthby =
 			extract_sparse_name(kv(wm, END_ROOF, KWS_XAUTHBY),

@@ -15,9 +15,9 @@
 
 #include "send_ca_policy.h"
 #include "enum_names.h"
-#include "lswcdefs.h"
+#include "names.h"
 
-static const char *send_ca_policy_name[] = {
+static const char *send_ca_policy_enum_name[] = {
 #define S(E) [E] = #E
 	S(CA_SEND_NONE),
 	S(CA_SEND_ISSUER),
@@ -25,8 +25,12 @@ static const char *send_ca_policy_name[] = {
 #undef S
 };
 
-const struct enum_names send_ca_policy_names  = {
+static const struct enum_names send_ca_policy_enum_names  = {
 	CA_SEND_NONE, CA_SEND_ALL,
-	ARRAY_PTR(send_ca_policy_name),
+	ARRAY_PTR(send_ca_policy_enum_name),
 	.en_prefix = "CA_SEND_",
+};
+
+const struct names send_ca_policy_names = {
+	.enum_names = &send_ca_policy_enum_names,
 };

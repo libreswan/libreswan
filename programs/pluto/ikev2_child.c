@@ -694,7 +694,7 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf,
 	 * inTCP/inUDP are (determined by the negotiating IKE
 	 * SA).  For completeness include both.
 	 */
-	jam_enum_short(buf, &encap_proto_names, config->child.encap_proto);
+	jam_name_short(buf, &encap_proto_names, config->child.encap_proto);
 	if (larval->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 		jam_string(buf, "inTCP");
 	} else if (nat_traversal_detected(&larval->sa)) {
