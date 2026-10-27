@@ -187,22 +187,13 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 
 	/* Include intermediate auth only if an IKE_INTERMEDIATE was processed. */
 	if (ike->sa.st_v2_ike_intermediate.id != 0) {
-		chunk_t ia1;
-		chunk_t ia2;
-		switch (role) {
-		case SA_INITIATOR:
-			ia1 = ike->sa.st_v2_ike_intermediate.initiator;
-			ia2 = ike->sa.st_v2_ike_intermediate.responder;
-			break;
-		case SA_RESPONDER:
-			ia1 = ike->sa.st_v2_ike_intermediate.responder;
-			ia2 = ike->sa.st_v2_ike_intermediate.initiator;
-			break;
-		default:
-			bad_case(role);
-		}
-		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ia1), };
-		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ia2), };
+		/*
+		 * RFC 9242 3.3.2: both Initiator and Responder signed
+		 * octets use IntAuth_iN | IntAuth_rN, independent of
+		 * who is signing.
+		 */
+		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ike->sa.st_v2_ike_intermediate.initiator), };
+		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ike->sa.st_v2_ike_intermediate.responder), };
 		/* IKE AUTH's first Message ID */
 		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
 		shunk_t mid = THING_AS_SHUNK(blobs->mid);
