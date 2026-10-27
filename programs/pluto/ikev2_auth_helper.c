@@ -82,12 +82,12 @@ static void pack_task(struct ike_sa *ike,
 	chunk_t nonce = (role == SA_INITIATOR ? ike->sa.st_nr :
 			 role == SA_RESPONDER ? ike->sa.st_ni :
 			 empty_chunk);
-	chunk_t ia1 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.initiator :
-		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.responder :
-		       empty_chunk);
-	chunk_t ia2 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.responder :
-		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
-		       empty_chunk);
+	/*
+	 * RFC 9242 3.3.2: both Initiator and Responder signed octets
+	 * use IntAuth_iN | IntAuth_rN, independent of who is signing.
+	 */
+	chunk_t ia1 = ike->sa.st_v2_ike_intermediate.initiator;
+	chunk_t ia2 = ike->sa.st_v2_ike_intermediate.responder;
 
 	task->firstpacket = ro_hunk_addref(firstpacket, ike->sa.logger);
 	/* on initiator, we need to hash responders nonce */
