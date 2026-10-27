@@ -95,9 +95,6 @@ static const struct sparse_names xfrm_type_sparse_names = {
 		NE(XFRM_MSG_FLUSHSA),
 		NE(XFRM_MSG_FLUSHPOLICY),
 
-		NE(XFRM_MSG_BASE),
-		NE(XFRM_MSG_MAX),
-
 		SPARSE_NULL
 #undef NE
 	},
