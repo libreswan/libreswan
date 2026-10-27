@@ -1733,6 +1733,7 @@ kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
+kvmplutotest	interop-ikev2-strongswan-49-intermediate-cert-initiator		good
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good

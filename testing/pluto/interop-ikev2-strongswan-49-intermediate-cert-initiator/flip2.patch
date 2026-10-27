@@ -1,0 +1,57 @@
+diff --git a/programs/pluto/ikev2_auth.c b/programs/pluto/ikev2_auth.c
+index 0b91c9b5bb..f9241140e9 100644
+--- a/programs/pluto/ikev2_auth.c
++++ b/programs/pluto/ikev2_auth.c
+@@ -187,22 +187,13 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
+ 
+ 	/* Include intermediate auth only if an IKE_INTERMEDIATE was processed. */
+ 	if (ike->sa.st_v2_ike_intermediate.id != 0) {
+-		chunk_t ia1;
+-		chunk_t ia2;
+-		switch (role) {
+-		case SA_INITIATOR:
+-			ia1 = ike->sa.st_v2_ike_intermediate.initiator;
+-			ia2 = ike->sa.st_v2_ike_intermediate.responder;
+-			break;
+-		case SA_RESPONDER:
+-			ia1 = ike->sa.st_v2_ike_intermediate.responder;
+-			ia2 = ike->sa.st_v2_ike_intermediate.initiator;
+-			break;
+-		default:
+-			bad_case(role);
+-		}
+-		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ia1), };
+-		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ia2), };
++		/*
++		 * RFC 9242 3.3.2: both Initiator and Responder signed
++		 * octets use IntAuth_iN | IntAuth_rN, independent of
++		 * who is signing.
++		 */
++		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ike->sa.st_v2_ike_intermediate.initiator), };
++		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ike->sa.st_v2_ike_intermediate.responder), };
+ 		/* IKE AUTH's first Message ID */
+ 		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
+ 		shunk_t mid = THING_AS_SHUNK(blobs->mid);
+diff --git a/programs/pluto/ikev2_auth_helper.c b/programs/pluto/ikev2_auth_helper.c
+index 09c3e6cd6b..4fb74df896 100644
+--- a/programs/pluto/ikev2_auth_helper.c
++++ b/programs/pluto/ikev2_auth_helper.c
+@@ -87,12 +87,12 @@ static void pack_task(struct ike_sa *ike,
+ 	chunk_t nonce = (role == SA_INITIATOR ? ike->sa.st_nr :
+ 			 role == SA_RESPONDER ? ike->sa.st_ni :
+ 			 empty_chunk);
+-	chunk_t ia1 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.initiator :
+-		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.responder :
+-		       empty_chunk);
+-	chunk_t ia2 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.responder :
+-		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
+-		       empty_chunk);
++	/*
++	 * RFC 9242 3.3.2: both Initiator and Responder signed octets
++	 * use IntAuth_iN | IntAuth_rN, independent of who is signing.
++	 */
++	chunk_t ia1 = ike->sa.st_v2_ike_intermediate.initiator;
++	chunk_t ia2 = ike->sa.st_v2_ike_intermediate.responder;
+ 
+ 	task->zero_prefix = transcript.zero_prefix;
+ 	for (unsigned m = 0; m < elemsof(task->message); m++) {

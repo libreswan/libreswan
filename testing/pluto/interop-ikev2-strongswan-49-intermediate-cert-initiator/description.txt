@@ -1,0 +1,5 @@
+interop strongswan->libreswan with addke1=ml_kem_768
+
+using X.509 certificates (RSA) instead of PSK
+
+including rekey
