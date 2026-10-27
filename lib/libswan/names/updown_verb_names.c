@@ -1,6 +1,6 @@
-/* updown names, for libreswan
+/* updown verb names, for libreswan
  *
- * Copyright (C) 2025  Andrew Cagney
+ * Copyright (C) 2025-2026  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,13 +13,11 @@
  * for more details.
  */
 
-#include "updown.h"
-#include "lswcdefs.h"		/* for ARRAY_PTR() */
-#include "names.h"
+#include "updown_verb.h"
 #include "enum_names.h"
 #include "names.h"
 
-static const char *updown_story[] = {
+static const char *updown_verb_enum_story[] = {
 #define C(E,V) [E-UPDOWN_FLOOR] = V
 	C(UPDOWN_PREPARE, "prepare"),
 	C(UPDOWN_ROUTE, "route"),
@@ -29,13 +27,17 @@ static const char *updown_story[] = {
 #undef C
 };
 
-const struct enum_names updown_stories = {
+static const struct enum_names updown_verb_enum_stories = {
 	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_PTR(updown_story),
+	ARRAY_PTR(updown_verb_enum_story),
 	NULL, NULL,
 };
 
-static const char *updown_name[] = {
+const struct names updown_verb_stories = {
+	.enum_names = &updown_verb_enum_stories,
+};
+
+static const char *updown_verb_enum_name[] = {
 #define C(E) [E-UPDOWN_FLOOR] = #E
 	C(UPDOWN_PREPARE),
 	C(UPDOWN_ROUTE),
@@ -45,26 +47,12 @@ static const char *updown_name[] = {
 #undef C
 };
 
-const struct enum_names updown_names = {
+static const struct enum_names updown_verb_enum_names = {
 	UPDOWN_FLOOR, UPDOWN_ROOF-1,
-	ARRAY_PTR(updown_name),
+	ARRAY_PTR(updown_verb_enum_name),
 	"UPDOWN_", NULL,
 };
 
-static const char *updown_config_name[] = {
-#define C(E) [E] = #E
-	C(UPDOWN_CONFIG_ASYNC),
-	C(UPDOWN_CONFIG_EXEC),
-#undef C
-};
-
-static const struct enum_names updown_config_enum_names = {
-	0, UPDOWN_CONFIG_ROOF-1,
-	ARRAY_PTR(updown_config_name),
-	"UPDOWN_CONFIG_",
-	NULL,
-};
-
-const struct names updown_config_names = {
-	.enum_names = &updown_config_enum_names,
+const struct names updown_verb_names = {
+	.enum_names = &updown_verb_enum_names,
 };

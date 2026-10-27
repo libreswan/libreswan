@@ -31,6 +31,9 @@
 
 #include <stdbool.h>
 
+#include "updown_verb.h"
+#include "updown_config.h"
+
 struct jambuf;
 struct state;
 struct connection;
@@ -40,34 +43,9 @@ struct spds;
 struct logger;
 struct child_sa;
 struct spd_owner;
+enum updown_verb;
 
-/* many bits reach in to use this, but maybe shouldn't */
-
-enum updown {
-#define UPDOWN_FLOOR UPDOWN_PREPARE
-	UPDOWN_PREPARE,
-	UPDOWN_ROUTE,
-	UPDOWN_UNROUTE,
-	UPDOWN_UP,
-	UPDOWN_DOWN,
-#define UPDOWN_ROOF (UPDOWN_DOWN+1)
-};
-
-extern const struct enum_names updown_stories;
-extern const struct enum_names updown_names;
-
-enum updown_configs {
-	UPDOWN_CONFIG_ASYNC,
-	UPDOWN_CONFIG_EXEC,
-#define UPDOWN_CONFIG_ROOF (UPDOWN_CONFIG_EXEC+1)
-};
-
-#define updown_config_async updown_config[UPDOWN_CONFIG_ASYNC]
-#define updown_config_exec updown_config[UPDOWN_CONFIG_EXEC]
-
-extern const struct names updown_config_names;
-
-bool updown_connection_spd(enum updown updown_verb,
+bool updown_connection_spd(enum updown_verb updown_verb,
 			   const struct connection *c,
 			   const struct spd *spd,
 			   struct logger *logger/*state-or-connection*/);
@@ -77,7 +55,7 @@ bool updown_connection_spd(enum updown updown_verb,
  *
  * These are hacks to mimic current behaviour.
  */
-struct updown_config {
+struct updown_configs {
 	/*
 	 * Abort, returning false, when updown fails.  By default
 	 * errors are ignored, and updown stumbles onto the next SPD.
@@ -95,9 +73,9 @@ struct updown_config {
 	bool down_wip_installed_up;
 };
 
-bool updown_child_spds(enum updown updown_verb,
+bool updown_child_spds(enum updown_verb updown_verb,
 		       struct child_sa *child,
-		       struct updown_config config);
+		       struct updown_configs config);
 
 bool updown_async_child(bool prepare, bool route, bool up,
 			struct child_sa *child);

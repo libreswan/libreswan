@@ -46,11 +46,11 @@ static server_fork_cb updown_async_callback;
 const char *pluto_dns_resolver;
 
 static struct verbose verbose_updown(struct logger *logger,
-				     enum updown updown_verb,
+				     enum updown_verb updown_verb,
 				     const char **verb)
 {
 	name_buf vb;
-	if (PEXPECT(logger, enum_short(&updown_stories, updown_verb, &vb))) {
+	if (PEXPECT(logger, name_short(&updown_verb_stories, updown_verb, &vb))) {
 		/* points into static string */
 		PEXPECT(logger, vb.buf != vb.tmp);
 		*verb = vb.buf;
@@ -435,7 +435,7 @@ static bool do_updown_verb(const char *verb,
 	return ok;
 }
 
-bool updown_connection_spd(enum updown updown_verb,
+bool updown_connection_spd(enum updown_verb updown_verb,
 			   const struct connection *c,
 			   const struct spd *spd,
 			   struct logger *logger/*C-or-CHILD*/)
@@ -489,7 +489,7 @@ static bool updown_child_spd_1(const char *verb,
 	return ok;
 }
 
-static void update_wip(struct spd *spd, enum updown updown_verb, bool ok)
+static void update_wip(struct spd *spd, enum updown_verb updown_verb, bool ok)
 {
 	switch (updown_verb) {
 	case UPDOWN_UP:
@@ -503,9 +503,9 @@ static void update_wip(struct spd *spd, enum updown updown_verb, bool ok)
 	}
 }
 
-bool updown_child_spds(enum updown updown_verb,
+bool updown_child_spds(enum updown_verb updown_verb,
 		       struct child_sa *child,
-		       struct updown_config config)
+		       struct updown_configs config)
 {
 	const char *verb;
 	struct verbose verbose = verbose_updown(child->sa.logger, updown_verb, &verb);
