@@ -2504,7 +2504,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
-		bad_enum(verbose.logger, &encap_proto_names, c->config->child.encap_proto);
+		bad_case(c->config->child.encap_proto);
 	}
 
 	/*
