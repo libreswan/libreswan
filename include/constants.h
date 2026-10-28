@@ -139,7 +139,6 @@ extern const char *bool_str(bool b);	/* bool -> string */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
-extern char *add_str(char *buf, size_t size, const char *src);
 
 #include "pluto_constants.h"
 

@@ -166,26 +166,38 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 
 struct line {
 	char buf[72];
+	struct jambuf jambuf;
 };
+
+static void add(struct line *line, const char *string)
+{
+	jam_string(&line->jambuf, string);
+}
 
 static void newline(FILE *stream, struct line *line)
 {
-	if (!streq(line->buf, "\t")) {
-		fprintf(stream, "%s\n", line->buf);
+	shunk_t buf = jambuf_as_shunk(&line->jambuf);
+	if (!hunk_streq(buf, "\t")) {
+		fprintf(stream, PRI_SHUNK"\n", pri_shunk(buf));
 	}
-	jam_str(line->buf, sizeof(line->buf), "\t");
+	line->jambuf = ARRAY_AS_JAMBUF(line->buf);
+	add(line, "\t");
 }
 
 void optarg_usage(const char *progname, const char *synopsys, const char *details)
 {
 	FILE *stream = stdout;
 
-	struct line line = {"\t"};
+	struct line line = {
+		.jambuf = ARRAY_AS_JAMBUF(line.buf),
+	};
 
-	if (strlen(synopsys) == 0) {
-		snprintf(line.buf, sizeof(line.buf), "Usage: %s", progname);
-	} else {
-		fprintf(stream, "Usage: %s [--options] %s\n", progname, synopsys);
+	add(&line, "Usage: ");
+	add(&line, progname);
+	if (strlen(synopsys) > 0) {
+		add(&line, " [--options] ");
+		add(&line, synopsys);
+		newline(stream, &line);
 	}
 
 	for (const struct option *opt = optarg_options; opt->name != NULL; opt++) {
@@ -277,14 +289,14 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		}
 
 		/* enough space? allow for separator, and null? */
-		if (strlen(line.buf) + strlen(option) + 2 >= sizeof(line)) {
+		if (strlen(line.buf) + strlen(option) + 2 >= sizeof(line.buf)) {
 			/* finish current line */
 			newline(stream, &line);
 		} else if (!streq(line.buf, "\t")) {
-			add_str(line.buf, sizeof(line.buf), " ");
+			add(&line, " ");
 		}
 
-		add_str(line.buf, sizeof(line.buf), option);
+		add(&line, option);
 	}
 
 	/* force flush */

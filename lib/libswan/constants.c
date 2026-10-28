@@ -88,43 +88,6 @@ char *jam_str(char *dest, size_t size, const char *src)
 	}
 }
 
-/*
- * Add a string to a partially filled buffer of limited size
- *
- * This is similar to what people mistakenly think strncat() does but
- * add_str() matches jam_str() so the arguments are quite different.
- * OpenBSD's strlcat serves the same purpose.
- *
- * The buffer bound (size) must be greater than 0.
- * That allows a guarantee that the result is NUL-terminated.
- *
- * The result is a pointer:
- *   if the string fits, to the NUL at the end of the string in dest;
- *   if the string was truncated, to the roof of dest.
- *
- * Warning: strncat's bound is NOT on the whole buffer!
- * strncat(dest, src, n) adds at most n+1 bytes after the contents of
- * dest.  Many people think that the limit is n bytes.
- *
- * Warning: Is it really wise to silently truncate?  Only the caller
- * knows.  The caller SHOULD check by seeing if the result equals
- * dest's roof.  Overflow at any point in a chain of jam_str and
- * add_str calls will be reflected in the final return result so
- * checking of intermediate return values is not required.
- */
-
-char *add_str(char *buf, size_t size, const char *src)
-{
-	passert(size > 0);
-	/*
-	 * skip to end of existing string (if we're not already there)
-	 */
-	char *end = buf + strlen(buf);
-	passert(end < buf + size);	/* must be within buffer */
-
-	return jam_str(end, size - (end-buf), src);
-}
-
 static const char *const perspective_name[] = {
 #define S(E) [E - NO_PERSPECTIVE] = #E
 	S(NO_PERSPECTIVE),
