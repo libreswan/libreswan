@@ -78,8 +78,6 @@ OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
 OBJS += pubkey/pubkey_sign_hash.o
 
-OBJS += ttobool.o
-
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o
 OBJS += alloc_printf.o
