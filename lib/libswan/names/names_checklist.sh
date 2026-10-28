@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
 includedir=$(realpath $1) ; shift
 
