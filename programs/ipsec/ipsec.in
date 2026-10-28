@@ -755,7 +755,13 @@ ipsec_import() {
 	    exit 1
 	fi
 
-	@@PK12UTIL@@ -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
+	# First try blanc password to avoid uselessly prompting interactively
+	@@PK12UTIL@@ -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}" -W '' -K '' 2>/dev/null
+	if [ $? -gt 0 ]; then
+	    # Not the empty password for either nss db or pkcs12 file, so prompt user
+	    @@PK12UTIL@@ -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
+	fi
+
 	# check and correct trust bits
 	set_nss_db_trusts
 	exit 0
