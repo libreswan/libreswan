@@ -142,7 +142,6 @@ err_t ttobool(const char *t, bool *b);	/* string -> bool */
 extern char *jam_str(char *dest, size_t size, const char *src);
 extern char *add_str(char *buf, size_t size, const char *src);
 
-#include "ietf_constants.h"
 #include "pluto_constants.h"
 
 #endif /* _CONSTANTS_H_ */

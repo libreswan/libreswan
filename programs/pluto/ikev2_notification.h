@@ -18,6 +18,7 @@
 
 #include <stdbool.h>
 
+#include "ietf_constants.h"	/* for v2_notification_t */
 struct msg_digest;
 struct ike_sa;
 struct logger;

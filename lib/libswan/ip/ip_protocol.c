@@ -18,6 +18,7 @@
 
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for strncaseeq() */
+#include "ietf_constants.h"	/* for PROTO_IPSEC_ESP */
 #include "enum_names.h"
 
 #include "passert.h"

@@ -5,6 +5,8 @@
 
 /* socket address family info */
 
+#include "ietf_constants.h"
+
 #include "ip_address.h"
 #include "ip_subnet.h"
 #include "ip_selector.h"

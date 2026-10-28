@@ -23,6 +23,7 @@
 
 #include <stdlib.h>	/* for NULL et.al. */
 
+#include "ietf_constants.h"	/* for MD5_DIGEST_SIZE */
 #include "lswversion.h"		/* for libreswan_vendorid */
 #include "crypt_hash.h"
 #include "ike_alg_hash.h"

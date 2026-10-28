@@ -16,7 +16,7 @@
 #ifndef IKEV1_NOTIFICATION_H
 #define IKEV1_NOTIFICATION_H
 
-#include "constants.h"
+#include "ietf_constants.h"
 
 struct state;
 enum state_kind;

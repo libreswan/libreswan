@@ -10,6 +10,7 @@
 #include "passert.h"
 #include "pexpect.h"
 #include "enum_names.h"
+#include "ietf_constants.h"
 
 #define PREFIX "         "
 
