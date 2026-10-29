@@ -169,7 +169,7 @@ struct impairment impairments[] = {
 		.sizeof_value = sizeof(impair.VALUE),	\
 		##__VA_ARGS__,				\
 	}
-#define P(VALUE, HELP, ...)					\
+#define F(VALUE, HELP, ...)					\
 	{							\
 		.what = #VALUE,					\
 		.action = IMPAIR_FLAGS,				\
@@ -206,6 +206,7 @@ struct impairment impairments[] = {
 		.help = HELP,					\
 		.enabled = &impair.VALUE.enabled,		\
 		.value = &impair.VALUE.value,			\
+		.annex = &impair.VALUE.annex,			\
 		.sizeof_value = sizeof(impair.VALUE.value),	\
 		.value_names = &NAMES,				\
 		##__VA_ARGS__,					\
@@ -329,7 +330,9 @@ struct impairment impairments[] = {
 	  "add an unknown payload to the (unencrypted) part of the exchange"),
 	E(add_unknown_v2_payload_to_sk, ikev2_exchange_nom,
 	  "add an unknonwn payload to the encrypted part of the exchange"),
+
 	B(unknown_v2_payload_critical, "mark the unknown payload as critical"),
+
 	U(pad_with_unknown_v2_payloads, "pad the exchange with unknown payloads: 0=MAX+1, 1=MAX, 2=MAX-1, ..."),
 
 	E(add_v2_notification, ikev2_notification_names, "add a notification to the message",
@@ -615,7 +618,12 @@ enum impair_status parse_impair(const char *optarg,
 			}
 		}
 		if (annex_name < 0) {
-			err_t err = shunk_to_uintmax(annex, NULL, 0/*base*/, &impair->annex);
+			/*
+			 * Either the name is invalid, or no name is
+			 * allowed.
+			 */
+			err_t err = shunk_to_uintmax(annex, NULL, 0/*base*/,
+						     &impair->annex);
 			if (err != NULL) {
 				llog(ERROR_STREAM, logger,
 				     "impair option '"PRI_SHUNK"' has invalid annex '"PRI_SHUNK"': %s",
