@@ -857,7 +857,8 @@ static void process_impair_update(const struct impairment *impairment,
 		/* new value */
 		jam_string(buf, " -> ");
 		jam_impairment_value(buf, impairment);
-		if (impairment->annex != NULL) {
+		if (impairment->annex != NULL &&
+		    (*impairment->annex) != wc->annex) {
 			jam(buf, " (%u->%ju)", (*impairment->annex), wc->annex);
 			(*impairment->annex) = wc->annex;
 		}
