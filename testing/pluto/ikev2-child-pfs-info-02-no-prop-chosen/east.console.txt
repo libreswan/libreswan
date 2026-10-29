@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+east #
+ grep 'proposed CHILD_SA_PFS_INFO_SUPPORTED notification' /tmp/pluto.log
+| accepting proposed CHILD_SA_PFS_INFO_SUPPORTED notification from initiator
+east #

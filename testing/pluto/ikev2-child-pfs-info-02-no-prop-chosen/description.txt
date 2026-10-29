@@ -1,0 +1,5 @@
+IKEv2 Child SA PFS Info (draft-ietf-ipsecme-child-pfs-info): both west and east
+have child-sa-pfs-info-supported=yes and pfs=yes, so CHILD_SA_PFS_INFO_SUPPORTED is negotiated
+in IKE_SA_INIT; but west's esp= proposes DH19 while east's esp= proposes DH20.
+The KE transforms in the IKE_AUTH Child SA proposals do not match, so the
+responder must reject the Child SA with NO_PROPOSAL_CHOSEN.
