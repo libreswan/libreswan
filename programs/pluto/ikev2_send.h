@@ -74,7 +74,7 @@ struct v2_incoming_fragments {
 	 * For simplicity, index by fragment number which is 1-based;
 	 * leaving element 0 empty.
 	 */
-	struct v2_incoming_fragment frags[MAX_IKE_FRAGMENTS + 1];
+	struct v2_incoming_fragment frags[MAX_IKEv2_FRAGMENTS + 1];
 };
 
 struct v2_outgoing_fragments {

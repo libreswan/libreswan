@@ -718,7 +718,7 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 		return "fragment number must be no greater than the total number of fragments";
 	}
 
-	if (skf_hdr->isaskf_total > MAX_IKE_FRAGMENTS) {
+	if (skf_hdr->isaskf_total > MAX_IKEv2_FRAGMENTS) {
 		return "total number of fragments must be no more than MAX_IKE_FRAGMENTS";
 	}
 
@@ -1502,7 +1502,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	PASSERT(logger, unencrypted_payloads.len < max_skf_size);
 	unsigned int nfrags = (sk->cleartext.len + unencrypted_payloads.len + max_skf_size - 1) / max_skf_size;
 
-	if (nfrags > MAX_IKE_FRAGMENTS) {
+	if (nfrags > MAX_IKEv2_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 			    sk->cleartext.len, max_skf_size);
