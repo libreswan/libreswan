@@ -143,6 +143,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KYN_IKE_SOCKET_ERRQUEUE] = "yes",
 	[KYN_LISTEN_UDP] = "yes",
 	[KYN_LISTEN_TCP] = "no",
+	[KYN_CHILD_SA_PFS_INFO_SUPPORTED] = "no",
 
 	[KSF_SEEDDEV] = "/dev/random",
 
@@ -559,6 +560,7 @@ static const struct keyword_def config_setup_keyword[] = {
   K("signature-hash-algorithms", kt_sparse_name, KSF_SIGNATURE_HASH_ALGORITHMS, .sparse_names = &yna_option_names),
   K("ike-sa-init-full-transcript-auth", kt_sparse_name, KSF_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, .sparse_names = &yna_option_names),
 
+  K("child-sa-pfs-info-supported", kt_sparse_name, KYN_CHILD_SA_PFS_INFO_SUPPORTED, .sparse_names = &yn_option_names),
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 
 #ifdef USE_NFLOG

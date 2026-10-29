@@ -191,6 +191,7 @@ struct hidden_variables {
 						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
+	bool st_v2_child_pfs_info_supported;	/* draft-ietf-ipsecme-child-pfs-info */
 };
 
 /*
