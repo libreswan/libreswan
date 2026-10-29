@@ -18,7 +18,7 @@ west #
  sleep 10
 west #
  ipsec whack --showstates
-#2: "east-west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "east-west":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
 #3: "east-west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
 #3: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
@@ -28,4 +28,3 @@ west #
  # to avoid shutdown logs confusing things, hard kill pluto
 west #
  kill -9 `cat /run/pluto/pluto.pid`
-west #

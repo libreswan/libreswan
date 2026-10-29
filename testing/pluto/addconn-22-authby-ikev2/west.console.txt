@@ -283,7 +283,7 @@ west #
  ipsec addconn --name authby:never authby=never type=drop
 warning: "authby:never": "keyexchange=ikev2" ignored for never-negotiate ("type=drop") connection
 "authby:never": added oriented drop connection
- policy: IKEv2+AUTH_NEVER+DROP+NEVER_NEGOTIATE;
+ policy: IKEv2+AUTH_NEVER+IKE_SA_INIT_FULL_TRANSCRIPT_AUTH_NO+DROP+NEVER_NEGOTIATE;
  v2-auth-hash-policy: none;
  our auth:never
  their auth:never
