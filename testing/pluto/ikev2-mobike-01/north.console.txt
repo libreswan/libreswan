@@ -29,7 +29,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
-"northnet-eastnet": added oriented IKEv2 connection
+"northnet-eastnet": added oriented IKEv2 permanent connection
 north #
  ipsec whack --impair suppress_retransmits
 north #

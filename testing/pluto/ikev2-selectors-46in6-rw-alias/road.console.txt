@@ -12,11 +12,11 @@ road #
 road #
  ipsec add road
 "road/1x1": connection is using multiple sourceips
-"road/1x1": added oriented IKEv2 connection
+"road/1x1": added oriented IKEv2 permanent connection
 warning: "road": skipping mismatched leftsubnets=198.18.66.0/24 rightsubnets=2001:db8:0:20::/64
 warning: "road": skipping mismatched leftsubnets=2001:db8:0:30::/64 rightsubnets=192.0.2.0/24
 "road/2x2": connection is using multiple sourceips
-"road/2x2": added oriented IKEv2 connection
+"road/2x2": added oriented IKEv2 permanent connection
 road #
  echo "initdone"
 initdone

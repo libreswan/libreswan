@@ -17,7 +17,7 @@ west #
  ipsec connectionstatus implied-prefix   | grep updown
 west #
  ipsec add --config redundant-prefix.conf redundant-prefix
-"redundant-prefix": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=1.2.3.4 match an interface)
+"redundant-prefix": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=1.2.3.4 match an interface)
 west #
  ipsec connectionstatus redundant-prefix | grep updown
 "redundant-prefix":   leftupdown=left updown; leftupdown-config=noasync,noexec;

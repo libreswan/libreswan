@@ -15,7 +15,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -34,7 +34,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20 intermediate=yes
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -56,7 +56,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20;addke1=none
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -79,7 +79,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20;addke1=none;addke2=ml_kem_768
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -102,7 +102,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20;addke1=modp8192;addke2=none
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -125,7 +125,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo ike=aes;dh20;addke1=modp8192;addke2=ml_kem_768
-"algo": added oriented IKEv2 connection
+"algo": added oriented IKEv2 permanent connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

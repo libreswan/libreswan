@@ -25,10 +25,10 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add rw-lte
-"rw-lte": added oriented IKEv2 connection
+"rw-lte": added oriented IKEv2 template connection
 road #
  ipsec auto --add rw-wifi
-"rw-wifi": added oriented IKEv2 connection
+"rw-wifi": added oriented IKEv2 template connection
 road #
  echo "initdone"
 initdone
