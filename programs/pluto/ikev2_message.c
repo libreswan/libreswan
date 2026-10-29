@@ -718,8 +718,8 @@ static const char *invalid_ikev2_incoming_fragment(struct v2_incoming_fragments 
 		return "fragment number must be no greater than the total number of fragments";
 	}
 
-	if (skf_hdr->isaskf_total > MAX_IKE_FRAGMENTS) {
-		return "total number of fragments must be no more than MAX_IKE_FRAGMENTS";
+	if (skf_hdr->isaskf_total > MAX_IKEv2_FRAGMENTS) {
+		return "total number of fragments must be no more than MAX_IKEv2_FRAGMENTS";
 	}
 
 	if (skf_hdr->isaskf_number == 1 && skf_hdr->isaskf_np == NEXT_PAYLOAD_v2NONE) {
@@ -748,6 +748,10 @@ static const char *invalid_ikev2_incoming_fragment(struct v2_incoming_fragments 
 
 	if (skf_hdr->isaskf_total != frags->total) {
 		return "fragment total changed";
+	}
+
+	if (frags->fragment_total_packet_size + md->packet.len > MAX_IKEv2_FRAGMENTS_TOTAL_PACKET_SIZE) {
+		return "accumulated fragments are too big";
 	}
 
 	return NULL;
@@ -823,7 +827,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* entire SKF pbs; cur points past SKF header */
 	const struct pbs_in *skf_pbs = &md->chain[NEXT_PAYLOAD_v2SKF]->pbs;
-	/* entire payload: AAD+SKF-header+IV+cipher-text) */
+	/* entire payload: AAD+SKF_header+IV+cipher_text) */
 	chunk_t text = chunk2(md->packet.ptr, skf_pbs->roof - md->packet.ptr);
 	/* first thing after SKF header is Initialization Vector */
 	unsigned iv_offset = skf_pbs->cur - md->packet.ptr;
@@ -895,16 +899,21 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* save the fragment */
 
-	PASSERT(ike->sa.logger, (*frags)->count < (*frags)->total);
-	(*frags)->count++;
-	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
 	PASSERT(ike->sa.logger, skf_hdr->isaskf_number < elemsof((*frags)->frags));
+	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
 	PASSERT(ike->sa.logger, frag->text.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->plain.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->text.len == 0);
 	PASSERT(ike->sa.logger, frag->plain.len == 0);
+	PASSERT(ike->sa.logger, frag->packet_size == 0);
 	frag->text = clone_hunk_as_chunk(&text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
+	frag->packet_size = md->packet.len;
+
+	PASSERT(ike->sa.logger, (*frags)->count < (*frags)->total);
+	(*frags)->count++;
+	(*frags)->fragment_total_packet_size += frag->packet_size;
+
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
 		 * Since TEXT has been decrypted (PLAIN points into
@@ -959,6 +968,10 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags)
 {
+	/* reset totals, will update */
+	(*frags)->count = 0;
+	(*frags)->fragment_total_packet_size = 0;
+
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		if (frag->text.ptr != NULL) {
@@ -980,14 +993,15 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 					"saved fragment %u of %u invalid; dropped",
 					i, (*frags)->total);
 				/* release the frag */
-				(*frags)->count--;
 				free_chunk_content(&frag->text);
-				frag->text = empty_chunk;
-				frag->plain = null_shunk;
-				frag->iv_offset = 0;
+				zero(frag);
+				continue;
 			}
+
 			ldbg(ike->sa.logger, "saved fragment %u of %u decrypted",
 			     i, (*frags)->total);
+			(*frags)->count++;
+			(*frags)->fragment_total_packet_size += frag->packet_size;
 		}
 	}
 
@@ -1566,7 +1580,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	PASSERT(logger, max_skf_size >= 400/*arbitrary*/);
 	unsigned int nfrags = (sk->cleartext.len + max_skf_size - 1) / max_skf_size;
 
-	if (nfrags > MAX_IKE_FRAGMENTS) {
+	if (nfrags > MAX_IKEv2_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 			    sk->cleartext.len, max_skf_size);
