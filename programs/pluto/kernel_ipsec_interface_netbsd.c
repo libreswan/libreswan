@@ -120,21 +120,21 @@ static bool netbsd_ipsec_interface_del(const char *ipsec_if_name,
 	return server_runv("ifconfig destroy", destroy, verbose);
 }
 
-static bool netbsd_ipsec_interface_match(struct ipsec_interface_match *match UNUSED,
-					   struct verbose verbose UNUSED)
+static bool netbsd_ipsec_interface_match(struct ipsec_interface_match *match,
+					   struct verbose verbose)
 {
 	const char *run[] = {
 		"ifconfig",
 		match->ipsec_if_name,
 		NULL,
 	};
-	bool ok = server_runv("ifconfig", run, verbose);
-	if (ok) {
-		jam_str(match->found, sizeof(match->found), match->ipsec_if_name);
-	} else {
+	if (!server_runv("ifconfig", run, verbose)) {
 		match->diag = diag("not found");
+		return false;
 	}
-	return ok;
+
+	fill_and_terminate(match->found, match->ipsec_if_name);
+	return true;
 }
 
 static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbose)

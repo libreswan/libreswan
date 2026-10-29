@@ -96,8 +96,8 @@ static bool freebsd_ipsec_interface_add(const char *ipsec_if_name,
 	return server_runv("ifconfig create", create, verbose);
 }
 
-static bool freebsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
-					struct verbose verbose UNUSED)
+static bool freebsd_ipsec_interface_up(const char *ipsec_if_name,
+					struct verbose verbose)
 {
 	const char *up[] = {
 		"ifconfig",
@@ -128,13 +128,14 @@ static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
 		match->ipsec_if_name,
 		NULL,
 	};
-	bool ok = server_runv("ifconfig", run, verbose);
-	if (ok) {
-		jam_str(match->found, sizeof(match->found), match->ipsec_if_name);
-	} else {
+
+	if (!server_runv("ifconfig", run, verbose)) {
 		match->diag = diag("not found");
+		return false;
 	}
-	return ok;
+
+	fill_and_terminate(match->found, match->ipsec_if_name);
+	return true;
 }
 
 static err_t freebsd_ipsec_interface_init(struct verbose verbose)

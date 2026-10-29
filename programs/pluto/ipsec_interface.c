@@ -461,10 +461,9 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 			 unmap_id(ipsec_if_id));
 	passert(l < IFNAMSIZ);
 	if (kernel_xfrmi_req_phy()) {
-		char *none = "NONE";
-		jam_str(p->physical, sizeof(none), none);
+		fill_and_terminate(p->physical, "NONE");
 	} else {
-		jam_str(p->physical, sizeof(p->physical), iface->real_device_name);
+		fill_and_terminate(p->physical, iface->real_device_name);
 	}
 	/* add to known interfaces */
 	p->next = ipsec_interfaces;

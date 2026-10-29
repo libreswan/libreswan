@@ -1426,7 +1426,7 @@ static bool siocethtool(const char *ifname, void *data, const char *action,
 			const struct logger *logger)
 {
 	struct ifreq ifr = { .ifr_data = data };
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	fill_and_terminate(ifr.ifr_name, ifname);
 	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr) != 0) {
 		/* EOPNOTSUPP is expected if kernel doesn't support this */
 		if (errno == EOPNOTSUPP) {
