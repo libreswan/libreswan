@@ -1509,6 +1509,13 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 		return false;
 	}
 
+	if (impair.add_fragments.enabled) {
+		llog(IMPAIR_STREAM, logger, "adding %u %u-byte SKF fragments",
+		     impair.add_fragments.value,
+		     impair.add_fragments.annex);
+		nfrags += impair.add_fragments.value;
+	}
+
 	realloc_v2_outgoing_fragments(fragments, sk->logger, nfrags, story);
 
 	/*
@@ -1576,9 +1583,35 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 
 		number++;
 
+		/* only first packet has next payload */
 		skf_np = NEXT_PAYLOAD_v2NONE;
+		/* remaining fragments have no unencrypted part */
 		unencrypted_payloads = null_shunk;
+
 	} while (clear_cursor.len > 0);
+
+	if (impair.add_fragments.enabled) {
+		chunk_t fragment = alloc_chunk(impair.add_fragments.annex, __func__);
+		bool ok = true;
+		for (unsigned count = 0; ok && count < impair.add_fragments.value; count++) {
+			ldbg(logger, "adding %u-byte SKF fragment %u",
+			     impair.add_fragments.annex, number);
+			ok = encrypt_and_record_outbound_fragment(sk->logger, sk->ike,
+								  &hdr,
+								  /*unencrypted-type*/NEXT_PAYLOAD_v2NONE,
+								  /*unencrypted-blob*/null_shunk,
+								  previous_to_sk_next_payload_offset,
+								  NEXT_PAYLOAD_v2NONE,
+								  (*fragments),
+								  HUNK_AS_SHUNK(&fragment),
+								  number);
+			number++;
+		}
+		free_chunk_content(&fragment);
+		if (!ok) {
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -1655,14 +1688,25 @@ static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 	 * this message for ESP, each message needs a non-ESP_Marker
 	 * prefix.
 	 */
-	if (!PEXPECT(sk->logger, sk->ike->sa.st_iface_endpoint != NULL) &&
-	    sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled)
+	PASSERT(sk->logger, sk->ike->sa.st_iface_endpoint != NULL);
+	if (sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled) {
 		len += NON_ESP_MARKER_SIZE;
+	}
 
-	/* IPv4 and IPv6 have different fragment sizes */
-	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
-	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
-	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
+	/*
+	 * IPv4 and IPv6 have different fragment sizes.
+	 */
+
+	bool fragment_message =
+		(sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
+		 sk->ike->sa.st_v2_ike_fragmentation_enabled &&
+		 len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size);
+	if (impair.add_fragments.enabled && !fragment_message) {
+		llog(IMPAIR_STREAM, sk->logger, "forcing fragmentation");
+		fragment_message = true;
+	}
+
+	if (fragment_message) {
 		if (!encrypt_and_record_outbound_fragments(message, sk, outgoing_fragments, story)) {
 			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;

@@ -194,9 +194,10 @@ struct impairment impairments[] = {
 		.what = #VALUE,					\
 		.action = CALL_IMPAIR_UPDATE,			\
 		.help = HELP,					\
-		.value = &impair.VALUE.value,			\
-		.sizeof_value = sizeof(impair.VALUE.value),	\
 		.enabled = &impair.VALUE.enabled,		\
+		.value = &impair.VALUE.value,			\
+		.annex = &impair.VALUE.annex,			\
+		.sizeof_value = sizeof(impair.VALUE.value),	\
 		.unsigned_help = "<unsigned>",			\
 	}
 #define E(VALUE, NAMES, HELP, ...)				\
@@ -330,7 +331,7 @@ struct impairment impairments[] = {
 	  "add an unknown payload to the (unencrypted) part of the exchange"),
 	E(add_unknown_v2_payload_to_sk, ikev2_exchange_nom,
 	  "add an unknonwn payload to the encrypted part of the exchange"),
-
+	U(add_fragments, "add an extra <count>:<size> fragments when fragmenting the message"),
 	B(unknown_v2_payload_critical, "mark the unknown payload as critical"),
 
 	U(pad_with_unknown_v2_payloads, "pad the exchange with unknown payloads: 0=MAX+1, 1=MAX, 2=MAX-1, ..."),
