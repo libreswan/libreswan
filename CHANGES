@@ -2,9 +2,9 @@ See also https://libreswan.org/
 
 v5.5 (unreleased)
 * Security
-  - Remove build support for DH2 and DH22 (was already disabled) [Paul]
+  - remove build support for DH2 and DH22 (was already disabled) [Paul]
 * IKEv2:
-  - Fix Redirect error logging [Paul de Lange, GenDigital]
+  - fix Redirect error logging [Paul de Lange (GenDigital), Chaitanya Bhardwaj]
   - support auth=digsig and selecting auth-from-key [RuiL, #2708, #2503, #3068]
   - add RFC 9593 Announcing Supported Authentication Methods [Osema, Vukašin]
   - Fix interop with INTERMEDIATE and non-PSK auth [Astrid Passot, Paul]
