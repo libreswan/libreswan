@@ -678,6 +678,7 @@ kvmplutotest	ikev2-frag-03-retrans			good
 kvmplutotest	ikev2-frag-04-nofrag-east		good
 kvmplutotest	ikev2-frag-05-nofrag-west		good
 kvmplutotest	ikev2-frag-06-unsolicited		good
+kvmplutotest	ikev2-frag-07-too-big			good github/3079
 
 kvmplutotest	dynamic-iface-01			good
 kvmplutotest	ikev2-removed-iface-01			good
