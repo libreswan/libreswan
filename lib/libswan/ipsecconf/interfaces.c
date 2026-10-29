@@ -47,7 +47,7 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	if (sock < 0)
 		return false;
 
-	fill_and_terminate(req.ifr_name, iface, IFNAMSIZ);
+	fill_and_terminate(req.ifr_name, iface);
 
 	/* UP? */
 	if (ioctl(sock, SIOCGIFFLAGS, &req) != 0 ||

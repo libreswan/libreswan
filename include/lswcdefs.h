@@ -168,4 +168,15 @@
 		(len_blob_ == NULL ? 0 : len_blob_->len);	\
 	})
 
+/*
+ * Fill a string field, ensuring that it is padded and terminated with
+ * NUL.
+ *
+ * If termination isn't required, strncpy would do.
+ */
+#define fill_and_terminate(DEST, SRC) {			\
+		strncpy((DEST), (SRC), sizeof(DEST)-1);	\
+		(DEST)[sizeof(DEST)-1] = '\0';		\
+	}
+
 #endif

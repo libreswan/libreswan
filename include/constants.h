@@ -88,16 +88,6 @@ bool strheq(const char *a, const char *b);
 	})
 
 /*
- * Fill a string field, ensuring that it is padded and terminated with NUL
- * If termination isn't required, strncpy would do.
- * If filling isn't required, jam_str would do.
- */
-#define fill_and_terminate(dest, src, len) { \
-		strncpy((dest), (src), (len)-1); \
-		(dest)[(len)-1] = '\0'; \
-	}
-
-/*
  * zero an object given a pointer to it.
  *
  * Note: this won't work on a pointer to the first element of an
