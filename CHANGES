@@ -4,12 +4,12 @@ v5.5 (unreleased)
 * Security
   - remove build support for DH2 and DH22 (was already disabled) [Paul]
 * IKEv2:
-  - fix Redirect error logging [Paul de Lange (GenDigital), Chaitanya Bhardwaj]
+  - fix Redirect error logging [Paul de Lange (GenDigital), Chaitanya Bhardwaj, #3107]
   - support auth=digsig and selecting auth-from-key [RuiL, #2708, #2503, #3068]
-  - add RFC 9593 Announcing Supported Authentication Methods [Osema, Vukašin]
-  - Fix interop with INTERMEDIATE and non-PSK auth [Astrid Passot, Paul]
+  - add RFC 9593 Announcing Supported Authentication Methods [Osema Fadhel (GSoC), Vukašin]
+  - fix interop with INTERMEDIATE and non-PSK auth [Astrid Passot, Paul]
 * Building:
-  - Fix USE_IKEv1=false [Paul]
+  - fix USE_IKEv1=false [Paul, Andrew, Tuomo]
 * Testing:
   - fix KVM testing with SELinux enabled [Ondrej]
 
@@ -54,11 +54,11 @@ v5.4 (August 13, 2026)
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
   - log default crypto policy during startup [Vinayak Sandur #2759 #2753]
 * Kernel:
-  - fix host-to-host on FreeBSD, NetBSD, OpenBSD [Amrinder Singh]
-  - optimize acquire by adding msgid [Vinayak Sandur]
-  - fix on-demand on FreeBSD, NetBSD, OpenBSD [Amrinder Singh]
+  - fix host-to-host on FreeBSD, NetBSD, OpenBSD [Amrinder Singh (GSoC)]
+  - optimize acquire by adding msgid [Vinayak Sandur (GSoC)]
+  - fix on-demand on FreeBSD, NetBSD, OpenBSD [Amrinder Singh (GSoC)]
   - fix metrics on Linux VTI interfaces [Cleberson Batista, Andrew #2601]
-  - include selectors in Linux policy error logs [Amrinder Singh #1544 #2651]
+  - include selectors in Linux policy error logs [Amrinder Singh (GSoC), #1544 #2651]
   - include XFRM message name in Linux errors [Anish #2701 #2653]
   - drop redundant "SPI" from kernel logs [Sabari07 #2694 #2654]
   - be sensitive when logging kernel SPIs [shahrinf #2652 #2670]
