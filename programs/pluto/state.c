@@ -1293,6 +1293,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 #   undef state_clone_chunk
 	}
 
+	child->sa.hidden_variables = ike->sa.hidden_variables;
 #ifdef USE_IKEv1
 	/*
 	 * Due to IKEv1, these IKE (ISAKMP) SA fields need to be
@@ -1303,7 +1304,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	 * expects .st_seen_cfg_dns, and the "generic" show-status
 	 * code expects the NAT result.
 	 */
-	child->sa.hidden_variables = ike->sa.hidden_variables;
 	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
