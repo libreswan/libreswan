@@ -2655,6 +2655,37 @@ struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c
 }
 
 /*
+ * Build Child SA proposals for CHILD_SA_PFS_INFO_SUPPORTED negotiation in IKE_AUTH
+ * (draft-ietf-ipsecme-child-pfs-info).  Uses the same KE selection logic as
+ * CREATE_CHILD_SA rekey proposals so the agreed KE will actually work at rekey time.
+ * Called only after IKE_SA_INIT confirmed the peer supports the extension.
+ */
+struct ikev2_proposals *get_v2_IKE_AUTH_child_pfs_info_proposals(const struct ike_sa *ike,
+								  struct connection *cc,
+								  struct verbose verbose)
+{
+	const struct ke_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+
+	if (!cc->config->child.pfs) {
+		/* no PFS configured — propose NONE so rekey will use no DH */
+		return get_v2_child_proposals(cc, "child-pfs-info no-pfs",
+					      /*strip_kem*/true,
+					      /*default_kem*/&ike_alg_ke_none,
+					      verbose);
+	} else if (cc->config->pfs_rekey_workaround) {
+		/* force IKE SA's DH, matching pfs-rekey-workaround CREATE_CHILD_SA logic */
+		return get_v2_child_proposals(cc, "child-pfs-info pfs-rekey-workaround",
+					      /*strip_kem*/true,
+					      ike_dh, verbose);
+	} else {
+		/* propose the full ESP= KE line; fall back to IKE SA's DH if none */
+		return get_v2_child_proposals(cc, "child-pfs-info pfs",
+					      /*strip_kem*/false,
+					      ike_dh, verbose);
+	}
+}
+
+/*
  * Use the CREATE_CHILD_SA proposal suite - the
  * proposal generated during IKE_AUTH will have been
  * stripped of DH.

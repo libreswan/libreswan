@@ -1,0 +1,12 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ ipsec addconn --config west.conf --configsetup=child-sa-pfs-info-supported
+no
+west #
+ ipsec addconn --config child-sa-pfs-info-supported-yes.conf --configsetup=child-sa-pfs-info-supported
+yes
+west #
+ ipsec addconn --config child-sa-pfs-info-supported-no.conf --configsetup=child-sa-pfs-info-supported
+no
+west #

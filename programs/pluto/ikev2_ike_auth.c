@@ -52,6 +52,7 @@
 #include "pluto_stats.h"
 #include "cert_decode_helper.h"
 #include "ikev2_child.h"
+#include "ikev2_proposals.h"
 #include "ikev2_peer_id.h"
 #include "crypt_symkey.h"
 #include "nat_traversal.h"
@@ -403,11 +404,28 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		/*
 		 * A CHILD_SA established during an AUTH exchange does
 		 * not propose DH - the IKE SA's SKEYSEED is always
-		 * used.
+		 * used.  When CHILD_SA_PFS_INFO_SUPPORTED was negotiated,
+		 * include KE transforms to inform the peer which KE we
+		 * will use when rekeying this Child SA later.
 		 */
-		const struct ikev2_proposals *child_proposals = cc->config->child.v2_ike_auth_proposals;
-		if (!emit_v2_child_request_payloads(ike, child, child_proposals,
-						    /*ike_auth_exchange*/true, request.pbs)) {
+		struct ikev2_proposals *pfs_info_proposals = NULL;
+		const struct ikev2_proposals *child_proposals;
+		if (child->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+			struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+			pfs_info_proposals =
+				get_v2_IKE_AUTH_child_pfs_info_proposals(ike, cc, verbose);
+			if (pfs_info_proposals == NULL) {
+				/* programming error already logged by pexpect */
+				return STF_INTERNAL_ERROR;
+			}
+			child_proposals = pfs_info_proposals;
+		} else {
+			child_proposals = cc->config->child.v2_ike_auth_proposals;
+		}
+		bool ok = emit_v2_child_request_payloads(ike, child, child_proposals,
+							 /*ike_auth_exchange*/true, request.pbs);
+		free_ikev2_proposals(&pfs_info_proposals);
+		if (!ok) {
 			return STF_INTERNAL_ERROR;
 		}
 		/* child ready to go */

@@ -31,6 +31,10 @@ config setup
 	# anti-DDoS # counter measures.
 	#ddos-mode=auto
 
+	# Negotiate CHILD_SA_PFS_INFO_SUPPORTED (draft-ietf-ipsecme-child-pfs-info)
+	# during IKE_SA_INIT. The default is no.
+	#child-sa-pfs-info-supported=no
+
 	# DDoS defense mechanism threshold
 	# The number of half-open IKE SAs before the pluto IKE daemon will be
 	# placed in (anti-ddos) busy mode. The default is 25000.

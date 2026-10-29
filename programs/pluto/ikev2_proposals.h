@@ -92,6 +92,9 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
  */
 
 struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c);
+struct ikev2_proposals *get_v2_IKE_AUTH_child_pfs_info_proposals(const struct ike_sa *ike,
+								  struct connection *cc,
+								  struct verbose verbose);
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
 								   struct child_sa *larval_child,
