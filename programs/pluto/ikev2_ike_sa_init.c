@@ -566,6 +566,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
+	/* Send CHILD_SA_PFS_INFO_SUPPORTED notify (draft-ietf-ipsecme-child-pfs-info) */
+	if (config_setup_yn(KYN_CHILD_SA_PFS_INFO_SUPPORTED)) {
+		if (!emit_v2N(v2N_CHILD_SA_PFS_INFO_SUPPORTED, request.pbs))
+			return false;
+	}
+
 	/* first check if this IKE_SA_INIT came from redirect
 	 * instruction.
 	 * - if yes, send the v2N_REDIRECTED_FROM
@@ -760,6 +766,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 				       ike->sa.logger, md, c->config->intermediate);
 
+	ike->sa.hidden_variables.st_v2_child_pfs_info_supported =
+		accept_v2_notification(v2N_CHILD_SA_PFS_INFO_SUPPORTED,
+				       ike->sa.logger, md, config_setup_yn(KYN_CHILD_SA_PFS_INFO_SUPPORTED));
+
 	bool ppk_ike_auth_enabled =
 		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,
 				       md, c->config->ppk.allow);
@@ -951,6 +961,13 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* Send CHILD_SA_PFS_INFO_SUPPORTED Notify payload (draft-ietf-ipsecme-child-pfs-info) */
+	if (ike->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+		if (!emit_v2N(v2N_CHILD_SA_PFS_INFO_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1272,6 +1289,10 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	ike->sa.st_v2_ike_intermediate.enabled =
 		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 				       ike->sa.logger, md, c->config->intermediate);
+
+	ike->sa.hidden_variables.st_v2_child_pfs_info_supported =
+		accept_v2_notification(v2N_CHILD_SA_PFS_INFO_SUPPORTED,
+				       ike->sa.logger, md, config_setup_yn(KYN_CHILD_SA_PFS_INFO_SUPPORTED));
 
 	bool ppk_ike_auth_enabled =
 		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,

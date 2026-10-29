@@ -3269,6 +3269,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			      end->protoport.has_port_wildcard);
 	}
 #endif
+
 	config->narrowing = narrowing;
 
 	/*

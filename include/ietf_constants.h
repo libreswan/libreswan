@@ -1922,8 +1922,9 @@ typedef enum ikev2_notification {
 	v2N_USE_PPK_INT = 16445,		/* RFC-9867 */
 	v2N_PPK_IDENTITY_KEY = 16446,		/* RFC-9867 */
 	v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH = 16447, /* draft-ietf-ipsecme-ikev2-downgrade-prevention */
+	v2N_CHILD_SA_PFS_INFO_SUPPORTED = 16448,	/* draft-ietf-ipsecme-child-pfs-info */
 
-	/* 16448 - 40959 Unassigned */
+	/* 16449 - 40959 Unassigned */
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 

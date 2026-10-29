@@ -640,25 +640,38 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	const struct ke_desc *accepted_dh =
 		proto_info->trans_attrs.ta_dh == &ike_alg_ke_none ? NULL
 		: proto_info->trans_attrs.ta_dh;
-	switch (child->sa.st_sa_role) {
-	case SA_INITIATOR:
-		vexpect(expect_accepted_proposal);
-		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_kem) {
-			vlog("expecting %s but remote's accepted proposal includes %s",
-			     child->sa.st_pfs_kem == NULL ? "no DH" : child->sa.st_pfs_kem->common.fqn,
-			     accepted_dh->common.fqn);
-			return v2N_NO_PROPOSAL_CHOSEN;
-		}
-		child->sa.st_pfs_kem = accepted_dh;
-		break;
-	case SA_RESPONDER:
-		vexpect(!expect_accepted_proposal);
-		vexpect(child->sa.st_sa_role == SA_RESPONDER);
+	/*
+	 * Only when CHILD_SA_PFS_INFO_SUPPORTED, is KE allowed in IKE_AUTH
+	 */
+	const bool pfs_info = (isa_xchg == ISAKMP_v2_IKE_AUTH &&
+			       child->sa.hidden_variables.st_v2_child_pfs_info_supported);
+	if (pfs_info) {
 		vexpect(child->sa.st_pfs_kem == NULL);
-		child->sa.st_pfs_kem = accepted_dh;
-		break;
-	default:
-		bad_case(child->sa.st_sa_role);
+		if (accepted_dh != NULL) {
+			vdbg("ignoring %s in IKE_AUTH accepted proposal: CHILD_SA_PFS_INFO only",
+			     accepted_dh->common.fqn);
+		}
+	} else {
+		switch (child->sa.st_sa_role) {
+		case SA_INITIATOR:
+			vexpect(expect_accepted_proposal);
+			if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_kem) {
+				vlog("expecting %s but remote's accepted proposal includes %s",
+				     child->sa.st_pfs_kem == NULL ? "no DH" : child->sa.st_pfs_kem->common.fqn,
+				     accepted_dh->common.fqn);
+				return v2N_NO_PROPOSAL_CHOSEN;
+			}
+			child->sa.st_pfs_kem = accepted_dh;
+			break;
+		case SA_RESPONDER:
+			vexpect(!expect_accepted_proposal);
+			vexpect(child->sa.st_sa_role == SA_RESPONDER);
+			vexpect(child->sa.st_pfs_kem == NULL);
+			child->sa.st_pfs_kem = accepted_dh;
+			break;
+		default:
+			bad_case(child->sa.st_sa_role);
+		}
 	}
 
 	/*
@@ -1071,10 +1084,27 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 				     VERBOSE(DEBUG_STREAM, ike_to_reject->sa.logger, NULL));
 	}
 
+	struct connection *resp_cc = child->sa.st_connection;
+	struct ikev2_proposals *pfs_info_proposals = NULL;
+	const struct ikev2_proposals *resp_proposals;
+	if (child->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+		pfs_info_proposals =
+			get_v2_IKE_AUTH_child_pfs_info_proposals(ike, resp_cc, verbose);
+		if (pfs_info_proposals == NULL) {
+			/* programming error already logged by pexpect */
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		resp_proposals = pfs_info_proposals;
+	} else {
+		resp_proposals = resp_cc->config->child.v2_ike_auth_proposals;
+	}
+
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					ike, child, md,
-					child->sa.st_connection->config->child.v2_ike_auth_proposals,
+					resp_proposals,
 					/*expect-accepted-proposal?*/false);
+	free_ikev2_proposals(&pfs_info_proposals);
 	name_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
 	     str_enum_long(&v2_notification_names, n, &nb));
@@ -1256,10 +1286,26 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	/* examine and accept SA ESP/AH proposals */
 
+	struct connection *init_cc = child->sa.st_connection;
+	struct ikev2_proposals *pfs_info_init_proposals = NULL;
+	const struct ikev2_proposals *init_proposals;
+	if (child->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+		pfs_info_init_proposals =
+			get_v2_IKE_AUTH_child_pfs_info_proposals(ike, init_cc, verbose);
+		if (pfs_info_init_proposals == NULL) {
+			/* programming error already logged by pexpect */
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		init_proposals = pfs_info_init_proposals;
+	} else {
+		init_proposals = init_cc->config->child.v2_ike_auth_proposals;
+	}
 	n = process_childs_v2SA_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
 					ike, child, response_md,
-					child->sa.st_connection->config->child.v2_ike_auth_proposals,
+					init_proposals,
 					/*expect-accepted-proposal?*/true);
+	free_ikev2_proposals(&pfs_info_init_proposals);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;
 	}
