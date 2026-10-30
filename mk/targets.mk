@@ -90,8 +90,6 @@ local-clean: $(patsubst %,local-clean-%,$(TARGETS))
 $(eval $(call recursive-target,install))
 local-install: $(patsubst %,local-install-%,$(TARGETS))
 
-$(eval $(call recursive-target,check))
-
 # The install_file_list target is special; the command:
 #
 #    $ make install_file_list > file-list

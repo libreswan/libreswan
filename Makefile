@@ -71,8 +71,13 @@ cscope:
 TAGS: $(TAGSFILES)
 	LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
 
-.PHONY: dummy
-dummy:
+.PHONY: check
+check:
+	@echo
+	@echo "These aren't the tests you're looking for ..."
+	@echo "You can go about your testing here https://libreswan.github.io/Testing"
+	@echo
+	@false
 
 include ${LIBRESWANSRCDIR}/mk/targets.mk
 
