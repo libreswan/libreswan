@@ -74,17 +74,6 @@ TAGS: $(TAGSFILES)
 .PHONY: dummy
 dummy:
 
-
-# Run regress stuff after the other check targets.
-.PHONY: regress
-check: regress
-regress: local-check recursive-check
-ifneq ($(strip(${REGRESSRESULTS})),)
-	mkdir -p ${REGRESSRESULTS}
-	-perl testing/utils/regress-summarize-results.pl ${REGRESSRESULTS}
-endif
-	@echo "======== End of make check target. ========"
-
 include ${LIBRESWANSRCDIR}/mk/targets.mk
 
 # directories visited by all recursion
