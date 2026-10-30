@@ -1441,9 +1441,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * - variable:	IV (no IV is longer than SHA2_512_DIGEST_SIZE) (64 or less)
 	 * - variable:	fragment's data
 	 * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
-	 */
-
-	/*
+	 *
 	 * XXX: this math seems very contrived, can the fragment()
 	 * function above be left to do the computation on-the-fly?
 	 *
@@ -1454,7 +1452,9 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * .ikev2_max_fragment_size).
 	 */
 
-	unsigned int max_skf_size = endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	const unsigned max_fragmented_packet_size =
+		endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	unsigned int max_skf_size =  max_fragmented_packet_size;
 
 	/*
 	 * Reduce MAX by non-ESP marker bytes.  When doing NAT these
@@ -1469,7 +1469,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * Reduce MAX of the always present message and the SKF
 	 * headers
 	 */
-	max_skf_size -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
+	max_skf_size -= NSIZEOF_isakmp_hdr;
+	max_skf_size -= NSIZEOF_ikev2_skf;
 
 	/*
 	 * Reduce MAX by the always present integrity/tag bytes.
@@ -1479,6 +1480,11 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 			 : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 
 	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
+		/*
+		 * XXX: Magic to mask of low bits.  Assumes
+		 * .enc_blocksize is power-of-two, would modulo-math
+		 * be better?
+		 */
 		max_skf_size &= ~(sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize - 1);
 	}
 
@@ -1487,20 +1493,53 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	PASSERT(sk->logger, sk->cleartext.len != 0);
 
 	/*
-	 * Location of the unencrypted payloads and it's Next Payload
-	 * field.
+	 * Location of the unencrypted payloads, and their length
+	 * (when there's no unencrypted payloads, .len==0).
+	 *
+	 * XXX: The math above and below ignores the unencrypted
+	 * payloads when determining the size of a fragment (they only
+	 * exist for testing).  Consequently, when the first message
+	 * contains an unencrypted payload it will larger than the
+	 * math suggests.
+	 *
+	 * XXX: The HARD upper bound is determined by the size of
+	 * struct fragment_pbs_out's buffer (which is set by IPv6).
+	 * IPv6 probably never has enough space for unencrypted
+	 * payloads.
 	 */
+
 	shunk_t unencrypted_payloads = {
 		.ptr = message.ptr + sizeof(struct isakmp_hdr),
 		.len = sk->payload.ptr - (const uint8_t*)message.ptr - sizeof(struct isakmp_hdr),
 	};
 
+	/* Danger: use addition to avoid underflow */
+	if (PBAD(logger, (unencrypted_payloads.len + max_fragmented_packet_size >=
+			  sizeof(((struct fragment_pbs_out *)0)->buffer)))) {
+		return false;
+	}
+
 	/*
 	 * Required number of fragments; rounded; and including
 	 * unencrypted payloads.
+	 *
+	 * Since the SK payload can be no larger than 64k, that sets
+	 * the limit on the number of fragments.  The >=400-byte check
+	 * is just a crude way of confirming that the above math
+	 * didn't screw up - both IPv4 and IPv6 fragment are known to
+	 * be well over 400-bytes in size.
+	 *
+	 * XXX: with the exception of .enc_blocksize and non-ESP
+	 * header, the value is also static - why the convoluted math.
+	 *
+	 * XXX: Don't include unencrypted_payloads.len in the
+	 * calculation, it should be zero.  The only time it is
+	 * non-zero is when when adding bogus payloads, and then only
+	 * consequence is that the first packet is slightly bigger
+	 * than MAX_XKF_SIZE.
 	 */
-	PASSERT(logger, unencrypted_payloads.len < max_skf_size);
-	unsigned int nfrags = (sk->cleartext.len + unencrypted_payloads.len + max_skf_size - 1) / max_skf_size;
+	PASSERT(logger, max_skf_size >= 400/*arbitrary*/);
+	unsigned int nfrags = (sk->cleartext.len + max_skf_size - 1) / max_skf_size;
 
 	if (nfrags > MAX_IKEv2_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
