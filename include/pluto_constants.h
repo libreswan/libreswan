@@ -361,7 +361,17 @@ extern const struct enum_names stf_status_names;
 #define MIN_OUTPUT_UDP_SIZE		1024
 #define MAX_OUTPUT_UDP_SIZE            65536
 
-#define MAX_IKE_FRAGMENTS       32 /* Windows has been observed to send 29 fragments :/ */
+/*
+ * Windows has been observed to send 29 fragments :/
+ *
+ * Pluto sends ~64*1k fragments to force packet overflow.
+ *
+ * The max size of the fragmented SK payload is significatly smaller
+ * than MAX_FRAGMENT_PACKET_TOTAL_SIZE (the SKF fragments + headers
+ * take away space for the payload).
+ */
+#define MAX_IKEv2_FRAGMENTS       64
+#define MAX_IKEv2_FRAGMENTS_TOTAL_PACKET_SIZE 65536
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA "50000" /* fairly arbitrary */

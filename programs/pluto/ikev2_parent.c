@@ -528,33 +528,45 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * accumulate and .st_v2_incomming remains NULL.
 	 */
 
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
+	struct v2_incoming_fragments **frags =
+		&ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
 	if ((*frags) != NULL) {
 		/*
 		 * Already accumulating fragments, keep going?
 		 */
 		if (md->chain[NEXT_PAYLOAD_v2SK] != NULL) {
-			ldbg(ike->sa.logger, "received IKE encrypted message");
 			if ((*frags)->total == 0) {
-				ldbg(ike->sa.logger, "  ignoring message; collecting fragments");
+				ldbg(ike->sa.logger, "  ignoring encrypted message; already collected");
 			} else {
-				ldbg(ike->sa.logger, "  ignoring message; already collected");
+				ldbg(ike->sa.logger, "  ignoring encrypted message; collecting fragments");
 			}
 			pexpect((*frags)->md != NULL);
-		} else if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
-			collect_v2_incoming_fragment(ike, md, frags);
-		} else {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "message has neither SK nor SKF payload");
+			return;
 		}
+
+		if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
+			/*
+			 * Since there's no way to validate the packet
+			 * (decryption isn't yet possible), this call
+			 * can only save or drop the fragment.  call
+			 * either saves or drops the fragment.
+			 */
+			collect_v2_incoming_fragment(ike, md, frags);
+			return;
+		}
+
+		llog_pexpect(ike->sa.logger, HERE,
+			     "message has neither SK nor SKF payload");
 		return;
 	}
 
 	/*
-	 * First fragment (SKF) or payload (SK), start accumulating it
-	 * as fragments and start crypto (for SK there's only one
-	 * fragment).
+	 * First fragment (SKF) or payload (SK).
+	 *
+	 * Start accumulating it as fragments and start crypto (for SK
+	 * there's only one fragment).
 	 */
+	PEXPECT(ike->sa.logger, (*frags) == NULL);
 	if (md->chain[NEXT_PAYLOAD_v2SK] != NULL) {
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
@@ -563,8 +575,25 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	} else if (md->chain[NEXT_PAYLOAD_v2SKF] != NULL) {
 		struct ikev2_skf *skf = &md->chain[NEXT_PAYLOAD_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
+		case FRAGMENT_INVALID:
+			/*
+			 * For instance, bad fragment header, bad
+			 * total wrong exchange.
+			 *
+			 * Since the packet hasn't yet been decrypted,
+			 * it isn't possible to tell if the crud came
+			 * from a broken initiator or an atacker.
+			 * Hence drop packet on the floor.
+			 */
+			ldbg(ike->sa.logger, "fragment invalid; skip starting SKEYSEED");
+			return;
 		case FRAGMENT_IGNORED:
-			ldbg(ike->sa.logger, "no fragments accumulated; skipping SKEYSEED");
+			/*
+			 * For instance, a duplicate fragment.
+			 *
+			 * XXX: how would this happen?
+			 */
+			ldbg(ike->sa.logger, "fragment ignored; skip starting SKEYSEED");
 			return;
 		case FRAGMENTS_MISSING:
 		case FRAGMENTS_COMPLETE:

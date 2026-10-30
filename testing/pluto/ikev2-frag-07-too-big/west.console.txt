@@ -1,0 +1,109 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ /testing/x509/import.sh real/mainca/west.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ /testing/x509/import.sh real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair revival
+west #
+ ipsec up west-east # should fail - SK contains bloat
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-east" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
+"west-east" #1: dropping fragment 1 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 2 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 3 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 4 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 5 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 6 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 7 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 8 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 9 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 10 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 11 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 12 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 13 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 14 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 15 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 16 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 17 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 18 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 19 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 20 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 21 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 22 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 23 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 24 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 25 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 26 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 27 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 28 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 29 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 30 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 31 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 32 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 33 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 34 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 35 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 36 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 37 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 38 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 39 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 40 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 41 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 42 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 43 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 44 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 45 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 46 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 47 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 48 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 49 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 50 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 51 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 52 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 53 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 54 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 55 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 56 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 57 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 58 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 59 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 60 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 61 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 62 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 63 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 64 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: dropping fragment 65 of 66 as total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: IKE_AUTH_I: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+"west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"west-east" #1: deleting IKE SA (sent IKE_AUTH request)
+west #
+ grep '^IMPAIR: ' /tmp/pluto.log
+IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+west #

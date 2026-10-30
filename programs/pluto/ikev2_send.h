@@ -39,6 +39,15 @@ struct v2_incoming_fragments {
 	unsigned total;
 	unsigned count;
 	enum ikev2_exchange xchg;
+
+	/*
+	 * Track how much memory has been allocated.  Limiting total
+	 * packet size, puts an even tighter limit on the max size of
+	 * the fragmented SK payload (while avoiding some painful
+	 * math).
+	 */
+	uintmax_t fragment_total_packet_size;
+
 	/*
 	 * A fragment.
 	 *
@@ -74,7 +83,7 @@ struct v2_incoming_fragments {
 	 * For simplicity, index by fragment number which is 1-based;
 	 * leaving element 0 empty.
 	 */
-	struct v2_incoming_fragment frags[MAX_IKE_FRAGMENTS + 1];
+	struct v2_incoming_fragment frags[MAX_IKEv2_FRAGMENTS + 1];
 };
 
 struct v2_outgoing_fragments {

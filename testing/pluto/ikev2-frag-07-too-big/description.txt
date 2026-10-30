@@ -1,0 +1,7 @@
+responder sending back a crazy number of fragments
+
+Initiator should reject this when limits, specifically, total size of
+all the packet fragments, exceeds a limit.
+
+See #3079 "IKEv2 fragment-queue resource exhaustion" where fragments,
+and not memory are limited.
