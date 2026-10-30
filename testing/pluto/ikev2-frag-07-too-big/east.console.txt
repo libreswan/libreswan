@@ -12,7 +12,7 @@ east #
 east #
  # and send some bonus fragments
 east #
- ipsec whack --impair add_fragments:1:1024
+ ipsec whack --impair add_fragments:64:1024
 east #
  ipsec add west-east
 "west-east": added oriented IKEv2 connection
