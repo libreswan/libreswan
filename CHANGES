@@ -6,7 +6,8 @@ v5.5 (unreleased)
 * IKEv2:
   - fix Redirect error logging [Paul de Lange (GenDigital), Chaitanya Bhardwaj, #3107]
   - support auth=digsig and selecting auth-from-key [RuiL, #2708, #2503, #3068]
-  - add RFC 9593 Announcing Supported Authentication Methods [Osema Fadhel (GSoC), Vukašin]
+  - support RFC 9593 Announcing Supported Authentication Methods [Osema Fadhel (GSoC), Vukašin]
+  - support DRAFT RFC Downgrade Prevention [Vinayak Sandur]
   - fix interop with INTERMEDIATE and non-PSK auth [Astrid Passot, Paul]
 * Building:
   - fix USE_IKEv1=false [Paul, Andrew, Tuomo]
