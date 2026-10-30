@@ -1,0 +1,16 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add west-east
+"west-east": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep '^IMPAIR: ' /tmp/pluto.log
+east #
