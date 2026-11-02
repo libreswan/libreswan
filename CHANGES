@@ -5,6 +5,9 @@ v5.4.2 (unreleased)
   - fix CVE-2026-110339 - NPE - empty PKCS#7 payload
     http://libreswan.org/security/CVE-2026-110339
     [Duc Anh Luu, Andrew]
+  - fix CVE-2026-115846 - IKE_INTERMEDIATE addkey bypass
+    http://libreswan.org/security/CVE-2026-115846
+    [Astrid Passot, Andrew]
 
 v5.4.1 (Oct 5, 2026)
 * Security
