@@ -274,6 +274,7 @@ struct impairment impairments[] = {
 	  .unsigned_help = "1=certificates; 2=crl"),
 	B(send_nonzero_reserved, "send non-zero reserved fields in IKEv2 proposal fields"),
 	B(send_nonzero_reserved_id, "send non-zero reserved fields in IKEv2 ID payload that is part of the AUTH hash calculation"),
+	B(disable_optimized_rekey, "disable optimized rekeys (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt); rekeys use the traditional SA and TS payloads"),
 	B(suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
 	B(timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
 

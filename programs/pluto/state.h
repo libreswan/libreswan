@@ -192,6 +192,7 @@ struct hidden_variables {
 	ip_address st_nat_oa;
 	ip_address st_natd;
 	bool st_v2_child_pfs_info_supported;	/* draft-ietf-ipsecme-child-pfs-info */
+	bool st_v2_optimized_rekey_supported;	/* draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt */
 };
 
 /*
@@ -255,6 +256,8 @@ struct state {
 	so_serial_t st_v1_ipsec_pred;		/* IKEv1: replacing established IPsec SA */
 	so_serial_t st_v2_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_v2_rekey_pred;		/* IKEv2: rekeying established IKE or CHILD SA */
+	bool st_v2_rekey_optimizable;		/* IKEv2: Child SA may be rekeyed using an optimized rekey */
+	bool st_v2_optimized_rekey;		/* IKEv2: larval Child SA is an optimized rekey */
 
 #ifdef USE_PAM_AUTH
 	struct pam_auth *st_pam_auth;		/* per state auth/pam thread */

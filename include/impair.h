@@ -147,6 +147,7 @@ struct impair {
 	bool minor_version_bump;
 	bool timeout_on_retransmit;
 	bool suppress_retransmits;
+	bool disable_optimized_rekey;
 	bool send_bogus_payload_flag;
 	bool send_bogus_isakmp_flag;
 	bool send_no_delete;

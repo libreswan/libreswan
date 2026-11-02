@@ -256,7 +256,8 @@ void event_v2_rekey(struct state *st, bool detach_whack)
 	}
 
 	llog(RC_LOG, larval_sa->sa.logger,
-	     "initiating rekey to replace %s "PRI_SO" using IKE SA "PRI_SO,
+	     "initiating %srekey to replace %s "PRI_SO" using IKE SA "PRI_SO,
+	     (larval_sa->sa.st_v2_optimized_rekey ? "optimized " : ""),
 	     state_sa_name(st),
 	     pri_so(st->st_serialno),
 	     pri_so(ike->sa.st_serialno));
