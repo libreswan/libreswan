@@ -18,7 +18,7 @@
 
       <varlistentry>
 	<term>
-	  <option>&digsig;</option>
+	  &digsig;
 	</term>
 	<listitem>
 	  <para>
@@ -32,10 +32,10 @@
 
       <varlistentry>
 	<term>
-	  <option>&ecdsa;</option>
+	  &ecdsa;
 	</term>
 	<term>
-	  <option>&ecdsa-sha2;</option>
+	  &ecdsa-sha2;
 	</term>
 	<listitem>
 	  <para>
@@ -44,16 +44,15 @@
 	  </para>
 	  <para>
 	    The choice of hash algorithm can be narrowed further by
-	    specifying <option>&ecdsa-sha2_256;</option>,
-	    <option>&ecdsa-sha2_384;</option>, or
-	    <option>&ecdsa-sha2_512;</option>.
+	    specifying &ecdsa-sha2_256;, &ecdsa-sha2_384;, or
+	    &ecdsa-sha2_512;.
 	  </para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term>
-	  <option>&eddsa;</option>
+	  &eddsa;
 	</term>
 	<listitem>
 	  <para>
@@ -65,10 +64,10 @@
 
       <varlistentry>
 	<term>
-	  <option>&rsa;</option>
+	  &rsa;
 	</term>
 	<term>
-	  <option>&rsasig;</option>
+	  &rsasig;
 	</term>
 	<listitem>
 	  <para>
@@ -95,10 +94,10 @@
 
       <varlistentry>
 	<term>
-	  <option>&psk;</option>
+	  &psk;
 	</term>
 	<term>
-	  <option>&secret;</option>
+	  &secret;
 	</term>
 	<listitem>
 	  <para>
@@ -110,7 +109,7 @@
 
       <varlistentry>
 	<term>
-	  <option>&never;</option>
+	  &never;
 	</term>
 	<listitem>
 	  <para>
@@ -127,7 +126,7 @@
 
       <varlistentry>
 	<term>
-	  <option>&null;</option>
+	  &null;
 	</term>
 	<listitem>
 	  <para>
@@ -144,7 +143,7 @@
 
       <varlistentry>
 	<term>
-	  <option>&eaponly;</option>
+	  &eaponly;
 	</term>
 	<listitem>
 	  <para>

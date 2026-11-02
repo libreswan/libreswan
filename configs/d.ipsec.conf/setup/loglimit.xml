@@ -7,10 +7,10 @@
       Whether pluto's internal log rate limiting is enabled.  When
       enabled, pluto limits the number of repetitive log messages
       (such as malformed packets or bad certificates) to prevent
-      excessive logging under heavy load.  Setting this to
-      <option>&no;</option> disables all rate limiters, allowing every
-      log message to be emitted.  This is useful for debugging or
-      when full log visibility is required.
+      excessive logging under heavy load.  Setting this to &no;
+      disables all rate limiters, allowing every log message to be
+      emitted.  This is useful for debugging or when full log
+      visibility is required.
     </para>
     <para>
       The rate limit counters are reset once every hour.
