@@ -3321,6 +3321,9 @@ diag_t extract_connection(const struct whack_message *wm,
 	bool compress = extract_bool(kv(wm, END_ROOF, KWS_COMPRESS),
 				     /*value_when_unset*/YN_NO,
 				     &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 	config->child.ipcomp = compress;
 
 	/*
