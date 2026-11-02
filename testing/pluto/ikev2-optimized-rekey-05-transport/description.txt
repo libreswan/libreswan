@@ -1,0 +1,6 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) of a
+transport mode Child SA.  Both ends have optimized-rekey=yes and
+child-sa-pfs-info-supported=yes, so even the first rekey is optimized.
+
+The optimized rekey must not send USE_TRANSPORT_MODE, instead the rekeyed Child
+SA inherits the mode, and so remains a transport mode Child SA.

@@ -1,0 +1,17 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep 'OPTIMIZED_REKEY_SUPPORTED notification' /tmp/pluto.log
+| accepting proposed OPTIMIZED_REKEY_SUPPORTED notification from initiator
+east #

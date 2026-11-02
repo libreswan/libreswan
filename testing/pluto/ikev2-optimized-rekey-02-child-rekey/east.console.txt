@@ -1,0 +1,18 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep -E 'selected state microcode process CREATE_CHILD_SA' /tmp/pluto.log | sed -e 's/^| selected state microcode //'
+process CREATE_CHILD_SA rekey Child SA request
+process CREATE_CHILD_SA optimized rekey Child SA request
+east #
