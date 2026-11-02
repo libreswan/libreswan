@@ -292,6 +292,8 @@
 <!ENTITY rfc7427 '<ulink url="https://www.rfc-editor.org/info/rfc7427">RFC 7427: Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)</ulink>'>
 <!ENTITY rfc9395 '<ulink url="https://www.rfc-editor.org/info/rfc9395">RFC 9395: Deprecation of the Internet Key Exchange Version 1 (IKEv1) Protocol and Obsoleted Algorithms</ulink>'>
 
+<!ENTITY draft-ietf-ipsecme-ikev2-downgrade-prevention '<ulink url="https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-downgrade-prevention">Draft: Downgrade Prevention for the Internet Key Exchange Protocol Version 2 (IKEv2)</ulink>'>
+
 <!-- people -->
 
 <!-- to make up an authors list

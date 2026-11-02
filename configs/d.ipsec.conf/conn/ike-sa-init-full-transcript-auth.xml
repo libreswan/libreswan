@@ -5,11 +5,11 @@
   <listitem>
     <para>
       Whether to negotiate the IKEv2 downgrade-prevention extension
-      (draft-ietf-ipsecme-ikev2-downgrade-prevention).  Normally each
-      peer authenticates only the IKE_SA_INIT message it sent; this
-      extension additionally authenticates the message it received, so
-      that tampering with either IKE_SA_INIT message causes the
-      IKE_AUTH exchange to fail.  IKEv2 only.
+      (&draft-ietf-ipsecme-ikev2-downgrade-prevention;).  Normally
+      each peer authenticates only the IKE_SA_INIT message it sent;
+      this extension additionally authenticates the message it
+      received, so that tampering with either IKE_SA_INIT message
+      causes the IKE_AUTH exchange to fail.  IKEv2 only.
     </para>
     <para>
       &auto;, the default, proposes the extension and uses it when the
@@ -22,6 +22,14 @@
       at least one uncompromised authentication key is used; in
       particular it does not apply when both peers authenticate with the
       same pre-shared key.
+    </para>
+    <para>
+      History: the parameter
+      <option>ike-sa-init-full-transcript-auth</option> was added in
+      &Libreswan; 5.5.
+    </para>
+    <para>
+      The default is &auto;.
     </para>
   </listitem>
 </varlistentry>

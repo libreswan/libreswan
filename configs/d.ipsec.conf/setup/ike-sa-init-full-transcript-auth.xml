@@ -4,8 +4,10 @@
   </term>
   <listitem>
     <para>
-      Whether &Libreswan; should negotiate the IKEv2 downgrade-prevention
-      extension.This setting overrides every connection's own
+      Whether &Libreswan; should negotiate the IKEv2
+      downgrade-prevention extension
+      (&draft-ietf-ipsecme-ikev2-downgrade-prevention;).  This setting
+      overrides every connection's own
       <option>ike-sa-init-full-transcript-auth=</option> setting.
     </para>
     <variablelist>
