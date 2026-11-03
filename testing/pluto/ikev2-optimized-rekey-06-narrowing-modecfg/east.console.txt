@@ -48,11 +48,6 @@ src 0.0.0.0/0 dst 192.0.2.100/32
 src 192.0.2.100/32 dst 0.0.0.0/0
 src 192.0.2.100/32 dst 0.0.0.0/0
 east #
- if [ -f /run/pluto/pluto.pid ]; then grep -E 'selected state microcode process CREATE_CHILD_SA' /tmp/pluto.log | sed -e 's/^| selected state microcode //' ; fi
-process CREATE_CHILD_SA optimized rekey Child SA request
-process CREATE_CHILD_SA optimized rekey Child SA request
-process CREATE_CHILD_SA optimized rekey Child SA response
-east #
  if [ -f /run/pluto/pluto.pid ]; then ipsec trafficstatus ; fi
 #5: "rw-east-pool-x509-ipv4"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
 east #

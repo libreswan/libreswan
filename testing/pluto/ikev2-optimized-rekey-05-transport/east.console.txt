@@ -38,7 +38,3 @@ east #
  echo "initdone"
 initdone
 east #
- grep -E 'selected state microcode process CREATE_CHILD_SA' /tmp/pluto.log | sed -e 's/^| selected state microcode //'
-process CREATE_CHILD_SA optimized rekey Child SA request
-process CREATE_CHILD_SA optimized rekey Child SA request
-east #

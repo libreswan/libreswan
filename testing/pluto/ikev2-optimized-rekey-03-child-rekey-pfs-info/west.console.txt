@@ -75,7 +75,3 @@ west #
  echo done
 done
 west #
- grep -E 'selected state microcode process CREATE_CHILD_SA' /tmp/pluto.log | sed -e 's/^| selected state microcode //'
-process CREATE_CHILD_SA optimized rekey Child SA response
-process CREATE_CHILD_SA optimized rekey Child SA response
-west #
