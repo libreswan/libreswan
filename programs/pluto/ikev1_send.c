@@ -151,8 +151,10 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 * prefix.  natt_bonus is the size of the addition (0 if not
 	 * needed).
 	 */
-	if (st->st_iface_endpoint != NULL && st->st_iface_endpoint->esp_encapsulation_enabled)
+	if (st->st_iface_endpoint != NULL &&
+	    st->st_iface_endpoint->esp_encapsulation_enabled) {
 		len += NON_ESP_MARKER_SIZE;
+	}
 
 	/* This condition is complex.  Formatting is meant to help reader.
 	 *
@@ -169,12 +171,26 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 *
 	 * ??? the following test does not account for natt_bonus
 	 */
-	return len >= endpoint_info(st->st_remote_endpoint)->ikev1_max_fragment_size &&
-	    (   (resending &&
-		 st->st_connection->config->ike_frag.allow &&
-		 st->st_v1_seen_fragmentation_supported) ||
-		st->st_connection->config->ike_frag.v1_force ||
-		st->st_v1_seen_fragments   );
+	if (len < endpoint_info(st->st_remote_endpoint)->ikev1_max_fragment_size) {
+		return false;
+	}
+
+	if (st->st_connection->config->ike_frag.v1_force ||
+	    st->st_v1_seen_fragments) {
+		return true;
+	}
+
+	if (resending) {
+		if (st->st_connection->config->ike_frag.allow &&
+		    st->st_v1_seen_fragmentation_supported) {
+			if (retransmit_count(st) == 1) {
+				llog(RC_LOG, st->logger, "retransmitting fragmented message");
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
