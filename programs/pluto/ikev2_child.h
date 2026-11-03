@@ -67,6 +67,10 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 bool v2_rekey_may_be_optimized(const struct ike_sa *ike, const struct child_sa *prev);
 bool emit_v2_child_optimized_request_payloads(const struct child_sa *larval_child,
 					      struct pbs_out *pbs);
+v2_notification_t extract_v2N_OPTIMIZED_REKEY_spi(struct verbose verbose,
+						  const struct msg_digest *md,
+						  void *spi, size_t size);
+
 v2_notification_t process_v2_optimized_rekey_sa(struct child_sa *child,
 						struct msg_digest *md);
 

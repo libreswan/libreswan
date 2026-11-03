@@ -691,6 +691,51 @@ static bool emit_v2_child_optimized_response_payloads(const struct child_sa *lar
 }
 
 /*
+ * Extract the new SPI from the notification data of
+ * N(OPTIMIZED_REKEY); the notification's Protocol ID and SPI Size
+ * MUST be zero (draft section 6.2) and the data is the SPI.
+ *
+ * SIZE is the size of the SPI: 8 for an IKE SA; for a Child SA it is
+ * the SPI Size of N(REKEY_SA).
+ */
+v2_notification_t extract_v2N_OPTIMIZED_REKEY_spi(struct verbose verbose,
+						  const struct msg_digest *md,
+						  void *spi, size_t size)
+{
+	const struct payload_digest *n_pd = md->v2N_status[v2N_status_OPTIMIZED_REKEY];
+	if (n_pd == NULL) {
+		vlog("optimized rekey is missing N(OPTIMIZED_REKEY)");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	const struct ikev2_notify *n = &n_pd->payload.v2n;
+	if (n->isan_protoid != PROTO_v2_RESERVED ||
+	    n->isan_spisize != 0 ||
+	    pbs_left(&n_pd->pbs) != size) {
+		vlog("N(OPTIMIZED_REKEY) must have zero protocol ID and SPI size, and a %zu byte SPI as data",
+		     size);
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	struct pbs_in spi_pbs = n_pd->pbs;
+	diag_t d = pbs_in_bytes(&spi_pbs, spi, size, "SPI");
+	if (d != NULL) {
+		vlog("%s", str_diag(d));
+		pfree_diag(&d);
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	bool zero = true;
+	for (size_t i = 0; i < size; i++) {
+		if (((const uint8_t *)spi)[i] != 0) {
+			zero = false;
+		}
+	}
+	if (zero) {
+		vlog("N(OPTIMIZED_REKEY) contains zero SPI");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	return v2N_NOTHING_WRONG;
+}
+
+/*
  * Instead of processing an SA payload, inherit the accepted proposal
  * from the Child SA being replaced; the only thing taken from the
  * message is the new SPI, in N(OPTIMIZED_REKEY).
@@ -708,30 +753,10 @@ v2_notification_t process_v2_optimized_rekey_sa(struct child_sa *child,
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	const struct payload_digest *n_pd = md->v2N_status[v2N_status_OPTIMIZED_REKEY];
-	if (n_pd == NULL) {
-		vlog("optimized rekey is missing N(OPTIMIZED_REKEY)");
-		return v2N_NO_PROPOSAL_CHOSEN;
-	}
-	const struct ikev2_notify *n = &n_pd->payload.v2n;
-	if (n->isan_protoid != PROTO_v2_RESERVED ||
-	    n->isan_spisize != 0 ||
-	    pbs_left(&n_pd->pbs) != sizeof(ipsec_spi_t)) {
-		vlog("N(OPTIMIZED_REKEY) must have zero protocol ID and SPI size, and a %zu byte SPI as data",
-		     sizeof(ipsec_spi_t));
-		return v2N_NO_PROPOSAL_CHOSEN;
-	}
 	ipsec_spi_t spi = 0; /* network ordered */
-	struct pbs_in spi_pbs = n_pd->pbs;
-	diag_t d = pbs_in_thing(&spi_pbs, spi, "SPI");
-	if (d != NULL) {
-		vlog("%s", str_diag(d));
-		pfree_diag(&d);
-		return v2N_NO_PROPOSAL_CHOSEN;
-	}
-	if (spi == 0) {
-		vlog("N(OPTIMIZED_REKEY) contains zero SPI");
-		return v2N_NO_PROPOSAL_CHOSEN;
+	v2_notification_t n = extract_v2N_OPTIMIZED_REKEY_spi(verbose, md, &spi, sizeof(spi));
+	if (n != v2N_NOTHING_WRONG) {
+		return n;
 	}
 
 	/*
@@ -746,7 +771,8 @@ v2_notification_t process_v2_optimized_rekey_sa(struct child_sa *child,
 
 	free_ikev2_proposal(&child->sa.st_v2_accepted_proposal);
 	child->sa.st_v2_accepted_proposal =
-		clone_ikev2_proposal_with_remote_spi(pred->sa.st_v2_accepted_proposal, spi);
+		clone_ikev2_proposal_with_remote_spi(pred->sa.st_v2_accepted_proposal,
+					     THING_AS_SHUNK(spi));
 	vdbg_ikev2_proposal(verbose, "optimized rekey inherited", child->sa.st_v2_accepted_proposal);
 
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);

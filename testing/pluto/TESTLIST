@@ -893,6 +893,8 @@ kvmplutotest	ikev2-optimized-rekey-03-child-rekey-pfs-info	good
 kvmplutotest	ikev2-optimized-rekey-04-impair-disable		good
 kvmplutotest	ikev2-optimized-rekey-05-transport		good
 kvmplutotest	ikev2-optimized-rekey-06-narrowing-modecfg	good
+kvmplutotest	ikev2-optimized-rekey-07-ike-sa-rekey		good
+kvmplutotest	ikev2-optimized-rekey-08-ike-sa-rekey-addke	good
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-replace-ike	good
