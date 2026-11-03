@@ -71,6 +71,8 @@ static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 static ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_new_child_request;
 static ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_rekey_child_request;
 static ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_rekey_ike_request;
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_optimized_request(struct ike_sa *ike,
+									 struct msg_digest *md);
 
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1;
 static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2;
@@ -230,6 +232,9 @@ static void llog_v2_larval_ike_sa_established(struct ike_sa *ike,
 
 		jam_string(buf, " rekeyed IKE SA ");
 		jam_so(buf, larval_ike->sa.st_v2_rekey_pred);
+		if (larval_ike->sa.st_v2_optimized_rekey) {
+			jam_string(buf, " (optimized rekey)");
+		}
 
 		jam_string(buf, " ");
 		jam_v2_ike_protection(buf, ike);
@@ -426,6 +431,14 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		 * work as a fresh proposal.
 		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
+		if (larval_ike->sa.st_v2_optimized_rekey) {
+			/* the SA payload is replaced by the new SPI */
+			if (!emit_v2N_hunk(v2N_OPTIMIZED_REKEY, local_spi, message.pbs)) {
+				llog_sa(RC_LOG, larval_ike, "out optimized rekey fail");
+				return false;
+			}
+			break;
+		}
 		/* send v2 IKE SAs*/
 		if (!emit_v2SA_proposals(message.pbs,
 					 larval_ike->sa.st_v2_create_child_sa_proposals,
@@ -441,8 +454,14 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		 * Emit the agreed to proposal.
 		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
-		/* send selected v2 IKE SA */
-		if (!emit_v2SA_proposal(message.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
+		if (larval_ike->sa.st_v2_optimized_rekey) {
+			/* the SA payload is replaced by the new SPI */
+			if (!emit_v2N_hunk(v2N_OPTIMIZED_REKEY, local_spi, message.pbs)) {
+				llog_sa(RC_LOG, larval_ike, "out optimized rekey fail");
+				return false;
+			}
+		} else if (!emit_v2SA_proposal(message.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
+			/* send selected v2 IKE SA */
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -993,6 +1012,15 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_optimized_request(struct ike_s
 				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_OK; /*IKE*/
+	}
+
+	/*
+	 * Without N(REKEY_SA) this is the optimized rekey of the IKE
+	 * SA (the SA being replaced is the one the message is sent
+	 * on).
+	 */
+	if (md->v2N_status[v2N_status_REKEY_SA] == NULL) {
+		return process_v2_CREATE_CHILD_SA_rekey_ike_optimized_request(ike, md);
 	}
 
 	struct child_sa *predecessor = NULL;
@@ -1792,6 +1820,82 @@ static bool calc_v2_rekey_ike_keymat(struct ike_sa *old_ike,
 	return true;
 }
 
+/*
+ * draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt: the optimized rekey
+ * inherits the proposal, including any additional key exchanges
+ * (which are then performed using IKE_FOLLOWUP_KE), of the IKE SA
+ * being replaced.
+ *
+ * Not (yet) optimized when a PPK was used: the draft requires the PPK
+ * to be re-negotiated.
+ */
+
+static bool v2_ike_rekey_may_be_optimized(const struct ike_sa *ike)
+{
+	const struct connection *c = ike->sa.st_connection;
+	return (!impair.disable_optimized_rekey &&
+		ike->sa.hidden_variables.st_v2_optimized_rekey_supported &&
+		c->config->child.optimized_rekey &&
+		ike->sa.st_v2_rekey_optimizable &&
+		ike->sa.st_v2_accepted_proposal != NULL &&
+		!ike->sa.st_ppk_ike_auth_used);
+}
+
+/*
+ * Instead of processing an SA payload, inherit the accepted proposal
+ * from the IKE SA being replaced; the only thing taken from the
+ * message is the peer's new SPI, in N(OPTIMIZED_REKEY).
+ *
+ * This is the equivalent of process_v2SA_payload().
+ */
+
+static v2_notification_t process_v2_optimized_rekey_ike_sa(struct ike_sa *ike,
+							   struct child_sa *larval_ike,
+							   struct msg_digest *md)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
+
+	if (!vexpect(ike->sa.st_v2_accepted_proposal != NULL)) {
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	ike_spi_t spi = {0};
+	v2_notification_t n = extract_v2N_OPTIMIZED_REKEY_spi(verbose, md, &spi, sizeof(spi));
+	if (n != v2N_NOTHING_WRONG) {
+		return n;
+	}
+
+	larval_ike->sa.st_v2_optimized_rekey = true;
+	free_ikev2_proposal(&larval_ike->sa.st_v2_accepted_proposal);
+	larval_ike->sa.st_v2_accepted_proposal =
+		clone_ikev2_proposal_with_remote_spi(ike->sa.st_v2_accepted_proposal,
+						     THING_AS_SHUNK(spi));
+	return v2N_NOTHING_WRONG;
+}
+
+/*
+ * Responder: the request has no SA; the proposal is inherited from
+ * the IKE SA being replaced.  When that isn't possible, reject with
+ * NO_PROPOSAL_CHOSEN so that the initiator falls back to a regular
+ * rekey.
+ */
+
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_optimized_request(struct ike_sa *ike,
+									 struct msg_digest *md)
+{
+	if (!v2_ike_rekey_may_be_optimized(ike) ||
+	    md->chain[NEXT_PAYLOAD_v2KE] == NULL) {
+		llog_sa(RC_LOG, ike,
+			"rejecting optimized rekey of IKE SA, it can't be optimized");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_OK; /*IKE*/
+	}
+
+	return process_v2_CREATE_CHILD_SA_rekey_ike_request(ike, NULL, md);
+}
+
 struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 						     bool detach_whack)
 {
@@ -1814,6 +1918,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	larval_ike->sa.st_policy = (struct child_policy) {0};
 	larval_ike->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_ike_proposals(ike, verbose);
+	larval_ike->sa.st_v2_optimized_rekey = v2_ike_rekey_may_be_optimized(ike);
 
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
@@ -1910,6 +2015,28 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_response_transiti
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
 	  .encrypted_payloads.optional = v2P(N),
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
+	  .llog_success = ldbg_success_ikev2,
+	  .timeout_event = EVENT_RETAIN, },
+
+	/*
+	 * Optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt):
+	 * SA is replaced by N(OPTIMIZED_REKEY).
+	 *
+	 *   Initiator                         Responder
+	 *   --------------------------------------------------------
+	 *   HDR, SK {N(OPTIMIZED_REKEY), Ni, KEi} -->
+	 *                      <--  HDR, SK {N(OPTIMIZED_REKEY), Nr, KEr}
+	 */
+
+	{ .story      = "process CREATE_CHILD_SA optimized rekey IKE SA response",
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(Ni) | v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
+	  .encrypted_payloads.notification = v2N_OPTIMIZED_REKEY,
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
@@ -2035,14 +2162,23 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 	struct payload_digest *const sa_pd = request_md->chain[NEXT_PAYLOAD_v2SA];
-	n = process_v2SA_payload("IKE Rekey responder child",
-				 &sa_pd->pbs,
-				 /*expect_ike*/ true,
-				 /*expect_spi*/ true,
-				 /*expect_accepted*/ false,
-				 /*limit-logging*/is_opportunistic(c),
-				 &larval_ike->sa.st_v2_accepted_proposal,
-				 ike_proposals, verbose);
+	if (sa_pd == NULL) {
+		/* only the optimized rekey has no SA */
+		n = process_v2_optimized_rekey_ike_sa(ike, larval_ike, request_md);
+	} else {
+		if (request_md->v2N_status[v2N_status_OPTIMIZED_REKEY] != NULL) {
+			llog_sa(RC_LOG, larval_ike,
+				"OPTIMIZED_REKEY notify ignored due to the presence of an SA payload");
+		}
+		n = process_v2SA_payload("IKE Rekey responder child",
+					 &sa_pd->pbs,
+					 /*expect_ike*/ true,
+					 /*expect_spi*/ true,
+					 /*expect_accepted*/ false,
+					 /*limit-logging*/is_opportunistic(c),
+					 &larval_ike->sa.st_v2_accepted_proposal,
+					 ike_proposals, verbose);
+	}
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(larval_ike->sa.logger, ike, request_md,
@@ -2247,15 +2383,20 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	 * that it matches the rekey proposal originally sent.
 	 */
 	struct payload_digest *const sa_pd = response_md->chain[NEXT_PAYLOAD_v2SA];
-	n = process_v2SA_payload("IKE initiator (accepting)",
-				 &sa_pd->pbs,
-				 /*expect_ike*/ true,
-				 /*expect_spi*/ true,
-				 /*expect_accepted*/ true,
-				 /*limit-logging*/is_opportunistic(c),
-				 &larval_ike->sa.st_v2_accepted_proposal,
-				 larval_ike->sa.st_v2_create_child_sa_proposals,
-				 verbose);
+	if (sa_pd == NULL) {
+		/* only the optimized rekey has no SA */
+		n = process_v2_optimized_rekey_ike_sa(ike, larval_ike, response_md);
+	} else {
+		n = process_v2SA_payload("IKE initiator (accepting)",
+					 &sa_pd->pbs,
+					 /*expect_ike*/ true,
+					 /*expect_spi*/ true,
+					 /*expect_accepted*/ true,
+					 /*limit-logging*/is_opportunistic(c),
+					 &larval_ike->sa.st_v2_accepted_proposal,
+					 larval_ike->sa.st_v2_create_child_sa_proposals,
+					 verbose);
+	}
 	if (n != v2N_NOTHING_WRONG) {
 		/*
 		 * XXX: what should happen here?  It feels like a
@@ -2467,9 +2608,13 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	 * The responder rejected an optimized rekey, retry as a
 	 * regular rekey.
 	 */
-	const so_serial_t retry_pred =
+	const bool retry_regular =
 		((*larval_child)->sa.st_v2_optimized_rekey &&
-		 error == v2N_NO_PROPOSAL_CHOSEN ? (*larval_child)->sa.st_v2_rekey_pred :
+		 error == v2N_NO_PROPOSAL_CHOSEN);
+	const bool larval_is_ike =
+		((*larval_child)->sa.st_sa_kind_when_established == IKE_SA);
+	const so_serial_t retry_pred =
+		(retry_regular && !larval_is_ike ? (*larval_child)->sa.st_v2_rekey_pred :
 		 SOS_NOBODY);
 
 	stf_status status;
@@ -2507,6 +2652,14 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	}
 
 	connection_teardown_child(larval_child, REASON_DELETED, HERE);
+
+	if (retry_regular && larval_is_ike) {
+		llog_sa(RC_LOG, ike,
+			"optimized rekey rejected, retrying with a regular rekey");
+		ike->sa.st_v2_rekey_optimizable = false;
+		ike->sa.st_viable_parent = true; /* the rekey failed */
+		submit_v2_CREATE_CHILD_SA_rekey_ike(ike, /*detach_whack*/false);
+	}
 
 	if (retry_pred != SOS_NOBODY) {
 		struct child_sa *pred = child_sa_by_serialno(retry_pred);

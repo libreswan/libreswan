@@ -76,7 +76,7 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
  * rekey.
  */
 struct ikev2_proposal *clone_ikev2_proposal_with_remote_spi(const struct ikev2_proposal *proposal,
-							    ipsec_spi_t remote_spi);
+							    shunk_t remote_spi);
 
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
