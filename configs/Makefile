@@ -129,53 +129,27 @@ D_IPSEC_CONF_EXAMPLE = $(srcdir)/d.ipsec.conf/*.example
 DEPS += $(srcdir)/ipsec.conf.5.xml
 DEPS += $(D_IPSEC_CONF_XML)
 DEPS += $(D_IPSEC_CONF_EXAMPLE)
-DEPS += $(builddir)/ipsec.conf.5.use.ok
-DEPS += $(builddir)/ipsec.conf.5.aliases.ok
-DEPS += $(builddir)/ipsec.conf.5.param.ok
+DEPS += $(builddir)/ipsec.conf.5.check-used.ok
+DEPS += $(builddir)/ipsec.conf.5.check-aliases.ok
+DEPS += $(builddir)/ipsec.conf.5.check-parameters.ok
 DEPS += $(builddir)/ipsec.conf.5.entities.xml
 
 $(builddir)/ipsec.conf.5.man: $(DEPS)
 $(builddir)/ipsec.conf.5.html: $(DEPS)
 
-$(builddir)/ipsec.conf.5.use.ok: $(D_IPSEC_CONF_XML)
+$(builddir)/ipsec.conf.5.check-used.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
-	for x in $(D_IPSEC_CONF_XML) ; do \
-		d=$$(basename $$(dirname $${x})) ; \
-		b=$$(basename $${x} .xml) ; \
-		f=d.ipsec.conf/$${d}/$${b}.xml ; \
-		e=$${d}.$${b} ; \
-		if ! grep '&'$${e}';' ipsec.conf.5.xml d.ipsec.conf/sect/*.xml > /dev/null ; then \
-			echo use '&'$${e}';' missing ; \
-			exit 1 ; \
-		fi ; \
-		if ! grep "id='$${d}.$${b}'" $${x} > /dev/null ; then \
-			echo anchor "id='$${d}.$${b}'" missing ; \
-			exit 1 ; \
-		fi ; \
-	done
+	$(srcdir)/ipsec.conf.5.check-used.sh
 	touch $@
 
-$(builddir)/ipsec.conf.5.aliases.ok: $(D_IPSEC_CONF_XML) Makefile
+$(builddir)/ipsec.conf.5.check-aliases.ok: $(D_IPSEC_CONF_XML) Makefile
 	: do all aliases get an historic mention?
-	for a in $$(awk -F '"' '/ A.*"/ { print $$2 }' ../lib/libswan/ipsecconf/conn.c) ; do \
-		if test -f d.ipsec.conf/conn/$$a.xml ; then \
-			echo alias $$a should not have an entry ; \
-			exit 1 ; \
-		fi ; \
-		if ! grep $$a d.ipsec.conf/conn/*.xml ; then \
-			echo alias $$a needs an historic mention ; \
-			exit 1 ; \
-		fi ; \
-	done
+	$(srcdir)/ipsec.conf.5.check-aliases.sh
 	touch $@
 
-$(builddir)/ipsec.conf.5.param.ok: $(D_IPSEC_CONF_XML) Makefile
-	: do all keywords have a man page?
-	for p in $$(awk -F '"' '/ K.*".*KWS_/ { print $$2 }' ../lib/libswan/ipsecconf/conn.c) ; do \
-		if test ! -f d.ipsec.conf/conn/$$p.xml ; then \
-			echo parameter $$p is not documented ; \
-		fi ; \
-	done
+$(builddir)/ipsec.conf.5.check-parameters.ok: $(D_IPSEC_CONF_XML) Makefile
+	: do all config keywords have a man page?
+	$(srcdir)/ipsec.conf.5.check-parameters.sh
 	touch $@
 
 $(builddir)/ipsec.conf.5.entities.xml: $(D_IPSEC_CONF_XML) $(srcdir)/ipsec.conf.5.entities.sh
