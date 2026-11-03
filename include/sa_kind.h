@@ -18,7 +18,8 @@
 #define SA_KIND_H
 
 enum sa_kind {
-#define SA_KIND_FLOOR 0
+	/* zero is reserved, see state_filter */
+#define SA_KIND_FLOOR 1
 	IKE_SA = SA_KIND_FLOOR,
 	CHILD_SA,
 #define SA_KIND_ROOF (CHILD_SA+1)
