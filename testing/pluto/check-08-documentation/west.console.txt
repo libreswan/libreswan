@@ -1,0 +1,64 @@
+/source/configs/ipsec.conf.5.check-uses.sh
+-bash: /source/configs/ipsec.conf.5.check-uses.sh: No such file or directory
+west #
+ /source/configs/ipsec.conf.5.check-parameters.sh
+setup parameter drop-oppo-null is not documented
+setup parameter logstderr is not documented
+setup parameter seeddev is not documented
+conn parameter also is not documented
+conn parameter clones is not documented
+conn parameter connalias is not documented
+conn parameter dns-match-id, is not documented
+conn parameter groundhog is not documented
+conn parameter iptfs-packet-size is not documented
+conn parameter pfs-rekey-workaround is not documented
+conn parameter reauth is not documented
+conn parameter session-resumption is not documented
+west #
+ /source/configs/ipsec.conf.5.check-aliases.sh
+curl-timeout
+/source/configs/d.ipsec.conf/setup/crl-timeout.xml:      <option>curl-timeout</option>.
+xfrmlifetime
+/source/configs/d.ipsec.conf/setup/expire-lifetime.xml:      <option>xfrmlifetime</option>.
+aggrmode
+/source/configs/d.ipsec.conf/conn/aggressive.xml:      <option>aggrmode=</option>; it was was renamed to
+ikev1-dpdtimeout
+/source/configs/d.ipsec.conf/conn/dpdtimeout.xml:      <option>ikev1-dpdtimeout=</option> &Libreswan; 5.0 (with
+/source/configs/d.ipsec.conf/conn/dpdtimeout.xml:      in &Libreswan; 5.4 (<option>ikev1-dpdtimeout=</option> made the
+keylife
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>keylife=</option>, <option>lifetime=</option>, and
+lifetime
+/source/configs/d.ipsec.conf/conn/ikelifetime.xml:<varlistentry id='conn.ikelifetime'>
+/source/configs/d.ipsec.conf/conn/ikelifetime.xml:    <option>ikelifetime=&seconds;</option>
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:<varlistentry id='conn.ipsec-lifetime'>
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:    <option>ipsec-lifetime=&seconds;</option>
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      on <option>ipsec-lifetime=</option>.
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>keylife=</option>, <option>lifetime=</option>, and
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>salifetime=</option>; these were replaced by
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>ipsec-lifetime=</option> in &Libreswan; 4.8.
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>ipsec-lifetime=<literal>8h</literal></option> (eight
+/source/configs/d.ipsec.conf/conn/rekeyfuzz.xml:      not exceed <option>salifetime</option>.  The value
+/source/configs/d.ipsec.conf/conn/rekeymargin.xml:      values as for <option>salifetime</option>.  Relevant only
+nflog
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:<varlistentry id='conn.nflog-group'>
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:    <option>nflog-group=</option>
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      nflog:XXX pseudo interfaces where XXX is the nflog group
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      nflog group specified.  The rules are setup with the
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      nflog-prefix matching the connection name.  See also the global
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      <option>nflog-all=</option> option.
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      <option>nflog=</option>; it was renamed to
+/source/configs/d.ipsec.conf/conn/nflog-group.xml:      <option>nflog-group=</option> in &Libreswan; version 5.3.
+policy-label
+/source/configs/d.ipsec.conf/conn/sec-label.xml:      For example, <option>policy-label=system_u:object_r:ipsec_spd_t:s0-s15:c0.c1023</option>
+/source/configs/d.ipsec.conf/conn/sec-label.xml:      <option>policy-label=</option>; it was renamed to
+remote_peer_type
+/source/configs/d.ipsec.conf/conn/remote-peer-type.xml:      <option>remote_peer_type=</option>; it was renamed to
+salifetime
+/source/configs/d.ipsec.conf/conn/ipsec-lifetime.xml:      <option>salifetime=</option>; these were replaced by
+/source/configs/d.ipsec.conf/conn/rekeyfuzz.xml:      not exceed <option>salifetime</option>.  The value
+/source/configs/d.ipsec.conf/conn/rekeymargin.xml:      values as for <option>salifetime</option>.  Relevant only
+send-no-esp-tfc
+/source/configs/d.ipsec.conf/conn/send-esp-tfc-padding-not-supported.xml:      originally called <option>send-no-esp-tfc=</option>; it was
+xauthusername
+/source/configs/d.ipsec.conf/conn/username.xml:      <option>xauthusername=</option>; it was renamed to
+west #

@@ -1,0 +1,11 @@
+look for gaps in the documentation
+
+- undocumented parameters
+
+  all parameters listed in the table in setup.c and conn.c need
+  documentation
+
+- undocumneted aliases
+
+  all the aliases in the tables in setup.c and conn.c need an
+  honourable mention
