@@ -133,7 +133,8 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		attr.len = address_type(ip)->ip_size;
 	}
 
-	if (afi == &ipv6_info) {
+	bool ipv6_prefix = (afi == &ipv6_info && type == IKEv2_INTERNAL_IP6_ADDRESS);
+	if (ipv6_prefix) {
 		/* RFC hack to append 1-byte IPv6 prefix len */
 		attr.len += sizeof(uint8_t);
 	}
@@ -145,7 +146,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		}
 	}
 
-	if (afi == &ipv6_info) {
+	if (ipv6_prefix) {
 		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN; /*128*/
 		if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
 			/* already logged */
@@ -692,6 +693,12 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS:
+			if (pbs_left(&cp_a_pbs) > sizeof(struct in6_addr)) {
+				llog_sa(RC_LOG, child,
+					"ERROR INTERNAL_IP6_DNS attribute length %u is more than %zu octets",
+					cp_a.len, sizeof(struct in6_addr));
+				return false;
+			}
 			d = ikev2_set_dns(&cp_a_pbs, child, &ipv6_info);
 			if (d != NULL) {
 				llog(RC_LOG, child->sa.logger, "ERROR %s", str_diag(d));
