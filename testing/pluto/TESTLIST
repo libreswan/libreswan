@@ -1255,6 +1255,7 @@ kvmplutotest	ikev2-ipv6-transport-mode-02-xfrm-xfrm	good
 
 kvmplutotest	addresspool-46in4-ikev2				good
 kvmplutotest	addresspool-46in4-4only-ikev2			good
+kvmplutotest	ikev2-cp-dns-46in4				good	github/3134
 kvmplutotest	addresspool-46in4-6only-ikev2			good
 kvmplutotest	addresspool-46in6-ikev2				good
 kvmplutotest	addresspool-46in6-4only-ikev2			good

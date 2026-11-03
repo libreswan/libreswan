@@ -1,0 +1,1 @@
+IPv4 and IPv6 addresspool, the server sends INTERNAL_IP4_DNS and INTERNAL_IP6_DNS; west is the client.
