@@ -5,8 +5,11 @@
       The timeout for used when fetching CRLs.
     </para>
     <para>
+      History: prior to &Libreswan; 5.3 the parameter was called
+      <option>curl-timeout</option>.
+    </para>
+    <para>
       The default is 5 seconds (<literal>5s</literal>).
     </para>
   </listitem>
 </varlistentry>
-
