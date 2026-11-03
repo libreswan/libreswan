@@ -8,7 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add transport-optimized-rekey
-ipsec auto --status | grep transport-optimized-rekey
+ipsec add transport-optimized-rekey
+ipsec connectionstatus transport-optimized-rekey
 ipsec whack --impair suppress_retransmits
 echo "initdone"

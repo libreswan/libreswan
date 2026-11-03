@@ -20,7 +20,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add rw-east-pool-x509-ipv4
+ ipsec add rw-east-pool-x509-ipv4
 "rw-east-pool-x509-ipv4": added oriented IKEv2 connection
 east #
  echo "initdone"
@@ -40,7 +40,7 @@ east #
  ../../guestbin/wait-for.sh --match '#5: initiator rekeyed Child SA #4' -- cat /tmp/pluto.log
 "rw-east-pool-x509-ipv4"[1] 192.1.2.254 #5: initiator rekeyed Child SA #4 using #1 (optimized rekey); IPsec tunnel [0.0.0.0/0===192.0.2.100/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 NATD=192.1.2.254:EPHEM DPD=passive}
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #5: "rw-east-pool-x509-ipv4"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
 east #
  ipsec _kernel policy | grep -E '^src'
@@ -53,7 +53,7 @@ process CREATE_CHILD_SA optimized rekey Child SA request
 process CREATE_CHILD_SA optimized rekey Child SA request
 process CREATE_CHILD_SA optimized rekey Child SA response
 east #
- if [ -f /run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
+ if [ -f /run/pluto/pluto.pid ]; then ipsec trafficstatus ; fi
 #5: "rw-east-pool-x509-ipv4"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
 east #
  if [ -f /run/pluto/pluto.pid ]; then ipsec _kernel policy | grep -E '^src' ; fi

@@ -22,10 +22,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add transport-optimized-rekey
+ ipsec add transport-optimized-rekey
 "transport-optimized-rekey": added oriented IKEv2 connection
 west #
- ipsec auto --status | grep transport-optimized-rekey
+ ipsec connectionstatus transport-optimized-rekey
 "transport-optimized-rekey": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 "transport-optimized-rekey":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "transport-optimized-rekey":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
@@ -56,7 +56,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up transport-optimized-rekey
+ ipsec up transport-optimized-rekey
 "transport-optimized-rekey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "transport-optimized-rekey" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "transport-optimized-rekey" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -101,7 +101,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #4: "transport-optimized-rekey", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  echo done

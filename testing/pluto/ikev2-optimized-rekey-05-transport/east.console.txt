@@ -6,10 +6,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add transport-optimized-rekey
+ ipsec add transport-optimized-rekey
 "transport-optimized-rekey": added oriented IKEv2 connection
 east #
- ipsec auto --status | grep transport-optimized-rekey
+ ipsec connectionstatus transport-optimized-rekey
 "transport-optimized-rekey": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 "transport-optimized-rekey":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "transport-optimized-rekey":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;

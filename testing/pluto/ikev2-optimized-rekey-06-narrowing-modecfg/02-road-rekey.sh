@@ -7,5 +7,5 @@ ipsec whack --rekey-child --name road-east-x509-ipv4
 ../../guestbin/wait-for.sh --match '#4: initiator rekeyed Child SA #3' -- cat /tmp/pluto.log
 ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 # still the same selectors
-ipsec whack --trafficstatus
+ipsec trafficstatus
 ipsec _kernel policy | grep -E '^src'
