@@ -9,6 +9,7 @@ v5.5 (unreleased)
   - support RFC 9593 Announcing Supported Authentication Methods [Osema Fadhel (GSoC), Vukašin]
   - support DRAFT RFC Downgrade Prevention [Vinayak Sandur]
   - fix interop with INTERMEDIATE and non-PSK auth [Astrid Passot, Paul]
+  - fix INTERNAL_IP6_DNS attribute to be 16, not 17 bytes [Wavie Hu, Paul, #3134]
 * Building:
   - fix USE_IKEv1=false [Paul, Andrew, Tuomo]
 * Testing:
