@@ -133,7 +133,14 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		attr.len = address_type(ip)->ip_size;
 	}
 
-	if (afi == &ipv6_info) {
+	/*
+	 * RFC 7296 3.15.1: only INTERNAL_IP6_ADDRESS carries the
+	 * 1-byte prefix length; INTERNAL_IP6_DNS is 0 or 16 octets.
+	 */
+	bool append_prefix_len = (afi == &ipv6_info &&
+				  type == IKEv2_INTERNAL_IP6_ADDRESS);
+
+	if (append_prefix_len) {
 		/* RFC hack to append 1-byte IPv6 prefix len */
 		attr.len += sizeof(uint8_t);
 	}
@@ -145,7 +152,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		}
 	}
 
-	if (afi == &ipv6_info) {
+	if (append_prefix_len) {
 		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN; /*128*/
 		if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
 			/* already logged */
