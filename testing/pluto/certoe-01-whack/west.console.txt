@@ -20,13 +20,13 @@ west #
 west #
  # give OE policies time to load
 west #
- ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec status
 Total IPsec connections: loaded 10, routed 5, active 0
 west #
  echo "initdone"
 initdone
 west #
- ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23
+ ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23 # sanitize-retransmits # sanitize-retransmits
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: initiate on-demand for packet 192.1.2.45:8-ICMP->192.1.2.23:0 by whack
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -41,7 +41,7 @@ up
 west #
  # should show traffic
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo done

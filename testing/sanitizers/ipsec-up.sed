@@ -10,7 +10,6 @@
 /^ ipsec auto --up [[:alnum:]-]*$/ b match-ipsec-up
 /^ ipsec whack --xauthname.*--initiate [[:alnum:]-]*$/ b match-ipsec-up
 /^ ipsec whack --xauthname.*--initiate$/ b match-ipsec-up
-/^ ipsec whack --oppohere.*[[:alnum:]-]*$/ b match-ipsec-up
 
 b end-ipsec-up
 
