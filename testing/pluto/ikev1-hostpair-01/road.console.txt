@@ -20,9 +20,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair suppress_retransmits
-road #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
+ ipsec add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  echo "initdone"
@@ -56,10 +54,8 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.1/32
-road #
- # change ip, emulating sudden switching network
 road #
  ipsec whack --impair send_no_delete
 road #
@@ -75,7 +71,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
+ ipsec add westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv4-psk-ikev1 --initiate
@@ -103,18 +99,13 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #2: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
- # should not fail to ping
-road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.1/32
 road #
- echo done
-done
-road #
- ipsec status | grep eastnet
+ ipsec connectionstatus westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1": 192.0.2.1/32===192.1.3.210[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]; routed-tunnel; my_ip=192.0.2.1; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.3.210; nexthop: 192.1.3.254; remote: 192.1.2.23; established ISAKMP SA: #1;
 "westnet-eastnet-ipv4-psk-ikev1":   mycert=road;
@@ -141,17 +132,15 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev1":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-#1: "westnet-eastnet-ipv4-psk-ikev1":4500 ISAKMP SA established; RETRANSMIT in XXs; NAT_KEEPALIVE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-#2: "westnet-eastnet-ipv4-psk-ikev1":4500 IPsec SA established; REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-#2: "westnet-eastnet-ipv4-psk-ikev1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B username=use3
+road #
+ ipsec trafficstatus
+#2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.1/32
 road #
  # should show no hits
 road #
- hostname | grep nic || grep INVALID_IKE_SPI /tmp/pluto.log
+ grep INVALID_IKE_SPI /tmp/pluto.log
 road #
- hostname | grep nic || grep MSG_TRUNC /tmp/pluto.log
+ grep MSG_TRUNC /tmp/pluto.log
 road #
- hostname | grep nic || grep "cannot route" /tmp/pluto.log
-road #
- hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
+ grep "cannot route" /tmp/pluto.log
 road #

@@ -18,7 +18,7 @@ road #
 road #
  # expected to fail due to overlap of IP
 road #
- ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate # sanitize-retransmits
+ ipsec whack --xauthname xroad --xauthpass use1pass --name road-east --initiate # sanitize-retransmits
 "road-east" #1: initiating IKEv1 Main Mode connection
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2
@@ -40,5 +40,5 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 road #
