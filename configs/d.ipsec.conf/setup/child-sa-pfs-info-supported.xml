@@ -1,0 +1,22 @@
+<varlistentry id='setup.child-sa-pfs-info-supported'>
+  <term>
+    <option>child-sa-pfs-info-supported=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to negotiate the IKEv2 CHILD_SA_PFS_INFO_SUPPORTED
+      notification (draft-ietf-ipsecme-child-pfs-info) during
+      IKE_SA_INIT.  When both peers support it, the key exchange
+      method to use when rekeying the Child SA is agreed during
+      IKE_AUTH.
+    </para>
+    <para>
+      This is a global option, and not a per-connection option,
+      because the notification is exchanged in IKE_SA_INIT, before a
+      responder knows which connection the IKE SA will be using.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,0 +1,3 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) combined
+with child-sa-pfs-info-supported=yes: the KE method was negotiated during
+IKE_AUTH, so even the first rekey of the Child SA is optimized.

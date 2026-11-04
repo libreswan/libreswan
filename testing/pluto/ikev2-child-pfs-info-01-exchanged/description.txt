@@ -1,0 +1,4 @@
+IKEv2 Child SA PFS Info (draft-ietf-ipsecme-child-pfs-info): both west and east
+have child-sa-pfs-info-supported=yes and pfs=yes. Both sides negotiate the KE method to use
+when rekeying the Child SA via CHILD_SA_PFS_INFO_SUPPORTED notify in IKE_SA_INIT,
+and include KE transforms in the IKE_AUTH Child SA proposals.

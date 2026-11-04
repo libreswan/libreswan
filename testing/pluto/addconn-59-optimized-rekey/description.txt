@@ -1,0 +1,2 @@
+Test optimized-rekey= (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) is parsed
+and that bad values are rejected.

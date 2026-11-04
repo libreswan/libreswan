@@ -3269,6 +3269,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			      end->protoport.has_port_wildcard);
 	}
 #endif
+
 	config->narrowing = narrowing;
 
 	/*
@@ -3325,6 +3326,14 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 	config->child.ipcomp = compress;
+
+	config->child.optimized_rekey =
+		extract_bool(kv(wm, END_ROOF, KWS_OPTIMIZED_REKEY),
+			     /*value_when_unset*/YN_NO,
+			     &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * Extract the encapsulation protocol ESP/AH.

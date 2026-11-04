@@ -1,0 +1,58 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ /testing/x509/import.sh real/mainca/road.end.cert
+ ipsec certutil -A -n road -t P,, -i real/mainca/road.end.cert
+ ipsec certutil -O -n road
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "road" [E=user-road@testing.libreswan.org,CN=road.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add rw-east-pool-x509-ipv4
+"rw-east-pool-x509-ipv4": added oriented IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # east, the server with the pool, initiates the optimized rekey of the
+east #
+ # Child SA that road rekeyed
+east #
+ ipsec whack --rekey-child --name '"rw-east-pool-x509-ipv4"[1]'
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #5: initiating optimized rekey to replace Child SA #4 using IKE SA #1
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #5: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #1 {ESPinUDP <0xESPESP} [0.0.0.0/0===192.0.2.100/32]
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #5: initiator rekeyed Child SA #4 using #1 (optimized rekey); IPsec tunnel [0.0.0.0/0===192.0.2.100/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 NATD=192.1.2.254:EPHEM DPD=passive}
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #4: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #4: ESP traffic information: in=84B out=84B
+east #
+ ../../guestbin/wait-for.sh --match '#5: initiator rekeyed Child SA #4' -- cat /tmp/pluto.log
+"rw-east-pool-x509-ipv4"[1] 192.1.2.254 #5: initiator rekeyed Child SA #4 using #1 (optimized rekey); IPsec tunnel [0.0.0.0/0===192.0.2.100/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 NATD=192.1.2.254:EPHEM DPD=passive}
+east #
+ ipsec trafficstatus
+#5: "rw-east-pool-x509-ipv4"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
+east #
+ ipsec _kernel policy | grep -E '^src'
+src 0.0.0.0/0 dst 192.0.2.100/32
+src 192.0.2.100/32 dst 0.0.0.0/0
+src 192.0.2.100/32 dst 0.0.0.0/0
+east #
+ if [ -f /run/pluto/pluto.pid ]; then ipsec trafficstatus ; fi
+#5: "rw-east-pool-x509-ipv4"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.100/32
+east #
+ if [ -f /run/pluto/pluto.pid ]; then ipsec _kernel policy | grep -E '^src' ; fi
+src 0.0.0.0/0 dst 192.0.2.100/32
+src 192.0.2.100/32 dst 0.0.0.0/0
+src 192.0.2.100/32 dst 0.0.0.0/0
+east #

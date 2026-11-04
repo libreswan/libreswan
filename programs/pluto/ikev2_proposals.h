@@ -70,6 +70,14 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
 				  struct logger *logger);
 
+/*
+ * Clone the accepted PROPOSAL, replacing the remote SPI; used when
+ * the proposal is inherited, instead of negotiated, by an optimized
+ * rekey.
+ */
+struct ikev2_proposal *clone_ikev2_proposal_with_remote_spi(const struct ikev2_proposal *proposal,
+							    shunk_t remote_spi);
+
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
@@ -92,6 +100,9 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
  */
 
 struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c);
+struct ikev2_proposals *get_v2_IKE_AUTH_child_pfs_info_proposals(const struct ike_sa *ike,
+								  struct connection *cc,
+								  struct verbose verbose);
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
 								   struct child_sa *larval_child,

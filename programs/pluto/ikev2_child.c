@@ -76,6 +76,9 @@ static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
 					    const struct msg_digest *request_md,
 					    struct pbs_out *outpbs);
+static bool emit_v2_child_optimized_response_payloads(const struct child_sa *larval_child,
+						      const struct msg_digest *request_md,
+						      struct pbs_out *pbs);
 
 /*
  * Drive the larval Child SA's state machine.
@@ -333,53 +336,57 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 
 	PEXPECT(logger, larval_child->sa.st_v2_accepted_proposal != NULL);
 
-	/*
-	 * Verify if transport / tunnel mode matches; update the
-	 * proposal as needed.
-	 */
-
-	bool transport_mode_accepted =
-		accept_v2_notification(v2N_USE_TRANSPORT_MODE, logger, request_md,
-				       cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
-
-	enum kernel_mode required_mode =
-		(cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
-		 cc->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
-		 PEXPECT(logger, 0));
-	enum kernel_mode requested_mode =
-		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
-		 KERNEL_MODE_TUNNEL);
-	if (required_mode == requested_mode) {
-		name_buf mb;
-		ldbg_sa(larval_child, "local policy is %s and received matching notify",
-			str_enum_long(&kernel_mode_stories, required_mode, &mb));
-	} else if (required_mode == KERNEL_MODE_TUNNEL) {
-		/*
-		 * RFC allows us to ignore their (wrong) request for
-		 * transport mode.
-		 */
-		name_buf dmb, rmb;
-		llog_sa(RC_LOG, larval_child,
-			"policy dictates %s, ignoring peer's request for %s",
-			str_enum_long(&kernel_mode_stories, required_mode, &dmb),
-			str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
+	if (larval_child->sa.st_v2_optimized_rekey) {
+		/* optimized rekey: the mode and IP-TFS are inherited, see process_v2_optimized_rekey_sa() */
 	} else {
-		/* we should have received a matching mode request */
-		name_buf dmb, rmb;
-		llog_sa(RC_LOG, larval_child,
-			"policy dictates %s, but peer requested %s",
-			str_enum_long(&kernel_mode_stories, required_mode, &dmb),
-			str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
-		return v2N_NO_PROPOSAL_CHOSEN;
+		/*
+		 * Verify if transport / tunnel mode matches; update the
+		 * proposal as needed.
+		 */
+
+		bool transport_mode_accepted =
+			accept_v2_notification(v2N_USE_TRANSPORT_MODE, logger, request_md,
+					       cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
+
+		enum kernel_mode required_mode =
+			(cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+			 cc->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+			 PEXPECT(logger, 0));
+		enum kernel_mode requested_mode =
+			(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
+			 KERNEL_MODE_TUNNEL);
+		if (required_mode == requested_mode) {
+			name_buf mb;
+			ldbg_sa(larval_child, "local policy is %s and received matching notify",
+				str_enum_long(&kernel_mode_stories, required_mode, &mb));
+		} else if (required_mode == KERNEL_MODE_TUNNEL) {
+			/*
+			 * RFC allows us to ignore their (wrong) request for
+			 * transport mode.
+			 */
+			name_buf dmb, rmb;
+			llog_sa(RC_LOG, larval_child,
+				"policy dictates %s, ignoring peer's request for %s",
+				str_enum_long(&kernel_mode_stories, required_mode, &dmb),
+				str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
+		} else {
+			/* we should have received a matching mode request */
+			name_buf dmb, rmb;
+			llog_sa(RC_LOG, larval_child,
+				"policy dictates %s, but peer requested %s",
+				str_enum_long(&kernel_mode_stories, required_mode, &dmb),
+				str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+
+		larval_child->sa.st_seen_and_use_iptfs =
+			accept_v2_notification(v2N_USE_AGGFRAG,
+					       larval_child->sa.logger,
+					       request_md,
+					       cc->config->child.iptfs.enabled);
+
+		larval_child->sa.st_kernel_mode = required_mode;
 	}
-
-	larval_child->sa.st_seen_and_use_iptfs =
-		accept_v2_notification(v2N_USE_AGGFRAG,
-				       larval_child->sa.logger,
-				       request_md,
-				       cc->config->child.iptfs.enabled);
-
-	larval_child->sa.st_kernel_mode = required_mode;
 
 	if (!compute_v2_child_spi(larval_child)) {
 		return v2N_INVALID_SYNTAX;/* something fatal */
@@ -436,9 +443,15 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		ldbg(logger, "policy suggested compression, but peer did not offer support");
 	}
 
-	/* is not not negotiated */
-	larval_child->sa.st_seen_esp_tfc_padding_not_supported =
-		(request_md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	/*
+	 * Is not not negotiated.
+	 *
+	 * An optimized rekey doesn't send the notify, it is inherited.
+	 */
+	if (!larval_child->sa.st_v2_optimized_rekey) {
+		larval_child->sa.st_seen_esp_tfc_padding_not_supported =
+			(request_md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	}
 	ldbg(larval_child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
 	     bool_str(larval_child->sa.st_seen_esp_tfc_padding_not_supported));
 
@@ -476,6 +489,9 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * success_v2_state_transition(); suspect very similar code
 	 * will appear in the initiator.
 	 */
+	larval_child->sa.st_v2_rekey_optimizable =
+		(request_md->hdr.isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ||
+		 ike->sa.hidden_variables.st_v2_child_pfs_info_supported);
 	v2_child_sa_established(ike, larval_child);
 
 	return v2N_NOTHING_WRONG;
@@ -501,6 +517,14 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 			     pri_so(larval_child->sa.st_serialno),
 			     larval_child->sa.st_state->name);
 		}
+	}
+
+	/*
+	 * An optimized rekey replaces SA and TS with N(OPTIMIZED_REKEY).
+	 */
+	if (larval_child->sa.st_v2_optimized_rekey) {
+		PEXPECT(logger, isa_xchg == ISAKMP_v2_CREATE_CHILD_SA);
+		return emit_v2_child_optimized_response_payloads(larval_child, request_md, outpbs);
 	}
 
 	/* start of SA out */
@@ -576,6 +600,222 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	return true;
 }
 
+/*
+ * draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt
+ *
+ * The optimized rekey must inherit all properties of the SA being
+ * rekeyed.  Tunnel mode, transport mode and IP-TFS are inherited from
+ * the SA being replaced (their notifications are not sent), as is
+ * TFC padding.
+ *
+ * Not (yet) optimized:
+ *
+ * - IPCOMP: needs N(IPCOMP_SUPPORTED) with new CPIs
+ *
+ * - when a PPK was used: the draft requires the PPK to be
+ *   re-negotiated, which isn't done for CREATE_CHILD_SA
+ */
+bool v2_rekey_may_be_optimized(const struct ike_sa *ike, const struct child_sa *prev)
+{
+	const struct connection *c = prev->sa.st_connection;
+	return (!impair.disable_optimized_rekey &&
+		ike->sa.hidden_variables.st_v2_optimized_rekey_supported &&
+		c->config->child.optimized_rekey &&
+		prev->sa.st_v2_rekey_optimizable &&
+		prev->sa.st_v2_accepted_proposal != NULL &&
+		!c->config->child.ipcomp &&
+		!ike->sa.st_ppk_ike_auth_used);
+}
+
+/*
+ * N(OPTIMIZED_REKEY), Nonce, [KE]; the notification data is the SPI
+ * the sender expects in inbound ESP/AH packets (the notification's
+ * Protocol ID and SPI Size are zero).
+ */
+static bool emit_v2_child_optimized_payloads(const struct child_sa *larval_child,
+					     bool emit_ke,
+					     shunk_t ke,
+					     chunk_t nonce,
+					     struct pbs_out *pbs)
+{
+	struct logger *logger = larval_child->sa.logger;
+	const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+
+	/*
+	 * The SPI is notification data; the Protocol ID and SPI Size
+	 * stay zero (draft section 6.2).
+	 */
+	if (!emit_v2N_bytes(v2N_OPTIMIZED_REKEY,
+			    &proto_info->inbound.spi, sizeof(proto_info->inbound.spi),
+			    pbs)) {
+		return false;
+	}
+
+	struct ikev2_generic in = {
+		.isag_critical = build_ikev2_critical(false, logger),
+	};
+	struct pbs_out pb_nonce;
+	if (!pbs_out_struct(pbs, in, &ikev2_nonce_desc, &pb_nonce)) {
+		return false;
+	}
+	if (!pbs_out_hunk(&pb_nonce, nonce, "IKEv2 nonce")) {
+		return false;
+	}
+	close_pbs_out(&pb_nonce);
+
+	if (emit_ke &&
+	    !emit_v2KE(ke, larval_child->sa.st_pfs_kem, pbs)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool emit_v2_child_optimized_request_payloads(const struct child_sa *larval_child,
+					      struct pbs_out *pbs)
+{
+	return emit_v2_child_optimized_payloads(larval_child,
+						larval_child->sa.st_pfs_kem != NULL,
+						HUNK_AS_SHUNK(&larval_child->sa.st_gi),
+						larval_child->sa.st_ni, pbs);
+}
+
+static bool emit_v2_child_optimized_response_payloads(const struct child_sa *larval_child,
+						      const struct msg_digest *request_md,
+						      struct pbs_out *pbs)
+{
+	return emit_v2_child_optimized_payloads(larval_child,
+						request_md->chain[NEXT_PAYLOAD_v2KE] != NULL,
+						HUNK_AS_SHUNK(&larval_child->sa.st_gr),
+						larval_child->sa.st_nr, pbs);
+}
+
+/*
+ * Extract the new SPI from the notification data of
+ * N(OPTIMIZED_REKEY); the notification's Protocol ID and SPI Size
+ * MUST be zero (draft section 6.2) and the data is the SPI.
+ *
+ * SIZE is the size of the SPI: 8 for an IKE SA; for a Child SA it is
+ * the SPI Size of N(REKEY_SA).
+ */
+v2_notification_t extract_v2N_OPTIMIZED_REKEY_spi(struct verbose verbose,
+						  const struct msg_digest *md,
+						  void *spi, size_t size)
+{
+	const struct payload_digest *n_pd = md->v2N_status[v2N_status_OPTIMIZED_REKEY];
+	if (n_pd == NULL) {
+		vlog("optimized rekey is missing N(OPTIMIZED_REKEY)");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	const struct ikev2_notify *n = &n_pd->payload.v2n;
+	if (n->isan_protoid != PROTO_v2_RESERVED ||
+	    n->isan_spisize != 0 ||
+	    pbs_left(&n_pd->pbs) != size) {
+		vlog("N(OPTIMIZED_REKEY) must have zero protocol ID and SPI size, and a %zu byte SPI as data",
+		     size);
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	struct pbs_in spi_pbs = n_pd->pbs;
+	diag_t d = pbs_in_bytes(&spi_pbs, spi, size, "SPI");
+	if (d != NULL) {
+		vlog("%s", str_diag(d));
+		pfree_diag(&d);
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	bool zero = true;
+	for (size_t i = 0; i < size; i++) {
+		if (((const uint8_t *)spi)[i] != 0) {
+			zero = false;
+		}
+	}
+	if (zero) {
+		vlog("N(OPTIMIZED_REKEY) contains zero SPI");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+	return v2N_NOTHING_WRONG;
+}
+
+/*
+ * Instead of processing an SA payload, inherit the accepted proposal
+ * from the Child SA being replaced; the only thing taken from the
+ * message is the new SPI, in N(OPTIMIZED_REKEY).
+ *
+ * This is the equivalent of process_childs_v2SA_payload().
+ */
+v2_notification_t process_v2_optimized_rekey_sa(struct child_sa *child,
+						struct msg_digest *md)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+
+	struct child_sa *pred = child_sa_by_serialno(child->sa.st_v2_rekey_pred);
+	if (!vexpect(pred != NULL) ||
+	    !vexpect(pred->sa.st_v2_accepted_proposal != NULL)) {
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	ipsec_spi_t spi = 0; /* network ordered */
+	v2_notification_t n = extract_v2N_OPTIMIZED_REKEY_spi(verbose, md, &spi, sizeof(spi));
+	if (n != v2N_NOTHING_WRONG) {
+		return n;
+	}
+
+	/*
+	 * The notifications that negotiate the mode (USE_TRANSPORT_MODE,
+	 * USE_AGGFRAG) are not sent; the new SA keeps the mode of the SA
+	 * being replaced.
+	 */
+	child->sa.st_kernel_mode = pred->sa.st_kernel_mode;
+	child->sa.st_seen_and_use_iptfs = pred->sa.st_seen_and_use_iptfs;
+	child->sa.st_seen_esp_tfc_padding_not_supported =
+		pred->sa.st_seen_esp_tfc_padding_not_supported;
+
+	free_ikev2_proposal(&child->sa.st_v2_accepted_proposal);
+	child->sa.st_v2_accepted_proposal =
+		clone_ikev2_proposal_with_remote_spi(pred->sa.st_v2_accepted_proposal,
+					     THING_AS_SHUNK(spi));
+	vdbg_ikev2_proposal(verbose, "optimized rekey inherited", child->sa.st_v2_accepted_proposal);
+
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
+	proto_info->protocol = (proto_info == &child->sa.st_esp ? &ip_protocol_esp : &ip_protocol_ah);
+	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
+					  child->sa.logger)) {
+		vlog("optimized rekey inherited a proposal we don't actually support!");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	const struct ke_desc *accepted_dh =
+		proto_info->trans_attrs.ta_dh == &ike_alg_ke_none ? NULL
+		: proto_info->trans_attrs.ta_dh;
+	switch (child->sa.st_sa_role) {
+	case SA_INITIATOR:
+		if (accepted_dh != child->sa.st_pfs_kem) {
+			vlog("optimized rekey KE method does not match the one sent");
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		break;
+	case SA_RESPONDER:
+		vexpect(child->sa.st_pfs_kem == NULL);
+		/* KE must be present exactly when the SA being replaced used PFS */
+		if ((accepted_dh != NULL) != (md->chain[NEXT_PAYLOAD_v2KE] != NULL)) {
+			vlog("optimized rekey KE payload does not match the SA being rekeyed");
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		child->sa.st_pfs_kem = accepted_dh;
+		break;
+	default:
+		bad_case(child->sa.st_sa_role);
+	}
+
+	if (child->sa.st_pfs_kem != NULL) {
+		/* see process_childs_v2SA_payload() */
+		struct trans_attrs accepted_oakley = proto_info->trans_attrs;
+		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
+		child->sa.st_oakley = accepted_oakley;
+	}
+
+	return v2N_NOTHING_WRONG;
+}
+
 v2_notification_t process_childs_v2SA_payload(const char *what,
 					      struct ike_sa *unused_ike UNUSED,
 					      struct child_sa *child,
@@ -640,25 +880,38 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	const struct ke_desc *accepted_dh =
 		proto_info->trans_attrs.ta_dh == &ike_alg_ke_none ? NULL
 		: proto_info->trans_attrs.ta_dh;
-	switch (child->sa.st_sa_role) {
-	case SA_INITIATOR:
-		vexpect(expect_accepted_proposal);
-		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_kem) {
-			vlog("expecting %s but remote's accepted proposal includes %s",
-			     child->sa.st_pfs_kem == NULL ? "no DH" : child->sa.st_pfs_kem->common.fqn,
-			     accepted_dh->common.fqn);
-			return v2N_NO_PROPOSAL_CHOSEN;
-		}
-		child->sa.st_pfs_kem = accepted_dh;
-		break;
-	case SA_RESPONDER:
-		vexpect(!expect_accepted_proposal);
-		vexpect(child->sa.st_sa_role == SA_RESPONDER);
+	/*
+	 * Only when CHILD_SA_PFS_INFO_SUPPORTED, is KE allowed in IKE_AUTH
+	 */
+	const bool pfs_info = (isa_xchg == ISAKMP_v2_IKE_AUTH &&
+			       child->sa.hidden_variables.st_v2_child_pfs_info_supported);
+	if (pfs_info) {
 		vexpect(child->sa.st_pfs_kem == NULL);
-		child->sa.st_pfs_kem = accepted_dh;
-		break;
-	default:
-		bad_case(child->sa.st_sa_role);
+		if (accepted_dh != NULL) {
+			vdbg("ignoring %s in IKE_AUTH accepted proposal: CHILD_SA_PFS_INFO only",
+			     accepted_dh->common.fqn);
+		}
+	} else {
+		switch (child->sa.st_sa_role) {
+		case SA_INITIATOR:
+			vexpect(expect_accepted_proposal);
+			if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_kem) {
+				vlog("expecting %s but remote's accepted proposal includes %s",
+				     child->sa.st_pfs_kem == NULL ? "no DH" : child->sa.st_pfs_kem->common.fqn,
+				     accepted_dh->common.fqn);
+				return v2N_NO_PROPOSAL_CHOSEN;
+			}
+			child->sa.st_pfs_kem = accepted_dh;
+			break;
+		case SA_RESPONDER:
+			vexpect(!expect_accepted_proposal);
+			vexpect(child->sa.st_sa_role == SA_RESPONDER);
+			vexpect(child->sa.st_pfs_kem == NULL);
+			child->sa.st_pfs_kem = accepted_dh;
+			break;
+		default:
+			bad_case(child->sa.st_sa_role);
+		}
 	}
 
 	/*
@@ -761,6 +1014,9 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED,
 		}
 		jam_string(buf, " using ");
 		jam_so(buf, child->sa.st_clonedfrom);
+		if (child->sa.st_v2_optimized_rekey) {
+			jam_string(buf, " (optimized rekey)");
+		}
 		jam_string(buf, "; IPsec ");
 		/* log Child SA Traffic Selector details for admin's pleasure */
 		jam_enum_human(buf, &kernel_mode_names, child->sa.st_kernel_mode);
@@ -830,7 +1086,9 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.logger;
 
-	if (!process_v2TS_response_payloads(child, md)) {
+	/* an optimized rekey inherits the TS */
+	if (!child->sa.st_v2_optimized_rekey &&
+	    !process_v2TS_response_payloads(child, md)) {
 		return v2N_TS_UNACCEPTABLE;
 	}
 
@@ -861,39 +1119,45 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	/* check for Child SA related NOTIFY payloads */
 
-	bool transport_mode_accepted =
-		accept_v2_notification(v2N_USE_TRANSPORT_MODE, child->sa.logger, md,
-				       c->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
+	if (child->sa.st_v2_optimized_rekey) {
+		/* optimized rekey: the mode and IP-TFS are inherited, see process_v2_optimized_rekey_sa() */
+	} else {
+		bool transport_mode_accepted =
+			accept_v2_notification(v2N_USE_TRANSPORT_MODE, child->sa.logger, md,
+					       c->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
 
-	enum kernel_mode required_mode =
-		(c->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
-		 c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
-		 PEXPECT(logger, 0));
-	enum kernel_mode accepted_mode =
-		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
-		 KERNEL_MODE_TUNNEL);
-	if (required_mode != accepted_mode) {
-		/* we should have accepted a matching response */
-		name_buf amb, rmb;
-		llog_sa(RC_LOG, child,
-			"policy dictates %s, but peer requested %s",
-			str_enum_long(&kernel_mode_stories, required_mode, &rmb),
-			str_enum_long(&kernel_mode_stories, accepted_mode, &amb));
- 		return v2N_NO_PROPOSAL_CHOSEN;
- 	}
+		enum kernel_mode required_mode =
+			(c->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+			 c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+			 PEXPECT(logger, 0));
+		enum kernel_mode accepted_mode =
+			(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
+			 KERNEL_MODE_TUNNEL);
+		if (required_mode != accepted_mode) {
+			/* we should have accepted a matching response */
+			name_buf amb, rmb;
+			llog_sa(RC_LOG, child,
+				"policy dictates %s, but peer requested %s",
+				str_enum_long(&kernel_mode_stories, required_mode, &rmb),
+				str_enum_long(&kernel_mode_stories, accepted_mode, &amb));
+	 		return v2N_NO_PROPOSAL_CHOSEN;
+	 	}
 
-	child->sa.st_seen_and_use_iptfs =
-		accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
-				       c->config->child.iptfs.enabled);
+		child->sa.st_seen_and_use_iptfs =
+			accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
+					       c->config->child.iptfs.enabled);
 
-	name_buf rmb;
-	ldbg_sa(child, "local policy is %s and received matching notify",
-		str_enum_long(&kernel_mode_stories, required_mode, &rmb));
-	child->sa.st_kernel_mode = required_mode;
+		name_buf rmb;
+		ldbg_sa(child, "local policy is %s and received matching notify",
+			str_enum_long(&kernel_mode_stories, required_mode, &rmb));
+		child->sa.st_kernel_mode = required_mode;
+	}
 
-	/* not negotiated */
-	child->sa.st_seen_esp_tfc_padding_not_supported =
-		(md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	/* not negotiated; an optimized rekey doesn't send the notify, it is inherited */
+	if (!child->sa.st_v2_optimized_rekey) {
+		child->sa.st_seen_esp_tfc_padding_not_supported =
+			(md->v2N_status[v2N_status_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	}
 	ldbg(child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
 	     bool_str(child->sa.st_seen_esp_tfc_padding_not_supported));
 
@@ -1071,10 +1335,27 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 				     VERBOSE(DEBUG_STREAM, ike_to_reject->sa.logger, NULL));
 	}
 
+	struct connection *resp_cc = child->sa.st_connection;
+	struct ikev2_proposals *pfs_info_proposals = NULL;
+	const struct ikev2_proposals *resp_proposals;
+	if (child->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+		pfs_info_proposals =
+			get_v2_IKE_AUTH_child_pfs_info_proposals(ike, resp_cc, verbose);
+		if (pfs_info_proposals == NULL) {
+			/* programming error already logged by pexpect */
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		resp_proposals = pfs_info_proposals;
+	} else {
+		resp_proposals = resp_cc->config->child.v2_ike_auth_proposals;
+	}
+
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					ike, child, md,
-					child->sa.st_connection->config->child.v2_ike_auth_proposals,
+					resp_proposals,
 					/*expect-accepted-proposal?*/false);
+	free_ikev2_proposals(&pfs_info_proposals);
 	name_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
 	     str_enum_long(&v2_notification_names, n, &nb));
@@ -1256,10 +1537,26 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	/* examine and accept SA ESP/AH proposals */
 
+	struct connection *init_cc = child->sa.st_connection;
+	struct ikev2_proposals *pfs_info_init_proposals = NULL;
+	const struct ikev2_proposals *init_proposals;
+	if (child->sa.hidden_variables.st_v2_child_pfs_info_supported) {
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+		pfs_info_init_proposals =
+			get_v2_IKE_AUTH_child_pfs_info_proposals(ike, init_cc, verbose);
+		if (pfs_info_init_proposals == NULL) {
+			/* programming error already logged by pexpect */
+			return v2N_NO_PROPOSAL_CHOSEN;
+		}
+		init_proposals = pfs_info_init_proposals;
+	} else {
+		init_proposals = init_cc->config->child.v2_ike_auth_proposals;
+	}
 	n = process_childs_v2SA_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
 					ike, child, response_md,
-					child->sa.st_connection->config->child.v2_ike_auth_proposals,
+					init_proposals,
 					/*expect-accepted-proposal?*/true);
+	free_ikev2_proposals(&pfs_info_init_proposals);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;
 	}
@@ -1300,6 +1597,9 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 * will appear in the responder.
 	 */
 
+	/* a Child SA from IKE_AUTH only has the KE after pfs-info */
+	child->sa.st_v2_rekey_optimizable =
+		ike->sa.hidden_variables.st_v2_child_pfs_info_supported;
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
 	release_whack(child->sa.logger, HERE);

@@ -194,6 +194,8 @@ kvmplutotest    addconn-54-xauth          good
 kvmplutotest    addconn-55-send-supported-auth-methods          good
 kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
 kvmplutotest	addconn-57-signature-hash-algorithms		good
+kvmplutotest	addconn-58-child-sa-pfs-info-supported		good
+kvmplutotest	addconn-59-optimized-rekey		good
 
 #################################################################
 # IKEv2 tests
@@ -885,6 +887,18 @@ kvmplutotest	ikev2-child-01-pfs-no-downgrade-no	good
 kvmplutotest	ikev2-child-02-pfs-yes-downgrade-yes	good
 kvmplutotest	ikev2-child-03-dh-none-pfs-no		good
 kvmplutotest	ikev2-child-04-dh-none-pfs-yes		good
+kvmplutotest	ikev2-child-pfs-info-01-exchanged		good
+kvmplutotest	ikev2-child-pfs-info-02-no-prop-chosen		good
+kvmplutotest	ikev2-child-pfs-info-03-non-first-ke		wip github/3119
+kvmplutotest	ikev2-optimized-rekey-01-negotiate		good
+kvmplutotest	ikev2-optimized-rekey-02-child-rekey		good
+kvmplutotest	ikev2-optimized-rekey-03-child-rekey-pfs-info	good
+kvmplutotest	ikev2-optimized-rekey-04-impair-disable		good
+kvmplutotest	ikev2-optimized-rekey-05-transport		good
+kvmplutotest	ikev2-optimized-rekey-06-narrowing-modecfg	good
+kvmplutotest	ikev2-optimized-rekey-07-ike-sa-rekey		good
+kvmplutotest	ikev2-optimized-rekey-08-ike-sa-rekey-addke	good
+kvmplutotest	ikev2-optimized-rekey-09-impair-disable-ike	good
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-replace-ike	good
