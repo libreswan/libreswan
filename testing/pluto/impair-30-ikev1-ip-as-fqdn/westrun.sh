@@ -1,3 +1,3 @@
 ipsec whack --impair v1_remote_quick_id:2
-ipsec auto --up west
+ipsec up west
 echo done

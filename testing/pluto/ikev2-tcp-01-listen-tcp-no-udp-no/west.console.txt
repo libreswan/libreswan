@@ -30,11 +30,11 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up tcp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
+ ipsec up tcp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true # sanitize-retransmits
 ERROR: "tcp": TCP: socket XX: connecting to 192.1.2.23:4500: Connection refused (errno 111)
 down
 west #
- ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
+ ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true # sanitize-retransmits
 "udp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "udp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "udp" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message

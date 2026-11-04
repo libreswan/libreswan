@@ -32,7 +32,7 @@ west #
 west #
  # UDP will fail
 west #
- ipsec up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message

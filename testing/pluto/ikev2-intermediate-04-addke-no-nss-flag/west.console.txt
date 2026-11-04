@@ -30,7 +30,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up west-mlkem
+ ipsec up west-mlkem # sanitize-retransmits
 "west-mlkem" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-mlkem" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-mlkem" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=MODP2048 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
@@ -45,7 +45,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west-mlkem", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec down west-mlkem
@@ -54,7 +54,7 @@ west #
 "west-mlkem" #2: ESP traffic information: in=84B out=84B
 "west-mlkem" #1: deleting IKE SA (established IKE SA)
 west #
- ipsec up west-ecp
+ ipsec up west-ecp # sanitize-retransmits
 "west-ecp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-ecp" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-ecp" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=MODP2048 addke1=DH21}, initiating IKE_INTERMEDIATE
@@ -69,7 +69,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #4: "west-ecp", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  ipsec down west-ecp

@@ -30,7 +30,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up tcp && ../../guestbin/ping-once.sh --up   -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true
+ ipsec up tcp && ../../guestbin/ping-once.sh --up   -I 192.0.1.254 192.0.2.254 && ipsec down tcp || true # sanitize-retransmits
 "tcp" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
 "tcp" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "tcp" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -44,7 +44,7 @@ up
 "tcp" #2: ESP traffic information: in=84B out=84B
 "tcp" #1: deleting IKE SA (established IKE SA)
 west #
- ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
+ ipsec up udp && ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254 && ipsec down udp || true # sanitize-retransmits
 "udp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "udp" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "udp" #3: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message

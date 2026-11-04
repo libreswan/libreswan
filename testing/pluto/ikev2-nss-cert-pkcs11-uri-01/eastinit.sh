@@ -39,6 +39,6 @@ echo -e "NSS Certificate DB:${GNUTLS_PIN}\nNSS FIPS 140-2 Certificate DB:${GNUTL
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
-ipsec auto --listall
+ipsec add westnet-eastnet-ikev2
+ipsec listall
 echo "initdone"
