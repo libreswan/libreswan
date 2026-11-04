@@ -7506,19 +7506,19 @@ name for -1 present (should be absent)
          short_name 123: RTM_MAX OK
          jam_names_short 123: RTM_MAX OK
          jam_names_human 123: rtm-max OK
-  sa_kind_names: [0..1]
-    0 -> IKE_SA
-         jam_enum 0: IKE_SA OK
+  sa_kind_names: [1..2]
+    1 -> IKE_SA
+         jam_enum 1: IKE_SA OK
          match IKE_SA: OK
-         short_name 0: IKE_SA OK
-         jam_enum_short 0: IKE_SA OK
-         jam_enum_human 0: ike-sa OK
-    1 -> CHILD_SA
-         jam_enum 1: CHILD_SA OK
+         short_name 1: IKE_SA OK
+         jam_enum_short 1: IKE_SA OK
+         jam_enum_human 1: ike-sa OK
+    2 -> CHILD_SA
+         jam_enum 2: CHILD_SA OK
          match CHILD_SA: OK
-         short_name 1: CHILD_SA OK
-         jam_enum_short 1: CHILD_SA OK
-         jam_enum_human 1: child-sa OK
+         short_name 2: CHILD_SA OK
+         jam_enum_short 2: CHILD_SA OK
+         jam_enum_human 2: child-sa OK
   sa_lifetime_names: [1..2]
     1 -> SA_LIFE_TYPE_SECONDS
          jam_enum 1: SA_LIFE_TYPE_SECONDS OK
