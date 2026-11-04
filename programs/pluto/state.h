@@ -305,6 +305,7 @@ struct state {
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
 	const struct ke_desc *st_pfs_kem;   /*group for Phase 2 PFS */
+	unsigned st_v2_invalid_ke_retries;
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
@@ -864,6 +865,8 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 enum sa_kind sa_kind, /*where is this going?*/
 				 enum sa_role sa_role,
 				 enum state_kind kind);
+
+void restart_v2_child_sa(struct child_sa *child);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
 void set_v2_transition(struct state *st, const struct v2_transition *transition, where_t where);

@@ -1372,6 +1372,16 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	return child;
 }
 
+void restart_v2_child_sa(struct child_sa *child)
+{
+	passert(child->sa.st_state == &state_v2_NEW_CHILD_I1 ||
+		child->sa.st_state == &state_v2_REKEY_CHILD_I1);
+	const struct finite_state *fs = (child->sa.st_v2_rekey_pred == SOS_NOBODY ?
+					&state_v2_NEW_CHILD_I0 : &state_v2_REKEY_CHILD_I0);
+	change_state(&child->sa, fs->kind);
+	set_v2_transition(&child->sa, fs->v2.larval_sa_transition, HERE);
+}
+
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
  */

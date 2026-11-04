@@ -38,6 +38,7 @@
 #include "defs.h"
 #include "demux.h"
 #include "ikev2_parent.h"
+#include "impair.h"
 #include "state.h"
 #include "keys.h" /* needs state.h */
 #include "id.h"
@@ -193,6 +194,21 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 {
 	passert(md->chain[NEXT_PAYLOAD_v2KE] != NULL);
 	int ke_kem = md->chain[NEXT_PAYLOAD_v2KE]->payload.v2ke.isak_ke;
+
+	if (st->st_sa_kind_when_established == CHILD_SA &&
+	    impair.v2n_invalid_ke.enabled) {
+		unsigned suggested = impair.v2n_invalid_ke.value;
+		if (suggested == (unsigned)ke_kem && impair.v2n_invalid_ke.annex != 0) {
+			suggested = impair.v2n_invalid_ke.annex;
+		}
+		llog(IMPAIR_STREAM, st->logger,
+		     "forcing INVALID_KE_PAYLOAD suggesting KE %u", suggested);
+		uint16_t gr = htons(suggested);
+		record_v2N_response(st->logger, ike, md,
+				    v2N_INVALID_KE_PAYLOAD, THING_AS_SHUNK(gr),
+				    security);
+		return false;
+	}
 
 	if (accepted_kem->ikev2_alg_id != ke_kem) {
 		name_buf ke_esb;
