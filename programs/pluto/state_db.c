@@ -370,6 +370,13 @@ static struct list_head *state_filter_head(struct state_filter *filter)
 		     pri_co(filter->connection_serialno), pri_where(filter->search.where));
 		hash_t hash = hash_state_connection_serialno(&filter->connection_serialno);
 		bucket = hash_table_bucket(&state_connection_serialno_hash_table, hash);
+	} else if (filter->kind == IKE_SA) {
+		/* after connection, limit to IKE SAs */
+		vdbg("FOR_EACH_STATE[kind=IKE_SA]... in "PRI_WHERE,
+		     pri_where(filter->search.where));
+		so_serial_t nobody = SOS_NOBODY;
+		hash_t hash = hash_state_clonedfrom(&nobody);
+		bucket = hash_table_bucket(&state_clonedfrom_hash_table, hash);
 	} else {
 		/* else other queries? */
 		vdbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->search.where));
@@ -395,6 +402,18 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	if (filter->connection_serialno != 0 &&
 	    filter->connection_serialno != st->st_connection->serialno) {
 		return false;
+	}
+	switch (filter->kind) {
+	case CHILD_SA:
+		if (st->st_clonedfrom == SOS_NOBODY) {
+			return false;
+		}
+		break;
+	case IKE_SA:
+		if (st->st_clonedfrom != SOS_NOBODY) {
+			return false;
+		}
+		break;
 	}
 	return true;
 }

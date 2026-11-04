@@ -606,6 +606,7 @@ struct ike_sa *nudge_connection_established_parents(struct connection *c,
 
 	struct state_filter parents = {
 		.connection_serialno = c->serialno,
+		.kind = IKE_SA,
 		.search = {
 			.order = OLD2NEW,
 			.verbose = verbose,

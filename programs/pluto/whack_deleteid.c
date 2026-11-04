@@ -37,19 +37,22 @@
 
 void whack_deleteid(const struct whack_message *m, struct show *s)
 {
+	struct logger *logger = show_logger(s);
+
 	if (m->name == NULL ) {
 		show_rc(RC_FATAL, s,
 			"received whack command to delete a connections with peer ID, but did not receive the ID - ignored");
 		return;
 	}
 
-	llog(LOG_STREAM/*not-whack*/, show_logger(s),
+	llog(LOG_STREAM/*not-whack*/, logger,
 	     "received whack command to delete connections with peer ID '%s'", m->name);
 
 	struct state_filter sf = {
+		.kind = IKE_SA,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
@@ -57,7 +60,7 @@ void whack_deleteid(const struct whack_message *m, struct show *s)
 	while (next_state(&sf)) {
 		struct connection *c = sf.st->st_connection;
 
-		if (!IS_PARENT_SA(sf.st)) {
+		if (!PEXPECT(logger, IS_PARENT_SA(sf.st))) {
 			continue;
 		}
 

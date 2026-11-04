@@ -260,6 +260,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 	*bogus = false;
 
 	struct state_filter sf = {
+		.kind = CHILD_SA,
 		.search = {
 			.order = NEW2OLD,
 			.verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL),
@@ -267,7 +268,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 		},
 	};
 	while (next_state(&sf)) {
-		if (!IS_CHILD_SA(sf.st)) {
+		if (!PEXPECT(ike->sa.logger, IS_CHILD_SA(sf.st))) {
 			continue;
 		}
 		struct child_sa *child = pexpect_child_sa(sf.st);

@@ -36,29 +36,32 @@
 
 void whack_deleteuser(const struct whack_message *m, struct show *s)
 {
+	struct logger *logger = show_logger(s);
+
 	if (m->name == NULL ) {
 		show_rc(RC_FATAL, s,
 			"received whack command to delete a connection by username, but did not receive the username - ignored");
 		return;
 	}
 
-	llog(LOG_STREAM/*not-whack*/, show_logger(s),
+	llog(LOG_STREAM/*not-whack*/, logger,
 	     "received whack to delete connection by user %s", m->name);
 
 #ifdef USE_IKEv1
 	struct state_filter sf = {
 		/* only support deleting ikev1 with XAUTH username */
 		.ike_version = IKEv1,
+		.kind = IKE_SA,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
 	unsigned nr = 0;
 	while (next_state(&sf)) {
 
-		if (!IS_ISAKMP_SA(sf.st)) {
+		if (!PEXPECT(logger, IS_ISAKMP_SA(sf.st))) {
 			continue;
 		}
 

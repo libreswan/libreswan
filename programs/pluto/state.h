@@ -962,7 +962,8 @@ struct state_filter {
 	 */
 	const enum ike_version ike_version;
 	const ike_spis_t *const ike_spis;	/* hashed */
-	const so_serial_t clonedfrom;
+	const so_serial_t clonedfrom;		/* when non-zero; hashed */
+	enum sa_kind kind;
 	const co_serial_t connection_serialno;
 
 	/*

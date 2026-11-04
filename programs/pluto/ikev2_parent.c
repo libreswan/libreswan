@@ -647,8 +647,8 @@ void save_first_inbound_ikev2_packet(const char *why UNUSED,
  *  - NULL: no simultaneous IKE SA
  */
 struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
-               struct ike_sa *ike,
-               const struct msg_digest *md)
+					   struct ike_sa *ike,
+					   const struct msg_digest *md)
 {
 	/* Check can be disabled in a connection config */
 	if (!c->config->reject_simultaneous_ike_auth) {
@@ -662,6 +662,7 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 
 	struct state_filter sf = {
 		.connection_serialno = c->serialno,
+		.kind = IKE_SA,
 		.search = {
 			.order = NEW2OLD,
 			.verbose.logger = ike->sa.logger,
@@ -672,7 +673,7 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 	struct ike_sa *simultaneous_ike = NULL;
 
 	while (next_state(&sf)) {
-		if (!IS_IKE_SA(sf.st)) {
+		if (!PEXPECT(ike->sa.logger, IS_IKE_SA(sf.st))) {
 			continue;
 		}
 

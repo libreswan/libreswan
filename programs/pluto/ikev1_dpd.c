@@ -139,6 +139,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	{
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
+			.kind = CHILD_SA,
 			.search = {
 				.order = NEW2OLD,
 				.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
@@ -147,7 +148,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 		};
 		while (next_state(&sf)) {
 			/* on first pass, ignore established ISAKMP SA's */
-			if (IS_PARENT_SA(sf.st)) {
+			if (PBAD(logger, IS_PARENT_SA(sf.st))) {
 				continue;
 			}
 			whack_attach(sf.st, logger);
@@ -164,10 +165,13 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 
 	/*
 	 * Finally zap any parents.
+	 *
+	 * No need for kind filter as only parents are left.
 	 */
 	{
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
+			/*.kind = KIND_IKE_SA,*/
 			.search = {
 				.order = NEW2OLD,
 				.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),

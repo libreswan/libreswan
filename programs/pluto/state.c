@@ -1541,6 +1541,7 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	struct ike_sa *best = NULL;
 
 	struct state_filter sf = {
+		.kind = IKE_SA,
 		.search = {
 			.order = NEW2OLD,
 			.verbose.logger = &global_logger,
@@ -1549,7 +1550,7 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 	};
 	while (next_state(&sf)) {
 		struct state *st = sf.st;
-		if (!IS_PARENT_SA(st)) {
+		if (!PEXPECT(c->logger, IS_PARENT_SA(st))) {
 			continue;
 		}
 		if (!connections_can_share_parent(c, st->st_connection)) {
@@ -1603,6 +1604,7 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 	struct ike_sa *best = NULL;
 
 	struct state_filter sf = {
+		.kind = IKE_SA,
 		.search = {
 			.order = NEW2OLD,
 			.verbose.logger = &global_logger,
@@ -1611,7 +1613,7 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 	};
 	while (next_state(&sf)) {
 		struct state *st = sf.st;
-		if (!IS_PARENT_SA(st)) {
+		if (!PEXPECT(c->logger, IS_PARENT_SA(st))) {
 			continue;
 		}
 		if (!connections_can_share_parent(c, st->st_connection)) {

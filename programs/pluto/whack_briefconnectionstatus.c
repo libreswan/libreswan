@@ -52,9 +52,10 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 
 	struct state_filter state_by_connection = {
 	    .connection_serialno = c->serialno,
+	    .kind = CHILD_SA,
 	    .search = {
 		    .order = OLD2NEW,
-		    .verbose.logger = &global_logger,
+		    .verbose.logger = c->logger,
 		    .where = HERE,
 	    },
 	};
@@ -62,7 +63,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 
 		struct state *st = state_by_connection.st;
 
-		if (IS_IKE_SA(st)) {
+		if (PBAD(c->logger, IS_IKE_SA(st))) {
 			continue;
 		}
 

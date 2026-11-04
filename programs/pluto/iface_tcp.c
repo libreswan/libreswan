@@ -407,6 +407,7 @@ struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 		 * doesn't re-trigger.
 		 */
 		struct state_filter sf = {
+			.kind = IKE_SA,
 			.search = {
 				.order = NEW2OLD,
 				.verbose.logger = &global_logger,
@@ -417,10 +418,10 @@ struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 		stop_any_iketcp_read_listener("error", *ifp, logger);
 		iface_endpoint_addref(*ifp);
 		while(next_state(&sf)) {
-			if (sf.st->st_iface_endpoint != *ifp) {
+			if (!PEXPECT(logger, IS_IKE_SA(sf.st))) {
 				continue;
 			}
-			if (!IS_IKE_SA(sf.st)) {
+			if (sf.st->st_iface_endpoint != *ifp) {
 				continue;
 			}
 			struct ike_sa *ike = pexpect_ike_sa(sf.st);
