@@ -1,5 +1,0 @@
-This tests the IKE2 liveness, with dpdaction=clear on east and road
-
-This should not be configured for static tunnels normally, because it
-causes leaking traffic. It is normally meant to be configured on VPN
-servers for roadwarrior connection (right=%any with rekey=no connections)
