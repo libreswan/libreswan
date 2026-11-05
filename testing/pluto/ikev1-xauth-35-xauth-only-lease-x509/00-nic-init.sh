@@ -13,4 +13,3 @@ iptables -I FORWARD 1 --proto 50 -j DROP
 iptables -t nat -L -n
 iptables -L -n
 echo done.
-: ==== end ====

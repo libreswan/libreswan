@@ -3,4 +3,3 @@ iptables -F
 iptables -X
 ../../guestbin/block-non-ipsec.sh
 echo done
-: ==== end ====

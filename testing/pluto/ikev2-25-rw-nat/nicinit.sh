@@ -13,4 +13,3 @@ iptables -I INPUT 1 --destination 192.0.2.0/24 -j DROP
 iptables -t nat -L -n
 iptables -L -n
 echo "initdone"
-: ==== end ====

@@ -5,4 +5,3 @@ iptables -t nat -I PREROUTING -p esp -d 192.1.3.254 -j DNAT --to-destination 192
 # Display the table, so we know it is correct.
 iptables -t nat -L
 echo "initdone"
-: ==== end ====
