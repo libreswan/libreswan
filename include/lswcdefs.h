@@ -170,13 +170,15 @@
 
 /*
  * Fill a string field, ensuring that it is padded and terminated with
- * NUL.
+ * NULs.  Return position of first NUL.
  *
  * If termination isn't required, strncpy would do.
  */
-#define fill_and_terminate(DEST, SRC) {			\
-		strncpy((DEST), (SRC), sizeof(DEST)-1);	\
-		(DEST)[sizeof(DEST)-1] = '\0';		\
-	}
+#define fill_and_terminate(DEST, SRC)					\
+	({								\
+		char *p_ = stpncpy((DEST), (SRC), sizeof(DEST) - 1);	\
+		(DEST)[sizeof(DEST)-1] = '\0';				\
+		p_;							\
+	})
 
 #endif
