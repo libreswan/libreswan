@@ -85,7 +85,7 @@
 #include "ikev2_delete.h"		/* for record_v2_delete() */
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 #include "ikev2_eap.h"
-#include "terminate.h"
+#include "ikev2_terminate.h"
 #include "ikev2_parent.h"
 #include "log_limiter.h"
 
@@ -1743,8 +1743,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
-		terminate_ike_family(&ike, REASON_DELETED,
-				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		terminate_ikev2_family(&ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		pexpect(ike == NULL);
 		return;
 
@@ -1758,8 +1758,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		v2_msgid_finish(ike, md, HERE);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
-		terminate_ike_family(&ike, REASON_DELETED,
-				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		terminate_ikev2_family(&ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
 		return;
@@ -1784,8 +1784,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* do the deed; record'n'send logs */
 		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
-		terminate_ike_family(&ike, REASON_DELETED,
-				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		terminate_ikev2_family(&ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
 		return;
@@ -1817,8 +1817,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		}
 
 		on_delete(&ike->sa, skip_send_delete);
-		terminate_ike_family(&ike, REASON_DELETED,
-				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		terminate_ikev2_family(&ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		pexpect(ike == NULL);
 		return;
 
@@ -1835,8 +1835,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		     transition->story,
 		     str_enum_long(&v2_notification_names, notification, &nb));
 	on_delete(&ike->sa, skip_send_delete);
-	terminate_ike_family(&ike, REASON_DELETED,
-			     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+	terminate_ikev2_family(&ike, REASON_DELETED,
+			       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 }
 
 static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void *arg)

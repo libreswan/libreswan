@@ -72,8 +72,12 @@
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 #include "ikev2_replace.h"
-#include "terminate.h"
 #include "ikev2_nat.h"
+
+#ifdef USE_IKEv1
+#include "ikev1_terminate.h"
+#endif
+#include "ikev2_terminate.h"
 
 static timeout_event_cb timer_event_cb;
 
@@ -484,8 +488,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 */
 		if (IS_IKE_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			terminate_ike_family(&ike, REASON_DELETED,
-					     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+			terminate_ikev2_family(&ike, REASON_DELETED,
+					       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
@@ -508,8 +512,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		     "initiator/responder/response processor timeout after %s seconds",
 		     str_deltatime(event_delay, &dtb));
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT,
-				     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		terminate_ikev2_family(&ike, REASON_EXCHANGE_TIMEOUT,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		st = NULL;
 		break;
 	}
@@ -518,12 +522,16 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v1_DPD:
 		event_v1_dpd(st);
 		break;
+#endif
 
+#ifdef USE_IKEv1
 	case EVENT_v1_DPD_TIMEOUT:
 		event_v1_dpd_timeout(st);
 		break;
+#endif
 
 #ifdef USE_PAM_AUTH
+#ifdef USE_IKEv1
 	case EVENT_v1_PAM_TIMEOUT:
 	{
 		ldbg(st->logger, "PAM thread timeout on state "PRI_SO"",
@@ -541,15 +549,17 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 	}
 #endif
+#endif
 
+#ifdef USE_IKEv1
 	case EVENT_v1_CRYPTO_TIMEOUT:
 		whack_attach(st, logger);
 		ldbg(st->logger, "event crypto_failed on state "PRI_SO", aborting",
 		     pri_so(st->st_serialno));
 		if (IS_PARENT_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			terminate_ike_family(&ike, REASON_CRYPTO_TIMEOUT,
-					     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+			terminate_ikev1_family(&ike, REASON_CRYPTO_TIMEOUT,
+					       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			pstat_sa_failed(&child->sa, REASON_CRYPTO_TIMEOUT);
@@ -557,14 +567,16 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		}
 		/* note: no md->st to clear */
 		break;
+#endif
 
-
+#ifdef USE_IKEv1
 	case EVENT_v1_NAT_KEEPALIVE:
 		whack_attach(st, logger);
 		event_v1_nat_keepalive(st);
 		whack_detach(st, logger);
 		break;
 #endif
+
 	case EVENT_v2_NAT_KEEPALIVE:
 		whack_attach(st, logger);
 		event_v2_nat_keepalive(pexpect_ike_sa(st));

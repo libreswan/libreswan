@@ -256,7 +256,7 @@ OBJS += routing.o
 OBJS += acquire.o
 OBJS += initiate.o
 OBJS += ddns.o
-OBJS += terminate.o
+
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
 OBJS += foodgroups.o
@@ -325,6 +325,12 @@ ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_packet.o
 endif
 OBJS += ikev2_packet.o
+
+OBJS += terminate.o
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_terminate.o
+endif
+OBJS += ikev2_terminate.o
 
 # Archives
 

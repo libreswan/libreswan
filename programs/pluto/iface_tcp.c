@@ -46,7 +46,7 @@
 #include "log.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
-#include "terminate.h"
+#include "ikev2_terminate.h"
 
 static struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 					       struct logger *logger);
@@ -424,8 +424,9 @@ struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 				continue;
 			}
 			struct ike_sa *ike = pexpect_ike_sa(sf.st);
-			terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT,
-					     VERBOSE(DEBUG_STREAM, logger, "iketcp"));
+			PASSERT(ike->sa.logger, ike->sa.st_ike_version == IKEv2);
+			terminate_ikev2_family(&ike, REASON_EXCHANGE_TIMEOUT,
+					       VERBOSE(DEBUG_STREAM, logger, "iketcp"));
 		}
 		iface_endpoint_delref(ifp); /* possibly last */
 

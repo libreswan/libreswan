@@ -44,6 +44,7 @@
 #include "pluto_stats.h"
 #include "demux.h"
 #include "send.h"
+#include "ikev1_terminate.h"
 
 static monotime_t last_v1N_PAYLOAD_MALFORMED = MONOTIME_EPOCH;
 

@@ -73,12 +73,17 @@
 #include "show.h"
 #include "ikev2_replace.h"
 #include "routing.h"
-#include "terminate.h"
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_states.h"
 #include "crypt_cipher.h"		/* for cipher_context_destroy() */
 #include "ddos.h"
 #include "ipsecconf/setup.h"
+
+#include "terminate.h"		/* for terminate_all_connection_states() */
+#ifdef USE_IKEv1
+#include "ikev1_terminate.h"
+#endif
+#include "ikev2_terminate.h"
 
 static void delete_state(struct state *st);
 
@@ -1819,8 +1824,18 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 	}
 #endif
 
-	terminate_ike_family(ike, REASON_DELETED,
-			     VERBOSE(DEBUG_STREAM, (*ike)->sa.logger, NULL));
+	switch ((*ike)->sa.st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		terminate_ikev1_family(ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, (*ike)->sa.logger, NULL));
+		break;
+#endif
+	case IKEv2:
+		terminate_ikev2_family(ike, REASON_DELETED,
+				       VERBOSE(DEBUG_STREAM, (*ike)->sa.logger, NULL));
+		break;
+	}
 }
 
 void show_globalstate_status(struct show *s)

@@ -35,7 +35,7 @@
 #include "ikev1_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #endif
 #include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
-#include "terminate.h"	/* for terminate_ike_family() */
+#include "ikev2_terminate.h"	/* for terminate_ikev2_family() */
 
 void whack_deletestate(const struct whack_message *wm, struct show *s)
 {
@@ -112,8 +112,8 @@ void whack_deletestate(const struct whack_message *wm, struct show *s)
 				llog(RC_LOG, ike->sa.logger,
 				     "deleting IKE SA because deleting larval Child SA "PRI_SO" was requested",
 				     pri_so(child->sa.st_serialno));
-				terminate_ike_family(&ike, REASON_DELETED,
-						     VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+				terminate_ikev2_family(&ike, REASON_DELETED,
+						       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
 			}
 			break;
 		}
