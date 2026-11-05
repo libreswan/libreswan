@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"alpha" $1
+"beta" $2
+"delta/1x1" $4
+"delta/1x2" $5
+"gamma" $3
+west #
+ ipsec add --autoall --config /testing/pluto/addconn-58-autoall-reconcile/west-reduced.conf
+"alpha": unchanged
+"beta": swept
+"gamma": swept
+"delta/1x1": swept
+"delta/1x2": swept
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"alpha" $1
+west #
