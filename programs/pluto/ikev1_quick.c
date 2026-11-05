@@ -84,7 +84,7 @@
 #include "unpack.h"
 #include "orient.h"
 #include "instantiate.h"
-#include "terminate.h"
+#include "ikev1_terminate.h"
 #include "addresspool.h"
 #include "ipsec_interface.h"
 #include "verbose.h"
@@ -1498,7 +1498,7 @@ static bool echo_id(struct pbs_out *outs,
  * The Initiator uses install_ipsec_sa to install both at once.
  */
 
-static void terminate_conflicts(struct child_sa *child)
+static void terminate_ikev1_conflicts(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -1548,13 +1548,13 @@ static void terminate_conflicts(struct child_sa *child)
 				 * to the permanent connection C.
 				 */
 				connection_addref(co, child->sa.logger);
-				terminate_all_connection_states(co, HERE);
+				terminate_all_ikev1_connection_states(co, HERE);
 				connection_delref(&co, child->sa.logger);
 			} else {
 				/*
 				 * NOTE: C not CO; why?
 				 */
-				terminate_all_connection_states(c, HERE);
+				terminate_all_ikev1_connection_states(c, HERE);
 			}
 		}
 	}
@@ -1662,7 +1662,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	 * failure won't look like success.
 	 */
 
-	terminate_conflicts(child);
+	terminate_ikev1_conflicts(child);
 
 	if (!connection_establish_inbound(child, HERE)) {
 		return STF_FAIL_v1N; /* ??? we may be partly committed */
