@@ -168,7 +168,7 @@
 #include "rekeyfuzz.h"
 #include "updown.h"
 #include "ikev1_delete.h"
-#include "terminate.h"
+#include "ikev1_terminate.h"
 #include "state_db.h"
 #include "ikev1_message.h"
 #include "ikev1_notification.h"

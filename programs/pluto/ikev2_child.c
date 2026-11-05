@@ -70,7 +70,7 @@
 #include "nat_traversal.h"
 #include "ikev2_ke.h"
 #include "ikev2_auth.h"
-#include "terminate.h"
+#include "ikev2_terminate.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -1067,8 +1067,8 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		return v2N_AUTHENTICATION_FAILED;
 	} else if (ike_to_reject != NULL) {
 		/* Terminate the other IKE SA, continue with current */
-		terminate_ike_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA,
-				     VERBOSE(DEBUG_STREAM, ike_to_reject->sa.logger, NULL));
+		terminate_ikev2_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA,
+				       VERBOSE(DEBUG_STREAM, ike_to_reject->sa.logger, NULL));
 	}
 
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",

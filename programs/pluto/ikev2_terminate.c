@@ -29,6 +29,7 @@
 #include "ikev2_delete.h"
 #include "terminate.h"		/* for terminate_ike_family() */
 #include "visit_connection.h"
+#include "pluto_stats.h"
 
 extern connection_state_visitor terminate_ikev2_connection_states;
 
@@ -76,7 +77,7 @@ void terminate_ikev2_connection_states(struct connection *c,
 		whack_attach(&(*ike)->sa, c->logger);
 		whack_attach(&(*child)->sa, c->logger);
 		record_n_send_n_log_v2_delete(*ike, HERE);
-		terminate_ike_family(ike, REASON_DELETED, verbose);
+		terminate_ikev2_family(ike, REASON_DELETED, verbose);
 		return;
 
 	case VISIT_CONNECTION_CHILD_OF_NONE:
@@ -100,7 +101,7 @@ void terminate_ikev2_connection_states(struct connection *c,
 		 * but when would this be the case?
 		 */
 		whack_attach(&(*ike)->sa, c->logger);
-		terminate_ike_family(ike, REASON_DELETED, verbose);
+		terminate_ikev2_family(ike, REASON_DELETED, verbose);
 		return;
 
 	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
@@ -149,4 +150,138 @@ void terminate_all_ikev2_connection_states(struct connection *c, where_t where)
 	visit_connection_states(c, terminate_ikev2_connection_states, &context, where);
 	/* caller must hold a reference */
 	pmemory(c);
+}
+
+static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
+			       enum terminate_reason reason,
+			       struct verbose verbose)
+{
+
+	/*
+	 * With IKEv2, deleting an IKE SA deletes all children; the
+	 * only question is how.
+	 *
+	 * If the child owns the connection's routing then it needs to
+	 * be dispatched; else it can simply be deleted.
+	 */
+	whack_attach(&child->sa, (*ike)->sa.logger);
+
+	/* redundant */
+	on_delete(&child->sa, skip_send_delete);
+	on_delete(&child->sa, skip_log_message);
+	struct connection *cc = child->sa.st_connection;
+
+	if (cc->established_child_sa == child->sa.st_serialno) {
+		PEXPECT((*ike)->sa.logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
+		/* will delete child and its logger */
+		vdbg("teardown established Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		connection_teardown_child(&child, reason, verbose.where);
+		return;
+	}
+
+	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+		/*
+		 * Presumably the Child SA lost ownership; or never
+		 * gained it.
+		 */
+		llog_sa(RC_LOG, child, "deleting lingering %s",
+			child->sa.st_connection->config->ike_info->parent_sa_name);
+		delete_child_sa(&child);
+		return;
+	}
+
+	if (cc->negotiating_child_sa == child->sa.st_serialno) {
+		/* will delete child and its logger */
+		vdbg("teardown larval Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		connection_teardown_child(&child, reason, verbose.where);
+		return;
+	}
+
+	if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
+		/*
+		 * The IKE SA is established; log any larval children
+		 * (presumably from a CREATE_CHILD_SA exchange).
+		 */
+		llog_sa(RC_LOG, child, "deleting larval %s",
+			child->sa.st_connection->config->ike_info->child_sa_name);
+		delete_child_sa(&child);
+		return;
+	}
+
+	vdbg("delete Child SA "PRI_SO,
+	     pri_so(child->sa.st_serialno));
+	delete_child_sa(&child);
+}
+
+void terminate_ikev2_family(struct ike_sa **ike,
+			    enum terminate_reason reason,
+			    struct verbose verbose)
+{
+	vdbg("%s()", __func__);
+	verbose.level++;
+	pstat_sa_failed(&(*ike)->sa, reason);
+
+	vdbg("IKE SA "PRI_SO" is no longer viable",
+	     pri_so((*ike)->sa.st_serialno));
+	(*ike)->sa.st_viable_parent = false;
+
+	/*
+	 * When the IKE SA's connection has a direct Child SA (i.e.,
+	 * shares connection) that owns the route then teardown that
+	 * Child SA first.
+	 *
+	 * This way the IKE SA's connection can jump to the front of
+	 * the revival queue (without this an IKE SA with multiple
+	 * children ends up with its children squabbling over which SA
+	 * should be revived first).
+	 *
+	 * When this isn't the case, the for-each-child will instead
+	 * do the terminating.
+	 */
+
+	struct child_sa *connection_child = child_sa_by_serialno((*ike)->sa.st_connection->negotiating_child_sa);
+	if (connection_child == NULL) {
+		vdbg("IKE SA "PRI_SO"'s connection has no Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
+	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
+		vdbg("IKE SA "PRI_SO"' is not the parent of the connection's Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so(connection_child->sa.st_serialno));
+		connection_child = NULL;
+	} else {
+		vdbg("dispatching delete to IKE SA "PRI_SO"'s Child SA "PRI_SO,
+		     pri_so((*ike)->sa.st_serialno),
+		     pri_so(connection_child->sa.st_serialno));
+		whack_attach(&connection_child->sa, (*ike)->sa.logger);
+		/* will delete child and its logger */
+		connection_teardown_child(&connection_child, reason,
+					  verbose.where); /* always dispatches here*/
+		PEXPECT((*ike)->sa.logger, connection_child == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
+	}
+
+	/*
+	 * We are a parent: prune any remaining children and then
+	 * prepare to delete ourself.
+	 */
+
+	struct state_filter cf = {
+		.clonedfrom = (*ike)->sa.st_serialno,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = (*ike)->sa.logger,
+			.where = HERE,
+		},
+	};
+	while(next_state(&cf)) {
+		struct child_sa *child = pexpect_child_sa(cf.st);
+		terminate_v2_child(ike, child, reason, verbose);
+	}
+
+	/* delete self */
+	connection_teardown_ike(ike, reason, verbose.where);
 }

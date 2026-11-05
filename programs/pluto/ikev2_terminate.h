@@ -19,7 +19,15 @@
 #include "where.h"
 
 struct connection;
+struct ike_sa;
+struct verbose;
+enum terminate_reason;
 
 void terminate_all_ikev2_connection_states(struct connection *c, where_t where);
+
+void terminate_ikev2_family(struct ike_sa **ike, enum terminate_reason reason,
+			    struct verbose verbose);
+
+
 
 #endif
