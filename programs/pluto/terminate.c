@@ -53,232 +53,36 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#ifdef USE_IKEv1
-#include "ikev1_delete.h"
-#include "ikev1_xauth.h"
-#endif
 #include "nat_traversal.h"
+
 #include "terminate.h"
+#ifdef USE_IKEv1
+#include "ikev1_terminate.h"
+#endif
+#include "ikev2_terminate.h"
+
 #include "visit_connection.h"		/* for whack_connection() */
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
 #include "revival.h"
 #include "connection_event.h"
 
-#ifdef USE_IKEv1
-static void terminate_v1_state(struct connection *c,
-			       struct ike_sa **ike,
-			       struct child_sa **child,
-			       enum connection_visit_kind visit_kind)
+void terminate_all_connection_states(struct connection *c, where_t where)
 {
-	switch (visit_kind) {
-
-	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
-	case NUDGE_CONNECTION_CROSSED_IKE_SA:
-		/*
-		 * Prepare the IKE SA for deletion.
-		 *
-		 * IKEv1 announces the death of the ISAKMP SA after
-		 * all the children have gone (reverse of IKEv2).
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		(*ike)->sa.st_viable_parent = false;
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA: /* ignore IKE */
-	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
-	case VISIT_CONNECTION_CHILD_OF_NONE:
-	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
-	{
-		/*
-		 * Can't always assume IKE is suitable for sending
-		 * deletes: for CHILD it probably is; and for CUCKOO
-		 * it is NULL.
-		 *
-		 * Hence just always re-compute it.
-		 */
-		whack_attach(&(*child)->sa, c->logger);
-		struct ike_sa *isakmp = /* could be NULL */
-			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
-		/* IKEv1 has cuckoos */
-		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	}
-
-	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_LURKING_IKE_SA:
-		whack_attach(&(*ike)->sa, c->logger);
-		delete_ike_sa(ike);
-		return;
-
-	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		/*
-		 * When IKEv1 deletes an IKE SA any siblings are
-		 * orphaned.
-		 */
-		return;
-	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
-		/*
-		 * When IKEv1 deletes an IKE SA it always sends a
-		 * delete notify; hence handle this in
-		 * FINISH_CONNECTION_PRINCIPAL_IKE_SA.
-		 */
-		return;
-
-	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
-	{
-		struct ike_sa *isakmp =
-			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
-		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
-		connection_teardown_ike(ike, REASON_DELETED, HERE);
-		return;
-	}
-
-	}
-	bad_case(visit_kind);
-}
-#endif
-
-static void terminate_v2_states(struct connection *c,
-				struct ike_sa **ike,
-				struct child_sa **child,
-				enum connection_visit_kind visit_kind,
-				struct verbose verbose)
-{
-	switch (visit_kind) {
-	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
-	case NUDGE_CONNECTION_CROSSED_IKE_SA:
-		/*
-		 * Prepare the IKE SA for deletion.
-		 *
-		 * IKEv2 announces the death first.
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		(*ike)->sa.st_viable_parent = false;
-		record_n_send_n_log_v2_delete(*ike, HERE);
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
-	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
-		PEXPECT(c->logger, ike != NULL);
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
-		/*
-		 * The IKE SA's state will become scrambled when the
-		 * Cuckoo is deleted; hence delete the IKE SA.
-		 */
-		PEXPECT(c->logger, ike != NULL);
-		whack_attach(&(*ike)->sa, c->logger);
-		whack_attach(&(*child)->sa, c->logger);
-		record_n_send_n_log_v2_delete(*ike, HERE);
-		terminate_ike_family(ike, REASON_DELETED, verbose);
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_NONE:
-		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-
-	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		delete_child_sa(child);
-		return;
-	case VISIT_CONNECTION_LURKING_IKE_SA:
-		/*
-		 * For instance, a larval IKE SA, either stuck waiting
-		 * for IKE_SA_INIT response crossed by the peer
-		 * establishing the IKE SA.
-		 *
-		 * This will strip the connection of the IKE SA.  If
-		 * the IKE SA has children then they too are deleted,
-		 * but when would this be the case?
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		terminate_ike_family(ike, REASON_DELETED, verbose);
-		return;
-
-	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
-	{
-		/*
-		 * Since connection_teardown_child() was not
-		 * dispatched the IKE SA gets to to the teardown.
-		 *
-		 * At this point the IKE SA should have no children.
-		 */
-		struct state_filter child = {
-			.clonedfrom = (*ike)->sa.st_serialno,
-			.search = {
-				.order = NEW2OLD,
-				.verbose.logger = c->logger,
-				.where = HERE,
-			},
-		};
-		if (next_state(&child)) {
-			llog_pexpect(c->logger, child.search.where,
-				     "IKE SA "PRI_SO" has unexpected Child SA "PRI_SO,
-				     pri_so((*ike)->sa.st_serialno),
-				     pri_so(child.st->st_serialno));
-			/* get out of Dodge! */
-			return;
-		}
-		connection_teardown_ike(ike, REASON_DELETED, HERE);
-		return;
-	}
-
-	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
-		delete_ike_sa(ike);
-		return;
-	}
-
-	bad_case(visit_kind);
-}
-
-struct connection_state_visitor_context {
-	unsigned count;
-};
-
-static void terminate_connection_states(struct connection *c,
-					struct ike_sa **ike,
-					struct child_sa **child,
-					enum connection_visit_kind visit_kind,
-					struct connection_state_visitor_context *context,
-					struct verbose verbose)
-{
-	if (context->count == 0) {
-		vlog("terminating SAs using this connection");
-	}
-	context->count++;
 	switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
-		terminate_v1_state(c, ike, child, visit_kind);
+		terminate_all_ikev1_connection_states(c, where);
+		pmemory(c);
 		return;
 #endif
 	case IKEv2:
-		/* may need to delete IKE tree */
-		terminate_v2_states(c, ike, child, visit_kind, verbose);
+		terminate_all_ikev2_connection_states(c, where);
+		pmemory(c);
 		return;
 	}
-	bad_case(c->config->ike_version);
-}
-
-void terminate_all_connection_states(struct connection *c, where_t where)
-{
-	struct connection_state_visitor_context context = {0};
-	visit_connection_states(c, terminate_connection_states, &context, where);
 	/* caller must hold a reference */
-	pmemory(c);
+	bad_case(c->config->ike_version);
 }
 
 /*
