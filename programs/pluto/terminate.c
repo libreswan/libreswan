@@ -19,53 +19,17 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include "sysdep.h"
-#include "constants.h"
-#include "lswalloc.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-
-#include "defs.h"
-#include "connections.h"        /* needs id.h */
-#include "pending.h"
-#include "foodgroups.h"
-#include "demux.h"      /* needs packet.h */
-#include "state.h"
-#include "timer.h"
-#include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "server.h"
-#include "kernel.h"     /* needs connections.h */
-#include "log.h"
-#include "keys.h"
-#include "whack.h"
-#include "ike_alg.h"
-#include "kernel_alg.h"
-#include "plutoalg.h"
-#include "nat_traversal.h"
-
 #include "terminate.h"
 #ifdef USE_IKEv1
 #include "ikev1_terminate.h"
 #endif
 #include "ikev2_terminate.h"
 
-#include "visit_connection.h"		/* for whack_connection() */
-#include "ikev2_delete.h"
-#include "pluto_stats.h"
-#include "revival.h"
-#include "connection_event.h"
+#include "connections.h"
+#include "log.h"
+#include "revival.h"		/* for flush_unrouted_revival() */
+#include "pending.h"		/* for remove_connection_from_pending() */
+#include "connection_event.h"	/* for flush_connection_event() */
 
 void terminate_all_connection_states(struct connection *c, where_t where)
 {
