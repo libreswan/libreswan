@@ -1989,13 +1989,13 @@ int main(int argc, char **argv)
 			end->we_xauthusername = optarg;
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
-			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;
+			usernamelen = fill_and_terminate(xauthusername, optarg) - xauthusername + 1;
 			continue;
 
 		case OPT_XAUTHPASS:	/* --xauthpass */
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
-			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
+			xauthpasslen = fill_and_terminate(xauthpass, optarg) - xauthpass + 1;
 			continue;
 
 		case END_CAT:		/* --cat[={yes,no}] */

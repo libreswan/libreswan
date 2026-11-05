@@ -651,9 +651,8 @@ struct ike_sa *new_v1_istate(struct connection *c,
 
 	if (c->local->host.config->xauth.client) {
 		if (c->local->host.config->xauth.username != NULL) {
-			jam_str(parent->sa.st_xauth_username,
-				sizeof(parent->sa.st_xauth_username),
-				c->local->host.config->xauth.username);
+			fill_and_terminate(parent->sa.st_xauth_username,
+					   c->local->host.config->xauth.username);
 		}
 	}
 
@@ -1307,7 +1306,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
-	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
+	memcpy(child->sa.st_xauth_username, ike->sa.st_xauth_username, sizeof(ike->sa.st_xauth_username));
 #endif
 	return child;
 }
