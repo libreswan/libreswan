@@ -2,12 +2,12 @@
 
 resolvectl dns eth0
 resolvectl domain eth0
-ipsec up eastnet-any
+ipsec up eastnet-any # sanitize-retransmits
 resolvectl dns eth0
 resolvectl domain eth0
 
 ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 
 # restore to blank
 
@@ -19,7 +19,7 @@ resolvectl domain eth0
 
 resolvectl dns eth0 8.8.8.8
 resolvectl domain eth0 google.com
-ipsec up eastnet-any
+ipsec up eastnet-any # sanitize-retransmits
 resolvectl dns eth0
 resolvectl domain eth0
 

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add eastnet-any
+ipsec add eastnet-any
 echo initdone

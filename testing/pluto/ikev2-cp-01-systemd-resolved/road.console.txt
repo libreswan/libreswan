@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add eastnet-any
+ ipsec add eastnet-any
 "eastnet-any": added oriented IKEv2 connection
 road #
  # confirm we have stock resolv.conf
@@ -28,7 +28,7 @@ road #
  resolvectl domain eth0
 Link 2 (eth0):
 road #
- ipsec up eastnet-any
+ ipsec up eastnet-any # sanitize-retransmits
 "eastnet-any"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-any"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -52,7 +52,7 @@ road #
  ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "eastnet-any"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=100.64.13.2/32
 road #
  # restore to blank
@@ -77,7 +77,7 @@ road #
 road #
  resolvectl domain eth0 google.com
 road #
- ipsec up eastnet-any
+ ipsec up eastnet-any # sanitize-retransmits
 "eastnet-any"[2] 192.1.2.23 #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "eastnet-any"[2] 192.1.2.23 #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "eastnet-any"[2] 192.1.2.23 #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

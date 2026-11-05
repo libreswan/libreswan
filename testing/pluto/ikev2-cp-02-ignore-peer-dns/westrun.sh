@@ -1,4 +1,4 @@
-ipsec up west-eastnet
+ipsec up west-eastnet # sanitize-retransmits
 ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
 ipsec trafficstatus
 # confirm resolv.conf was NOT updated (ignore-peer-dns=yes)
