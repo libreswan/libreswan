@@ -276,7 +276,7 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 
 	/* copy socket location */
 
-	fill_and_terminate(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path));
+	fill_and_terminate(ctl_addr.sun_path, ctlsocket);
 
 	/*  Pack strings */
 

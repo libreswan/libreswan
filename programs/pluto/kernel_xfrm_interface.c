@@ -411,7 +411,7 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *ipsec_if_name,
 	vdbg("%s() %s setting .result = true; .xfrm_link=%d; .xfrm_if_id=%d",
 	     __func__, ipsec_if_name,
 	     ifi_rsp->result.xfrm_link, ifi_rsp->result.xfrm_if_id);
-	jam_str(ifi_rsp->match->found, sizeof(ifi_rsp->match->found), ipsec_if_name);
+	fill_and_terminate(ifi_rsp->match->found, ipsec_if_name);
 	ifi_rsp->result.xfrm_link = xfrm_link;
 	ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 	ifi_rsp->result.ok = true;

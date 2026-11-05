@@ -1426,7 +1426,7 @@ static bool siocethtool(const char *ifname, void *data, const char *action,
 			const struct logger *logger)
 {
 	struct ifreq ifr = { .ifr_data = data };
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	fill_and_terminate(ifr.ifr_name, ifname);
 	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr) != 0) {
 		/* EOPNOTSUPP is expected if kernel doesn't support this */
 		if (errno == EOPNOTSUPP) {
@@ -1739,7 +1739,7 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 			.alg_key_len = sa->integ->integ_keymat_size * BITS_IN_BYTE,
 			.alg_trunc_len = sa->integ->integ_output_size * BITS_IN_BYTE,
 		};
-		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, name);
 
 		/*
 		 * Now copy all of XFRM_ALGO_AEAD structure up to, but
@@ -1777,7 +1777,7 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 		}
 
 		struct xfrm_algo algo;
-		fill_and_terminate(algo.alg_name, calg_name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, calg_name);
 		algo.alg_key_len = 0;
 
 		/* append */
@@ -1810,7 +1810,7 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 				.alg_key_len = sa->encrypt_key.len * BITS_IN_BYTE,
 				.alg_icv_len = sa->encrypt->aead_tag_size * BITS_IN_BYTE,
 			};
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name);
 
 			/*
 			 * Now copy all of XFRM_ALGO_AEAD structure up
@@ -1838,7 +1838,7 @@ static bool netlink_add_sa(const struct kernel_state *sa,
 			struct xfrm_algo algo = {
 				.alg_key_len = sa->encrypt_key.len * BITS_IN_BYTE,
 			};
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name);
 
 			/*
 			 * Now copy all of XFRM_ALGO structure up to,

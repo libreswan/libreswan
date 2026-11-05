@@ -168,4 +168,17 @@
 		(len_blob_ == NULL ? 0 : len_blob_->len);	\
 	})
 
+/*
+ * Fill a string field, ensuring that it is padded and terminated with
+ * NULs.  Return position of first NUL.
+ *
+ * If termination isn't required, strncpy would do.
+ */
+#define fill_and_terminate(DEST, SRC)					\
+	({								\
+		char *p_ = stpncpy((DEST), (SRC), sizeof(DEST) - 1);	\
+		(DEST)[sizeof(DEST)-1] = '\0';				\
+		p_;							\
+	})
+
 #endif

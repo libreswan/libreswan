@@ -1329,7 +1329,7 @@ static stf_status ikev1_xauth_callback(struct ike_sa *ike,
 		if (ike->sa.st_v1_quirks.xauth_ack_msgid)
 			ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(ike->sa.st_xauth_username, sizeof(ike->sa.st_xauth_username), name);
+		fill_and_terminate(ike->sa.st_xauth_username, name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -2450,9 +2450,8 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						if (cptr != NULL)
 							*cptr = '\0';
 
-						jam_str(ike->sa.st_xauth_username,
-							sizeof(ike->sa.st_xauth_username),
-							xauth_username);
+						fill_and_terminate(ike->sa.st_xauth_username,
+								   xauth_username);
 					}
 
 					if (!pbs_out_raw(&attrval,
