@@ -1,5 +1,5 @@
-ipsec up west-cuckold
-ipsec up west-cuckoo
+ipsec up west-cuckold # sanitize-retransmits
+ipsec up west-cuckoo  # sanitize-retransmits
 
 ipsec whack --rekey-ike --name west-cuckold --asynchronous
 
