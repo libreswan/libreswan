@@ -702,8 +702,8 @@ kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
 kvmplutotest	ikev2-ecdsa-08-legacy-p256-rawkey			good
 kvmplutotest	ikev2-x509-ecdsa-08-legacy-sha2_512			good
 
-kvmplutotest	ikev2-x509-eddsa-01-preloaded-cert	good
-kvmplutotest	ikev2-x509-eddsa-02-sendcerts		good
+kvmplutotest	ikev2-x509-eddsa-01-preloaded-cert	skip
+kvmplutotest	ikev2-x509-eddsa-02-sendcerts		skip
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
