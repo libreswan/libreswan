@@ -31,123 +31,111 @@
 #include "visit_connection.h"
 #include "pluto_stats.h"
 
-extern connection_state_visitor terminate_ikev2_connection_states;
-
-struct connection_state_visitor_context {
-	unsigned count;
-};
-
-void terminate_ikev2_connection_states(struct connection *c,
-					      struct ike_sa **ike,
-					      struct child_sa **child,
-					      enum connection_visit_kind visit_kind,
-					      struct connection_state_visitor_context *context,
-					      struct verbose verbose)
+static void terminate_ikev2_ike_sa(struct ike_sa **ike,
+				   struct verbose verbose)
 {
-	if (context->count == 0) {
-		vlog("terminating SAs using this connection");
-	}
-	context->count++;
+	whack_attach(&(*ike)->sa, verbose.logger);
+	(*ike)->sa.st_viable_parent = false;
 
-	switch (visit_kind) {
-	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
-	case NUDGE_CONNECTION_CROSSED_IKE_SA:
-		/*
-		 * Prepare the IKE SA for deletion.
-		 *
-		 * IKEv2 announces the death first.
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		(*ike)->sa.st_viable_parent = false;
-		record_n_send_n_log_v2_delete(*ike, HERE);
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
-	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
-		PEXPECT(c->logger, ike != NULL);
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
-		/*
-		 * The IKE SA's state will become scrambled when the
-		 * Cuckoo is deleted; hence delete the IKE SA.
-		 */
-		PEXPECT(c->logger, ike != NULL);
-		whack_attach(&(*ike)->sa, c->logger);
-		whack_attach(&(*child)->sa, c->logger);
-		record_n_send_n_log_v2_delete(*ike, HERE);
-		terminate_ikev2_family(ike, REASON_DELETED, verbose);
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_NONE:
-		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-
-	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		delete_child_sa(child);
-		return;
-	case VISIT_CONNECTION_LURKING_IKE_SA:
-		/*
-		 * For instance, a larval IKE SA, either stuck waiting
-		 * for IKE_SA_INIT response crossed by the peer
-		 * establishing the IKE SA.
-		 *
-		 * This will strip the connection of the IKE SA.  If
-		 * the IKE SA has children then they too are deleted,
-		 * but when would this be the case?
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		terminate_ikev2_family(ike, REASON_DELETED, verbose);
-		return;
-
-	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
-	{
-		/*
-		 * Since connection_teardown_child() was not
-		 * dispatched the IKE SA gets to to the teardown.
-		 *
-		 * At this point the IKE SA should have no children.
-		 */
-		struct state_filter child = {
-			.clonedfrom = (*ike)->sa.st_serialno,
-			.search = {
-				.order = NEW2OLD,
-				.verbose.logger = c->logger,
-				.where = HERE,
-			},
-		};
-		if (next_state(&child)) {
-			llog_pexpect(c->logger, child.search.where,
-				     "IKE SA "PRI_SO" has unexpected Child SA "PRI_SO,
-				     pri_so((*ike)->sa.st_serialno),
-				     pri_so(child.st->st_serialno));
-			/* get out of Dodge! */
-			return;
-		}
-		connection_teardown_ike(ike, REASON_DELETED, HERE);
-		return;
+	if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
+		record_n_send_n_log_v2_delete((*ike), HERE);
 	}
 
-	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
-		delete_ike_sa(ike);
-		return;
-	}
-
-	bad_case(visit_kind);
+	terminate_ikev2_family(ike, REASON_DELETED, verbose);
 }
 
 void terminate_all_ikev2_connection_states(struct connection *c, where_t where)
 {
-	struct connection_state_visitor_context context = {0};
-	visit_connection_states(c, terminate_ikev2_connection_states, &context, where);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+	verbose.where = where;
+	vdbg("terminating all states");
+	unsigned level = ++verbose.level;
+
+	/*
+	 * Pass 1, terminate the connection's IKE SAs
+	 *
+	 * Terminating the IKE SA also terminates any of its children,
+	 * hence both are removed from the database.
+	 *
+	 * Per github/3133, can't assume the order of the connection's
+	 * IKE SAs and Child SAs.  After the initial exchange, the
+	 * Child SA is newer than the IKE SA, but after a rekey of the
+	 * IKE SA that gets reversed.  Hence this code picks away at
+	 * the IKE SAs using fresh queries.
+	 */
+
+	verbose.level = level;
+	vdbg("pass 1: terminating IKE SAs");
+	verbose.level++;
+	bool ike_logged = false;
+	while (true) {
+		struct state_filter parent = {
+			.connection_serialno = c->serialno,
+			.kind = IKE_SA,
+			.search = {
+				.order = NEW2OLD,
+				.verbose = verbose,
+				.where = HERE,
+			},
+		};
+		if (!next_state(&parent)) {
+			break;
+		}
+
+		if (!ike_logged) {
+			vlog("terminating %ss using this connection",
+			     c->config->ike_info->parent_sa_name);
+			ike_logged = true;
+		}
+
+		struct ike_sa *ike = pexpect_ike_sa(parent.st);
+		terminate_ikev2_ike_sa(&ike, verbose);
+		vassert(ike == NULL);
+	}
+
+	/*
+	 * Pass 2, terminate cuckolds
+	 *
+	 * The above terminates Child SAs that share their connection
+	 * with the IKE SA, which leaves Child SAs (the cuckoos) that
+	 * have an IKE SA with a different connection (the cuckold).
+	 *
+	 * With IKEv2, the only way to delete just the Child SA is to
+	 * have the IKE SA to perform a full delete exchange.  Hence,
+	 * instead, the IKE SA is blown away.
+	 */
+
+	verbose.level = level;
+	vdbg("pass 2: terminating cuckolds");
+	verbose.level++;
+	bool child_logged = false;
+	while (true) {
+		struct state_filter child = {
+			.connection_serialno = c->serialno,
+			.kind = CHILD_SA,
+			.search = {
+				.order = NEW2OLD,
+				.verbose = verbose,
+				.where = HERE,
+			},
+		};
+		if (!next_state(&child)) {
+			break;
+		}
+
+		if (!child_logged) {
+			vlog("terminating %ss of %ss using this connection",
+			     c->config->ike_info->parent_sa_name,
+			     c->config->ike_info->child_sa_name);
+			child_logged = true;
+		}
+
+		whack_attach(child.st, c->logger);
+		struct ike_sa *cuckold = ike_sa(child.st, HERE);
+		terminate_ikev2_ike_sa(&cuckold, verbose);
+		vassert(cuckold == NULL);
+	}
+
 	/* caller must hold a reference */
 	pmemory(c);
 }
@@ -186,7 +174,7 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 		 * gained it.
 		 */
 		llog_sa(RC_LOG, child, "deleting lingering %s",
-			child->sa.st_connection->config->ike_info->parent_sa_name);
+			child->sa.st_connection->config->ike_info->child_sa_name);
 		delete_child_sa(&child);
 		return;
 	}
