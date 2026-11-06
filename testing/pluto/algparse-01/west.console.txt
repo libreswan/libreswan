@@ -355,11 +355,10 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
-algparse --ikev1 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
-ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
-	3DES_CBC-HMAC_SHA1_96
-	3DES_CBC-HMAC_SHA2_256_128
+algparse --ikev1 'esp=aes_gcm;dh19,aes_gcm;dh20' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH20' as PFS policy is disabled
+	AES_GCM_16
 algparse --ikev1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse --ikev1 'esp=ke=modp8192' (expect ERROR)
@@ -940,8 +939,8 @@ algparse --ikev1 --pfs 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCE
 algparse --ikev1 --pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
-algparse --ikev1 --pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv1 ESP Key Exchange algorithm (MODP8192, MODP2048) is not allowed in quick mode
+algparse --ikev1 --pfs 'esp=aes_gcm;dh19,aes_gcm;dh20' (expect ERROR)
+	ERROR: more than one IKEv1 ESP Key Exchange algorithm (DH19, DH20) is not allowed in quick mode
 algparse --ikev1 --pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse --ikev1 --pfs 'esp=ke=modp8192' (expect ERROR)
@@ -1522,11 +1521,10 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
-algparse --ikev2 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
-ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
-	3DES_CBC-HMAC_SHA1_96
-	3DES_CBC-HMAC_SHA2_256_128
+algparse --ikev2 'esp=aes_gcm;dh19,aes_gcm;dh20' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH20' as PFS policy is disabled
+	AES_GCM_16
 algparse --ikev2 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse --ikev2 'esp=ke=modp8192' (expect ERROR)
@@ -2072,8 +2070,9 @@ algparse --ikev2 --pfs 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCE
 algparse --ikev2 --pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
-algparse --ikev2 --pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
+algparse --ikev2 --pfs 'esp=aes_gcm;dh19,aes_gcm;dh20' (expect SUCCESS)
+	AES_GCM_16-DH19
+	AES_GCM_16-DH20
 algparse --ikev2 --pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse --ikev2 --pfs 'esp=ke=modp8192' (expect ERROR)

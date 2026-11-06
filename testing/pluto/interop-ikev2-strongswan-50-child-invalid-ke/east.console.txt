@@ -1,0 +1,15 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ../../guestbin/strongswan-start.sh
+loaded ike secret 'ike-west-east'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'west-east'
+successfully loaded 1 connections, 0 unloaded
+east #
+ echo initdone
+initdone
+east #

@@ -1,0 +1,59 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ ../../guestbin/block-non-ipsec.sh
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-initial
+"west-initial": added oriented IKEv2 connection
+west #
+ ipsec add west-additional
+"west-additional": added oriented IKEv2 connection
+west #
+ echo initdone
+initdone
+west #
+ ipsec up west-initial
+"west-initial" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-initial" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-initial" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=MODP2048}, initiating IKE_AUTH
+"west-initial" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-initial" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"west-initial" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-initial" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128 DPD=passive}
+west #
+ ipsec up west-additional
+"west-additional" #3: initiating Child SA using IKE SA #1
+"west-additional" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.20.0/24]
+"west-additional" #3: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD response suggesting ECP_384 instead of DH19
+"west-additional" #3: retrying CREATE_CHILD_SA with suggested DH20
+"west-additional" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.20.0/24]
+"west-additional" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.20.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH20 DPD=passive}
+west #
+ ipsec whack --rekey-child --name west-initial
+"west-initial" #4: initiating rekey to replace Child SA #2 using IKE SA #1
+"west-initial" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-initial" #4: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD response suggesting ECP_384 instead of DH19
+"west-initial" #4: retrying CREATE_CHILD_SA with suggested DH20
+"west-initial" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"west-initial" #4: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH20 DPD=passive}
+"west-initial" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"west-initial" #2: ESP traffic information: in=0B out=0B
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.20.254
+up
+west #
+ ipsec whack --trafficstatus
+#3: "west-additional", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#4: "west-initial", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #

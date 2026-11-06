@@ -436,6 +436,9 @@ kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 kvmplutotest	ikev2-invalid-ke-07-second-child	good	github/1266
 kvmplutotest	ikev2-invalid-ke-08-rekey-child		wip	github/1259
+kvmplutotest	ikev2-invalid-ke-09-child-retry		good	github/3119
+kvmplutotest	ikev2-invalid-ke-10-child-reject		good	github/3119
+kvmplutotest	ikev2-invalid-ke-11-child-retry-limit	good	github/3119
 kvmplutotest	ikev2-unknown-payload-01-sa-init		good
 kvmplutotest	ikev2-unknown-payload-01-sa-init-critical	good
 kvmplutotest	ikev2-unknown-payload-02-auth			good
@@ -1730,6 +1733,7 @@ kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-cert-initiator		good
+kvmplutotest	interop-ikev2-strongswan-50-child-invalid-ke	good	github/3119
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good

@@ -1,0 +1,2 @@
+Reject NONE, unchanged and unconfigured KE suggestions without losing the
+established IKE and Child SAs. A subsequent valid Child request succeeds.

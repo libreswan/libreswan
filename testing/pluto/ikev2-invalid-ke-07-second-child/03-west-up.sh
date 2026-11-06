@@ -1,2 +1,2 @@
 ipsec up west-cuckold
-ipsec up west-cuckoo # fail with invalid KE
+ipsec up west-cuckoo # retry with MODP4096

@@ -359,7 +359,7 @@ static void test_esp(struct logger *logger)
 	esp(true, "3des-sha1-modp8192,3des-sha2;modp8192");
 	esp(true, "3des-sha1;modp8192,3des-sha2-modp8192");
 	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
-	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
+	esp(!pfs || ike_version == IKEv2, "aes_gcm;dh19,aes_gcm;dh20");
 
 	esp(false, "aes_gcm;modp2048-modp2048"); /* dash-addke removed; use ;addke1= */
 
