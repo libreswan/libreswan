@@ -1,0 +1,25 @@
+Rekey then lurk, then delete, a connection
+
+Code terminating IKE SA needs to be careful that the next in order
+isn't also deleted, causing it to step into the use-after-free Abyss.
+
+- establish a permanent connection
+
+  NEW2OLD order is Child SA -> IKE SA
+
+- rekey IKE SA
+
+  NEW2OLD order is IKE SA -> Child SA
+
+- lurk the existing connection
+
+  On peer kill pluto, and then bring up connection leaving existing
+  connection lurking
+
+  NEW2OLD order is IKE SA -> Child SA -> Lurking IKE SA -> Lurking Child SA
+
+- delete connection
+
+See #3133 pluto SIGSEGV in next_state() (use-after-free) when deleting
+a connection that owns a lingering IKE SA with an older Child SA
+(Dmitrii Krasnov).
