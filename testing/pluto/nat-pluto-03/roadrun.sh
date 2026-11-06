@@ -1,4 +1,4 @@
-ipsec whack --name road-eastnet-encapsulation=yes --initiate
+ipsec whack --name road-eastnet-encapsulation=yes --initiate # sanitize-retransmits
 ../../guestbin/ping-once.sh --up 192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 echo done

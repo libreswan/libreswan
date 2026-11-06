@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add road-eastnet-encapsulation=yes
+ ipsec add road-eastnet-encapsulation=yes
 "road-eastnet-encapsulation=yes": added oriented IKEv1 connection
 road #
  ipsec status | grep encapsulation:
@@ -15,7 +15,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec whack --name road-eastnet-encapsulation=yes --initiate
+ ipsec whack --name road-eastnet-encapsulation=yes --initiate # sanitize-retransmits
 "road-eastnet-encapsulation=yes" #1: initiating IKEv1 Main Mode connection
 "road-eastnet-encapsulation=yes" #1: sent Main Mode request
 "road-eastnet-encapsulation=yes" #1: sent Main Mode I2
@@ -30,7 +30,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "road-eastnet-encapsulation=yes", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  echo done

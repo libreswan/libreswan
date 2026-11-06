@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add road-eastnet
+ ipsec add road-eastnet
 "road-eastnet": added oriented IKEv1 connection
 east #
  ipsec status | grep encapsulation:

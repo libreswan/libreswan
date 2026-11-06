@@ -1,4 +1,4 @@
-ipsec auto --up north-east-7
+ipsec up north-east-7 # sanitize-retransmits
 # port 2 does NOT go over ipsec, IPsec traffic should remain 0
 echo test | nc 192.1.2.23 2
 ipsec trafficstatus
