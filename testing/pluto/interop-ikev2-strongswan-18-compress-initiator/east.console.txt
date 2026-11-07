@@ -15,11 +15,10 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -78,11 +77,10 @@ east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
