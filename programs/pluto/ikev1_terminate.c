@@ -30,99 +30,115 @@
 #include "visit_connection.h"
 #include "pluto_stats.h"
 
-extern connection_state_visitor terminate_ikev1_connection_states;
-
-struct connection_state_visitor_context {
-	unsigned count;
-};
-
-void terminate_ikev1_connection_states(struct connection *c,
-					      struct ike_sa **ike,
-					      struct child_sa **child,
-					      enum connection_visit_kind visit_kind,
-					      struct connection_state_visitor_context *context,
-					      struct verbose verbose)
-{
-	if (context->count == 0) {
-		vlog("terminating SAs using this connection");
-	}
-	context->count++;
-
-	switch (visit_kind) {
-
-	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
-	case NUDGE_CONNECTION_CROSSED_IKE_SA:
-		/*
-		 * Prepare the IKE SA for deletion.
-		 *
-		 * IKEv1 announces the death of the ISAKMP SA after
-		 * all the children have gone (reverse of IKEv2).
-		 */
-		whack_attach(&(*ike)->sa, c->logger);
-		(*ike)->sa.st_viable_parent = false;
-		return;
-
-	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA: /* ignore IKE */
-	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
-	case VISIT_CONNECTION_CHILD_OF_NONE:
-	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
-	{
-		/*
-		 * Can't always assume IKE is suitable for sending
-		 * deletes: for CHILD it probably is; and for CUCKOO
-		 * it is NULL.
-		 *
-		 * Hence just always re-compute it.
-		 */
-		whack_attach(&(*child)->sa, c->logger);
-		struct ike_sa *isakmp = /* could be NULL */
-			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
-		/* IKEv1 has cuckoos */
-		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	}
-
-	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		whack_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case VISIT_CONNECTION_LURKING_IKE_SA:
-		whack_attach(&(*ike)->sa, c->logger);
-		delete_ike_sa(ike);
-		return;
-
-	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		/*
-		 * When IKEv1 deletes an IKE SA any siblings are
-		 * orphaned.
-		 */
-		return;
-	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
-		/*
-		 * When IKEv1 deletes an IKE SA it always sends a
-		 * delete notify; hence handle this in
-		 * FINISH_CONNECTION_PRINCIPAL_IKE_SA.
-		 */
-		return;
-
-	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
-	{
-		struct ike_sa *isakmp =
-			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
-		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
-		connection_teardown_ike(ike, REASON_DELETED, HERE);
-		return;
-	}
-
-	}
-	bad_case(visit_kind);
-}
-
 void terminate_all_ikev1_connection_states(struct connection *c, where_t where)
 {
-	struct connection_state_visitor_context context = {0};
-	visit_connection_states(c, terminate_ikev1_connection_states, &context, where);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+	verbose.where = where;
+
+	/*
+	 * Pass 1: mark all ISAKMP SAs as non-viable.
+	 *
+	 * This is to stop the Child SAs trying to use the IKE SA when
+	 * it finds it's been taken down.  Shouldn't happen as the
+	 * connection is "down" but play it safe.
+	 */
+
+	struct state_filter viable_parent = {
+		.kind = IKE_SA,
+		.connection_serialno = c->serialno,
+		.search = {
+			.order = NEW2OLD,
+			.verbose = verbose,
+			.where = HERE,
+		},
+	};
+	while (next_state(&viable_parent)) {
+		whack_attach(viable_parent.st, c->logger);
+		viable_parent.st->st_viable_parent = false;
+	}
+
+	/*
+	 * Pass 2: terminate children.
+	 *
+	 * With IKEv1, IPsec and ISAKMP SAs are deleted separately.
+	 * Children go first so that they can use the parent to send
+	 * the delete notification.
+	 *
+	 * Because code can't assume order of states, pick away at the
+	 * list.
+	 */
+
+	bool logged_child = false;
+	while (true) {
+		struct state_filter child = {
+			.kind = CHILD_SA,
+			.connection_serialno = c->serialno,
+			.search = {
+				.order = NEW2OLD,
+				.verbose = verbose,
+				.where = HERE,
+			},
+		};
+		if (!next_state(&child)) {
+			break;
+		}
+
+		if (!logged_child) {
+			vlog("terminating %ss using this connection",
+			     c->config->ike_info->child_sa_name);
+		}
+
+		struct child_sa *ipsec = pexpect_child_sa(child.st);
+		whack_attach(&ipsec->sa, c->logger);
+		struct ike_sa *isakmp = /* could be NULL */
+			established_isakmp_sa_for_state(&ipsec->sa,
+							/*viable-parent*/false);
+		/* IKEv1 has cuckoos; call handles NULL */
+		llog_n_maybe_send_v1_delete(isakmp, &ipsec->sa, HERE);
+		connection_teardown_child(&ipsec, REASON_DELETED, HERE);
+		vassert(ipsec == NULL);
+	}
+
+	/*
+	 * Pass 3: terminate parents.
+	 *
+	 * With IKEv1, IPsec and ISAKMP SAs are deleted separately.
+	 * Children go first so that they can use the parent to send
+	 * the delete notification.
+	 *
+	 * Because code can't assume order of states, pick away at the
+	 * list.
+	 */
+
+	bool logged_parent = false;
+	while (true) {
+		struct state_filter parent = {
+			.kind = IKE_SA,
+			.connection_serialno = c->serialno,
+			.search = {
+				.order = NEW2OLD,
+				.verbose = verbose,
+				.where = HERE,
+			},
+		};
+		if (!next_state(&parent)) {
+			break;
+		}
+
+		if (!logged_parent) {
+			vlog("terminating %ss using this connection",
+			     c->config->ike_info->parent_sa_name);
+		}
+
+		struct ike_sa *isakmp = pexpect_parent_sa(parent.st);
+		struct ike_sa *transport =
+			established_isakmp_sa_for_state(parent.st,
+							/*viable-parent*/false);
+		llog_n_maybe_send_v1_delete(transport, parent.st, HERE);
+		connection_teardown_ike(&isakmp, REASON_DELETED, HERE);
+		vassert(isakmp == NULL);
+	}
+
 	/* caller must hold a reference */
 	pmemory(c);
 }
