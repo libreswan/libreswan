@@ -119,6 +119,7 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_USE_PPK_INT),
 	S(v2N_PPK_IDENTITY_KEY),
 	S(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
+	S(v2N_CHILD_SA_PFS_INFO_SUPPORTED),
 #undef S
 };
 
