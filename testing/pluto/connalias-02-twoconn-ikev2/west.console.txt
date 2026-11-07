@@ -75,7 +75,7 @@ terminated 2 connections
 "west-cuckold" #5: ESP traffic information: in=0B out=0B
 west #
  ipsec delete cuckold
-"west-cuckold": terminating SAs using this connection
+"west-cuckold": terminating IKE SAs using this connection
 "west-cuckold" #4: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec delete cuckoo

@@ -45,13 +45,13 @@ west #
 "westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec delete westnet4-eastnet4
-"westnet4-eastnet4": terminating SAs using this connection
+"westnet4-eastnet4": terminating IKE SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
-"westnet6-eastnet6": terminating SAs using this connection
+"westnet6-eastnet6": terminating IKE SAs using this connection
 "westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B
@@ -106,13 +106,13 @@ west #
 "westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec delete westnet4-eastnet4
-"westnet4-eastnet4": terminating SAs using this connection
+"westnet4-eastnet4": terminating IKE SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
-"westnet6-eastnet6": terminating SAs using this connection
+"westnet6-eastnet6": terminating IKE SAs using this connection
 "westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B

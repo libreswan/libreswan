@@ -56,7 +56,7 @@ west #
 "new-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec auto --delete new-west
-"new-west": terminating SAs using this connection
+"new-west": terminating IKE SAs using this connection
 "new-west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "new-west" #2: ESP traffic information: in=0B out=0B
 west #

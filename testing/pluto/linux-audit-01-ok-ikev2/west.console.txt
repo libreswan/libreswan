@@ -28,7 +28,7 @@ west #
 "ikev2" #2: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec delete ikev2
-"ikev2": terminating SAs using this connection
+"ikev2": terminating IKE SAs using this connection
 "ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "ikev2" #2: ESP traffic information: in=0B out=0B
 west #

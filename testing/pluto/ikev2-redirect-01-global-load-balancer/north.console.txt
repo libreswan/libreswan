@@ -111,7 +111,7 @@ north #
 #7: "north-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 north #
  ipsec auto --delete north-east
-"north-east": terminating SAs using this connection
+"north-east": terminating IKE SAs using this connection
 "north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "north-east" #7: command "down" output: restoring resolvconf
 "north-east" #7: ESP traffic information: in=84B out=84B

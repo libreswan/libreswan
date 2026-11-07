@@ -89,7 +89,7 @@ road #
  # check if delete removes all policies without errors
 road #
  ipsec auto --delete road
-"road": terminating SAs using this connection
+"road": terminating IKE SAs using this connection
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "road" #2: ESP traffic information: in=84B out=84B
 "road": delete ipsec-interface ipsec0[16384]@NONE added by pluto

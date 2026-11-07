@@ -58,7 +58,7 @@ west #
 "westnet-eastnet-ikev2-modp2048" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp2048
-"westnet-eastnet-ikev2-modp2048": terminating SAs using this connection
+"westnet-eastnet-ikev2-modp2048": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-modp2048" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-modp2048" #2: ESP traffic information: in=0B out=0B
 west #
@@ -72,7 +72,7 @@ west #
 "westnet-eastnet-ikev2-modp3072" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp3072
-"westnet-eastnet-ikev2-modp3072": terminating SAs using this connection
+"westnet-eastnet-ikev2-modp3072": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-modp3072" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-modp3072" #4: ESP traffic information: in=0B out=0B
 west #
@@ -86,7 +86,7 @@ west #
 "westnet-eastnet-ikev2-modp4096" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp4096
-"westnet-eastnet-ikev2-modp4096": terminating SAs using this connection
+"westnet-eastnet-ikev2-modp4096": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-modp4096" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-modp4096" #6: ESP traffic information: in=0B out=0B
 west #
@@ -100,7 +100,7 @@ west #
 "westnet-eastnet-ikev2-modp8192" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp8192
-"westnet-eastnet-ikev2-modp8192": terminating SAs using this connection
+"westnet-eastnet-ikev2-modp8192": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-modp8192" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-modp8192" #8: ESP traffic information: in=0B out=0B
 west #
@@ -114,7 +114,7 @@ west #
 "westnet-eastnet-ikev2-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh19
-"westnet-eastnet-ikev2-dh19": terminating SAs using this connection
+"westnet-eastnet-ikev2-dh19": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-dh19" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 west #
@@ -128,7 +128,7 @@ west #
 "westnet-eastnet-ikev2-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh20
-"westnet-eastnet-ikev2-dh20": terminating SAs using this connection
+"westnet-eastnet-ikev2-dh20": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-dh20" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-dh20" #12: ESP traffic information: in=0B out=0B
 west #
@@ -142,7 +142,7 @@ west #
 "westnet-eastnet-ikev2-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh21
-"westnet-eastnet-ikev2-dh21": terminating SAs using this connection
+"westnet-eastnet-ikev2-dh21": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-dh21" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-dh21" #14: ESP traffic information: in=0B out=0B
 west #
@@ -156,7 +156,7 @@ west #
 "westnet-eastnet-ikev2-dh31" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh31
-"westnet-eastnet-ikev2-dh31": terminating SAs using this connection
+"westnet-eastnet-ikev2-dh31": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2-dh31" #15: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2-dh31" #16: ESP traffic information: in=0B out=0B
 west #

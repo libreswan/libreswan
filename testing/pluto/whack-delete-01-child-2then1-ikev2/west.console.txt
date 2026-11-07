@@ -46,7 +46,7 @@ west #
 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec delete west-cuckoo
-"west-cuckoo": terminating IKE SA of connection's Child SA
+"west-cuckoo": terminating IKE SAs of Child SAs using this connection
 "west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-cuckold" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds

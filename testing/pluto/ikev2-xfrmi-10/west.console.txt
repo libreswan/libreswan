@@ -66,7 +66,7 @@ X: ipsec17@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x11 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 west #
  ipsec auto --delete west
-"west": terminating SAs using this connection
+"west": terminating IKE SAs using this connection
 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "west" #2: ESP traffic information: in=84B out=84B
 west #

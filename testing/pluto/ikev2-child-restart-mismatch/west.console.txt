@@ -71,7 +71,7 @@ west #
  # should see westnet-eastnet-ikev2c replacing
 west #
  ipsec auto --delete westnet-eastnet-ikev2a
-"westnet-eastnet-ikev2a": terminating SAs using this connection
+"westnet-eastnet-ikev2a": terminating IKE SAs using this connection
 "westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 west #

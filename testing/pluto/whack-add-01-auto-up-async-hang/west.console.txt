@@ -26,7 +26,7 @@ west #
 "base" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ipsec delete base
-"base": terminating SAs using this connection
+"base": terminating IKE SAs using this connection
 "base" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  # try synchronously; should eventually detach

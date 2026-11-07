@@ -61,7 +61,7 @@ up
 "ikev2-esp=aes-sha1-modp4096" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --delete ikev2-base
-"ikev2-base": terminating SAs using this connection
+"ikev2-base": terminating IKE SAs using this connection
 "ikev2-base" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "ikev2-base" #2: ESP traffic information: in=84B out=84B
 west #

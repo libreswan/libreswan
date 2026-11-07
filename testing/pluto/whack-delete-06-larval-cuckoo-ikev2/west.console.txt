@@ -51,7 +51,7 @@ west #
  # deleting the wedged CUCKOO Child SA deletes the CUCKOLD IKE SA
 west #
  ipsec delete west-cuckoo
-"west-cuckoo": terminating SAs using this connection
+"west-cuckoo": terminating IKE SAs of Child SAs using this connection
 "west-cuckold" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "west-cuckold" #1: blocking outbound message 2
 "west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
