@@ -8,7 +8,7 @@ east #
 east #
  # ipsec whack --impair key_length_attribute:0
 east #
- ipsec auto --add east
+ ipsec add east
 "east": added oriented IKEv2 connection
 east #
  echo "initdone"
