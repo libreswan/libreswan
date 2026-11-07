@@ -674,6 +674,8 @@ kvmplutotest	ikev2-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
 
+# fragmentation
+
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
 kvmplutotest	ikev2-frag-03-retrans			good
@@ -955,7 +957,6 @@ kvmplutotest	x509-pluto-03		good
 kvmplutotest	x509-pluto-04		good
 kvmplutotest	x509-pluto-05		good
 
-kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
 kvmplutotest	x509-pluto-frag-02	good
 kvmplutotest	x509-pluto-frag-03	good
@@ -1905,3 +1906,7 @@ kvmplutotest	ikev2-supported-auth-methods-03		            good
 kvmplutotest	ikev2-supported-auth-methods-03-fail		    good
 kvmplutotest	ikev2-supported-auth-methods-04		            wip
 kvmplutotest	ikev2-supported-auth-methods-05		            good
+
+# fragmentation
+
+kvmplutotest	fragmentation-00-no-blocked-ikev1	good
