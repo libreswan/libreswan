@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add rw-eastnet-ipv6
-"rw-eastnet-ipv6": added oriented IKEv2 connection
+"rw-eastnet-ipv6": added oriented IKEv2 template connection
 east #
  ipsec status
 using kernel interface: xfrm

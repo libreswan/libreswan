@@ -9,7 +9,7 @@ road #
  ../../guestbin/block-non-ipsec.sh
 road #
  ipsec add road-east
-"road-east": added oriented IKEv1 connection
+"road-east": added oriented IKEv1 permanent connection
 road #
  # give north time to establish first so we always get the same IP later
 road #

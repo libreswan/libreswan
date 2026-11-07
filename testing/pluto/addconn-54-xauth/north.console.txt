@@ -8,5 +8,5 @@ north #
  ipsec add ikev2-north-east
 warning: "ikev2-north-east": IKEv2 connection ignores "leftxauthclient=yes"
 warning: "ikev2-north-east": IKEv2 connection ignores "rightxauthserver=yes"
-"ikev2-north-east": added oriented IKEv2 connection
+"ikev2-north-east": added oriented IKEv2 permanent connection
 north #
