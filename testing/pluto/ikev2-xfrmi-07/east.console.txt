@@ -6,12 +6,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet
+ ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
 east #

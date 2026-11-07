@@ -21,14 +21,14 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add north
+ ipsec add north
 "north": ipsec-interface ipsec2 linked to lo (1) and not eth1 (3)
 "north": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone
 north #
- ipsec auto --up north
+ ipsec up north # sanitize-retransmits
 "north" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

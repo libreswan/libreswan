@@ -1,4 +1,4 @@
-ipsec auto --up north
+ipsec up north # sanitize-retransmits
 sleep  2 # why?
 ../../guestbin/tcpdump.sh --start -i ipsec2
 ../../guestbin/ping-once.sh --up  192.0.2.254

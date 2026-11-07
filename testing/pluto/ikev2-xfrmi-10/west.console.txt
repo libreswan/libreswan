@@ -36,13 +36,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
+ ipsec add west
 "west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -65,7 +65,7 @@ west #
 X: ipsec17@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x11 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 west #
- ipsec auto --delete west
+ ipsec delete west # sanitize-retransmits
 "west": terminating SAs using this connection
 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "west" #2: ESP traffic information: in=84B out=84B
@@ -82,5 +82,5 @@ west #
  echo done
 done
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 west #

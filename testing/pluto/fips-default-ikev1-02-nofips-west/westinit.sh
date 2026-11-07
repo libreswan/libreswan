@@ -10,5 +10,5 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 #setenforce 0
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet
+ipsec add westnet-eastnet
 echo "initdone"
