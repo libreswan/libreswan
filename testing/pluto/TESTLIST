@@ -195,6 +195,7 @@ kvmplutotest    addconn-55-send-supported-auth-methods          good
 kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
 kvmplutotest	addconn-57-signature-hash-algorithms		good
 kvmplutotest	addconn-58-child-sa-pfs-info-supported		good
+kvmplutotest	addconn-59-separate-transports			good
 
 #################################################################
 # IKEv2 tests
