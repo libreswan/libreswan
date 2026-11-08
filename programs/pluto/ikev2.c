@@ -1727,11 +1727,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	case STF_OK_RESPONDER_DELETE_IKE:
 		/*
-		 * Responder processing something that triggered a
-		 * delete IKE family (but not for reasons that are
-		 * fatal).
-		 *
-		 * For instance, a N(D(IKE)) request.
+		 * Responder processing a request that deletes the IKE
+		 * family, such as an IKE Delete or AUTHENTICATION_FAILED.
 		 *
 		 * XXX: should this zombify the IKE SA so that
 		 * re-transmits have something that can respond.
@@ -1764,16 +1761,21 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(ike == NULL);
 		return;
 
+	case STF_INITIATOR_AUTH_FAILED:
+		/* RFC 7296 2.21.2: send a new INFORMATIONAL after IKE_AUTH. */
+		pexpect(transition->recv_role == MESSAGE_RESPONSE);
+		v2_msgid_finish(ike, md, HERE);
+		on_delete(&ike->sa, skip_send_delete);
+		record_n_send_v2_authentication_failed(ike);
+		terminate_ikev2_family(&ike, REASON_AUTH_FAILED,
+				       VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+		return;
+
 	case STF_OK_INITIATOR_SEND_DELETE_IKE:
 		/*
 		 * Initiator processing response, finish current
 		 * exchange and then record'n'send a fire'n'forget
 		 * delete.
-		 *
-		 * For instance, when the IKE_AUTH response's
-		 * authentication fails the initiator needs to quickly
-		 * send out a delete (this is IKEv2's documented
-		 * violation to the don't respond to a response rule).
 		 *
 		 * XXX: this should instead jump to a new transition
 		 * that performs a proper delete exchange.

@@ -770,6 +770,7 @@ struct state {
 		 * False means use strange should_send_delete() logic.
 		 */
 		bool skip_send_delete;
+		bool skip_revival;
 
 		/*
 		 * For the most part delete_state() will log a message

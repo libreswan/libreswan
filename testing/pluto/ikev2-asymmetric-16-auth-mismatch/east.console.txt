@@ -20,8 +20,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added oriented IKEv2 connection
+ ipsec whack --impair revival
 east #
  ipsec connectionstatus westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[ID_NULL]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
@@ -38,7 +37,7 @@ east #
 "westnet-eastnet-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ikev2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet-ikev2":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-ikev2":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+KEEP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
 "westnet-eastnet-ikev2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -52,6 +51,9 @@ east #
 east #
  echo "initdone"
 initdone
+east #
+ grep -E "received INFORMATIONAL request with AUTHENTICATION_FAILED|revival attempt .* scheduled" /tmp/pluto.log
+"westnet-eastnet-ikev2" #1: received INFORMATIONAL request with AUTHENTICATION_FAILED
 east #
  ipsec _kernel state
 east #

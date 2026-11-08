@@ -21,6 +21,8 @@ typedef bool emit_v2_INFORMATIONAL_request_payload_fn(struct ike_sa *ike,
 						      struct child_sa *child,
 						      struct pbs_out *pbs);
 
+extern void record_n_send_v2_authentication_failed(struct ike_sa *ike);
+
 extern bool record_v2_INFORMATIONAL_request(const char *name,
 					    struct logger *logger,
 					    struct ike_sa *ike,

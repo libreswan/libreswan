@@ -1229,10 +1229,6 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 					       struct child_sa *unused_child UNUSED,
 					       struct msg_digest *md)
 {
-	/*
-	 * If the initiator rejects the responders authentication it
-	 * should immediately send a delete notification and wipe the SA.
-	 */
 	struct payload_digest *cert_payloads = md->chain[NEXT_PAYLOAD_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_v2_cert_decode(ike, md, cert_payloads,
@@ -1256,13 +1252,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		/*
-		 * We cannot send a response as we are processing
-		 * IKE_AUTH reply the RFC states we pretend IKE_AUTH
-		 * was okay, and then send an INFORMATIONAL DELETE IKE
-		 * SA.
-		 */
-		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		return STF_INITIATOR_AUTH_FAILED;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -1318,13 +1308,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		/*
-		 * We cannot send a response as we are processing
-		 * IKE_AUTH reply the RFC states we pretend IKE_AUTH
-		 * was okay, and then send an INFORMATIONAL DELETE IKE
-		 * SA.
-		 */
-		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+		return STF_INITIATOR_AUTH_FAILED;
 	}
 
 	/*

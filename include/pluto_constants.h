@@ -336,6 +336,7 @@ typedef enum {
 	STF_OK_RESPONDER_DELETE_IKE,		/*    yes        yes    response? */
 	STF_INTERNAL_ERROR,			/*     no        no      never? */
 	STF_FATAL,				/*     no        yes     never */
+	STF_INITIATOR_AUTH_FAILED,		/*    yes        yes    request */
 	STF_FAIL_v1N,       			/*     no       maybe?   response? */
 #define STF_ROOF (STF_FAIL_v1N + 65536) /* see RFC and above */
 } stf_status;

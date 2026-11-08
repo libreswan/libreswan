@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ cp /testing/x509/pki/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
+east #
+ cp /testing/x509/pki/real/mainca/`hostname`.key /etc/strongswan/swanctl/rsa/`hostname`.key
+east #
+ cp /testing/x509/pki/real/mainca/`hostname`.end.cert /etc/strongswan/swanctl/x509/`hostname`.crt
+east #
+ cp /testing/x509/pki/real/mainca/west.end.cert /etc/strongswan/swanctl/x509/west.crt
+east #
+ ../../guestbin/strongswan-start.sh
+loaded certificate from '/etc/strongswan/swanctl/x509/east.crt'
+loaded certificate from '/etc/strongswan/swanctl/x509/west.crt'
+loaded rsa key from '/etc/strongswan/swanctl/rsa/east.key'
+no authorities found, 0 unloaded
+no pools found, 0 unloaded
+loaded connection 'westnet-eastnet-ikev2'
+successfully loaded 1 connections, 0 unloaded
+east #
+ echo "initdone"
+initdone
+east #
+ swanctl --list-sas
+east #
+ ipsec _kernel state
+east #
+ echo done
+done
+east #
+ grep "parsed INFORMATIONAL request.*N(AUTH_FAILED)" /tmp/charon.log | cut -d "]" -f 2-
+ parsed INFORMATIONAL request 2 [ N(AUTH_FAILED) ]
+east #

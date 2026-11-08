@@ -20,6 +20,7 @@
 #include <stdint.h>		/* for intmax_t */
 
 #include "monotime.h"
+#include "ietf_constants.h"
 
 struct state;
 struct ike_sa;
@@ -74,6 +75,7 @@ struct v2_msgid_window {
 	 */
 	intmax_t sent;		/* starts with -1 */
 	intmax_t recv;		/* starts with -1 */
+	enum ikev2_exchange recv_exchange; /* last processed request (responder) */
 	unsigned recv_frags;	/* number of fragments in last .recv */
 	intmax_t wip;		/* >=0 when busy */
 	/*

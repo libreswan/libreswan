@@ -175,6 +175,7 @@ static const char *const stf_status_strings[] = {
 	S(STF_OK_RESPONDER_DELETE_IKE),
 	S(STF_OK_INITIATOR_SEND_DELETE_IKE),
 	S(STF_FATAL),
+	S(STF_INITIATOR_AUTH_FAILED),
 	S(STF_FAIL_v1N),
 #undef S
 };

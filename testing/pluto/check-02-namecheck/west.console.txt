@@ -7862,7 +7862,7 @@ name for -1 present (should be absent)
          short_name 7: ignore OK
          jam_enum_short 7: ignore OK
          jam_enum_human 7: ignore OK
-  stf_status_names: [0..9]
+  stf_status_names: [0..10]
     0 -> STF_SKIP_COMPLETE_STATE_TRANSITION
          jam_enum 0: STF_SKIP_COMPLETE_STATE_TRANSITION OK
          match STF_SKIP_COMPLETE_STATE_TRANSITION: OK
@@ -7917,12 +7917,18 @@ name for -1 present (should be absent)
          short_name 8: STF_FATAL OK
          jam_enum_short 8: STF_FATAL OK
          jam_enum_human 8: stf-fatal OK
-    9 -> STF_FAIL_v1N
-         jam_enum 9: STF_FAIL_v1N OK
+    9 -> STF_INITIATOR_AUTH_FAILED
+         jam_enum 9: STF_INITIATOR_AUTH_FAILED OK
+         match STF_INITIATOR_AUTH_FAILED: OK
+         short_name 9: STF_INITIATOR_AUTH_FAILED OK
+         jam_enum_short 9: STF_INITIATOR_AUTH_FAILED OK
+         jam_enum_human 9: stf-initiator-auth-failed OK
+   10 -> STF_FAIL_v1N
+         jam_enum 10: STF_FAIL_v1N OK
          match STF_FAIL_v1N: OK
-         short_name 9: STF_FAIL_v1N OK
-         jam_enum_short 9: STF_FAIL_v1N OK
-         jam_enum_human 9: stf-fail-v1n OK
+         short_name 10: STF_FAIL_v1N OK
+         jam_enum_short 10: STF_FAIL_v1N OK
+         jam_enum_human 10: stf-fail-v1n OK
   tcp_option_names: [1..3]
     1 -> no
          jam_sparse 1: no OK

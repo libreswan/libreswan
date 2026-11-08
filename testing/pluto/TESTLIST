@@ -845,7 +845,7 @@ kvmplutotest	ikev2-asymmetric-10-rsaraw-psk		good
 kvmplutotest	ikev2-asymmetric-12-rsacert-null	good
 kvmplutotest	ikev2-asymmetric-13-rsacert-psk		good
 kvmplutotest	ikev2-asymmetric-15-rsaraw-rsaraw	good
-kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
+kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good	github/3098
 kvmplutotest	ikev2-asymmetric-17-auth-mismatch-reverse	good
 
 # test harnass needs to be able to install raw keys and certs
@@ -1730,6 +1730,7 @@ kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
 kvmplutotest	interop-ikev2-strongswan-49-intermediate-cert-initiator		good
+kvmplutotest	interop-ikev2-strongswan-51-auth-failed	good	github/3098
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good

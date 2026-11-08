@@ -394,6 +394,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		/* for duplicate detection */
 		new->responder.recv = msgid;
 		new->responder.recv_frags = md->v2_frags_total;
+		new->responder.recv_exchange = md->hdr.isa_xchg;
 		new->responder.sent = msgid;
 		event_delete(EVENT_v2_TIMEOUT_RESPONDER, &ike->sa);
 		break;

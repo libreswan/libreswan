@@ -11,6 +11,6 @@ rightid="%fromcert"
 
 This test should not establish a connection. The initiator should reject it.
 
-Also, the initiator should REALLY send an encrypted informational to DELETE
-the conn, as east has it as established. Current output does not reflect the
-delete confirmation yet.
+The initiator sends AUTHENTICATION_FAILED in an encrypted INFORMATIONAL
+request. The responder deletes the IKE and Child SAs without reviving
+the connection, even with auto=keep.

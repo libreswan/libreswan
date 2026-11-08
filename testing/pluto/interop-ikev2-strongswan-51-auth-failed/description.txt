@@ -1,0 +1,4 @@
+The Libreswan initiator expects an IP address absent from the strongSwan
+responder certificate. It rejects the certificate and sends AUTHENTICATION_FAILED
+in an INFORMATIONAL request instead of Delete. The responder removes the IKE
+and Child SAs. A subsequent connection with the correct ID succeeds.

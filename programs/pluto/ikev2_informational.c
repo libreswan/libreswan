@@ -44,6 +44,7 @@
 #include "ikev2.h"
 #include "ikev2_states.h"
 #include "ikev2_notification.h"
+#include "ikev2_msgid.h"
 
 static stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 						   struct child_sa *null_child,
@@ -110,6 +111,23 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	const struct payload_digest *error = md->v2N_error;
+	const struct v2_msgid_window *window = &ike->sa.st_v2_msgid_windows.responder;
+	/* RFC 7296 2.21.2: a fatal Notify immediately following IKE_AUTH. */
+	if (window->recv_exchange == ISAKMP_v2_IKE_AUTH &&
+	    (intmax_t)md->hdr.isa_msgid == window->recv + 1 &&
+	    error != NULL && error->payload.v2n.isan_type == v2N_AUTHENTICATION_FAILED &&
+	    error->payload.v2n.isan_spisize == 0 && pbs_left(&error->pbs) == 0) {
+		if (!close_and_record_v2_message(&response)) {
+			return STF_INTERNAL_ERROR;
+		}
+		llog_sa(RC_LOG, ike, "received INFORMATIONAL request with AUTHENTICATION_FAILED");
+		pstat(ikev2_recv_notifies_e, v2N_AUTHENTICATION_FAILED);
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		on_delete(&ike->sa, skip_revival);
+		return STF_OK_RESPONDER_DELETE_IKE;
+	}
+
 	/* HDR out */
 
 	if (md->chain[NEXT_PAYLOAD_v2N] != NULL) {
@@ -147,6 +165,40 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	mobike_possibly_send_recorded(ike, md);
 
 	return STF_OK;
+}
+
+static bool emit_authentication_failed(struct ike_sa *ike UNUSED,
+				       struct child_sa *child UNUSED,
+				       struct pbs_out *pbs)
+{
+	return emit_v2N(v2N_AUTHENTICATION_FAILED, pbs);
+}
+
+/* The SA is deleted after sending this request; no response is processed. */
+static const struct v2_exchange v2_INFORMATIONAL_AUTHENTICATION_FAILED_exchange;
+
+static const struct v2_transition v2_INFORMATIONAL_AUTHENTICATION_FAILED_transition = {
+	.story = "send authentication failure notification",
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_INFORMATIONAL_AUTHENTICATION_FAILED_exchange,
+};
+
+static const struct v2_exchange v2_INFORMATIONAL_AUTHENTICATION_FAILED_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
+	.name = "INFORMATIONAL AUTHENTICATION_FAILED",
+	.secured = true,
+	.initiate.transition = &v2_INFORMATIONAL_AUTHENTICATION_FAILED_transition,
+};
+
+void record_n_send_v2_authentication_failed(struct ike_sa *ike)
+{
+	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_AUTHENTICATION_FAILED_exchange);
+	if (record_v2_INFORMATIONAL_request("INFORMATIONAL AUTHENTICATION_FAILED",
+					   ike->sa.logger, ike, NULL,
+					   emit_authentication_failed) &&
+	    send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments)) {
+		llog_sa(RC_LOG, ike, "sent INFORMATIONAL request with AUTHENTICATION_FAILED");
+	}
 }
 
 /*

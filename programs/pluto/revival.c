@@ -211,8 +211,10 @@ static bool scheduled_revival(struct connection *c, struct state *st/*can be NUL
 
 	if (st != NULL && st->st_ike_version == IKEv2) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		if (PEXPECT(logger, ike != NULL) &&
-		    ike->sa.st_skip_revival_as_redirecting) {
+		if (PEXPECT(logger, ike != NULL) && ike->sa.st_on_delete.skip_revival) {
+			return false;
+		}
+		if (ike != NULL && ike->sa.st_skip_revival_as_redirecting) {
 			address_buf ab;
 			llog(RC_LOG, logger,
 			     "scheduling redirect %u to %s",
