@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add ikev1-separate=
+"ikev1-separate=": added oriented IKEv1 connection
+west #
+ ipsec add ikev1-separate=yes
+"ikev1-separate=yes": failed to add connection: separate-transports= requires IKEv2
+west #
+ ipsec add ikev1-separate=no
+"ikev1-separate=no": added oriented IKEv1 connection
+west #
+ ipsec add ikev1-separate=auto
+"ikev1-separate=auto": failed to add connection: separate-transports= requires IKEv2
+west #
+ ipsec add ikev2-separate=
+"ikev2-separate=": added oriented IKEv2 connection
+west #
+ ipsec add ikev2-separate=yes
+"ikev2-separate=yes": added oriented IKEv2 connection
+west #
+ ipsec add ikev2-separate=no
+"ikev2-separate=no": added oriented IKEv2 connection
+west #
+ ipsec add ikev2-separate=auto
+"ikev2-separate=auto": added oriented IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\([A-Z_]*SEPARATE_TRANSPORTS[A-Z_]*\).*/\1 \2/p' | sort
+"ikev2-separate=auto":   policy: SEPARATE_TRANSPORTS_AUTO
+"ikev2-separate=yes":   policy: SEPARATE_TRANSPORTS_YES
+west #
