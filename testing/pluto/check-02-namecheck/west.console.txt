@@ -3729,6 +3729,13 @@ name for -1 present (should be absent)
          jam_names_short 16447: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH OK
          jam_names_human 16447: ike-sa-init-full-transcript-auth OK
          match IKE_SA_INIT_FULL_TRANSCRIPT_AUTH [short]: OK
+  16448 -> v2N_SEPARATE_TRANSPORTS
+         jam_names 16448: v2N_SEPARATE_TRANSPORTS OK
+         match v2N_SEPARATE_TRANSPORTS: OK
+         short_name 16448: SEPARATE_TRANSPORTS OK
+         jam_names_short 16448: SEPARATE_TRANSPORTS OK
+         jam_names_human 16448: separate-transports OK
+         match SEPARATE_TRANSPORTS [short]: OK
   40960 -> v2N_NULL_AUTH
          jam_names 40960: v2N_NULL_AUTH OK
          match v2N_NULL_AUTH: OK
@@ -9056,6 +9063,13 @@ name for -1 present (should be absent)
          jam_enum_short 16447: IKE_SA_INIT_FULL_TRANSCRIPT_AUTH OK
          jam_enum_human 16447: ike-sa-init-full-transcript-auth OK
          match IKE_SA_INIT_FULL_TRANSCRIPT_AUTH [short]: OK
+  16448 -> v2N_SEPARATE_TRANSPORTS
+         jam_enum 16448: v2N_SEPARATE_TRANSPORTS OK
+         match v2N_SEPARATE_TRANSPORTS: OK
+         short_name 16448: SEPARATE_TRANSPORTS OK
+         jam_enum_short 16448: SEPARATE_TRANSPORTS OK
+         jam_enum_human 16448: separate-transports OK
+         match SEPARATE_TRANSPORTS [short]: OK
   40960 -> v2N_NULL_AUTH
          jam_enum 40960: v2N_NULL_AUTH OK
          match v2N_NULL_AUTH: OK

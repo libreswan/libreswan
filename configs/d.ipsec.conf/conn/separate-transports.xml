@@ -1,0 +1,32 @@
+<varlistentry id='conn.separate-transports'>
+  <term>
+    <option>separate-transports=&yna_option;</option>
+  </term>
+  <listitem>
+    <caution>
+      <para>
+      This feature is in progress.separate transports are not yet negotiated or
+      used.
+      </para>
+    </caution>
+    <para>
+      Whether to negotiate the use of separate transports for IKE and
+      ESP.  IKE is carried over TCP, which is reliable and so copes with the large
+      key exchange payloads used by post-quantum algorithms, while ESP
+      continues to use UDP (or is sent directly over IP), avoiding the
+      head-of-line blocking that TCP would impose on the data.  IKEv2
+      only.
+    </para>
+    <para>
+      &no;, the default, neither proposes nor accepts it.  &auto;
+      proposes the extension and uses it when the peer also supports
+      it, otherwise falling back to standard IKEv2.  &yes;
+      additionally requires it: the connection fails if the peer does
+      not agree.
+    </para>
+    <para>
+      This differs from <option>enable-tcp=</option>, which selects
+      the transport used for both IKE and ESP.
+    </para>
+  </listitem>
+</varlistentry>

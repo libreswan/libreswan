@@ -179,6 +179,7 @@ enum v2N_status {
 	v2N_status_USE_TRANSPORT_MODE,
 	v2N_status_USE_AGGFRAG,
 	v2N_status_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
+	v2N_status_SEPARATE_TRANSPORTS,
 	v2N_status_TICKET_LT_OPAQUE,
 	v2N_status_TICKET_REQUEST,
 	v2N_status_TICKET_ACK,
