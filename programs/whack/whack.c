@@ -569,6 +569,7 @@ enum opt {
 	CD_FAKE_STRONGSWAN,
 	CD_MOBIKE,
 	CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH,
+	CD_SEPARATE_TRANSPORTS,
 	CD_SESSION_RESUMPTION,
 
 	CD_IKE,
@@ -879,6 +880,7 @@ const struct option optarg_options[] = {
 	{ "fake-strongswan\0", optional_argument, NULL, CD_FAKE_STRONGSWAN },
 	{ "mobike\0", optional_argument, NULL, CD_MOBIKE },
 	{ OPT("ike-sa-init-full-transcript-auth", "yes|no|auto"), optional_argument, NULL, CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH },
+	{ OPT("separate-transports", "yes|no|auto"), optional_argument, NULL, CD_SEPARATE_TRANSPORTS },
 
 	{ "dpddelay\0", required_argument, NULL, CD_DPDDELAY },
 	{ "dpdtimeout\0", required_argument, NULL, CD_DPDTIMEOUT },
@@ -1763,6 +1765,11 @@ int main(int argc, char **argv)
 		/* --ike-sa-init-full-transcript-auth[={yes,no,auto}] */
 		case CD_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH:
 			msg.wm_ike_sa_init_full_transcript_auth = (optarg == NULL ? "yes" : optarg);
+			continue;
+
+		/* --separate-transports[={yes,no,auto}] */
+		case CD_SEPARATE_TRANSPORTS:
+			msg.wm_separate_transports = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CDS_PASS:	/* --pass */
