@@ -3566,6 +3566,21 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->ike_sa_init_full_transcript_auth = ike_sa_init_full_transcript_auth;
 
+	enum yna_options separate_transports =
+		extract_yna(kv(wm, END_ROOF, KWS_SEPARATE_TRANSPORTS),
+			    /*value_when_unset*/YNA_NO,
+			    /*value_when_never_negotiate*/YNA_NO,
+			    &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (separate_transports != YNA_NO &&
+	    ike_version < IKEv2) {
+		return diag("separate-transports= requires IKEv2");
+	}
+
+	config->separate_transports = separate_transports;
+
 	config->mobike = mobike;
 	if (mobike) {
 		if (ike_version < IKEv2) {
