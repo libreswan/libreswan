@@ -23,9 +23,10 @@ west #
  # use delete, not down - because east has auto=start
 west #
  ipsec delete west-east-auto
-"west-east-auto": terminating SAs using this connection
+"west-east-auto": terminating IPsec SAs using this connection
 "west-east-auto" #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
 "west-east-auto" #2: ESP traffic information: in=0B out=0B
+"west-east-auto": terminating ISAKMP SAs using this connection
 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  # no IPsec SA should be there. No ISAKMP SA should be there either

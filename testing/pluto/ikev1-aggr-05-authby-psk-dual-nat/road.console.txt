@@ -36,10 +36,11 @@ road #
  ipsec whack --impair send_no_delete
 road #
  ipsec auto --delete road-east
-"road-east": terminating SAs using this connection
+"road-east": terminating IPsec SAs using this connection
 "road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "road-east" #2: send_no_delete set - not sending Delete/Notify
 "road-east" #2: ESP traffic information: in=0B out=0B
+"road-east": terminating ISAKMP SAs using this connection
 "road-east" #1: deleting ISAKMP SA (AGGR_I2) and sending notification
 IMPAIR: "road-east" #1: send_no_delete set - not sending Delete/Notify
 road #

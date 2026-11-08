@@ -34,10 +34,11 @@ west #
 "ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
  ipsec delete ikev1 # sanitize-retransmits
-"ikev1": terminating SAs using this connection
+"ikev1": terminating IPsec SAs using this connection
 "ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "ikev1" #2: ESP traffic information: in=0B out=0B
 "ikev1" #2: IPCOMP traffic information: in=0B out=0B
+"ikev1": terminating ISAKMP SAs using this connection
 "ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ipsec up ikev1-aggr # sanitize-retransmits
@@ -51,10 +52,11 @@ west #
 "ikev1-aggr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
  ipsec delete ikev1-aggr # sanitize-retransmits
-"ikev1-aggr": terminating SAs using this connection
+"ikev1-aggr": terminating IPsec SAs using this connection
 "ikev1-aggr" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 "ikev1-aggr" #4: ESP traffic information: in=0B out=0B
 "ikev1-aggr" #4: IPCOMP traffic information: in=0B out=0B
+"ikev1-aggr": terminating ISAKMP SAs using this connection
 "ikev1-aggr" #3: deleting ISAKMP SA (AGGR_I2) and sending notification
 west #
  echo done

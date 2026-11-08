@@ -56,7 +56,8 @@ west #
  # to be sure; initiator's already received it
 west #
  ipsec delete west-to-east
-"west-to-east": terminating SAs using this connection
+"west-to-east": terminating IPsec SAs using this connection
 "west-to-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+"west-to-east": terminating ISAKMP SAs using this connection
 "west-to-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #

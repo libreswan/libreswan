@@ -34,9 +34,10 @@ north #
 one
 north #
  ipsec auto --replace northnet-eastnet-nat
-"northnet-eastnet-nat": terminating SAs using this connection
+"northnet-eastnet-nat": terminating IPsec SAs using this connection
 "northnet-eastnet-nat" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
+"northnet-eastnet-nat": terminating ISAKMP SAs using this connection
 "northnet-eastnet-nat" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 "northnet-eastnet-nat": added oriented IKEv1 connection
 north #

@@ -32,10 +32,11 @@ west #
  ipsec whack --impair v1_ipsec_delete_payload:duplicate
 west #
  ipsec delete west-east # sanitize-retransmits
-"west-east": terminating SAs using this connection
+"west-east": terminating IPsec SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "west-east" #2: emitting duplicate IPsec delete payloads
 "west-east" #2: ESP traffic information: in=0B out=0B
+"west-east": terminating ISAKMP SAs using this connection
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "west-east" #1: emitting duplicate ISKMP delete payloads
 west #

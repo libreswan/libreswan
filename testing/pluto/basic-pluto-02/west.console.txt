@@ -103,9 +103,10 @@ west #
  # testing re-orienting
 west #
  ipsec auto --replace westnet-all
-"westnet-all": terminating SAs using this connection
+"westnet-all": terminating IPsec SAs using this connection
 "westnet-all" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-all" #2: ESP traffic information: in=84B out=84B
+"westnet-all": terminating ISAKMP SAs using this connection
 "westnet-all" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 "westnet-all": added oriented IKEv1 connection
 west #
