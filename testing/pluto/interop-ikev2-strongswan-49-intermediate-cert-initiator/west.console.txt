@@ -1,7 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-strongswan U6.0.7 must be installed
-Linux strongSwan U6.1.0/K7.3.0-0.0.next.20260825.511.vanilla.fc46.x86_64
-University of Applied Sciences Rapperswil, Switzerland
 west #
  cp /testing/x509/pki/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 west #
