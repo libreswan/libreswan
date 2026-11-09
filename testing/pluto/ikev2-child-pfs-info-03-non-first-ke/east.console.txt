@@ -1,0 +1,69 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+"east": added oriented IKEv2 connection
+east #
+ ipsec whack --impair revival
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ # east initiates the Child SA rekey; it must use DH20, not DH19
+east #
+ ipsec whack --rekey-child --name east
+"east" #3: initiating rekey to replace Child SA #2 using IKE SA #1
+"east" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [192.1.2.23/32===192.1.2.45/32]
+"east" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.23/32===192.1.2.45/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH20 DPD=passive}
+"east" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"east" #2: ESP traffic information: in=84B out=84B
+east #
+ ../../guestbin/wait-for-pluto.sh '#3: initiator rekeyed Child SA #2'
+"east" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.23/32===192.1.2.45/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH20 DPD=passive}
+east #
+ ipsec whack --trafficstatus
+#3: "east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+east #
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+east #
+ ipsec _kernel policy
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+east #
+ grep 'proposed CHILD_SA_PFS_INFO_SUPPORTED notification' /tmp/pluto.log
+| accepting proposed CHILD_SA_PFS_INFO_SUPPORTED notification from initiator
+east #

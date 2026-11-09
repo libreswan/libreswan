@@ -1,0 +1,15 @@
+IKEv2 Child SA PFS Info (draft-ietf-ipsecme-child-pfs-info): the IKE SA is
+negotiated with DH19 but both ends have esp=aes_gcm;dh20, so the CHILD_SA_PFS_INFO
+exchanged in IKE_AUTH is DH20 (and not the IKE SA's DH19).  East, the responder,
+then initiates the Child SA rekey and must use DH20, not DH19.
+
+Without further support of pfsinfo "helping" the CREATE_CHILD_SA pick the
+right pfs, this will result in first an INVALID_KE followed by a successful
+exchange, but libreswan does not implement INVALID_KE in CREATE_CHILD_SA.
+
+"west-east": failed to add connection: more than one IKEv2 ESP Key Exchange algorithm (DH19, DH20) requires unimplemented CREATE_CHILD_SA INVALID_KE
+
+Once implemented, ideally we remember the KE from pfsinfo and skip using
+the wrong KE. This is not implemented either.
+
+Therefor, this test is marked WIP.
