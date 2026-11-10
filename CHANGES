@@ -1,6 +1,6 @@
 See also https://libreswan.org/
 
-v5.4.2 (unreleased)
+v5.4.2 (Nov 16, 2026)
 * Security
   - fix CVE-2026-110339 - NPE - empty PKCS#7 payload
     http://libreswan.org/security/CVE-2026-110339
@@ -8,8 +8,11 @@ v5.4.2 (unreleased)
   - fix CVE-2026-115846 - IKE_INTERMEDIATE addkey bypass
     http://libreswan.org/security/CVE-2026-115846
     [Astrid Passot, Andrew]
-* Interop
+* IKEv2:
+  - fix auth calculation for non-PSK with INTERMEDIATE [Astrid Passot, Paul]
   - fix INTERNAL_IP6_DNS attribute to be 16 bytes [Wavie Hu, Paul, #3134]
+* X509
+  - ipsec import: fix automated passwordless pkcs12 import [Paul]
 
 v5.4.1 (Oct 5, 2026)
 * Security
