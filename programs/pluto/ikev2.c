@@ -1924,7 +1924,10 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 {
 	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
 				       LELEM(STATE_V2_NEW_CHILD_I0) |
-				       LELEM(STATE_V2_NEW_CHILD_R0));
+				       LELEM(STATE_V2_NEW_CHILD_R0) |
+				       LELEM(STATE_V2_CHILD_FOLLOWUP_KE_I0) |
+				       LELEM(STATE_V2_CHILD_FOLLOWUP_KE_I1) |
+				       LELEM(STATE_V2_CHILD_FOLLOWUP_KE_R0));
 
 	struct state_filter sf = {
 		.search = {
@@ -1943,6 +1946,10 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 
 		/* larval child state? */
 		if (!LHAS(pending_states, st->st_state->kind)) {
+			continue;
+		}
+		/* CHILD_FOLLOWUP_KE_* is shared with rekeying */
+		if (st->st_v2_rekey_pred != SOS_NOBODY) {
 			continue;
 		}
 		/*
