@@ -6,6 +6,7 @@
 / strongswan up / b match-strongswan
 / strongswan down / b match-strongswan
 / swanctl / b match-strongswan
+/wait-for.sh.*charon.log/ b match-strongswan
 b end-strongswan
 
 :match-strongswan
@@ -15,6 +16,8 @@ b end-strongswan
   /^[a-z]* #/ b end-strongswan
 
 :next-strongswan
+
+  # delete some lines
 
   /^  worker threads: .*$/ {
   	   N
@@ -73,6 +76,9 @@ b end-strongswan
 
   # strip out our own changing vendor id
   s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/
+
+  # 01[IKE] -> [IKE]
+  s/^[0-9][0-9]*\(\[[A-Z][A-Z]*\]\)/\1/
 
 b match-strongswan
 
