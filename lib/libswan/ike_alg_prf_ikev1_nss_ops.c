@@ -37,7 +37,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    /*const*/ PK11SymKey *ke_secret /* NSS doesn't do const */,
 				    struct logger *logger)
 {
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+	CK_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_TRUE,
 		.bRekey = CK_FALSE,
@@ -51,8 +51,8 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	return crypt_derive(ke_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
-			    "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
+	return crypt_derive(ke_secret, CKM_IKE_PRF_DERIVE, &params,
+			    "skeyid", CKM_IKE1_PRF_DERIVE, CKA_DERIVE,
 			    /*key,flags*/ 0, 0,
 			    HERE, logger);
 }
@@ -71,7 +71,7 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+	CK_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_FALSE,
 		.bRekey = CK_FALSE,
@@ -85,8 +85,8 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	skeyid = crypt_derive(psk, CKM_NSS_IKE_PRF_DERIVE, &params,
-			      "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
+	skeyid = crypt_derive(psk, CKM_IKE_PRF_DERIVE, &params,
+			      "skeyid", CKM_IKE1_PRF_DERIVE, CKA_DERIVE,
 			      /*key_size*/0, /*flags*/0,
 			      HERE, logger);
 	symkey_delref(logger, "psk", &psk);
@@ -102,7 +102,7 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
-	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
+	CK_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_FALSE,
 		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
@@ -117,7 +117,7 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 		.len = sizeof(ike1_prf_params),
 	};
 
-	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
+	return crypt_derive(skeyid, CKM_IKE1_PRF_DERIVE, &params,
 			    "skeyid_d", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 			    /*key-size*/0, /*flags*/0,
 			    HERE, logger);
@@ -132,7 +132,7 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
-	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
+	CK_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_TRUE,
 		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
@@ -148,7 +148,7 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 		.len = sizeof(ike1_prf_params),
 	};
 
-	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
+	return crypt_derive(skeyid, CKM_IKE1_PRF_DERIVE, &params,
 			    "skeyid_a", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 			    /*key-size*/0, /*flags*/0,
 			    HERE, logger);
@@ -163,7 +163,7 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
-	CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
+	CK_IKE1_PRF_DERIVE_PARAMS ike1_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bHasPrevKey = CK_TRUE,
 		.hKeygxy = PK11_GetSymKeyHandle(ke_secret),
@@ -179,7 +179,7 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 		.len = sizeof(ike1_prf_params),
 	};
 
-	return crypt_derive(skeyid, CKM_NSS_IKE1_PRF_DERIVE, &params,
+	return crypt_derive(skeyid, CKM_IKE1_PRF_DERIVE, &params,
 			    "skeyid_e", CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 			    /*key-size*/0, /*flags*/0,
 			    HERE, logger);
@@ -194,7 +194,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 
 	/*
 	 * XXX: This requires a fix to an old bug adding
-	 * CKM_NSS_IKE1_APP_B_PRF_DERIVE to the allowed operations
+	 * CKM_IKE1_EXTENDED_DERIVE to the allowed operations
 	 * that was embedded in the below changeset.
 	 *
 	 * changeset:   15575:225bb39eade1
@@ -212,7 +212,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 	if (target == 0)
 		target = CKM_EXTRACT_KEY_FROM_KEY;
 
-	return crypt_derive(skeyid_e, CKM_NSS_IKE1_APP_B_PRF_DERIVE,
+	return crypt_derive(skeyid_e, CKM_IKE1_EXTENDED_DERIVE,
 			    &params, "keymat_e", target, CKA_ENCRYPT,
 			    /*key-size*/required_keymat, /*flags*/CKF_DECRYPT|CKF_ENCRYPT,
 			    HERE, logger);
@@ -273,7 +273,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 	/*
 	 * If this fails to compile, a newer nss version is needed.
 	 */
-	CK_NSS_IKE1_APP_B_PRF_DERIVE_PARAMS dparams = {
+	CK_IKE1_EXTENDED_DERIVE_PARAMS dparams = {
 		.prfMechanism = prf->nss.mechanism,
 		.bHasKeygxy = g_xy != NULL,
 		.hKeygxy = g_xy != NULL ? PK11_GetSymKeyHandle(g_xy) : 0,
@@ -284,7 +284,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 		.data = (unsigned char *)&dparams,
 		.len = sizeof(dparams),
 	};
-	PK11SymKey *key = crypt_derive(SKEYID_d, CKM_NSS_IKE1_APP_B_PRF_DERIVE, &params,
+	PK11SymKey *key = crypt_derive(SKEYID_d, CKM_IKE1_EXTENDED_DERIVE, &params,
 				       "section_5_keymat", CKM_EXTRACT_KEY_FROM_KEY,
 				       CKA_ENCRYPT,
 				       /*key-size*/required_keymat,
