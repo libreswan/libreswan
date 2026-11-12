@@ -22,13 +22,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ikev2
+ ipsec up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 ke=MODP2048}, initiating IKE_AUTH
@@ -59,9 +59,9 @@ west #
 lifetime current:\	  8068(bytes), 2(packets)\	  
 lifetime current:\	  8028(bytes), 1(packets)\	  
 west #
- # We cannot run ipsec whack --trafficstatus because compression causes the byte count to slightly differ each run
+ # We cannot run ipsec trafficstatus because compression causes the byte count to slightly differ each run
 west #
- # ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
+ # ipsec trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 west #
  echo done
 done

@@ -22,13 +22,13 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev1
+ ipsec add westnet-eastnet-ikev1
 "westnet-eastnet-ikev1": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ikev1
+ ipsec up westnet-eastnet-ikev1
 "westnet-eastnet-ikev1" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ikev1" #1: sent Main Mode request
 "westnet-eastnet-ikev1" #1: sent Main Mode I2
@@ -39,10 +39,13 @@ west #
 "westnet-eastnet-ikev1" #2: sent Quick Mode request
 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
+ ../../guestbin/wait-for.sh --match 'CHILD_SA .* established' -- cat OUTPUT/east.charon.log
+[IKE] <westnet-eastnet-ikev1|1> CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.0/24 === 192.0.1.0/24
+west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet-ikev1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done

@@ -4,4 +4,4 @@ ipsec start
 ipsec whack --impair suppress_retransmits
 ipsec add westnet-eastnet-ipcomp
 echo "initdone"
-ipsec whack --impair revival
+

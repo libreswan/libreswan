@@ -26,26 +26,12 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev2
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N((16447)) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
-selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/ECP_256
-authentication of 'west' (myself) with pre-shared key
-establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH N(IPCOMP_SUP) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr N(IPCOMP_SUP) ]
-authentication of 'east' with pre-shared key successful
-IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
-scheduling rekeying in XXXs
-maximum IKE_SA lifetime XXXs
-selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
-CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-connection 'westnet-eastnet-ikev2' established successfully
+ swanctl --initiate --child westnet-eastnet-ikev2 --loglevel 0
+[IKE] initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+[IKE] establishing CHILD_SA westnet-eastnet-ikev2{1}
+[IKE] IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+initiate completed successfully
 west #
  # First ping is regular ESP since ping is too small to compress.  This
 west #
@@ -71,7 +57,7 @@ lifetime current:\	  8028(bytes), 1(packets)\
 west #
  # mangled traffic status
 west #
- ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
+ ipsec trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 ipsec whack: ERROR: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi

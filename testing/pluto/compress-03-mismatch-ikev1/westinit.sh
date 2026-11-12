@@ -9,6 +9,6 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair timeout_on_retransmit
 ipsec add westnet-eastnet-compress
-ipsec status | grep westnet-eastnet-compress
+ipsec connectionstatus westnet-eastnet-compress
 echo "initdone"
 ipsec whack --impair revival

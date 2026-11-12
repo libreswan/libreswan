@@ -10,5 +10,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
 ipsec add westnet-eastnet-ipcomp
-ipsec status | grep westnet-eastnet-ipcomp
+ipsec connectionstatus westnet-eastnet-ipcomp
 echo "initdone"

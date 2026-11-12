@@ -1,4 +1,4 @@
-ipsec auto --up westnet-eastnet-ikev2
+ipsec up westnet-eastnet-ikev2
 
 # First ping is regular ESP since ping is too small to compress.  This
 # oddly shows up as 0 packets and 4 packets on ipcomp.
@@ -11,4 +11,4 @@ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(a
 ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
 
 # mangled traffic status
-ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
+ipsec trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'

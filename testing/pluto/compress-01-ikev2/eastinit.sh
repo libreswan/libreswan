@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec add westnet-eastnet-ipcomp
-ipsec status | grep westnet-eastnet-ipcomp
+ipsec connectionstatus westnet-eastnet-ipcomp
 echo "initdone"
