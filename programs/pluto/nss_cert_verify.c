@@ -49,6 +49,16 @@
 #include "x509_ocsp.h"
 #include "x509_crl.h"		/* for crl_strict; */
 
+static diag_t cert_verify_subject_alt_name_extension(const char *who,
+						     const struct id *id,
+						     struct logger *logger,
+						     /*const*/ SECItem *subject_alt_name_extension);
+
+static diag_t cert_verify_subject_alt_name_list(const char *who,
+						const struct id *id,
+						struct logger *logger,
+						CERTGeneralName *name_list);
+
 bool groundhogday;
 
 static bool crl_is_current(CERTSignedCrl *crl)
@@ -701,9 +711,9 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	/*
 	 * Get a handle on the certificate's subject alt name.
 	 */
-	SECItem	subAltName;
+	SECItem	subject_alt_name_extension = {0}; /* must SECITEM_FreeItem(PR_FALSE) */
 	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
-					      &subAltName);
+					      &subject_alt_name_extension);
 	if (rv != SECSuccess) {
 		id_buf idb;
 		name_buf kb;
@@ -712,15 +722,45 @@ diag_t cert_verify_subject_alt_name(const char *who,
 			    str_id(id, &idb));
 	}
 
+	diag_t d = cert_verify_subject_alt_name_extension(who, id, logger,
+							  &subject_alt_name_extension);
+
+	/* contract met */
+	SECITEM_FreeItem(&subject_alt_name_extension, PR_FALSE/*only free .data*/);
+	return d;
+}
+
+diag_t cert_verify_subject_alt_name_extension(const char *who,
+					      const struct id *id,
+					      struct logger *logger,
+					      /*const*/ SECItem *subject_alt_name_extension)
+{
 	/*
 	 * Now decode that into a circular buffer (yes not a list) so
 	 * the ID can be compared against it.
 	 */
-	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE); /*must PORT_FreeArena(PR_FALSE)*/
 	PASSERT(logger, arena != NULL);
-	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
-	if (nameList == NULL) {
-		PORT_FreeArena(arena, PR_FALSE);
+
+	/*
+	 * Try to unpack the name list.
+	 *
+	 * The unpacked list is stored in the arena.  Hence, it will
+	 * be freed when the arena is freed.
+	 */
+	CERTGeneralName *name_list = CERT_DecodeAltNameExtension(arena, subject_alt_name_extension);
+	diag_t d = cert_verify_subject_alt_name_list(who, id, logger, name_list);
+
+	PORT_FreeArena(arena, PR_FALSE);
+	return d;
+}
+
+diag_t cert_verify_subject_alt_name_list(const char *who,
+					 const struct id *id,
+					 struct logger *logger,
+					 CERTGeneralName *name_list)
+{
+	if (name_list == NULL) {
 		id_buf idb;
 		name_buf kb;
 		return diag("%s certificate subjectAltName extension failed to decode while looking for %s '%s'",
@@ -778,7 +818,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	 * the first entry the first time we see it but stop when we get to it
 	 * the second time.
 	 */
-	CERTGeneralName *current = nameList;
+	CERTGeneralName *current = name_list;
 	do {
 		switch (current->type) {
 		case certDNSName:
@@ -816,7 +856,6 @@ diag_t cert_verify_subject_alt_name(const char *who,
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);
 				}
-				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
 			}
 			break;
@@ -837,7 +876,6 @@ diag_t cert_verify_subject_alt_name(const char *who,
 				address_buf b;
 				ldbg(logger, "%s certificate subjectAltname matches address %s",
 				     who, str_address(&myip, &b));
-				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
 			}
 			address_buf b;
@@ -850,12 +888,8 @@ diag_t cert_verify_subject_alt_name(const char *who,
 			break;
 		}
 		current = CERT_GetNextGeneralName(current);
-	} while (current != nameList);
+	} while (current != name_list);
 
-	/*
-	 * Don't need to free nameList, it's part of the arena.
-	 */
-	PORT_FreeArena(arena, PR_FALSE);
 	name_buf esb;
 	return diag("%s certificate subjectAltName extension does not match %s '%s'",
 		    who, str_enum_short(&ike_id_type_names, id->kind, &esb),
