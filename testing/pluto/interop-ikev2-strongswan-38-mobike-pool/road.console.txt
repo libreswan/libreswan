@@ -128,9 +128,11 @@ road #
  ipsec _kernel state
 src 192.1.33.222 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 192.1.2.23 dst 192.1.33.222
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 road #
  ipsec _kernel policy

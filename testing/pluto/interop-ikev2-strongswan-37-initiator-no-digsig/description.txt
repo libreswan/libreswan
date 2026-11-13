@@ -6,4 +6,5 @@ specified in RFC 7427.
 
 Authentication is successful with RSA-SHA1 (old style rsa)
 
-
+note: this test case might fail now with more modern systems that
+no longer allow SHA1

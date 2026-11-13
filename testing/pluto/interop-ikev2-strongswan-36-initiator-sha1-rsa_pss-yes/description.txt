@@ -5,4 +5,6 @@ This tests libreswan as server accepting only rsa-sha1 (v1.5) strongswan
 using rsa_pss = true which strongwan upstream claims would fall back to
 old method.
 
+note: this test case might fail now with more modern systems that
+no longer allow SHA1
 
