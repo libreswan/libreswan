@@ -6,47 +6,47 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add negotiationshunt=
-"negotiationshunt=": added oriented IKEv2 connection
+"negotiationshunt=": added oriented IKEv2 permanent connection
 west #
  ipsec add negotiationshunt=passthrough
-"negotiationshunt=passthrough": added oriented IKEv2 connection
+"negotiationshunt=passthrough": added oriented IKEv2 permanent connection
 west #
  ipsec add negotiationshunt=drop
-"negotiationshunt=drop": added oriented IKEv2 connection
+"negotiationshunt=drop": added oriented IKEv2 permanent connection
 west #
  ipsec add negotiationshunt=hold
 warning: "negotiationshunt=hold": "negotiationshunt=hold" implemented as "drop"
-"negotiationshunt=hold": added oriented IKEv2 connection
+"negotiationshunt=hold": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=
-"failureshunt=": added oriented IKEv2 connection
+"failureshunt=": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=none
-"failureshunt=none": added oriented IKEv2 connection
+"failureshunt=none": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=passthrough
-"failureshunt=passthrough": added oriented IKEv2 connection
+"failureshunt=passthrough": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=drop
-"failureshunt=drop": added oriented IKEv2 connection
+"failureshunt=drop": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=hold
 warning: "failureshunt=hold": "failureshunt=hold" implemented as "drop"
-"failureshunt=hold": added oriented IKEv2 connection
+"failureshunt=hold": added oriented IKEv2 permanent connection
 west #
  ipsec add failureshunt=reject
 warning: "failureshunt=reject": "failureshunt=reject" implemented as "drop"
-"failureshunt=reject": added oriented IKEv2 connection
+"failureshunt=reject": added oriented IKEv2 permanent connection
 west #
  ipsec add type=drop
-"type=drop": added oriented drop connection
+"type=drop": added oriented drop permanent connection
 west #
  ipsec add type=reject
 warning: "type=reject": "type=reject" implemented as "drop"
-"type=reject": added oriented drop connection
+"type=reject": added oriented drop permanent connection
 west #
  ipsec add type=passthrough
-"type=passthrough": added oriented passthrough connection
+"type=passthrough": added oriented passthrough permanent connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(DROP\).*/\1 \2/p' | sort -u
 "failureshunt=drop":   policy: DROP

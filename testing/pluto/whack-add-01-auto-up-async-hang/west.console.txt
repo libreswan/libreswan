@@ -22,7 +22,7 @@ west #
 PATH/libexec/ipsec/add --config /etc/ipsec.conf --ctlsocket /run/pluto/pluto.ctl --auto=up --asynchronous base
 west #
  ipsec start --asynchronous base
-"base": added oriented IKEv2 connection
+"base": added oriented IKEv2 permanent connection
 "base" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
  ipsec delete base
@@ -32,7 +32,7 @@ west #
  # try synchronously; should eventually detach
 west #
  ipsec add --auto=up base
-"base": added oriented IKEv2 connection
+"base": added oriented IKEv2 permanent connection
 "base" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "base" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "base" #2: IKE_SA_INIT_I: 5 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message

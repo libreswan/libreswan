@@ -49,7 +49,7 @@ conn hostkey
 	leftrsasigkey=0s<<RAW-PUBKEY#2>>
 west #
  ipsec add hostkey
-"hostkey": added oriented IKEv1 connection
+"hostkey": added oriented IKEv1 permanent connection
 west #
  ipsec up hostkey # sanitize-retransmits
 "hostkey" #1: initiating IKEv1 Main Mode connection

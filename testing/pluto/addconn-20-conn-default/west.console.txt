@@ -9,10 +9,10 @@ west #
 initdone
 west #
  ipsec add first
-"first": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
+"first": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
  ipsec add second
-"second": added unoriented IKEv2 connection (neither left=2.3.4.5 nor right=5.6.7.8 match an interface)
+"second": added unoriented IKEv2 permanent connection (neither left=2.3.4.5 nor right=5.6.7.8 match an interface)
 west #
  # conn second should inherit the conn %default values with 3des-sha1
 west #
@@ -30,7 +30,7 @@ west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #
  ipsec add cert-allow
-"cert-allow": added oriented IKEv2 connection
+"cert-allow": added oriented IKEv2 permanent connection
 west #
  echo done
 done

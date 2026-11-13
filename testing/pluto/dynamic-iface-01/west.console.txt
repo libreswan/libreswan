@@ -7,13 +7,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-"west-east": added oriented IKEv1 connection
+"west-east": added oriented IKEv1 permanent connection
 west #
  ipsec auto --add float-east
-"float-east": added unoriented IKEv1 connection (neither left=192.1.2.66 nor right=192.1.2.23 match an interface)
+"float-east": added unoriented IKEv1 permanent connection (neither left=192.1.2.66 nor right=192.1.2.23 match an interface)
 west #
  ipsec auto --add west-float
-"west-float": added oriented IKEv1 connection
+"west-float": added oriented IKEv1 permanent connection
 west #
  echo "initdone"
 initdone
@@ -41,7 +41,7 @@ west #
 listening for IKE messages
 adding interface eth1 192.1.2.66:UDP/500
 adding interface eth1 192.1.2.66:UDP/4500 (NAT)
-"float-east": oriented IKEv1 connection (local: left=192.1.2.66 remote: right=192.1.2.23)
+"float-east": oriented IKEv1 permanent connection (local: left=192.1.2.66 remote: right=192.1.2.23)
 "west-float": connection matches both left 192.1.2.45%eth1 and right 192.1.2.66%eth1
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
@@ -73,7 +73,7 @@ ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using
 "float-east" #4: ESP traffic information: in=0B out=0B
 "float-east" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
-"west-float": oriented IKEv1 connection (local: left=192.1.2.45 remote: right=192.1.2.66)
+"west-float": oriented IKEv1 permanent connection (local: left=192.1.2.45 remote: right=192.1.2.66)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #

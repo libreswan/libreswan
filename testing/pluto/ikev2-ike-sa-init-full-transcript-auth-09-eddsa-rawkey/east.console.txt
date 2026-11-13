@@ -50,7 +50,7 @@ conn hostkey
 	lefteddsakey=0s<<RAW-PUBKEY#2>>
 east #
  ipsec add hostkey
-"hostkey": added oriented IKEv2 connection
+"hostkey": added oriented IKEv2 permanent connection
 east #
  ipsec showstates | grep full-transcript-auth
 #1: "hostkey":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
