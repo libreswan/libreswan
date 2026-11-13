@@ -1,5 +1,8 @@
 # Strongswan sanitizer
 
+# happens with namespace tests when ipsec _kernel policy for strongswan fails grep
+/^sed: couldn't flush stdout: Broken pipe$/d
+
 / strongswan status$/ b match-strongswan
 / strongswan status / b match-strongswan
 / strongswan statusall / b match-strongswan
