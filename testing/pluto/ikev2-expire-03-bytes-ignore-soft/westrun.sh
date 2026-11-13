@@ -1,5 +1,5 @@
 ipsec whack --impair ignore_soft_expire
-ipsec auto --up west
+ipsec up west # sanitize-retransmits
 
 # First take the SA up-to, but not over, the limit by spraying the
 # peer with ping packets.

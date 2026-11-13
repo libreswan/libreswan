@@ -1,4 +1,4 @@
-ipsec auto --up west
+ipsec up west # sanitize-retransmits
 
 : ==== cut ====
 ip -s xfrm state

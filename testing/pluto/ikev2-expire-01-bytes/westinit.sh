@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add west
+ipsec add west
 # confirm max bytes for IPsec SA is set
 ipsec status |grep ipsec_max_bytes
 echo "initdone"
