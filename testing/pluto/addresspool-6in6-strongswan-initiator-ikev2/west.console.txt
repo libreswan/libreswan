@@ -63,7 +63,7 @@ Bypass LAN 2001:db8:0:1::/64:  2001:db8:0:1::/64 === 2001:db8:0:1::/64 PASS
 Bypass LAN 2001:db8:1:2::/64:  2001:db8:1:2::/64 === 2001:db8:1:2::/64 PASS
 Bypass LAN fe80::/64:  fe80::/64 === fe80::/64 PASS
 Bypass LAN 2001:db8:0:3:1::/128:  2001:db8:0:3:1::/128 === 2001:db8:0:3:1::/128 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
         west[1]: ESTABLISHED XXX second ago, 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
 rw-eastnet-ipv6{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 rw-eastnet-ipv6{1}:   2001:db8:0:3:1::/128 === 2001:db8:0:2::/64

@@ -71,7 +71,7 @@ road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
       client[1]: ESTABLISHED XXX second ago, 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
       client{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
       client{1}:   192.0.1.254/32 === 192.0.2.0/24
