@@ -6,34 +6,34 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn--default
-"addconn--default": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--default": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--both
-"addconn--both": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--both": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--rfc
-"addconn--rfc": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--rfc": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--drafts
-"addconn--drafts": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--drafts": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--none
-"addconn--none": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--none": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--default                      --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--default": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--default": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--both    --ikev1-natt both    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--both": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--both": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--rfc     --ikev1-natt rfc     --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--rfc": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--rfc": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--drafts  --ikev1-natt drafts  --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--drafts": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--drafts": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--none    --ikev1-natt none    --encrypt --ikev1 --ipv4 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--none": added unoriented IKEv1 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--none": added unoriented IKEv1 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(ikev1-method:\)[ ]*\([^ ;]*\).*/\1 \2 \3/p' | sort
 "addconn--both": ikev1-method: rfc+drafts

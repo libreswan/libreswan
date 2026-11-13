@@ -12,7 +12,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add westnet-eastnet-ipcomp
-"westnet-eastnet-ipcomp": added oriented IKEv2 connection
+"westnet-eastnet-ipcomp": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone

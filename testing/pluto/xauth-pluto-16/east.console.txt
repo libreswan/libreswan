@@ -23,7 +23,7 @@ east #
  # this should succeed
 east #
  ipsec add modecfg-east-21
-"modecfg-east-21": added oriented IKEv1 connection
+"modecfg-east-21": added oriented IKEv1 template connection
 east #
  # these should fail due to overlapping address pools
 east #

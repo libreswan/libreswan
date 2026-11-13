@@ -11,7 +11,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add road-right
-"road-right": added oriented IKEv2 connection
+"road-right": added oriented IKEv2 permanent connection
 road #
  ipsec up road-right
 "road-right" #1: initiating IKEv2 connection to 192.1.2.23 (right.testing.libreswan.org) using UDP
