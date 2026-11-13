@@ -58,7 +58,7 @@ road #
 Shunted Connections:
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
 Bypass LAN 192.1.33.0/24:  192.1.33.0/24 === 192.1.33.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
    road-east[1]: ESTABLISHED XXX second ago, 192.1.3.209[192.1.3.209]...192.1.2.23[east]
    road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
    road-east{1}:   198.18.66.10/32 === 192.0.2.0/24
@@ -120,7 +120,7 @@ road #
  strongswan status
 Shunted Connections:
 Bypass LAN 192.1.33.0/24:  192.1.33.0/24 === 192.1.33.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
    road-east[1]: ESTABLISHED XXX second ago, 192.1.33.222[192.1.3.209]...192.1.2.23[east]
    road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
    road-east{1}:   198.18.66.10/32 === 192.0.2.0/24
@@ -128,9 +128,11 @@ road #
  ipsec _kernel state
 src 192.1.33.222 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 192.1.2.23 dst 192.1.33.222
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 road #
  ipsec _kernel policy
@@ -169,7 +171,7 @@ road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.1.33.0/24:  192.1.33.0/24 === 192.1.33.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
    road-east[1]: ESTABLISHED XXX second ago, 192.1.33.222[192.1.3.209]...192.1.2.23[east]
    road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
    road-east{1}:   198.18.66.10/32 === 192.0.2.0/24

@@ -33,8 +33,7 @@ west #
 up
 west #
  swanctl --terminate --ike westnet-eastnet-ikev2 --loglevel 0
-[IKE] IKE_SA westnet-eastnet-ikev2[2] rekeyed between 192.1.2.45[west]...192.1.2.23[east]
-[IKE] deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
+[IKE] deleting IKE_SA westnet-eastnet-ikev2[3] between 192.1.2.45[west]...192.1.2.23[east]
 [IKE] IKE_SA deleted
 terminate completed successfully
 west #
@@ -49,6 +48,6 @@ west #
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (0 up, 0 connecting):
+Security Associations (0 total, 0 connecting):
   none
 west #

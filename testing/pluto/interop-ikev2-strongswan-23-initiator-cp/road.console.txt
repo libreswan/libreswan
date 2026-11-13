@@ -12,8 +12,7 @@ road #
 road #
  # See https://github.com/libreswan/libreswan/issues/2635
 road #
- test -r PATH/sbin/resolvconf && mv -v PATH/sbin/resolvconf{,.tmp}
-renamed 'PATH/sbin/resolvconf' -> 'PATH/sbin/resolvconf.tmp'
+ test -r PATH/sbin/resolvconf && mv PATH/sbin/resolvconf{,.tmp}
 road #
  ../../guestbin/strongswan-start.sh
 loaded ike secret 'ike-@east@road'
@@ -22,8 +21,7 @@ no pools found, 0 unloaded
 loaded connection 'roadnet-eastnet-ikev2'
 successfully loaded 1 connections, 0 unloaded
 road #
- test -r PATH/sbin/resolvconf.tmp && mv -v PATH/sbin/resolvconf{.tmp,}
-renamed 'PATH/sbin/resolvconf.tmp' -> 'PATH/sbin/resolvconf'
+ test -r PATH/sbin/resolvconf.tmp && mv PATH/sbin/resolvconf{.tmp,}
 road #
  echo "initdone"
 initdone

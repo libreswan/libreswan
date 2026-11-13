@@ -5,7 +5,7 @@ nic #
  ../../guestbin/simple-http-server.sh OUTPUT 80
 Serving HTTP on 0.0.0.0 port 80 ...
 nic #
- test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
+ test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
 nic #
- test -r /tmp/pluto.log && ipsec crlutil -L
+ test -r /run/pluto/pluto.ctl && ipsec crlutil -L
 nic #

@@ -1,5 +1,8 @@
 # Strongswan sanitizer
 
+# happens with namespace tests when ipsec _kernel policy for strongswan fails grep
+/^sed: couldn't flush stdout: Broken pipe$/d
+
 / strongswan status$/ b match-strongswan
 / strongswan status / b match-strongswan
 / strongswan statusall / b match-strongswan
@@ -72,7 +75,9 @@ b end-strongswan
   s/server requested EAP_MD5 authentication.*$/server requested EAP_MD5 authentication XXX/
   s/server requested EAP_TLS authentication.*$/server requested EAP_TLS authentication (id 0xXX)/
 
+  # support different versions of libcurl output
   s/Failed to connect to nic.testing.libreswan.org port.*$/Failed to connect to nic.testing.libreswan.org XXX/
+  s/Failed to connect to nic.testing.libreswan.org\( port\|:\).*$/Failed to connect to nic.testing.libreswan.org XXX/
 
   # strip out our own changing vendor id
   s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/
