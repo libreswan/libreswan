@@ -936,15 +936,6 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       second_unique_ke->fqn);
 			return false;
 #endif
-		case IKEv2:
-			/*
-			 * IKEv2, only implements one KE algorithm for Child SAs.
-			 */
-			proposal_error(parser, "more than one IKEv2 %s Key Exchange algorithm (%s, %s) requires unimplemented CREATE_CHILD_SA INVALID_KE",
-				       parser->protocol->name,
-				       first_unique_ke->fqn,
-				       second_unique_ke->fqn);
-			return false;
 		default:
 			/* ignore */
 			break;

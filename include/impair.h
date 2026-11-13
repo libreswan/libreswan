@@ -219,6 +219,7 @@ struct impair {
 	enum impair_emit v1_ipsec_delete_payload;
 
 	struct impair_unsigned v2_delete_protoid;
+	struct impair_unsigned v2n_invalid_ke;
 	struct impair_unsigned v2n_rekey_sa_protoid;
 	struct impair_unsigned v2_proposal_protoid;
 

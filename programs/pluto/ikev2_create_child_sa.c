@@ -773,7 +773,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!prep_v2_child_for_request(larval_child)) {
+	if (larval_child->sa.st_v2_invalid_ke_retries == 0 &&
+	    !prep_v2_child_for_request(larval_child)) {
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
@@ -1091,7 +1092,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_OK; /* IKE */
 	}
 
-	if (!prep_v2_child_for_request(larval_child)) {
+	if (larval_child->sa.st_v2_invalid_ke_retries == 0 &&
+	    !prep_v2_child_for_request(larval_child)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2258,13 +2260,23 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (ike->sa.st_oakley.ta_dh == NULL) {
+	const struct ke_desc *sent_ke =
+		(larval_child->sa.st_sa_kind_when_established == CHILD_SA ?
+		 larval_child->sa.st_pfs_kem : larval_child->sa.st_oakley.ta_dh);
+	if (sent_ke == NULL) {
 		name_buf nb, xb;
 		llog(RC_LOG, larval_child->sa.logger,
 		     "%s failed with error notification %s response but no KE was sent",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_name_short(&ikev2_notification_names, error, &nb));
-		return STF_FATAL;
+		return STF_OK;
+	}
+
+	if (notify->payload.v2n.isan_spisize != 0 ||
+	    pbs_left(&notify->pbs) != sizeof(uint16_t)) {
+		llog(RC_LOG, larval_child->sa.logger,
+		     "ignoring malformed INVALID_KE_PAYLOAD response");
+		return STF_OK;
 	}
 
 	struct pbs_in invalid_ke_pbs = notify->pbs;
@@ -2280,11 +2292,11 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 		     str_name_short(&ikev2_notification_names, error, &nb),
 		     str_diag(d));
 		pfree_diag(&d);
-		return STF_FATAL;
+		return STF_OK;
 	}
 
 	pstats(invalidke_recv_s, sk.sk_kem);
-	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
+	pstats(invalidke_recv_u, sent_ke->ikev2_alg_id);
 
 	name_buf nb, sgb, xb;
 	llog(RC_LOG, larval_child->sa.logger,
@@ -2292,8 +2304,47 @@ static stf_status process_v2_CREATE_CHILD_SA_v2N_INVALID_KE_PAYLOAD(struct ike_s
 	     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 	     str_name_short(&ikev2_notification_names, error, &nb),
 	     str_enum_short(&ikev2_trans_type_ke_names, sk.sk_kem, &sgb),
-	     ike->sa.st_oakley.ta_dh->common.fqn);
-	return STF_OK; /* let IKE stumble on */
+	     sent_ke->common.fqn);
+	if (larval_child->sa.st_sa_kind_when_established != CHILD_SA) {
+		return STF_OK;
+	}
+
+	if (sk.sk_kem == IKEv2_KE_NONE ||
+	    sk.sk_kem == sent_ke->ikev2_alg_id ||
+	    !ikev2_proposals_include_kem(larval_child->sa.st_v2_create_child_sa_proposals,
+				       sk.sk_kem)) {
+		llog(RC_LOG, larval_child->sa.logger,
+		     "not retrying CREATE_CHILD_SA: suggested KE is unchanged or not acceptable");
+		return STF_OK;
+	}
+
+	if (larval_child->sa.st_v2_invalid_ke_retries >= MAXIMUM_INVALID_KE_RETRANS) {
+		llog(RC_LOG, larval_child->sa.logger,
+		     "not retrying CREATE_CHILD_SA: too many INVALID_KE_PAYLOAD responses");
+		return STF_OK;
+	}
+
+	name_buf ignore;
+	const struct ke_desc *new_ke = ikev2_ke_desc(sk.sk_kem, &ignore);
+	passert(new_ke != NULL);
+	bool rekey = larval_child->sa.st_v2_rekey_pred != SOS_NOBODY;
+	/* Keep the SPI and proposals, but regenerate the KE and nonce. */
+	larval_child->sa.st_v2_invalid_ke_retries++;
+	larval_child->sa.st_pfs_kem = new_ke;
+	dh_local_secret_delref(&larval_child->sa.st_dh_local_secret, HERE);
+	free_chunk_content(&larval_child->sa.st_gi);
+	restart_v2_child_sa(larval_child);
+	event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &larval_child->sa);
+	/* Finish this response before the crypto callback queues the next exchange. */
+	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+
+	llog(RC_LOG, larval_child->sa.logger, "retrying CREATE_CHILD_SA with suggested %s",
+	     new_ke->common.fqn);
+	submit_ke_and_nonce(&larval_child->sa, &larval_child->sa, NULL, new_ke,
+			    (rekey ? queue_v2_CREATE_CHILD_SA_rekey_child_request :
+			     queue_v2_CREATE_CHILD_SA_new_child_request),
+			    /*detach_whack*/false, HERE);
+	return STF_OK;
 }
 
 stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
@@ -2307,9 +2358,6 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		/* XXX: drop everything on the floor */
 		return STF_INTERNAL_ERROR;
 	}
-
-        pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
-
 
 	/*
 	 * There _should_ be an error notification.
@@ -2342,6 +2390,13 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		llog(RC_LOG, (*larval_child)->sa.logger, "state transition '%s' failed",
 		     (*larval_child)->sa.st_v2_transition->story);
 	}
+
+	if (*larval_child == NULL) {
+		/* INVALID_KE submitted crypto for another attempt. */
+		return status;
+	}
+
+	pstat_sa_failed(&(*larval_child)->sa, REASON_TRAFFIC_SELECTORS_FAILED);
 
 	/*
 	 * If LARVAL_CHILD is rekeying (replacing) a Child SA, also

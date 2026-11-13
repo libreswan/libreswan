@@ -1,0 +1,3 @@
+Retry CREATE_CHILD_SA with DH20 after initially sending DH19, both when
+creating a second Child SA and when rekeying the IKE_AUTH Child SA.
+The IKE SA uses MODP2048 so checking its KE instead of the Child KE fails.

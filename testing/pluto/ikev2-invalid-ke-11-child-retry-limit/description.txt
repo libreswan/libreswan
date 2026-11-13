@@ -1,0 +1,2 @@
+Alternate DH19 and DH20 suggestions until the three-retry limit is reached.
+The established IKE and Child SAs survive, and a subsequent request succeeds.
