@@ -47,6 +47,16 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 			    int wstatus, shunk_t output,
 			    struct logger *logger);
 
+static void add_crl_fetch_request(asn1_t issuer_dn,
+				  shunk_t request_url,
+				  struct logger *logger);
+static bool add_crl_fetch_requests_for_issuer(asn1_t issuer_dn,
+					      struct logger *logger);
+static bool add_crl_fetch_requests_for_issuer_cert(asn1_t issuer_dn,
+						   CERTCertificate *cert,
+						   PLArenaPool *arena,
+						   struct logger *logger);
+
 static struct crl_distribution_point *crl_distribution_queue = NULL;
 
 struct crl_distribution_point {
@@ -159,27 +169,23 @@ static void unlocked_append_distribution_points(asn1_t issuer_dn, CERTCrlDistrib
 	}
 }
 
-static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *cert, struct logger *logger)
+void add_crl_fetch_request(asn1_t issuer_dn,
+			   shunk_t request_url,
+			   struct logger *logger)
 {
-	SECItem crls;
-	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
-				   &crls) != SECSuccess) {
-		ldbg_nss_error(logger, "finding CRL distribution points using CERT_FindCertExtension() failed");
-		return NULL;
+	if (add_crl_fetch_requests_for_issuer(issuer_dn, logger)) {
+		return;
 	}
 
-	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena, &crls);
-	if (dps == NULL) {
-		ldbg_nss_error(logger, "decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed");
-		return NULL;
+	if (request_url.len > 0) {
+		unlocked_append_distribution_point(issuer_dn, request_url);
+		return;
 	}
 
-	return dps;
+	ldbg(logger, "CRL: no distribution points or URL available for new fetch request");
 }
 
-static
-void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
-			   struct logger *logger)
+bool add_crl_fetch_requests_for_issuer(asn1_t issuer_dn, struct logger *logger)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -190,29 +196,53 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	PASSERT(logger, handle != NULL);
 	SECItem issuer_secitem = same_shunk_as_secitem(issuer_dn, siBuffer);
-	CERTCertificate *ca = CERT_FindCertByName(handle, &issuer_secitem); /* must free */
+
+	CERTCertificate *ca =
+		CERT_FindCertByName(handle, &issuer_secitem); /*must free; no early return */
 	if (ca == NULL) {
 		llog_nss_error(RC_LOG, logger, "error finding CA to add to fetch request");
-		return;
+		return true/*give up*/;
 	}
 
-	CERTCrlDistributionPoints *request_dps = get_cert_distribution_points(ca, logger);
-	if (request_dps == NULL && request_url.len == 0) {
-		ldbg(logger, "CRL: no distribution point available for new fetch request");
-		CERT_DestroyCertificate(ca);
-		return;
+	/* no early return enganged */
+
+	/*
+	 * Allocate and use a scratch buffer to store the distribution
+	 * points.  Must be freed.
+	 */
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE); /*must free; no early return*/
+	PASSERT(logger, arena != NULL);
+	bool ok = add_crl_fetch_requests_for_issuer_cert(issuer_dn, ca, arena, logger);
+
+	PORT_FreeArena(arena, PR_FALSE); /* contract met */
+	CERT_DestroyCertificate(ca); /* contract met */
+	return ok;
+}
+
+bool add_crl_fetch_requests_for_issuer_cert(asn1_t issuer_dn,
+					    CERTCertificate *cert,
+					    PLArenaPool *arena,
+					    struct logger *logger)
+{
+	SECItem crls = {0}; /* must free; no early return */
+	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
+				   &crls) != SECSuccess) {
+		ldbg_nss_error(logger, "finding CRL distribution points using CERT_FindCertExtension() failed");
+		return NULL;
 	}
 
-	ldbg(logger, "CRL: appending Crl fetch request");
-	/* now add the distribution point */
+	/* no early return enganged */
+
+	/* stored in ARENA */
+	CERTCrlDistributionPoints *request_dps = CERT_DecodeCRLDistributionPoints(arena, &crls);
 	if (request_dps != NULL) {
+		/* now add the distribution point */
 		unlocked_append_distribution_points(issuer_dn, request_dps);
-	} else {
-		unlocked_append_distribution_point(issuer_dn, request_url);
+		/* no early return */
 	}
 
-	/* clean up */
-	CERT_DestroyCertificate(ca);
+	SECITEM_FreeItem(&crls, PR_FALSE/*only free .data*/); /* contract met */
+	return (request_dps != NULL);
 }
 
 void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
