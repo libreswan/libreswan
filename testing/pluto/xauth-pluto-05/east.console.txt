@@ -12,6 +12,9 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for-pluto.sh --match '#2: IPsec SA established tunnel mode'
+"modecfg-road-eastnet-psk"[1] 192.1.3.194 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=use3}
+east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.3.194
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
