@@ -50,9 +50,9 @@ IMPAIR: "nss-cert-crl" #1: retransmit so timing out SA (may retry)
 "nss-cert-crl" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert-crl" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
- test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
+ test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
 west #
- test -r /tmp/pluto.log && ipsec crlutil -L
+ test -r /run/pluto/pluto.ctl && ipsec crlutil -L
 CRL names                                CRL Type
 mainca                                   CRL  
 west #

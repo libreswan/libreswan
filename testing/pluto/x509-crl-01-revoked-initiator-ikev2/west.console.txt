@@ -48,9 +48,9 @@ west #
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert-crl" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
- test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
+ test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
 west #
- test -r /tmp/pluto.log && ipsec crlutil -L
+ test -r /run/pluto/pluto.ctl && ipsec crlutil -L
 CRL names                                CRL Type
 mainca                                   CRL  
 west #

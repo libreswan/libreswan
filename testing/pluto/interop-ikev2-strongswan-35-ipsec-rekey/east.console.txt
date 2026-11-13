@@ -42,9 +42,9 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 east #
- if test -r /tmp/charon.log ; then strongswan status ; fi
+ if test -r /run/strongswan/charon.ctl ; then strongswan status ; fi
 east #
- if test -r /tmp/pluto.log ; then ipsec connectionstatus ; fi
+ if test -r /run/pluto/pluto.ctl ; then ipsec connectionstatus ; fi
 Connection list:
  
 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
