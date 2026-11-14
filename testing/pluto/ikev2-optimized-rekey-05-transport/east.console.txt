@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add transport-optimized-rekey
+"transport-optimized-rekey": added oriented IKEv2 connection
+east #
+ ipsec connectionstatus transport-optimized-rekey
+"transport-optimized-rekey": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
+"transport-optimized-rekey":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
+"transport-optimized-rekey":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"transport-optimized-rekey":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"transport-optimized-rekey":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"transport-optimized-rekey":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"transport-optimized-rekey":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"transport-optimized-rekey":   sec_label:unset;
+"transport-optimized-rekey":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
+"transport-optimized-rekey":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"transport-optimized-rekey":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"transport-optimized-rekey":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"transport-optimized-rekey":   policy: IKEv2+PSK+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"transport-optimized-rekey":   v2-auth-hash-policy: none;
+"transport-optimized-rekey":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"transport-optimized-rekey":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"transport-optimized-rekey":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
+"transport-optimized-rekey":   sendca: all; our sendcert: always; their sendcert: always;
+"transport-optimized-rekey":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
+"transport-optimized-rekey":   nat-traversal: encapsulation:auto; keepalive:20s
+"transport-optimized-rekey":   routing: unrouted;
+"transport-optimized-rekey":   reqid: REQID;
+"transport-optimized-rekey":   conn serial: $1;
+"transport-optimized-rekey":   ESP algorithms: AES_GCM_16-DH19
+east #
+ echo "initdone"
+initdone
+east #

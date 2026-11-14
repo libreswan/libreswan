@@ -1,0 +1,109 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
+destination -I 192.1.2.45 192.1.2.23 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.1.2.23/32 -p icmp -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add transport-optimized-rekey
+"transport-optimized-rekey": added oriented IKEv2 connection
+west #
+ ipsec connectionstatus transport-optimized-rekey
+"transport-optimized-rekey": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"transport-optimized-rekey":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"transport-optimized-rekey":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"transport-optimized-rekey":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"transport-optimized-rekey":   our auth:secret, their auth:secret, our autheap:none, their autheap:none, send-supported-auth-methods:no;
+"transport-optimized-rekey":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"transport-optimized-rekey":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"transport-optimized-rekey":   sec_label:unset;
+"transport-optimized-rekey":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
+"transport-optimized-rekey":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"transport-optimized-rekey":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"transport-optimized-rekey":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"transport-optimized-rekey":   policy: IKEv2+PSK+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"transport-optimized-rekey":   v2-auth-hash-policy: none;
+"transport-optimized-rekey":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"transport-optimized-rekey":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"transport-optimized-rekey":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"transport-optimized-rekey":   sendca: all; our sendcert: always; their sendcert: always;
+"transport-optimized-rekey":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
+"transport-optimized-rekey":   nat-traversal: encapsulation:auto; keepalive:20s
+"transport-optimized-rekey":   routing: unrouted;
+"transport-optimized-rekey":   reqid: REQID;
+"transport-optimized-rekey":   conn serial: $1;
+"transport-optimized-rekey":   ESP algorithms: AES_GCM_16-DH19
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up transport-optimized-rekey
+"transport-optimized-rekey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"transport-optimized-rekey" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"transport-optimized-rekey" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
+"transport-optimized-rekey" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"transport-optimized-rekey" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(OPTIMIZED_REKEY_SUPPORTED),IDr,AUTH,SA,TSi,TSr,N(USE_TRANSPORT_MODE)}
+"transport-optimized-rekey" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"transport-optimized-rekey" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ # with pfs-info the first rekey is optimized; neither end sends
+west #
+ # USE_TRANSPORT_MODE but the mode is inherited
+west #
+ ipsec whack --rekey-child --name transport-optimized-rekey
+"transport-optimized-rekey" #3: initiating optimized rekey to replace Child SA #2 using IKE SA #1
+"transport-optimized-rekey" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"transport-optimized-rekey" #3: initiator rekeyed Child SA #2 using #1 (optimized rekey); IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 DPD=passive}
+"transport-optimized-rekey" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"transport-optimized-rekey" #2: ESP traffic information: in=64B out=64B
+west #
+ ../../guestbin/wait-for.sh --match '#3: initiator rekeyed Child SA #2' -- cat /tmp/pluto.log
+"transport-optimized-rekey" #3: initiator rekeyed Child SA #2 using #1 (optimized rekey); IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 DPD=passive}
+west #
+ ipsec whack --rekey-child --name transport-optimized-rekey
+"transport-optimized-rekey" #4: initiating optimized rekey to replace Child SA #3 using IKE SA #1
+"transport-optimized-rekey" #4: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #1 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"transport-optimized-rekey" #4: initiator rekeyed Child SA #3 using #1 (optimized rekey); IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 DPD=passive}
+"transport-optimized-rekey" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"transport-optimized-rekey" #3: ESP traffic information: in=0B out=0B
+west #
+ ../../guestbin/wait-for.sh --match '#4: initiator rekeyed Child SA #3' -- cat /tmp/pluto.log
+"transport-optimized-rekey" #4: initiator rekeyed Child SA #3 using #1 (optimized rekey); IPsec transport [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-DH19 DPD=passive}
+west #
+ # confirm transport mode is still used after the rekeys
+west #
+ ipsec _kernel state | grep mode
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ ipsec trafficstatus
+#4: "transport-optimized-rekey", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #

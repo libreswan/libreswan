@@ -259,6 +259,7 @@ struct child_config {
 	uint32_t metric;		/* metric for tunnel routes */
 	uint16_t mtu;			/* mtu for tunnel routes */
 	bool ipcomp;
+	bool optimized_rekey;		/* negotiate omitting SA/TS payloads when rekeying */
 
 	struct config_iptfs {
 		bool enabled;

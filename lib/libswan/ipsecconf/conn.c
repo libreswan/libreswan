@@ -98,6 +98,7 @@ static const struct keyword_def config_conn_keyword[] = {
   KWS("ppk", LEMPTY, KWS_PPK),
   KWS("ppk-ids", LEMPTY, KWS_PPK_IDS),
   KWS("intermediate", LEMPTY, KWS_INTERMEDIATE),
+  KWS("optimized-rekey", LEMPTY, KWS_OPTIMIZED_REKEY),
   KWS("esn", LEMPTY, KWS_ESN),
   KWS("decap-dscp", LEMPTY, KWS_DECAP_DSCP),
   KWS("encap-dscp", LEMPTY, KWS_ENCAP_DSCP),
