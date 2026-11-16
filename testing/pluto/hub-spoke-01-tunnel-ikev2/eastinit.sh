@@ -1,7 +1,9 @@
 /testing/guestbin/swan-prep --nokeys
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add northnet-westnet-ipv4-psk
-ipsec auto --up northnet-westnet-ipv4-psk
-ipsec auto --status
+
+ipsec add westnet-northnet-ipv4-psk
+ipsec add northnet-westnet-ipv4-psk
+
 echo "initdone"

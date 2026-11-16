@@ -267,7 +267,6 @@ kvmplutotest	ikev2-48-nat-cp-start			wip	github:518
 kvmplutotest	ikev2-48-nat-cp-nondefault		good
 kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
 kvmplutotest	ikev2-48-nat-cp-two-servers		good
-kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-53-clean-pending			good
 kvmplutotest	ikev2-59-multiple-acquires-alias	wip
@@ -582,7 +581,8 @@ kvmplutotest	ddos-01-ikev2				wip	non-deterministic
 kvmplutotest	ikev2-switchnat-01			good
 kvmplutotest	ikev1-switchnat-01			good
 
-kvmplutotest	ikev1-hub-spoke 			good
+kvmplutotest	hub-spoke-01-tunnel-ikev1		good
+kvmplutotest	hub-spoke-01-tunnel-ikev2 		good
 
 kvmplutotest	ikev1-hostpair-01			good
 kvmplutotest	ikev2-hostpair-01			good

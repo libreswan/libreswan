@@ -1,0 +1,6 @@
+This is a hub-and-spoke tunnel test using IKEv1.
+
+The subnet behind west can ping the subnet behind north.  via east,
+which is the hub.
+
+<westnet>-west->east->north
