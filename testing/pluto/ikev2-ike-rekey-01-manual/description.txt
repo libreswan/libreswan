@@ -1,0 +1,1 @@
+Test manual IKE SA rekey, using CREATE_CHILD_SA, RFC 7296 #1.3.2 

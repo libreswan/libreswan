@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
+ ipsec add west
 "west": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -20,7 +20,7 @@ initdone
 west #
  # IKE #1 CHILD #2
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -32,16 +32,12 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-west #
- # why?
-west #
- sleep 13
 west #
  # IKE #3 CHILD #2
 west #
- ipsec whack --rekey-ike --name west
+ ipsec whack --rekey-ike --name west # sanitize-retransmits
 "west" #3: initiating rekey to replace IKE SA #1 using IKE SA #1
 "west" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "west" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}
@@ -50,7 +46,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  ipsec showstates
@@ -58,13 +54,9 @@ west #
 #2: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=2^63B 
 #3: "west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
- # why?
-west #
- sleep 21
-west #
  # IKE #4 CHILD #2
 west #
- ipsec whack --rekey-ike --name west
+ ipsec whack --rekey-ike --name west # sanitize-retransmits
 "west" #4: initiating rekey to replace IKE SA #3 using IKE SA #3
 "west" #4: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
 "west" #4: initiator rekeyed IKE SA #3 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}
@@ -73,12 +65,15 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
+ ipsec trafficstatus
+#2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+west #
  ipsec showstates
 #2: "west":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
 #2: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=252B ESPout=252B ESPmax=2^63B 
 #4: "west":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  ipsec showstates

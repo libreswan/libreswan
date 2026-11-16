@@ -913,8 +913,8 @@ kvmplutotest	ikev2-expire-02-packets		good
 kvmplutotest	ikev2-expire-03-bytes-ignore-soft			good
 kvmplutotest	ikev2-expire-04-ipcomp		good
 kvmplutotest	ikev2-child-dual-asym-01	good
-kvmplutotest	ikev2-ike-rekey-01		good
-kvmplutotest	ikev2-ike-rekey-02		good
+kvmplutotest	ikev2-ike-rekey-01-manual	good
+kvmplutotest	ikev2-ike-rekey-02-both-async	good
 kvmplutotest	ikev2-ike-rekey-03		good
 kvmplutotest	ikev2-ike-rekey-04		good
 kvmplutotest	ikev2-ike-rekey-05		good
