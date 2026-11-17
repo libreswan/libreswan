@@ -132,12 +132,12 @@ static void show_one_client_brief(struct show *s,
 			jam_end_host(buf, c, that->host);
 		}
 
-		jam_string(buf, "\tfrom ");
+		jam_string(buf, " from ");
 		jam_end_host(buf, c, this->host);
 		jam_string(buf, " to ");
 		jam_end_host(buf, c, that->host);
 		jam_humber_uintmax(buf, " (", get_child_bytes(c, DIRECTION_INBOUND), "B");
-		jam_humber_uintmax(buf, "/", get_child_bytes(c, DIRECTION_OUTBOUND), "B)\t");
+		jam_humber_uintmax(buf, "/", get_child_bytes(c, DIRECTION_OUTBOUND), "B) ");
 
 		jam_string(buf, c->name);
 		jam(buf, ", reqid="PRI_REQID, pri_reqid(c->child.reqid));
