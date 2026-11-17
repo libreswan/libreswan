@@ -6,19 +6,19 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 west #
- ipsec auto --add float-east
+ ipsec add float-east
 "float-east": added unoriented IKEv1 connection (neither left=192.1.2.66 nor right=192.1.2.23 match an interface)
 west #
- ipsec auto --add west-float
+ ipsec add west-float
 "west-float": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west-east
+ ipsec up west-east # sanitize-retransmits
 "west-east" #1: initiating IKEv1 Main Mode connection
 "west-east" #1: sent Main Mode request
 "west-east" #1: sent Main Mode I2
@@ -46,9 +46,11 @@ adding interface eth1 192.1.2.66:UDP/4500 (NAT)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ipsec auto --up float-east #retransmits
+ ipsec up float-east # sanitize-retranmits
 "float-east" #3: initiating IKEv1 Main Mode connection
 "float-east" #3: sent Main Mode request
+"float-east" #3: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+"float-east" #3: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_I1
 "float-east" #3: sent Main Mode I2
 "float-east" #3: sent Main Mode I3
 "float-east" #3: Peer ID is FQDN: '@east'
@@ -60,7 +62,9 @@ west #
 west #
  ../../guestbin/ip.sh address del 192.1.2.66/24 dev eth1
 west #
- # filter the error, it sometimes changes which network error happens (22 vs 101)
+ # filter the error, it sometimes changes which network error happens
+west #
+ # (22 vs 101)
 west #
  ipsec listen | sed "s/failed in delete notify.*$/failed in delete notify [...]/"
 listening for IKE messages
@@ -77,15 +81,9 @@ ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ipsec auto --up west-float #retransmits
+ ipsec up west-float # should fail # sanitize-retransmits
 "west-float" #5: initiating IKEv1 Main Mode connection
 "west-float" #5: sent Main Mode request
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 1 second for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
 "west-float" #5: STATE_MAIN_I1: 30 second timeout exceeded after 6 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 "west-float" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-float" #5: deleting ISAKMP SA (MAIN_I1) and NOT sending notification

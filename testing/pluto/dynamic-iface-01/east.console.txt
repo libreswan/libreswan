@@ -6,13 +6,13 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 east #
- ipsec auto --add float-east
+ ipsec add float-east
 "float-east": added oriented IKEv1 connection
 east #
- ipsec auto --add west-float
+ ipsec add west-float
 "west-float": added unoriented IKEv1 connection (neither left=192.1.2.45 nor right=192.1.2.66 match an interface)
 east #
  echo "initdone"

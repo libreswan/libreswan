@@ -1,3 +1,3 @@
-ipsec whack --trafficstatus
+ipsec trafficstatus
 : ==== tuc ====
-ipsec auto --status
+ipsec status

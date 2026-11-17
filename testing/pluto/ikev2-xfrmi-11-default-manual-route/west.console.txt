@@ -20,14 +20,14 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west
+ ipsec add west
 "west": created ipsec-interface ipsec1@NONE
 "west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up west
+ ipsec up west # sanitize-retransmits
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -42,6 +42,9 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
+ ipsec trafficstatus
+#2: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
  # add route
 west #
  ../../guestbin/ip.sh address add 192.0.1.254/24 dev ipsec1
@@ -50,6 +53,9 @@ west #
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
+west #
+ ipsec trafficstatus
+#2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -61,12 +67,12 @@ west #
  echo done
 done
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  : ==== tuc ====
 west #
- ipsec auto --status
+ ipsec status
 using kernel interface: xfrm
  
 interface lo 127.0.0.1:UDP/4500 (NAT)

@@ -8,17 +8,17 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add north-east-gw
+ ipsec add north-east-gw
 "north-east-gw": created ipsec-interface ipsec1@NONE
 "north-east-gw": added oriented IKEv2 connection
 east #
- ipsec auto --add north-east-sn
+ ipsec add north-east-sn
 "north-east-sn": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 east #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

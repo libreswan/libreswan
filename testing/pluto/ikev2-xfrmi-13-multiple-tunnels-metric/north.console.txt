@@ -8,17 +8,17 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add north-east-gw
+ ipsec add north-east-gw
 "north-east-gw": created ipsec-interface ipsec1@NONE
 "north-east-gw": added oriented IKEv2 connection
 north #
- ipsec auto --add north-east-sn
+ ipsec add north-east-sn
 "north-east-sn": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone
 north #
- ipsec auto --up north-east-gw
+ ipsec up north-east-gw # sanitize-retransmits
 "north-east-gw" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east-gw" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east-gw" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -27,7 +27,7 @@ north #
 "north-east-gw" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "north-east-gw" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
- ipsec auto --up north-east-sn
+ ipsec up north-east-sn # sanitize-retransmits
 "north-east-sn" #3: initiating Child SA using IKE SA #1
 "north-east-sn" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.1.3.33/32===192.0.21.0/24]
 "north-east-sn" #3: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.0.21.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
@@ -41,7 +41,11 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.0.21.254
 up
 north #
- ipsec auto --down north-east-sn
+ ipsec trafficstatus
+#2: "north-east-gw", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#3: "north-east-sn", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+north #
+ ipsec down north-east-sn # sanitize-retransmits
 "north-east-sn": initiating delete of connection's Child SA #3 using IKE SA "north-east-gw" #1
 "north-east-sn": note: IKE SA "north-east-gw" #1 will remain up: required by UP policy; in-use by "north-east-gw" #2
 "north-east-sn" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
@@ -50,16 +54,21 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23
 up
 north #
- ipsec auto --down north-east-gw
+ ipsec trafficstatus
+#2: "north-east-gw", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+north #
+ ipsec down north-east-gw # sanitize-retransmits
 "north-east-gw": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "north-east-gw" #1: sent INFORMATIONAL request to delete IKE SA
 "north-east-gw" #2: ESP traffic information: in=168B out=168B
 "north-east-gw" #1: deleting IKE SA (established IKE SA)
 north #
+ ipsec trafficstatus
+north #
  echo done
 done
 north #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 north #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
