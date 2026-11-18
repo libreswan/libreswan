@@ -12,7 +12,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet
+ ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -20,7 +20,7 @@ initdone
 west #
  # IKE #1 CHILD #2
 west #
- ipsec auto --up westnet-eastnet
+ ipsec up westnet-eastnet # sanitize-retransmits
 "westnet-eastnet" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -32,12 +32,12 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # no liveness probes sent yet
 west #
- ipsec whack --globalstatus | grep total.ike.dpd
+ ipsec globalstatus | grep total.ike.dpd
 total.ike.dpd.sent=0
 total.ike.dpd.recv=0
 total.ike.dpd.replied=0
@@ -48,7 +48,7 @@ west #
 west #
  ipsec whack --liveness --name westnet-eastnet
 west #
- ipsec whack --globalstatus | grep total.ike.dpd
+ ipsec globalstatus | grep total.ike.dpd
 total.ike.dpd.sent=1
 total.ike.dpd.recv=1
 total.ike.dpd.replied=0
@@ -58,10 +58,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
- ipsec whack --globalstatus | grep total.ike.dpd
+ ipsec globalstatus | grep total.ike.dpd
 total.ike.dpd.sent=1
 total.ike.dpd.recv=1
 total.ike.dpd.replied=0

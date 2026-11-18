@@ -1,1 +1,1 @@
-ipsec whack --globalstatus | grep total.ike.dpd
+ipsec globalstatus | grep total.ike.dpd

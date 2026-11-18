@@ -1,3 +1,3 @@
-ipsec whack --trafficstatus
+ipsec trafficstatus
 ../../guestbin/xfrmcheck.sh
 

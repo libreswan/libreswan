@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add named
+ ipsec add named
 "named": adding interface eth1 192.1.2.23:UDP/443 (NAT fixed)
 "named": added oriented IKEv2 connection
 east #
