@@ -1,0 +1,1 @@
+Both west and east have separate-transports=auto.
