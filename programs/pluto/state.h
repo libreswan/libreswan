@@ -83,14 +83,6 @@ struct child_policy {
 #define has_child_policy(POLICY) ((POLICY) != NULL && (POLICY)->is_set)
 
 /*
- * Hard limit on the number of Additional Child SAs per connection (RFC 9611).
- *
- * The sole purpose of this limit is to prevent initiators from exhausting
- * responder resources by creating too many Additional SAs.
- */
-#define MAX_ADDITIONAL_SAS 64
-
-/*
  * Per-resource Child SAs (RFC 9611).
  *
  * RFC 9611 negotiates multiple Child SAs with identical Traffic Selectors,

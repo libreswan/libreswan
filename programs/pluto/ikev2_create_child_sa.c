@@ -963,21 +963,17 @@ uint32_t connection_num_resources(struct connection *c)
 }
 
 /*
- * Maximum number of Additional Child SAs a connection (RFC 9611).
+ * Maximum number of Additional Child SAs per connection (RFC 9611).
  *
- * The limit is derived from the amount of actual resources rather than
- * being a fixed constant. RFC 9611 Section 6 RECOMMENDS to allow at the
- * very least double the number of available resources. The result is
- * still clamped to hard limit MAX_ADDITIONAL_SAS.
+ * RFC 9611 Section 6 RECOMMENDS to allow at the very least double the
+ * number of available resources; the headroom covers the corner case
+ * where, during Child SA rekeying, all the new Additional Child SAs
+ * are created before the old Child SAs are torn down. Requests beyond
+ * the limit are rejected with TS_MAX_QUEUE.
  */
 static uint32_t connection_max_additional_sas(struct connection *c)
 {
-	uint32_t num_resources = connection_num_resources(c);
-	uint32_t limit = num_resources * 2;
-	if (limit > MAX_ADDITIONAL_SAS) {
-		limit = MAX_ADDITIONAL_SAS;
-	}
-	return limit;
+	return connection_num_resources(c) * 2;
 }
 
 /*
@@ -992,7 +988,7 @@ static uint32_t connection_max_additional_sas(struct connection *c)
 static uint32_t assign_least_loaded_resource(struct connection *c, uint32_t sa_index)
 {
 	uint32_t num_resources = connection_num_resources(c);
-	bool used[MAX_ADDITIONAL_SAS] = {false};
+	bool *used = alloc_things(bool, num_resources, "used resource IDs");
 
 	/* Mark which resource IDs are in use for this connection */
 	struct state_filter sf = {
@@ -1015,9 +1011,11 @@ static uint32_t assign_least_loaded_resource(struct connection *c, uint32_t sa_i
 	uint32_t resource_id;
 	for (resource_id = 0; resource_id < num_resources; resource_id++) {
 		if (!used[resource_id]) {
+			pfree(used);
 			return resource_id;
 		}
 	}
+	pfree(used);
 
 	/* All resources used - round-robin (normal when multiple SAs per resource) */
 	return (num_resources > 0 ? sa_index % num_resources : 0);
