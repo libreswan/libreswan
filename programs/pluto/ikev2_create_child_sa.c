@@ -1360,6 +1360,22 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
 
 	/*
+	 * Will the Child SA be created or rekeyed using
+	 * IKE_FOLLOWUP_KE?
+	 *
+	 * Only when there's PFS is .st_oakley updated with the
+	 * accepted proposal (and its ADDKEs).
+	 */
+	bool followup_ke = ((larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+			     larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0) &&
+			    larval_child->sa.st_pfs_kem != NULL &&
+			    next_is_ikev2_ike_followup_ke_exchange(larval_child));
+	if (followup_ke &&
+	    !PEXPECT(larval_child->sa.logger, next_ikev2_ike_followup_ke_exchange(larval_child))) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * ??? Should we support fragmenting?  Maybe one day.
 	 *
@@ -1383,8 +1399,28 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 						      request_md, n, HERE);
 	}
 
+	/* send N(ADDITIONAL_KEY_EXCHANGE) if there will be followup-ke exchanges */
+	if (followup_ke) {
+		generate_ikev2_followup_ke_link(larval_child);
+		if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_child, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	if (followup_ke) {
+		/* {REKEY,NEW}_CHILD_R0 -> CHILD_FOLLOWUP_KE_R0 */
+		change_v2_state(&larval_child->sa);
+
+		larval_child->sa.st_v2_ike_followup_ke.keys =
+			table_alloc(struct prf_keys, 0);
+
+		ike->sa.st_v2_ike_followup_ke.larval_sa =
+			ike->sa.st_v2_msgid_windows.responder.wip_sa;
+		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 	}
 
 	return STF_OK; /*IKE*/
@@ -1479,7 +1515,8 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	/*
 	 * Drive the larval Child SA's state machine.
 	 */
-	set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+	/* {REKEY,NEW}_CHILD_I1 -> CHILD_FOLLOWUP_KE_I0 */
+	set_larval_v2_transition(larval_child, &state_v2_CHILD_FOLLOWUP_KE_I0, HERE);
 
 	/* Ni in */
 	if (!accept_v2_nonce(larval_child->sa.logger, response_md,
@@ -1520,6 +1557,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 * success_v2_state_transition(); suspect very similar code
 		 * will appear in the responder.
 		 */
+		initiator_skip_v2_child_followup_ke(larval_child);
 		v2_child_sa_established(ike, larval_child);
 		/* hack; cover all bases; handled by close any whacks? */
 		release_whack(larval_child->sa.logger, HERE);
@@ -1591,12 +1629,39 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 		return STF_OK; /* IKE */
 	}
 
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_child)) {
+		if (!extract_ikev2_followup_ke_link(larval_child, response_md)) {
+			return STF_FATAL;
+		}
+
+		/* {REKEY,NEW}_CHILD_I1 -> CHILD_FOLLOWUP_KE_I0 */
+		change_v2_state(&larval_child->sa);
+
+		/* keys are derived after the last IKE_FOLLOWUP_KE */
+		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
+									 response_md);
+		if (n != v2N_NOTHING_WRONG) {
+			return reject_CREATE_CHILD_SA_response(ike, &larval_child,
+							       response_md, n, HERE);
+		}
+
+		larval_child->sa.st_v2_ike_followup_ke.keys =
+			table_alloc(struct prf_keys, 0);
+
+		ike->sa.st_v2_ike_followup_ke.larval_sa =
+			ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+		return next_v2_exchange(ike, response_md, &v2_IKE_FOLLOWUP_KE_child_exchange, HERE);
+	}
+
 	v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
 								 response_md);
 	if (n != v2N_NOTHING_WRONG) {
 		return reject_CREATE_CHILD_SA_response(ike, &larval_child,
 						       response_md, n, HERE);
 	}
+
+	initiator_skip_v2_child_followup_ke(larval_child);
 
 	/*
 	 * XXX: fudge a state transition.

@@ -1,0 +1,82 @@
+/testing/guestbin/swan-prep --46 --nokey
+Initializing NSS database
+west #
+ ../../guestbin/ip.sh address show eth0 | grep global | sort
+    inet 192.0.1.254/24 scope global eth0
+    inet6 2001:db8:0:1::254/64 scope global
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add west-cuckold
+"west-cuckold": added oriented IKEv2 connection
+west #
+ ipsec add west-cuckoo
+"west-cuckoo": added oriented IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-cuckold # sanitize-retransmits
+"west-cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-cuckold" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-cuckold" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke2=ML_KEM_768 addke4=MODP2048 addke6=ML_KEM_1024}, initiating IKE_INTERMEDIATE
+"west-cuckold" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768}
+"west-cuckold" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE} reassembled from N fragments
+"west-cuckold" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"west-cuckold" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke4=MODP2048}
+"west-cuckold" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
+"west-cuckold" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"west-cuckold" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke6=ML_KEM_1024}
+"west-cuckold" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE} reassembled from N fragments
+"west-cuckold" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"west-cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [198.18.66.0/24===192.0.2.0/24]
+"west-cuckold" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
+west #
+ ipsec up west-cuckoo  # sanitize-retransmits
+"west-cuckoo" #3: initiating Child SA using IKE SA #1
+"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.20.0/24]
+"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128-DH31 addke2=ML_KEM_1024 addke4=DH19 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up 192.0.20.254
+up
+west #
+ ipsec trafficstatus
+#2: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # CREATE_CHILD_SA followed by three IKE_FOLLOWUP_KE exchanges
+west #
+ ipsec whack --rekey-child --name west-cuckoo # sanitize-retransmits
+"west-cuckoo" #4: initiating rekey to replace Child SA #3 using IKE SA #1
+"west-cuckoo" #4: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.20.0/24]
+"west-cuckoo" #4: initiator rekeyed Child SA #3 using #1; IPsec tunnel [198.18.66.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128-DH31 addke2=ML_KEM_1024 addke4=DH19 DPD=passive}
+"west-cuckoo" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"west-cuckoo" #3: ESP traffic information: in=84B out=84B
+west #
+ ipsec whack --rekey-child --name west-cuckold # sanitize-retransmits
+"west-cuckold" #5: initiating rekey to replace Child SA #2 using IKE SA #1
+"west-cuckold" #5: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.2.0/24]
+"west-cuckold" #5: initiator rekeyed Child SA #2 using #1; IPsec tunnel [198.18.66.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128-DH31 addke2=ML_KEM_1024 addke4=DH19 DPD=passive}
+"west-cuckold" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
+"west-cuckold" #2: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up 192.0.20.254
+up
+west #
+ ipsec trafficstatus
+#5: "west-cuckold", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#4: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #

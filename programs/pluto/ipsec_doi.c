@@ -153,6 +153,16 @@ void jam_child_sa_details(struct jambuf *buf,
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_kem != NULL) {
 			jam_string(buf, "-");
 			jam_string(buf, st->st_pfs_kem->common.fqn);
+			/*
+			 * Only when there's PFS is .st_oakley updated
+			 * with the accepted proposal (and its ADDKEs);
+			 * otherwise it is a copy of the IKE SA's.
+			 */
+			FOR_EACH_ITEM(ke, &st->st_oakley.ta_addke) {
+				jam(buf, " addke%d=",
+				    (ke->type - IKEv2_TRANS_TYPE_ADDKE1) + 1);
+				jam_string(buf, ke->kem->common.fqn);
+			}
 		}
 
 		/*

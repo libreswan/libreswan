@@ -105,20 +105,42 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 */
 	PK11SymKey *shared = NULL;
 	if (child->sa.st_pfs_kem != NULL) {
-		ldbgf(DBG_CRYPT, child->sa.logger,
-		      PRI_SO" %s add g^ir to child key %p",
-		      pri_so(child->sa.st_serialno),
-		      child->sa.st_state->name, child->sa.st_dh_shared_secret);
+		if (child->sa.st_v2_ike_followup_ke.keys != NULL) {
+			ldbgf(DBG_CRYPT, child->sa.logger,
+			      PRI_SO" %s add g^ir and %u additional key(s) to child key %p",
+			      pri_so(child->sa.st_serialno),
+			      child->sa.st_state->name,
+			      child->sa.st_v2_ike_followup_ke.keys->len,
+			      child->sa.st_dh_shared_secret);
+		} else {
+			ldbgf(DBG_CRYPT, child->sa.logger,
+			      PRI_SO" %s add g^ir to child key %p",
+			      pri_so(child->sa.st_serialno),
+			      child->sa.st_state->name, child->sa.st_dh_shared_secret);
+		}
 		shared = child->sa.st_dh_shared_secret;
 	}
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(child->sa.st_oakley.ta_prf,
-						   ike->sa.st_skey_d_nss,
-						   shared,
-						   child->sa.st_ni,
-						   child->sa.st_nr,
-						   keymat_len * 2,
-						   child->sa.logger);
+	PK11SymKey *keymat;
+	if (child->sa.st_pfs_kem != NULL &&
+	    child->sa.st_v2_ike_followup_ke.keys != NULL) {
+		keymat = ikev2_IKE_FOLLOWUP_KE_child_sa_keymat(child->sa.st_oakley.ta_prf,
+							       ike->sa.st_skey_d_nss,
+							       shared,
+							       child->sa.st_ni,
+							       child->sa.st_nr,
+							       child->sa.st_v2_ike_followup_ke.keys,
+							       keymat_len * 2,
+							       child->sa.logger);
+	} else {
+		keymat = ikev2_child_sa_keymat(child->sa.st_oakley.ta_prf,
+					       ike->sa.st_skey_d_nss,
+					       shared,
+					       child->sa.st_ni,
+					       child->sa.st_nr,
+					       keymat_len * 2,
+					       child->sa.logger);
+	}
 	PK11SymKey *ikey = key_from_symkey_bytes("initiator to responder key",
 						 keymat, 0, keymat_len,
 						 HERE, child->sa.logger);

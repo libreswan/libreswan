@@ -52,6 +52,9 @@
 #include "crypt_dh.h"
 #include "crypt_kem.h"
 #include "rnd.h"
+#include "routing.h"		/* for connection_establish_child() */
+#include "pending.h"		/* for unpend() */
+#include "ikev2_delete.h"	/* for submit_v2_delete_exchange() */
 
 static ikev2_state_transition_fn process_v2_IKE_FOLLOWUP_KE_rekey_ike_request;
 static ikev2_state_transition_fn process_v2_IKE_FOLLOWUP_KE_rekey_ike_response;
@@ -63,6 +66,16 @@ static ikev2_helper_fn process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_helper;
 static ikev2_resume_fn initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue;
 static ikev2_resume_fn process_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue;
 static ikev2_resume_fn process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_continue;
+
+static ikev2_state_transition_fn process_v2_IKE_FOLLOWUP_KE_child_request;
+static ikev2_state_transition_fn process_v2_IKE_FOLLOWUP_KE_child_response;
+static ikev2_state_transition_fn process_v2_IKE_FOLLOWUP_KE_child_failure_response;
+
+static ikev2_helper_fn process_v2_IKE_FOLLOWUP_KE_child_request_helper;
+static ikev2_helper_fn process_v2_IKE_FOLLOWUP_KE_child_response_helper;
+
+static ikev2_resume_fn process_v2_IKE_FOLLOWUP_KE_child_request_continue;
+static ikev2_resume_fn process_v2_IKE_FOLLOWUP_KE_child_response_continue;
 
 static ikev2_cleanup_fn cleanup_IKE_FOLLOWUP_KE_task;
 
@@ -359,6 +372,17 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_request(struct ike_sa *ike,
 	struct child_sa *larval_ike = ike->sa.st_v2_ike_followup_ke.larval_sa;
 	if (!pexpect(larval_ike != NULL)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * On the wire, an IKE_FOLLOWUP_KE request creating or
+	 * rekeying a Child SA is indistinguishable from one rekeying
+	 * the IKE SA; use the
+	 * larval SA, created by the preceding CREATE_CHILD_SA
+	 * exchange, to tell them apart.
+	 */
+	if (larval_ike->sa.st_sa_kind_when_established == CHILD_SA) {
+		return process_v2_IKE_FOLLOWUP_KE_child_request(ike, null_child, md);
 	}
 
 	if (!validate_ikev2_followup_ke_link(larval_ike, md)) {
@@ -689,6 +713,411 @@ stf_status process_v2_IKE_FOLLOWUP_KE_rekey_ike_response_continue(struct ike_sa 
 
 	return STF_OK;
 }
+
+/*
+ * Create or rekey Child SA using IKE_FOLLOWUP_KE.
+ *
+ * Unlike rekeying the IKE SA, the SKEYSEED isn't involved; once all
+ * the additional key exchanges have completed, the KEYMAT is
+ * computed, from SK_d, g^ir (new), Ni, Nr, and all the collected
+ * SK(n)s, and the Child SA established.
+ */
+
+/*
+ * Initiator: initiate IKE_FOLLOWUP_KE request
+ *
+ * Other than the larval SA being a Child SA, this is the same as
+ * when rekeying the IKE SA.
+ */
+static stf_status initiate_v2_IKE_FOLLOWUP_KE_child_request(struct ike_sa *ike,
+							    struct child_sa *null_child,
+							    struct msg_digest *null_md)
+{
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, null_md == NULL);
+
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	PEXPECT(larval_child->sa.logger, larval_child->sa.st_sa_role == SA_INITIATOR);
+	ldbg(larval_child->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending FOLLOWUP_KE",
+	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
+
+	/* advance to the next followup ke exchange */
+	if (!next_ikev2_ike_followup_ke_exchange(larval_child)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ikev2_task task = {
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_child),
+	};
+
+	/* the KEi and request are the same as for rekeying the IKE SA */
+	submit_ikev2_task(ike, null_md,
+			  clone_thing(task, "initiator task"),
+			  initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request_helper,
+			  initiate_v2_IKE_FOLLOWUP_KE_rekey_ike_request_continue,
+			  cleanup_IKE_FOLLOWUP_KE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+/*
+ * Responder: process IKE_FOLLOWUP_KE request
+ *
+ * This processes an incoming IKE_FOLLOWUP_KE request and sends a
+ * response.  If this isn't the final IKE_FOLLOWUP_KE exchange, a new
+ * link is included in the ADDITIONAL_KEY_EXCHANGE notification;
+ * otherwise the Child SA's keys are derived and the Child SA is
+ * established.
+ */
+stf_status process_v2_IKE_FOLLOWUP_KE_child_request(struct ike_sa *ike,
+						    struct child_sa *null_child,
+						    struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, null_child == NULL);
+
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!validate_ikev2_followup_ke_link(larval_child, md)) {
+		llog(RC_LOG, larval_child->sa.logger, "responder IKE_FOLLOWUP_KE link does not match");
+		LDBG_hunk(larval_child->sa.logger, &larval_child->sa.st_v2_ike_followup_ke.link);
+		return STF_FATAL;
+	}
+
+	struct ikev2_task task = {
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_child),
+		.is_last = !next_is_ikev2_ike_followup_ke_exchange(larval_child),
+	};
+
+	submit_ikev2_task(ike, md,
+			  clone_thing(task, "responder task"),
+			  process_v2_IKE_FOLLOWUP_KE_child_request_helper,
+			  process_v2_IKE_FOLLOWUP_KE_child_request_continue,
+			  cleanup_IKE_FOLLOWUP_KE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_FOLLOWUP_KE_child_request_helper(struct ikev2_task *task,
+							   struct msg_digest *md,
+							   struct logger *logger)
+{
+	if (task->exchange.kem != NULL &&
+	    task->exchange.kem != &ike_alg_ke_none) {
+		shunk_t initiator_ke;
+		if (!extract_v2KE_for_ke(task->exchange.kem, md,
+					 &initiator_ke, logger)) {
+			return STF_FATAL;
+		}
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "ADDKE: responder encapsulating using initiator KE:");
+			LDBG_hunk(logger, &initiator_ke);
+		}
+
+		diag_t d = kem_responder_encapsulate(task->exchange.kem,
+						     initiator_ke,
+						     &task->responder, logger);
+		if (d != NULL) {
+			llog(RC_LOG, logger, "IKE_FOLLOWUP_KE encapsulate failed: %s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+		if (LDBGP(DBG_BASE, logger)) {
+			shunk_t ke = kem_responder_ke(task->responder);
+			LDBG_log(logger, "ADDKE: responder KE:");
+			LDBG_hunk(logger, &ke);
+		}
+	}
+
+	return STF_OK;
+}
+
+stf_status process_v2_IKE_FOLLOWUP_KE_child_request_continue(struct ike_sa *ike,
+							     struct msg_digest *md,
+							     struct ikev2_task *task)
+{
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (task->responder != NULL) {
+		PK11SymKey *new_ke_secret =
+			kem_responder_shared_key(task->responder);
+		new_ke_secret = symkey_addref(larval_child->sa.logger, "new_ke_secret", new_ke_secret);
+		table_grow(larval_child->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
+	}
+
+	if (task->is_last) {
+		/*
+		 * Drive the larval Child SA's state machine.
+		 */
+		set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+
+		ikev2_derive_child_keys(ike, larval_child);
+
+		/* install inbound and outbound SPI info */
+		if (!connection_establish_child(ike, larval_child, HERE)) {
+			/* already logged */
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_TEMPORARY_FAILURE, empty_shunk/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			ike->sa.st_v2_ike_followup_ke.larval_sa = NULL;
+			connection_teardown_child(&larval_child, REASON_DELETED, HERE);
+			return STF_OK; /*IKE*/
+		}
+	}
+
+	struct v2_message response;
+	if (!open_v2_message("followup_ke exchange response",
+			     ike, larval_child->sa.logger,
+			     md/*response*/, ISAKMP_v2_IKE_FOLLOWUP_KE,
+			     reply_buffer, sizeof(reply_buffer), &response,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (task->responder != NULL) {
+		if (!emit_v2KE(kem_responder_ke(task->responder),
+			       task->exchange.kem,
+			       response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		if (!task->is_last) {
+			generate_ikev2_followup_ke_link(larval_child);
+			if (!emit_v2N_ADDITIONAL_KEY_EXCHANGE(larval_child,
+							      response.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+	}
+
+	if (!close_v2_message(&response)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!record_v2_message(&response)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (task->is_last) {
+		ike->sa.st_v2_ike_followup_ke.larval_sa = NULL;
+		/* CHILD_FOLLOWUP_KE_R0 -> ESTABLISHED_CHILD_SA */
+		v2_child_sa_established(ike, larval_child);
+		return STF_OK; /*IKE*/
+	}
+
+	if (!PEXPECT(larval_child->sa.logger, next_ikev2_ike_followup_ke_exchange(larval_child))) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	return STF_OK;
+}
+
+/*
+ * Initiator: process IKE_FOLLOWUP_KE response
+ *
+ * This processes the IKE_FOLLOWUP_KE response from the responder.
+ * If this is the final IKE_FOLLOWUP_KE exchange, the Child SA's keys
+ * are derived and the Child SA is established; otherwise the next
+ * IKE_FOLLOWUP_KE exchange is initiated.
+ */
+stf_status process_v2_IKE_FOLLOWUP_KE_child_response(struct ike_sa *ike,
+						     struct child_sa *null_child,
+						     struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, null_child == NULL);
+
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (next_is_ikev2_ike_followup_ke_exchange(larval_child) &&
+	    !extract_ikev2_followup_ke_link(larval_child, md)) {
+		return STF_FATAL;
+	}
+
+	struct ikev2_task task = {
+		.exchange = current_ikev2_ike_followup_ke_exchange(larval_child),
+		.is_last = !next_is_ikev2_ike_followup_ke_exchange(larval_child),
+	};
+
+	/* for ADDKE decapsulate() */
+	task.initiator = larval_child->sa.st_kem.initiator;
+	larval_child->sa.st_kem.initiator = NULL;
+
+	submit_ikev2_task(ike, md,
+			  clone_thing(task, "initiator task"),
+			  process_v2_IKE_FOLLOWUP_KE_child_response_helper,
+			  process_v2_IKE_FOLLOWUP_KE_child_response_continue,
+			  cleanup_IKE_FOLLOWUP_KE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_FOLLOWUP_KE_child_response_helper(struct ikev2_task *task,
+							    struct msg_digest *md,
+							    struct logger *logger)
+{
+	if (task->initiator != NULL) {
+		shunk_t responder_ke = null_shunk;
+		if (!extract_v2KE_for_ke(task->exchange.kem, md,
+					 &responder_ke, logger)) {
+			return STF_FATAL;
+		}
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
+			LDBG_hunk(logger, &responder_ke);
+		}
+		diag_t d = kem_initiator_decapsulate(task->initiator, responder_ke, logger);
+		if (d != NULL) {
+			llog(RC_LOG, logger, "IKE_FOLLOWUP_KE decapsulate failed: %s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+	}
+
+	return STF_OK;
+}
+
+stf_status process_v2_IKE_FOLLOWUP_KE_child_response_continue(struct ike_sa *ike,
+							      struct msg_digest *md,
+							      struct ikev2_task *task)
+{
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (task->initiator != NULL) {
+		PK11SymKey *new_ke_secret =
+			kem_initiator_shared_key(task->initiator);
+		new_ke_secret = symkey_addref(larval_child->sa.logger, "new_ke_secret", new_ke_secret);
+		table_grow(larval_child->sa.st_v2_ike_followup_ke.keys,
+			   new_ke_secret);
+	}
+
+	if (!task->is_last) {
+		return next_v2_exchange(ike, md, &v2_IKE_FOLLOWUP_KE_child_exchange, HERE);
+	}
+
+	ike->sa.st_v2_ike_followup_ke.larval_sa = NULL;
+
+	/*
+	 * Drive the larval Child SA's state machine.
+	 */
+	set_larval_v2_transition(larval_child, &state_v2_CHILD_FOLLOWUP_KE_I1, HERE);
+	change_v2_state(&larval_child->sa);
+
+	set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+
+	ikev2_derive_child_keys(ike, larval_child);
+
+	/* now install child SAs */
+	if (!connection_establish_child(ike, larval_child, HERE)) {
+		/* already logged; quickly delete this larval SA */
+		unpend(ike, larval_child->sa.st_connection);
+		submit_v2_delete_exchange(ike, larval_child);
+		return STF_OK; /* IKE */
+	}
+
+	if (larval_child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+		ikev2_rekey_expire_predecessor(larval_child, larval_child->sa.st_v2_rekey_pred);
+	}
+
+	v2_child_sa_established(ike, larval_child);
+	/* hack; cover all bases; handled by close any whacks? */
+	release_whack(larval_child->sa.logger, HERE);
+
+	return STF_OK; /* IKE */
+}
+
+/*
+ * Initiator: process IKE_FOLLOWUP_KE error response
+ *
+ * Hand the larval Child SA back to the message window so that the
+ * CREATE_CHILD_SA failure code can clean up.
+ */
+stf_status process_v2_IKE_FOLLOWUP_KE_child_failure_response(struct ike_sa *ike,
+							     struct child_sa *null_child,
+							     struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, null_child == NULL);
+
+	struct child_sa *larval_child = ike->sa.st_v2_ike_followup_ke.larval_sa;
+	if (!pexpect(larval_child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.initiator.wip_sa == NULL);
+	ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child;
+	ike->sa.st_v2_ike_followup_ke.larval_sa = NULL;
+
+	return process_v2_CREATE_CHILD_SA_failure_response(ike, null_child, md);
+}
+
+static const struct v2_transition v2_IKE_FOLLOWUP_KE_child_initiate_transition = {
+	.story = "initiate IKE_FOLLOWUP_KE create or rekey Child SA",
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+	.processor = initiate_v2_IKE_FOLLOWUP_KE_child_request,
+	.llog_success = ldbg_success_ikev2,
+	.timeout_event = EVENT_RETAIN,
+};
+
+/*
+ * There are no responder transitions; the request is
+ * indistinguishable from the one rekeying the IKE SA and is
+ * dispatched by process_v2_IKE_FOLLOWUP_KE_rekey_ike_request().
+ */
+
+static const struct v2_transition v2_IKE_FOLLOWUP_KE_child_response_transition[] = {
+	{ .story = "process IKE_FOLLOWUP_KE create or rekey Child SA response",
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+	  .recv_role = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
+	  .processor = process_v2_IKE_FOLLOWUP_KE_child_response,
+	  .llog_success = ldbg_success_ikev2,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "process IKE_FOLLOWUP_KE create or rekey Child SA failure response",
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads = { .required = v2P(SK), },
+	  .processor  = process_v2_IKE_FOLLOWUP_KE_child_failure_response,
+	  .llog_success = ldbg_success_ikev2,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
+};
+
+const struct v2_exchange v2_IKE_FOLLOWUP_KE_child_exchange = {
+	.type = ISAKMP_v2_IKE_FOLLOWUP_KE,
+	.name = "IKE_FOLLOWUP_KE (Child SA)",
+	.secured = true,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_IKE_FOLLOWUP_KE_child_initiate_transition,
+	.transitions.response = {
+		ARRAY_PTR(v2_IKE_FOLLOWUP_KE_child_response_transition),
+	},
+};
 
 static const struct v2_transition v2_IKE_FOLLOWUP_KE_rekey_ike_initiate_transition = {
 	.story = "initiate IKE_FOLLOWUP_KE rekey IKE SA",

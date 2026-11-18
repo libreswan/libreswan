@@ -95,6 +95,31 @@ void set_larval_v2_transition(struct child_sa *larval,
 }
 
 /*
+ * When creating or rekeying a Child SA without IKE_FOLLOWUP_KE, drive
+ * the larval Child SA's state machine through the IKE_FOLLOWUP_KE
+ * states.
+ */
+
+void initiator_skip_v2_child_followup_ke(struct child_sa *larval_child)
+{
+	if (!PEXPECT(larval_child->sa.logger,
+		     (larval_child->sa.st_state == &state_v2_NEW_CHILD_I1 ||
+		      larval_child->sa.st_state == &state_v2_REKEY_CHILD_I1))) {
+		return;
+	}
+
+	/* {REKEY,NEW}_CHILD_I1 -> CHILD_FOLLOWUP_KE_I0 */
+	change_v2_state(&larval_child->sa);
+
+	/* CHILD_FOLLOWUP_KE_I0 -> CHILD_FOLLOWUP_KE_I1 */
+	set_larval_v2_transition(larval_child, &state_v2_CHILD_FOLLOWUP_KE_I1, HERE);
+	change_v2_state(&larval_child->sa);
+
+	/* CHILD_FOLLOWUP_KE_I1 -> ESTABLISHED_CHILD_SA */
+	set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+}
+
+/*
  * All payloads required by an IKE_AUTH child?
  */
 
@@ -442,6 +467,21 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	ldbg(larval_child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
 	     bool_str(larval_child->sa.st_seen_esp_tfc_padding_not_supported));
 
+	if ((larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+	     larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0) &&
+	    larval_child->sa.st_v2_ike_followup_ke.next_exchange > 0) {
+		/*
+		 * Creating or rekeying the Child SA with
+		 * IKE_FOLLOWUP_KE; only emit the response payloads.
+		 * The keys are derived, and the Child SA established,
+		 * after the last IKE_FOLLOWUP_KE exchange.
+		 */
+		if (!emit_v2_child_response_payloads(ike, larval_child, request_md, sk_pbs)) {
+			return v2N_INVALID_SYNTAX; /* something fatal to IKE (but bogus) */
+		}
+		return v2N_NOTHING_WRONG;
+	}
+
 	ikev2_derive_child_keys(ike, larval_child);
 
 	/*
@@ -476,6 +516,13 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * success_v2_state_transition(); suspect very similar code
 	 * will appear in the initiator.
 	 */
+	if (larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
+	    larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0) {
+		/* {REKEY,NEW}_CHILD_R0 -> CHILD_FOLLOWUP_KE_R0 */
+		change_v2_state(&larval_child->sa);
+		/* CHILD_FOLLOWUP_KE_R0 -> ESTABLISHED_CHILD_SA */
+		set_larval_v2_transition(larval_child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+	}
 	v2_child_sa_established(ike, larval_child);
 
 	return v2N_NOTHING_WRONG;
@@ -955,6 +1002,16 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		child->sa.st_ipcomp.protocol = &ip_protocol_ipcomp;
 	}
 
+	if (child->sa.st_state == &state_v2_CHILD_FOLLOWUP_KE_I0) {
+		/*
+		 * Creating or rekeying the Child SA with
+		 * IKE_FOLLOWUP_KE; the keys are derived, and the
+		 * Child SA established, after the last
+		 * IKE_FOLLOWUP_KE exchange.
+		 */
+		return v2N_NOTHING_WRONG;
+	}
+
 	ikev2_derive_child_keys(ike, child);
 
 	/* now install child SAs */
@@ -1226,9 +1283,10 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	}
 
 	/*
-	 * Drive the larval Child SA's state machine.
+	 * Drive the larval Child SA's state machine.  The IKE_AUTH
+	 * Child SA never uses IKE_FOLLOWUP_KE.
 	 */
-	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
+	set_larval_v2_transition(child, &state_v2_CHILD_FOLLOWUP_KE_I0, HERE);
 
 	/*
 	 * Assume reaching here with an error notification means that
@@ -1346,6 +1404,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	 * will appear in the responder.
 	 */
 
+	initiator_skip_v2_child_followup_ke(child);
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
 	release_whack(child->sa.logger, HERE);
