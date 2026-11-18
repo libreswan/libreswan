@@ -5,15 +5,24 @@
   <listitem>
     <para>
       When using certificates, check whether the IKE peer ID is
-      present as a <literal>subjectAltName</literal>> (SAN) on the
-      peer certificate.  Accepted values are &yes; (the default) or
-      &no;.  This check should only be disabled when intentionally
-      using certificates that do not have their peer ID specified as a
-      SAN on the certificate.  These certificates violate &rfc4945;
+      present as a <literal>subjectAltName</literal> (SAN) on the peer
+      certificate.  Accepted values are &yes; (the default) or &no;.
+      This check should only be disabled when intentionally using
+      certificates that do not have their peer ID specified as a SAN
+      on the certificate.  These certificates violate &rfc4945;
       Section 3.1 Identification Payload, and are normally rejected to
       prevent a compromised host from assuming the IKE identity of
       another host.  The SAN limits the IDs that the peer is able to
       assume.
+    </para>
+    <para>
+      When &authby; is &eaponly;, the connection's ID is compared to
+      the <literal>subjectAltName</literal> (SAN) of the certificate
+      authenticated using EAP.
+    </para>
+    <para>
+      History: Prior to &Libreswan; 5.5, the EAP certificate ID was
+      not checked against the ID.
     </para>
     <para>
       The default is &yes;.
