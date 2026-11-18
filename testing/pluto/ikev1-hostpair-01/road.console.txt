@@ -21,7 +21,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 permanent connection
 road #
  echo "initdone"
 initdone
@@ -72,7 +72,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 permanent connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv4-psk-ikev1 --initiate
 "westnet-eastnet-ipv4-psk-ikev1" #1: initiating IKEv1 Main Mode connection

@@ -11,10 +11,10 @@ west #
  # note order
 west #
  ipsec add a
-"a": added oriented IKEv2 connection
+"a": added oriented IKEv2 permanent connection
 west #
  ipsec add b
-"b": added oriented IKEv2 connection
+"b": added oriented IKEv2 permanent connection
 west #
  # Initiate "a" with all packets blocked.
 west #

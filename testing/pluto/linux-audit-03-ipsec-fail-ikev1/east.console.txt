@@ -9,10 +9,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add ikev1
-"ikev1": added oriented IKEv1 connection
+"ikev1": added oriented IKEv1 permanent connection
 east #
  ipsec add ikev1-aggr
-"ikev1-aggr": added oriented IKEv1 connection
+"ikev1-aggr": added oriented IKEv1 permanent connection
 east #
  echo "initdone"
 initdone
