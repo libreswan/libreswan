@@ -6,10 +6,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2a
+ ipsec add westnet-eastnet-ikev2a
 "westnet-eastnet-ikev2a": added oriented IKEv2 connection
 west #
- ipsec auto --add westnet-eastnet-ikev2b
+ ipsec add westnet-eastnet-ikev2b
 "westnet-eastnet-ikev2b": added oriented IKEv2 connection
 west #
  echo "initdone"
@@ -19,7 +19,7 @@ west #
 west #
  # initial exchange
 west #
- ipsec auto --up westnet-eastnet-ikev2a
+ ipsec up westnet-eastnet-ikev2a # sanitize-retransmits
 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2a" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
@@ -28,20 +28,19 @@ west #
 "westnet-eastnet-ikev2a" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ikev2a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
- # creat-child-sa request. Expected to fail due to firewall
+ # CREATE_CHILD_SA request.  Expected to fail due to firewall we expect
 west #
- # we expect east to re-answer our retransmits
+ # east to re-answer our retransmits drop silently to avoid race
 west #
- # drop silently to avoid race conditions of kernel log
+ # conditions of kernel log
 west #
  iptables -I INPUT -p udp --dport 500 -j DROP
 west #
- ipsec whack --impair timeout_on_retransmit
-west #
- ipsec auto --up westnet-eastnet-ikev2b #retransmits
+ ipsec up westnet-eastnet-ikev2b # expect retransmits
 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [192.0.100.0/24===192.0.200.0/24]
-IMPAIR: "westnet-eastnet-ikev2a" #1: retransmit so timing out SA (may retry)
+"westnet-eastnet-ikev2a" #1: retransmitting new Child SA request; will wait 5 seconds for response
+"westnet-eastnet-ikev2a" #1: ESTABLISHED_IKE_SA: 8 second timeout exceeded after 1 retransmits.  No response (or no acceptable response) to our IKEv2 message
 "westnet-eastnet-ikev2a" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ikev2a" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
@@ -52,10 +51,11 @@ west #
  echo done
 done
 west #
- # should show retransmits on west and replies on east
+ # should show just EAST with SA
 west #
- grep sending /tmp/pluto.log |grep through
-| sending 740 bytes for IKE_SA_INIT request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 433 bytes for IKE_AUTH request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 373 bytes for new Child SA request through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
+ ipsec trafficstatus
+west #
+ # should show retransmits on east
+west #
+ grep '^[^|].* CREATE_CHILD_SA .* retransmit' /tmp/pluto.log
 west #
