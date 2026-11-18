@@ -129,12 +129,26 @@ static const char *const v2_notification_private_range_40960_40960_name[] = {
 #undef S
 };
 
+static const char *const v2_notification_private_range_50206_50206_name[] = {
+#define S(E) [E - v2N_SEPARATE_TRANSPORTS] = #E
+	S(v2N_SEPARATE_TRANSPORTS),	/* 50206 */
+#undef S
+};
+
+static const struct enum_names v2_notification_private_50206_50206_names = {
+	v2N_SEPARATE_TRANSPORTS,
+	v2N_SEPARATE_TRANSPORTS,
+	ARRAY_PTR(v2_notification_private_range_50206_50206_name),
+	"v2N_", /* prefix */
+	NULL,
+};
+
 static const struct enum_names v2_notification_private_40960_40960_names = {
 	v2N_NULL_AUTH,
 	v2N_NULL_AUTH,
 	ARRAY_PTR(v2_notification_private_range_40960_40960_name),
 	"v2N_", /* prefix */
-	NULL,
+	&v2_notification_private_50206_50206_names,
 };
 
 static const struct enum_names v2_notification_status_names = {

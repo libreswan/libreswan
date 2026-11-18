@@ -105,6 +105,7 @@ static const struct keyword_def config_conn_keyword[] = {
   KWS("fragmentation", LEMPTY, KWS_FRAGMENTATION),
   KWS("mobike", LEMPTY, KWS_MOBIKE),
   KWS("ike-sa-init-full-transcript-auth", LEMPTY, KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH),
+  KWS("separate-transports", LEMPTY, KWS_SEPARATE_TRANSPORTS),
   KWS("narrowing", LEMPTY, KWS_NARROWING),
   KWS("pam-authorize", LEMPTY, KWS_PAM_AUTHORIZE),
   KWS("send-redirect", LEMPTY, KWS_SEND_REDIRECT),

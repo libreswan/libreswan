@@ -142,6 +142,7 @@
       &conn.ikepad;
       &conn.mobike;
       &conn.ike-sa-init-full-transcript-auth;
+      &conn.separate-transports;
       &conn.intermediate;
       &conn.esn;
       &conn.decap-dscp;
