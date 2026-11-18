@@ -11,7 +11,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec add labeled
-"labeled": added oriented IKEv2 connection
+"labeled": added oriented IKEv2 labeled-template connection
 road #
  echo "initdone"
 initdone

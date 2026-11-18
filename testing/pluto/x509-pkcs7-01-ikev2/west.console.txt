@@ -15,7 +15,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add ikev2-westnet-eastnet-x509-cr
-"ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 connection
+"ikev2-westnet-eastnet-x509-cr": added oriented IKEv2 permanent connection
 west #
  ipsec whack --impair send_pkcs7_thingie:1 # CERTS
 west #

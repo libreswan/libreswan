@@ -7,10 +7,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add intermediate-fragmentation-no
-"intermediate-fragmentation-no": added oriented IKEv2 connection
+"intermediate-fragmentation-no": added oriented IKEv2 permanent connection
 west #
  ipsec add intermediate-fragmentation-yes
-"intermediate-fragmentation-yes": added oriented IKEv2 connection
+"intermediate-fragmentation-yes": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone

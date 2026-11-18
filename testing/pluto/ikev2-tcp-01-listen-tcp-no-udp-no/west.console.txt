@@ -22,10 +22,10 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add tcp
-"tcp": added oriented IKEv2 connection
+"tcp": added oriented IKEv2 permanent connection
 west #
  ipsec add udp
-"udp": added oriented IKEv2 connection
+"udp": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone
