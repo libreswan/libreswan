@@ -572,6 +572,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
+	/* Send SEPARATE_TRANSPORTS Notify payload */
+	if (c->config->separate_transports != YNA_NO) {
+		if (!emit_v2N(v2N_SEPARATE_TRANSPORTS, request.pbs))
+			return false;
+	}
+
 	/* first check if this IKE_SA_INIT came from redirect
 	 * instruction.
 	 * - if yes, send the v2N_REDIRECTED_FROM
@@ -813,6 +819,21 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
+	ike->sa.st_v2_separate_transports =
+		accept_v2_notification(v2N_SEPARATE_TRANSPORTS,
+				       ike->sa.logger, md,
+				       c->config->separate_transports != YNA_NO);
+
+	if (c->config->separate_transports == YNA_YES &&
+	    !ike->sa.st_v2_separate_transports) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
+		llog_sa(RC_LOG, ike,
+			"separate-transports=yes is required but peer does not support it");
+		return STF_FATAL;
+	}
+
 	/*
 	 * Responder: check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP.
@@ -983,6 +1004,11 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	if (full_transcript_auth_policy(c) != YNA_NO) {
 		if (!emit_v2N(v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH, response.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (ike->sa.st_v2_separate_transports) {
+		if (!emit_v2N(v2N_SEPARATE_TRANSPORTS, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1272,6 +1298,21 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	    !ike->sa.st_v2_full_transcript_auth) {
 		llog_sa(RC_LOG, ike,
 			"ike-sa-init-full-transcript-auth=yes is required but peer does not support it");
+		return STF_FATAL;
+	}
+
+	ike->sa.st_v2_separate_transports =
+		(c->config->separate_transports != YNA_NO &&
+		 md->v2N_status[v2N_status_SEPARATE_TRANSPORTS] != NULL);
+	if (ike->sa.st_v2_separate_transports) {
+		ldbg(ike->sa.logger,
+		     "responder accepted our proposed SEPARATE_TRANSPORTS notification");
+	}
+
+	if (c->config->separate_transports == YNA_YES &&
+	    !ike->sa.st_v2_separate_transports) {
+		llog_sa(RC_LOG, ike,
+			"separate-transports=yes is required but peer does not support it");
 		return STF_FATAL;
 	}
 
