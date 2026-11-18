@@ -1,0 +1,4 @@
+Libreswan initiates a second Child SA and rekeys its IKE_AUTH Child SA
+against strongSwan. Each request initially sends DH19; strongSwan requires
+DH20 and returns INVALID_KE_PAYLOAD. Both retries must establish DH20
+Child SAs under the original IKE SA and pass encrypted traffic.

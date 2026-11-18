@@ -407,6 +407,7 @@ struct impairment impairments[] = {
 	  .value_sparse_names = &impair_emit_names),
 
 	U(v2_delete_protoid, "corrupt the IKEv2 Delete protocol ID"),
+	U(v2n_invalid_ke, "force a Child SA INVALID_KE response suggesting <group>[:<alternate-group>]; use the alternate when the received KE matches the first group"),
 	U(v2n_rekey_sa_protoid, "corrupt the IKEv2 REKEY CHILD notify protocol ID"),
 	U(v2_proposal_protoid, "corrupt the IKEv2 proposal substructure protocol ID"),
 
