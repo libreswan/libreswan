@@ -2136,6 +2136,17 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals)
 	*proposals = NULL;
 }
 
+struct ikev2_proposal *clone_ikev2_proposal_with_remote_spi(const struct ikev2_proposal *proposal,
+							    shunk_t remote_spi)
+{
+	struct ikev2_proposal *clone = clone_bytes(proposal, sizeof(*proposal),
+						   "optimized rekey inherited proposal");
+	passert(remote_spi.len <= sizeof(clone->remote_spi.bytes));
+	clone->remote_spi.size = remote_spi.len;
+	memcpy(clone->remote_spi.bytes, remote_spi.ptr, remote_spi.len);
+	return clone;
+}
+
 void free_ikev2_proposal(struct ikev2_proposal **proposal)
 {
 	if (proposal == NULL || *proposal == NULL) {

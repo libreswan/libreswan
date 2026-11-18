@@ -1,0 +1,12 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) of a Child
+SA that narrowed its traffic selectors.
+
+road (behind NAT) has leftsubnet=0.0.0.0/0, leftmodecfgclient=yes and
+narrowing=yes; east assigns it an address from a pool.  With
+child-sa-pfs-info-supported=yes the Child SA rekeys are optimized, so no TS
+payloads are sent; the rekeyed Child SA has to keep exactly the same, narrowed,
+traffic selectors.
+
+The rekey is initiated from both sides: road, with the single IP, rekeys twice
+(02-road-rekey.sh); then east, the server with the pool, initiates a rekey
+(03-east-rekey.sh) which road, as the responder, handles (04-road-check.sh).

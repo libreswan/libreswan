@@ -1,0 +1,4 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) of the
+IKE SA: both ends have optimized-rekey=yes.  The IKE SA is rekeyed with the SA
+payload replaced by N(OPTIMIZED_REKEY) carrying the new IKE SPI; the Child SA
+moves to the new IKE SA and is then itself rekeyed using an optimized rekey.

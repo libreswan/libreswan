@@ -1,0 +1,4 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt): both ends
+have optimized-rekey=yes and pfs=yes.  The first rekey of the Child SA created
+during IKE_AUTH has to be a regular rekey (no pfs-info), the second rekey is
+optimized: SA and TS are replaced by N(OPTIMIZED_REKEY).

@@ -1,0 +1,86 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke1=ML_KEM_768}, initiating IKE_INTERMEDIATE
+"westnet-eastnet-ikev2" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"westnet-eastnet-ikev2" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE} reassembled from N fragments
+"westnet-eastnet-ikev2" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
+"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(OPTIMIZED_REKEY_SUPPORTED),IDr,AUTH,SA,TSi,TSr}
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ # rekey the IKE SA: optimized
+west #
+ ipsec whack --rekey-ike --name westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #3: initiating optimized rekey to replace IKE SA #1 using IKE SA #1
+"westnet-eastnet-ikev2" #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
+"westnet-eastnet-ikev2" #3: initiator rekeyed IKE SA #1 (optimized rekey) {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke1=ML_KEM_768}
+"westnet-eastnet-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ../../guestbin/wait-for.sh --match '#3: initiator rekeyed IKE SA #1' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2" #3: initiator rekeyed IKE SA #1 (optimized rekey) {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke1=ML_KEM_768}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ # and again
+west #
+ ipsec whack --rekey-ike --name westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #4: initiating optimized rekey to replace IKE SA #3 using IKE SA #3
+"westnet-eastnet-ikev2" #4: sent CREATE_CHILD_SA request to rekey IKE SA #3 (using IKE SA #3)
+"westnet-eastnet-ikev2" #4: initiator rekeyed IKE SA #3 (optimized rekey) {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke1=ML_KEM_768}
+"westnet-eastnet-ikev2" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ../../guestbin/wait-for.sh --match '#4: initiator rekeyed IKE SA #3' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2" #4: initiator rekeyed IKE SA #3 (optimized rekey) {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 ke=DH31 addke1=ML_KEM_768}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec showstates
+#2: "westnet-eastnet-ikev2":500 established Child SA; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
+#2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=252B ESPout=252B ESPmax=2^63B 
+#4: "westnet-eastnet-ikev2":500 established IKE SA; REKEY in XXs; REPLACE in XXs; newest; idle;
+west #
+ ipsec trafficstatus
+#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #

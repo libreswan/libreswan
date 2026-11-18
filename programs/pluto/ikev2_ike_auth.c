@@ -344,6 +344,12 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
+	if (ike->sa.st_connection->config->child.optimized_rekey) {
+		if (!emit_v2N(v2N_OPTIMIZED_REKEY_SUPPORTED, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	/* Notification payload for ticket request */
 	if (ike->sa.st_connection->config->session_resumption) {
 		llog(RC_LOG, ike->sa.logger, "asking for session resume ticket");
@@ -791,6 +797,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 
+	ike->sa.hidden_variables.st_v2_optimized_rekey_supported =
+		accept_v2_notification(v2N_OPTIMIZED_REKEY_SUPPORTED, ike->sa.logger, md,
+				       c->config->child.optimized_rekey);
+
 	bool mobike_accepted =
 		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
 
@@ -1137,6 +1147,11 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 			return STF_INTERNAL_ERROR;
 	}
 
+	if (ike->sa.hidden_variables.st_v2_optimized_rekey_supported) {
+		if (!emit_v2N(v2N_OPTIMIZED_REKEY_SUPPORTED, response.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
 	if (ike->sa.st_ppk_ike_auth_used) {
 		if (!emit_v2N(v2N_PPK_IDENTITY, response.pbs))
 			return STF_INTERNAL_ERROR;
@@ -1381,6 +1396,10 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	ike->sa.st_v2_mobike.enabled =
 		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
+
+	ike->sa.hidden_variables.st_v2_optimized_rekey_supported =
+		accept_v2_notification(v2N_OPTIMIZED_REKEY_SUPPORTED, ike->sa.logger, md,
+				       c->config->child.optimized_rekey);
 
 	return process_v2_IKE_AUTH_response_post_cert_child(ike, md);
 }

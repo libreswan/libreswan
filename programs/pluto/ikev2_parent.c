@@ -178,6 +178,8 @@ void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 	connection_establish_ike(ike, where);
 	schedule_v2_nat_keepalive(ike, where);
 	pstat_sa_established(&ike->sa);
+	/* a later rekey of this IKE SA may be optimized */
+	ike->sa.st_v2_rekey_optimizable = true;
 }
 
 /*

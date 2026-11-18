@@ -143,6 +143,7 @@
       &conn.mobike;
       &conn.ike-sa-init-full-transcript-auth;
       &conn.intermediate;
+      &conn.optimized-rekey;
       &conn.esn;
       &conn.decap-dscp;
       &conn.encap-dscp;

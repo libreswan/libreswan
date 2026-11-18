@@ -1924,7 +1924,10 @@ typedef enum ikev2_notification {
 	v2N_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH = 16447, /* draft-ietf-ipsecme-ikev2-downgrade-prevention */
 	v2N_CHILD_SA_PFS_INFO_SUPPORTED = 16448,	/* draft-ietf-ipsecme-child-pfs-info */
 
-	/* 16449 - 40959 Unassigned */
+	v2N_OPTIMIZED_REKEY_SUPPORTED = 16449,	/* draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt, placeholder: codepoint not yet assigned */
+	v2N_OPTIMIZED_REKEY = 16450,		/* draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt, placeholder: codepoint not yet assigned */
+
+	/* 16451 - 40959 Unassigned */
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 

@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ RUN() { echo " $@" 1>&2 ; "$@" ; }
+west #
+ add() { name=$1 ; expr "${name}" : '.*=$' && shift ; RUN ipsec addconn --name ${name} left=192.1.2.45 right=192.1.2.23 "$@" ; }
+west #
+ # unset, yes and no are accepted
+west #
+ add optimized-rekey=
+16
+ ipsec addconn --name optimized-rekey= left=192.1.2.45 right=192.1.2.23
+"optimized-rekey=": added oriented IKEv2 connection
+west #
+ add optimized-rekey=yes
+0
+ ipsec addconn --name optimized-rekey=yes left=192.1.2.45 right=192.1.2.23 optimized-rekey=yes
+"optimized-rekey=yes": added oriented IKEv2 connection
+west #
+ add optimized-rekey=no
+0
+ ipsec addconn --name optimized-rekey=no left=192.1.2.45 right=192.1.2.23 optimized-rekey=no
+"optimized-rekey=no": added oriented IKEv2 connection
+west #
+ # anything else is rejected
+west #
+ add optimized-rekey=maybe
+0
+ ipsec addconn --name optimized-rekey=maybe left=192.1.2.45 right=192.1.2.23 optimized-rekey=maybe
+"optimized-rekey=maybe": failed to add connection: "optimized-rekey=maybe" is invalid, valid options are "yes", and "no"
+west #

@@ -1,0 +1,8 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) combined
+with child-sa-pfs-info-supported=yes: the optimized rekey is negotiated and,
+as the KE method was negotiated in IKE_AUTH, the first rekey could be optimized.
+
+The initiator (west) first uses the impairment disable_optimized_rekey and
+performs a regular Child SA rekey and a regular IKE SA rekey.  It then removes
+the impairment and performs an optimized Child SA rekey and an optimized IKE SA
+rekey.

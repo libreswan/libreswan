@@ -187,6 +187,8 @@ enum v2N_status {
 	v2N_status_SA_RESOURCE_INFO,
 	v2N_status_TS_MAX_QUEUE,
 	v2N_status_CHILD_SA_PFS_INFO_SUPPORTED,
+	v2N_status_OPTIMIZED_REKEY_SUPPORTED,
+	v2N_status_OPTIMIZED_REKEY,
 	v2N_status_ROOF,
 };
 

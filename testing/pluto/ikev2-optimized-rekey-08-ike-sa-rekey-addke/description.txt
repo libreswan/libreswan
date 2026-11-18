@@ -1,0 +1,4 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) of an IKE
+SA that was negotiated with an additional key exchange (ML-KEM-768, RFC 9370).
+The optimized rekey inherits the proposal, so the CREATE_CHILD_SA exchange is
+followed by an IKE_FOLLOWUP_KE exchange.
