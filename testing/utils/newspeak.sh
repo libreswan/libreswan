@@ -19,8 +19,7 @@ for d in "$@" ; do
 	# drop the auto/whack prefix
 	sed -i \
 	    -e 's/ipsec auto --/ipsec /' \
-	    -e 's/ipsec whack --trafficstatus/ipsec trafficstatus/' \
-	    -e 's/ipsec whack --shuntstatus/ipsec shuntstatus/' \
+	    -e 's/ipsec whack --\([a-z]*\)status/ipsec \1status/' \
 	    $f
 	# this is a common idiom from scripts that predate
 	# connectionstatus
