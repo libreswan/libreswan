@@ -193,6 +193,10 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			jam_string(buf, " full-transcript-auth;");
 		}
 
+		if (!IS_CHILD_SA(st) && st->st_v2_separate_transports) {
+			jam_string(buf, " separate-transports;");
+		}
+
 		/*
 		 * Hunt and peck for events (needs fixing).
 		 *

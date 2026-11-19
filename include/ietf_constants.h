@@ -1932,6 +1932,7 @@ typedef enum ikev2_notification {
 
 	v2N_PRIVATE_FLOOR = 40960,
 	v2N_NULL_AUTH = 40960,
+	v2N_SEPARATE_TRANSPORTS = 50206,	/* draft-ietf-ipsecme-ikev2-reliable-transport-08 */
 
 } v2_notification_t;
 
