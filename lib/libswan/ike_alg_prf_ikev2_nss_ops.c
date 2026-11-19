@@ -40,7 +40,7 @@ static PK11SymKey *prfplus_key_data(const char *target_name,
 				    size_t required_keymat,
 				    struct logger *logger)
 {
-	CK_NSS_IKE_PRF_PLUS_DERIVE_PARAMS ike_prf_plus_params = {
+	CK_IKE2_PRF_PLUS_DERIVE_PARAMS ike_prf_plus_params = {
 		.pSeedData = seed_data.ptr,
 		.ulSeedDataLen = seed_data.len,
 		.prfMechanism = prf_desc->nss.mechanism,
@@ -56,7 +56,7 @@ static PK11SymKey *prfplus_key_data(const char *target_name,
 		.len = sizeof(ike_prf_plus_params),
 	};
 
-	return crypt_derive(key, CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
+	return crypt_derive(key, CKM_IKE2_PRF_PLUS_DERIVE, &params,
 			    target_name, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 			    /*keysize*/required_keymat, /*flags*/0,
 			    HERE, logger);
@@ -87,7 +87,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		is_aes_prf = 1;
 	}
 
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+	CK_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_TRUE,
 		.bRekey = CK_FALSE,
@@ -101,8 +101,8 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	return crypt_derive(ke_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
-			    "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE, CKA_DERIVE,
+	return crypt_derive(ke_secret, CKM_IKE_PRF_DERIVE, &params,
+			    "skeyseed", CKM_IKE2_PRF_PLUS_DERIVE, CKA_DERIVE,
 			    /*keysize*/0, /*flags*/0,
 			    HERE, logger);
 }
@@ -127,7 +127,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 			logger);
 	}
 
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+	CK_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf_desc->nss.mechanism,
 		.bDataAsKey = CK_FALSE,
 		.bRekey = CK_TRUE,
@@ -142,8 +142,8 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-	return crypt_derive(SK_d_old, CKM_NSS_IKE_PRF_DERIVE, &params,
-			    "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE, CKA_DERIVE,
+	return crypt_derive(SK_d_old, CKM_IKE_PRF_DERIVE, &params,
+			    "skeyseed", CKM_IKE2_PRF_PLUS_DERIVE, CKA_DERIVE,
 			    /*key-size*/0, /*flags*/0,
 			    HERE, logger);
 }
@@ -238,7 +238,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 	{
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
 		CK_MECHANISM_TYPE prf_mech = prf_desc->nss.mechanism;
-		CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+		CK_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 			.prfMechanism = prf_mech,
 			.bDataAsKey = CK_FALSE,
 			.bRekey = CK_FALSE,
@@ -251,7 +251,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 			.data = (unsigned char *)&ike_prf_params,
 			.len = sizeof(ike_prf_params),
 		};
-		prf_psk = crypt_derive(psk, CKM_NSS_IKE_PRF_DERIVE, &params,
+		prf_psk = crypt_derive(psk, CKM_IKE_PRF_DERIVE, &params,
 				       "prf(Shared Secret, \"Key Pad for IKEv2\")", prf_mech,
 				       CKA_SIGN, 0/*key-size*/, 0/*flags*/,
 				       HERE, logger);
