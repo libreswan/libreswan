@@ -8,7 +8,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-west
-"east-west": added oriented IKEv2 connection
+"east-west": added oriented IKEv2 permanent connection
 east #
  ipsec auto --up east-west
 "east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP

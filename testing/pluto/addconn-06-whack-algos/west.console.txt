@@ -8,16 +8,16 @@ west #
  # parser---* connections from west.conf loaded
 west #
  ipsec whack --name whack----rsasig      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --rsasig --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack----rsasig": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack----rsasig": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack----ecdsa       --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel --ecdsa  --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack----ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack----ecdsa": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--defaults      --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt --ikev2-allow --ipv4 --to --host 5.6.7.8
-"whack--defaults": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--defaults": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ikev2-default --host 1.2.3.4 --ikefrag-allow --no-esn --pfs --tunnel          --encrypt               --ipv4 --to --host 5.6.7.8
-"whack--ikev2-default": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--ikev2-default": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | grep "policy:" | grep rsasig | grep TUNNEL
 "parser---rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -40,13 +40,13 @@ IKEv2
 IKEv2
 west #
  ipsec whack --name whack--ike-aes_gcm --ike aes_gcm --host 1.2.3.4 --to --host 5.6.7.8
-"whack--ike-aes_gcm": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--ike-aes_gcm": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--esp-aes_gcm --esp aes_gcm --host 1.2.3.4 --to --host 5.6.7.8
-"whack--esp-aes_gcm": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--esp-aes_gcm": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--ah-sha2_256 --ah sha2_256 --host 1.2.3.4 --to --host 5.6.7.8
-"whack--ah-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"whack--ah-sha2_256": added unoriented IKEv2 permanent connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | grep algorithms:
 "whack--ah-sha2_256":   AH algorithms: HMAC_SHA2_256_128

@@ -30,7 +30,7 @@ east #
 east #
  ipsec auto --add westnet-eastnet-ikev2
 warning: "westnet-eastnet-ikev2": "leftauth=secret" overrides "authby=ECDSA"
-"westnet-eastnet-ikev2": added oriented IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 permanent connection
 east #
  echo "initdone"
 initdone

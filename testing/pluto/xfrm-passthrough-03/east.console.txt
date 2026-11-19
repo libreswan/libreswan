@@ -7,17 +7,17 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add west-east-passthrough-a
-"west-east-passthrough-a": added oriented passthrough connection
+"west-east-passthrough-a": added oriented passthrough permanent connection
 east #
  ipsec add west-east-passthrough-b
-"west-east-passthrough-b": added oriented passthrough connection
+"west-east-passthrough-b": added oriented passthrough permanent connection
 east #
  ipsec route west-east-passthrough-a
 east #
  ipsec route west-east-passthrough-b
 east #
  ipsec add west-east
-"west-east": added oriented IKEv2 connection
+"west-east": added oriented IKEv2 permanent connection
 east #
  ../../guestbin/echo-server.sh -tcp -4 7 -daemon
 listening on IPv4 TCP port 7
