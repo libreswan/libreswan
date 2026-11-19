@@ -3,6 +3,9 @@ See also https://libreswan.org/
 v5.5 (unreleased)
 * Security
   - remove build support for DH2 and DH22 (was already disabled) [Paul]
+  - fix CVE-2026-115846 - IKE_INTERMEDIATE addke bypass
+    http://libreswan.org/security/CVE-2026-115846
+    [Astrid Passot, Andrew]
 * IKEv2:
   - fix Redirect error logging [Paul de Lange (GenDigital), Chaitanya Bhardwaj, #3107]
   - support auth=digsig and selecting auth-from-key [RuiL, #2708, #2503, #3068]

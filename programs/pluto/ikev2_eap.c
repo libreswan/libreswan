@@ -53,6 +53,7 @@
 #include "ikev2_states.h"
 #include "ikev2_auth.h"
 #include "ikev2_notification.h"
+#include "ikev2_ike_intermediate.h"	/* for next_is_ikev2_ike_intermediate_exchange() */
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_EAP_request;
 
@@ -442,6 +443,15 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		llog(IMPAIR_STREAM, ike->sa.logger,
 		     "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
+	}
+
+	if (next_is_ikev2_ike_intermediate_exchange(ike)) {
+		llog(RC_LOG, ike->sa.logger,
+		     "authentication failed, expecting IKE_INTERMEDIATE request");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
 	}
 
 	/*
