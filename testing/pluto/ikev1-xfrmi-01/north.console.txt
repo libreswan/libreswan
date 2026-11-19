@@ -16,14 +16,14 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add north
+ ipsec add north
 "north": created ipsec-interface ipsec1@NONE
 "north": added oriented IKEv1 connection
 north #
  echo "initdone"
 initdone
 north #
- ipsec auto --up north
+ ipsec up north # sanitize-retransmits
 "north" #1: initiating IKEv1 Main Mode connection
 "north" #1: sent Main Mode request
 "north" #1: sent Main Mode I2
@@ -44,7 +44,8 @@ north #
 north #
  # tcpdump -s 0 -n -w /tmp/ipsec1.pcap -i ipsec1 & echo $! > /tmp/tcpdump.pid
 north #
- sleep  2
+ ../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat OUTPUT/east.pluto.log
+"northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -58,7 +59,7 @@ X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 north #
  #kill -9 $(cat /tmp/tcpdump.pid)
 north #
- sleep 2
+ #sleep 2
 north #
  #cp /tmp/ipsec1.pcap OUTPUT/
 north #
@@ -74,6 +75,6 @@ north #
  echo done
 done
 north #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #

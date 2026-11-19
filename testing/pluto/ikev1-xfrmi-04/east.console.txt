@@ -16,11 +16,11 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add northnet-eastnet
+ ipsec add northnet-eastnet
 "northnet-eastnet": created ipsec-interface ipsec1@NONE
 "northnet-eastnet": added oriented IKEv1 connection
 east #
- ipsec auto --add westnet-eastnet
+ ipsec add westnet-eastnet
 "westnet-eastnet": added oriented IKEv1 connection
 east #
  echo "initdone"
@@ -32,7 +32,7 @@ east #
  ../../guestbin/wait-for-pluto.sh '#4: IPsec SA established'
 "northnet-eastnet" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@north'
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 east #

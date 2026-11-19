@@ -1,15 +1,20 @@
-ipsec auto --up north
+ipsec up north # sanitize-retransmits
+
 # comments below are to understand/explore the basics : what is going on
 # ../../guestbin/ip.sh link add ipsec1 type xfrm if_id 1 dev eth0
 # ../../guestbin/ip.sh link set ipsec1 up
 # ../../guestbin/ip-route.sh add 192.0.2.0/24 dev ipsec1 src 198.18.66.254
 # tcpdump -s 0 -n -w /tmp/ipsec1.pcap -i ipsec1 & echo $! > /tmp/tcpdump.pid
-sleep  2
+
+../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat OUTPUT/east.pluto.log
 ../../guestbin/ping-once.sh --up 192.0.2.254
 ../../guestbin/ip.sh -s link show ipsec1
+
 #kill -9 $(cat /tmp/tcpdump.pid)
-sleep 2
+#sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
+
 ../../guestbin/ip.sh rule show
 ../../guestbin/ip-route.sh show table 50
+
 echo done

@@ -12,10 +12,9 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec up westnet-northnet-ipv4-psk
+ ipsec up westnet-northnet-ipv4-psk # sanitize-retransmits
 "westnet-northnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 "westnet-northnet-ipv4-psk" #1: sent Main Mode request
-"westnet-northnet-ipv4-psk" #1: discarding packet received during asynchronous work (DNS or crypto) in STATE_MAIN_I1
 "westnet-northnet-ipv4-psk" #1: sent Main Mode I2
 "westnet-northnet-ipv4-psk" #1: sent Main Mode I3
 "westnet-northnet-ipv4-psk" #1: Peer ID is FQDN: '@east'
