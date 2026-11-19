@@ -94,6 +94,8 @@ EOF
 #
 # Packages needed for testing are only installed to avoid drift.
 #
+# Unfortunately, uninstalled packages get the latest version.
+#
 
 packages_for_testing() {
     cat <<EOF | awk '{print $1}'
@@ -129,8 +131,8 @@ socat
 softhsm-devel			# used by soft tokens
 sshpass				# used by ansible-playbook
 strace
-strongswan
-strongswan-sqlite
+https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.7/4.fc44/x86_64/strongswan-6.0.7-4.fc44.x86_64.rpm
+https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.7/4.fc44/x86_64/strongswan-sqlite-6.0.7-4.fc44.x86_64.rpm
 systemtap			# performance profiling
 tar
 tcpdump
@@ -158,12 +160,12 @@ dnf upgrade -y $(packages_for_build)
 
 
 :
-: Force an upgrade of strongSwan and its dependencies
+: Force an upgrade of libgcrypt, above strongSwan needs newer version.
 :
 : something broken means that latest strongswan does not pull in
 : latest libgcrypt
 
-dnf upgrade -y libgcrypt strongswan
+dnf upgrade -y libgcrypt
 
 
 :
