@@ -104,33 +104,12 @@ stf_status initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 	}
 
 	/*
-	 * XXX: just assume an SA that isn't established is
-	 * larval.
-	 *
-	 * Would be nice to have something indicating larval,
-	 * established, zombie.
-	 *
-	 * Should use .llog_success, but that code doesn't
-	 * know which Child SA the exchange was for.  Hence,
-	 * pretend that it was sent when it hasn't (but will
-	 * real soon, promise!)
+	 * Keep whack attached to the Child SA until the Delete
+	 * response arrives; otherwise ipsec up can return before
+	 * the peer has deleted its Child SA.  If no response arrives,
+	 * the IKE SA's retransmit timeout deletes the family.
 	 */
 	ike->sa.st_v2_msgid_windows.initiator.dead_sa = child->sa.st_serialno;
-	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
-	if (!established) {
-		/*
-		 * Normally the responder would include it's
-		 * outgoing SA's SPI, and this end would use
-		 * that to find / delete the child.  Here,
-		 * however, the SA isn't established so we've
-		 * no clue as to what the responder will send
-		 * back.  If anything.
-		 *
-		 * Hence signal the Child SA that it should
-		 * delete itself.
-		 */
-		event_force(EVENT_v2_DISCARD, &child->sa);
-	}
 
 	return STF_OK;
 }

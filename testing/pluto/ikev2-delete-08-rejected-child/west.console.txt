@@ -1,0 +1,77 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add rejected-child
+"rejected-child": added oriented IKEv2 connection
+west #
+ ipsec whack --impair revival
+west #
+ echo initdone
+initdone
+west #
+ ipsec whack --impair drop_inbound:3
+IMPAIR: recording all inbound messages
+IMPAIR: will drop inbound message 3
+west #
+ ipsec up rejected-child
+"rejected-child" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"rejected-child" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"rejected-child" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA2_256 ke=DH19}, initiating IKE_AUTH
+"rejected-child" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"rejected-child" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"rejected-child" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"rejected-child" #2: policy dictates Transport Mode, but peer requested Tunnel Mode
+"rejected-child" #1: response for Child SA #2 was rejected with NO_PROPOSAL_CHOSEN; initiating delete of Child SA (IKE SA will remain UP)
+"rejected-child" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
+IMPAIR: "rejected-child" #2: drop inbound message 3
+"rejected-child" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+IMPAIR: "rejected-child" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+ERROR: "rejected-child" #2: netlink response for XFRM_MSG_GETSA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+ERROR: "rejected-child" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+west #
+ ipsec showstates
+#1: "rejected-child":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
+west #
+ echo done
+done
+west #
+ ipsec down rejected-child
+"rejected-child": initiating delete of connection's IKE SA #1
+"rejected-child" #1: sent INFORMATIONAL request to delete IKE SA
+"rejected-child" #1: deleting IKE SA (established IKE SA)
+west #
+ # Inbound messages 1-3 are IKE_SA_INIT, IKE_AUTH, and Child Delete; 4 is IKE Delete.
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair drop_inbound:7
+IMPAIR: will drop inbound message 7
+west #
+ ipsec up rejected-child
+"rejected-child" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"rejected-child" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"rejected-child" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA2_256 ke=DH19}, initiating IKE_AUTH
+"rejected-child" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP} [192.1.2.45/32===192.1.2.23/32]
+"rejected-child" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"rejected-child" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"rejected-child" #4: policy dictates Transport Mode, but peer requested Tunnel Mode
+"rejected-child" #3: response for Child SA #4 was rejected with NO_PROPOSAL_CHOSEN; initiating delete of Child SA (IKE SA will remain UP)
+"rejected-child" #4: sent INFORMATIONAL request to delete larval Child SA using IKE SA #3
+IMPAIR: "rejected-child" #4: drop inbound message 7
+"rejected-child" #4: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+IMPAIR: "rejected-child" #4: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
+ERROR: "rejected-child" #4: netlink response for XFRM_MSG_GETSA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+ERROR: "rejected-child" #4: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
+west #
+ ipsec showstates
+west #
+ ipsec _kernel state
+west #
+ echo done
+done
+west #

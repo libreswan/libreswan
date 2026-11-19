@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add rejected-child
+"rejected-child": added oriented IKEv2 connection
+east #
+ ipsec whack --impair revival
+east #
+ echo initdone
+initdone
+east #
+ ipsec showstates
+#1: "rejected-child":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
+east #
+ ipsec _kernel state
+east #
+ echo done
+done
+east #

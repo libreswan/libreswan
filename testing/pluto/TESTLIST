@@ -225,6 +225,7 @@ kvmplutotest	ikev2-delete-04				good
 kvmplutotest	ikev2-delete-05-sa-start		good
 kvmplutotest	ikev2-delete-06-start-both		good
 kvmplutotest	ikev2-delete-07-larval-child		good
+kvmplutotest	ikev2-delete-08-rejected-child	good	github/3151
 
 # performance
 #
