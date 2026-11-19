@@ -2,11 +2,15 @@ test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
 west #
  test -f PATH/libexec/ipsec/pluto && PLUTOBIN="PATH/libexec/ipsec/pluto"
 west #
- # default CLI output is colourised with no way to disable
+ # Default CLI output is colourised with no way to disable ulgh!
 west #
- # ulgh!
+ # Hence, format in json.
 west #
- checksec --format=json --file=${PLUTOBIN} | jq -M
+ # Zap "fortaify-able", seems to be a moving target.  "fortify" is
+west #
+ # compiler sensitive but changes less often.
+west #
+ checksec --format=json --file=${PLUTOBIN} | jq -M | sed -e '/fortify-able/ s/:.*/: .../'
 {
   "PATH/libexec/ipsec/pluto": {
     "relro": "full",
@@ -18,7 +22,7 @@ west #
     "symbols": "yes",
     "fortify_source": "partial",
     "fortified": "9",
-    "fortify-able": "22"
+    "fortify-able": ...
   }
 }
 west #
