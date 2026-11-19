@@ -12,8 +12,7 @@ road #
 road #
  # See https://github.com/libreswan/libreswan/issues/2635
 road #
- test -r PATH/sbin/resolvconf && mv -v PATH/sbin/resolvconf{,.tmp}
-renamed 'PATH/sbin/resolvconf' -> 'PATH/sbin/resolvconf.tmp'
+ test -r PATH/sbin/resolvconf && mv PATH/sbin/resolvconf{,.tmp}
 road #
  ../../guestbin/strongswan-start.sh
 loaded ike secret 'ike-'
@@ -22,8 +21,7 @@ no pools found, 0 unloaded
 loaded connection 'client'
 successfully loaded 1 connections, 0 unloaded
 road #
- test -r PATH/sbin/resolvconf.tmp && mv -v PATH/sbin/resolvconf{.tmp,}
-renamed 'PATH/sbin/resolvconf.tmp' -> 'PATH/sbin/resolvconf'
+ test -r PATH/sbin/resolvconf.tmp && mv PATH/sbin/resolvconf{.tmp,}
 road #
  echo "initdone"
 initdone
@@ -71,7 +69,7 @@ road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
       client[1]: ESTABLISHED XXX second ago, 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
       client{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
       client{1}:   192.0.1.254/32 === 192.0.2.0/24

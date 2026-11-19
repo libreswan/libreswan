@@ -44,7 +44,7 @@ west #
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
@@ -63,11 +63,13 @@ src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid 1 mode tunnel
@@ -102,16 +104,16 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid 1 mode tunnel
 west #
- if test -r /tmp/charon.log ; then strongswan status ; fi
+ if test -r /run/strongswan/charon.ctl ; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (1 up, 0 connecting):
+Security Associations (1 total, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  DELETED, TUNNEL, reqid 1
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 westnet-eastnet-ikev2{2}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{2}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- if test -r /tmp/pluto.log ; then ipsec connectionstatus ; fi
+ if test -r /run/pluto/pluto.ctl ; then ipsec connectionstatus ; fi
 west #

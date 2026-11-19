@@ -63,3 +63,4 @@ b start-kernel
 
 /^grep: \/tmp\/pluto.log: No data available/ d
 /^cat: \/tmp\/pluto.log: No data available/ d
+
