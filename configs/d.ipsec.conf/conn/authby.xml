@@ -151,6 +151,12 @@
 	    payload); cannot be combined with other authentication
 	    methods.
 	  </para>
+	  <para>
+	    When &require-id-on-certificate; is &yes;, the
+	    connection's ID is also compared to the
+	    <literal>subjectAltName</literal> (SAN) of the certificate
+	    authenticated using EAP.
+	  </para>
 	</listitem>
       </varlistentry>
 
@@ -180,6 +186,13 @@
 	  vulnerable to offline dictionary attacks.
 	</para>
       </note>
+    </para>
+
+    <para>
+      History: Prior to &Libreswan; 5.5, &authby;=&eaponly; did not
+      check that the connection's ID matched the
+      <literal>subjectAltName</literal> (SAN) of the certificate
+      authenticated by EAP.
     </para>
 
   </listitem>

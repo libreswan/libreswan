@@ -53,6 +53,7 @@
 #include "ikev2_states.h"
 #include "ikev2_auth.h"
 #include "ikev2_notification.h"
+#include "peer_id.h"		/* for update_peer_id_certs() */
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_EAP_request;
 
@@ -445,9 +446,14 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	}
 
 	/*
-	 * XXX: hack so that incoming certs are ignored; should update
-	 * CERT code?
+	 * XXX: hack so that incoming certs are ignored and the
+	 * unverified ID can be used to select the connection.
+	 *
+	 * Later, in process_v2_IKE_AUTH_request_EAP_final(), where
+	 * EAP has finished, the EAP peer cert will be compared
+	 * against the selected connection.
 	 */
+	ike->sa.st_remote_certs.verified = NULL;
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = true;
 
@@ -727,6 +733,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 					         struct child_sa *unused_child UNUSED,
 					         struct msg_digest *md)
 {
+	struct connection *c = ike->sa.st_connection;
 	static const char key_pad_str[] = "client EAP encryption"; /* EAP-TLS RFC 5216 */
 	struct eap_state *eap = ike->sa.st_eap;
 	struct logger *logger = ike->sa.logger;
@@ -738,6 +745,45 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		return STF_FATAL;
 
 	ldbg(ike->sa.logger, "responder verifying AUTH payload");
+
+	/*
+	 * Does the peer's EAP certificate match the configured ID?
+	 */
+	{
+
+		if (PBAD(ike->sa.logger, ike->sa.st_remote_certs.verified != NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		CERTCertificate *peer_cert = SSL_PeerCertificate(eap->eaptls_desc); /* must free or save */
+		if (peer_cert == NULL) {
+			llog(RC_LOG, ike->sa.logger, "authentication failed, EAPTLS has no peer certificate");
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
+
+		/*
+		 * HACK so that update_peer_id_certs() can be called.
+		 */
+		ike->sa.st_remote_certs.processed = true;
+		ike->sa.st_remote_certs.harmless = true;
+		ike->sa.st_remote_certs.verified = alloc_thing(struct certs, "EAP certs");
+		ike->sa.st_remote_certs.verified->cert = peer_cert;
+		peer_cert = NULL; /* ownership transfered */
+
+		diag_t d = update_peer_id_certs(ike);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "authentication failed, EAPTLS certificate ID invalid, %s",
+			     str_diag(d));
+			pfree_diag(&d);
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
+	}
 
 	/*
 	 * IKEv2: 2.16.  Extensible Authentication Protocol Methods
@@ -790,7 +836,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	/* construct final response */
 
-	struct connection *c = ike->sa.st_connection;
 	bool send_redirect = false;
 	if (!v2_ike_sa_auth_responder_establish(ike, &send_redirect)) {
 		return STF_FATAL;
