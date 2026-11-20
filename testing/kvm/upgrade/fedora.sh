@@ -54,34 +54,42 @@ dnf makecache
 sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
 #
-# Packages used to build libreswan, are installed and then upgraded.
+# Packages used to build libreswan.
+#
+# These track updates.  Notably, NSS.
 #
 
-packages_for_build() {
+build_packages() {
     cat <<EOF | awk '{print $1}'
 ElectricFence
 audit-libs-devel
+c++				# Building NSS
+clang
+gdb				# debugging the build
+gyp				# Building NSS
 ldns-devel
 libcurl-devel
 libseccomp-devel
 libselinux-devel
 make
+ninja				# Building NSS
 nss-devel
 nss-tools
 nss-util-devel
 pam-devel
+strace				# debugging the build
 unbound
 unbound-devel
+valgrind			# debugging the build
 xmlto
 EOF
 }
 
 #
-# Kernel packages are only installed to avoid drift.
+# Kernel packages.
 #
-# xl2tpd was included in this list because it sucks in additional
-# kernel dependencies; however Fedora 43 dropped the package for
-# kl2tpd.
+# These do not update to avoid drift.
+#
 
 kernel_packages() {
     cat <<EOF | awk '{print $1}'
@@ -91,23 +99,22 @@ EOF
 }
 
 #
-# Packages needed for testing are only installed to avoid drift.
+# Test Packages
+#
+# These do not update to avoid drift.
 #
 
-packages_for_testing() {
+test_packages() {
     cat <<EOF | awk '{print $1}'
 bind-dnssec-utils
 bind-utils
-c++				# Building NSS
 checksec
 conntrack-tools
 diffstat			# used by NSRUN
 fping
 gawk
-gdb
 git				# used by NSRUN
 gnutls-utils			# used by soft tokens
-gyp				# Building NSS
 iptables
 jq
 kl2tpd
@@ -116,7 +123,6 @@ linux-system-roles
 nc
 net-tools
 nftables
-ninja				# Building NSS
 nsd
 ocspd
 openssl
@@ -127,14 +133,13 @@ selinux-policy-devel
 socat
 softhsm-devel			# used by soft tokens
 sshpass				# used by ansible-playbook
-strace
 strongswan
 strongswan-sqlite
 systemtap			# performance profiling
 tar
 tcpdump
+time				# aka /bin/time
 tpm2-abrmd
-valgrind
 vim-enhanced
 wireshark-cli
 EOF
@@ -142,17 +147,19 @@ EOF
 
 
 :
-: Install build dependencies, testing, and kernel packages
+: Install the release version of all packages.
 :
 
-dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
+dnf install -y --disable-repo '*updates*' $(build_packages)
+dnf install -y --disable-repo '*updates*' $(test_packages)
+dnf install -y --disable-repo '*updates*' $(kernel_packages)
 
 
 :
-: Upgrade build dependencies
+: Now upgrade build dependencies to mainline.
 :
 
-dnf upgrade -y $(packages_for_build)
+dnf upgrade -y $(build_packages)
 
 
 :
