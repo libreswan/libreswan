@@ -52,8 +52,31 @@ up
 west #
  # cannot use ipsec _kernel state
 west #
- ipsec _kernel policy for strongswan
-grep: strongswan: No such file or directory
+ ipsec _kernel policy # for strongswan
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto ah spi 0xSPISPI reqid 1 mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid 1 mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto ah reqid 1 mode tunnel
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
