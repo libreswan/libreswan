@@ -17,19 +17,40 @@
 #
 
 if test $# -lt 1 ; then
-    echo "usage: $0 { state | policy }" 1>&2
+    cat <<EOF 1>&2
+Usage: $0 { state | policy } [--sort] [--nosort] [pattern]"
+
+EOF
     exit 1
 fi
 
-case $1 in
-    state | policy )
-	op=$1 ; shift
-	;;
-    * )
-	echo "$1: unknown operation" 1>&2
-	exit 1
-	;;
-esac
+while test "$#" -gt 0 ; do
+    case $1 in
+	state )
+	    op=$1
+	    sort=${sort:-false}
+	    ;;
+	policy )
+	    op=$1
+	    sort=${sort:-true}
+	    ;;
+	--sort )
+	    sort=true
+	    ;;
+	--sort=no | --nosort )
+	    sort=false
+	    ;;
+	* )
+	    # assume rest os grep pattern
+	    break
+	    ;;
+    esac
+    shift
+done
+
+if test -z "${op}" ; then
+    echo "$0: missing operation" 1>&2
+fi
 
 sort=false
 while test "$#" -gt 0 ; do
@@ -61,8 +82,16 @@ $ { x; s,\n,<>,g; p; }'
 
 split_lines()
 {
-    sed -e 's,<>,\
+    {
+	if test "$#" -gt 0 ; then
+	    grep "$@"
+	else
+	    cat
+	fi
+    } | {
+	sed -e 's,<>,\
 ,g'
+    }
 }
 
 # deal with the different systems
@@ -72,17 +101,15 @@ xfrm_state()
     {
 	ip xfrm state
     } | {
+	join_lines
+    } | {
 	if ${sort} ; then
-	    {
-		join_lines
-	    } | {
-		sort -V
-	    } | {
-		split_lines
-	    }
+	    sort -V
 	else
 	    cat
 	fi
+    } | {
+	split_lines
     }
 }
 
@@ -129,12 +156,6 @@ xfrm_policy()
     } | {
 	# strip the sort prefixes
 	sed -e 's/^.* | //'
-    } | {
-	if test "$#" -gt 0 ; then
-	    grep "$@"
-	else
-	    cat
-	fi
     } | {
 	split_lines
     }
