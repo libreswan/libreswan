@@ -48,15 +48,15 @@ west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	anti-replay esn context:
@@ -64,7 +64,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32
 west #
  ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32

@@ -107,8 +107,8 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
-	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:system_r:sshd_t:s0-s0:c0.c1023
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -119,8 +119,8 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
-	security context system_u:system_r:sshd_t:s0-s0:c0.c1023 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:system_r:sshd_t:s0-s0:c0.c1023
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -131,8 +131,8 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:system_r:ping_t:s0:c1.c256
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -143,8 +143,8 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 
-	security context system_u:system_r:ping_t:s0:c1.c256 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:system_r:ping_t:s0:c1.c256
 west #
  # And there should be one set of tunnel policies using the configured
 west #

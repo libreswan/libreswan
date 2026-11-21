@@ -42,15 +42,15 @@ west #
  ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
-	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
@@ -59,12 +59,12 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir out
-	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0
 west #
  ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
@@ -94,15 +94,15 @@ west #
  ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
-	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
@@ -111,12 +111,12 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir out
-	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0
 west #
  ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135

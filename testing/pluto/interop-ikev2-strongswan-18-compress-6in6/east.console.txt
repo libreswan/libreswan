@@ -23,12 +23,12 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
-	comp deflate 
+	comp deflate
 	lastused YYYY-MM-DD HH:MM:SS
 	dir out
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 
+	replay-window 0
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid 1 mode transport
 	replay-window 32 flag af-unspec
@@ -39,12 +39,12 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto comp spi 0xSPISPI reqid 1 mode tunnel
 	replay-window 0 flag noecn af-unspec
-	comp deflate 
+	comp deflate
 	lastused YYYY-MM-DD HH:MM:SS
 	dir in
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 
+	replay-window 0
 	lastused YYYY-MM-DD HH:MM:SS
 east #
  ipsec _kernel policy

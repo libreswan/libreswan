@@ -22,14 +22,14 @@ west #
  ipsec _kernel state
 src 2.2.2.2 dst 1.1.1.1
 	proto esp spi 0xSPISPI reqid 1000 mode tunnel
-	replay-window 0 
+	replay-window 0
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+	sel src 0.0.0.0/0 dst 0.0.0.0/0
 src 1.1.1.1 dst 2.2.2.2
 	proto esp spi 0xSPISPI reqid 1000 mode tunnel
-	replay-window 0 
+	replay-window 0
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+	sel src 0.0.0.0/0 dst 0.0.0.0/0
 west #
  ipsec _kernel policy
 src 10.0.1.0/24 dst 10.0.2.0/24

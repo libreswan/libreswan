@@ -208,9 +208,9 @@ src 192.1.2.23 dst 192.1.2.45
 	dir in
 src 192.0.1.254 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir out
-	sel src 192.0.1.254/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
+	sel src 192.0.1.254/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -231,9 +231,9 @@ src 192.1.2.23 dst 192.1.2.45
 	dir in
 src 192.1.2.45 dst 192.0.2.254
 	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir out
-	sel src 192.1.2.45/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
+	sel src 192.1.2.45/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -254,9 +254,9 @@ src 192.1.2.23 dst 192.1.2.45
 	dir in
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir out
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1
 west #
  ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
