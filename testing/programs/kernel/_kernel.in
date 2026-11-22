@@ -2,7 +2,8 @@
 # -*- mode: sh; sh-shell: sh -*-
 # ipsec kernel commands
 #
-# Copyright (C) 2023,2025 Andrew Cagney
+# Copyright (C) 2023,2025-2026 Andrew Cagney
+# Copyright (C) 2026 Amrinder Singh <officialamrindersinghh@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -29,6 +30,15 @@ case $1 in
 	exit 1
 	;;
 esac
+
+sort=false
+while test "$#" -gt 0 ; do
+    case "$1" in
+	--sort ) sort=true ;;
+	* ) break ;;
+    esac
+    shift
+done
 
 # Join/Split related lines using <> as the separator so that they can
 # be fed to things like sort.  While at it strip out any trailing
@@ -59,7 +69,21 @@ split_lines()
 
 xfrm_state()
 {
-    ip xfrm state
+    {
+	ip xfrm state
+    } | {
+	if ${sort} ; then
+	    {
+		join_lines
+	    } | {
+		sort -V
+	    } | {
+		split_lines
+	    }
+	else
+	    cat
+	fi
+    }
 }
 
 xfrm_policy()
