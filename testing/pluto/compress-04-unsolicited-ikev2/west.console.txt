@@ -31,8 +31,8 @@ IMPAIR: "westnet-eastnet-ipcomp" #2: revival: skip scheduling CONNECTION_REVIVAL
 ERROR: "westnet-eastnet-ipcomp" #2: netlink response for XFRM_MSG_GETSA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "westnet-eastnet-ipcomp" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
- ../../guestbin/wait-for-pluto.sh --match '#1: Child SA #2 no longer exists, ignoring delete response'
-"westnet-eastnet-ipcomp" #1: Child SA #2 no longer exists, ignoring delete response
+ ipsec showstates
+#1: "westnet-eastnet-ipcomp":500 established IKE SA; full-transcript-auth; REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
  ipsec _kernel state
 west #

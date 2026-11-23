@@ -1,0 +1,6 @@
+Reject the IKE_AUTH Child SA because the responder uses tunnel mode and
+the initiator requires transport mode. Drop the first Delete response and
+check that synchronous ipsec up waits for the retransmitted response.
+The IKE SA stays established. Repeat with retransmits suppressed and a
+dropped Delete response to check that the timeout releases the command
+and removes the SAs.
