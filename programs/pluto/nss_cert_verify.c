@@ -454,6 +454,46 @@ static void add_decoded_cert_1(struct certs **certs,
 	add_cert(certs, cert);
 }
 
+static void decode_pkcs7_cert_payload(CERTCertDBHandle *handle,
+				      SEC_PKCS7ContentInfo *contents,
+				      struct certs **certs,
+				      struct logger *logger)
+{
+	/*
+	 * XXX: SEC_PKCS7GetCertificateList() isn't robust when the
+	 * contents are empty.  Hence add some pre-checks here.
+	 *
+	 * See CVE-2026-110339, suggested fix from Anh Lưu Đức.
+	 *
+	 * The type check is the guard for the signedData field.
+	 */
+	if (SEC_PKCS7ContentType(contents) != SEC_OID_PKCS7_SIGNED_DATA) {
+		llog(RC_LOG, logger, "wrapped PKCS7 payload does not contain signed data");
+		return;
+	}
+	if (contents->content.signedData == NULL) {
+		llog(RC_LOG, logger, "wrapped PKCS7 payload is empty");
+		return;
+	}
+
+	/*
+	 * When the content is SEC_OID_PKCS7_SIGNED_DATA, the,
+	 * possibly empty, raw cert array is returned; else NULL.
+	 *
+	 * This points to an internal structure, so no free is needed.
+	 */
+	SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
+	if (cert_list == NULL || (*cert_list) == NULL) {
+		llog(RC_LOG, logger,
+		     "wrapped PKCS7 certificate payload did not contain any certificates");
+		return;
+	}
+
+	for (; *cert_list; cert_list++) {
+		add_decoded_cert(handle, certs, **cert_list, logger);
+	}
+}
+
 /*
  * Decode the cert payloads creating a list of temp certificates.
  */
@@ -506,28 +546,17 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		case CERT_PKCS7_WRAPPED_X509:
 		{
-			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
-									     NULL, NULL, NULL);
+			/* must free */
+			SEC_PKCS7ContentInfo *contents =
+				SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
+						    NULL, NULL, NULL);
 			if (contents == NULL) {
 				llog(RC_LOG, logger,
-					    "wrapped PKCS7 certificate payload could not be decoded");
-				continue;
+				     "wrapped PKCS7 certificate payload could not be decoded");
+				break;
 			}
-			/*
-			 * When the content is
-			 * SEC_OID_PKCS7_SIGNED_DATA, the, possibly
-			 * empty, raw cert array is returned; else
-			 * NULL.
-			 */
-			SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
-			if (cert_list == NULL || (*cert_list) == NULL) {
-				llog(RC_LOG, logger,
-				     "wrapped PKCS7 certificate payload did not contain any certificates");
-			} else {
-				for (; *cert_list; cert_list++) {
-					add_decoded_cert(handle, &certs, **cert_list, logger);
-				}
-			}
+
+			decode_pkcs7_cert_payload(handle, contents, &certs, logger);
 			SEC_PKCS7DestroyContentInfo(contents);
 			break;
 		}
@@ -940,16 +969,46 @@ static SECItem *impaired_pkcs7_crl(void)
 	return SECITEM_DupItem(&pkcs7);
 }
 
+static SECItem *impaired_pkcs7(shunk_t x)
+{
+	/* XXX: strips const */
+	SECItem pkcs7 = same_shunk_as_secitem(x, siBuffer);
+	return SECITEM_DupItem(&pkcs7);
+}
+
 SECItem *impaired_pkcs7_blob(const struct cert *mycert,
 			     bool send_full_chain,
 			     struct logger *logger)
 {
-	if (impair.send_pkcs7_thingie == 1) {
+	switch (impair.send_pkcs7_thingie) {
+	case 0:
+		return NULL;
+	case 1:
 		llog(IMPAIR_STREAM, logger, "sending certs as PKCS7 blob");
 		passert(mycert != NULL);
 		return impaired_pkcs7_certs(mycert, send_full_chain, logger);
+	case 2:
+		llog(IMPAIR_STREAM, logger, "sending crl as PKCS7 blob");
+		return impaired_pkcs7_crl();
+	case 3:
+	{
+		llog(IMPAIR_STREAM, logger, "sending empty PKCS7 cert blob");
+		static const uint8_t x[] = {
+			0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
+			0xf7, 0x0d, 0x01, 0x07, 0x02,
+		};
+		/*
+		 * https://lapo.it decodes this as:
+		 *
+		 *   ContentInfo SEQUENCE (2 elem)
+		 *     contentType ContentType OBJECT IDENTIFIER 1.2.840.113549.1.1.5 sha1WithRSAEncryption (PKCS #1)
+		 *     content [0] [?] NULL
+		 */
+		return impaired_pkcs7(THING_AS_SHUNK(x));
 	}
-
-	llog(IMPAIR_STREAM, logger, "sending crl as PKCS7 blob");
-	return impaired_pkcs7_crl();
+	default:
+		llog(IMPAIR_STREAM, logger, "unregognized PKCS7 impair %d",
+		     impair.send_pkcs7_thingie);
+		return NULL;
+	}
 }
