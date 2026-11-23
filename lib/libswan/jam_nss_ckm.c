@@ -74,17 +74,17 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, name_buf *buf)
 		CASE(CKM_DH_PKCS_DERIVE);
 		CASE(CKM_ECDH1_DERIVE);
 
-#ifdef CKM_NSS_IKE_PRF_DERIVE /* print whenever defined */
-		CASE(CKM_NSS_IKE_PRF_DERIVE);
+#ifdef CKM_IKE_PRF_DERIVE /* print whenever defined */
+		CASE(CKM_IKE_PRF_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE1_PRF_DERIVE /* print whenever defined */
-		CASE(CKM_NSS_IKE1_PRF_DERIVE);
+#ifdef CKM_IKE1_PRF_DERIVE /* print whenever defined */
+		CASE(CKM_IKE1_PRF_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE_PRF_PLUS_DERIVE /* print whenever defined */
-		CASE(CKM_NSS_IKE_PRF_PLUS_DERIVE);
+#ifdef CKM_IKE2_PRF_PLUS_DERIVE /* print whenever defined */
+		CASE(CKM_IKE2_PRF_PLUS_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE1_APP_B_PRF_DERIVE /* print whenever defined */
-		CASE(CKM_NSS_IKE1_APP_B_PRF_DERIVE);
+#ifdef CKM_IKE1_EXTENDED_DERIVE /* print whenever defined */
+		CASE(CKM_IKE1_EXTENDED_DERIVE);
 #endif
 
 		CASE(CKM_VENDOR_DEFINED);
