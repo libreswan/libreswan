@@ -95,9 +95,9 @@ src 192.1.2.23 dst 192.1.2.45
 	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
+	replay-window 0
 	dir in
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32
 west #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
