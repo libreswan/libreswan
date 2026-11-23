@@ -1207,98 +1207,129 @@ void process_v1_packet(struct msg_digest *md)
 		     fraghdr.isafrag_number,
 		     (fraghdr.isafrag_flags == 1) ? "(last)" : "");
 
+		/*
+		 * Find the insertion point while also accumulating
+		 * totals so far.
+		 *
+		 * For totals, start with current fragment.
+		 */
+
+		size_t total_packet_size = md->packet.len;
+		size_t total_fragment_size = pbs_in_left(&frag_pbs).len;
+		long prev_index = 0;
+
+		struct v1_ike_rfrag **insertion_point = &st->st_v1_rfrags;
+		for (struct v1_ike_rfrag *frag = st->st_v1_rfrags;
+		     frag != NULL; frag = frag->next) {
+			/*
+			 * Keep advancing insertion_point, when
+			 * there's a duplicate it points at the
+			 * original, when there's no fragment it
+			 * points at the insertion point.
+			 */
+			if (frag->index < fraghdr.isafrag_number) {
+				insertion_point = &frag->next;
+			}
+
+			/*
+			 * Accumulate totals, but don't double count
+			 * this fragment (it could be present as a
+			 * duplicate).
+			 */
+			if (frag->index != fraghdr.isafrag_number) {
+				total_packet_size += frag->md->packet.len;
+				total_fragment_size += frag->data.len;
+			}
+
+			/*
+			 * Have all fragments been received?
+			 */
+			if (prev_index + 1 == frag->index) {
+				prev_index++;
+			} else if (prev_index + 1 == fraghdr.isafrag_number) {
+				prev_index++;
+			}
+
+			if (frag->last) {
+				last_frag_index = frag->index;
+			}
+		}
+
+		/* stop accumulating */
+		if (total_packet_size >= MAX_INPUT_UDP_SIZE) {
+			llog(RC_LOG, logger, "maximum fragmented packet size exceeded");
+			send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED);
+			return;
+		}
+
+		if (fraghdr.isafrag_number > last_frag_index) {
+			llog(RC_LOG, logger, "fragment following last fragment received");
+			send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED);
+			return;
+		}
+
+		/*
+		 * When duplicate, discard original.
+		 */
+		struct v1_ike_rfrag *old = (*insertion_point);
+
 		struct v1_ike_rfrag *ike_frag = alloc_thing(struct v1_ike_rfrag, "ike_frag");
 		ike_frag->md = md_addref(md);
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
 		ike_frag->data = pbs_in_left(&frag_pbs);
+		ike_frag->next = (*insertion_point);
+		(*insertion_point) = ike_frag;
+		ike_frag = NULL;
 
-		/* Add the fragment to the state */
-		struct v1_ike_rfrag **i = &st->st_v1_rfrags;
-		for (;;) {
-			if (ike_frag != NULL) {
-				/* Still looking for a place to insert ike_frag */
-				if (*i == NULL ||
-				    (*i)->index > ike_frag->index) {
-					ike_frag->next = *i;
-					*i = ike_frag;
-					ike_frag = NULL;
-				} else if ((*i)->index == ike_frag->index) {
-					/* Replace fragment with same index */
-					struct v1_ike_rfrag *old = *i;
-
-					ike_frag->next = old->next;
-					*i = ike_frag;
-					pexpect(old->md != NULL);
-					md_delref(&old->md);
-					pfree(old);
-					ike_frag = NULL;
-				}
-			}
-
-			if (*i == NULL)
-				break;
-
-			if ((*i)->last)
-				last_frag_index = (*i)->index;
-
-			i = &(*i)->next;
+		if (old != NULL && old->index == fraghdr.isafrag_number) {
+			pexpect(old->md != NULL);
+			md_delref(&old->md);
+			pfree(old);
+			old = NULL;
 		}
 
-		/* We have the last fragment, reassemble if complete */
-		if (last_frag_index != 0) {
-			size_t size = 0;
-			int prev_index = 0;
+		/* We have all fragments, reassemble it */
+		if (prev_index > 0 &&
+		    prev_index == last_frag_index) {
+			struct v1_ike_rfrag *first_frag = st->st_v1_rfrags;
+			struct msg_digest *whole_md = alloc_md(first_frag->md->iface,
+							       first_frag->md->sender,
+							       NULL/*packet*/,
+							       total_fragment_size,
+							       first_frag->md->logger,
+							       HERE);
 
-			for (struct v1_ike_rfrag *frag = st->st_v1_rfrags; frag; frag = frag->next) {
-				size += frag->data.len;
-				if (frag->index != ++prev_index) {
-					break; /* fragment list incomplete */
-				} else if (frag->index == last_frag_index) {
-					struct msg_digest *whole_md = alloc_md(frag->md->iface,
-									       frag->md->sender,
-									       NULL/*packet*/, size,
-									       frag->md->logger,
-									       HERE);
-
-					/*
-					 * Reassemble fragments in
-					 * buffer.
-					 *
-					 * Header is taken directly
-					 * from first fragment.
-					 *
-					 * XXX: DANGER! this code is
-					 * reusing FRAG.
-					 */
-					frag = st->st_v1_rfrags;
-					uint8_t *buffer = whole_md->packet.ptr;
-					size_t offset = 0;
-					while (frag != NULL && frag->index <= last_frag_index) {
-						passert(offset + frag->data.len <= size);
-						memcpy(buffer + offset, frag->data.ptr, frag->data.len);
-						offset += frag->data.len;
-						frag = frag->next;
-					}
-
-					/*
-					 * process_md() calls
-					 * process_v1_packet(), but
-					 * only after first
-					 * initializing .hdr and
-					 * .message_pbs.
-					 */
-					process_md(whole_md);
-					md_delref(&whole_md);
-					free_v1_message_queues(st);
-					/* optimize: if receiving fragments, immediately respond with fragments too */
-					st->st_v1_seen_fragments = true;
-					ldbg(logger, " updated IKE fragment state to respond using fragments without waiting for re-transmits");
-					break;
-				}
+			/*
+			 * Reassemble fragments in buffer.
+			 *
+			 * Header is taken directly from first
+			 * fragment.
+			 *
+			 * XXX: DANGER! this code is reusing FRAG.
+			 */
+			uint8_t *buffer = whole_md->packet.ptr;
+			size_t offset = 0;
+			for (struct v1_ike_rfrag *frag = st->st_v1_rfrags;
+			     frag != NULL && frag->index <= last_frag_index;
+			     frag = frag->next) {
+				passert(offset + frag->data.len <= whole_md->packet.len);
+				memcpy(buffer + offset, frag->data.ptr, frag->data.len);
+				offset += frag->data.len;
 			}
-		}
 
+			/*
+			 * process_md() calls process_v1_packet(), but
+			 * only after first initializing .hdr and
+			 * .message_pbs.
+			 */
+			process_md(whole_md);
+			md_delref(&whole_md);
+			free_v1_message_queues(st);
+			/* optimize: if receiving fragments, immediately respond with fragments too */
+			st->st_v1_seen_fragments = true;
+			ldbg(logger, " updated IKE fragment state to respond using fragments without waiting for re-transmits");
+		}
 		return;
 	}
 
