@@ -381,6 +381,12 @@ bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 		return false;
 	}
 
+	if (impair.skip_v2_IKE_INTERMEDIATE_exchange) {
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "skipping IKE_INTERMEDIATE exchange");
+		return false;
+	}
+
 	unsigned next_exchange = ike->sa.st_v2_ike_intermediate.next_exchange;
 	unsigned nr_exchanges = ike->sa.st_oakley.ta_addke.len;
 	if (nr_exchanges == 0 && (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE ||
@@ -389,10 +395,9 @@ bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 	}
 
 	return (next_exchange < nr_exchanges);
-
 }
 
-bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
+static bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 {
 	if (!PEXPECT(ike->sa.logger, next_is_ikev2_ike_intermediate_exchange(ike))) {
 		return false;
@@ -708,11 +713,16 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
 
-	if (!PEXPECT(logger, next_ikev2_ike_intermediate_exchange(ike))) {
-		return STF_INTERNAL_ERROR;
-	}
-
 	natify_ikev2_ike_responder_endpoints(ike, md);
+
+	if (!next_ikev2_ike_intermediate_exchange(ike)) {
+		llog(RC_LOG, ike->sa.logger,
+		     "authentication failed, initiator sent unsolicited IKE_INTERMEDIATE request");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	/*
 	 * All systems are go.

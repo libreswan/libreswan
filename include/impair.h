@@ -242,6 +242,8 @@ struct impair {
 
 	bool empty_ike_auth_auth;
 
+	bool skip_v2_IKE_INTERMEDIATE_exchange;
+
 	/*
 	 * add more here
 	 */
