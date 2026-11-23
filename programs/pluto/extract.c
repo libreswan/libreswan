@@ -1679,7 +1679,7 @@ static diag_t extract_host_end(enum end end,
 
 		if (src->we_ckaid != NULL) {
 			vwarning("ignoring %s ckaid '%s' and using %s certificate '%s'",
-				 leftright, src->we_cert,
+				 leftright, src->we_ckaid,
 				 leftright, src->we_cert);
 		}
 
