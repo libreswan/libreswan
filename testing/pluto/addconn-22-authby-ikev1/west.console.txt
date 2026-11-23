@@ -160,6 +160,6 @@ no connection or alias named "authby:digsig"
 west #
  leftauth rsa
  ipsec addconn --name leftauth:rsa leftauth=rsa
-"leftauth:rsa": failed to add connection: IKEv1 does not support "leftauth="
+"leftauth:rsa": failed to add connection: IKEv1 does not support "leftauth=rsa"
 no connection or alias named "leftauth:rsa"
 west #
