@@ -1,14 +1,11 @@
 east# ../../guestbin/prep.sh
 
-ipsec.conf -> /usr/local/etc/ipsec.conf
-ipsec.secrets -> /usr/local/etc/ipsec.secrets
+ipsec.conf -> /etc/ipsec.conf
+ipsec.secrets -> /etc/ipsec.secrets
 
 east# ipsec start
 
-Redirecting to: /usr/local/etc/rc.d/pluto onestart
-Initializing NSS database
-
-Starting pluto.
+Redirecting to: systemctl start ipsec.service
 
 east# ../../guestbin/wait-until-pluto-started
 

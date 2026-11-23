@@ -1,0 +1,118 @@
+/testing/guestbin/swan-prep --nokeys --46
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec connectionstatus westnet-eastnet
+"westnet-eastnet": 192.0.2.0/24===2001:db8:1:2::23[@east]...2001:db8:1:2::45[@west]===192.0.1.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
+"westnet-eastnet":   host: oriented; local: 2001:db8:1:2::23; remote: 2001:db8:1:2::45;
+"westnet-eastnet":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"westnet-eastnet":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"westnet-eastnet":   sec_label:unset;
+"westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
+"westnet-eastnet":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet":   policy: IKEv2+PSK+ENCRYPT+COMPRESS+TUNNEL+PFS+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet":   v2-auth-hash-policy: none;
+"westnet-eastnet":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"westnet-eastnet":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
+"westnet-eastnet":   sendca: all; our sendcert: always; their sendcert: always;
+"westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:30s
+"westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
+"westnet-eastnet":   routing: routed-ondemand;
+"westnet-eastnet":   conn serial: $1;
+"westnet-eastnet":   IKE algorithms: AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
+"westnet-eastnet":   ESP algorithms: AES_CBC-HMAC_SHA1_96
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec _kernel state
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag af-unspec esn
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+	dir out
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 64, bitmap-length 2
+	 00000000 00000001 
+	dir in
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	dir in
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.0.2.254 dst 192.0.1.254
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	dir out
+	sel src 192.0.2.254/32 dst 192.0.1.254/32 proto icmp type 0 code 0 dev eth1 
+east #
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto comp reqid REQID mode tunnel
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+east #
