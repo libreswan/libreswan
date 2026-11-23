@@ -1,7 +1,10 @@
-#include "defs.h"
+#include <ldns/rr.h>
 
-#ifndef _IKEV2_IPSECKEY_DNSR_H
-#define _IKEV2_IPSECKEY_DNSR_H
+#include "defs.h"
+#include "names.h"
+
+#ifndef IKEV2_IPSECKEY_DNSR_H
+#define IKEV2_IPSECKEY_DNSR_H
 
 struct p_dns_req;
 
@@ -38,8 +41,8 @@ struct p_dns_req {
 	realtime_t done_time;
 
 	char *qname;		/* DNS query to send, from ID */
-	uint16_t qtype;
-	uint16_t qclass;
+	ldns_rr_type qtype;
+	ldns_rr_class qclass;
 
 	int ub_async_id;	/* used to track libunbound query, to cancel */
 	struct ub_ctx *ctx;
@@ -75,5 +78,7 @@ extern err_t process_dns_resp(struct p_dns_req *dnsr);
 extern dns_status dns_qry_start(struct p_dns_req *dnsr);
 extern struct p_dns_req *pluto_dns_list;
 extern void free_ipseckey_dns(struct p_dns_req *pp);
+
+const char *str_ldns_rr_type(ldns_rr_type type, name_buf *buf);
 
 #endif

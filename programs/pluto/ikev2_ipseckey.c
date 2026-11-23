@@ -47,9 +47,6 @@
 #include "secrets.h"
 #include "ikev2_ike_auth.h"
 
-#define LDNS_RR_TYPE_A 1
-#define LDNS_RR_TYPE_IPSECKEY 45
-
 static struct ub_ctx *ipseckey_unbound_ctx;
 
 static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
@@ -376,11 +373,9 @@ static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 	return NULL;
 }
 
-
 static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 				     struct msg_digest *md,
-				     int qtype,
-				     const char *qtype_name,
+				     ldns_rr_type qtype,
 				     dnsr_cb_fn dnsr_cb,
 				     stf_status (*callback)(struct ike_sa *ike,
 							    struct msg_digest *md,
@@ -407,10 +402,11 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	p->logger = clone_logger(ike->sa.logger, HERE);
 	p->qname = clone_str(qname, "dns qname");
 
+	name_buf qb;
 	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",
-				  p->qname, qtype_name);
+				  p->qname, str_ldns_rr_type(qtype, &qb));
 
-	p->qclass = C_IN; /* aka ns_c_in */
+	p->qclass = LDNS_RR_CLASS_IN; /* aka C_IN; aka ns_c_in */
 	p->qtype = qtype;
 	p->cache_hit = true;
 	p->dns_status = DNS_SUSPEND;
@@ -430,7 +426,7 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
 								    bool err))
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */
-	struct p_dns_req *p = qry_st_init(ike, md, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb, callback);
+	struct p_dns_req *p = qry_st_init(ike, md, LDNS_RR_TYPE_IPSECKEY, dnsr_cb, callback);
 	if (p == NULL) {
 		return NULL;
 	}
@@ -519,7 +515,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
 			/* ask for the DNS's IPv4 address */
-			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A, "A",
+			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A,
 							       idi_a_fetch_continue,
 							       callback); /*must save/free*/
 			if (dnsr_a == NULL) {

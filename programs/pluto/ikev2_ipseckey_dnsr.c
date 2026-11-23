@@ -515,3 +515,20 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 	      "ERROR"));
 	return ret;
 }
+
+/* XXX: hack for system header */
+const char *str_ldns_rr_type(ldns_rr_type type, name_buf *buf)
+{
+	switch (type) {
+#define S(T) case LDNS_RR_TYPE_##T: return #T
+		S(A);
+		S(AAAA);
+		S(TXT);
+		S(NS);
+		S(IPSECKEY);
+#undef S
+	default:
+		bad_name(type, buf);
+		return buf->buf;
+	}
+}
