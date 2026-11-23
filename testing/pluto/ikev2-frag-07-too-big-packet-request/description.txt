@@ -1,0 +1,6 @@
+initiator sending lots of large fragments
+
+responder should reject accumulated total as more than 64k
+
+See #3079 "IKEv2 fragment-queue resource exhaustion" where fragments,
+and not memory are limited.

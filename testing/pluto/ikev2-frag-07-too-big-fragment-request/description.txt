@@ -1,0 +1,6 @@
+initiiator sending crazy number of fragments duing IKE_AUTH
+
+responder should reject total as too big
+
+See #3079 "IKEv2 fragment-queue resource exhaustion" where fragments,
+and not memory are limited.

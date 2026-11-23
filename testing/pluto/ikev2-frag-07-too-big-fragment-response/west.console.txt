@@ -34,7 +34,8 @@ west #
 "west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH
 "west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP} [192.0.1.0/24===192.0.2.0/24]
 "west-east" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
-"west-east" #1: IKE_AUTH_I: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+"west-east" #1: dropping invalid fragment 1 of 65, total number of fragments must be no more than MAX_IKE_FRAGMENTS
+"west-east" #1: encountered fatal error in state IKE_AUTH_I
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east" #1: deleting IKE SA (sent IKE_AUTH request)

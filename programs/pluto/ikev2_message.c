@@ -704,9 +704,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
  * Incoming IKEv2 fragments.
  */
 
-static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *frags,
-					       struct msg_digest *md,
-					       struct ikev2_skf *skf_hdr)
+static const char *invalid_ikev2_incoming_fragment(struct v2_incoming_fragments *frags,
+						   struct msg_digest *md,
+						   struct ikev2_skf *skf_hdr)
 {
 	/* Sanity check header */
 
@@ -718,8 +718,8 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 		return "fragment number must be no greater than the total number of fragments";
 	}
 
-	if (skf_hdr->isaskf_total > MAX_IKE_FRAGMENTS) {
-		return "total number of fragments must be no more than MAX_IKE_FRAGMENTS";
+	if (skf_hdr->isaskf_total > MAX_IKEv2_FRAGMENTS) {
+		return "total number of fragments must be no more than MAX_IKEv2_FRAGMENTS";
 	}
 
 	if (skf_hdr->isaskf_number == 1 && skf_hdr->isaskf_np == NEXT_PAYLOAD_v2NONE) {
@@ -750,9 +750,8 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 		return "fragment total changed";
 	}
 
-	if (frags->frags[skf_hdr->isaskf_number].text.ptr != NULL) {
-		/* retain earlier fragment with same index */
-		return "repeat";
+	if (frags->fragment_total_packet_size + md->packet.len > MAX_IKEv2_FRAGMENTS_TOTAL_PACKET_SIZE) {
+		return "accumulated fragments are too big";
 	}
 
 	return NULL;
@@ -806,33 +805,51 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct msg_digest *md,
 						     struct v2_incoming_fragments **frags)
 {
-	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
-		llog_sa(RC_LOG, ike, "ignoring fragment as peer never proposed fragmentation");
-		return FRAGMENT_IGNORED;
-	}
+	/* locate what is interesting */
 
 	struct ikev2_skf *skf_hdr = &md->chain[NEXT_PAYLOAD_v2SKF]->payload.v2skf;
+	ldbg(ike->sa.logger,
+	     "received %zu-byte encrypted fragment '%u', total number '%u', next payload '%u'",
+	     md->packet.len,
+	     skf_hdr->isaskf_number,
+	     skf_hdr->isaskf_total,
+	     skf_hdr->isaskf_np);
 
-	ldbg(ike->sa.logger, "received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
-	     skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
-
-	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
-	if (why != NULL) {
-		llog_sa(RC_LOG, ike, "dropping fragment %u of %u as %s",
-			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
-		return FRAGMENT_IGNORED;
-	}
-
-	/* locate what is interesting */
+	/*
+	 * When possible, decrypt (in place) and FIRST.
+	 *
+	 * Any attacker, worth their salt (...), will craft packets
+	 * that get past any pre-decrypt checks.
+	 *
+	 * And a packet that validates but is then found to contain
+	 * crud should cause the exchange to abort.
+	 */
 
 	/* entire SKF pbs; cur points past SKF header */
 	const struct pbs_in *skf_pbs = &md->chain[NEXT_PAYLOAD_v2SKF]->pbs;
-	/* entire payload: AAD+SKF-header+IV+cipher-text) */
+	/* entire payload: AAD+SKF_header+IV+cipher_text) */
 	chunk_t text = chunk2(md->packet.ptr, skf_pbs->roof - md->packet.ptr);
 	/* first thing after SKF header is Initialization Vector */
 	unsigned iv_offset = skf_pbs->cur - md->packet.ptr;
 
-	/* if possible, decrypt (in place) */
+	/*
+	 * If the slot for this packet is already full, drop it.
+	 *
+	 * This should be minimal and cheap (and hopefully not dump
+	 * core).  Proper validation occures after the packet has been
+	 * decrypted.
+	 */
+	if ((*frags) != NULL &&
+	    skf_hdr->isaskf_number > 0 &&
+	    skf_hdr->isaskf_number <= (*frags)->total &&
+	    (*frags)->frags[skf_hdr->isaskf_number].text.ptr != NULL) {
+		/* retain earlier fragment with same index */
+		llog(RC_LOG, ike->sa.logger,
+		     "fragment %u of %u is a duplicate",
+		     skf_hdr->isaskf_number,
+		     skf_hdr->isaskf_total);
+		return FRAGMENT_IGNORED;
+	}
 
 	shunk_t plain = null_shunk;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
@@ -858,6 +875,18 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		     skf_hdr->isaskf_total);
 	}
 
+	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
+		llog_sa(RC_LOG, ike, "ignoring fragment as peer never proposed fragmentation");
+		return FRAGMENT_IGNORED;
+	}
+
+	const char *why = invalid_ikev2_incoming_fragment((*frags), md, skf_hdr);
+	if (why != NULL) {
+		llog_sa(RC_LOG, ike, "dropping invalid fragment %u of %u, %s",
+			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
+		return FRAGMENT_INVALID;
+	}
+
 	/* make space for the fragment (it's worth saving) */
 
 	if ((*frags) == NULL) {
@@ -870,16 +899,21 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* save the fragment */
 
-	PASSERT(ike->sa.logger, (*frags)->count < (*frags)->total);
-	(*frags)->count++;
-	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
 	PASSERT(ike->sa.logger, skf_hdr->isaskf_number < elemsof((*frags)->frags));
+	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
 	PASSERT(ike->sa.logger, frag->text.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->plain.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->text.len == 0);
 	PASSERT(ike->sa.logger, frag->plain.len == 0);
+	PASSERT(ike->sa.logger, frag->packet_size == 0);
 	frag->text = clone_hunk_as_chunk(&text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
+	frag->packet_size = md->packet.len;
+
+	PASSERT(ike->sa.logger, (*frags)->count < (*frags)->total);
+	(*frags)->count++;
+	(*frags)->fragment_total_packet_size += frag->packet_size;
+
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
 		 * Since TEXT has been decrypted (PLAIN points into
@@ -934,6 +968,10 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags)
 {
+	/* reset totals, will update */
+	(*frags)->count = 0;
+	(*frags)->fragment_total_packet_size = 0;
+
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		if (frag->text.ptr != NULL) {
@@ -955,14 +993,15 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 					"saved fragment %u of %u invalid; dropped",
 					i, (*frags)->total);
 				/* release the frag */
-				(*frags)->count--;
 				free_chunk_content(&frag->text);
-				frag->text = empty_chunk;
-				frag->plain = null_shunk;
-				frag->iv_offset = 0;
+				zero(frag);
+				continue;
 			}
+
 			ldbg(ike->sa.logger, "saved fragment %u of %u decrypted",
 			     i, (*frags)->total);
+			(*frags)->count++;
+			(*frags)->fragment_total_packet_size += frag->packet_size;
 		}
 	}
 
@@ -1441,9 +1480,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * - variable:	IV (no IV is longer than SHA2_512_DIGEST_SIZE) (64 or less)
 	 * - variable:	fragment's data
 	 * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
-	 */
-
-	/*
+	 *
 	 * XXX: this math seems very contrived, can the fragment()
 	 * function above be left to do the computation on-the-fly?
 	 *
@@ -1454,7 +1491,9 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * .ikev2_max_fragment_size).
 	 */
 
-	unsigned int max_skf_size = endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	const unsigned max_fragmented_packet_size =
+		endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	unsigned int max_skf_size =  max_fragmented_packet_size;
 
 	/*
 	 * Reduce MAX by non-ESP marker bytes.  When doing NAT these
@@ -1469,7 +1508,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	 * Reduce MAX of the always present message and the SKF
 	 * headers
 	 */
-	max_skf_size -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
+	max_skf_size -= NSIZEOF_isakmp_hdr;
+	max_skf_size -= NSIZEOF_ikev2_skf;
 
 	/*
 	 * Reduce MAX by the always present integrity/tag bytes.
@@ -1479,6 +1519,11 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 			 : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 
 	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
+		/*
+		 * XXX: Magic to mask of low bits.  Assumes
+		 * .enc_blocksize is power-of-two, would modulo-math
+		 * be better?
+		 */
 		max_skf_size &= ~(sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize - 1);
 	}
 
@@ -1487,22 +1532,55 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	PASSERT(sk->logger, sk->cleartext.len != 0);
 
 	/*
-	 * Location of the unencrypted payloads and it's Next Payload
-	 * field.
+	 * Location of the unencrypted payloads, and their length
+	 * (when there's no unencrypted payloads, .len==0).
+	 *
+	 * XXX: The math above and below ignores the unencrypted
+	 * payloads when determining the size of a fragment (they only
+	 * exist for testing).  Consequently, when the first message
+	 * contains an unencrypted payload it will larger than the
+	 * math suggests.
+	 *
+	 * XXX: The HARD upper bound is determined by the size of
+	 * struct fragment_pbs_out's buffer (which is set by IPv6).
+	 * IPv6 probably never has enough space for unencrypted
+	 * payloads.
 	 */
+
 	shunk_t unencrypted_payloads = {
 		.ptr = message.ptr + sizeof(struct isakmp_hdr),
 		.len = sk->payload.ptr - (const uint8_t*)message.ptr - sizeof(struct isakmp_hdr),
 	};
 
+	/* Danger: use addition to avoid underflow */
+	if (PBAD(logger, (unencrypted_payloads.len + max_fragmented_packet_size >=
+			  sizeof(((struct fragment_pbs_out *)0)->buffer)))) {
+		return false;
+	}
+
 	/*
 	 * Required number of fragments; rounded; and including
 	 * unencrypted payloads.
+	 *
+	 * Since the SK payload can be no larger than 64k, that sets
+	 * the limit on the number of fragments.  The >=400-byte check
+	 * is just a crude way of confirming that the above math
+	 * didn't screw up - both IPv4 and IPv6 fragment are known to
+	 * be well over 400-bytes in size.
+	 *
+	 * XXX: with the exception of .enc_blocksize and non-ESP
+	 * header, the value is also static - why the convoluted math.
+	 *
+	 * XXX: Don't include unencrypted_payloads.len in the
+	 * calculation, it should be zero.  The only time it is
+	 * non-zero is when when adding bogus payloads, and then only
+	 * consequence is that the first packet is slightly bigger
+	 * than MAX_XKF_SIZE.
 	 */
-	PASSERT(logger, unencrypted_payloads.len < max_skf_size);
-	unsigned int nfrags = (sk->cleartext.len + unencrypted_payloads.len + max_skf_size - 1) / max_skf_size;
+	PASSERT(logger, max_skf_size >= 400/*arbitrary*/);
+	unsigned int nfrags = (sk->cleartext.len + max_skf_size - 1) / max_skf_size;
 
-	if (nfrags > MAX_IKE_FRAGMENTS) {
+	if (nfrags > MAX_IKEv2_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 			    sk->cleartext.len, max_skf_size);

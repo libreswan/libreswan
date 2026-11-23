@@ -5,8 +5,9 @@ ipsec start
 
 # bloat the first fragment
 ipsec whack --impair add_unknown_v2_payload_to:IKE_AUTH:400
-# and send some bonus fragments
-ipsec whack --impair add_fragments:1:1024
+
+# And send some small bonus fragments making the total >64.
+ipsec whack --impair add_fragments:64:100
 
 ipsec add west-east
 echo "initdone"
