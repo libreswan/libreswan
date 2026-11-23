@@ -30,10 +30,11 @@ west #
 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ipsec up west-cuckoo # fail with invalid KE
+ ipsec up west-cuckoo # retry with MODP4096
 "west-cuckoo" #3: initiating Child SA using IKE SA #1
 "west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.20.0/24]
-"west-cuckoo" #3: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD response suggesting MODP4096 instead of MODP8192
-"west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-cuckoo" #3: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
+"west-cuckoo" #3: CREATE_CHILD_SA failed with error notification INVALID_KE_PAYLOAD response suggesting MODP4096 instead of MODP2048
+"west-cuckoo" #3: retrying CREATE_CHILD_SA with suggested MODP4096
+"west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP} [198.18.66.0/24===192.0.20.0/24]
+"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [198.18.66.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP4096 DPD=passive}
 west #

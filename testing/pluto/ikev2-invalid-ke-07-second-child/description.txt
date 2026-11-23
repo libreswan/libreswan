@@ -1,4 +1,4 @@
-two multinets, second has conflicting KE
+Two multinets, with the second initially using a different KE.
 
-Causes a create_child_sa(new) request to be rejected with
-INVALID_KE_PAYLOAD response (ref #1266).
+The CREATE_CHILD_SA request receives INVALID_KE_PAYLOAD and retries
+with MODP4096 from its original proposal (refs #1266 and #3119).
