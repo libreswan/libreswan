@@ -81,6 +81,8 @@ enum v2N_status v2N_status_from_notification(v2_notification_t n)
 	C(SA_RESOURCE_INFO);
 	C(TS_MAX_QUEUE);
 	C(CHILD_SA_PFS_INFO_SUPPORTED);
+	C(OPTIMIZED_REKEY_SUPPORTED);
+	C(OPTIMIZED_REKEY);
 #undef C
 	default: return v2N_status_IGNORE;
 	}

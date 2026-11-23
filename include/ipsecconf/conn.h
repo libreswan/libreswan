@@ -191,6 +191,7 @@ enum config_conn_keyword {
 	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
 	KWS_KEYEXCHANGE,
 	KWS_PPK,
+	KWS_OPTIMIZED_REKEY,	/* draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt */
 	KWS_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KWS_ESN,
 	KWS_DECAP_DSCP,

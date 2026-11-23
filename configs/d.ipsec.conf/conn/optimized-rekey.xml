@@ -1,0 +1,28 @@
+<varlistentry id='conn.optimized-rekey'>
+  <term>
+    <option>optimized-rekey=&yn_option;</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to negotiate the IKEv2 optimized rekey
+      (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt) in IKE_AUTH.  When
+      both peers have exchanged the OPTIMIZED_REKEY_SUPPORTED
+      notification, a rekey may omit the SA (and for the Child SA the
+      TS) payloads from the CREATE_CHILD_SA exchange, as the new SA
+      inherits the properties of the SA being rekeyed. A regular
+      rekey is always accepted.
+    </para>
+    <para>
+      Optimized Child SA rekeys keeps the mode (tunnel, transport or
+      IP-TFS) of the Child SA it replaces. Child SAs using compression,
+      or on an IKE SA that used a PPK, are rekeyed with a regular rekey.
+      The first rekey of a Child SA created in IKE_AUTH is a regular rekey,
+      unless <option>child-sa-pfs-info-supported</option> was negotiated.
+      When the peer rejects an optimized rekey with
+      NO_PROPOSAL_CHOSEN, a regular rekey is tried.
+    </para>
+    <para>
+      The default is &no;.
+    </para>
+  </listitem>
+</varlistentry>

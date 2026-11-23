@@ -1,0 +1,4 @@
+IKEv2 optimized rekey (draft-ietf-ipsecme-ikev2-sa-ts-payloads-opt): both west
+and east have optimized-rekey=yes, so OPTIMIZED_REKEY_SUPPORTED is exchanged in
+IKE_AUTH.  This only tests the negotiation; the notify codepoints are
+placeholders until assigned by IANA.
