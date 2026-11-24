@@ -73,6 +73,7 @@
 #include "ikev2_send.h"
 #include "ip_info.h"
 #include "nat_traversal.h"
+#include "ip_encap.h"		/* for ip_encap_esp_in_{udp,tcp} */
 #include "pluto_x509.h"
 #include "ip_address.h"
 #include "pluto_stats.h"
@@ -131,7 +132,7 @@ void jam_child_sa_details(struct jambuf *buf,
 			    !st->st_seen_esp_tfc_padding_not_supported);
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool iptfs = st->st_seen_and_use_iptfs;
-		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
+		const struct ip_encap *encap = child_esp_encap(st);
 
 		if (nat) {
 			ldbg(st->logger,
@@ -140,7 +141,8 @@ void jam_child_sa_details(struct jambuf *buf,
 		}
 
 		jam(buf, "ESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
-		    tcp ? "inTCP" : nat ? "inUDP" : "",
+		    encap == &ip_encap_esp_in_tcp ? "inTCP" :
+		    encap == &ip_encap_esp_in_udp ? "inUDP" : "",
 		    esn ? "/ESN" : "",
 		    tfc ? "/TFC" : "",
 		    iptfs ? "/IPTFS" : "",

@@ -24,6 +24,7 @@
 #include "ike_spi.h"
 
 struct hash_desc;
+struct ip_encap;
 
 extern deltatime_t nat_keepalive_period;
 
@@ -74,6 +75,8 @@ extern deltatime_t nat_keepalive_period;
  * NAT-Traversal detected
  */
 bool nat_traversal_detected(const struct state *st);
+
+const struct ip_encap *child_esp_encap(const struct state *st);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger);
 

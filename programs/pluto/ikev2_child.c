@@ -68,6 +68,7 @@
 #include "ikev2_notification.h"
 #include "iface.h"
 #include "nat_traversal.h"
+#include "ip_encap.h"		/* for ip_encap_esp_in_{udp,tcp} */
 #include "ikev2_ke.h"
 #include "ikev2_auth.h"
 #include "ikev2_terminate.h"
@@ -708,9 +709,10 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf,
 	 * SA).  For completeness include both.
 	 */
 	jam_name_short(buf, &encap_proto_names, config->child.encap_proto);
-	if (larval->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+	const struct ip_encap *encap = child_esp_encap(&larval->sa);
+	if (encap == &ip_encap_esp_in_tcp) {
 		jam_string(buf, "inTCP");
-	} else if (nat_traversal_detected(&larval->sa)) {
+	} else if (encap == &ip_encap_esp_in_udp) {
 		jam_string(buf, "inUDP");
 	}
 #if 0
