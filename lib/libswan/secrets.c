@@ -118,9 +118,7 @@ struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 	}
 
 	switch (secret->kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
-	case SECRET_EDDSA:
+	case SECRET_PUBKEY:
 		/* some sort of PKI */
 		return secret->u.pubkey;
 	default:
@@ -452,9 +450,7 @@ struct secret *secret_find_by_id(struct secret *secrets,
 				same = hunk_eq(s->u.preshared[0],
 					       best->u.preshared[0]);
 				break;
-			case SECRET_RSA:
-			case SECRET_ECDSA:
-			case SECRET_EDDSA:
+			case SECRET_PUBKEY:
 				same = secret_pubkey_same(s, best, verbose.logger);
 				break;
 			case SECRET_XAUTH:
@@ -1023,9 +1019,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			case SECRET_XAUTH:
 				pfreeany(s->u.preshared);
 				break;
-			case SECRET_RSA:
-			case SECRET_ECDSA:
-			case SECRET_EDDSA:
+			case SECRET_PUBKEY:
 				secret_pubkey_stuff_delref(&s->u.pubkey, HERE);
 				break;
 			default:
@@ -1280,7 +1274,7 @@ static err_t add_private_key(struct secret **secrets,
 	PEXPECT(logger, content.keyid.keyid[0] != '\0');
 
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
-	s->kind = type->private_key_kind;
+	s->kind = SECRET_PUBKEY;
 	s->line = 0;
 	/* make an unpacked copy of the private key */
 	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, logger, HERE);
