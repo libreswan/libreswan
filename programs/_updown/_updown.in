@@ -119,10 +119,10 @@ export LC_ALL
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 test ${UPDOWN_DEBUG} && set -x
 
-if [ -x @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} ]; then
-    exec @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@
+if [ -x @@IPSEC_LIBEXECDIR@@/_updown.${PLUTO_STACK} ]; then
+    exec @@IPSEC_LIBEXECDIR@@/_updown.${PLUTO_STACK} $@
 else
-    echo "FATAL: Could not execute @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@"
+    echo "FATAL: Could not execute @@IPSEC_LIBEXECDIR@@/_updown.${PLUTO_STACK} $@"
 fi
 
 exit 3

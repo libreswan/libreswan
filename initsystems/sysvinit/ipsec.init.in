@@ -72,7 +72,7 @@ fi
 
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-@@IPSEC_CONF@@}"
-IPSEC_EXECDIR="${IPSEC_EXECDIR:-@@IPSEC_EXECDIR@@}"
+IPSEC_LIBEXECDIR="${IPSEC_LIBEXECDIR:-@@IPSEC_LIBEXECDIR@@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
 unset PLUTO_OPTIONS
 
@@ -141,8 +141,8 @@ start() {
 	rm -f ${lockfile}
     fi
     echo
-    if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
-	@@LIBEXECDIR@@/portexcludes
+    if [ -f @@IPSEC_LIBEXECDIR@@/portexcludes ] ; then
+	@@IPSEC_LIBEXECDIR@@/portexcludes
     fi
     return ${RETVAL}
 }
@@ -289,7 +289,7 @@ case "$1" in
     status)
 	status
 	RETVAL=$?
-	${IPSEC_EXECDIR}/whack --status 2>/dev/null | grep Total | sed 's/^000\ Total\ //'
+	${IPSEC_LIBEXECDIR}/whack --status 2>/dev/null | grep Total | sed 's/^000\ Total\ //'
 	;;
     version)
 	version
