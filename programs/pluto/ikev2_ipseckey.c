@@ -47,9 +47,6 @@
 #include "secrets.h"
 #include "ikev2_ike_auth.h"
 
-#define LDNS_RR_TYPE_A 1
-#define LDNS_RR_TYPE_IPSECKEY 45
-
 static struct ub_ctx *ipseckey_unbound_ctx;
 
 static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
@@ -65,19 +62,24 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 		str_deltatime(served_delta, &db));
 }
 
-static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *dns_pubkeys)
+static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
+				     struct p_dns_req *dnsr,
+				     struct dns_pubkey *dns_pubkeys,
+				     struct verbose verbose)
 {
-	passert(dns_pubkeys != NULL);
+	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
+	vassert(dns_pubkeys != NULL);
+	vassert(ike != NULL);
 
-	const struct state *st = state_by_serialno(dnsr->so_serial);
-	const struct id *keyid = &st->st_connection->remote->host.id;
+	const struct id *remote_id = &ike->sa.st_connection->remote->host.id;
 
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	/* delete only once. then multiple keys could be added */
-	delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
+	delete_public_keys(&pluto_pubkeys, remote_id, &pubkey_type_rsa);
 
 	realtime_t install_time = realnow();
-	for (struct dns_pubkey *dns_pubkey = dns_pubkeys; dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
+	for (struct dns_pubkey *dns_pubkey = dns_pubkeys;
+	     dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
 
 		/*
 		 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
@@ -98,35 +100,34 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
 			DNSSEC_SECURE : DNSSEC_INSECURE;
 
-		if (keyid->kind == ID_FQDN) {
+		if (remote_id->kind == ID_FQDN) {
 			id_buf thatidbuf;
 			name_buf ab;
-			ldbg(st->logger, "add IPSECKEY pluto as publickey %s %s %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vdbg("add IPSECKEY pluto as publickey %s %s %s",
+			     str_id(remote_id, &thatidbuf),
 			     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
 		} else {
 			id_buf thatidbuf;
 			name_buf ab;
-			ldbg(st->logger, "add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+			     str_id(remote_id, &thatidbuf),
 			     dnsr->qname, ttl_buf,
 			     str_enum_long(&dns_auth_level_names, al, &ab));
 		}
 
 		struct pubkey *pubkey = NULL; /*must-delref*/
-		diag_t d = unpack_dns_pubkey(keyid, /*dns_auth_level*/al,
+		diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
 					     dns_pubkey->algorithm_type,
 					     install_time,
 					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
 					     ttl,
 					     dns_pubkey->pubkey,
 					     &pubkey,
-					     st->logger);
+					     dnsr->logger);
 		if (d != NULL) {
 			id_buf thatidbuf;
-			llog(RC_LOG, dnsr->logger,
-			     "add %s publickey failed, %s: %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vlog("add %s publickey failed, %s: %s",
+			     str_id(remote_id, &thatidbuf),
 			     dnsr->log_buf,
 			     str_diag(d));
 			pfree_diag(&d);
@@ -138,11 +139,16 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 	}
 }
 
-static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
+static void validate_address(struct ike_sa *ike,
+			     struct p_dns_req *dnsr,
+			     unsigned char *addr,
+			     struct verbose verbose)
 {
-	struct state *st = state_by_serialno(dnsr->so_serial);
+	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
+	vassert(ike != NULL);
+
 	ip_address ipaddr;
-	const struct ip_info *afi = endpoint_info(st->st_remote_endpoint);
+	const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
 		return;
@@ -159,40 +165,28 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 	}
 
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, ipaddr)) {
+	if (!endpoint_address_eq_address(ike->sa.st_remote_endpoint, ipaddr)) {
 		endpoint_buf ra;
 		address_buf rb;
-		ldbg(dnsr->logger, " forward address of IDi %s do not match remote address %s != %s",
+		vdbg("forward address of IDi %s do not match remote address %s != %s",
 		     dnsr->qname,
-		     str_endpoint(&st->st_remote_endpoint, &ra),
+		     str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 		     str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = true;
 	endpoint_buf ra;
-	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
-	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
+	vdbg("address of IDi %s match remote address %s",
+	     dnsr->qname, str_endpoint(&ike->sa.st_remote_endpoint, &ra));
 }
 
-static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
+static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
+						  struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	const char *parse_err;
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
 
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find discard the response */
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
-		return;
-	}
-
-
-	ipseckey_dbg_dns_resp(dnsr);
-	parse_err = process_dns_resp(dnsr);
-
+	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
@@ -208,8 +202,8 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 	}
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
-	ike->sa.ipseckey_dnsr = NULL;
-	free_ipseckey_dns(dnsr);
+	ike->sa.st_ipseckey.ipseckey_request = NULL;
+	free_ipseckey_dns(&dnsr);
 }
 
 static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
@@ -222,23 +216,10 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
 	complete_v2_state_transition(ike, md, callback(ike, md, err));
 }
 
-static void idi_a_fetch_continue(struct p_dns_req *dnsr)
+static void idi_address_fetch_continue(struct ike_sa *ike,
+				       struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	bool err;
-
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find st, hence no md, abort*/
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
-		return;
-	}
-
-	if (!dnsr->cache_hit)
-		ipseckey_dbg_dns_resp(dnsr);
-	process_dns_resp(dnsr);
+	process_dns_resp(ike, dnsr);
 
 	if (!dnsr->fwd_addr_valid) {
 		llog(RC_LOG, dnsr->logger,
@@ -246,13 +227,12 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 		     dnsr->log_buf);
 	}
 
+	bool err;
 	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
 		err = false;
 	} else {
-		if (ike->sa.ipseckey_dnsr != NULL) {
-			free_ipseckey_dns(ike->sa.ipseckey_dnsr);
-			ike->sa.ipseckey_dnsr = NULL;
-		}
+		/* tells unbound to cancel the other request */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.ipseckey_request);
 		err = true;
 	}
 
@@ -267,50 +247,36 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
-	ike->sa.ipseckey_fwd_dnsr = NULL;
+	ike->sa.st_ipseckey.address_request = NULL;
 
-	if (ike->sa.ipseckey_dnsr != NULL) {
+	if (ike->sa.st_ipseckey.ipseckey_request != NULL) {
 		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
 	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
-	free_ipseckey_dns(dnsr);
+	free_ipseckey_dns(&dnsr);
 }
 
-static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
+static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
+						  struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	const char *parse_err;
-	bool err;
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
 
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find st, hence no md, abort*/
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
-		return;
-	}
-
-	if (!dnsr->cache_hit)
-		ipseckey_dbg_dns_resp(dnsr);
-	parse_err = process_dns_resp(dnsr);
-
+	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
 
+	bool err;
 	if (dnsr->rcode == 0 && parse_err == NULL) {
 		err = false;
 	} else {
-		if (ike->sa.ipseckey_fwd_dnsr != NULL) {
-			free_ipseckey_dns(ike->sa.ipseckey_fwd_dnsr);
-			ike->sa.ipseckey_fwd_dnsr = NULL;
-		}
+		/* tells unbound to cancel the other request */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
 		err = true;
 	}
 
@@ -326,18 +292,44 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
-	ike->sa.ipseckey_dnsr = NULL;
+	ike->sa.st_ipseckey.ipseckey_request = NULL;
 
-	if (ike->sa.ipseckey_fwd_dnsr != NULL) {
+	if (ike->sa.st_ipseckey.address_request != NULL) {
 		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
 	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
-	free_ipseckey_dns(dnsr);
+	free_ipseckey_dns(&dnsr);
+}
+
+void ipseckey_request_callback(struct p_dns_req *dnsr)
+{
+ 	dnsr->done_time = realnow();
+ 	ipseckey_dbg_dns_resp(dnsr);
+
+	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
+	if (ike == NULL) {
+		/* IKE SA disappeared, hence no md, abort */
+		deltatime_t served_delta = realtime_diff(dnsr->done_time,
+							 dnsr->start_time);
+		deltatime_buf db;
+		llog(RC_LOG, dnsr->logger,
+		     "the IKE SA "PRI_SO" is gone; %s returned %s elapsed time %s seconds",
+		     pri_so(dnsr->so_serial),
+		     dnsr->log_buf, dnsr->rcode_name,
+		     str_deltatime(served_delta, &db));
+		free_ipseckey_dns(&dnsr);
+		return;
+	}
+
+	/*
+	 * Danger; callee may free dnsr.
+	 */
+	dnsr->cb(ike, dnsr);
 }
 
 static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
@@ -376,11 +368,9 @@ static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 	return NULL;
 }
 
-
 static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 				     struct msg_digest *md,
-				     int qtype,
-				     const char *qtype_name,
+				     ldns_rr_type qtype,
 				     dnsr_cb_fn dnsr_cb,
 				     stf_status (*callback)(struct ike_sa *ike,
 							    struct msg_digest *md,
@@ -407,10 +397,11 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	p->logger = clone_logger(ike->sa.logger, HERE);
 	p->qname = clone_str(qname, "dns qname");
 
+	name_buf qb;
 	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",
-				  p->qname, qtype_name);
+				  p->qname, str_ldns_rr_type(qtype, &qb));
 
-	p->qclass = C_IN; /* aka ns_c_in */
+	p->qclass = LDNS_RR_CLASS_IN; /* aka C_IN; aka ns_c_in */
 	p->qtype = qtype;
 	p->cache_hit = true;
 	p->dns_status = DNS_SUSPEND;
@@ -430,7 +421,7 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
 								    bool err))
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */
-	struct p_dns_req *p = qry_st_init(ike, md, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb, callback);
+	struct p_dns_req *p = qry_st_init(ike, md, LDNS_RR_TYPE_IPSECKEY, dnsr_cb, callback);
 	if (p == NULL) {
 		return NULL;
 	}
@@ -464,11 +455,11 @@ bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
 
 	dns_status ret = dns_qry_start(dnsr);
 	if (ret == DNS_SUSPEND) {
-		ike->sa.ipseckey_dnsr = dnsr; /* saved */
+		ike->sa.st_ipseckey.ipseckey_request = dnsr; /* saved */
 		return true;	/* while querying IDr do not suspend */
 	}
 
-	free_ipseckey_dns(dnsr); /* freed */
+	free_ipseckey_dns(&dnsr); /* freed */
 	return ret == DNS_OK;
 }
 
@@ -499,7 +490,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 
 	const dns_status ret_idi = dns_qry_start(dnsr_idi);
 	if (ret_idi != DNS_SUSPEND && ret_idi != DNS_OK) {
-		free_ipseckey_dns(dnsr_idi); /* freed */
+		free_ipseckey_dns(&dnsr_idi); /* freed */
 		return ret_idi;
 	}
 
@@ -508,19 +499,19 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	 * query.
 	 */
 	if (ret_idi == DNS_SUSPEND) {
-		ike->sa.ipseckey_dnsr = dnsr_idi; /*saved*/
+		ike->sa.st_ipseckey.ipseckey_request = dnsr_idi; /*saved*/
 	} else {
-		free_ipseckey_dns(dnsr_idi); /*freed*/
+		free_ipseckey_dns(&dnsr_idi); /*freed*/
 	}
-	dnsr_idi = NULL; /*saved/freed*/
+	dnsr_idi = NULL; /*saved|freed*/
 
 	/* start second query? */
 	if (ike->sa.st_connection->config->dns_match_id) {
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
 			/* ask for the DNS's IPv4 address */
-			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A, "A",
-							       idi_a_fetch_continue,
+			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A,
+							       idi_address_fetch_continue,
 							       callback); /*must save/free*/
 			if (dnsr_a == NULL) {
 				return DNS_FATAL;
@@ -528,11 +519,11 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 			dnsr_a->validate_address_cb = validate_address;
 			const dns_status ret_a = dns_qry_start(dnsr_a);
 			if (ret_a == DNS_SUSPEND) {
-				ike->sa.ipseckey_fwd_dnsr = dnsr_a;
+				ike->sa.st_ipseckey.address_request = dnsr_a;
 				return DNS_SUSPEND;
 			}
 
-			free_ipseckey_dns(dnsr_a); /*freed*/
+			free_ipseckey_dns(&dnsr_a); /*freed*/
 			dnsr_a = NULL;
 			if (ret_a != DNS_OK) {
 				return ret_a;

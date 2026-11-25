@@ -37,15 +37,18 @@
 #include "log.h"
 #include "dnssec.h" 		/* includes unbound.h */
 #include "demux.h"		/* for md_delref() */
-#include "ikev2_ipseckey.h" /* for dns_status */
+#include "ikev2_ipseckey.h"	/* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
-void free_ipseckey_dns(struct p_dns_req *d)
+void free_ipseckey_dns(struct p_dns_req **dd)
 {
-	if (d == NULL)
+	struct p_dns_req *d = (*dd);
+	(*dd) = NULL;
+	if (d == NULL) {
 		return;
+	}
 
 	if (d->ub_async_id != 0) {
 		ub_cancel(d->ctx, d->ub_async_id);
@@ -271,8 +274,12 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 	return ugh == NULL;
 }
 
-static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
+static err_t parse_rr(struct ike_sa *ike,
+		      struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
+		      struct verbose verbose)
 {
+	vassert(ike != NULL);
+
 	ldns_rr_list *answers = ldns_pkt_answer(ldnspkt);
 	ldns_buffer *output = NULL;
 	size_t i;
@@ -296,7 +303,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
 
 		if (qclass != dnsr->qclass) {
-			ldbg(dnsr->logger, "dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
+			vdbg("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
 			     i, class_e->name, class->name);
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
@@ -304,7 +311,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		rdf = ldns_rr_rdf(ans, 0);
 		if (rdf == NULL) {
-			ldbg(dnsr->logger, "dns answer %zu did not convert to rdf ignore this answer", i);
+			vdbg("dns answer %zu did not convert to rdf ignore this answer", i);
 			continue;
 		}
 
@@ -361,7 +368,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		output = NULL;
 
 		if (dnsr->validate_address_cb) {
-			dnsr->validate_address_cb(dnsr, ldns_rdf_data(rdf));
+			dnsr->validate_address_cb(ike, dnsr, ldns_rdf_data(rdf), verbose);
 		}
 
 		if (dnsr->qtype == atype && atype == LDNS_RR_TYPE_IPSECKEY) {
@@ -370,7 +377,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		if (atype != dnsr->qtype) {
 			/* dns server stuffed extra rr types, ignore */
-			ldbg(dnsr->logger, "dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
+			vdbg("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
 			     i, dnsr->qtype, atype);
 		}
 	}
@@ -379,8 +386,8 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		return "nothing to add";
 	}
 
-	if (dnsr->pubkeys_cb) {
-		dnsr->pubkeys_cb(dnsr, dns_pubkeys);
+	if (dnsr->pubkeys_cb != NULL) {
+		dnsr->pubkeys_cb(ike, dnsr, dns_pubkeys, verbose);
 	}
 
 	while (dns_pubkeys != NULL) {
@@ -392,8 +399,11 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 }
 
 /* This is called when dns response arrives */
-err_t process_dns_resp(struct p_dns_req *dnsr)
+err_t process_dns_resp(struct ike_sa *ike, struct p_dns_req *dnsr)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, dnsr->logger, "IPSECKEY");
+	vassert(ike != NULL);
+
 	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
@@ -417,23 +427,13 @@ err_t process_dns_resp(struct p_dns_req *dnsr)
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
 			llog(IMPAIR_STREAM, dnsr->logger, "allowing insecure DNS response");
-			return parse_rr(dnsr, ldnspkt);
+			return parse_rr(ike, dnsr, ldnspkt, verbose);
 		}
 		return "unbound returned INSECURE response - ignored";
 
 	case UB_EVENT_SECURE:
-		return parse_rr(dnsr, ldnspkt);
+		return parse_rr(ike, dnsr, ldnspkt, verbose);
 	}
-}
-
-void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
-{
-	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
-	deltatime_buf db;
-	llog(RC_LOG, dnsr->logger,
-	     "the state is gone; %s returned %s elapsed time %s seconds",
-	     dnsr->log_buf, dnsr->rcode_name,
-	     str_deltatime(served_delta, &db));
 }
 
 void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
@@ -481,7 +481,18 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	rcode_txt = ldns_lookup_by_id(ldns_rcodes, dnsr->rcode);
 	dnsr->rcode_name = rcode_txt->name;
 
-	dnsr->cb(dnsr);
+	/*
+	 * XXX: hack
+	 *
+	 * Should call ike_sa_by_serialno() and pass result into
+	 * callback, but can't as exposing that declaration exposes a
+	 * conflict between "asn1.h" and OpenSSL's headers.
+	 *
+	 * Hence callback an extra level of indirection.
+	 *
+	 * Danger, callee may free DNSR.
+	 */
+	ipseckey_request_callback(dnsr);
 }
 
 dns_status dns_qry_start(struct p_dns_req *dnsr)
@@ -514,4 +525,21 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 	      ret == DNS_OK ? "ok" :
 	      "ERROR"));
 	return ret;
+}
+
+/* XXX: hack for system header */
+const char *str_ldns_rr_type(ldns_rr_type type, name_buf *buf)
+{
+	switch (type) {
+#define S(T) case LDNS_RR_TYPE_##T: return #T
+		S(A);
+		S(AAAA);
+		S(TXT);
+		S(NS);
+		S(IPSECKEY);
+#undef S
+	default:
+		bad_name(type, buf);
+		return buf->buf;
+	}
 }

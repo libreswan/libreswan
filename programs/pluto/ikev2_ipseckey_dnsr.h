@@ -1,11 +1,15 @@
-#include "defs.h"
+#include <ldns/rr.h>
 
-#ifndef _IKEV2_IPSECKEY_DNSR_H
-#define _IKEV2_IPSECKEY_DNSR_H
+#include "defs.h"
+#include "names.h"
+#include "verbose.h"
+
+#ifndef IKEV2_IPSECKEY_DNSR_H
+#define IKEV2_IPSECKEY_DNSR_H
 
 struct p_dns_req;
 
-typedef void dnsr_cb_fn(struct p_dns_req *);
+typedef void dnsr_cb_fn(struct ike_sa *ike, struct p_dns_req *);
 
 struct dns_pubkey {
 	/* ID? */
@@ -16,11 +20,15 @@ struct dns_pubkey {
 	shunk_t pubkey;
 };
 
-typedef void dnsr_pubkeys_cb_fn(struct p_dns_req *dnsr,
-				struct dns_pubkey *dns_pubkeys);
+typedef void dnsr_pubkeys_cb_fn(struct ike_sa *ike,
+				struct p_dns_req *dnsr,
+				struct dns_pubkey *dns_pubkeys,
+				struct verbose verbose);
 
-typedef void dnsr_validate_address_cb_fn(struct p_dns_req *dnsr,
-					 unsigned char *addr);
+typedef void dnsr_validate_address_cb_fn(struct ike_sa *ike,
+					 struct p_dns_req *dnsr,
+					 unsigned char *addr,
+					 struct verbose verbose);
 
 struct p_dns_req {
 	dns_status dns_status;
@@ -38,8 +46,8 @@ struct p_dns_req {
 	realtime_t done_time;
 
 	char *qname;		/* DNS query to send, from ID */
-	uint16_t qtype;
-	uint16_t qclass;
+	ldns_rr_type qtype;
+	ldns_rr_class qclass;
 
 	int ub_async_id;	/* used to track libunbound query, to cancel */
 	struct ub_ctx *ctx;
@@ -63,17 +71,19 @@ struct p_dns_req {
 	char *why_bogus;	/* returned by libunbound if the security is bogus */
 
 	dnsr_cb_fn *cb;	/* continue function for pluto, not the unbound cb */
+
 	dnsr_pubkeys_cb_fn *pubkeys_cb;	/* called when public keys are retrieved from IPSECKEY RR */
 	dnsr_validate_address_cb_fn *validate_address_cb; /* called when addresses are returned as A RR */
 
 	struct p_dns_req *next;
 };
 
-extern void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr);
 extern void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr);
-extern err_t process_dns_resp(struct p_dns_req *dnsr);
+extern err_t process_dns_resp(struct ike_sa *ike, struct p_dns_req *dnsr);
 extern dns_status dns_qry_start(struct p_dns_req *dnsr);
 extern struct p_dns_req *pluto_dns_list;
-extern void free_ipseckey_dns(struct p_dns_req *pp);
+extern void free_ipseckey_dns(struct p_dns_req **pp);
+
+const char *str_ldns_rr_type(ldns_rr_type type, name_buf *buf);
 
 #endif
