@@ -153,48 +153,6 @@ static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
 	}
 }
 
-static void validate_address(struct ike_sa *ike,
-			     struct p_dns_req *dnsr,
-			     unsigned char *addr,
-			     struct verbose verbose)
-{
-	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
-	vassert(ike != NULL);
-
-	ip_address ipaddr;
-	const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
-
-	if (dnsr->qtype != LDNS_RR_TYPE_A) {
-		return;
-	}
-
-	/*
-	 * XXX: this is assuming that addr has .ip_size bytes!?!
-	 * Interface doesn't pass in actual length.
-	 */
-	diag_t diag = data_to_address(addr, afi->ip_size, afi, &ipaddr);
-	if (diag != NULL) {
-		llog(RC_LOG, dnsr->logger, "invalid address: %s", str_diag(diag));
-		pfree_diag(&diag);
-		return;
-	}
-
-	if (!endpoint_address_eq_address(ike->sa.st_remote_endpoint, ipaddr)) {
-		endpoint_buf ra;
-		address_buf rb;
-		vdbg("forward address of IDi %s do not match remote address %s != %s",
-		     dnsr->qname,
-		     str_endpoint(&ike->sa.st_remote_endpoint, &ra),
-		     str_address(&ipaddr, &rb));
-		return;
-	}
-
-	dnsr->fwd_addr_valid = true;
-	endpoint_buf ra;
-	vdbg("address of IDi %s match remote address %s",
-	     dnsr->qname, str_endpoint(&ike->sa.st_remote_endpoint, &ra));
-}
-
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
@@ -254,20 +212,28 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
 static void idi_address_fetch_continue(struct ike_sa *ike,
 				       struct p_dns_req *dnsr)
 {
-	process_dns_resp(ike, dnsr);
-
-	if (!dnsr->fwd_addr_valid) {
-		llog(RC_LOG, dnsr->logger,
-		     "forward address validation failed %s",
-		     dnsr->log_buf);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
+
+	PEXPECT(dnsr->logger, dnsr->forward_address.ip.is_set);
 
 	bool larval = (dnsr->dns_status == DNS_LARVAL);
 
-	if (dnsr->rcode == 0 &&
-	    dnsr->fwd_addr_valid) {
+
+	if (resp_err == NULL &&
+	    dnsr->forward_address_valid) {
+		address_buf ab;
+		ldbg(dnsr->logger, "forward address %s validated",
+		     str_address_sensitive(&dnsr->forward_address, &ab));
 		dnsr->dns_status = DNS_OK;
 	} else {
+		address_buf ab;
+		llog(RC_LOG, dnsr->logger,
+		     "forward address %s validation failed %s",
+		     str_address_sensitive(&dnsr->forward_address, &ab),
+		     dnsr->log_buf);
 		/* tells unbound to cancel the other request */
 		free_ipseckey_dns(&ike->sa.st_ipseckey.ipseckey_request);
 		dnsr->dns_status = DNS_FATAL;
@@ -520,6 +486,8 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 							       struct msg_digest *md,
 							       bool err))
 {
+	struct verbose verbose  = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
+
 	/* ask for the DNS's IPSECKEY */
 	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(ike, md,
 							  responder_fetch_idi_ipseckey_continue,
@@ -550,14 +518,27 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	if (ike->sa.st_connection->config->dns_match_id) {
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
+			const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
+			if (vbad(afi == NULL)) {
+				return DNS_FATAL;
+			}
+
 			/* ask for the DNS's IPv4 address */
-			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A,
+			ldns_rr_type qtype = (afi == &ipv4_info ? LDNS_RR_TYPE_A :
+					      afi == &ipv6_info ? LDNS_RR_TYPE_AAAA :
+					      0);
+			if (vbad(qtype == 0)) {
+				return DNS_FATAL;
+			}
+
+			struct p_dns_req *dnsr_a = qry_st_init(ike, md, qtype,
 							       idi_address_fetch_continue,
 							       callback); /*must save/free*/
 			if (dnsr_a == NULL) {
 				return DNS_FATAL;
 			}
-			dnsr_a->validate_address_cb = validate_address;
+
+			dnsr_a->forward_address = endpoint_address(ike->sa.st_remote_endpoint);
 			const dns_status ret_a = dns_qry_start(dnsr_a);
 			if (ret_a == DNS_SUSPEND) {
 				ike->sa.st_ipseckey.address_request = dnsr_a;

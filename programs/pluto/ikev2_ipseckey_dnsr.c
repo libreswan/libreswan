@@ -39,6 +39,7 @@
 #include "demux.h"		/* for md_delref() */
 #include "ikev2_ipseckey.h"	/* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
+#include "ip_info.h"
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
@@ -280,6 +281,39 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 	return ugh == NULL;
 }
 
+static bool validate_address(struct p_dns_req *dnsr,
+			     ip_address valid_address,
+			     chunk_t addr)
+{
+	const struct ip_info *afi = address_info(valid_address);
+
+	/*
+	 * XXX: this is assuming that addr has .ip_size bytes!?!
+	 * Interface doesn't pass in actual length.
+	 */
+	ip_address ipaddr;
+	diag_t diag = hunk_to_address(addr, afi, &ipaddr);
+	if (diag != NULL) {
+		llog(RC_LOG, dnsr->logger, "invalid address: %s", str_diag(diag));
+		pfree_diag(&diag);
+		return false;
+	}
+
+	if (!address_eq_address(valid_address, ipaddr)) {
+		address_buf rb, ra;
+		ldbg(dnsr->logger, "address of IDi %s do not match remote address %s != %s",
+		     dnsr->qname,
+		     str_address(&valid_address, &ra),
+		     str_address(&ipaddr, &rb));
+		return false;
+	}
+
+	address_buf ra;
+	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
+	     dnsr->qname, str_address(&valid_address, &ra));
+	return true;
+}
+
 static void parse_rr(struct ike_sa *ike,
 		     struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
 		     struct verbose verbose)
@@ -348,11 +382,12 @@ static void parse_rr(struct ike_sa *ike,
 
 		switch (qtype) {
 		case LDNS_RR_TYPE_A:
-			if (dnsr->validate_address_cb) {
-				dnsr->validate_address_cb(ike, dnsr,
-							  ldns_rdf_data(rdf),
-							  verbose);
-			}
+		case LDNS_RR_TYPE_AAAA:
+			vexpect(dnsr->forward_address.ip.is_set);
+			dnsr->forward_address_valid =
+				validate_address(dnsr, dnsr->forward_address,
+						 chunk2(ldns_rdf_data(rdf),
+							ldns_rdf_size(rdf)));
 			break;
 		case LDNS_RR_TYPE_IPSECKEY:
 			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans),
