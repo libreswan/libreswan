@@ -172,24 +172,10 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
 }
 
-static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
+static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
+						  struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	const char *parse_err;
-
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find discard the response */
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(&dnsr);
-		return;
-	}
-
-
-	ipseckey_dbg_dns_resp(dnsr);
-	parse_err = process_dns_resp(dnsr);
-
+	const char *parse_err = process_dns_resp(dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
@@ -219,22 +205,9 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
 	complete_v2_state_transition(ike, md, callback(ike, md, err));
 }
 
-static void idi_a_fetch_continue(struct p_dns_req *dnsr)
+static void idi_a_fetch_continue(struct ike_sa *ike,
+				 struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	bool err;
-
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find st, hence no md, abort*/
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(&dnsr);
-		return;
-	}
-
-	if (!dnsr->cache_hit)
-		ipseckey_dbg_dns_resp(dnsr);
 	process_dns_resp(dnsr);
 
 	if (!dnsr->fwd_addr_valid) {
@@ -243,6 +216,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 		     dnsr->log_buf);
 	}
 
+	bool err;
 	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
 		err = false;
 	} else {
@@ -277,29 +251,16 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	free_ipseckey_dns(&dnsr);
 }
 
-static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
+static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
+						  struct p_dns_req *dnsr)
 {
-	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
-	const char *parse_err;
-	bool err;
-
-	dnsr->done_time = realnow();
-
-	if (ike == NULL) {
-		/* state disappeared we can't find st, hence no md, abort*/
-		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(&dnsr);
-		return;
-	}
-
-	if (!dnsr->cache_hit)
-		ipseckey_dbg_dns_resp(dnsr);
-	parse_err = process_dns_resp(dnsr);
+	const char *parse_err = process_dns_resp(dnsr);
 
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
 
+	bool err;
 	if (dnsr->rcode == 0 && parse_err == NULL) {
 		err = false;
 	} else {
@@ -333,6 +294,32 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
 	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
 	free_ipseckey_dns(&dnsr);
+}
+
+void ipseckey_request_callback(struct p_dns_req *dnsr)
+{
+ 	dnsr->done_time = realnow();
+ 	ipseckey_dbg_dns_resp(dnsr);
+
+	struct ike_sa *ike = ike_sa_by_serialno(dnsr->so_serial);
+	if (ike == NULL) {
+		/* IKE SA disappeared, hence no md, abort */
+		deltatime_t served_delta = realtime_diff(dnsr->done_time,
+							 dnsr->start_time);
+		deltatime_buf db;
+		llog(RC_LOG, dnsr->logger,
+		     "the IKE SA "PRI_SO" is gone; %s returned %s elapsed time %s seconds",
+		     pri_so(dnsr->so_serial),
+		     dnsr->log_buf, dnsr->rcode_name,
+		     str_deltatime(served_delta, &db));
+		free_ipseckey_dns(&dnsr);
+		return;
+	}
+
+	/*
+	 * Danger; callee may free dnsr.
+	 */
+	dnsr->cb(ike, dnsr);
 }
 
 static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)

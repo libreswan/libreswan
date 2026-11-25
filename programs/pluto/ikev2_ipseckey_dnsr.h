@@ -8,7 +8,7 @@
 
 struct p_dns_req;
 
-typedef void dnsr_cb_fn(struct p_dns_req *);
+typedef void dnsr_cb_fn(struct ike_sa *ike, struct p_dns_req *);
 
 struct dns_pubkey {
 	/* ID? */
@@ -66,13 +66,13 @@ struct p_dns_req {
 	char *why_bogus;	/* returned by libunbound if the security is bogus */
 
 	dnsr_cb_fn *cb;	/* continue function for pluto, not the unbound cb */
+
 	dnsr_pubkeys_cb_fn *pubkeys_cb;	/* called when public keys are retrieved from IPSECKEY RR */
 	dnsr_validate_address_cb_fn *validate_address_cb; /* called when addresses are returned as A RR */
 
 	struct p_dns_req *next;
 };
 
-extern void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr);
 extern void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr);
 extern err_t process_dns_resp(struct p_dns_req *dnsr);
 extern dns_status dns_qry_start(struct p_dns_req *dnsr);

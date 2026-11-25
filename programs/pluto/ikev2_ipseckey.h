@@ -2,6 +2,7 @@
 #define IKEV2_IPSECKEY_H
 
 struct dnssec_config;
+struct p_dns_req;
 
 struct ike_sa;
 
@@ -20,5 +21,7 @@ bool initiator_fetch_idr_ipseckey(struct ike_sa *ike);
 void init_ikev2_ipseckey(struct event_base *event_base,
 			 struct logger *logger);
 void shutdown_ikev2_ipseckey(const struct logger *logger);
+
+void ipseckey_request_callback(struct p_dns_req *dnsr);
 
 #endif

@@ -37,7 +37,7 @@
 #include "log.h"
 #include "dnssec.h" 		/* includes unbound.h */
 #include "demux.h"		/* for md_delref() */
-#include "ikev2_ipseckey.h" /* for dns_status */
+#include "ikev2_ipseckey.h"	/* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
@@ -429,16 +429,6 @@ err_t process_dns_resp(struct p_dns_req *dnsr)
 	}
 }
 
-void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
-{
-	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
-	deltatime_buf db;
-	llog(RC_LOG, dnsr->logger,
-	     "the state is gone; %s returned %s elapsed time %s seconds",
-	     dnsr->log_buf, dnsr->rcode_name,
-	     str_deltatime(served_delta, &db));
-}
-
 void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
 	struct logger *logger = dnsr->logger;
@@ -484,7 +474,18 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	rcode_txt = ldns_lookup_by_id(ldns_rcodes, dnsr->rcode);
 	dnsr->rcode_name = rcode_txt->name;
 
-	dnsr->cb(dnsr);
+	/*
+	 * XXX: hack
+	 *
+	 * Should call ike_sa_by_serialno() and pass result into
+	 * callback, but can't as exposing that declaration exposes a
+	 * conflict between "asn1.h" and OpenSSL's headers.
+	 *
+	 * Hence callback an extra level of indirection.
+	 *
+	 * Danger, callee may free DNSR.
+	 */
+	ipseckey_request_callback(dnsr);
 }
 
 dns_status dns_qry_start(struct p_dns_req *dnsr)
