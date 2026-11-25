@@ -281,105 +281,87 @@ static err_t parse_rr(struct ike_sa *ike,
 	vassert(ike != NULL);
 
 	ldns_rr_list *answers = ldns_pkt_answer(ldnspkt);
-	ldns_buffer *output = NULL;
-	size_t i;
-
 	dbg_log_dns_question(dnsr, ldnspkt);
 
 	struct dns_pubkey *dns_pubkeys = NULL;
+	unsigned level = verbose.level++;
 
-	for (i = 0; i < ldns_rr_list_rr_count(answers); i++) {
-		ldns_rr *ans = ldns_rr_list_rr(answers, i);
-		ldns_rr_type atype = ldns_rr_get_type(ans);
-		ldns_rr_class qclass = ldns_rr_get_class(ans);
-		ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes, qclass);
-		ldns_lookup_table *class_e = ldns_lookup_by_id(ldns_rr_classes, dnsr->qclass);
-		ldns_rdf *rdf;
-		ldns_status status = LDNS_STATUS_OK;
+	for (unsigned rr_nr = 0; rr_nr < ldns_rr_list_rr_count(answers); rr_nr++) {
 
-		if (output != NULL)
+		verbose.level = level + 1;
+		ldns_rr *ans = ldns_rr_list_rr(answers, rr_nr);
+
+		const unsigned rdf_nr = 0;
+		ldns_rdf *rdf = ldns_rr_rdf(ans, rdf_nr);
+		if (rdf == NULL) {
+			vdbg("RR %u, RDF %u: could not extract RDF",
+			     rr_nr, rdf_nr);
+			continue;
+		}
+
+		if (verbose.debug) {
+			ldns_buffer *output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
+			ldns_status status = ldns_rdf2buffer_str(output, rdf);
+			if (status == LDNS_STATUS_OK) {
+				VDBG_log("RR %u, RDF %u: %s", rr_nr, rdf_nr,
+					 ldns_buffer_begin(output));
+			} else {
+				VDBG_log("RR %u, RDF %u: invalid: %s (%d)",
+					 rr_nr, rdf_nr,
+					 ldns_get_errorstr_by_id(status),
+					 status);
+			}
 			ldns_buffer_free(output);
+			if (status != LDNS_STATUS_OK) {
+				continue;
+			}
+		}
 
-		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
+		verbose.level++;
 
+		ldns_rr_type qtype = ldns_rr_get_type(ans);
+		if (qtype != dnsr->qtype) {
+			/* dns server stuffed extra rr types, ignore */
+			name_buf db, qb;
+			vdbg("RR %u, RDF %u: qtype mismatch expect %s vs %s ignore this answer",
+			     rr_nr, rdf_nr, str_ldns_rr_type(dnsr->qtype, &db),
+			     str_ldns_rr_type(qtype, &qb));
+			continue;
+		}
+
+		ldns_rr_class qclass = ldns_rr_get_class(ans);
 		if (qclass != dnsr->qclass) {
-			vdbg("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
-			     i, class_e->name, class->name);
+			ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes, qclass);
+			ldns_lookup_table *dclass = ldns_lookup_by_id(ldns_rr_classes, dnsr->qclass);
+			vdbg("RR %u, RDF %u: qclass mismatch expect %s vs %s ignore the answer now",
+			     rr_nr, rdf_nr,
+			     (dclass != NULL ? dclass->name : "<dclass>"),
+			     (class != NULL ? class->name : "<class>"));
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
 		}
 
-		rdf = ldns_rr_rdf(ans, 0);
-		if (rdf == NULL) {
-			vdbg("dns answer %zu did not convert to rdf ignore this answer", i);
-			continue;
-		}
-
-		if (ldns_rr_owner(ans)) {
-			status = ldns_rdf2buffer_str_dname(output,
-					ldns_rr_owner(ans));
-		}
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " %u ", ldns_rr_ttl(ans));
-		status = ldns_rr_class2buffer_str(output,
-				ldns_rr_get_class(ans));
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " ");
-		/* would this explod on unknown types? */
-		status = ldns_rr_type2buffer_str(output, ldns_rr_get_type(ans));
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " ");
-
-		/* let's parse and debug log the usual RR types */
-		switch (atype) {
+		switch (qtype) {
 		case LDNS_RR_TYPE_A:
-			ldns_rdf2buffer_str_a(output, rdf);
+			if (dnsr->validate_address_cb) {
+				dnsr->validate_address_cb(ike, dnsr,
+							  ldns_rdf_data(rdf),
+							  verbose);
+			}
 			break;
-
-		case LDNS_RR_TYPE_AAAA:
-			ldns_rdf2buffer_str_aaaa(output, rdf);
-			break;
-
-		case LDNS_RR_TYPE_TXT:
-			ldns_rdf2buffer_str_str(output, rdf);
-			break;
-
-		case LDNS_RR_TYPE_NS:
-			ldns_rdf2buffer_str_dname(output, rdf);
-			break;
-
 		case LDNS_RR_TYPE_IPSECKEY:
-			ldns_rdf2buffer_str_ipseckey(output, rdf);
+			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans),
+					   &dns_pubkeys);
 			break;
 		default:
-			ldns_buffer_free(output);
-			output = NULL;
-			continue;
+		{
+			name_buf qb;
+			vlog_pexpect(HERE, "RR %u, RDF %u: unexpected type %s",
+				     rr_nr, rdf_nr, str_ldns_rr_type(qtype, &qb));
+			break;
+		}
 		}
 
-		ldbg(dnsr->logger, "%s", ldns_buffer_begin(output));
-		ldns_buffer_free(output);
-		output = NULL;
-
-		if (dnsr->validate_address_cb) {
-			dnsr->validate_address_cb(ike, dnsr, ldns_rdf_data(rdf), verbose);
-		}
-
-		if (dnsr->qtype == atype && atype == LDNS_RR_TYPE_IPSECKEY) {
-			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans), &dns_pubkeys);
-		}
-
-		if (atype != dnsr->qtype) {
-			/* dns server stuffed extra rr types, ignore */
-			vdbg("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
-			     i, dnsr->qtype, atype);
-		}
 	}
 
 	if (dns_pubkeys == NULL) {
