@@ -62,19 +62,24 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 		str_deltatime(served_delta, &db));
 }
 
-static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *dns_pubkeys)
+static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
+				     struct p_dns_req *dnsr,
+				     struct dns_pubkey *dns_pubkeys,
+				     struct verbose verbose)
 {
-	passert(dns_pubkeys != NULL);
+	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
+	vassert(dns_pubkeys != NULL);
+	vassert(ike != NULL);
 
-	const struct state *st = state_by_serialno(dnsr->so_serial);
-	const struct id *keyid = &st->st_connection->remote->host.id;
+	const struct id *remote_id = &ike->sa.st_connection->remote->host.id;
 
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	/* delete only once. then multiple keys could be added */
-	delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
+	delete_public_keys(&pluto_pubkeys, remote_id, &pubkey_type_rsa);
 
 	realtime_t install_time = realnow();
-	for (struct dns_pubkey *dns_pubkey = dns_pubkeys; dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
+	for (struct dns_pubkey *dns_pubkey = dns_pubkeys;
+	     dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
 
 		/*
 		 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
@@ -95,35 +100,34 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
 			DNSSEC_SECURE : DNSSEC_INSECURE;
 
-		if (keyid->kind == ID_FQDN) {
+		if (remote_id->kind == ID_FQDN) {
 			id_buf thatidbuf;
 			name_buf ab;
-			ldbg(st->logger, "add IPSECKEY pluto as publickey %s %s %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vdbg("add IPSECKEY pluto as publickey %s %s %s",
+			     str_id(remote_id, &thatidbuf),
 			     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
 		} else {
 			id_buf thatidbuf;
 			name_buf ab;
-			ldbg(st->logger, "add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+			     str_id(remote_id, &thatidbuf),
 			     dnsr->qname, ttl_buf,
 			     str_enum_long(&dns_auth_level_names, al, &ab));
 		}
 
 		struct pubkey *pubkey = NULL; /*must-delref*/
-		diag_t d = unpack_dns_pubkey(keyid, /*dns_auth_level*/al,
+		diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
 					     dns_pubkey->algorithm_type,
 					     install_time,
 					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
 					     ttl,
 					     dns_pubkey->pubkey,
 					     &pubkey,
-					     st->logger);
+					     dnsr->logger);
 		if (d != NULL) {
 			id_buf thatidbuf;
-			llog(RC_LOG, dnsr->logger,
-			     "add %s publickey failed, %s: %s",
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			vlog("add %s publickey failed, %s: %s",
+			     str_id(remote_id, &thatidbuf),
 			     dnsr->log_buf,
 			     str_diag(d));
 			pfree_diag(&d);
@@ -135,11 +139,16 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 	}
 }
 
-static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
+static void validate_address(struct ike_sa *ike,
+			     struct p_dns_req *dnsr,
+			     unsigned char *addr,
+			     struct verbose verbose)
 {
-	struct state *st = state_by_serialno(dnsr->so_serial);
+	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
+	vassert(ike != NULL);
+
 	ip_address ipaddr;
-	const struct ip_info *afi = endpoint_info(st->st_remote_endpoint);
+	const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
 		return;
@@ -156,26 +165,26 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 	}
 
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, ipaddr)) {
+	if (!endpoint_address_eq_address(ike->sa.st_remote_endpoint, ipaddr)) {
 		endpoint_buf ra;
 		address_buf rb;
-		ldbg(dnsr->logger, " forward address of IDi %s do not match remote address %s != %s",
+		vdbg("forward address of IDi %s do not match remote address %s != %s",
 		     dnsr->qname,
-		     str_endpoint(&st->st_remote_endpoint, &ra),
+		     str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 		     str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = true;
 	endpoint_buf ra;
-	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
-	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
+	vdbg("address of IDi %s match remote address %s",
+	     dnsr->qname, str_endpoint(&ike->sa.st_remote_endpoint, &ra));
 }
 
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-	const char *parse_err = process_dns_resp(dnsr);
+	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
@@ -208,7 +217,7 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
 static void idi_a_fetch_continue(struct ike_sa *ike,
 				 struct p_dns_req *dnsr)
 {
-	process_dns_resp(dnsr);
+	process_dns_resp(ike, dnsr);
 
 	if (!dnsr->fwd_addr_valid) {
 		llog(RC_LOG, dnsr->logger,
@@ -254,7 +263,7 @@ static void idi_a_fetch_continue(struct ike_sa *ike,
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-	const char *parse_err = process_dns_resp(dnsr);
+	const char *parse_err = process_dns_resp(ike, dnsr);
 
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);

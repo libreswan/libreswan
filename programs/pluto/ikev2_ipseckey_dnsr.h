@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include "names.h"
+#include "verbose.h"
 
 #ifndef IKEV2_IPSECKEY_DNSR_H
 #define IKEV2_IPSECKEY_DNSR_H
@@ -19,11 +20,15 @@ struct dns_pubkey {
 	shunk_t pubkey;
 };
 
-typedef void dnsr_pubkeys_cb_fn(struct p_dns_req *dnsr,
-				struct dns_pubkey *dns_pubkeys);
+typedef void dnsr_pubkeys_cb_fn(struct ike_sa *ike,
+				struct p_dns_req *dnsr,
+				struct dns_pubkey *dns_pubkeys,
+				struct verbose verbose);
 
-typedef void dnsr_validate_address_cb_fn(struct p_dns_req *dnsr,
-					 unsigned char *addr);
+typedef void dnsr_validate_address_cb_fn(struct ike_sa *ike,
+					 struct p_dns_req *dnsr,
+					 unsigned char *addr,
+					 struct verbose verbose);
 
 struct p_dns_req {
 	dns_status dns_status;
@@ -74,7 +79,7 @@ struct p_dns_req {
 };
 
 extern void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr);
-extern err_t process_dns_resp(struct p_dns_req *dnsr);
+extern err_t process_dns_resp(struct ike_sa *ike, struct p_dns_req *dnsr);
 extern dns_status dns_qry_start(struct p_dns_req *dnsr);
 extern struct p_dns_req *pluto_dns_list;
 extern void free_ipseckey_dns(struct p_dns_req **pp);
