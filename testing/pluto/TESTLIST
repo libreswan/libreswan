@@ -1364,6 +1364,8 @@ kvmplutotest 	ikev2-55-ipseckey-06				good
 kvmplutotest 	ikev2-55-ipseckey-07				wip
 kvmplutotest 	ikev2-55-ipseckey-08				good
 kvmplutotest 	ikev2-55-ipseckey-09				good
+kvmplutotest 	ikev2-55-ipseckey-10-dns-match-id-ipv4		good
+kvmplutotest 	ikev2-55-ipseckey-10-dns-match-id-ipv6		good
 
 #################################################################
 # Specific bug tests

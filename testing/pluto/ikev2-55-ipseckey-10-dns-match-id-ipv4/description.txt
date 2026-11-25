@@ -1,0 +1,11 @@
+IKEv2 responder fetch initiator key from dns and authenticate.
+
+east, the responder, does not initiator's public key locally.
+When AUTH exchange message arrives with IDi=road.testing.libreswan.or
+east fetch ipseckey RR for IDi and add it to pluto's global keystore.
+And continue with authentication.
+
+Road, the initiator, has east's publickey locally configured.
+
+Note final.sh has ipsec auto --listpubkeys and east has road's key.
+ 

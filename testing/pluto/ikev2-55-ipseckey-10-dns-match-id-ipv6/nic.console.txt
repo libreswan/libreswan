@@ -1,0 +1,11 @@
+setenforce Permissive
+nic #
+ /testing/guestbin/nic-dnssec.sh start
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
+nic #
+ echo done
+done
+nic #
