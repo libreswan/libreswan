@@ -42,10 +42,13 @@
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
-void free_ipseckey_dns(struct p_dns_req *d)
+void free_ipseckey_dns(struct p_dns_req **dd)
 {
-	if (d == NULL)
+	struct p_dns_req *d = (*dd);
+	(*dd) = NULL;
+	if (d == NULL) {
 		return;
+	}
 
 	if (d->ub_async_id != 0) {
 		ub_cancel(d->ctx, d->ub_async_id);

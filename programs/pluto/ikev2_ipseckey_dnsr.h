@@ -77,7 +77,7 @@ extern void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr);
 extern err_t process_dns_resp(struct p_dns_req *dnsr);
 extern dns_status dns_qry_start(struct p_dns_req *dnsr);
 extern struct p_dns_req *pluto_dns_list;
-extern void free_ipseckey_dns(struct p_dns_req *pp);
+extern void free_ipseckey_dns(struct p_dns_req **pp);
 
 const char *str_ldns_rr_type(ldns_rr_type type, name_buf *buf);
 

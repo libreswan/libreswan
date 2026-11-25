@@ -182,7 +182,7 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 	if (ike == NULL) {
 		/* state disappeared we can't find discard the response */
 		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
@@ -206,7 +206,7 @@ static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
 	ike->sa.ipseckey_dnsr = NULL;
-	free_ipseckey_dns(dnsr);
+	free_ipseckey_dns(&dnsr);
 }
 
 static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
@@ -229,7 +229,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	if (ike == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
 		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
@@ -247,8 +247,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 		err = false;
 	} else {
 		if (ike->sa.ipseckey_dnsr != NULL) {
-			free_ipseckey_dns(ike->sa.ipseckey_dnsr);
-			ike->sa.ipseckey_dnsr = NULL;
+			free_ipseckey_dns(&ike->sa.ipseckey_dnsr);
 		}
 		err = true;
 	}
@@ -269,13 +268,13 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	if (ike->sa.ipseckey_dnsr != NULL) {
 		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
 	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
-	free_ipseckey_dns(dnsr);
+	free_ipseckey_dns(&dnsr);
 }
 
 static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
@@ -289,7 +288,7 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	if (ike == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
 		ikev2_ipseckey_log_missing_st(dnsr);
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
@@ -305,8 +304,7 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 		err = false;
 	} else {
 		if (ike->sa.ipseckey_fwd_dnsr != NULL) {
-			free_ipseckey_dns(ike->sa.ipseckey_fwd_dnsr);
-			ike->sa.ipseckey_fwd_dnsr = NULL;
+			free_ipseckey_dns(&ike->sa.ipseckey_fwd_dnsr);
 		}
 		err = true;
 	}
@@ -328,13 +326,13 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	if (ike->sa.ipseckey_fwd_dnsr != NULL) {
 		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
-		free_ipseckey_dns(dnsr);
+		free_ipseckey_dns(&dnsr);
 		return;
 	}
 
 	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
 	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
-	free_ipseckey_dns(dnsr);
+	free_ipseckey_dns(&dnsr);
 }
 
 static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
@@ -464,7 +462,7 @@ bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
 		return true;	/* while querying IDr do not suspend */
 	}
 
-	free_ipseckey_dns(dnsr); /* freed */
+	free_ipseckey_dns(&dnsr); /* freed */
 	return ret == DNS_OK;
 }
 
@@ -495,7 +493,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 
 	const dns_status ret_idi = dns_qry_start(dnsr_idi);
 	if (ret_idi != DNS_SUSPEND && ret_idi != DNS_OK) {
-		free_ipseckey_dns(dnsr_idi); /* freed */
+		free_ipseckey_dns(&dnsr_idi); /* freed */
 		return ret_idi;
 	}
 
@@ -506,7 +504,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	if (ret_idi == DNS_SUSPEND) {
 		ike->sa.ipseckey_dnsr = dnsr_idi; /*saved*/
 	} else {
-		free_ipseckey_dns(dnsr_idi); /*freed*/
+		free_ipseckey_dns(&dnsr_idi); /*freed*/
 	}
 	dnsr_idi = NULL; /*saved/freed*/
 
@@ -528,7 +526,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 				return DNS_SUSPEND;
 			}
 
-			free_ipseckey_dns(dnsr_a); /*freed*/
+			free_ipseckey_dns(&dnsr_a); /*freed*/
 			dnsr_a = NULL;
 			if (ret_a != DNS_OK) {
 				return ret_a;
