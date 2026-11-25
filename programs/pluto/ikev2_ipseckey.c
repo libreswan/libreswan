@@ -184,6 +184,8 @@ static void validate_address(struct ike_sa *ike,
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+
 	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
@@ -200,7 +202,7 @@ static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 	}
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
-	ike->sa.ipseckey_dnsr = NULL;
+	ike->sa.st_ipseckey.ipseckey_request = NULL;
 	free_ipseckey_dns(&dnsr);
 }
 
@@ -214,8 +216,8 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
 	complete_v2_state_transition(ike, md, callback(ike, md, err));
 }
 
-static void idi_a_fetch_continue(struct ike_sa *ike,
-				 struct p_dns_req *dnsr)
+static void idi_address_fetch_continue(struct ike_sa *ike,
+				       struct p_dns_req *dnsr)
 {
 	process_dns_resp(ike, dnsr);
 
@@ -229,9 +231,8 @@ static void idi_a_fetch_continue(struct ike_sa *ike,
 	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
 		err = false;
 	} else {
-		if (ike->sa.ipseckey_dnsr != NULL) {
-			free_ipseckey_dns(&ike->sa.ipseckey_dnsr);
-		}
+		/* tells unbound to cancel the other request */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.ipseckey_request);
 		err = true;
 	}
 
@@ -246,9 +247,9 @@ static void idi_a_fetch_continue(struct ike_sa *ike,
 	}
 
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
-	ike->sa.ipseckey_fwd_dnsr = NULL;
+	ike->sa.st_ipseckey.address_request = NULL;
 
-	if (ike->sa.ipseckey_dnsr != NULL) {
+	if (ike->sa.st_ipseckey.ipseckey_request != NULL) {
 		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(&dnsr);
@@ -263,8 +264,9 @@ static void idi_a_fetch_continue(struct ike_sa *ike,
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-	const char *parse_err = process_dns_resp(ike, dnsr);
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
 
+	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
@@ -273,9 +275,8 @@ static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 	if (dnsr->rcode == 0 && parse_err == NULL) {
 		err = false;
 	} else {
-		if (ike->sa.ipseckey_fwd_dnsr != NULL) {
-			free_ipseckey_dns(&ike->sa.ipseckey_fwd_dnsr);
-		}
+		/* tells unbound to cancel the other request */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
 		err = true;
 	}
 
@@ -291,9 +292,9 @@ static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 
 	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
-	ike->sa.ipseckey_dnsr = NULL;
+	ike->sa.st_ipseckey.ipseckey_request = NULL;
 
-	if (ike->sa.ipseckey_fwd_dnsr != NULL) {
+	if (ike->sa.st_ipseckey.address_request != NULL) {
 		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(&dnsr);
@@ -454,7 +455,7 @@ bool initiator_fetch_idr_ipseckey(struct ike_sa *ike)
 
 	dns_status ret = dns_qry_start(dnsr);
 	if (ret == DNS_SUSPEND) {
-		ike->sa.ipseckey_dnsr = dnsr; /* saved */
+		ike->sa.st_ipseckey.ipseckey_request = dnsr; /* saved */
 		return true;	/* while querying IDr do not suspend */
 	}
 
@@ -498,11 +499,11 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	 * query.
 	 */
 	if (ret_idi == DNS_SUSPEND) {
-		ike->sa.ipseckey_dnsr = dnsr_idi; /*saved*/
+		ike->sa.st_ipseckey.ipseckey_request = dnsr_idi; /*saved*/
 	} else {
 		free_ipseckey_dns(&dnsr_idi); /*freed*/
 	}
-	dnsr_idi = NULL; /*saved/freed*/
+	dnsr_idi = NULL; /*saved|freed*/
 
 	/* start second query? */
 	if (ike->sa.st_connection->config->dns_match_id) {
@@ -510,7 +511,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 		if (id.kind == ID_FQDN) {
 			/* ask for the DNS's IPv4 address */
 			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A,
-							       idi_a_fetch_continue,
+							       idi_address_fetch_continue,
 							       callback); /*must save/free*/
 			if (dnsr_a == NULL) {
 				return DNS_FATAL;
@@ -518,7 +519,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 			dnsr_a->validate_address_cb = validate_address;
 			const dns_status ret_a = dns_qry_start(dnsr_a);
 			if (ret_a == DNS_SUSPEND) {
-				ike->sa.ipseckey_fwd_dnsr = dnsr_a;
+				ike->sa.st_ipseckey.address_request = dnsr_a;
 				return DNS_SUSPEND;
 			}
 

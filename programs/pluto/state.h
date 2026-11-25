@@ -69,7 +69,6 @@
 
 struct whack_message;
 struct v2_transition;
-struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
 struct eap_state;
@@ -433,8 +432,12 @@ struct state {
 
 	bool st_v2_full_transcript_auth;
 
-	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
-	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
+	struct {
+		/* ipseckey of that end */
+		struct p_dns_req *ipseckey_request;
+		/* validate IDi that IP in forward A/AAAA */
+		struct p_dns_req *address_request;
+	} st_ipseckey;
 
 	char *st_active_redirect_gw;		/* needed for sending of REDIRECT in informational */
 
