@@ -1,5 +1,19 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Initializing NSS database
+road #
+ /testing/x509/import.sh real/mainca/road.p12
+ ipsec pk12util -w nss-pw -i real/mainca/road.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n road
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "road" [E=user-road@testing.libreswan.org,CN=road.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+road #
+ /testing/x509/import.sh real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 road #
  ipsec start
 Redirecting to: [initsystem]
@@ -21,6 +35,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode request
 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I2
 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending my cert
+"westnet-eastnet-ipv4-psk-ikev1" #1: I am sending a CA cert chain
 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I3
 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
@@ -32,11 +47,13 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #1: received IPv4 lease 192.0.2.1, updating source IP address
+"westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.2.1/32===192.1.2.23/32}
 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
+"westnet-eastnet-ipv4-psk-ikev1" #2: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
@@ -55,6 +72,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: send_no_delete set - not sending Delete/Notify
+"westnet-eastnet-ipv4-psk-ikev1" #2: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #1: send_no_delete set - not sending Delete/Notify
@@ -65,6 +83,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #3: sent Main Mode request
 "westnet-eastnet-ipv4-psk-ikev1" #3: sent Main Mode I2
 "westnet-eastnet-ipv4-psk-ikev1" #3: I am sending my cert
+"westnet-eastnet-ipv4-psk-ikev1" #3: I am sending a CA cert chain
 "westnet-eastnet-ipv4-psk-ikev1" #3: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #3: sent Main Mode I3
 "westnet-eastnet-ipv4-psk-ikev1" #3: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
@@ -76,11 +95,13 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #3: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #3: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #3: received IPv4 lease 192.0.2.1, updating source IP address
+"westnet-eastnet-ipv4-psk-ikev1" #3: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev1" #3: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#3 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.2.1/32===192.1.2.23/32}
 "westnet-eastnet-ipv4-psk-ikev1" #4: sent Quick Mode request
+"westnet-eastnet-ipv4-psk-ikev1" #4: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  # #5.#6
@@ -89,6 +110,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev1" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #4: send_no_delete set - not sending Delete/Notify
+"westnet-eastnet-ipv4-psk-ikev1" #4: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #3: send_no_delete set - not sending Delete/Notify
@@ -99,6 +121,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #5: sent Main Mode request
 "westnet-eastnet-ipv4-psk-ikev1" #5: sent Main Mode I2
 "westnet-eastnet-ipv4-psk-ikev1" #5: I am sending my cert
+"westnet-eastnet-ipv4-psk-ikev1" #5: I am sending a CA cert chain
 "westnet-eastnet-ipv4-psk-ikev1" #5: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #5: sent Main Mode I3
 "westnet-eastnet-ipv4-psk-ikev1" #5: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
@@ -110,11 +133,13 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #5: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #5: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #5: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #5: received IPv4 lease 192.0.2.1, updating source IP address
+"westnet-eastnet-ipv4-psk-ikev1" #5: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev1" #5: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#5 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.2.1/32===192.1.2.23/32}
 "westnet-eastnet-ipv4-psk-ikev1" #6: sent Quick Mode request
+"westnet-eastnet-ipv4-psk-ikev1" #6: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  # #7.#8
@@ -123,6 +148,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev1" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #5
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #6: send_no_delete set - not sending Delete/Notify
+"westnet-eastnet-ipv4-psk-ikev1" #6: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #5: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #5: send_no_delete set - not sending Delete/Notify
@@ -133,6 +159,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #7: sent Main Mode request
 "westnet-eastnet-ipv4-psk-ikev1" #7: sent Main Mode I2
 "westnet-eastnet-ipv4-psk-ikev1" #7: I am sending my cert
+"westnet-eastnet-ipv4-psk-ikev1" #7: I am sending a CA cert chain
 "westnet-eastnet-ipv4-psk-ikev1" #7: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #7: sent Main Mode I3
 "westnet-eastnet-ipv4-psk-ikev1" #7: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
@@ -144,11 +171,13 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #7: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #7: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #7: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #7: received IPv4 lease 192.0.2.1, updating source IP address
+"westnet-eastnet-ipv4-psk-ikev1" #7: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev1" #7: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#7 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.2.1/32===192.1.2.23/32}
 "westnet-eastnet-ipv4-psk-ikev1" #8: sent Quick Mode request
+"westnet-eastnet-ipv4-psk-ikev1" #8: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev1" #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  # twice so numbers change
