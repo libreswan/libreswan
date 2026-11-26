@@ -1450,49 +1450,7 @@ def find_other_hosts(test, test_hosts):
         logger.debug("add others %s", host.group(1))
 
 
-def get_tcpdump_cmds(args, test):
-
-    test_hosts = []
-    log_line = ''
-
-    if test.dom_prefix:
-        tcpdump_dev_192_1_2 = ["-w OUTPUT/%s -i %s" %
-                               ("swan12.pcap", test.dom_prefix + "192_1_2")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
-            "swan13.pcap", test.dom_prefix + "192_1_3")
-    else:
-        tcpdump_dev_192_1_2 = ["-w OUTPUT/%s -i %s" %
-                               ("swan12.pcap", "swan12")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
-
-    cmds = []
-
-    if test["type"] == 'kvmplutotest':
-        for iface in tcpdump_devs:
-            pcap_file = 'OUTPUT/' + iface + '.pcap'
-            # cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file,
-            # iface, tcpdump_filter)
-            cmd = args.tcpdump + " " + args.tcpdumpfilter + " " + iface
-            logger.debug(cmd)
-            cmds.append(cmd)
-
-        cmds = sorted(set(cmds))
-
-    find_other_hosts(test, test_hosts)
-
-    if "others" in test:
-        log_line = log_line + " also " + " ".join(test["others"])
-
-    logger.debug("test hosts are initiator %s responder %s %s",
-                 test["initiator"], test["responder"], log_line)
-
-    test["test_hosts"] = []
-    test["test_hosts"].extend(test_hosts)
-
-    return cmds, test_hosts
-
-
-def orient(args, test, prefix=None):
+def orient(args, test):
     test_hosts = []
     log_line = ''
     if os.path.exists("eastrun.sh"):
@@ -1512,15 +1470,6 @@ def orient(args, test, prefix=None):
         test_hosts.append(test["nic"])
         log_line = "and nic"
 
-    if prefix:
-        tcpdump_devs = ["-w OUTPUT/%s -i %s" %
-                        ("swan12.pcap", prefix + "192_1_2")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
-            "swan13.pcap", prefix + "192_1_3")
-    else:
-        tcpdump_devs = ["-w OUTPUT/%s -i %s" % ("swan12.pcap", "swan12")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
-
     if os.path.exists("westrun.sh"):
         if os.path.exists("westinit.sh"):
             test["initiator"] = "west"
@@ -1530,14 +1479,12 @@ def orient(args, test, prefix=None):
     elif os.path.exists("roadrun.sh"):
         if os.path.exists("roadinit.sh"):
             test["initiator"] = "road"
-            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logger.error(
                 "ABORT can't identify INITIATOR: no %s/roadinit.sh, but there is roadrun.sh" % os.getcwd())
     elif os.path.exists("northrun.sh"):
         if os.path.exists("northinit.sh"):
             test["initiator"] = "north"
-            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logger.error(
                 "ABORT can't identify INITIATOR: no %s/northinit.sh, but there is northrun.sh" % os.getcwd())
@@ -1553,19 +1500,6 @@ def orient(args, test, prefix=None):
     test_hosts.append(test["initiator"])
     test_hosts.append(test["responder"])
 
-    cmds = []
-
-    if test["type"] == 'kvmplutotest':
-        for iface in tcpdump_devs:
-            pcap_file = 'OUTPUT/' + iface + '.pcap'
-            # cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file,
-            # iface, tcpdump_filter)
-            cmd = args.tcpdump + " " + args.tcpdumpfilter + " " + iface
-            logger.debug(cmd)
-            cmds.append(cmd)
-
-        cmds = sorted(set(cmds))
-
     find_other_hosts(test, test_hosts)
 
     if "others" in test:
@@ -1577,7 +1511,7 @@ def orient(args, test, prefix=None):
     test["test_hosts"] = []
     test["test_hosts"].extend(test_hosts)
 
-    return cmds, test_hosts
+    return test_hosts
 
 
 def read_exec_shell_cmd(ex, filename, prompt, timer, hostname=""):
