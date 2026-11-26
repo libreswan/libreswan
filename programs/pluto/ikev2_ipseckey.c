@@ -184,7 +184,14 @@ static void validate_address(struct ike_sa *ike,
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
+#if 0
+	/*
+	 * XXX: when there's a cache hit, this can be called directly
+	 * from unbound's start function; and the field will never be
+	 * set.
+	 */
 	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+#endif
 
 	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
@@ -264,7 +271,14 @@ static void idi_address_fetch_continue(struct ike_sa *ike,
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
+#if 0
+	/*
+	 * XXX: when there's a cache hit, this can be called directly
+	 * from unbound's start function; and the field will never be
+	 * set.
+	 */
 	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+#endif
 
 	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
