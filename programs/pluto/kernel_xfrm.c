@@ -1198,10 +1198,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	const struct connection *const c = child->sa.st_connection;
 
-	const struct ip_encap *encap_type =
-		(child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
-		nat_traversal_detected(&child->sa) ? &ip_encap_esp_in_udp :
-		NULL;
+	const struct ip_encap *encap_type = child_esp_encap(&child->sa);
 	ldbg(logger, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 
 	const struct ipsec_proto_info *proto_info = outer_ipsec_proto_info(child);

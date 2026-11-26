@@ -1564,6 +1564,18 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		break;
 	}
 
+	/* only show when not the default (no) */
+	switch (c->config->separate_transports) {
+	case YNA_YES:
+		CS("SEPARATE_TRANSPORTS_YES");
+		break;
+	case YNA_AUTO:
+		CS("SEPARATE_TRANSPORTS_AUTO");
+		break;
+	default:
+		break;
+	}
+
 	CT(mobike, MOBIKE);
 	CT(ppk.allow, PPK_ALLOW);
 	CT(ppk.insist, PPK_INSIST);

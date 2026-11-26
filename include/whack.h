@@ -501,6 +501,7 @@ struct whack_message {
 
 #define wm_mobike conn[END_ROOF].value[KWS_MOBIKE]		/* allow MOBIKE */
 #define wm_ike_sa_init_full_transcript_auth conn[END_ROOF].value[KWS_IKE_SA_INIT_FULL_TRANSCRIPT_AUTH]
+#define wm_separate_transports conn[END_ROOF].value[KWS_SEPARATE_TRANSPORTS]
 #define wm_intermediate conn[END_ROOF].value[KWS_INTERMEDIATE]	/* allow Intermediate Exchange */
 #define wm_sha2_truncbug conn[END_ROOF].value[KWS_SHA2_TRUNCBUG]	/* allow Intermediate Exchange */
 #define wm_share_lease conn[END_ROOF].value[KWS_SHARE_LEASE]	/* allow further connections to use lease IP */

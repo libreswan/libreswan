@@ -1,0 +1,1 @@
+IKE over TCP with ESP directly over IP; separate-transports=yes with enable-tcp=yes.

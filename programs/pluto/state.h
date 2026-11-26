@@ -431,6 +431,7 @@ struct state {
 						 * detection */
 
 	bool st_v2_full_transcript_auth;
+	bool st_v2_separate_transports;
 
 	struct {
 		/* ipseckey of that end */

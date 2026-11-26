@@ -37,6 +37,8 @@
 #include "ike_alg_hash.h"
 #include "crypt_hash.h"
 #include "ip_info.h"
+#include "ip_encap.h"		/* for ip_encap_esp_in_{udp,tcp} */
+#include "ip_protocol.h"	/* for ip_protocol_tcp */
 #include "send.h"
 #include "iface.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
@@ -192,6 +194,30 @@ bool nat_traversal_detected(const struct state *st)
 {
 	return (st->hidden_variables.st_nated_host ||
 		st->hidden_variables.st_nated_peer);
+}
+
+/*
+ * NAT is checked first: ESP can only cross a NAT when UDP
+ * encapsulated, so a detected NAT rules out sending ESP directly over
+ * IP no matter what was negotiated.
+ */
+
+const struct ip_encap *child_esp_encap(const struct state *st)
+{
+	if (nat_traversal_detected(st)) {
+		return &ip_encap_esp_in_udp;
+	}
+
+	const struct state *ike = (IS_CHILD_SA(st) ? state_by_serialno(st->st_clonedfrom) : st);
+	if (ike != NULL && ike->st_v2_separate_transports) {
+		return NULL;
+	}
+
+	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+		return &ip_encap_esp_in_tcp;
+	}
+
+	return NULL;
 }
 
 static void nat_traversal_send_ka(struct state *st)

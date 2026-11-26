@@ -1318,13 +1318,11 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 				      child->sa.st_esp.outbound.keymat);
 		const struct trans_attrs *ta = &child->sa.st_esp.trans_attrs;
 
-		const struct ip_encap *encap_type = NULL;
+		const struct ip_encap *encap_type = child_esp_encap(&child->sa);
 		ip_port encap_sport = unset_port;
 		ip_port encap_dport = unset_port;
 
-		if (nat_traversal_detected(&child->sa) ||
-		    child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-			encap_type = child->sa.st_iface_endpoint->io->protocol->encap_esp;
+		if (encap_type != NULL) {
 			switch (direction) {
 			case DIRECTION_INBOUND:
 				encap_sport = endpoint_port(child->sa.st_remote_endpoint);
