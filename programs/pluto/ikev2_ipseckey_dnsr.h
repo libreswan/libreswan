@@ -33,8 +33,6 @@ typedef void dnsr_validate_address_cb_fn(struct ike_sa *ike,
 struct p_dns_req {
 	dns_status dns_status;
 
-	bool cache_hit;		/* libunbound hit cache/local, calledback immediately */
-
 	so_serial_t so_serial;	/* wake up the state when query returns */
 	struct msg_digest *md;	/* wake up message to resume */
 	stf_status (*callback)(struct ike_sa *ike, struct msg_digest *md, bool err);

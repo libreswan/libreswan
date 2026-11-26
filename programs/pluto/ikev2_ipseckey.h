@@ -7,9 +7,10 @@ struct p_dns_req;
 struct ike_sa;
 
 typedef enum {
-	DNS_OK = STF_OK,
-	DNS_FATAL = STF_FATAL,
-	DNS_SUSPEND = STF_SUSPEND,
+	DNS_LARVAL,
+	DNS_OK,
+	DNS_FATAL,
+	DNS_SUSPEND,
 } dns_status;
 
 dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *md,

@@ -429,7 +429,7 @@ void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 		LDBG_log(logger, "%s returned %s cache=%s elapsed time %s seconds",
 			 dnsr->log_buf,
 			 dnsr->rcode_name,
-			 bool_str(dnsr->cache_hit),
+			 bool_str(dnsr->dns_status == 0),
 			 str_deltatime(served_delta, &db));
 
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
@@ -443,12 +443,13 @@ void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 	}
 }
 
-static void ipseckey_ub_cb(void* mydata, int rcode,
-		void *wire, int wire_len, int secure, char* why_bogus
+static void ipseckey_ub_cb(void *mydata, int rcode,
+			   void *wire, int wire_len,
+			   int secure, char* why_bogus
 #if (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR >= 8) || UNBOUND_VERSION_MAJOR > 1
-		, int was_ratelimited UNUSED
+			   , int was_ratelimited UNUSED
 #endif
-		)
+	)
 {
 	struct p_dns_req *dnsr = (struct p_dns_req *)mydata;
 	ldns_lookup_table *rcode_txt;
@@ -479,16 +480,22 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 
 dns_status dns_qry_start(struct p_dns_req *dnsr)
 {
-	int ub_ret;
-
 	PASSERT(dnsr->logger, dnsr->ctx != NULL);
 	ldbg(dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
+	/*
+	 * XXX: when there's a cache hit, this will call
+	 * IPSECKEY_UB_CB before returning.  That will then update
+	 * .dns_status.
+	 */
+
 	ldbg(dnsr->logger, "UB: %s submitted", dnsr->log_buf);
-	ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
-				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
+	dnsr->dns_status = DNS_LARVAL; /* reserved */
+	int ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
+				      dnsr->qclass, dnsr,
+				      ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {
 		llog(RC_LOG, dnsr->logger,
@@ -496,15 +503,21 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 		return DNS_FATAL;
 	}
 
-	dns_status ret = dnsr->dns_status;
-	if (dnsr->dns_status == DNS_SUSPEND) {
-		dnsr->cache_hit = false;
+	/*
+	 * If the above has already called the callback (because the
+	 * value was found in the cache), .dns_status will have been
+	 * updated to something other than DNS_LARVAL.
+	 */
+	if (dnsr->dns_status == DNS_LARVAL) {
+		dnsr->dns_status = DNS_SUSPEND;
 	}
 
+	dns_status ret = dnsr->dns_status;
 	ldbg(dnsr->logger, "UB: %s returned %d (%s)",
 	     dnsr->log_buf, ret,
 	     (ret == DNS_SUSPEND ? "suspend" :
 	      ret == DNS_OK ? "ok" :
+	      ret == DNS_FATAL ? "fatal" :
 	      "ERROR"));
 	return ret;
 }

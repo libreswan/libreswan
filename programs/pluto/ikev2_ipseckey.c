@@ -184,43 +184,55 @@ static void validate_address(struct ike_sa *ike,
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-#if 0
-	/*
-	 * XXX: when there's a cache hit, this can be called directly
-	 * from unbound's start function; and the field will never be
-	 * set.
-	 */
-	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
-#endif
-
 	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
 
-	if (dnsr->cache_hit) {
-		if (dnsr->rcode == 0 && parse_err == NULL) {
-			dnsr->dns_status = DNS_OK;
-		} else {
-			/* is there a better ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		}
+	bool larval = (dnsr->dns_status == DNS_LARVAL);
+
+	if (dnsr->rcode == 0 &&
+	    parse_err == NULL) {
+		dnsr->dns_status = DNS_OK;
+	} else {
+#if 0
+		/*
+		 * XXX: initiator doesn't check address?  Must happen
+		 * elsewhere.
+		 *
+		 * Hence no need to cancel other request.
+		 */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
+#else
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.address_request == NULL);
+#endif
+		dnsr->dns_status = DNS_FATAL;
+	}
+
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (larval) {
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.ipseckey_request == NULL);
 		return;
 	}
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.ipseckey_request = NULL;
+
 	free_ipseckey_dns(&dnsr);
 }
 
 static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
-				       struct msg_digest *md,
-				       bool err,
-				       stf_status(*callback)(struct ike_sa *ike,
-							     struct msg_digest *md,
-							     bool err))
+				       const struct p_dns_req *dnsr)
 {
-	complete_v2_state_transition(ike, md, callback(ike, md, err));
+	bool err = (dnsr->dns_status != DNS_OK);
+	ldbg(dnsr->logger, "resume id=%s err=%s", dnsr->qname, bool_str(err));
+	stf_status status = dnsr->callback(ike, dnsr->md, err);
+	complete_v2_state_transition(ike, dnsr->md, status);
 }
 
 static void idi_address_fetch_continue(struct ike_sa *ike,
@@ -234,28 +246,34 @@ static void idi_address_fetch_continue(struct ike_sa *ike,
 		     dnsr->log_buf);
 	}
 
-	bool err;
-	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
-		err = false;
+	bool larval = (dnsr->dns_status == DNS_LARVAL);
+
+	if (dnsr->rcode == 0 &&
+	    dnsr->fwd_addr_valid) {
+		dnsr->dns_status = DNS_OK;
 	} else {
 		/* tells unbound to cancel the other request */
 		free_ipseckey_dns(&ike->sa.st_ipseckey.ipseckey_request);
-		err = true;
+		dnsr->dns_status = DNS_FATAL;
 	}
 
-	if (dnsr->cache_hit) {
-		if (err) {
-			/* is there a beeter ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		} else {
-			dnsr->dns_status = DNS_OK;
-		}
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (larval) {
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.address_request == NULL);
 		return;
 	}
 
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.address_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.address_request = NULL;
 
+	/*
+	 * Other request outstanding?
+	 */
 	if (ike->sa.st_ipseckey.ipseckey_request != NULL) {
 		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
@@ -263,51 +281,46 @@ static void idi_address_fetch_continue(struct ike_sa *ike,
 		return;
 	}
 
-	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr);
 	free_ipseckey_dns(&dnsr);
 }
 
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-#if 0
-	/*
-	 * XXX: when there's a cache hit, this can be called directly
-	 * from unbound's start function; and the field will never be
-	 * set.
-	 */
-	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
-#endif
-
 	const char *parse_err = process_dns_resp(ike, dnsr);
 	if (parse_err != NULL) {
 		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
 	}
 
-	bool err;
-	if (dnsr->rcode == 0 && parse_err == NULL) {
-		err = false;
+	if (dnsr->rcode == 0 &&
+	    parse_err == NULL) {
+		dnsr->dns_status = DNS_OK;
 	} else {
-		/* tells unbound to cancel the other request */
+		/*
+		 * Tell unbound to cancel the other request; if there
+		 * is one.
+		 */
 		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
-		err = true;
+		dnsr->dns_status = DNS_FATAL;
 	}
 
-	if (dnsr->cache_hit) {
-		if (err) {
-			/* is there a beeter ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		} else {
-			dnsr->dns_status = DNS_OK;
-		}
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (ike->sa.st_ipseckey.ipseckey_request == NULL) {
 		return;
 	}
 
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
-
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.ipseckey_request = NULL;
 
+	/*
+	 * Other request outstanding?  Wait for that to finish.
+	 */
 	if (ike->sa.st_ipseckey.address_request != NULL) {
 		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
@@ -315,8 +328,7 @@ static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 		return;
 	}
 
-	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr);
 	free_ipseckey_dns(&dnsr);
 }
 
@@ -417,8 +429,6 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 
 	p->qclass = LDNS_RR_CLASS_IN; /* aka C_IN; aka ns_c_in */
 	p->qtype = qtype;
-	p->cache_hit = true;
-	p->dns_status = DNS_SUSPEND;
 	p->cb = dnsr_cb;
 
 	p->next = pluto_dns_list;

@@ -850,6 +850,9 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, atype)) {
 		dns_status ret = responder_fetch_idi_ipseckey(ike, md, process_v2_IKE_AUTH_request_ipseckey_continue);
 		switch (ret) {
+		default:
+		case DNS_LARVAL:
+			bad_case(ret);
 		case DNS_SUSPEND:
 			return STF_SUSPEND;
 		case DNS_FATAL:
