@@ -630,7 +630,7 @@ class TestList:
                 logger.error("****** invalid test %s: directory %s not found", testdir, tdir)
                 continue
             reason = self.skip_test(testtype, testdir, testexpect)
-            if reason and self.args.log_level == "debug":
+            if reason and (self.args.log_level == "debug" or testtype == "kvmonly"):
                 TestList.log_skip(testdir, reason, )
 
             if reason:
@@ -655,7 +655,13 @@ class TestList:
         if testexpect == "skiptest":
             return "type is skiptest"
 
-        if testtype != "dockerplutotest" and testtype != "kvmplutotest":
+        if testtype == "kvmonly" and self.args.testtype == "nsplutotest":
+            return "type is kvmonly (depends on KVM); skipped by namespace based testing"
+
+        if testtype == "nsonly" and self.args.testtype != "nsplutotest":
+            return "type is nsonly (depends on namespaces); skipped by non-namespace based testing"
+
+        if testtype not in ("default", "kvmonly", "nsonly", "dockerplutotest"):
             return "type %s yet to be migrated to kvm style" % testtype
 
         if self.args.include:
@@ -3986,14 +3992,11 @@ class TestListRun():
                 return (True)
 
             # **** short cut tests to nsplutotest with --ns ***
-            if testtype == 'kvmplutotest' and self.args.testtype == 'nsplutotest':
-                testtype = "nsplutotest"
-
-            if testtype == 'kvmplutotest' and self.args.testtype == 'dockerplutotest':
-                testtype = "dockerplutotest"
-
-            if self.args.testtype == 'nsplutotest' and not self.ns_skip_test(testdir):
-                continue
+            if testtype in ('default', 'kvmonly', 'nsonly'):
+                if self.args.testtype in ('nsplutotest', 'dockerplutotest'):
+                    testtype = self.args.testtype
+                else:
+                    testtype = 'kvmplutotest'
 
             r_file = self.odir + '/' + testdir + '/OUTPUT/RESULT'
             test_odir = self.odir + '/' + testdir + '/OUTPUT'

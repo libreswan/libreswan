@@ -18,7 +18,7 @@ import argparse
 def add_arguments(parser):
     group = parser.add_argument_group("Test filter arguments",
                                       "Options for selecting the tests to run or ignore")
-    group.add_argument("--test-kind", default="kvmplutotest",
+    group.add_argument("--test-kind", default="^(default|kvmonly)$",
                        type=re.compile, metavar="REGULAR-EXPRESSION",
                        help="Select tests with kind matching %(metavar)s (default: '%(default)s')")
     group.add_argument("--test-status", default="good",

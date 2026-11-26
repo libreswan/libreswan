@@ -87,8 +87,21 @@ def main():
             expanded.extend(matches)
         else:
             expanded.append(i)
+    # tests that depend on KVM can't be run using namespaces
+    kinds = dict()
+    try:
+        with open(os.path.join(plutodir, "TESTLIST")) as testlist:
+            for line in testlist:
+                fields = line.split("#")[0].split()
+                if len(fields) >= 2:
+                    kinds[fields[1]] = fields[0]
+    except OSError as e:
+        print("WARNING: cannot read TESTLIST, not skipping kvmonly tests: %s"%e, file=sys.stderr)
     for i in expanded:
         test = os.path.basename(i)
+        if kinds.get(test) == "kvmonly":
+            print("WARNING: skipping test %s: it is kvmonly (depends on KVM)"%test, file=sys.stderr)
+            continue
         if test in tests:
             duplicates[test] = duplicates.get(test, 1) + 1
         else:

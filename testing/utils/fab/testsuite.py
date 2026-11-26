@@ -26,7 +26,7 @@ class Test:
 
     def __init__(self, test_directory,
                  saved_test_output_directory=None,
-                 kind="kvmplutotest",
+                 kind="default",
                  status="good",
                  logger=None):
         # basics

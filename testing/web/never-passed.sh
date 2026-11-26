@@ -58,7 +58,7 @@ hints
 
 while read kind test expectation junk ; do
     case "${kind}" in
-	kvmplutotest ) ;;
+	default | kvmonly ) ;;
 	* ) continue ;;
     esac
     nr_passed=0

@@ -2,7 +2,7 @@
 
 # script to try combinations of workers and prefixes
 
-grep ^kvmplutotest testing/pluto/TESTLIST \
+grep -E '^(default|kvmonly)' testing/pluto/TESTLIST \
     | head -100 > testing/pluto/SHORTLIST
 
 for workers in 1 2 3 4 5 ; do
