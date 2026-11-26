@@ -232,7 +232,7 @@ V2_LARVAL_SA(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0",
 
 static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.story      = "process CREATE_CHILD_SA rekey Child SA request (larval)",
-	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.to = &state_v2_CHILD_FOLLOWUP_KE_R0,
 	.exchange = &v2_CREATE_CHILD_SA_rekey_child_exchange,
 };
 
@@ -241,7 +241,7 @@ V2_LARVAL_SA(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0",
 
 static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.story      = "process CREATE_CHILD_SA rekey Child SA response (larval)",
-	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.to = &state_v2_CHILD_FOLLOWUP_KE_I0,
 	.flags = { .release_whack = true, },
 	.exchange = &v2_CREATE_CHILD_SA_rekey_child_exchange,
 };
@@ -264,7 +264,7 @@ V2_LARVAL_SA(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0",
 
 static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.story      = "process CREATE_CHLD_SA create Child SA request (larval)",
-	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.to = &state_v2_CHILD_FOLLOWUP_KE_R0,
 	.exchange = &v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
@@ -273,11 +273,47 @@ V2_LARVAL_SA(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
 
 static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.story      = "process CREATE_CHILD_SA create Child SA response (larval)",
-	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.to = &state_v2_CHILD_FOLLOWUP_KE_I0,
 	.exchange = &v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
 V2_LARVAL_SA(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
+	     CAT_OPEN_CHILD_SA);
+
+/*
+ * Child states when creating or rekeying a Child SA using
+ * IKE_FOLLOWUP_KE.
+ *
+ * The larval Child SA's .st_v2_rekey_pred distinguishes rekeying
+ * from creating.
+ */
+
+static const struct v2_transition v2_CHILD_FOLLOWUP_KE_R0_transition = {
+	.story      = "process IKE_FOLLOWUP_KE create or rekey Child SA request (larval)",
+	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+};
+
+V2_LARVAL_SA(CHILD_FOLLOWUP_KE_R0, "process IKE_FOLLOWUP_KE create or rekey Child SA request (larval)",
+	     CAT_OPEN_CHILD_SA);
+
+static const struct v2_transition v2_CHILD_FOLLOWUP_KE_I0_transition = {
+	.story      = "initiate IKE_FOLLOWUP_KE create or rekey Child SA (larval)",
+	.to = &state_v2_CHILD_FOLLOWUP_KE_I1,
+	.exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+};
+
+V2_LARVAL_SA(CHILD_FOLLOWUP_KE_I0, "STATE_V2_CHILD_FOLLOWUP_KE_I0",
+	     CAT_OPEN_CHILD_SA);
+
+static const struct v2_transition v2_CHILD_FOLLOWUP_KE_I1_transition = {
+	.story      = "process IKE_FOLLOWUP_KE create or rekey Child SA response (larval)",
+	.to = &state_v2_ESTABLISHED_CHILD_SA,
+	.flags = { .release_whack = true, },
+	.exchange = &v2_IKE_FOLLOWUP_KE_child_exchange,
+};
+
+V2_LARVAL_SA(CHILD_FOLLOWUP_KE_I1, "sent IKE_FOLLOWUP_KE request to create or rekey IPsec SA",
 	     CAT_OPEN_CHILD_SA);
 
 /*
@@ -346,6 +382,9 @@ static const struct finite_state *v2_states[] = {
 	S(REKEY_IKE_FOLLOWUP_KE_I0),
 	S(REKEY_IKE_FOLLOWUP_KE_I1),
 	S(REKEY_IKE_FOLLOWUP_KE_R0),
+	S(CHILD_FOLLOWUP_KE_I0),
+	S(CHILD_FOLLOWUP_KE_I1),
+	S(CHILD_FOLLOWUP_KE_R0),
 	S(ESTABLISHED_IKE_SA),
 	S(ESTABLISHED_CHILD_SA),
 	S(ZOMBIE),

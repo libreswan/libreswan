@@ -47,5 +47,6 @@ struct ikev2_ike_followup_ke_exchange {
 
 /* Exchange declaration */
 extern const struct v2_exchange v2_IKE_FOLLOWUP_KE_rekey_ike_exchange;
+extern const struct v2_exchange v2_IKE_FOLLOWUP_KE_child_exchange;
 
 #endif
