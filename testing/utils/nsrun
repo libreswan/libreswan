@@ -3958,17 +3958,6 @@ class TestListRun():
         self.n = 0
         self.torun = 0
         self.notorun = 0
-        self.nsunsuported = 0
-        self.ns_skip_tests =  ["audit", "dnsoe", "fips", "ipseckey", "dnssec", "interop", "klips", "ocsp", "seccomp", "strongswan"]
-
-    def ns_skip_test(self, testdir):
-        for s in self.ns_skip_tests:
-            if re.search(s, testdir):
-                # TestList.log_skip(testdir, "namespace do not support. It matched pattern %s" % s)
-                self.nsunsuported += 1
-                return False
-
-        return True
 
     def do_test_list_new(self, tlr=None):
 
@@ -4051,10 +4040,6 @@ class TestListRun():
 
         self.torun = self.nstorun + self.ktorun + self.dtorun
         self.nottorun = self.nsnottorun + self.knottorun + self.dnottorun
-
-        if self.ns_skip_tests:
-            tlr_sum += " testtype %s ns unsupported %s skipped patterns %s" % (
-                self.args.testtype, self.nsunsuported, self.ns_skip_tests)
 
         logger.info(tlr_sum)
 
