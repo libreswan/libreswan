@@ -74,7 +74,20 @@ def main():
     # (shared namespaces and OUTPUT directory); run each test once
     tests = list()
     duplicates = dict()
+    plutodir = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "..", "pluto")
+    expanded = list()
     for i in args:
+        # a bare name (or wildcard) that isn't a directory is looked up
+        # in testing/pluto/
+        if not os.path.isdir(i) and '/' not in i:
+            matches = sorted(m for m in glob.glob(os.path.join(glob.escape(plutodir), i)) if os.path.isdir(m))
+            if not matches:
+                print("ERROR: %s is not a test directory and was not found in %s"%(i, os.path.normpath(plutodir)), file=sys.stderr)
+                sys.exit(1)
+            expanded.extend(matches)
+        else:
+            expanded.append(i)
+    for i in expanded:
         test = os.path.basename(i)
         if test in tests:
             duplicates[test] = duplicates.get(test, 1) + 1
