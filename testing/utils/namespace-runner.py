@@ -70,12 +70,24 @@ def main():
     verbose = options.verbose
     diff = options.diff
 
-    print("running queue of %s"%num)
-    print("testlist: %s"%" ".join(args))
-
-    threads = list()
+    # running the same test twice in parallel makes both copies fail
+    # (shared namespaces and OUTPUT directory); run each test once
+    tests = list()
+    duplicates = dict()
     for i in args:
         test = os.path.basename(i)
+        if test in tests:
+            duplicates[test] = duplicates.get(test, 1) + 1
+        else:
+            tests.append(test)
+    for test, count in duplicates.items():
+        print("WARNING: deduplicated test %s (listed %d times, running once)"%(test, count), file=sys.stderr)
+
+    print("running queue of %s"%num)
+    print("testlist: %s"%" ".join(tests))
+
+    threads = list()
+    for test in tests:
         thread = threading.Thread(target=task,args=(test,))
         threads.append(thread)
         thread.start()

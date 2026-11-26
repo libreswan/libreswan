@@ -1,2 +1,5 @@
-# should show retransmits on west and replies on east
-grep sending /tmp/pluto.log |grep through
+# should show just EAST with SA
+ipsec trafficstatus
+
+# should show retransmits on east
+grep '^[^|].* CREATE_CHILD_SA .* retransmit' /tmp/pluto.log

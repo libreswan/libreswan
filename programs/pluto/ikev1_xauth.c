@@ -1719,7 +1719,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 			if (!set_attr(&recv, attr.isaat_af_type)) {
 				llog_bad_attr(ike->sa.logger, "modecfg (CFG_REQUEST)", &modecfg_attr_names, attr.isaat_af_type);
-				break;
+				continue;
 			}
 		}
 
@@ -2224,7 +2224,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 			if (!set_attr(&recv, attr.isaat_af_type)) {
 				llog_bad_attr(ike->sa.logger, "modecfg (CFG_ACK)", &modecfg_attr_names, attr.isaat_af_type);
-				break;
+				continue;
 			}
 		}
 		break;

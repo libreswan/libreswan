@@ -1,11 +1,15 @@
 # bring up server behind NAT "road"
-ipsec auto --add road-east
-ipsec auto --up road-east
-# sleep 3
+ipsec add road-east
+ipsec up road-east # sanitize-retransmits
 ipsec trafficstatus
-# emulate bringing up second server behind same NAT "runner"
+
+# We simulate two behind nat by simply deleting first connection
+# without sending deletes on road.
 ipsec whack --impair send_no_delete
-ipsec auto --delete road-east
-ipsec auto --add runner-east
-ipsec auto --up runner-east
+ipsec delete road-east # never retransmits
+
+# Second connection
+ipsec add runner-east
+ipsec up runner-east # sanitize-retransmits
+
 echo done

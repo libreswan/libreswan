@@ -1,2 +1,2 @@
 ipsec add named
-ipsec up named
+ipsec up named # sanitize-retransmits

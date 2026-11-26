@@ -16,7 +16,7 @@ west #
  ipsec add named
 "named": added oriented IKEv2 connection
 west #
- ipsec up named
+ ipsec up named # sanitize-retransmits
 "named" #1: initiating IKEv2 connection to 192.1.2.23 (right.libreswan.org) using UDP
 "named" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/443
 "named" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/443 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 ke=DH19}, initiating IKE_AUTH

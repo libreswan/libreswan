@@ -1,1 +1,1 @@
-ipsec whack --trafficstatus
+ipsec trafficstatus

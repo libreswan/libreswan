@@ -13,10 +13,10 @@ initdone
 road #
  # bring up server behind NAT "road"
 road #
- ipsec auto --add road-east
+ ipsec add road-east
 "road-east": added oriented IKEv1 connection
 road #
- ipsec auto --up road-east
+ ipsec up road-east # sanitize-retransmits
 "road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 "road-east" #1: initiating IKEv1 Aggressive Mode connection
 "road-east" #1: sent Aggressive Mode request
@@ -26,16 +26,16 @@ road #
 "road-east" #2: sent Quick Mode request
 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
 road #
- # sleep 3
-road #
  ipsec trafficstatus
 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 road #
- # emulate bringing up second server behind same NAT "runner"
+ # We simulate two behind nat by simply deleting first connection
+road #
+ # without sending deletes on road.
 road #
  ipsec whack --impair send_no_delete
 road #
- ipsec auto --delete road-east
+ ipsec delete road-east # never retransmits
 "road-east": terminating SAs using this connection
 "road-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 IMPAIR: "road-east" #2: send_no_delete set - not sending Delete/Notify
@@ -43,10 +43,12 @@ IMPAIR: "road-east" #2: send_no_delete set - not sending Delete/Notify
 "road-east" #1: deleting ISAKMP SA (AGGR_I2) and sending notification
 IMPAIR: "road-east" #1: send_no_delete set - not sending Delete/Notify
 road #
- ipsec auto --add runner-east
+ # Second connection
+road #
+ ipsec add runner-east
 "runner-east": added oriented IKEv1 connection
 road #
- ipsec auto --up runner-east
+ ipsec up runner-east # sanitize-retransmits
 "runner-east" #3: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 "runner-east" #3: initiating IKEv1 Aggressive Mode connection
 "runner-east" #3: sent Aggressive Mode request
@@ -59,6 +61,6 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #4: "runner-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 road #

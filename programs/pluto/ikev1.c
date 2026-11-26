@@ -2817,12 +2817,6 @@ bool v1_state_busy(const struct state *st)
 		return true;
 	}
 
-	if (st->ipseckey_dnsr != NULL) {
-		ldbg(st->logger, PRI_SO" is busy; has IPSECKEY DNS %p",
-		     pri_so(st->st_serialno), st->ipseckey_dnsr);
-		return true;
-	}
-
 	/*
 	 * If IKEv1 is doing something in the background then the
 	 * state isn't busy.

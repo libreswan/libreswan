@@ -1,1 +1,1 @@
-ipsec auto --up northnet-eastnet
+ipsec up northnet-eastnet # sanitize-retransmits
