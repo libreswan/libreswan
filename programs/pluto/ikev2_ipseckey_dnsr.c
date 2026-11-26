@@ -55,6 +55,12 @@ void free_ipseckey_dns(struct p_dns_req **dd)
 		d->ub_async_id = 0;
 	}
 
+	while (d->pubkeys != NULL) {
+		struct dns_pubkey *tbd = d->pubkeys;
+		d->pubkeys = d->pubkeys->next;
+		pfree(tbd);
+	}
+
 	md_delref(&d->md);
 	free_logger(&d->logger, HERE);
 	pfreeany(d->qname);
@@ -274,16 +280,15 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 	return ugh == NULL;
 }
 
-static err_t parse_rr(struct ike_sa *ike,
-		      struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
-		      struct verbose verbose)
+static void parse_rr(struct ike_sa *ike,
+		     struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
+		     struct verbose verbose)
 {
 	vassert(ike != NULL);
 
 	ldns_rr_list *answers = ldns_pkt_answer(ldnspkt);
 	dbg_log_dns_question(dnsr, ldnspkt);
 
-	struct dns_pubkey *dns_pubkeys = NULL;
 	unsigned level = verbose.level++;
 
 	for (unsigned rr_nr = 0; rr_nr < ldns_rr_list_rr_count(answers); rr_nr++) {
@@ -351,7 +356,7 @@ static err_t parse_rr(struct ike_sa *ike,
 			break;
 		case LDNS_RR_TYPE_IPSECKEY:
 			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans),
-					   &dns_pubkeys);
+					   &dnsr->pubkeys);
 			break;
 		default:
 		{
@@ -363,21 +368,6 @@ static err_t parse_rr(struct ike_sa *ike,
 		}
 
 	}
-
-	if (dns_pubkeys == NULL) {
-		return "nothing to add";
-	}
-
-	if (dnsr->pubkeys_cb != NULL) {
-		dnsr->pubkeys_cb(ike, dnsr, dns_pubkeys, verbose);
-	}
-
-	while (dns_pubkeys != NULL) {
-		struct dns_pubkey *tbd = dns_pubkeys;
-		dns_pubkeys = dns_pubkeys->next;
-		pfree(tbd);
-	}
-	return NULL;
 }
 
 /* This is called when dns response arrives */
@@ -409,12 +399,14 @@ err_t process_dns_resp(struct ike_sa *ike, struct p_dns_req *dnsr)
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
 			llog(IMPAIR_STREAM, dnsr->logger, "allowing insecure DNS response");
-			return parse_rr(ike, dnsr, ldnspkt, verbose);
+			parse_rr(ike, dnsr, ldnspkt, verbose);
+			return NULL;
 		}
 		return "unbound returned INSECURE response - ignored";
 
 	case UB_EVENT_SECURE:
-		return parse_rr(ike, dnsr, ldnspkt, verbose);
+		parse_rr(ike, dnsr, ldnspkt, verbose);
+		return NULL;
 	}
 }
 

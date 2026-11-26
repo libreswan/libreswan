@@ -20,11 +20,6 @@ struct dns_pubkey {
 	shunk_t pubkey;
 };
 
-typedef void dnsr_pubkeys_cb_fn(struct ike_sa *ike,
-				struct p_dns_req *dnsr,
-				struct dns_pubkey *dns_pubkeys,
-				struct verbose verbose);
-
 typedef void dnsr_validate_address_cb_fn(struct ike_sa *ike,
 					 struct p_dns_req *dnsr,
 					 unsigned char *addr,
@@ -70,8 +65,12 @@ struct p_dns_req {
 
 	dnsr_cb_fn *cb;	/* continue function for pluto, not the unbound cb */
 
-	dnsr_pubkeys_cb_fn *pubkeys_cb;	/* called when public keys are retrieved from IPSECKEY RR */
 	dnsr_validate_address_cb_fn *validate_address_cb; /* called when addresses are returned as A RR */
+
+	/*
+	 * The extracted pubkeys.
+	 */
+	struct dns_pubkey *pubkeys;
 
 	struct p_dns_req *next;
 };

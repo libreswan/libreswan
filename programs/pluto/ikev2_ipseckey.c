@@ -62,11 +62,75 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 		str_deltatime(served_delta, &db));
 }
 
+static void add_dns_pubkey_to_pluto(realtime_t install_time,
+				    const struct id *remote_id,
+				    struct p_dns_req *dnsr,
+				    const struct dns_pubkey *dns_pubkey,
+				    struct verbose verbose)
+{
+	/*
+	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
+	 * does not expire while negotiating
+	 */
+
+	uint32_t ttl = dns_pubkey->ttl;
+	uint32_t ttl_used = max(ttl, (uint32_t)deltasecs(RETRANSMIT_TIMEOUT_DEFAULT));
+	char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
+
+	if (ttl_used == ttl) {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
+	} else {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
+			 ttl, ttl_used);
+	}
+
+	enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
+		DNSSEC_SECURE : DNSSEC_INSECURE;
+
+	if (remote_id->kind == ID_FQDN) {
+		id_buf thatidbuf;
+		name_buf ab;
+		vdbg("add IPSECKEY pluto as publickey %s %s %s",
+		     str_id(remote_id, &thatidbuf),
+		     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
+	} else {
+		id_buf thatidbuf;
+		name_buf ab;
+		vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+		     str_id(remote_id, &thatidbuf),
+		     dnsr->qname, ttl_buf,
+		     str_enum_long(&dns_auth_level_names, al, &ab));
+	}
+
+	struct pubkey *pubkey = NULL; /*must-delref*/
+	diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
+				     dns_pubkey->algorithm_type,
+				     install_time,
+				     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
+				     ttl,
+				     dns_pubkey->pubkey,
+				     &pubkey,
+				     dnsr->logger);
+	if (d != NULL) {
+		id_buf thatidbuf;
+		vlog("add %s publickey failed, %s: %s",
+		     str_id(remote_id, &thatidbuf),
+		     dnsr->log_buf,
+		     str_diag(d));
+		pfree_diag(&d);
+	}
+
+	/* not replace! */
+	add_pubkey(pubkey, &pluto_pubkeys); /*add-ref*/
+	pubkey_delref(&pubkey);
+}
+
 static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
 				     struct p_dns_req *dnsr,
-				     struct dns_pubkey *dns_pubkeys,
-				     struct verbose verbose)
+				     struct dns_pubkey **dns_pubkeys)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, dnsr->logger, "IPSECKEY");
+
 	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
 	vassert(dns_pubkeys != NULL);
 	vassert(ike != NULL);
@@ -78,64 +142,14 @@ static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
 	delete_public_keys(&pluto_pubkeys, remote_id, &pubkey_type_rsa);
 
 	realtime_t install_time = realnow();
-	for (struct dns_pubkey *dns_pubkey = dns_pubkeys;
-	     dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
+	while (*dns_pubkeys != NULL) {
+		struct dns_pubkey *dns_pubkey = *dns_pubkeys;
+		(*dns_pubkeys) = (*dns_pubkeys)->next;
 
-		/*
-		 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
-		 * does not expire while negotiating
-		 */
-
-		uint32_t ttl = dns_pubkey->ttl;
-		uint32_t ttl_used = max(ttl, (uint32_t)deltasecs(RETRANSMIT_TIMEOUT_DEFAULT));
-		char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
-
-		if (ttl_used == ttl) {
-			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
-		} else {
-			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
-				 ttl, ttl_used);
-		}
-
-		enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
-			DNSSEC_SECURE : DNSSEC_INSECURE;
-
-		if (remote_id->kind == ID_FQDN) {
-			id_buf thatidbuf;
-			name_buf ab;
-			vdbg("add IPSECKEY pluto as publickey %s %s %s",
-			     str_id(remote_id, &thatidbuf),
-			     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
-		} else {
-			id_buf thatidbuf;
-			name_buf ab;
-			vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			     str_id(remote_id, &thatidbuf),
-			     dnsr->qname, ttl_buf,
-			     str_enum_long(&dns_auth_level_names, al, &ab));
-		}
-
-		struct pubkey *pubkey = NULL; /*must-delref*/
-		diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
-					     dns_pubkey->algorithm_type,
-					     install_time,
-					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
-					     ttl,
-					     dns_pubkey->pubkey,
-					     &pubkey,
-					     dnsr->logger);
-		if (d != NULL) {
-			id_buf thatidbuf;
-			vlog("add %s publickey failed, %s: %s",
-			     str_id(remote_id, &thatidbuf),
-			     dnsr->log_buf,
-			     str_diag(d));
-			pfree_diag(&d);
-		}
-
-		/* not replace! */
-		add_pubkey(pubkey, &pluto_pubkeys); /*add-ref*/
-		pubkey_delref(&pubkey);
+		add_dns_pubkey_to_pluto(install_time, remote_id,
+					dnsr, dns_pubkey,
+					verbose);
+		pfreeany(dns_pubkey);
 	}
 }
 
@@ -184,15 +198,17 @@ static void validate_address(struct ike_sa *ike,
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-	const char *parse_err = process_dns_resp(ike, dnsr);
-	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
 
 	bool larval = (dnsr->dns_status == DNS_LARVAL);
 
-	if (dnsr->rcode == 0 &&
-	    parse_err == NULL) {
+	if (resp_err == NULL &&
+	    dnsr->pubkeys != NULL) {
+		/* also throws them away */
+		add_dns_pubkeys_to_pluto(ike, dnsr, &dnsr->pubkeys);
 		dnsr->dns_status = DNS_OK;
 	} else {
 #if 0
@@ -288,13 +304,15 @@ static void idi_address_fetch_continue(struct ike_sa *ike,
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-	const char *parse_err = process_dns_resp(ike, dnsr);
-	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
 
-	if (dnsr->rcode == 0 &&
-	    parse_err == NULL) {
+	if (resp_err == NULL &&
+	    dnsr->pubkeys != NULL) {
+		/* also throws them away */
+		add_dns_pubkeys_to_pluto(ike, dnsr, &dnsr->pubkeys);
 		dnsr->dns_status = DNS_OK;
 	} else {
 		/*
@@ -449,7 +467,6 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
 	if (p == NULL) {
 		return NULL;
 	}
-	p->pubkeys_cb = add_dns_pubkeys_to_pluto;
 	return p;
 }
 
