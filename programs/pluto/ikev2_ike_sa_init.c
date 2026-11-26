@@ -339,22 +339,17 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		release_whack(ike->sa.logger, HERE);
 	}
 
-	/*
-	 * XXX: this attempt to prefetch the IPSEC key during
-	 * IKE_SA_INIT is pretty dodgy.  A connswitch can happen
-	 * during IKE_AUTH, making it a wrong decision.
-	 */
 	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
 		/*
-		 * This submits a background task?  How is it ever
-		 * synced?
+		 * XXX: prefetch the IPSECKEY in the background.  The
+		 * result is stored, as a pubkey, in PLUTO_PUBKEYS.
 		 *
-		 * The value returned (the PUBKEY) is required during
-		 * IKE AUTH.
+		 * The IKE_AUTH code will then attempt to search
+		 * PLUTO_PUBKEYS for the requested key.
 		 *
-		 * XXX: A second request for (hopefully) the same
-		 * IPSEC key will be made during IKE AUTH.  If DNS
-		 * hasn't finished that request will block.
+		 * Since the operation is not synchronised.  There's
+		 * no guarentee that the key is available during
+		 * IKE_AUTH; and no way to detect a failed key fetch.
 		 */
 		if (!initiator_fetch_idr_ipseckey(ike)) {
 			llog_sa(RC_LOG, ike,
