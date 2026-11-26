@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ../../guestbin/wait-for-pluto.sh --match '"named": oriented'
-"named": oriented IKEv2 connection (local: left=192.1.2.45 remote: right=right.testing.libreswan.org)
+"named": oriented IKEv2 permanent connection (local: left=192.1.2.45 remote: right=right.testing.libreswan.org)
 west #
  ../../guestbin/wait-for-pluto.sh --match '"named" #1: initiating'
 "named" #1: initiating IKEv2 connection to 192.1.2.23 (right.testing.libreswan.org) using UDP

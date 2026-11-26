@@ -7,13 +7,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add rekey
-"rekey": added oriented IKEv2 connection
+"rekey": added oriented IKEv2 permanent connection
 west #
  ipsec add rekey1
-"rekey1": added oriented IKEv2 connection
+"rekey1": added oriented IKEv2 permanent connection
 west #
  ipsec add rekey2
-"rekey2": added oriented IKEv2 connection
+"rekey2": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone

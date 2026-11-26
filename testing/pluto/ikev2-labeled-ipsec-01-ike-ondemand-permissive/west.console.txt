@@ -15,7 +15,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add labeled
-"labeled": added oriented IKEv2 connection
+"labeled": added oriented IKEv2 labeled-template connection
 west #
  echo "initdone"
 initdone

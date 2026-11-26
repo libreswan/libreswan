@@ -13,10 +13,10 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec add westnet-eastnet-ikev2a
-"westnet-eastnet-ikev2a": added oriented IKEv2 connection
+"westnet-eastnet-ikev2a": added oriented IKEv2 permanent connection
 west #
  ipsec add westnet-eastnet-ikev2b
-"westnet-eastnet-ikev2b": added oriented IKEv2 connection
+"westnet-eastnet-ikev2b": added oriented IKEv2 permanent connection
 west #
  echo "initdone"
 initdone

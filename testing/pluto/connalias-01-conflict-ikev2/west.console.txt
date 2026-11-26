@@ -9,10 +9,10 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add westnet-eastnet-alias
-"westnet-eastnet-alias": added oriented IKEv2 connection
+"westnet-eastnet-alias": added oriented IKEv2 permanent connection
 west #
  ipsec add westnet-eastnet-second
-"westnet-eastnet-second": added oriented IKEv2 connection
+"westnet-eastnet-second": added oriented IKEv2 permanent connection
 west #
  ipsec connectionstatus westnet-eastnet
 no connection or alias named "westnet-eastnet"

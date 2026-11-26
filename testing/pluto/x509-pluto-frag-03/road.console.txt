@@ -19,7 +19,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec add x509
-"x509": added oriented IKEv1 connection
+"x509": added oriented IKEv1 permanent connection
 road #
  echo done
 done

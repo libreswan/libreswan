@@ -100,5 +100,5 @@ ipsec addconn: ERROR: loading config file 'bad-conn-key.conf' failed
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
 warning: "bad-conn-value": debug=asdlfasdfj invalid, ignored
-"bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=%any match an interface)
+"bad-conn-value": added unoriented IKEv2 template connection (neither left=1.2.3.4 nor right=%any match an interface)
 west #
