@@ -3157,6 +3157,8 @@ def setup_single_test(args, cwd=None):
             os.chdir(tdir)
         else:
             logger.error("given --testname %s and can't find directory %s" % (args.testname, tdir))
+            if exitcode:
+                sys.exit(1)
             return
 
     test = Test(args, cwd=cwd)
@@ -3202,6 +3204,9 @@ def do_single_test(args=None, test=None, tlr=None):
     e = None
 
     if test.do_test():
+        # the test aborted before it could run, never report a pass
+        if exitcode:
+            sys.exit(1)
         os.chdir("..")  # chdir end
         return True
 
@@ -3278,12 +3283,13 @@ def check_host_ns_support():
 
 
 def check_host_xfrm_stack():
-    # check if there is XFRM stack on the host
+    # check if there is XFRM stack on the host, ubuntu does not have CONFIG_XFRM_STATS :/
 
     v_line = runcmd("ipsec version")
-    if not os.path.isfile("/proc/net/xfrm_stat"):
+    if not os.path.isfile("/proc/sys/net/core/xfrm_acq_expires"):
         logger.error( "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
         return True
+    return False
 
 def check_host_networking():
 
