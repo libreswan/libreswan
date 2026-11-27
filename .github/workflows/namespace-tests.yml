@@ -1,0 +1,183 @@
+name: namespace-tests
+
+# Build libreswan and run a subset of the testing/pluto tests using
+# Linux namespaces (testing/utils/nsrun) on a GitHub hosted runner.
+# See testing/ns/README.md for the equivalent local steps.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Tests to run (globs matched against testing/pluto/)"
+        required: false
+        default: "ikev2-0* interop-ikev2-strongswan-0*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  nsrun:
+    name: nsrun on Ubuntu 26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      PYTHONUNBUFFERED: "1"
+      # passed through the environment, not ${{ }}, so the input
+      # can't inject shell commands
+      TESTS: ${{ github.event.inputs.tests || 'ikev2-0* interop-ikev2-strongswan-0*' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install build and test dependencies
+        run: |
+          # don't rebuild the man-db index for every package
+          sudo rm -f /var/lib/man-db/auto-update
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config bison flex \
+            libnss3-dev libnss3-tools libevent-dev libunbound-dev \
+            libpam0g-dev libcap-ng-dev libldns-dev xmlto \
+            libcurl4-openssl-dev libseccomp-dev \
+            libaudit-dev systemd-dev \
+            git patch python3-pexpect curl tar diffutils \
+            gawk diffstat iptables iproute2 iputils-ping kmod openssl \
+            util-linux ccache strongswan
+
+      - name: Prepare host
+        run: sudo ./testing/ns/prepare-host.sh
+
+      # The caches are restored and saved explicitly: the post-job save
+      # of actions/cache is skipped when a test fails.
+
+      # Object files can't be cached (checkout makes every source file
+      # newer, so make rebuilds everything); use ccache.  Each commit
+      # saves a new entry, restoring the most recent one.
+      - name: Restore ccache
+        id: ccache-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.ccache
+          key: ccache-ubuntu-26.04-${{ runner.arch }}-${{ github.sha }}
+          restore-keys: ccache-ubuntu-26.04-${{ runner.arch }}-
+
+      # USE_LINUX_AUDIT=true matches the Fedora build used to generate
+      # the reference output (pluto logs audit-log=yes)
+      - name: Build libreswan
+        run: |
+          export CCACHE_DIR="$HOME/.ccache" CCACHE_MAXSIZE=500M
+          export PATH="/usr/lib/ccache:$PATH"
+          ccache --zero-stats
+          make -j"$(nproc)" USE_LINUX_AUDIT=true
+          ccache --show-stats
+          echo "::notice title=ccache::$(ccache --print-stats | grep -E '^(direct_cache_hit|preprocessed_cache_hit|cache_miss)' | paste -sd ' ')"
+
+      - name: Save ccache
+        if: steps.ccache-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.ccache
+          key: ${{ steps.ccache-cache.outputs.cache-primary-key }}
+
+      - name: Install libreswan
+        run: |
+          sudo make USE_LINUX_AUDIT=true install
+          ipsec --version
+
+      # The certificates are dated relative to when they are generated
+      # (valid from 11 months ago; the up-to-date CRL for 360 days), so
+      # also regenerate them weekly.
+      - name: Compute certificate cache week
+        id: x509-week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore test certificates
+        id: x509-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            testing/x509/pki
+            testing/x509/selfsigned
+          key: x509-${{ steps.x509-week.outputs.week }}-${{ hashFiles('testing/x509/**', 'mk/config.mk', 'mk/defaults/linux.mk') }}
+
+      - name: Generate test certificates
+        if: steps.x509-cache.outputs.cache-hit != 'true'
+        run: make -C testing/x509
+
+      - name: Save test certificates
+        if: steps.x509-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            testing/x509/pki
+            testing/x509/selfsigned
+          key: ${{ steps.x509-cache.outputs.cache-primary-key }}
+
+      - name: Run tests
+        run: |
+          # leave the globs for namespace-runner.py to expand
+          set -f
+          # shellcheck disable=SC2086 # split TESTS into words
+          ./testing/utils/namespace-runner.py -j "$(( $(nproc) * 2 ))" --diff ${TESTS} | tee "$RUNNER_TEMP/nsrun.log"
+
+      - name: Make test output readable
+        if: always()
+        run: sudo chmod -R a+rX testing/pluto/*/OUTPUT/ || true
+
+      # list the results on the job's page, and annotate each failed
+      # test with the start of its output differences
+      - name: Summarize results
+        if: always()
+        run: |
+          # head(1) closing the pipe early isn't an error
+          set +o pipefail
+          log="$RUNNER_TEMP/nsrun.log"
+          test -r "$log" || exit 0
+          {
+            echo '```'
+            sed -n '/^total  tests:/,$p' "$log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=nsrun::$(grep -E '^(total|passed|failed) +tests: [0-9]+$' "$log" | paste -sd ' ')"
+          failed=$(sed -n 's/^failed tests: \([^0-9].*\)/\1/p' "$log" | tail -1)
+          for t in ${failed} ; do
+            o=testing/pluto/"$t"/OUTPUT
+            diff=$(cat "$o"/*.console.diff 2>/dev/null | head -60)
+            if test -z "${diff}" ; then
+              # no console differences, the test didn't run properly
+              diff=$(echo "OUTPUT: $(cd "$o" 2>&1 && echo *)"
+                     cat "$o"/RESULT 2>&1
+                     grep -iE 'error|abort|exception|timeout|traceback|cannot|failed' "$o"/debug.log 2>&1 | tail -20)
+            fi
+            {
+              echo "<details><summary>${t}</summary>"
+              echo
+              echo '```diff'
+              echo "${diff:-(no differences, see OUTPUT/debug.log)}"
+              echo '```'
+              echo '</details>'
+            } >> "$GITHUB_STEP_SUMMARY"
+            # annotations use %-encoding for newlines
+            msg=$(printf '%s' "${diff:-no differences}" | head -30 | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/%0A/g')
+            echo "::error title=${t} failed::${msg}"
+          done
+
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nsrun-output
+          path: testing/pluto/*/OUTPUT/
+          if-no-files-found: ignore
