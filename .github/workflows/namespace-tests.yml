@@ -12,7 +12,9 @@ on:
       tests:
         description: "Tests to run (globs matched against testing/pluto/)"
         required: false
-        default: "ikev2-0* interop-ikev2-strongswan-0*"
+        # add strongswan interop once we ported properly to run on Ubuntu
+        # default: "ikev2-0* interop-ikev2-strongswan-0*"
+        default: "ikev2-0* ikev2-intermediate-*"
 
 permissions:
   contents: read
