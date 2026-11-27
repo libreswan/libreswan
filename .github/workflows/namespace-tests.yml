@@ -130,7 +130,7 @@ jobs:
           # leave the globs for namespace-runner.py to expand
           set -f
           # shellcheck disable=SC2086 # split TESTS into words
-          ./testing/utils/namespace-runner.py -j "$(( $(nproc) * 2 ))" --diff ${TESTS} | tee "$RUNNER_TEMP/nsrun.log"
+          ./testing/utils/namespace-runner.py --s -j "$(( $(nproc) * 2 ))" --diff ${TESTS} | tee "$RUNNER_TEMP/nsrun.log"
 
       - name: Make test output readable
         if: always()
