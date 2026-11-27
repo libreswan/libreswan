@@ -1909,6 +1909,9 @@ def cmdline():
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
 
+    parser.add_argument("--sa", default=False, action="store_true",
+                        help="accept any strongswan version; swan-prep skips the version check")
+
     parser.add_argument("--scancwd", default=False, action="store_true",
                         help="san/resanitize  results, run in cwd")
 
@@ -1962,6 +1965,10 @@ def cmdline():
 
     logutil.add_arguments(parser)
     args = parser.parse_args()
+
+    if args.sa:
+        # --preserve-env passes this through sudo and nsenter to swan-prep
+        DEF.sudo_c += " SWAN_STRONGSWAN_ANY=YES"
 
     if not args.with_prefix:
         args.prefix = []

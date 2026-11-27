@@ -414,11 +414,14 @@ match args.userland:
     case "strongswan":
 
         # check version and spew all over test output
-        output = subprocess.getoutput("strongswan version")
-        strongswan_version = "U6.0.7"
+        output = subprocess.getoutput("swanctl --version --raw 2>&1 |grep strongSwan | awk '{print $2}'")
+        strongswan_version = "6.0.7"
         if args.strongswan_version:
             strongswan_version = args.strongswan_version
-        if not strongswan_version in output:
+        # nsrun --sa sets SWAN_STRONGSWAN_ANY: any strongswan version is ok
+        if "SWAN_STRONGSWAN_ANY" in os.environ:
+            pass
+        elif not strongswan_version in output:
             print("strongswan %s must be installed" % (strongswan_version))
             print("")
             print(output)
