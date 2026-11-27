@@ -1,19 +1,11 @@
-#
-# This isn't actually a shell script. It just looks like one.
-# Some tools other than /bin/sh process it.
-#
-
 # test-kind	directory-containing-test	expectation	[PR#] # comment
 
 # Test Kind:
 #
-#   kvmplutotest: uses KVM (and hopefully docker); will be run by
-#                 default
+#   default: should run with KVM and namespaces; will be run by default
 #
-#   umlplutotest: not converted to KVM; not run by default.
-#
-#   umlXhost: not converted to KVM; not run by default; requires
-#             missing domains, such as japan
+#   kvmonly: depends on KVM, namespace based tests will not run this.
+#   nsonly: depends on namespaces, KVM based tests will not run this.
 #
 # Expectation:
 #
@@ -29,90 +21,82 @@
 #             the output; this test is not run by default
 #
 #
-# Invoking the testsuite:
+# Full documentation of our testsuites:
 #
-#     make kvm-install
-#     make kvm-test
+#   KVM:	https://libreswan.github.io/Testing/KVM/
+#   namespaces: https://libreswan.github.io/Testing/Namespaces
 #
-# For more info see the output from: make kvm-help
 #
-# To run an individual test that is normally skipped, either invoke
-# make as:
-#
-#     make kvm-test KVM_TESTS=path/to/test/directory
-#
-# or invoke kvmrunner.py directly as:
+# To run an individual test using KVM:
 #
 #    ./testing/utils/kvmrunner.py path/to/test/directory ...
 #
-# To add the WIP tests to a test run specify:
+# To run an individual test using namespace:
 #
-#      KVM_TEST_FLAGS=--test-result "good|wip"
-#
-# either as a parameter to make, or added to Makefile.inc.local.
+#    ./testing/utils/namespace-runner.py path/to/test/directory ...
 #
 
 # various self-check programs
-kvmplutotest	check-01			good
-kvmplutotest	check-02-namecheck		good
-kvmplutotest	check-03-vendoridcheck		good
-kvmplutotest	check-04-pki			good
-kvmplutotest	check-05-checksec		good
-kvmplutotest	check-06-dnssec			good
-kvmplutotest	check-07-testlist		good
-kvmplutotest	check-08-documentation		good
+default	check-01			good
+default	check-02-namecheck		good
+default	check-03-vendoridcheck		good
+default	check-04-pki			good
+default	check-05-checksec		good
+kvmonly	check-06-dnssec			good
+default	check-07-testlist		good
+default	check-08-documentation		good
 
 # per-os sniff tests
 
-kvmplutotest	check-10-topology-alpine		good
-kvmplutotest	check-10-topology-debian		good
-kvmplutotest	check-10-topology-fedora		good
-kvmplutotest	check-10-topology-freebsd		good
-kvmplutotest	check-10-topology-linux			good
-kvmplutotest	check-10-topology-netbsd		good
-kvmplutotest	check-10-topology-openbsd		good
+kvmonly	check-10-topology-alpine		good
+kvmonly	check-10-topology-debian		good
+kvmonly	check-10-topology-fedora		good
+kvmonly	check-10-topology-freebsd		good
+kvmonly	check-10-topology-linux			good
+kvmonly	check-10-topology-netbsd		good
+kvmonly	check-10-topology-openbsd		good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
-kvmplutotest	basic-pluto-01			good
-kvmplutotest	basic-pluto-01-failtest		good
-kvmplutotest	basic-pluto-01-nosecrets	good
-kvmplutotest	basic-pluto-02			good
-kvmplutotest	basic-pluto-03			good
-kvmplutotest	basic-pluto-04			good
-kvmplutotest    basic-pluto-07-sourceip		good
-kvmplutotest    basic-pluto-08-misc		good
-kvmplutotest    basic-pluto-09-orienting	good
-kvmplutotest    basic-pluto-10-nm-configured	good
+default	basic-pluto-01			good
+default	basic-pluto-01-failtest		good
+default	basic-pluto-01-nosecrets	good
+default	basic-pluto-02			good
+default	basic-pluto-03			good
+default	basic-pluto-04			good
+default    basic-pluto-07-sourceip		good
+default    basic-pluto-08-misc		good
+default    basic-pluto-09-orienting	good
+default    basic-pluto-10-nm-configured	good
 
-kvmplutotest	linux-audit-01-ok-ikev1		good
-kvmplutotest	linux-audit-01-ok-ikev2		good
-kvmplutotest	linux-audit-02-ike-fail-ikev1	good
-kvmplutotest	linux-audit-02-ike-fail-ikev2	good
-kvmplutotest	linux-audit-03-ipsec-fail-ikev1	good
-kvmplutotest	linux-audit-03-ipsec-fail-ikev2	good
+default	linux-audit-01-ok-ikev1		good
+default	linux-audit-01-ok-ikev2		good
+default	linux-audit-02-ike-fail-ikev1	good
+default	linux-audit-02-ike-fail-ikev2	good
+default	linux-audit-03-ipsec-fail-ikev1	good
+default	linux-audit-03-ipsec-fail-ikev2	good
 # this test should be written once we can whack trigger rekeys
-#kvmplutotest	linux-audit-04-rekey-ikev1	wip
-#kvmplutotest	linux-audit-04-rekey-ikev2	wip
+#default	linux-audit-04-rekey-ikev1	wip
+#default	linux-audit-04-rekey-ikev2	wip
 
-kvmplutotest	fuzzer-ikev1-01			good
-kvmplutotest	fuzzer-ikev1-03			good
-kvmplutotest	fuzzer-ikev2-01			good
+default	fuzzer-ikev1-01			good
+default	fuzzer-ikev1-03			good
+default	fuzzer-ikev2-01			good
 
-kvmplutotest	basic-pluto-01-wrongkey		wip
-kvmplutotest	basic-pluto-01-nokey		good
+default	basic-pluto-01-wrongkey		wip
+default	basic-pluto-01-nokey		good
 
 
 #################################################################
 # add connection parser and semantic checker tests
 #################################################################
 
-kvmplutotest	connalias-01-conflict-ikev1			good	github/1620
-kvmplutotest	connalias-01-conflict-ikev2			good	github/1620
-kvmplutotest	connalias-02-twoconn-ikev1			good
-kvmplutotest	connalias-02-twoconn-ikev2			good
+default	connalias-01-conflict-ikev1			good	github/1620
+default	connalias-01-conflict-ikev2			good	github/1620
+default	connalias-02-twoconn-ikev1			good
+default	connalias-02-twoconn-ikev2			good
 
-kvmplutotest	algparse-01					good
-kvmplutotest	algparse-02-fips				good
+default	algparse-01					good
+kvmonly	algparse-02-fips				good
 
 #################################################################
 #
@@ -134,1207 +118,1207 @@ kvmplutotest	algparse-02-fips				good
 #
 #################################################################
 
-kvmplutotest    acquire-distraction-01				good
-kvmplutotest	addconn-01-left-is-right			good
-kvmplutotest	addconn-02-many-routes				good
-kvmplutotest	addconn-04-config-path				good
-kvmplutotest	addconn-05-bogus-left-interface			good
-kvmplutotest	addconn-06-whack-algos				good
-kvmplutotest	addconn-07-defaultroute				good	github/2336
-kvmplutotest	addconn-08-ordering				good	github:658
-kvmplutotest	addconn-09-dpd-vs-liveness			good
-kvmplutotest	addconn-10-duplicate-key			good
-kvmplutotest	addconn-11-bignum				good
-kvmplutotest	addconn-12-family				good	github:540;github:579
-kvmplutotest	addconn-13-selectors				good
-kvmplutotest	addconn-14-addresspool				good
-kvmplutotest	addconn-15-sourceip				good
-kvmplutotest	addconn-16-empty-config-option			good
-kvmplutotest	addconn-17-config-time-suffix			good
-kvmplutotest	addconn-18-config-percentage-suffix		good
-kvmplutotest	addconn-19-include-recursive			good
-kvmplutotest	addconn-19-include-missing			good
-kvmplutotest	addconn-19-include-no-match			good
-kvmplutotest	addconn-20-conn-default				good
-kvmplutotest	addconn-21-config-setup-listen			good
-kvmplutotest	addconn-22-authby-ikev1				good
-kvmplutotest	addconn-22-authby-ikev2				good
-kvmplutotest	addconn-23-fedora-crypto-policies		good
-kvmplutotest	addconn-24-conn-default-rsasigkey		good	github:833
-kvmplutotest	addconn-25-missing-cert				good
-kvmplutotest	addconn-27-keyexchange				good	github/1168
-kvmplutotest	addconn-28-fragmentation			good	github/1209
-kvmplutotest	addconn-29-nat-ikev1-method			good
-kvmplutotest	addconn-30-ikev1-labeled-ipsec			good
-kvmplutotest	addconn-31-pfs					good	github/1273
-kvmplutotest	addconn-32-compress				good
-kvmplutotest	addconn-33-encap-mode				good
-kvmplutotest	addconn-34-encap-proto				good
-kvmplutotest	addconn-35-encapsulation			good
-kvmplutotest	addconn-36-vti					good
+default    acquire-distraction-01				good
+default	addconn-01-left-is-right			good
+default	addconn-02-many-routes				good
+default	addconn-04-config-path				good
+default	addconn-05-bogus-left-interface			good
+default	addconn-06-whack-algos				good
+default	addconn-07-defaultroute				good	github/2336
+default	addconn-08-ordering				good	github:658
+default	addconn-09-dpd-vs-liveness			good
+default	addconn-10-duplicate-key			good
+default	addconn-11-bignum				good
+default	addconn-12-family				good	github:540;github:579
+default	addconn-13-selectors				good
+default	addconn-14-addresspool				good
+default	addconn-15-sourceip				good
+default	addconn-16-empty-config-option			good
+default	addconn-17-config-time-suffix			good
+default	addconn-18-config-percentage-suffix		good
+default	addconn-19-include-recursive			good
+default	addconn-19-include-missing			good
+default	addconn-19-include-no-match			good
+default	addconn-20-conn-default				good
+default	addconn-21-config-setup-listen			good
+default	addconn-22-authby-ikev1				good
+default	addconn-22-authby-ikev2				good
+kvmonly	addconn-23-fedora-crypto-policies		good
+default	addconn-24-conn-default-rsasigkey		good	github:833
+default	addconn-25-missing-cert				good
+default	addconn-27-keyexchange				good	github/1168
+default	addconn-28-fragmentation			good	github/1209
+default	addconn-29-nat-ikev1-method			good
+default	addconn-30-ikev1-labeled-ipsec			good
+default	addconn-31-pfs					good	github/1273
+default	addconn-32-compress				good
+default	addconn-33-encap-mode				good
+default	addconn-34-encap-proto				good
+default	addconn-35-encapsulation			good
+default	addconn-36-vti					good
 # try to offload when there's no hardware
-kvmplutotest	addconn-37-nic-offload				good
-kvmplutotest	addconn-37-nic-offload-no-hw-crypto		good	github/1527
-kvmplutotest	addconn-37-nic-offload-no-hw-packet		good	github/1527
-kvmplutotest	addconn-39-updown				good	github/1607
-kvmplutotest	addconn-40-id					good	github/544,github/1618
-kvmplutotest	addconn-41-ocsp-config				good
-kvmplutotest	addconn-42-empty				good
-kvmplutotest	addconn-43-x-comment				good
-kvmplutotest	addconn-44-narrowing				good
-kvmplutotest	addconn-45-unknown-parameter			good
-kvmplutotest	addconn-46-iptfs				good
-kvmplutotest	addconn-47-ikepad				good
-kvmplutotest	addconn-48-shunts				good
-kvmplutotest	addconn-50-send-vendorid			good
-kvmplutotest	addconn-51-config-setup-dns-resolver		good
-kvmplutotest	addconn-52-clones				good
-kvmplutotest	addconn-53-config-setup-ike-socket		good
-kvmplutotest    addconn-54-xauth          good
-kvmplutotest    addconn-55-send-supported-auth-methods          good
-kvmplutotest	addconn-56-ike-sa-init-full-transcript-auth        good
-kvmplutotest	addconn-57-signature-hash-algorithms		good
-kvmplutotest	addconn-58-child-sa-pfs-info-supported		good
+default	addconn-37-nic-offload				good
+default	addconn-37-nic-offload-no-hw-crypto		good	github/1527
+default	addconn-37-nic-offload-no-hw-packet		good	github/1527
+default	addconn-39-updown				good	github/1607
+default	addconn-40-id					good	github/544,github/1618
+default	addconn-41-ocsp-config				good
+default	addconn-42-empty				good
+default	addconn-43-x-comment				good
+default	addconn-44-narrowing				good
+default	addconn-45-unknown-parameter			good
+default	addconn-46-iptfs				good
+default	addconn-47-ikepad				good
+default	addconn-48-shunts				good
+default	addconn-50-send-vendorid			good
+default	addconn-51-config-setup-dns-resolver		good
+default	addconn-52-clones				good
+default	addconn-53-config-setup-ike-socket		good
+default    addconn-54-xauth          good
+default    addconn-55-send-supported-auth-methods          good
+default	addconn-56-ike-sa-init-full-transcript-auth        good
+default	addconn-57-signature-hash-algorithms		good
+default	addconn-58-child-sa-pfs-info-supported		good
 
 #################################################################
 # IKEv2 tests
 #################################################################
-kvmplutotest	ikev2-03-basic-rawrsa			good
-kvmplutotest	ikev2-03-basic-rawrsa-rsasigkey		good
-kvmplutotest	ikev2-03-basic-rawrsa-pem		good
-kvmplutotest	ikev2-04-basic-x509			good
-kvmplutotest	ikev2-04-basic-x509-ckaid		good
-kvmplutotest	ikev2-04-basic-x509-no-ca		good
-kvmplutotest	ikev2-04-basic-x509-no-ca-02		good
-kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch	good
-kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch-02	good
-kvmplutotest	ikev2-x509-pluto-05-forged		skiptest	github/
-kvmplutotest	ikev2-05-basic-psk			good
-kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
-kvmplutotest	ikev2-05-basic-psk-missing-initiator	good
-kvmplutotest	ikev2-05-basic-psk-missing-responder	good
-kvmplutotest	ikev2-07-invalid-xchg			good
-kvmplutotest	ikev2-ddos-cookie-01			good
-kvmplutotest	ikev2-ddos-cookie-02-mangle		good
-kvmplutotest	ikev2-ddos-cookie-03-add		good
+default	ikev2-03-basic-rawrsa			good
+default	ikev2-03-basic-rawrsa-rsasigkey		good
+default	ikev2-03-basic-rawrsa-pem		good
+default	ikev2-04-basic-x509			good
+default	ikev2-04-basic-x509-ckaid		good
+default	ikev2-04-basic-x509-no-ca		good
+default	ikev2-04-basic-x509-no-ca-02		good
+default	ikev2-04-basic-x509-no-ca-mismatch	good
+default	ikev2-04-basic-x509-no-ca-mismatch-02	good
+default	ikev2-x509-pluto-05-forged		skiptest	github/
+default	ikev2-05-basic-psk			good
+default	ikev2-05-basic-psk-oneconf-namespaces	good
+default	ikev2-05-basic-psk-missing-initiator	good
+default	ikev2-05-basic-psk-missing-responder	good
+default	ikev2-07-invalid-xchg			good
+default	ikev2-ddos-cookie-01			good
+default	ikev2-ddos-cookie-02-mangle		good
+default	ikev2-ddos-cookie-03-add		good
 
-kvmplutotest	ikev2-08-delete-notify			good
-kvmplutotest	ikev2-delete-01				good
-kvmplutotest	ikev2-delete-02				good
-kvmplutotest	ikev2-delete-04				good
-kvmplutotest	ikev2-delete-05-sa-start		good
-kvmplutotest	ikev2-delete-06-start-both		good
-kvmplutotest	ikev2-delete-07-larval-child		good
+default	ikev2-08-delete-notify			good
+default	ikev2-delete-01				good
+default	ikev2-delete-02				good
+default	ikev2-delete-04				good
+kvmonly	ikev2-delete-05-sa-start		good
+default	ikev2-delete-06-start-both		good
+default	ikev2-delete-07-larval-child		good
 
 # performance
 #
 # These demonstrate how to profile pluto.
-kvmplutotest	perf-memory-ikev2-psk-valgrind		wip
-kvmplutotest	perf-oncpu-ikev2-x509-callgrind		wip
-kvmplutotest	perf-debug-ikev2-x509-nss		skiptest # requires custom NSS
-kvmplutotest	perf-debug-ikev2-x509-gdb		skiptest # requires custom NSS
+default	perf-memory-ikev2-psk-valgrind		wip
+default	perf-oncpu-ikev2-x509-callgrind		wip
+default	perf-debug-ikev2-x509-nss		skiptest # requires custom NSS
+default	perf-debug-ikev2-x509-gdb		skiptest # requires custom NSS
 
-kvmplutotest	ikev2-09-rw-rsa				good
-kvmplutotest	ikev2-11-simple-psk			good
-kvmplutotest	ikev2-12-x509-ikev1			good
-kvmplutotest	ikev2-12-x509-ikev1-rw			good
-kvmplutotest	ikev2-12-transport-psk			good
-kvmplutotest	ikev2-13-ah				good
-kvmplutotest	ikev2-15-fuzzer				good
-kvmplutotest	ikev2-17-rekey-ipsec			good
-kvmplutotest	ikev2-20-ikesa-reauth			good
-kvmplutotest	ikev2-18-x509-alias			wip
-kvmplutotest	ikev2-16-alias-whack-up			good
-kvmplutotest	ikev2-16-alias-whack-start		good
-kvmplutotest	ikev2-19-x509-auto-start		wip
-kvmplutotest	ikev2-30-rw-no-rekey			good
-kvmplutotest	ikev2-31-nat-rw-no-rekey		good
-kvmplutotest	ikev2-32-nat-rw-rekey			wip	github:514
-kvmplutotest	ikev2-33-clearport-01			good	github/1374
-kvmplutotest	ikev2-34-clearport-02			good
-kvmplutotest	ikev2-35-mismatched-child		good
-kvmplutotest	ikev2-36-transport-protoport-01		good
-kvmplutotest	ikev2-41-rw-replace			good
-kvmplutotest	ikev2-42-rw-replace-responder		good
-kvmplutotest	ikev1-impair-01-replay-duplicates	good
-kvmplutotest	ikev2-impair-01-replay-duplicates	good
-kvmplutotest	ikev1-impair-02-replay-forward		good
-kvmplutotest	ikev2-impair-02-replay-forward		good
-kvmplutotest	ikev2-46-basic-psk-xfrm		good
-kvmplutotest	ikev2-47-priority			good
-kvmplutotest	ikev2-48-nat-cp				good
-kvmplutotest	ikev2-48-nat-cp-start			wip	github:518
-kvmplutotest	ikev2-48-nat-cp-nondefault		good
-kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
-kvmplutotest	ikev2-48-nat-cp-two-servers		good
-kvmplutotest	ikev2-50-propnum			good
-kvmplutotest	ikev2-53-clean-pending			good
-kvmplutotest	ikev2-59-multiple-acquires-alias	wip
-kvmplutotest	ikev2-59-alias-ondemand			wip
-kvmplutotest	ikev2-59-alias-retransmit		wip
-kvmplutotest	ikev2-59-multiple-acquires 		wip
-kvmplutotest	ikev2-60-pam				good
-kvmplutotest	ikev2-61-any-psk			good
-kvmplutotest	ikev2-62-host-ondemand			good
-kvmplutotest	ikev2-62-host-ondemand-instance		good
-kvmplutotest	ikev2-63-anyid-nat			good
-kvmplutotest	ikev2-64-same-route-twice		wip
-kvmplutotest	ikev2-67-parallel-sa			wip
-kvmplutotest	ikev2-67-esp-null-iperf			wip
-kvmplutotest	ikev2-68-sa-clones-auto-route		skiptest
-kvmplutotest	ikev2-70-src-address-selection		good
-kvmplutotest	ikev2-71-cp-resolve-name		good
-kvmplutotest 	ikev2-72-cp-resolve-both		good
+default	ikev2-09-rw-rsa				good
+default	ikev2-11-simple-psk			good
+default	ikev2-12-x509-ikev1			good
+default	ikev2-12-x509-ikev1-rw			good
+default	ikev2-12-transport-psk			good
+default	ikev2-13-ah				good
+default	ikev2-15-fuzzer				good
+default	ikev2-17-rekey-ipsec			good
+default	ikev2-20-ikesa-reauth			good
+default	ikev2-18-x509-alias			wip
+default	ikev2-16-alias-whack-up			good
+default	ikev2-16-alias-whack-start		good
+default	ikev2-19-x509-auto-start		wip
+default	ikev2-30-rw-no-rekey			good
+default	ikev2-31-nat-rw-no-rekey		good
+default	ikev2-32-nat-rw-rekey			wip	github:514
+default	ikev2-33-clearport-01			good	github/1374
+default	ikev2-34-clearport-02			good
+default	ikev2-35-mismatched-child		good
+default	ikev2-36-transport-protoport-01		good
+default	ikev2-41-rw-replace			good
+default	ikev2-42-rw-replace-responder		good
+default	ikev1-impair-01-replay-duplicates	good
+default	ikev2-impair-01-replay-duplicates	good
+default	ikev1-impair-02-replay-forward		good
+default	ikev2-impair-02-replay-forward		good
+default	ikev2-46-basic-psk-xfrm		good
+default	ikev2-47-priority			good
+default	ikev2-48-nat-cp				good
+default	ikev2-48-nat-cp-start			wip	github:518
+default	ikev2-48-nat-cp-nondefault		good
+default	ikev2-48-nat-cp-two-servers-same	good
+default	ikev2-48-nat-cp-two-servers		good
+default	ikev2-50-propnum			good
+default	ikev2-53-clean-pending			good
+default	ikev2-59-multiple-acquires-alias	wip
+default	ikev2-59-alias-ondemand			wip
+default	ikev2-59-alias-retransmit		wip
+default	ikev2-59-multiple-acquires 		wip
+default	ikev2-60-pam				good
+default	ikev2-61-any-psk			good
+default	ikev2-62-host-ondemand			good
+default	ikev2-62-host-ondemand-instance		good
+default	ikev2-63-anyid-nat			good
+default	ikev2-64-same-route-twice		wip
+default	ikev2-67-parallel-sa			wip
+default	ikev2-67-esp-null-iperf			wip
+default	ikev2-68-sa-clones-auto-route		skiptest
+default	ikev2-70-src-address-selection		good
+default	ikev2-71-cp-resolve-name		good
+default 	ikev2-72-cp-resolve-both		good
 
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-03-fallback    good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-04-mismatch    good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-05-x509        good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-06-tamper      good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-07-global-override	good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-08-connswitch-skip	good
-kvmplutotest	ikev2-ike-sa-init-full-transcript-auth-09-eddsa-rawkey	good
-kvmplutotest	ikev2-ikeport-02-initiator		good
-kvmplutotest	ikev2-ikeport-03-responder		good
-kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
-kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
-kvmplutotest	ikev2-ikeport-06-host-to-host		good
-kvmplutotest	ikev2-ikeport-4500-initiator-ipv4	good
-kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
-kvmplutotest	cloudflare-ikev2-ipv4-4500		good
+default	ikev2-ike-sa-init-full-transcript-auth-01-yes		good
+default	ikev2-ike-sa-init-full-transcript-auth-02-auto        good
+default	ikev2-ike-sa-init-full-transcript-auth-03-fallback    good
+default	ikev2-ike-sa-init-full-transcript-auth-04-mismatch    good
+default	ikev2-ike-sa-init-full-transcript-auth-05-x509        good
+default	ikev2-ike-sa-init-full-transcript-auth-06-tamper      good
+default	ikev2-ike-sa-init-full-transcript-auth-07-global-override	good
+default	ikev2-ike-sa-init-full-transcript-auth-08-connswitch-skip	good
+default	ikev2-ike-sa-init-full-transcript-auth-09-eddsa-rawkey	good
+default	ikev2-ikeport-02-initiator		good
+default	ikev2-ikeport-03-responder		good
+default	ikev2-ikeport-04-rw-nat-initiator	good
+default	ikev2-ikeport-05-rw-nat-responder	good
+default	ikev2-ikeport-06-host-to-host		good
+default	ikev2-ikeport-4500-initiator-ipv4	good
+default	ikev2-ikeport-4500-initiator-ipv6	good
+default	cloudflare-ikev2-ipv4-4500		good
 
-kvmplutotest	ikev2-ondemand-01-instance-auto			good	github/1110
-kvmplutotest	ikev2-ondemand-01-instance-route		good	github/1110
-kvmplutotest	ikev2-ondemand-02-permanent-auto-transport	good	github/1110
-kvmplutotest	ikev2-ondemand-02-permanent-auto-tunnel		good	github/1110
-kvmplutotest	ikev2-ondemand-02-permanent-route-transport	good	github/1110
-kvmplutotest	ikev2-ondemand-02-permanent-route-tunnel	good	github/1110
-kvmplutotest	ikev2-ondemand-04-timeout-instance		good	github/1095
-kvmplutotest	ikev2-ondemand-04-timeout-permanent-tunnel	good	github/1095
-kvmplutotest	ikev2-ondemand-04-timeout-permanent-transport	good	github/1095
+default	ikev2-ondemand-01-instance-auto			good	github/1110
+default	ikev2-ondemand-01-instance-route		good	github/1110
+default	ikev2-ondemand-02-permanent-auto-transport	good	github/1110
+default	ikev2-ondemand-02-permanent-auto-tunnel		good	github/1110
+default	ikev2-ondemand-02-permanent-route-transport	good	github/1110
+default	ikev2-ondemand-02-permanent-route-tunnel	good	github/1110
+default	ikev2-ondemand-04-timeout-instance		good	github/1095
+default	ikev2-ondemand-04-timeout-permanent-tunnel	good	github/1095
+default	ikev2-ondemand-04-timeout-permanent-transport	good	github/1095
 
-kvmplutotest	cryptoload-01-nhelpers3-overload-ikev1		good
-kvmplutotest	cryptoload-01-nhelpers3-overload-ikev2		good
-kvmplutotest	cryptoload-03-nhelpers0-hostkeys-ikev1		good
-kvmplutotest	cryptoload-03-nhelpers0-hostkeys-ikev2		good
-kvmplutotest	cryptoload-04-nhelpers0-x509-ikev2		good
-kvmplutotest	cryptoload-05-nhelpers0-psk-ikev2		good
-kvmplutotest	cryptoload-06-nhelpers0-child-pfs-ikev2		good
+default	cryptoload-01-nhelpers3-overload-ikev1		good
+default	cryptoload-01-nhelpers3-overload-ikev2		good
+default	cryptoload-03-nhelpers0-hostkeys-ikev1		good
+default	cryptoload-03-nhelpers0-hostkeys-ikev2		good
+default	cryptoload-04-nhelpers0-x509-ikev2		good
+default	cryptoload-05-nhelpers0-psk-ikev2		good
+default	cryptoload-06-nhelpers0-child-pfs-ikev2		good
 
-kvmplutotest	ikev2-25-rw-nat				good
-kvmplutotest	ikev2-27-uniqueid			good
-kvmplutotest	ikev2-28-rw-server-rekey 		good
-kvmplutotest	ikev2-29-no-rekey			good
+default	ikev2-25-rw-nat				good
+default	ikev2-27-uniqueid			good
+default	ikev2-28-rw-server-rekey 		good
+default	ikev2-29-no-rekey			good
 
-kvmplutotest	ikev2-ddns-01-hosts-ready		good
-kvmplutotest	ikev2-ddns-01-hosts-delayed		good
-kvmplutotest	ikev2-ddns-02-dns-ready			good
-kvmplutotest	ikev2-ddns-02-dns-delayed		good
-kvmplutotest	ikev2-ddns-03-manual-delayed		good
-kvmplutotest	ikev2-ddns-04-revival-hosts		good
-kvmplutotest	ikev2-ddns-04-revival-dns		good
+default	ikev2-ddns-01-hosts-ready		good
+default	ikev2-ddns-01-hosts-delayed		good
+kvmonly	ikev2-ddns-02-dns-ready			good
+kvmonly	ikev2-ddns-02-dns-delayed		good
+default	ikev2-ddns-03-manual-delayed		good
+kvmonly	ikev2-ddns-04-revival-hosts		good
+kvmonly	ikev2-ddns-04-revival-dns		good
 
-kvmplutotest	ikev2-04-basic-x509-nsspw		good
+default	ikev2-04-basic-x509-nsspw		good
 
-kvmplutotest	ikev2-10-2behind-nat			good
-kvmplutotest	ikev2-restart-eroute-01			wip
+default	ikev2-10-2behind-nat			good
+default	ikev2-restart-eroute-01			wip
 
 # modp tests for checking if we deal with sending different KE's
-kvmplutotest	ikev2-algo-01-modp2048-initiator	good
-kvmplutotest	ikev2-algo-02-modp2048-responder	good
-kvmplutotest	ikev2-algo-03-aes-ccm			good
-kvmplutotest	ikev2-algo-04-aes-gcm256		good
-kvmplutotest	ikev2-algo-05-aes-default		good
-kvmplutotest	ikev2-algo-06-aes-aes_xcbc		good
-kvmplutotest	ikev2-algo-07-aes_ctr			good
-kvmplutotest	ikev2-algo-08-aes_gcm-sha2_512		good
-kvmplutotest	ikev2-algo-09-camellia			good
-kvmplutotest	ikev2-algo-10-aes-gcm128		good
-kvmplutotest	ikev2-algo-11-gcm-prop2			good
-kvmplutotest	ikev2-algo-13-esp-null			good
-kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
-kvmplutotest	ikev2-algo-14-esp-null_auth_aes_gmac-none	good
-kvmplutotest	ikev2-algo-15-esp-null-none		good
-kvmplutotest	ikev2-algo-16-newer-dh			good
-kvmplutotest	ikev2-algo-17-no-sha1-01		good
-kvmplutotest	ikev2-algo-17-chacha20_poly1305-ike-esp	good
-kvmplutotest	ikev2-algo-18-ike-null			good
-kvmplutotest	ikev2-algo-19-ike-aes-kem-ml-kem	good	github/2368
-kvmplutotest	xfrm-algo-aes_gcm-01			good
-kvmplutotest	xfrm-algo-aes_gcm-02			good
-kvmplutotest	xfrm-algo-aes_gcm-03			good
+default	ikev2-algo-01-modp2048-initiator	good
+default	ikev2-algo-02-modp2048-responder	good
+default	ikev2-algo-03-aes-ccm			good
+default	ikev2-algo-04-aes-gcm256		good
+default	ikev2-algo-05-aes-default		good
+default	ikev2-algo-06-aes-aes_xcbc		good
+default	ikev2-algo-07-aes_ctr			good
+default	ikev2-algo-08-aes_gcm-sha2_512		good
+default	ikev2-algo-09-camellia			good
+default	ikev2-algo-10-aes-gcm128		good
+default	ikev2-algo-11-gcm-prop2			good
+default	ikev2-algo-13-esp-null			good
+default	ikev2-algo-12-aes-aes_cmac		good
+default	ikev2-algo-14-esp-null_auth_aes_gmac-none	good
+default	ikev2-algo-15-esp-null-none		good
+default	ikev2-algo-16-newer-dh			good
+default	ikev2-algo-17-no-sha1-01		good
+default	ikev2-algo-17-chacha20_poly1305-ike-esp	good
+default	ikev2-algo-18-ike-null			good
+default	ikev2-algo-19-ike-aes-kem-ml-kem	good	github/2368
+default	xfrm-algo-aes_gcm-01			good
+default	xfrm-algo-aes_gcm-02			good
+default	xfrm-algo-aes_gcm-03			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
-kvmplutotest	ikev2-algo-sha2-01			good
-kvmplutotest	ikev2-algo-sha2-02			good
-kvmplutotest	ikev2-algo-sha2-03			good
-kvmplutotest	ikev2-algo-sha2-04			good
-kvmplutotest	ikev2-algo-sha2-05			good
-kvmplutotest	ikev1-algo-esp-aes-gmac-128-sha1	good
-kvmplutotest	ikev1-algo-esp-sha2-05			good
-kvmplutotest	ikev1-algo-esp-null-01			good
-kvmplutotest	ikev2-algo-sha2-06			good
-kvmplutotest	ikev2-algo-sha2-08-truncbug		good
+default	ikev2-algo-sha2-01			good
+default	ikev2-algo-sha2-02			good
+default	ikev2-algo-sha2-03			good
+default	ikev2-algo-sha2-04			good
+default	ikev2-algo-sha2-05			good
+default	ikev1-algo-esp-aes-gmac-128-sha1	good
+default	ikev1-algo-esp-sha2-05			good
+default	ikev1-algo-esp-null-01			good
+default	ikev2-algo-sha2-06			good
+default	ikev2-algo-sha2-08-truncbug		good
 
-kvmplutotest	ikev2-nat-pluto-03			good
+default	ikev2-nat-pluto-03			good
 
-kvmplutotest	ikev2-child-re-up-01			wip
+default	ikev2-child-re-up-01			wip
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
-kvmplutotest	ikev2-algo-ike-sha2-01			good
-kvmplutotest	ikev2-algo-ike-sha2-02			good
-kvmplutotest	ikev2-algo-ike-sha2-03			good
-kvmplutotest	ikev2-algo-ike-sha2-04			good
-kvmplutotest	ikev1-algo-ike-sha2-01			good
-kvmplutotest	ikev1-algo-ike-sha2-02			good
-kvmplutotest	ikev1-algo-ike-sha2-03			good
-kvmplutotest	ikev1-algo-04-mismatch			good
-kvmplutotest	ikev1-algo-05-3des-sha2			good
+default	ikev2-algo-ike-sha2-01			good
+default	ikev2-algo-ike-sha2-02			good
+default	ikev2-algo-ike-sha2-03			good
+default	ikev2-algo-ike-sha2-04			good
+default	ikev1-algo-ike-sha2-01			good
+default	ikev1-algo-ike-sha2-02			good
+default	ikev1-algo-ike-sha2-03			good
+default	ikev1-algo-04-mismatch			good
+default	ikev1-algo-05-3des-sha2			good
 
-kvmplutotest	interop-ikev2-strongswan-aes_xcbc	good
+default	interop-ikev2-strongswan-aes_xcbc	good
 
 # ESN tests
-kvmplutotest	ikev2-algo-esn-00			good
-kvmplutotest	ikev2-algo-esn-01			good
-kvmplutotest	ikev2-algo-esn-02			good
-kvmplutotest	ikev2-algo-esn-03			good
-kvmplutotest	ikev2-algo-esn-04			good
-kvmplutotest	ikev2-algo-esn-05			good
-kvmplutotest	ikev2-algo-esn-06			good
-kvmplutotest	ikev2-algo-esn-07			good
-kvmplutotest	ikev2-algo-esn-08			good
-kvmplutotest	ikev2-algo-esn-09-replay-zero		wip
-kvmplutotest	interop-ikev2-strongswan-30-esn		good
+default	ikev2-algo-esn-00			good
+default	ikev2-algo-esn-01			good
+default	ikev2-algo-esn-02			good
+default	ikev2-algo-esn-03			good
+default	ikev2-algo-esn-04			good
+default	ikev2-algo-esn-05			good
+default	ikev2-algo-esn-06			good
+default	ikev2-algo-esn-07			good
+default	ikev2-algo-esn-08			good
+default	ikev2-algo-esn-09-replay-zero		wip
+default	interop-ikev2-strongswan-30-esn		good
 
 
 
 # Various corner case tests for IKEv2
-kvmplutotest	ikev2-major-version-initiator		good
-kvmplutotest	ikev2-major-version-responder		good
-kvmplutotest	ikev2-minor-version-initiator		good
-kvmplutotest	ikev2-minor-version-responder		good
-kvmplutotest	ikev2-isakmp-reserved-flags-01		good
-kvmplutotest	ikev2-isakmp-reserved-flags-02		good
-kvmplutotest	ikev2-payload-reserved-flags-01		good
-kvmplutotest	ikev2-payload-reserved-id-flags-01	good
+default	ikev2-major-version-initiator		good
+default	ikev2-major-version-responder		good
+default	ikev2-minor-version-initiator		good
+default	ikev2-minor-version-responder		good
+default	ikev2-isakmp-reserved-flags-01		good
+default	ikev2-isakmp-reserved-flags-02		good
+default	ikev2-payload-reserved-flags-01		good
+default	ikev2-payload-reserved-id-flags-01	good
 
-kvmplutotest	ikev2-allow-narrow-01			good
-kvmplutotest	ikev2-allow-narrow-02			good
-kvmplutotest	ikev2-allow-narrow-03			good
-kvmplutotest	ikev2-allow-narrow-04			good
-kvmplutotest	ikev2-allow-narrow-05			good
-kvmplutotest	ikev2-allow-narrow-07			good
-kvmplutotest	ikev2-allow-narrow-08-2conns		wip
-kvmplutotest	ikev2-allow-narrow-10-protoport		good
-kvmplutotest	ikev2-allow-narrow-11-subnet		good
-kvmplutotest	ikev2-allow-narrow-12-subnet-protoport	good
+default	ikev2-allow-narrow-01			good
+default	ikev2-allow-narrow-02			good
+default	ikev2-allow-narrow-03			good
+default	ikev2-allow-narrow-04			good
+default	ikev2-allow-narrow-05			good
+default	ikev2-allow-narrow-07			good
+default	ikev2-allow-narrow-08-2conns		wip
+default	ikev2-allow-narrow-10-protoport		good
+default	ikev2-allow-narrow-11-subnet		good
+default	ikev2-allow-narrow-12-subnet-protoport	good
 
-kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
-kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
-kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
-kvmplutotest	ikev2-invalid-ke-04-default-responder	good
-kvmplutotest	ikev2-invalid-ke-07-second-child	good	github/1266
-kvmplutotest	ikev2-invalid-ke-08-rekey-child		wip	github/1259
-kvmplutotest	ikev2-unknown-payload-01-sa-init		good
-kvmplutotest	ikev2-unknown-payload-01-sa-init-critical	good
-kvmplutotest	ikev2-unknown-payload-02-auth			good
-kvmplutotest	ikev2-unknown-payload-02-auth-critical		good
-kvmplutotest	ikev2-unknown-payload-03-auth-sk		good
-kvmplutotest	ikev2-unknown-payload-03-auth-sk-critical	good
-kvmplutotest	ikev2-impair-04-corrupt-auth-sk-payload	good
-kvmplutotest	ikev1-impair-05-send-zero-ike-ke	good
-kvmplutotest	ikev2-impair-05-send-zero-ike-ke	good
-kvmplutotest	ikev1-impair-06-send-no-ike-ke		good
-kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
-kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
-kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
-kvmplutotest	ikev2-impair-08-ignore-reserved		good
+default	ikev2-invalid-ke-01-invalid-modp	good
+default	ikev2-invalid-ke-02-wrong-modp		good
+default	ikev2-invalid-ke-03-default-initiator	good
+default	ikev2-invalid-ke-04-default-responder	good
+default	ikev2-invalid-ke-07-second-child	good	github/1266
+default	ikev2-invalid-ke-08-rekey-child		wip	github/1259
+default	ikev2-unknown-payload-01-sa-init		good
+default	ikev2-unknown-payload-01-sa-init-critical	good
+default	ikev2-unknown-payload-02-auth			good
+default	ikev2-unknown-payload-02-auth-critical		good
+default	ikev2-unknown-payload-03-auth-sk		good
+default	ikev2-unknown-payload-03-auth-sk-critical	good
+default	ikev2-impair-04-corrupt-auth-sk-payload	good
+default	ikev1-impair-05-send-zero-ike-ke	good
+default	ikev2-impair-05-send-zero-ike-ke	good
+default	ikev1-impair-06-send-no-ike-ke		good
+default	ikev2-impair-06-send-no-ike-ke		good
+default	ikev1-impair-07-send-empty-ike-ke	good
+default	ikev2-impair-07-send-empty-ike-ke	good
+default	ikev2-impair-08-ignore-reserved		good
 
-kvmplutotest	impair-09-ikev2-omit-ike-auth-child-initiator		good
-kvmplutotest	impair-09-ikev2-omit-ike-auth-child-responder		good
+default	impair-09-ikev2-omit-ike-auth-child-initiator		good
+default	impair-09-ikev2-omit-ike-auth-child-responder		good
 
-kvmplutotest	ikev2-impair-10-nr-ts-selectors		good
+default	ikev2-impair-10-nr-ts-selectors		good
 
-kvmplutotest	impair-08-ikev1-key-length-attribute	good
-kvmplutotest	impair-08-ikev2-key-length-attribute	good
-kvmplutotest	impair-11-ikev2-transform		good
-kvmplutotest	impair-12-ikev2-transform-dh-none	good	github/1244
-kvmplutotest	impair-13-ikev2-transform-integ-none	good	github/1244
+default	impair-08-ikev1-key-length-attribute	good
+default	impair-08-ikev2-key-length-attribute	good
+default	impair-11-ikev2-transform		good
+default	impair-12-ikev2-transform-dh-none	good	github/1244
+default	impair-13-ikev2-transform-integ-none	good	github/1244
 
-kvmplutotest	impair-09-protected-ikev1		good
-#kvmplutotest	impair-09-protected-ikev2		wip
+default	impair-09-protected-ikev1		good
+#default	impair-09-protected-ikev2		wip
 
-kvmplutotest	impair-14-ike-initiator-spi-0-ikev1	good
-kvmplutotest	impair-14-ike-initiator-spi-0-ikev2	good
-kvmplutotest	impair-14-ike-responder-spi-0-ikev1	good
-kvmplutotest	impair-14-ike-responder-spi-0-ikev2	good
+default	impair-14-ike-initiator-spi-0-ikev1	good
+default	impair-14-ike-initiator-spi-0-ikev2	good
+default	impair-14-ike-responder-spi-0-ikev1	good
+default	impair-14-ike-responder-spi-0-ikev2	good
 
-kvmplutotest	impair-20-ikev2-rekey-sa-protoid	good
-kvmplutotest	impair-30-ikev1-ip-as-fqdn		good
-kvmplutotest	impair-31-ikev1-quick-id		good
-kvmplutotest	impair-40-ikev1-delete-child		good
-kvmplutotest	impair-41-log-rate-limit		good
+default	impair-20-ikev2-rekey-sa-protoid	good
+default	impair-30-ikev1-ip-as-fqdn		good
+default	impair-31-ikev1-quick-id		good
+default	impair-40-ikev1-delete-child		good
+default	impair-41-log-rate-limit		good
 
-kvmplutotest	cve-2026-50721-truncate-signed-hash-ikev1	good
-kvmplutotest	cve-2026-50722-truncate-signed-hash-ikev2	good
+default	cve-2026-50721-truncate-signed-hash-ikev1	good
+default	cve-2026-50722-truncate-signed-hash-ikev2	good
 
-kvmplutotest	ikev1-psk-dual-behind-nat-01		good
-kvmplutotest	ikev1-psk-two-rw-id-ip-01		good
+default	ikev1-psk-dual-behind-nat-01		good
+default	ikev1-psk-two-rw-id-ip-01		good
 
-kvmplutotest	ikev1-transport-protoport-01		good
+default	ikev1-transport-protoport-01		good
 
-kvmplutotest	ikev1-x509-05-san-firstemail-match	good
-kvmplutotest	ikev1-x509-06-san-email-mismatch	good
-kvmplutotest	ikev1-x509-07-san-ip-mismatch		good
-kvmplutotest	ikev1-x509-08-san-dns-mismatch		good
-kvmplutotest	ikev1-x509-09-san-email-match		good
-kvmplutotest	ikev1-x509-10-san-ip-match		good
-kvmplutotest	ikev1-x509-11-san-dns-match		good
-kvmplutotest	ikev1-x509-12-san-dn-match		good
-kvmplutotest	ikev1-x509-13-san-dn-mismatch		good
-kvmplutotest	ikev1-x509-14-san-dn-fromcert		good
-kvmplutotest	ikev1-x509-16-mismatch-ignore		good
-kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match	good
-kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
-kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
-kvmplutotest	ikev1-x509-aggr-08-san-dns-mismatch	good
-kvmplutotest	ikev1-x509-aggr-09-san-email-match	good
-kvmplutotest	ikev1-x509-aggr-10-san-ip-match		good
-kvmplutotest	ikev1-x509-aggr-11-san-dns-match	good
-kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
-kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
-kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
+default	ikev1-x509-05-san-firstemail-match	good
+default	ikev1-x509-06-san-email-mismatch	good
+default	ikev1-x509-07-san-ip-mismatch		good
+default	ikev1-x509-08-san-dns-mismatch		good
+default	ikev1-x509-09-san-email-match		good
+default	ikev1-x509-10-san-ip-match		good
+default	ikev1-x509-11-san-dns-match		good
+default	ikev1-x509-12-san-dn-match		good
+default	ikev1-x509-13-san-dn-mismatch		good
+default	ikev1-x509-14-san-dn-fromcert		good
+default	ikev1-x509-16-mismatch-ignore		good
+default	ikev1-x509-aggr-05-san-firstemail-match	good
+default	ikev1-x509-aggr-06-san-email-mismatch	good
+default	ikev1-x509-aggr-07-san-ip-mismatch	good
+default	ikev1-x509-aggr-08-san-dns-mismatch	good
+default	ikev1-x509-aggr-09-san-email-match	good
+default	ikev1-x509-aggr-10-san-ip-match		good
+default	ikev1-x509-aggr-11-san-dns-match	good
+default	ikev1-x509-aggr-12-san-dn-match		good
+default	ikev1-x509-aggr-13-san-dn-mismatch	good
+default	ikev1-x509-aggr-14-san-dn-fromcert	good
 
-kvmplutotest	ikev2-x509-01				good
-kvmplutotest	ikev2-x509-03				good
-kvmplutotest	ikev2-x509-05-san-firstemail-match	good
-kvmplutotest	ikev2-x509-05-san-firstemail-match-responder	good
-kvmplutotest	ikev2-x509-06-san-email-mismatch	good
-kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
-kvmplutotest	ikev2-x509-08-san-dns-mismatch		good
-kvmplutotest	ikev2-x509-09-san-email-match		good
-kvmplutotest	ikev2-x509-10-san-ip-match		good
-kvmplutotest	ikev2-x509-10-san-ipv6-match		good github/1321
-kvmplutotest	ikev2-x509-11-san-dns-match		good
-kvmplutotest	ikev2-x509-12-san-dn-fromcert		good
-kvmplutotest	ikev2-x509-13-san-dn-match		good
-kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
-kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
-kvmplutotest	ikev2-x509-16-multicert			good
-kvmplutotest	ikev2-x509-17-multicert-02		good
-kvmplutotest	ikev2-x509-17-multicert-03		wip
-kvmplutotest	ikev2-x509-17-multicert-04		wip
-kvmplutotest	ikev2-x509-17-multicert-rightid-san-wildcard	good
-kvmplutotest	ikev2-x509-18-multicert-rightid		good
-kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
-kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
+default	ikev2-x509-01				good
+default	ikev2-x509-03				good
+default	ikev2-x509-05-san-firstemail-match	good
+default	ikev2-x509-05-san-firstemail-match-responder	good
+default	ikev2-x509-06-san-email-mismatch	good
+default	ikev2-x509-07-san-ip-mismatch		good
+default	ikev2-x509-08-san-dns-mismatch		good
+default	ikev2-x509-09-san-email-match		good
+default	ikev2-x509-10-san-ip-match		good
+default	ikev2-x509-10-san-ipv6-match		good github/1321
+default	ikev2-x509-11-san-dns-match		good
+default	ikev2-x509-12-san-dn-fromcert		good
+default	ikev2-x509-13-san-dn-match		good
+default	ikev2-x509-14-san-dn-mismatch		good
+default	ikev2-x509-15-san-dn-mismatch-responder	good
+default	ikev2-x509-16-multicert			good
+default	ikev2-x509-17-multicert-02		good
+default	ikev2-x509-17-multicert-03		wip
+default	ikev2-x509-17-multicert-04		wip
+default	ikev2-x509-17-multicert-rightid-san-wildcard	good
+default	ikev2-x509-18-multicert-rightid		good
+default	ikev2-x509-19-multicert-rightid-san	good
+default	ikev2-x509-20-multicert-rightid-san-wildcard	good
 
-kvmplutotest	ikev2-x509-23-no-ca			good
-kvmplutotest	ikev2-x509-24-fakewest			good
-kvmplutotest	ikev2-x509-25-missing-ca		good
-kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
-kvmplutotest	ikev2-x509-29-selfsigned		wip	github:542
-kvmplutotest	ikev2-x509-30-mismatch-ignore		good
-kvmplutotest	ikev2-x509-31-wifi-assist-nonat		good
-kvmplutotest	ikev2-x509-38-failureshunt		good
-kvmplutotest	ikev2-x509-40-dn-wildcard		good
-kvmplutotest	ikev2-x509-41-rightid-fromcert-rightid-ip good	github/600
-kvmplutotest	ikev2-x509-42-no-rightca		  wip	github/2437
-kvmplutotest	ikev2-x509-43-missing-key		good
-kvmplutotest	ikev2-x509-43-missing-key-legacy	good
-kvmplutotest	ikev2-x509-44-rsacert-psk-fallback	good
-kvmplutotest	ikev2-x509-44-rsacert-psk-fallback-missing-key	good
-kvmplutotest	ikev2-x509-45-wrong-key-type		good
-kvmplutotest	ikev2-x509-46-no-cert-loaded-key	good
+default	ikev2-x509-23-no-ca			good
+default	ikev2-x509-24-fakewest			good
+default	ikev2-x509-25-missing-ca		good
+default	ikev2-x509-28-del-nssdb-cert		good
+default	ikev2-x509-29-selfsigned		wip	github:542
+default	ikev2-x509-30-mismatch-ignore		good
+default	ikev2-x509-31-wifi-assist-nonat		good
+default	ikev2-x509-38-failureshunt		good
+default	ikev2-x509-40-dn-wildcard		good
+default	ikev2-x509-41-rightid-fromcert-rightid-ip good	github/600
+default	ikev2-x509-42-no-rightca		  wip	github/2437
+default	ikev2-x509-43-missing-key		good
+default	ikev2-x509-43-missing-key-legacy	good
+default	ikev2-x509-44-rsacert-psk-fallback	good
+default	ikev2-x509-44-rsacert-psk-fallback-missing-key	good
+default	ikev2-x509-45-wrong-key-type		good
+default	ikev2-x509-46-no-cert-loaded-key	good
 
 # wildcard ID related tests
-kvmplutotest	ikev1-x509-17-id-any			good
-kvmplutotest	ikev1-x509-18-id-notany			good
-kvmplutotest	ikev1-x509-19-id-notany-responder	good
-kvmplutotest	ikev1-x509-20-id-any-responder		good
-kvmplutotest	ikev1-x509-21-selfsigned		good
-kvmplutotest	ikev2-x509-32-id-any			good
-kvmplutotest	ikev2-x509-33-id-notany			good
-kvmplutotest	ikev2-x509-34-id-notany-responder	good
-kvmplutotest	ikev2-x509-35-id-any-responder		good
-kvmplutotest	ikev2-x509-36-leftrightauth		good
-kvmplutotest	ikev2-x509-37-fakeeast-westrsa		good
-kvmplutotest	ikev2-x509-37-fakeeast-westnoca		good
-kvmplutotest	ikev2-x509-37-fakeeast-westecca		good
+default	ikev1-x509-17-id-any			good
+default	ikev1-x509-18-id-notany			good
+default	ikev1-x509-19-id-notany-responder	good
+default	ikev1-x509-20-id-any-responder		good
+default	ikev1-x509-21-selfsigned		good
+default	ikev2-x509-32-id-any			good
+default	ikev2-x509-33-id-notany			good
+default	ikev2-x509-34-id-notany-responder	good
+default	ikev2-x509-35-id-any-responder		good
+default	ikev2-x509-36-leftrightauth		good
+default	ikev2-x509-37-fakeeast-westrsa		good
+default	ikev2-x509-37-fakeeast-westnoca		good
+default	ikev2-x509-37-fakeeast-westecca		good
 
 # PKCS7 payload containing the certificates
 
-kvmplutotest	x509-pkcs7-01-ikev1				good
-kvmplutotest	x509-pkcs7-01-ikev2				good
-kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev1	good
-kvmplutotest	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev2	good
+default	x509-pkcs7-01-ikev1				good
+default	x509-pkcs7-01-ikev2				good
+default	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev1	good
+default	x509-pkcs7-02-CVE-2026-77207-pkcs7-crl-ikev2	good
 
 #
 
-kvmplutotest	ikev2-auth-null-01			good
-kvmplutotest	ikev2-auth-mismatch-bug			good	github/2931
-kvmplutotest	ikev2-auth-mismatch-bug-legacy		good
+default	ikev2-auth-null-01			good
+default	ikev2-auth-mismatch-bug			good	github/2931
+default	ikev2-auth-mismatch-bug-legacy		good
 
-kvmplutotest	ddos-01-ikev2				wip	non-deterministic
+default	ddos-01-ikev2				wip	non-deterministic
 
-kvmplutotest	ikev2-switchnat-01			good
-kvmplutotest	ikev1-switchnat-01			good
+default	ikev2-switchnat-01			good
+default	ikev1-switchnat-01			good
 
-kvmplutotest	hub-spoke-01-tunnel-ikev1		good
-kvmplutotest	hub-spoke-01-tunnel-ikev2 		good
+default	hub-spoke-01-tunnel-ikev1		good
+default	hub-spoke-01-tunnel-ikev2 		good
 
-kvmplutotest	ikev1-hostpair-01			good
-kvmplutotest	ikev2-hostpair-01			good
-kvmplutotest	ikev1-hostpair-02			wip	github:521
-kvmplutotest	ikev2-hostpair-02			wip	github:521
-kvmplutotest	ikev2-hostpair-03-initial-contact	good
+kvmonly	ikev1-hostpair-01			good
+default	ikev2-hostpair-01			good
+default	ikev1-hostpair-02			wip	github:521
+default	ikev2-hostpair-02			wip	github:521
+default	ikev2-hostpair-03-initial-contact	good
 
-kvmplutotest	pluto-ipcmp-01				good
+default	pluto-ipcmp-01				good
 
-kvmplutotest	ikev2-38-psk-65bytes			good
-kvmplutotest	ikev2-39-psk-64bytes 			good
+default	ikev2-38-psk-65bytes			good
+default	ikev2-39-psk-64bytes 			good
 
-kvmplutotest	nflog-01-global				good
-kvmplutotest	nflog-02-conn				good
-kvmplutotest	nflog-03-conns				good
+default	nflog-01-global				good
+default	nflog-02-conn				good
+default	nflog-03-conns				good
 
-kvmplutotest	nflog-01-global-nftables		good
-kvmplutotest	nflog-02-conn-nftables			good
-kvmplutotest	ikev2-73-cat-nftables			good
+default	nflog-01-global-nftables		good
+default	nflog-02-conn-nftables			good
+default	ikev2-73-cat-nftables			good
 
 
-kvmplutotest	xfrm-vti-01				good
-kvmplutotest	xfrm-vti-02				good
-kvmplutotest	xfrm-vti-03				good
-kvmplutotest	xfrm-vti-05				good
-kvmplutotest	xfrm-vti-06				good
-kvmplutotest	xfrm-vti-07				wip
-kvmplutotest	xfrm-vti-08				good
-kvmplutotest	xfrm-vti-09				good
+default	xfrm-vti-01				good
+default	xfrm-vti-02				good
+default	xfrm-vti-03				good
+default	xfrm-vti-05				good
+default	xfrm-vti-06				good
+default	xfrm-vti-07				wip
+default	xfrm-vti-08				good
+default	xfrm-vti-09				good
 
-kvmplutotest	ikev2-tfc-01				good
-kvmplutotest	ikev2-tfc-02				good
-kvmplutotest	ikev2-tfc-03				good
+default	ikev2-tfc-01				good
+default	ikev2-tfc-02				good
+default	ikev2-tfc-03				good
 
-kvmplutotest	ikev2-xfrmi-01				good	github/1346
-kvmplutotest	ikev2-xfrmi-02				good
-kvmplutotest	ikev2-xfrmi-02-responder		wip
-kvmplutotest	ikev2-xfrmi-18-responder-iface-check	wip	github/1346
-kvmplutotest	ikev2-xfrmi-03				good
-kvmplutotest	ikev2-xfrmi-04				good
-kvmplutotest	ikev2-xfrmi-05-remote-access-client	wip	github/541
-kvmplutotest	ikev2-xfrmi-06				good
-kvmplutotest	ikev2-xfrmi-07				good
-kvmplutotest	ikev2-xfrmi-08				good
-kvmplutotest	ikev2-xfrmi-09-systemd-networkd 	good
-kvmplutotest	ikev2-xfrmi-10				good	github/541
-kvmplutotest	ikev2-xfrmi-11-default-manual-route	good
-kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
-kvmplutotest	ikev2-xfrmi-11-default-route		good
-kvmplutotest	ikev2-xfrmi-12-two-default-routes	good
-kvmplutotest	ikev2-xfrmi-13-multiple-tunnels		good
-kvmplutotest	ikev2-xfrmi-13-multiple-tunnels-metric	good	github/1703
-kvmplutotest	ikev2-xfrmi-14-fwmark			wip
-kvmplutotest	ikev1-xfrmi-01				good
-kvmplutotest	ikev1-xfrmi-02				wip
-kvmplutotest	ikev1-xfrmi-02-tcpdump			wip
-kvmplutotest	ikev1-xfrmi-02-aggr			wip
-kvmplutotest	ikev1-xfrmi-04				good
-kvmplutotest	ikev1-xfrmi-04-aggr			good
-kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
-kvmplutotest	ikev2-xfrmi-16-rekey			good
-kvmplutotest	ikev2-xfrmi-19-route-before-up		good
+default	ikev2-xfrmi-01				good	github/1346
+default	ikev2-xfrmi-02				good
+default	ikev2-xfrmi-02-responder		wip
+default	ikev2-xfrmi-18-responder-iface-check	wip	github/1346
+default	ikev2-xfrmi-03				good
+default	ikev2-xfrmi-04				good
+default	ikev2-xfrmi-05-remote-access-client	wip	github/541
+default	ikev2-xfrmi-06				good
+default	ikev2-xfrmi-07				good
+default	ikev2-xfrmi-08				good
+default	ikev2-xfrmi-09-systemd-networkd 	good
+default	ikev2-xfrmi-10				good	github/541
+default	ikev2-xfrmi-11-default-manual-route	good
+default	ikev2-xfrmi-11-vti-default-route	good
+default	ikev2-xfrmi-11-default-route		good
+default	ikev2-xfrmi-12-two-default-routes	good
+default	ikev2-xfrmi-13-multiple-tunnels		good
+default	ikev2-xfrmi-13-multiple-tunnels-metric	good	github/1703
+default	ikev2-xfrmi-14-fwmark			wip
+default	ikev1-xfrmi-01				good
+default	ikev1-xfrmi-02				wip
+default	ikev1-xfrmi-02-tcpdump			wip
+default	ikev1-xfrmi-02-aggr			wip
+default	ikev1-xfrmi-04				good
+default	ikev1-xfrmi-04-aggr			good
+default	ikev1-xfrmi-05-remote-access-client	good
+default	ikev2-xfrmi-16-rekey			good
+default	ikev2-xfrmi-19-route-before-up		good
 
-kvmplutotest	ipsec-interface-00-ipv46-ikev2-freebsd-setkey	good
-kvmplutotest	ipsec-interface-00-ipv46-ikev2-openbsd-iked	good
-kvmplutotest	ipsec-interface-00-ipv46-ikev2-fedora-xfrm	good
-kvmplutotest	ipsec-interface-00-ipv46-ikev2-netbsd-setkey	good # broken
+kvmonly	ipsec-interface-00-ipv46-ikev2-freebsd-setkey	good
+kvmonly	ipsec-interface-00-ipv46-ikev2-openbsd-iked	good
+kvmonly	ipsec-interface-00-ipv46-ikev2-fedora-xfrm	good
+kvmonly	ipsec-interface-00-ipv46-ikev2-netbsd-setkey	good # broken
 
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	good
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	good
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	good
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-fedora	good
+kvmonly	ipsec-interface-01-ipv4-ikev2-existing-freebsd	good
+kvmonly	ipsec-interface-01-ipv4-ikev2-existing-netbsd	good
+kvmonly	ipsec-interface-01-ipv4-ikev2-existing-openbsd	good
+kvmonly	ipsec-interface-01-ipv4-ikev2-existing-fedora	good
 
-kvmplutotest	ipsec-interface-06-ipv4-ikev1-xfrmi	good
-kvmplutotest	ipsec-interface-06-ipv4-ikev2-xfrmi	good
-kvmplutotest	ipsec-interface-06-ipv6-ikev1-xfrmi	good
-kvmplutotest	ipsec-interface-06-ipv6-ikev2-xfrmi	good
-kvmplutotest	ipsec-interface-15-blocked-ikev2-xfrmi	good	github/1769
-kvmplutotest	ipsec-interface-15-order-ikev2-xfrmi	good	github/1771
+default	ipsec-interface-06-ipv4-ikev1-xfrmi	good
+default	ipsec-interface-06-ipv4-ikev2-xfrmi	good
+default	ipsec-interface-06-ipv6-ikev1-xfrmi	good
+default	ipsec-interface-06-ipv6-ikev2-xfrmi	good
+default	ipsec-interface-15-blocked-ikev2-xfrmi	good	github/1769
+default	ipsec-interface-15-order-ikev2-xfrmi	good	github/1771
 
-kvmplutotest	ipsec-interface-17-ipcomp-ah		good	github/1879
-kvmplutotest	ipsec-interface-17-ipcomp-esp		good	github/1879
+default	ipsec-interface-17-ipcomp-ah		good	github/1879
+default	ipsec-interface-17-ipcomp-esp		good	github/1879
 
-kvmplutotest	ipsec-interface-18-ikev1-xauth-only	wip	github/1955
-kvmplutotest	ipsec-interface-19-namespace-unmanaged	good	github/2030
+default	ipsec-interface-18-ikev1-xauth-only	wip	github/1955
+default	ipsec-interface-19-namespace-unmanaged	good	github/2030
 
-kvmplutotest	ikev2-decap-dscp-01			good
-kvmplutotest	ikev2-dont-encap-dscp-01		good
-kvmplutotest	ikev2-nopmtudisc-01			good
+default	ikev2-decap-dscp-01			good
+default	ikev2-dont-encap-dscp-01		good
+default	ikev2-nopmtudisc-01			good
 
-kvmplutotest	ikev2-43-init-retransmit		good
+default	ikev2-43-init-retransmit		good
 
-kvmplutotest	ikev2-frag-01				good
-kvmplutotest	ikev2-frag-02-ipv6			good
-kvmplutotest	ikev2-frag-03-retrans			good
-kvmplutotest	ikev2-frag-04-nofrag-east		good
-kvmplutotest	ikev2-frag-05-nofrag-west		good
-kvmplutotest	ikev2-frag-06-unsolicited		good
-kvmplutotest	ikev2-frag-07-too-big			good github/3079
+default	ikev2-frag-01				good
+default	ikev2-frag-02-ipv6			good
+default	ikev2-frag-03-retrans			good
+default	ikev2-frag-04-nofrag-east		good
+default	ikev2-frag-05-nofrag-west		good
+default	ikev2-frag-06-unsolicited		good
+default	ikev2-frag-07-too-big			good github/3079
 
-kvmplutotest	dynamic-iface-01			good
-kvmplutotest	ikev2-removed-iface-01			good
+default	dynamic-iface-01			good
+default	ikev2-removed-iface-01			good
 
-kvmplutotest	replay-window-ikev1			good	github/529
-kvmplutotest	replay-window-ikev2			good	github/529
-kvmplutotest	replay-window-ikev2-pfkeyv2-freebsd	good
+default	replay-window-ikev1			good	github/529
+default	replay-window-ikev2			good	github/529
+kvmonly	replay-window-ikev2-pfkeyv2-freebsd	good
 
-kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
-kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
-kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384-legacy	good
+default	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
+default	interop-ikev2-strongswan-46-responder-ecdsa-384		good
+default	interop-ikev2-strongswan-46-responder-ecdsa-384-legacy	good
 
-kvmplutotest	ikev2-x509-ecdsa-01					good
-kvmplutotest	ikev2-x509-ecdsa-02-mismatch				good
-kvmplutotest	ikev2-x509-ecdsa-03-legacy-initiator			good
-kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			good
-kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				good
-kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
-kvmplutotest	ikev2-ecdsa-08-legacy-p256-rawkey			good
-kvmplutotest	ikev2-x509-ecdsa-08-legacy-sha2_512			good
+default	ikev2-x509-ecdsa-01					good
+default	ikev2-x509-ecdsa-02-mismatch				good
+default	ikev2-x509-ecdsa-03-legacy-initiator			good
+default	ikev2-x509-ecdsa-03-legacy-responder			good
+default	ikev2-x509-ecdsa-05-rsa-asym				good
+default	ikev2-x509-ecdsa-06-rsa-asym-flip			good
+default	ikev2-ecdsa-08-legacy-p256-rawkey			good
+default	ikev2-x509-ecdsa-08-legacy-sha2_512			good
 
-kvmplutotest	ikev2-x509-eddsa-01-preloaded-cert	skip
-kvmplutotest	ikev2-x509-eddsa-02-sendcerts		skip
+kvmonly	ikev2-x509-eddsa-01-preloaded-cert	skip
+kvmonly	ikev2-x509-eddsa-02-sendcerts		skip
 
 # Opportunstic Encryption using AUTH NULL
-kvmplutotest	newoe-01-whack				good
-kvmplutotest	newoe-02-whack-wrong-mode-initiator	good
-kvmplutotest	newoe-02-whack-wrong-mode-responder	good
-kvmplutotest	newoe-03-oeself				good
-kvmplutotest	newoe-04-pass-pass			good
-kvmplutotest	newoe-05-hold-pass			good
-kvmplutotest	newoe-06-prio				good
-kvmplutotest	newoe-07-ike-replace-initiator		good
-kvmplutotest	newoe-07-ike-replace-initiator-esp	wip	github/1057
-kvmplutotest	newoe-08-restart			good
-kvmplutotest	newoe-09-mutual				good
-kvmplutotest	ikev2-oe-09-transport-ipv4		good
-kvmplutotest	ikev2-oe-09-transport-ipv6		good
-kvmplutotest	newoe-10-expire-inactive		good
-kvmplutotest	newoe-10-expire-inactive-ike		good
-kvmplutotest	newoe-11-failike			good
-kvmplutotest	newoe-12-clear				good
-kvmplutotest	newoe-13-block				good
-kvmplutotest	newoe-14-clear-in-block-clear		good
-kvmplutotest	newoe-15-portpass			good
-kvmplutotest	newoe-17-block-in-clear-clear		good
+default	newoe-01-whack				good
+default	newoe-02-whack-wrong-mode-initiator	good
+default	newoe-02-whack-wrong-mode-responder	good
+default	newoe-03-oeself				good
+default	newoe-04-pass-pass			good
+default	newoe-05-hold-pass			good
+default	newoe-06-prio				good
+default	newoe-07-ike-replace-initiator		good
+default	newoe-07-ike-replace-initiator-esp	wip	github/1057
+default	newoe-08-restart			good
+default	newoe-09-mutual				good
+default	ikev2-oe-09-transport-ipv4		good
+default	ikev2-oe-09-transport-ipv6		good
+default	newoe-10-expire-inactive		good
+default	newoe-10-expire-inactive-ike		good
+default	newoe-11-failike			good
+default	newoe-12-clear				good
+default	newoe-13-block				good
+default	newoe-14-clear-in-block-clear		good
+default	newoe-15-portpass			good
+default	newoe-17-block-in-clear-clear		good
 #
-kvmplutotest 	newoe-18-poc-poc 			good
-kvmplutotest 	newoe-18-poc-cop 			good
-kvmplutotest 	newoe-18-poc-private 			good
-kvmplutotest 	newoe-18-poc-clear 			good
-kvmplutotest 	newoe-18-poc-block 			good
-kvmplutotest 	newoe-18-cop-poc 			good
-kvmplutotest 	newoe-18-cop-cop 			good
-kvmplutotest 	newoe-18-cop-private 			good
-kvmplutotest 	newoe-18-cop-clear 			good
-kvmplutotest 	newoe-18-cop-block 			good
-kvmplutotest 	newoe-18-private-poc 			good
-kvmplutotest 	newoe-18-private-cop 			good
-kvmplutotest 	newoe-18-private-private 		good
-kvmplutotest 	newoe-18-private-private-32 		good
-kvmplutotest 	newoe-18-private-clear 			good
-kvmplutotest 	newoe-18-private-block 			good
-kvmplutotest 	newoe-18-clear-poc 			good
-kvmplutotest 	newoe-18-clear-cop 			good
-kvmplutotest 	newoe-18-clear-private 			good
-kvmplutotest 	newoe-18-clear-clear 			good
-kvmplutotest 	newoe-18-clear-block 			good
-kvmplutotest 	newoe-18-block-poc 			good
-kvmplutotest 	newoe-18-block-cop 			good
-kvmplutotest 	newoe-18-block-private 			good
-kvmplutotest 	newoe-18-block-clear 			good
-kvmplutotest 	newoe-18-block-block 			good
-kvmplutotest	newoe-18-poc-blockall			good
-kvmplutotest	newoe-18-private-clearall		good
-kvmplutotest	newoe-18-private-copall			good
-kvmplutotest	newoe-18-private-pocall			good
-kvmplutotest 	newoe-19-poc-poc-clear			good
-kvmplutotest 	newoe-20-ipv6				good
-kvmplutotest 	newoe-21-liveness-clear			wip
-kvmplutotest	newoe-22-nat-poc-cop			good
-kvmplutotest	newoe-25-cat-1				wip	github/896
-kvmplutotest	newoe-25-cat-2				wip	github/896
-kvmplutotest	newoe-25-cat-3-4-way			wip	github/896
-kvmplutotest	newoe-25-cat-4				wip	github/896
-kvmplutotest 	newoe-25-cat-5				wip	github/896
-kvmplutotest 	newoe-26-poc-poc-host			good
-kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
-kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
-kvmplutotest 	newoe-28-dual-source			good
+default 	newoe-18-poc-poc 			good
+default 	newoe-18-poc-cop 			good
+default 	newoe-18-poc-private 			good
+default 	newoe-18-poc-clear 			good
+default 	newoe-18-poc-block 			good
+default 	newoe-18-cop-poc 			good
+default 	newoe-18-cop-cop 			good
+default 	newoe-18-cop-private 			good
+default 	newoe-18-cop-clear 			good
+default 	newoe-18-cop-block 			good
+default 	newoe-18-private-poc 			good
+default 	newoe-18-private-cop 			good
+default 	newoe-18-private-private 		good
+default 	newoe-18-private-private-32 		good
+default 	newoe-18-private-clear 			good
+default 	newoe-18-private-block 			good
+default 	newoe-18-clear-poc 			good
+default 	newoe-18-clear-cop 			good
+default 	newoe-18-clear-private 			good
+default 	newoe-18-clear-clear 			good
+default 	newoe-18-clear-block 			good
+default 	newoe-18-block-poc 			good
+default 	newoe-18-block-cop 			good
+default 	newoe-18-block-private 			good
+default 	newoe-18-block-clear 			good
+default 	newoe-18-block-block 			good
+default	newoe-18-poc-blockall			good
+default	newoe-18-private-clearall		good
+default	newoe-18-private-copall			good
+default	newoe-18-private-pocall			good
+default 	newoe-19-poc-poc-clear			good
+default 	newoe-20-ipv6				good
+default 	newoe-21-liveness-clear			wip
+default	newoe-22-nat-poc-cop			good
+default	newoe-25-cat-1				wip	github/896
+default	newoe-25-cat-2				wip	github/896
+default	newoe-25-cat-3-4-way			wip	github/896
+default	newoe-25-cat-4				wip	github/896
+default 	newoe-25-cat-5				wip	github/896
+default 	newoe-26-poc-poc-host			good
+default 	newoe-27-replace-sa-auth-authnull	good
+default 	newoe-27-replace-sa-authnull-authnull	good
+default 	newoe-28-dual-source			good
 
-kvmplutotest	newoe-30-shunt-slash24			good
-kvmplutotest	newoe-30-shunt-slash32			good
+default	newoe-30-shunt-slash24			good
+default	newoe-30-shunt-slash32			good
 
-kvmplutotest	newoe-31-interface-lost			wip	github/2413
+default	newoe-31-interface-lost			wip	github/2413
 
-kvmplutotest 	certoe-01-whack				good
-kvmplutotest 	certoe-02-whack-otherca			good
-kvmplutotest 	certoe-03-cop-whack			good
-kvmplutotest 	certoe-03-poc-whack			good
-kvmplutotest	certoe-04-poc-packet			good
-kvmplutotest	certoe-05-poc-reverse			good
-kvmplutotest	certoe-06-nat-packet-cop		wip	github/896
-kvmplutotest	certoe-07-nat-2-clients			wip	github/896
-kvmplutotest	certoe-08-nat-packet-cop-restart	wip	github/896
-kvmplutotest	certoe-09-packet-host			good
-kvmplutotest	certoe-09-packet-host-2			good
-kvmplutotest	certoe-10-symmetric-cert-whack		good
-kvmplutotest	certoe-11-symmetric-cert-nat		good
-kvmplutotest	certoe-12-nat-server			good
-kvmplutotest	certoe-13-poc-del-slash24		wip	github:577
-kvmplutotest	certoe-14-poc-del-slash32		good	github/528
-kvmplutotest	certoe-15-poc-east-west			good	github/528
+default 	certoe-01-whack				good
+default 	certoe-02-whack-otherca			good
+default 	certoe-03-cop-whack			good
+default 	certoe-03-poc-whack			good
+default	certoe-04-poc-packet			good
+default	certoe-05-poc-reverse			good
+default	certoe-06-nat-packet-cop		wip	github/896
+default	certoe-07-nat-2-clients			wip	github/896
+default	certoe-08-nat-packet-cop-restart	wip	github/896
+default	certoe-09-packet-host			good
+default	certoe-09-packet-host-2			good
+default	certoe-10-symmetric-cert-whack		good
+default	certoe-11-symmetric-cert-nat		good
+default	certoe-12-nat-server			good
+default	certoe-13-poc-del-slash24		wip	github:577
+default	certoe-14-poc-del-slash32		good	github/528
+default	certoe-15-poc-east-west			good	github/528
 
-kvmplutotest	certoe-16-rhbz1724200-halfopen-shunt	wip
+default	certoe-16-rhbz1724200-halfopen-shunt	wip
 
-kvmplutotest	certoe-17-asymmetric-cert-nat				good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-crash	good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-restart	good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	wip	github/1110
-kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
+default	certoe-17-asymmetric-cert-nat				good
+default	certoe-17-asymmetric-cert-nat-testing-client-crash	good
+default	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
+default	certoe-17-asymmetric-cert-nat-testing-client-restart	good
+default	certoe-17-asymmetric-cert-nat-testing-server-crash	wip	github/1110
+default	certoe-17-asymmetric-dual-clients-behind-nat-01		good
 # the non-keyingtries1 now fail because we enforce keyingtries=1 for OE
-kvmplutotest	certoe-18-pass-then-go-slash24		wip
-kvmplutotest	certoe-18-pass-then-go-slash32		wip
-kvmplutotest	certoe-18-pass-then-go-slash24-keyingtries1	good
-kvmplutotest	certoe-18-pass-then-go-slash32-keyingtries1	wip	github:530
-kvmplutotest	certoe-19-bareshunts-expire		good
+default	certoe-18-pass-then-go-slash24		wip
+default	certoe-18-pass-then-go-slash32		wip
+default	certoe-18-pass-then-go-slash24-keyingtries1	good
+default	certoe-18-pass-then-go-slash32-keyingtries1	wip	github:530
+default	certoe-19-bareshunts-expire		good
 
-kvmplutotest	rawrsaoe-asymmetric-nat			good
-kvmplutotest	rawrsaoe-asymmetric-01			good
+default	rawrsaoe-asymmetric-nat			good
+default	rawrsaoe-asymmetric-01			good
 
-kvmplutotest	dnsoe-01				wip	github/895
-kvmplutotest	dnsoe-02				wip	github/895
-kvmplutotest	dnsoe-03				wip
-kvmplutotest	dnsoe-04				wip	github/895
-kvmplutotest	dnsoe-05				wip	github/895
-kvmplutotest	dnsoe-06				wip
+default	dnsoe-01				wip	github/895
+default	dnsoe-02				wip	github/895
+default	dnsoe-03				wip
+default	dnsoe-04				wip	github/895
+default	dnsoe-05				wip	github/895
+default	dnsoe-06				wip
 
-kvmplutotest	newoe-18-poc-cop-port-7-tunnel		good
-kvmplutotest	newoe-18-poc-cop-port-7-transport	good
-kvmplutotest	newoe-18-poc-cop-port-7-whack		good
-kvmplutotest	newoe-18-poc-cop-port-7-both		wip	github/1750
-kvmplutotest	newoe-18-poc-cop-port-7-both-reorder	wip	github:519
+default	newoe-18-poc-cop-port-7-tunnel		good
+default	newoe-18-poc-cop-port-7-transport	good
+default	newoe-18-poc-cop-port-7-whack		good
+default	newoe-18-poc-cop-port-7-both		wip	github/1750
+default	newoe-18-poc-cop-port-7-both-reorder	wip	github:519
 
-kvmplutotest	mixoe-01-authanon-authanon		good
-kvmplutotest	mixoe-02-anon-authanon			good
-kvmplutotest	mixoe-03-authanon-anon			good
+default	mixoe-01-authanon-authanon		good
+default	mixoe-02-anon-authanon			good
+default	mixoe-03-authanon-anon			good
 
-kvmplutotest	ikev2-initiate-template-01		good
+default	ikev2-initiate-template-01		good
 
-kvmplutotest	ikev2-asymmetric-01-parsing		wip	github:554
-kvmplutotest	ikev2-asymmetric-02-orienting		good
-kvmplutotest	ikev2-asymmetric-03-null-rsacert	good
-kvmplutotest	ikev2-asymmetric-04-null-rsaraw		good
+default	ikev2-asymmetric-01-parsing		wip	github:554
+default	ikev2-asymmetric-02-orienting		good
+default	ikev2-asymmetric-03-null-rsacert	good
+default	ikev2-asymmetric-04-null-rsaraw		good
 
-kvmplutotest	ikev2-asymmetric-07-psk-rsaraw		good
-kvmplutotest	ikev2-asymmetric-08-psk-rsacert		good
-kvmplutotest	ikev2-asymmetric-09-rsaraw-null		good
-kvmplutotest	ikev2-asymmetric-10-rsaraw-psk		good
+default	ikev2-asymmetric-07-psk-rsaraw		good
+default	ikev2-asymmetric-08-psk-rsacert		good
+default	ikev2-asymmetric-09-rsaraw-null		good
+default	ikev2-asymmetric-10-rsaraw-psk		good
 
-kvmplutotest	ikev2-asymmetric-12-rsacert-null	good
-kvmplutotest	ikev2-asymmetric-13-rsacert-psk		good
-kvmplutotest	ikev2-asymmetric-15-rsaraw-rsaraw	good
-kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
-kvmplutotest	ikev2-asymmetric-17-auth-mismatch-reverse	good
+default	ikev2-asymmetric-12-rsacert-null	good
+default	ikev2-asymmetric-13-rsacert-psk		good
+default	ikev2-asymmetric-15-rsaraw-rsaraw	good
+default	ikev2-asymmetric-16-auth-mismatch	good
+default	ikev2-asymmetric-17-auth-mismatch-reverse	good
 
 # test harnass needs to be able to install raw keys and certs
-kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	good
-kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	good
+default	ikev2-asymmetric-11-rsaraw-rsacert	good
+default	ikev2-asymmetric-14-rsacert-rsaraw	good
 
 
 # RFC 3706 DPD
-kvmplutotest	dpd-01						wip	github/517
-kvmplutotest	dpd-02-reverse	good
-kvmplutotest	dpd-03	good
-kvmplutotest	dpd-04	good
-kvmplutotest	dpd-05	good
-kvmplutotest	dpd-07	good
-kvmplutotest	dpd-08	wip
-kvmplutotest	dpd-09-shared		wip
-kvmplutotest	dpd-10-alias 		wip
-kvmplutotest	dpd-11-silent		good
+default	dpd-01						wip	github/517
+default	dpd-02-reverse	good
+default	dpd-03	good
+default	dpd-04	good
+default	dpd-05	good
+default	dpd-07	good
+default	dpd-08	wip
+default	dpd-09-shared		wip
+default	dpd-10-alias 		wip
+default	dpd-11-silent		good
 
 # IKEv2 liveness tests
-kvmplutotest	ikev2-liveness-05				wip	github:531
-kvmplutotest	ikev2-liveness-08				wip
-kvmplutotest	ikev2-liveness-09-revival			good
-kvmplutotest	ikev2-liveness-10				wip
-kvmplutotest	ikev2-liveness-11-silent			good
-kvmplutotest	ikev2-liveness-13-whack				good
-kvmplutotest	ikev2-child-00-dh-hang		wip
-kvmplutotest	ikev2-child-01-pfs-no-downgrade-no	good
-kvmplutotest	ikev2-child-02-pfs-yes-downgrade-yes	good
-kvmplutotest	ikev2-child-03-dh-none-pfs-no		good
-kvmplutotest	ikev2-child-04-dh-none-pfs-yes		good
-kvmplutotest	ikev2-child-pfs-info-01-exchanged		good
-kvmplutotest	ikev2-child-pfs-info-02-no-prop-chosen		good
-kvmplutotest	ikev2-child-pfs-info-03-non-first-ke		wip github/3119
-kvmplutotest	ikev2-child-ipsec	good
-kvmplutotest	ikev2-child-ipsec-pfs	good
-kvmplutotest	ikev2-child-ipsec-replace-ike	good
-kvmplutotest	ikev2-child-ipsec-responder	good
-kvmplutotest	ikev2-child-ipsec-timer		wip
-kvmplutotest	ikev2-child-ipsec-retransmit	good
-kvmplutotest	ikev2-56-restart		skiptest
-kvmplutotest	ikev2-child-restart-mismatch 	good
+default	ikev2-liveness-05				wip	github:531
+default	ikev2-liveness-08				wip
+default	ikev2-liveness-09-revival			good
+default	ikev2-liveness-10				wip
+default	ikev2-liveness-11-silent			good
+default	ikev2-liveness-13-whack				good
+default	ikev2-child-00-dh-hang		wip
+default	ikev2-child-01-pfs-no-downgrade-no	good
+default	ikev2-child-02-pfs-yes-downgrade-yes	good
+default	ikev2-child-03-dh-none-pfs-no		good
+default	ikev2-child-04-dh-none-pfs-yes		good
+default	ikev2-child-pfs-info-01-exchanged		good
+default	ikev2-child-pfs-info-02-no-prop-chosen		good
+default	ikev2-child-pfs-info-03-non-first-ke		wip github/3119
+default	ikev2-child-ipsec	good
+default	ikev2-child-ipsec-pfs	good
+default	ikev2-child-ipsec-replace-ike	good
+default	ikev2-child-ipsec-responder	good
+default	ikev2-child-ipsec-timer		wip
+default	ikev2-child-ipsec-retransmit	good
+default	ikev2-56-restart		skiptest
+default	ikev2-child-restart-mismatch 	good
 
-kvmplutotest	ikev2-cp-01-resolvconf		good
-kvmplutotest	ikev2-cp-01-systemd-resolved	good
-kvmplutotest	ikev2-cp-02-ignore-peer-dns	good
-kvmplutotest	ikev2-cp-03-subnet-defaults-to-host	good	github/2698
+default	ikev2-cp-01-resolvconf		good
+default	ikev2-cp-01-systemd-resolved	good
+default	ikev2-cp-02-ignore-peer-dns	good
+default	ikev2-cp-03-subnet-defaults-to-host	good	github/2698
 
-kvmplutotest	ikev2-child-rekey		good
-kvmplutotest	ikev2-child-rekey-00		good
-kvmplutotest	ikev2-child-rekey-01		good
-kvmplutotest	ikev2-child-rekey-02		good
-kvmplutotest	ikev2-child-rekey-03		wip
-kvmplutotest	ikev2-child-rekey-05		wip # it exists, wasn't in the list?
-kvmplutotest	ikev2-child-rekey-06-deadlock	good
-kvmplutotest	ikev2-child-rekey-07-deadlock	good
-kvmplutotest	ikev2-child-rekey-08-deadlock	wip	github/1313,github/1326
-kvmplutotest	ikev2-child-rekey-09-windows	wip	github:576
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-initiate-subnet	good
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	good
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-subnet	good
-kvmplutotest	ikev2-expire-01-bytes		good
-kvmplutotest	ikev2-expire-02-packets		good
-kvmplutotest	ikev2-expire-03-bytes-ignore-soft			good
-kvmplutotest	ikev2-expire-04-ipcomp		good
-kvmplutotest	ikev2-child-dual-asym-01	good
-kvmplutotest	ikev2-ike-rekey-01-manual	good
-kvmplutotest	ikev2-ike-rekey-02-both-async	good
-kvmplutotest	ikev2-ike-rekey-03		good
-kvmplutotest	ikev2-ike-rekey-04		good
-kvmplutotest	ikev2-ike-rekey-05		good
-kvmplutotest	ikev2-cp-rekey-01		wip
-kvmplutotest	ikev2-cp-rekey-02-up-up		wip	github/366
+default	ikev2-child-rekey		good
+default	ikev2-child-rekey-00		good
+default	ikev2-child-rekey-01		good
+default	ikev2-child-rekey-02		good
+default	ikev2-child-rekey-03		wip
+default	ikev2-child-rekey-05		wip # it exists, wasn't in the list?
+default	ikev2-child-rekey-06-deadlock	good
+default	ikev2-child-rekey-07-deadlock	good
+default	ikev2-child-rekey-08-deadlock	wip	github/1313,github/1326
+default	ikev2-child-rekey-09-windows	wip	github:576
+default	ikev2-child-rekey-10-impair-rekey-initiate-subnet	good
+default	ikev2-child-rekey-10-impair-rekey-respond-supernet	good
+default	ikev2-child-rekey-10-impair-rekey-respond-subnet	good
+default	ikev2-expire-01-bytes		good
+default	ikev2-expire-02-packets		good
+default	ikev2-expire-03-bytes-ignore-soft			good
+default	ikev2-expire-04-ipcomp		good
+default	ikev2-child-dual-asym-01	good
+default	ikev2-ike-rekey-01-manual	good
+default	ikev2-ike-rekey-02-both-async	good
+default	ikev2-ike-rekey-03		good
+default	ikev2-ike-rekey-04		good
+default	ikev2-ike-rekey-05		good
+default	ikev2-cp-rekey-01		wip
+default	ikev2-cp-rekey-02-up-up		wip	github/366
 
-kvmplutotest	delete-ikev1-sa-01-isakmp-initiator	good
-kvmplutotest	delete-ikev1-sa-01-isakmp-responder	good
-kvmplutotest	delete-ikev1-sa-02-ipsec-initiator	good
-kvmplutotest	delete-ikev1-sa-02-ipsec-responder	good
-kvmplutotest	delete-ikev1-sa-03-conn-initiator	good
-kvmplutotest	delete-ikev1-sa-03-conn-responder	good
-kvmplutotest	delete-ikev1-sa-04-multi-initiator	good
-kvmplutotest	delete-ikev1-sa-04-multi-responder	wip	github/1876
-kvmplutotest	delete-sa-01			good
-kvmplutotest	delete-sa-02			good
-kvmplutotest	ikev1-27-uniqueid		good
-kvmplutotest	ikev1-28-huge-lifetime		good	github/695
+default	delete-ikev1-sa-01-isakmp-initiator	good
+default	delete-ikev1-sa-01-isakmp-responder	good
+default	delete-ikev1-sa-02-ipsec-initiator	good
+default	delete-ikev1-sa-02-ipsec-responder	good
+default	delete-ikev1-sa-03-conn-initiator	good
+default	delete-ikev1-sa-03-conn-responder	good
+default	delete-ikev1-sa-04-multi-initiator	good
+default	delete-ikev1-sa-04-multi-responder	wip	github/1876
+default	delete-sa-01			good
+default	delete-sa-02			good
+default	ikev1-27-uniqueid		good
+default	ikev1-28-huge-lifetime		good	github/695
 
 # connection switching tests
 
-kvmplutotest	ikev1-connswitch-01		good
-kvmplutotest	ikev1-connswitch-02		good
-kvmplutotest	ikev1-connswitch-ports-01	good
-kvmplutotest	ikev1-ikev2-connswitch-01	good
-kvmplutotest	ikev1-rekey-connswitch		wip	github/1170
+default	ikev1-connswitch-01		good
+default	ikev1-connswitch-02		good
+default	ikev1-connswitch-ports-01	good
+default	ikev1-ikev2-connswitch-01	good
+default	ikev1-rekey-connswitch		wip	github/1170
 
-kvmplutotest	ikev2-connswitch-01		good
-kvmplutotest	ikev2-connswitch-02		good
-kvmplutotest	ikev2-connswitch-02-real-mismatch	good
-kvmplutotest	ikev2-connswitch-03		good
-kvmplutotest	ikev2-connswitch-06-net-net-template	good	github/275
-kvmplutotest	ikev2-connswitch-06-net-net-permanent	good
-kvmplutotest	ikev2-connswitch-06-host-net-template	good	github/2380
+default	ikev2-connswitch-01		good
+default	ikev2-connswitch-02		good
+default	ikev2-connswitch-02-real-mismatch	good
+default	ikev2-connswitch-03		good
+default	ikev2-connswitch-06-net-net-template	good	github/275
+default	ikev2-connswitch-06-net-net-permanent	good
+default	ikev2-connswitch-06-host-net-template	good	github/2380
 
 #
 # a test of using X.509 keys
 #
-kvmplutotest	x509-pluto-01		good
-kvmplutotest	x509-pluto-02		good
-kvmplutotest	x509-pluto-03		good
-kvmplutotest	x509-pluto-04		good
-kvmplutotest	x509-pluto-05		good
+default	x509-pluto-01		good
+default	x509-pluto-02		good
+default	x509-pluto-03		good
+default	x509-pluto-04		good
+default	x509-pluto-05		good
 
-kvmplutotest	x509-pluto-frag-00	good
-kvmplutotest	x509-pluto-frag-01	good
-kvmplutotest	x509-pluto-frag-02	good
-kvmplutotest	x509-pluto-frag-03	good
-kvmplutotest	x509-pluto-frag-04	good
-kvmplutotest	x509-ikev2-frag-01-ike-aes_gcm	good
+default	x509-pluto-frag-00	good
+default	x509-pluto-frag-01	good
+default	x509-pluto-frag-02	good
+default	x509-pluto-frag-03	good
+default	x509-pluto-frag-04	good
+default	x509-ikev2-frag-01-ike-aes_gcm	good
 
 # test PKI x.509 aka PKIX profiles aka RFC 4945
-kvmplutotest	x509-profile-01-key-usage  		good
-kvmplutotest	x509-profile-02-extended-key-usage	good
-kvmplutotest	x509-profile-03-basic-constraints-end	good
-kvmplutotest	x509-profile-03-basic-constraints-ca	good
+default	x509-profile-01-key-usage  		good
+default	x509-profile-02-extended-key-usage	good
+default	x509-profile-03-basic-constraints-end	good
+default	x509-profile-03-basic-constraints-ca	good
 
-kvmplutotest	nat-pluto-01		good
-kvmplutotest	nat-pluto-02		good
-kvmplutotest	nat-pluto-03		good
-kvmplutotest	nat-pluto-04		good
-kvmplutotest	nat-pluto-07		wip	github/1492
-kvmplutotest	nat-pluto-08		good
-kvmplutotest	nat-pluto-09		good
-kvmplutotest	nat-pluto-10		good
-kvmplutotest	nat-pluto-11		good
-kvmplutotest	nat-pluto-12		good
+default	nat-pluto-01		good
+default	nat-pluto-02		good
+default	nat-pluto-03		good
+default	nat-pluto-04		good
+default	nat-pluto-07		wip	github/1492
+default	nat-pluto-08		good
+default	nat-pluto-09		good
+default	nat-pluto-10		good
+default	nat-pluto-11		good
+default	nat-pluto-12		good
 
 #
 # Test of NAT traversal w/DPD
-kvmplutotest	nat-dpd-pluto-01	wip
+default	nat-dpd-pluto-01	wip
 
 #
 # a test of using AES with pluto
 #
-kvmplutotest	ikev1-algo-ike-aes-01	good
-kvmplutotest	ikev1-algo-ike-aes-02	good
+default	ikev1-algo-ike-aes-01	good
+default	ikev1-algo-ike-aes-02	good
 
 # ECP DH tests
-kvmplutotest	algo-ike-aes128-sha2-ecp		good
+default	algo-ike-aes128-sha2-ecp		good
 
 # MD5 as PRF (regression in 4.8)
-kvmplutotest	algo-ike-aes-md5-esp-3des-sha1	good
+default	algo-ike-aes-md5-esp-3des-sha1	good
 
 # CAP_DAC_OVERRIDE
-kvmplutotest	basic-pluto-06		good
+default	basic-pluto-06		good
 # libcab-ng test
-kvmplutotest	capabilities-01		wip
+default	capabilities-01		wip
 
 #
 # a test case of PSK with aggressive mode
-kvmplutotest	psk-pluto-01		good
-kvmplutotest	psk-pluto-02		good
+default	psk-pluto-01		good
+default	psk-pluto-02		good
 
-kvmplutotest	xauth-pluto-03		good
-kvmplutotest	xauth-pluto-04		good
-kvmplutotest	xauth-pluto-05		good
-kvmplutotest	xauth-pluto-05-xfrm	good
-kvmplutotest	xauth-pluto-06		good
-kvmplutotest	xauth-pluto-07		good
-kvmplutotest	xauth-pluto-08		good
-kvmplutotest	xauth-pluto-09		good
+default	xauth-pluto-03		good
+default	xauth-pluto-04		good
+default	xauth-pluto-05		good
+default	xauth-pluto-05-xfrm	good
+default	xauth-pluto-06		good
+default	xauth-pluto-07		good
+default	xauth-pluto-08		good
+default	xauth-pluto-09		good
 
-kvmplutotest	xauth-pluto-10		good
-kvmplutotest	xauth-pluto-11		good
-kvmplutotest	xauth-pluto-12-resolvconf	good
-kvmplutotest	xauth-pluto-13		good
-kvmplutotest	xauth-pluto-14		good	github/1116
-kvmplutotest	xauth-pluto-15		good
-kvmplutotest	xauth-pluto-16		good
-kvmplutotest	xauth-pluto-17		good
-kvmplutotest	xauth-pluto-18		good
-kvmplutotest	xauth-pluto-19		good
-kvmplutotest	xauth-pluto-20-pam		good
-kvmplutotest	xauth-pluto-20-pam-stdout	good	github/2105
-kvmplutotest	xauth-pluto-20-pam-timeout 	good
-kvmplutotest	xauth-pluto-21-main-xr0-drop 	wip
-kvmplutotest	xauth-pluto-21-aggr-xr0-drop 	wip
-kvmplutotest	xauth-pluto-22		good
-kvmplutotest	xauth-pluto-23		good
-kvmplutotest	xauth-pluto-25-lsw299				wip	github/509
-kvmplutotest	xauth-pluto-26		good
-kvmplutotest	xauth-pluto-27		good
-kvmplutotest	xauth-pluto-28-twobehindnat	good
+default	xauth-pluto-10		good
+default	xauth-pluto-11		good
+default	xauth-pluto-12-resolvconf	good
+default	xauth-pluto-13		good
+default	xauth-pluto-14		good	github/1116
+default	xauth-pluto-15		good
+default	xauth-pluto-16		good
+default	xauth-pluto-17		good
+default	xauth-pluto-18		good
+default	xauth-pluto-19		good
+default	xauth-pluto-20-pam		good
+default	xauth-pluto-20-pam-stdout	good	github/2105
+default	xauth-pluto-20-pam-timeout 	good
+default	xauth-pluto-21-main-xr0-drop 	wip
+default	xauth-pluto-21-aggr-xr0-drop 	wip
+default	xauth-pluto-22		good
+default	xauth-pluto-23		good
+default	xauth-pluto-25-lsw299				wip	github/509
+default	xauth-pluto-26		good
+default	xauth-pluto-27		good
+default	xauth-pluto-28-twobehindnat	good
 
-kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
-kvmplutotest	ikev1-xauth-31-one-each-way				wip	github/633
-kvmplutotest	ikev1-xauth-32-lost-mode-cfg				good	github/1785
-kvmplutotest	ikev1-xauth-33-quick-narrow-any				good	github/1857,github/2051
-kvmplutotest	ikev1-xauth-34-modecfg-push-only			good	github/1954
-kvmplutotest	ikev1-xauth-34-modecfg-pull-only			good	github/1954
-kvmplutotest	ikev1-xauth-35-xauth-only-lease-wrong			good	github/1955
-kvmplutotest	ikev1-xauth-35-xauth-only-lease-missing			good	github/1955
-kvmplutotest	ikev1-xauth-35-xauth-only-lease-psk			good	github/1955
-kvmplutotest	ikev1-xauth-35-xauth-only-lease-x509			good	github/1955
-kvmplutotest	ikev1-xauth-36-cisco-split				good	github/2230
-kvmplutotest	ikev1-xauth-37-cisco-split-racoon-responder		good	github/2230
+default	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
+default	ikev1-xauth-31-one-each-way				wip	github/633
+default	ikev1-xauth-32-lost-mode-cfg				good	github/1785
+default	ikev1-xauth-33-quick-narrow-any				good	github/1857,github/2051
+default	ikev1-xauth-34-modecfg-push-only			good	github/1954
+default	ikev1-xauth-34-modecfg-pull-only			good	github/1954
+default	ikev1-xauth-35-xauth-only-lease-wrong			good	github/1955
+default	ikev1-xauth-35-xauth-only-lease-missing			good	github/1955
+default	ikev1-xauth-35-xauth-only-lease-psk			good	github/1955
+default	ikev1-xauth-35-xauth-only-lease-x509			good	github/1955
+default	ikev1-xauth-36-cisco-split				good	github/2230
+kvmonly	ikev1-xauth-37-cisco-split-racoon-responder		good	github/2230
 
 #
 # Aggressive Mode Pluto Tests
 #
-kvmplutotest	ikev1-aggr-01-authby-default-rsasig	good
-kvmplutotest	ikev1-aggr-02-authby-secret		good
-kvmplutotest	ikev1-aggr-03-authby-rsasig		good
-kvmplutotest	ikev1-aggr-04-authby-secret-rassig	good
-kvmplutotest	ikev1-aggr-05-authby-psk-dual-nat	good
-kvmplutotest	ikev1-aggr-06-use-last-ike-dh		good
-kvmplutotest	ikev1-aggr-07-no-isakmp-proposal-chosen	good
-kvmplutotest	ikev1-aggr-08-copy-r1-spis-to-i1	wip	github/1039
+default	ikev1-aggr-01-authby-default-rsasig	good
+default	ikev1-aggr-02-authby-secret		good
+default	ikev1-aggr-03-authby-rsasig		good
+default	ikev1-aggr-04-authby-secret-rassig	good
+default	ikev1-aggr-05-authby-psk-dual-nat	good
+default	ikev1-aggr-06-use-last-ike-dh		good
+default	ikev1-aggr-07-no-isakmp-proposal-chosen	good
+default	ikev1-aggr-08-copy-r1-spis-to-i1	wip	github/1039
 
 # Various algo tests
-kvmplutotest	ikev1-algo-ike-pfs-01	good
+default	ikev1-algo-ike-pfs-01	good
 
-kvmplutotest	ikev1-aggr-sendcert-01	good
-kvmplutotest	ikev1-aggr-replace-01	good
-kvmplutotest	ikev1-expire-r1-01-main	good
-kvmplutotest	ikev1-expire-r1-02-aggr	good
+default	ikev1-aggr-sendcert-01	good
+default	ikev1-aggr-replace-01	good
+default	ikev1-expire-r1-01-main	good
+default	ikev1-expire-r1-02-aggr	good
 
 # passthrough protoport tests
-kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-13-xfrm-ondemand good
-kvmplutotest	basic-pluto-15-no-retransmit good
+default	basic-pluto-12		good
+default	basic-pluto-13-xfrm-ondemand good
+default	basic-pluto-15-no-retransmit good
 
-kvmplutotest	basic-pluto-17-nssdir	good
-kvmplutotest	basic-pluto-18-secrets	good
+default	basic-pluto-17-nssdir	good
+default	basic-pluto-18-secrets	good
 
-kvmplutotest	pluto-rekey-01		good
-kvmplutotest	pluto-rekey-02		good
+default	pluto-rekey-01		good
+default	pluto-rekey-02		good
 
-kvmplutotest	psk-pluto-03		good
-kvmplutotest	psk-pluto-04		good
-kvmplutotest	psk-pluto-05		good
-kvmplutotest	psk-pluto-06		good
+default	psk-pluto-03		good
+default	psk-pluto-04		good
+default	psk-pluto-05		good
+default	psk-pluto-06		good
 
 #
 # tests using alternative ESP algorithms
 #
-kvmplutotest	xfrm-algo-camellia-01	good
-kvmplutotest	xfrm-algo-null-01	good
-kvmplutotest	xfrm-algo-null-02	good
+default	xfrm-algo-camellia-01	good
+default	xfrm-algo-null-01	good
+default	xfrm-algo-null-02	good
 
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
-kvmplutotest    algo-pluto-01          good
-kvmplutotest    algo-pluto-04          wip
-kvmplutotest    algo-pluto-07          good
-kvmplutotest    algo-pluto-08          good
-kvmplutotest    ikev2-algo-pluto-09          good
-kvmplutotest    algo-pluto-10          good
-kvmplutotest    algo-pluto-12-aes-default	good
-kvmplutotest    algo-pluto-13-invalid-3des	good
-kvmplutotest    algo-pluto-14-aes_ctr	good
+default    algo-pluto-01          good
+default    algo-pluto-04          wip
+default    algo-pluto-07          good
+default    algo-pluto-08          good
+default    ikev2-algo-pluto-09          good
+default    algo-pluto-10          good
+default    algo-pluto-12-aes-default	good
+default    algo-pluto-13-invalid-3des	good
+default    algo-pluto-14-aes_ctr	good
 
 #
 # tests for using multiple subnets using conn aliases
 #
-kvmplutotest	multinet-01		good
-kvmplutotest	multinet-04		good
-kvmplutotest	ikev1-rw-multiple-subnets			good
-kvmplutotest	ikev1-rw-multiple-subnets-split			good
-kvmplutotest	ikev2-rw-multiple-subnets			wip	github:520
-kvmplutotest	ikev2-rw-multiple-subnets-split			wip
-kvmplutotest	ikev2-rw-multiple-subnets-2			wip	github:520
-kvmplutotest	ikev2-rw-multiple-subnets-3			wip	gitgub:520
-kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
-kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
-kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
-kvmplutotest	ikev2-rw-multiple-rw-by-id			wip
+default	multinet-01		good
+default	multinet-04		good
+default	ikev1-rw-multiple-subnets			good
+default	ikev1-rw-multiple-subnets-split			good
+default	ikev2-rw-multiple-subnets			wip	github:520
+default	ikev2-rw-multiple-subnets-split			wip
+default	ikev2-rw-multiple-subnets-2			wip	github:520
+default	ikev2-rw-multiple-subnets-3			wip	gitgub:520
+default	ikev2-rw-multiple-subnets-4-mismatch		good
+default	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
+default	ikev2-rw-multiple-subnets-5-mismatch-frst	good
+default	ikev2-rw-multiple-rw-by-id			wip
 
 
 
 # tests for using multiple subnets with single ike and alias
-kvmplutotest	ikev2-selectors-44in4-rw-alias		good
-kvmplutotest	ikev2-selectors-44in4-rw-ike		good
-kvmplutotest	ikev2-selectors-44in6-rw-alias		good
-kvmplutotest	ikev2-selectors-44in6-rw-ike		good
-kvmplutotest	ikev2-selectors-46in4-rw-alias		good
-kvmplutotest	ikev2-selectors-46in4-rw-ike		good
-kvmplutotest	ikev2-selectors-46in6-rw-alias		good
-kvmplutotest	ikev2-selectors-46in6-rw-ike		good
-kvmplutotest	ikev2-selectors-64in4-rw-alias		good
-kvmplutotest	ikev2-selectors-64in4-rw-ike		good
-kvmplutotest	ikev2-selectors-64in6-rw-alias		good
-kvmplutotest	ikev2-selectors-64in6-rw-ike		good
-kvmplutotest	ikev2-selectors-66in4-rw-alias		good
-kvmplutotest	ikev2-selectors-66in4-rw-alias-nonat	good
-kvmplutotest	ikev2-selectors-66in4-rw-ike		good
-kvmplutotest	ikev2-selectors-66in6-rw-alias		good
-kvmplutotest	ikev2-selectors-66in6-rw-ike		good
-kvmplutotest	ikev2-selectors-44in4-rw-ike-mismatch-01	wip	release-blocker
-kvmplutotest	ikev2-selectors-44in4-rw-alias-mismatch-01	wip	release-blocker
-kvmplutotest	ikev2-selectors-44in4-rw-ike-mismatch-02	wip	release-blocker
-kvmplutotest	ikev2-selectors-44in4-rw-alias-mismatch-02	wip	release-blocker
+default	ikev2-selectors-44in4-rw-alias		good
+default	ikev2-selectors-44in4-rw-ike		good
+default	ikev2-selectors-44in6-rw-alias		good
+default	ikev2-selectors-44in6-rw-ike		good
+default	ikev2-selectors-46in4-rw-alias		good
+default	ikev2-selectors-46in4-rw-ike		good
+default	ikev2-selectors-46in6-rw-alias		good
+default	ikev2-selectors-46in6-rw-ike		good
+default	ikev2-selectors-64in4-rw-alias		good
+default	ikev2-selectors-64in4-rw-ike		good
+default	ikev2-selectors-64in6-rw-alias		good
+default	ikev2-selectors-64in6-rw-ike		good
+default	ikev2-selectors-66in4-rw-alias		good
+default	ikev2-selectors-66in4-rw-alias-nonat	good
+default	ikev2-selectors-66in4-rw-ike		good
+default	ikev2-selectors-66in6-rw-alias		good
+default	ikev2-selectors-66in6-rw-ike		good
+default	ikev2-selectors-44in4-rw-ike-mismatch-01	wip	release-blocker
+default	ikev2-selectors-44in4-rw-alias-mismatch-01	wip	release-blocker
+default	ikev2-selectors-44in4-rw-ike-mismatch-02	wip	release-blocker
+default	ikev2-selectors-44in4-rw-alias-mismatch-02	wip	release-blocker
 
 # transport mode related tests
-kvmplutotest	ikev1-nat-transport-02		good
+default	ikev1-nat-transport-02		good
 # this test shows two clients behind single NAT bug
-kvmplutotest	ikev1-nat-transport-03		wip
-kvmplutotest	ikev2-21-mode-mismatch-01	good
-kvmplutotest	ikev2-21-mode-mismatch-02	good
+default	ikev1-nat-transport-03		wip
+default	ikev2-21-mode-mismatch-01	good
+default	ikev2-21-mode-mismatch-02	good
 
-kvmplutotest	ah-pluto-01		good
-kvmplutotest	ah-pluto-02		good
-kvmplutotest	ah-pluto-03		good
-kvmplutotest	ah-pluto-04		good
-kvmplutotest	ah-pluto-05		good
-kvmplutotest	ah-pluto-09		good
-kvmplutotest	ah-pluto-10		good
-kvmplutotest	ah-pluto-12		good
-kvmplutotest	ah-pluto-13		good
+default	ah-pluto-01		good
+default	ah-pluto-02		good
+default	ah-pluto-03		good
+default	ah-pluto-04		good
+default	ah-pluto-05		good
+default	ah-pluto-09		good
+default	ah-pluto-10		good
+default	ah-pluto-12		good
+default	ah-pluto-13		good
 
-kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256		good
-kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512		good
-kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 		good
-kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 		good
-kvmplutotest	interop-ikev1-strongswan-14-camellia			good
-kvmplutotest	interop-ikev1-strongswan-17-compress			good
-kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
-kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
-kvmplutotest	interop-ikev1-strongswan-psk-aggr-01			good
+default	interop-ikev1-strongswan-10-ah-initiator-sha256		good
+default	interop-ikev1-strongswan-11-ah-initiator-sha512		good
+default	interop-ikev1-strongswan-12-esp-sha2_256 		good
+default	interop-ikev1-strongswan-13-esp-sha2_512 		good
+default	interop-ikev1-strongswan-14-camellia			good
+default	interop-ikev1-strongswan-17-compress			good
+default	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
+default	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
+default	interop-ikev1-strongswan-psk-aggr-01			good
 
-kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512		good
-kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256		good
-kvmplutotest	interop-ikev2-strongswan-18-compress			good
-kvmplutotest	interop-ikev2-strongswan-18-compress-6in6		good
-kvmplutotest	interop-ikev2-strongswan-18-compress-initiator		good
-kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk		good
-kvmplutotest	interop-ikev2-strongswan-23-initiator-cp		good
-kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
-kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
-kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
-kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
-kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
-kvmplutotest	interop-ikev2-esp-aes_gcm-netbsd-linux			good
-kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		good	github/1228
+default	interop-ikev2-strongswan-16-ah-initiator-sha512		good
+default	interop-ikev2-strongswan-17-ah-initiator-sha256		good
+default	interop-ikev2-strongswan-18-compress			good
+default	interop-ikev2-strongswan-18-compress-6in6		good
+default	interop-ikev2-strongswan-18-compress-initiator		good
+default	interop-ikev2-strongswan-22-cp-responder-psk		good
+default	interop-ikev2-strongswan-23-initiator-cp		good
+default	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
+default	interop-ikev2-strongswan-26-ke-mismatch-responder	good
+default	interop-ikev2-strongswan-31-asymmetric-responder	good
+default	interop-ikev2-strongswan-32-ip-lease			good
+default	interop-ikev2-xfrmi-strongswan-01			good
+kvmonly	interop-ikev2-esp-aes_gcm-netbsd-linux			good
+kvmonly	interop-ikev2-esp-aes_gcm-freebsd-netbsd		good	github/1228
 
 # EAPTLS
-kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
-kvmplutotest	interop-ikev2-strongswan-24-strongswan-eaptls		good
-kvmplutotest	interop-ikev2-eaptls-strongswan-client			good	github/2036-at-least
-kvmplutotest	eaptls-01-CVE-2026-77206-unexpected-eap-packet		good
+default	interop-ikev2-strongswan-20-strongswan-eap		good
+default	interop-ikev2-strongswan-24-strongswan-eaptls		good
+default	interop-ikev2-eaptls-strongswan-client			good	github/2036-at-least
+default	eaptls-01-CVE-2026-77206-unexpected-eap-packet		good
 
 # IKEv2 Selinux / secure labeling tests
-kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-permissive			good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-enforcing			good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-permissive		wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforcing			wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey			wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator			good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-childless	good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-ondemand	good
-kvmplutotest	ikev2-labeled-ipsec-05-any					good
-kvmplutotest	ikev2-labeled-ipsec-06-rekey-ike-acquire			good
-kvmplutotest	ikev2-labeled-ipsec-06-reauth-ike-acquire			wip
-kvmplutotest	ikev2-labeled-ipsec-07-connswitch-ike-ondemand			wip
-kvmplutotest	ikev2-labeled-ipsec-07-connswitch-ike-childless			wip
-kvmplutotest	ikev2-labeled-ipsec-08-narrow-ike-ondemand			good
-kvmplutotest	ikev2-labeled-ipsec-08-narrow-ike-childless			good
+default	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
+default	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			good
+default	ikev2-labeled-ipsec-01-ike-childless-permissive			good
+default	ikev2-labeled-ipsec-01-ike-childless-enforcing			good
+default	ikev2-labeled-ipsec-03-multi-acquires-permissive		wip
+default	ikev2-labeled-ipsec-03-multi-acquires-enforcing			wip
+default	ikev2-labeled-ipsec-03-multi-acquires-rekey			wip
+default	ikev2-labeled-ipsec-04-no-label-on-initiator			good
+default	ikev2-labeled-ipsec-04-no-label-on-responder-ike-childless	good
+default	ikev2-labeled-ipsec-04-no-label-on-responder-ike-ondemand	good
+default	ikev2-labeled-ipsec-05-any					good
+default	ikev2-labeled-ipsec-06-rekey-ike-acquire			good
+default	ikev2-labeled-ipsec-06-reauth-ike-acquire			wip
+default	ikev2-labeled-ipsec-07-connswitch-ike-ondemand			wip
+default	ikev2-labeled-ipsec-07-connswitch-ike-childless			wip
+default	ikev2-labeled-ipsec-08-narrow-ike-ondemand			good
+default	ikev2-labeled-ipsec-08-narrow-ike-childless			good
 
 # compress tests
-kvmplutotest    compress-01-ikev1			good
-kvmplutotest    compress-01-ikev2			good
-kvmplutotest    compress-02-cleanup-ikev1		good	github/435
-kvmplutotest    compress-02-cleanup-ikev2		good	github/435
-kvmplutotest    compress-03-mismatch-ikev1		good
-kvmplutotest    compress-03-mismatch-ikev2		good
-kvmplutotest	compress-04-unsolicited-ikev2		good
-kvmplutotest	compress-05-3des-ikev1			good
+default    compress-01-ikev1			good
+default    compress-01-ikev2			good
+default    compress-02-cleanup-ikev1		good	github/435
+default    compress-02-cleanup-ikev2		good	github/435
+default    compress-03-mismatch-ikev1		good
+default    compress-03-mismatch-ikev2		good
+default	compress-04-unsolicited-ikev2		good
+default	compress-05-3des-ikev1			good
 
-kvmplutotest	sourceip-01				good
+default	sourceip-01				good
 
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-6in4-01-ikev1			good
-kvmplutotest	ipv6-6in4-02-ikev2			good
-kvmplutotest	ipv6-6in4-02-ikev2-ipsec-device 	wip	github/2005
-kvmplutotest	ipv6-6in6-01-ikev1			good
-kvmplutotest	ipv6-6in6-02-ikev2			good
-kvmplutotest	ipv6-4in6-01-ikev1			good
-kvmplutotest	ipv6-4in6-02-ikev2			good
+default	ipv6-6in4-01-ikev1			good
+default	ipv6-6in4-02-ikev2			good
+default	ipv6-6in4-02-ikev2-ipsec-device 	wip	github/2005
+default	ipv6-6in6-01-ikev1			good
+default	ipv6-6in6-02-ikev2			good
+default	ipv6-4in6-01-ikev1			good
+default	ipv6-4in6-02-ikev2			good
 
-kvmplutotest	ipv6-transport-mode-02-xfrm-xfrm	good
-kvmplutotest	ipv6-transport-mode-04-ondemand-xfrm	good
-kvmplutotest	ipv6-tunnel-mode-02-xfrm-xfrm	good
-kvmplutotest	ipv6-transport-ts-mode-04-xfrm-xfrm	good	github/1875
-kvmplutotest	ipv6-tunnel-mode-03-rw			good
-kvmplutotest	ipv6-tunnel-mode-04-rw			good
-kvmplutotest	ikev2-ipv6-transport-mode-02-xfrm-xfrm	good
+default	ipv6-transport-mode-02-xfrm-xfrm	good
+default	ipv6-transport-mode-04-ondemand-xfrm	good
+default	ipv6-tunnel-mode-02-xfrm-xfrm	good
+default	ipv6-transport-ts-mode-04-xfrm-xfrm	good	github/1875
+default	ipv6-tunnel-mode-03-rw			good
+default	ipv6-tunnel-mode-04-rw			good
+default	ikev2-ipv6-transport-mode-02-xfrm-xfrm	good
 
 # address pool tests
 
-kvmplutotest	addresspool-46in4-ikev2				good
-kvmplutotest	addresspool-46in4-4only-ikev2			good
-kvmplutotest	ikev2-cp-dns-46in4				good	github/3134
-kvmplutotest	addresspool-46in4-6only-ikev2			good
-kvmplutotest	addresspool-46in6-ikev2				good
-kvmplutotest	addresspool-46in6-4only-ikev2			good
-kvmplutotest	addresspool-46in6-6only-ikev2			good
-kvmplutotest	addresspool-4in4-ikev2				good
-kvmplutotest	addresspool-4in6-ikev2				good
-kvmplutotest	addresspool-6in4-ikev2				good
-kvmplutotest	addresspool-6in6-ikev2				good
-kvmplutotest	addresspool-6in6-defaultroute-ikev2		good
+default	addresspool-46in4-ikev2				good
+default	addresspool-46in4-4only-ikev2			good
+default	ikev2-cp-dns-46in4				good	github/3134
+default	addresspool-46in4-6only-ikev2			good
+default	addresspool-46in6-ikev2				good
+default	addresspool-46in6-4only-ikev2			good
+default	addresspool-46in6-6only-ikev2			good
+default	addresspool-4in4-ikev2				good
+default	addresspool-4in6-ikev2				good
+default	addresspool-6in4-ikev2				good
+default	addresspool-6in6-ikev2				good
+default	addresspool-6in6-defaultroute-ikev2		good
 
-kvmplutotest	addresspool-4in4-shared-ikev1-ikev2		good
-kvmplutotest	addresspool-4in4-exhausted-ikev1-ikev2		good	github/2019
-kvmplutotest	addresspool-4in4-exhausted-ikev2-ikev1		good	github/2019
-kvmplutotest	addresspool-4in4-in-use-ikev1-ikev1		good
-kvmplutotest	addresspool-4in4-in-use-ikev2-ikev1		good
-kvmplutotest	addresspool-4in4-reserved-ikev1-ikev1		good
-kvmplutotest	addresspool-4in4-reserved-ikev2-ikev1		good
+default	addresspool-4in4-shared-ikev1-ikev2		good
+default	addresspool-4in4-exhausted-ikev1-ikev2		good	github/2019
+default	addresspool-4in4-exhausted-ikev2-ikev1		good	github/2019
+default	addresspool-4in4-in-use-ikev1-ikev1		good
+default	addresspool-4in4-in-use-ikev2-ikev1		good
+default	addresspool-4in4-reserved-ikev1-ikev1		good
+default	addresspool-4in4-reserved-ikev2-ikev1		good
 
-kvmplutotest	addresspool-4in4-static-static-overlap-xauth-ikev1	good
-kvmplutotest	addresspool-4in4-global-static-xauth-ikev1		good	github/509
+kvmonly	addresspool-4in4-static-static-overlap-xauth-ikev1	good
+default	addresspool-4in4-global-static-xauth-ikev1		good	github/509
 
-kvmplutotest	addresspool-6in6-strongswan-initiator-ikev2	good
+default	addresspool-6in6-strongswan-initiator-ikev2	good
 
-kvmplutotest	addresspool-6in6-6in-6in-ikev2			wip	github/2015
-kvmplutotest	addresspool-6in6-defaultroute-src-selection-ikev2 good
-kvmplutotest 	addresspool-6in6-defaultroute-dual-dns-ikev2	wip
+default	addresspool-6in6-6in-6in-ikev2			wip	github/2015
+default	addresspool-6in6-defaultroute-src-selection-ikev2 good
+default 	addresspool-6in6-defaultroute-dual-dns-ikev2	wip
 
 
 
 #################################################################
 # Interop tests
 #################################################################
-kvmplutotest	interop-ikev1-strongswan-01-xauth		good
-kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
-kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
-kvmplutotest	interop-ikev1-strongswan-04-psk-aes-gcm		good
-kvmplutotest	interop-ikev1-strongswan-04-psk-aes-ccm		good
+default	interop-ikev1-strongswan-01-xauth		good
+default	interop-ikev1-strongswan-02-psk-responder	good
+default	interop-ikev1-strongswan-03-psk-initiator	good
+default	interop-ikev1-strongswan-04-psk-aes-gcm		good
+default	interop-ikev1-strongswan-04-psk-aes-ccm		good
 
-kvmplutotest	interop-ikev2-strongswan-01-ike-algo-responder	good
-kvmplutotest	interop-ikev2-strongswan-01-esp-algo-responder	good
-kvmplutotest	interop-ikev2-strongswan-01-ah-algo-responder	good
+default	interop-ikev2-strongswan-01-ike-algo-responder	good
+default	interop-ikev2-strongswan-01-esp-algo-responder	good
+default	interop-ikev2-strongswan-01-ah-algo-responder	good
 
-kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
-kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
-kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
-kvmplutotest	interop-ikev2-strongswan-05-psk-aes		good
-kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
-kvmplutotest	interop-ikev2-strongswan-06-aes192		good
-kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
-kvmplutotest	interop-ikev2-strongswan-08-nonat		good
-kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
-kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
-kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
-kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
-kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
-kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
-kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-14-delete-sa-shared	good
-kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  good
-kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
-kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
-kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-01	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-02	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-03	good
-kvmplutotest	interop-ikev2-strongswan-21-transport-04	good
-kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
-kvmplutotest	interop-ikev2-strongswan-28-reauth		good
-kvmplutotest	interop-ikev2-strongswan-29-rekey		good
-kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
-kvmplutotest	interop-ikev2-strongswan-35-initiator-rekey	good
-kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-yes	good
-kvmplutotest	interop-ikev2-strongswan-36-initiator-sha1-rsa_pss-yes		good
-kvmplutotest	interop-ikev2-strongswan-37-initiator-no-digsig	good
-kvmplutotest	interop-ikev2-strongswan-38-digsig-impair	good
-kvmplutotest	interop-ikev2-strongswan-39-fragmentation-aes-gcm	good
-kvmplutotest	interop-ikev2-strongswan-41-responder-digsig-rsa-pss-256	good
-kvmplutotest	interop-ikev2-strongswan-42-initiator-digsig-rsa-pss-384	good
-kvmplutotest	interop-ikev2-strongswan-43-initiator-digsig-rsa-pss-multi-hash	good
-kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	good
+default    interop-ikev2-strongswan-02-psk-responder	good
+default    interop-ikev2-strongswan-03-psk-initiator	good
+default    interop-ikev2-strongswan-04-x509-responder	good
+default	interop-ikev2-strongswan-05-psk-aes		good
+default	interop-ikev2-strongswan-05-psk-md5		good
+default	interop-ikev2-strongswan-06-aes192		good
+default	interop-ikev2-strongswan-07-strongswan		good
+default	interop-ikev2-strongswan-08-nonat		good
+default	interop-ikev2-strongswan-09-psk-aes-ccm		good
+default	interop-ikev2-strongswan-09-psk-aes-gcm		good
+default	interop-ikev2-strongswan-10-nat-initiator	good
+default	interop-ikev2-strongswan-11-nat-initiator	good
+default	interop-ikev2-strongswan-12-nat-responder	good
+default	interop-ikev2-strongswan-13-ah-initiator	good
+default	interop-ikev2-strongswan-14-delete-sa		good
+default	interop-ikev2-strongswan-14-delete-sa-shared	good
+default	interop-ikev2-strongswan-15-child-sa		good
+default	interop-ikev2-strongswan-15-child-sa-responder  good
+default	interop-ikev2-strongswan-17-delete-sa-responder good
+default	interop-ikev2-strongswan-19-x509-res-certreq    good
+default	interop-ikev2-strongswan-20-psk-aes_xcbc	good
+default	interop-ikev2-strongswan-21-transport-01	good
+default	interop-ikev2-strongswan-21-transport-02	good
+default	interop-ikev2-strongswan-21-transport-03	good
+default	interop-ikev2-strongswan-21-transport-04	good
+default	interop-ikev2-strongswan-27-fragmentation	good
+default	interop-ikev2-strongswan-28-reauth		good
+default	interop-ikev2-strongswan-29-rekey		good
+default	interop-ikev2-strongswan-35-ipsec-rekey		good
+default	interop-ikev2-strongswan-35-initiator-rekey	good
+default	interop-ikev2-strongswan-36-initiator-sha1-sha2-rsa_pss-yes	good
+default	interop-ikev2-strongswan-36-initiator-sha1-rsa_pss-yes		good
+default	interop-ikev2-strongswan-37-initiator-no-digsig	good
+default	interop-ikev2-strongswan-38-digsig-impair	good
+default	interop-ikev2-strongswan-39-fragmentation-aes-gcm	good
+default	interop-ikev2-strongswan-41-responder-digsig-rsa-pss-256	good
+default	interop-ikev2-strongswan-42-initiator-digsig-rsa-pss-384	good
+default	interop-ikev2-strongswan-43-initiator-digsig-rsa-pss-multi-hash	good
+default	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	good
 # bug in strongswan causes this test to fail ?
-kvmplutotest	interop-ikev2-strongswan-48-chacha20poly1305-ikeesp 		good
+default	interop-ikev2-strongswan-48-chacha20poly1305-ikeesp 		good
 
 # Fails on purpose - shows strongswan issue
 
@@ -1342,172 +1326,172 @@ kvmplutotest	interop-ikev2-strongswan-48-chacha20poly1305-ikeesp 		good
 # RFC 7427
 #################################################################
 
-kvmplutotest	ikev2-digsig-01-defaults		good
-kvmplutotest	ikev2-digsig-02-legacy			good
-kvmplutotest	ikev2-digsig-03-rsa-sha2		good
-kvmplutotest	ikev2-digsig-04-mismatch		good
-kvmplutotest	ikev2-digsig-05-rsasig-rsa1		good
-kvmplutotest	ikev2-digsig-06-auth-digsig-mixed-certs		good
-kvmplutotest	ikev2-digsig-07-auth-digsig-eddsa-rawkey	good
-kvmplutotest	ikev2-digsig-08-auth-digsig-ecdsa-legacy	good
+default	ikev2-digsig-01-defaults		good
+default	ikev2-digsig-02-legacy			good
+default	ikev2-digsig-03-rsa-sha2		good
+default	ikev2-digsig-04-mismatch		good
+default	ikev2-digsig-05-rsasig-rsa1		good
+default	ikev2-digsig-06-auth-digsig-mixed-certs		good
+default	ikev2-digsig-07-auth-digsig-eddsa-rawkey	good
+default	ikev2-digsig-08-auth-digsig-ecdsa-legacy	good
 
 #################################################################
 # IPSEC KEY (from dns) tests
 #################################################################
 
-kvmplutotest 	ikev2-55-ipseckey-01				good
-kvmplutotest 	ikev2-55-ipseckey-02				good
-kvmplutotest 	ikev2-55-ipseckey-03				good
-kvmplutotest 	ikev2-55-ipseckey-04				good
-kvmplutotest 	ikev2-55-ipseckey-05				good
-kvmplutotest 	ikev2-55-ipseckey-06				good
-kvmplutotest 	ikev2-55-ipseckey-07				wip
-kvmplutotest 	ikev2-55-ipseckey-08				good
-kvmplutotest 	ikev2-55-ipseckey-09				good
+default 	ikev2-55-ipseckey-01				good
+default 	ikev2-55-ipseckey-02				good
+default 	ikev2-55-ipseckey-03				good
+default 	ikev2-55-ipseckey-04				good
+default 	ikev2-55-ipseckey-05				good
+default 	ikev2-55-ipseckey-06				good
+default 	ikev2-55-ipseckey-07				wip
+default 	ikev2-55-ipseckey-08				good
+default 	ikev2-55-ipseckey-09				good
 
 #################################################################
 # Specific bug tests
 #################################################################
 
-kvmplutotest	replay-authip-01			good
+default	replay-authip-01			good
 
-kvmplutotest	ikev1-l2tp-01				good	github/2515
-kvmplutotest	ikev1-l2tp-02				good	github/2515
-kvmplutotest	ikev1-l2tp-03-two-interfaces		good	github/693,github/1117,github/2515
+kvmonly	ikev1-l2tp-01				good	github/2515
+kvmonly	ikev1-l2tp-02				good	github/2515
+kvmonly	ikev1-l2tp-03-two-interfaces		good	github/693,github/1117,github/2515
 
-kvmplutotest	listen-change-01			good
+default	listen-change-01			good
 
 #################################################################
 # FIPS mode tests: Most require PLUTO built in FIPS mode
 #################################################################
-kvmplutotest	fips-default-ikev1-01-nofips-east	good
-kvmplutotest	fips-default-ikev2-01-nofips-east	good
-kvmplutotest	fips-default-ikev1-02-nofips-west	good
-kvmplutotest	fips-default-ikev2-02-nofips-west	good
+kvmonly	fips-default-ikev1-01-nofips-east	good
+kvmonly	fips-default-ikev2-01-nofips-east	good
+kvmonly	fips-default-ikev1-02-nofips-west	good
+kvmonly	fips-default-ikev2-02-nofips-west	good
 
-kvmplutotest	fips-03-ikev1-md5			good
-kvmplutotest	fips-04-ikev2-md5			good
-kvmplutotest	fips-06-ikev1-3des-sha1			good
-kvmplutotest	fips-07-ikev2-3des-sha256		good
-kvmplutotest	fips-08-ikev2-x509			good
-kvmplutotest	fips-09-ikev2-gcm			good
-kvmplutotest	fips-10-ikev2-psk			good
-kvmplutotest    fips-11-ikev2-esp-dh                    good
-kvmplutotest    fips-12-ikev2-esp-dh-wrong              good
-kvmplutotest    fips-13-ikev2-x509-key2032		good
-kvmplutotest    fips-14-ikev2-x509-ecdsa		good
-kvmplutotest	fips-15-CVE-2026-14957-CVE-2026-77205-rsa-pubkey	good
+kvmonly	fips-03-ikev1-md5			good
+kvmonly	fips-04-ikev2-md5			good
+kvmonly	fips-06-ikev1-3des-sha1			good
+kvmonly	fips-07-ikev2-3des-sha256		good
+kvmonly	fips-08-ikev2-x509			good
+kvmonly	fips-09-ikev2-gcm			good
+kvmonly	fips-10-ikev2-psk			good
+kvmonly    fips-11-ikev2-esp-dh                    good
+kvmonly    fips-12-ikev2-esp-dh-wrong              good
+kvmonly    fips-13-ikev2-x509-key2032		good
+kvmonly    fips-14-ikev2-x509-ecdsa		good
+kvmonly	fips-15-CVE-2026-14957-CVE-2026-77205-rsa-pubkey	good
 
 #################################################################
 # passthrough tests
 #################################################################
-kvmplutotest	xfrm-passthrough-ipxfrm			good
-kvmplutotest	xfrm-passthrough-00			good
-kvmplutotest	xfrm-passthrough-01			good
-kvmplutotest	xfrm-passthrough-02			good
-kvmplutotest	xfrm-passthrough-03			good
+default	xfrm-passthrough-ipxfrm			good
+default	xfrm-passthrough-00			good
+default	xfrm-passthrough-01			good
+default	xfrm-passthrough-02			good
+default	xfrm-passthrough-03			good
 
-kvmplutotest	ikev1-isakmp-reserved-flags-01		good
-kvmplutotest	ikev1-isakmp-reserved-flags-02		good
+default	ikev1-isakmp-reserved-flags-01		good
+default	ikev1-isakmp-reserved-flags-02		good
 
 #################################################################
 # KDF NSS tests
 #################################################################
 # this one might be triggered in 3.32 - 4.x but seems to depend on environment?
-kvmplutotest	ikev1-algo-sha2-variant-bug		good
-kvmplutotest	interop-ikev1-strongswan-06-kdf		good
+default	ikev1-algo-sha2-variant-bug		good
+default	interop-ikev1-strongswan-06-kdf		good
 
 #################################################################
 # X.509 NSS tests
 #################################################################
-kvmplutotest	nss-cert-01-ikev1		good
-kvmplutotest	nss-cert-01-ikev2		good
-kvmplutotest	nss-cert-02-ikev1		good
-kvmplutotest	nss-cert-02-ikev2		good
-kvmplutotest	nss-cert-03-ikev1		good
-kvmplutotest	nss-cert-03-ikev2		good
-kvmplutotest	nss-cert-04-ikev1		good
-kvmplutotest	nss-cert-04-ikev2		good
-kvmplutotest	nss-cert-05-ikev1		good
-kvmplutotest	nss-cert-05-ikev2		good
-kvmplutotest	nss-cert-06-ikev1		good
-kvmplutotest	nss-cert-06-ikev2		good
-kvmplutotest	nss-cert-11-ca-expiring-responder-perm-ikev2			wip	github/1006
-kvmplutotest	nss-cert-11-ca-expiring-responder-switch-ikev2			good
-kvmplutotest	nss-cert-11-ca-expiring-responder-switch-ikev2-overlapip	good
-kvmplutotest	nss-cert-11-ca-expiring-responder-switch-ikev2-rw		good	github/1103,github/1171
-kvmplutotest	nss-cert-11-ca-expired-responder-1conn-ikev2			good
-kvmplutotest	nss-cert-11-ca-expired-responder-3conn-ikev2			good
-kvmplutotest	ikev2-nss-cert-08-mismatch		good
-kvmplutotest	nss-cert-chain-01-ikev1		good
-kvmplutotest	nss-cert-chain-02-ikev1		good
-kvmplutotest	nss-cert-chain-03-ikev1		good
-kvmplutotest	nss-cert-chain-04-ikev1		good
-kvmplutotest	nss-cert-chain-01-ikev2		good
-kvmplutotest	nss-cert-chain-02-ikev2		good
-kvmplutotest	nss-cert-chain-03-ikev2		good
-kvmplutotest	nss-cert-chain-04-ikev2		good
+default	nss-cert-01-ikev1		good
+default	nss-cert-01-ikev2		good
+default	nss-cert-02-ikev1		good
+default	nss-cert-02-ikev2		good
+default	nss-cert-03-ikev1		good
+default	nss-cert-03-ikev2		good
+default	nss-cert-04-ikev1		good
+default	nss-cert-04-ikev2		good
+default	nss-cert-05-ikev1		good
+default	nss-cert-05-ikev2		good
+default	nss-cert-06-ikev1		good
+default	nss-cert-06-ikev2		good
+default	nss-cert-11-ca-expiring-responder-perm-ikev2			wip	github/1006
+default	nss-cert-11-ca-expiring-responder-switch-ikev2			good
+default	nss-cert-11-ca-expiring-responder-switch-ikev2-overlapip	good
+default	nss-cert-11-ca-expiring-responder-switch-ikev2-rw		good	github/1103,github/1171
+default	nss-cert-11-ca-expired-responder-1conn-ikev2			good
+default	nss-cert-11-ca-expired-responder-3conn-ikev2			good
+default	ikev2-nss-cert-08-mismatch		good
+default	nss-cert-chain-01-ikev1		good
+default	nss-cert-chain-02-ikev1		good
+default	nss-cert-chain-03-ikev1		good
+default	nss-cert-chain-04-ikev1		good
+default	nss-cert-chain-01-ikev2		good
+default	nss-cert-chain-02-ikev2		good
+default	nss-cert-chain-03-ikev2		good
+default	nss-cert-chain-04-ikev2		good
 
-kvmplutotest	x509-crl-01-revoked-initiator-ikev1	good
-kvmplutotest	x509-crl-01-revoked-initiator-ikev2	good
-kvmplutotest	x509-crl-01-revoked-responder-ikev1	good
-kvmplutotest	x509-crl-01-revoked-responder-ikev2	good
+default	x509-crl-01-revoked-initiator-ikev1	good
+default	x509-crl-01-revoked-initiator-ikev2	good
+default	x509-crl-01-revoked-responder-ikev1	good
+default	x509-crl-01-revoked-responder-ikev2	good
 
-kvmplutotest	x509-crl-02-old-crl-strict-no-ikev1	good
-kvmplutotest	x509-crl-02-old-crl-strict-no-ikev2	good
-kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev1	good
-kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev2	good
-kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev2-manual	good	github/2383
+default	x509-crl-02-old-crl-strict-no-ikev1	good
+default	x509-crl-02-old-crl-strict-no-ikev2	good
+default	x509-crl-02-old-crl-strict-yes-ikev1	good
+default	x509-crl-02-old-crl-strict-yes-ikev2	good
+default	x509-crl-02-old-crl-strict-yes-ikev2-manual	good	github/2383
 
-kvmplutotest	nss-cert-nosecret		good
-kvmplutotest	nss-cert-ocsp-01-ikev1			good
-kvmplutotest	nss-cert-ocsp-01-ikev2			good
-kvmplutotest	nss-cert-ocsp-01-strict-ikev1		good
-kvmplutotest	nss-cert-ocsp-02-revoked-ikev1		good
-kvmplutotest	nss-cert-ocsp-02-revoked-ikev2		good
-kvmplutotest	nss-cert-ocsp-03-bogus-uri-ikev1	good
-kvmplutotest	nss-cert-ocsp-03-bogus-uri-ikev2	good
-kvmplutotest	nss-cert-ocsp-03-bogus-uri-strict-ikev1	good
-kvmplutotest	nss-cert-ocsp-04-revoked-ikev1		good
-kvmplutotest	nss-cert-ocsp-05-no-trust-ikev1		good
-kvmplutotest	nss-cert-ocsp-05-no-trust-ikev2		good
-kvmplutotest	nss-cert-ocsp-05-no-trust-strict-ikev1	good
-kvmplutotest	nss-cert-ocsp-06-no-trust-revoked-ikev1	good
-kvmplutotest	nss-cert-ocsp-07-nic-no-ocsp-ikev1	good
-kvmplutotest	nss-cert-ocsp-07-nic-no-ocsp-ikev2	good
-kvmplutotest	nss-cert-ocsp-08-post-ikev1		good
-kvmplutotest	nss-cert-ocsp-09-chain-ikev1		good
+default	nss-cert-nosecret		good
+default	nss-cert-ocsp-01-ikev1			good
+default	nss-cert-ocsp-01-ikev2			good
+default	nss-cert-ocsp-01-strict-ikev1		good
+default	nss-cert-ocsp-02-revoked-ikev1		good
+default	nss-cert-ocsp-02-revoked-ikev2		good
+default	nss-cert-ocsp-03-bogus-uri-ikev1	good
+default	nss-cert-ocsp-03-bogus-uri-ikev2	good
+default	nss-cert-ocsp-03-bogus-uri-strict-ikev1	good
+default	nss-cert-ocsp-04-revoked-ikev1		good
+default	nss-cert-ocsp-05-no-trust-ikev1		good
+default	nss-cert-ocsp-05-no-trust-ikev2		good
+default	nss-cert-ocsp-05-no-trust-strict-ikev1	good
+default	nss-cert-ocsp-06-no-trust-revoked-ikev1	good
+default	nss-cert-ocsp-07-nic-no-ocsp-ikev1	good
+default	nss-cert-ocsp-07-nic-no-ocsp-ikev2	good
+default	nss-cert-ocsp-08-post-ikev1		good
+default	nss-cert-ocsp-09-chain-ikev1		good
 #
-kvmplutotest	x509-cert-08-expired-initiator-ikev1	good
-kvmplutotest	x509-cert-08-expired-initiator-ikev2	good
-kvmplutotest	x509-cert-08-expired-responder-ikev1	good
-kvmplutotest	x509-cert-08-expired-responder-ikev2	good
+default	x509-cert-08-expired-initiator-ikev1	good
+default	x509-cert-08-expired-initiator-ikev2	good
+default	x509-cert-08-expired-responder-ikev1	good
+default	x509-cert-08-expired-responder-ikev2	good
 
-kvmplutotest	x509-cert-09-notyetvalid-initiator-ikev1	good
-kvmplutotest	x509-cert-09-notyetvalid-initiator-ikev2	good
-kvmplutotest	x509-cert-09-notyetvalid-responder-ikev1	good
-kvmplutotest	x509-cert-09-notyetvalid-responder-ikev2	good
+default	x509-cert-09-notyetvalid-initiator-ikev1	good
+default	x509-cert-09-notyetvalid-initiator-ikev2	good
+default	x509-cert-09-notyetvalid-responder-ikev1	good
+default	x509-cert-09-notyetvalid-responder-ikev2	good
 #
 
-kvmplutotest	ikev2-nss-cert-pkcs11-uri-01		good
+default	ikev2-nss-cert-pkcs11-uri-01		good
 
-kvmplutotest	ikev1-2behind-nat-01		wip
+default	ikev1-2behind-nat-01		wip
 
 # Demonstrate a custom GSSAPI test domain
-kvmplutotest  	ikev2-gssapi-01			skiptest
+default  	ikev2-gssapi-01			skiptest
 
 #################################################################
 # leak tests
 #################################################################
-kvmplutotest	ikev2-leak-01-db_v2_prop_conj	good
-kvmplutotest	ikev2-leak-02-no-psk		good
+default	ikev2-leak-01-db_v2_prop_conj	good
+default	ikev2-leak-02-no-psk		good
 
 # seccomp
-kvmplutotest	seccomp-01-enabled-ikev1	good	github/795
-kvmplutotest	seccomp-01-enabled-ikev2	good	github/795
-kvmplutotest	seccomp-02-tolerant-ikev1	good	github/795
-kvmplutotest	seccomp-02-tolerant-ikev2	good	github/795
-kvmplutotest	seccomp-03-updown-ikev2		good	github/492
+default	seccomp-01-enabled-ikev1	good	github/795
+default	seccomp-01-enabled-ikev2	good	github/795
+default	seccomp-02-tolerant-ikev1	good	github/795
+default	seccomp-02-tolerant-ikev2	good	github/795
+default	seccomp-03-updown-ikev2		good	github/492
 
 #################################################################
 #
@@ -1519,393 +1503,393 @@ kvmplutotest	seccomp-03-updown-ikev2		good	github/492
 #
 #################################################################
 
-kvmplutotest	whack-basics-01				good
-kvmplutotest	whack-globalstatus-01			good
-kvmplutotest	whack-rereadcerts-01			good
-kvmplutotest	whack-rereadsecrets-01-privatekey	good	github/1894
-kvmplutotest	whack-ctlsocket-01			good
+default	whack-basics-01				good
+default	whack-globalstatus-01			good
+default	whack-rereadcerts-01			good
+default	whack-rereadsecrets-01-privatekey	good	github/1894
+default	whack-ctlsocket-01			good
 
 # "ipsec add/start/ondemand
 
-kvmplutotest	whack-add-01-auto-up-async-hang		good	github/2615
-kvmplutotest	whack-oppo-01-opporeqid			good
+default	whack-add-01-auto-up-async-hang		good	github/2615
+default	whack-oppo-01-opporeqid			good
 
 # "ipsec newhostkey" "ipsec showhostkey"
 
-kvmplutotest	whack-hostkey-01-ckaid-rsa		good
-kvmplutotest	whack-hostkey-01-ckaid-ecdsa		good
-kvmplutotest	whack-hostkey-01-ckaid-eddsa		good	github/2474
+default	whack-hostkey-01-ckaid-rsa		good
+default	whack-hostkey-01-ckaid-ecdsa		good
+default	whack-hostkey-01-ckaid-eddsa		good	github/2474
 
-kvmplutotest	whack-hostkey-02-ckaid-fips		good
-kvmplutotest	whack-hostkey-03-ckaid-nsspw		good
+kvmonly	whack-hostkey-02-ckaid-fips		good
+default	whack-hostkey-03-ckaid-nsspw		good
 
-kvmplutotest	whack-hostkey-04-ikev1-rawkey-rsa	good
+default	whack-hostkey-04-ikev1-rawkey-rsa	good
 
-kvmplutotest	whack-hostkey-05-ikev2-rawkey-rsa	good
-kvmplutotest	whack-hostkey-05-ikev2-rawkey-ecdsa	good
-kvmplutotest	whack-hostkey-05-ikev2-rawkey-eddsa	good	github/2477
-kvmplutotest	whack-hostkey-06-ikev2-pubkey-rsa	good
-kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
-kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-rsa		good
-kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-ecdsa	good
+default	whack-hostkey-05-ikev2-rawkey-rsa	good
+default	whack-hostkey-05-ikev2-rawkey-ecdsa	good
+default	whack-hostkey-05-ikev2-rawkey-eddsa	good	github/2477
+default	whack-hostkey-06-ikev2-pubkey-rsa	good
+default	whack-hostkey-06-ikev2-pubkey-ecdsa	good
+default	whack-hostkey-07-ikev2-ckaid-pubkey-rsa		good
+default	whack-hostkey-07-ikev2-ckaid-pubkey-ecdsa	good
 
 # ipsec showroute
 
-kvmplutotest	whack-showroute-01-linux		good
-kvmplutotest	whack-showroute-01-netbsd		wip
-kvmplutotest	whack-showroute-01-freebsd		wip
-kvmplutotest	whack-showroute-01-openbsd		wip
+default	whack-showroute-01-linux		good
+kvmonly	whack-showroute-01-netbsd		wip
+kvmonly	whack-showroute-01-freebsd		wip
+kvmonly	whack-showroute-01-openbsd		wip
 
 # up edge cases
 
-kvmplutotest	whack-up-01-async-ikev1			good
-kvmplutotest	whack-up-01-async-ikev2			good
-kvmplutotest	whack-up-02-config			good	github/1726
+default	whack-up-01-async-ikev1			good
+default	whack-up-01-async-ikev2			good
+default	whack-up-02-config			good	github/1726
 
 # ipsec delete/down of cuckoo
 
-kvmplutotest	whack-down-01-child-1then2-ikev1	good
-kvmplutotest	whack-down-01-child-1then2-ikev2	good
-kvmplutotest	whack-down-02-child-2then1-ikev1	good
-kvmplutotest	whack-down-02-child-2then1-ikev2	good
-kvmplutotest	whack-down-03-child-1then2then0-ikev1	good
-kvmplutotest	whack-down-03-child-1then2then0-ikev2	good
-kvmplutotest	whack-down-04-child-0then1then2-ikev1	good	github/2010
-kvmplutotest	whack-down-04-child-0then1then2-ikev2	good	github/2010
+default	whack-down-01-child-1then2-ikev1	good
+default	whack-down-01-child-1then2-ikev2	good
+default	whack-down-02-child-2then1-ikev1	good
+default	whack-down-02-child-2then1-ikev2	good
+default	whack-down-03-child-1then2then0-ikev1	good
+default	whack-down-03-child-1then2then0-ikev2	good
+default	whack-down-04-child-0then1then2-ikev1	good	github/2010
+default	whack-down-04-child-0then1then2-ikev2	good	github/2010
 
-kvmplutotest	whack-down-10-ikev1-quick-responder	good	github/1531
-kvmplutotest	whack-down-10-ikev1-quick-initiator	good	github/1531
+default	whack-down-10-ikev1-quick-responder	good	github/1531
+default	whack-down-10-ikev1-quick-initiator	good	github/1531
 
-kvmplutotest	whack-delete-01-child-1then2-ikev1	good
-kvmplutotest	whack-delete-01-child-1then2-ikev2	good
-kvmplutotest	whack-delete-01-child-2then1-ikev1	good
-kvmplutotest	whack-delete-01-child-2then1-ikev2	good
+default	whack-delete-01-child-1then2-ikev1	good
+default	whack-delete-01-child-1then2-ikev2	good
+default	whack-delete-01-child-2then1-ikev1	good
+default	whack-delete-01-child-2then1-ikev2	good
 
-kvmplutotest	whack-delete-03-up-revival-ikev1	good
-kvmplutotest	whack-delete-03-up-revival-ikev2	good
-kvmplutotest	whack-delete-04-ikev1-quick-responder	good	github/1531
-kvmplutotest	whack-delete-04-ikev1-quick-initiator	good	github/1531
-kvmplutotest	whack-delete-05-responder-ikev1		good
-kvmplutotest	whack-delete-05-responder-ikev2		good
-kvmplutotest	whack-delete-06-larval-cuckoo-ikev1	good
-kvmplutotest	whack-delete-06-larval-cuckoo-ikev2	good
+default	whack-delete-03-up-revival-ikev1	good
+default	whack-delete-03-up-revival-ikev2	good
+default	whack-delete-04-ikev1-quick-responder	good	github/1531
+default	whack-delete-04-ikev1-quick-initiator	good	github/1531
+default	whack-delete-05-responder-ikev1		good
+default	whack-delete-05-responder-ikev2		good
+default	whack-delete-06-larval-cuckoo-ikev1	good
+default	whack-delete-06-larval-cuckoo-ikev2	good
 
-kvmplutotest	whack-delete-child-01-async-ikev2	good
-kvmplutotest	whack-delete-ike-01-async-ikev2		good
+default	whack-delete-child-01-async-ikev2	good
+default	whack-delete-ike-01-async-ikev2		good
 
-kvmplutotest	whack-deleteuser-01-ikev1		good	github/1269
-kvmplutotest	whack-deleteid-01-psk-ikev1		good	github/1268
-kvmplutotest	whack-deleteid-01-psk-ikev2		good	github/1268
+default	whack-deleteuser-01-ikev1		good	github/1269
+default	whack-deleteid-01-psk-ikev1		good	github/1268
+default	whack-deleteid-01-psk-ikev2		good	github/1268
 
-kvmplutotest	whack-rekey-child-01-async-ikev2	good
-kvmplutotest	whack-rekey-ike-01-async-ikev2		good
+default	whack-rekey-child-01-async-ikev2	good
+default	whack-rekey-ike-01-async-ikev2		good
 
-kvmplutotest	whack-route-01-route-routed		good	github/1562
+default	whack-route-01-route-routed		good	github/1562
 
-kvmplutotest	whack-unroute-01-ikev1-quick-responder	good	github/1531
-kvmplutotest	whack-unroute-01-ikev1-quick-initiator	good	github/1531
+default	whack-unroute-01-ikev1-quick-responder	good	github/1531
+default	whack-unroute-01-ikev1-quick-initiator	good	github/1531
 
-kvmplutotest	whack-shutdown-01-magic			good	github/1709
+default	whack-shutdown-01-magic			good	github/1709
 
 # ipsec readwriteconf
 
-kvmplutotest	whack-readwriteconf-01			good	github/2630
+default	whack-readwriteconf-01			good	github/2630
 
 #
 # invoke pluto directly; play with "config setup" section
 #
 
-kvmplutotest	whack-pluto-01-startup			good	github/2048
-kvmplutotest	whack-pluto-02-logfile			good
+default	whack-pluto-01-startup			good	github/2048
+default	whack-pluto-02-logfile			good
 # BSI seed tests
-kvmplutotest	whack-pluto-03-seedbits			good
+default	whack-pluto-03-seedbits			good
 
 #
 # nssinit
 #
 
-kvmplutotest	whack-initnss-01			good
+default	whack-initnss-01			good
 
 
 #
 # PPK
 #
 
-kvmplutotest	ikev2-ppk-static-01-insist-yes			good
-kvmplutotest	ikev2-ppk-static-02-insist-insist		good
-kvmplutotest	ikev2-ppk-static-03-no-insist-fail		good
-kvmplutotest	ikev2-ppk-static-04-insist-no-fail		good
-kvmplutotest	ikev2-ppk-static-05-insist-nokey-insist-fail	good
-kvmplutotest	ikev2-ppk-static-06-insist-insist-nokey-fail	good
-kvmplutotest	ikev2-ppk-static-07-large-id			good
-kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
-kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
-kvmplutotest	ikev2-ppk-static-10-yes-no			good
-kvmplutotest	ikev2-ppk-static-11-multiple-ppk-ids		good
-kvmplutotest	ikev2-ppk-intermediate-01-insist-yes		good
-kvmplutotest	ikev2-ppk-intermediate-02-addke			good
+default	ikev2-ppk-static-01-insist-yes			good
+default	ikev2-ppk-static-02-insist-insist		good
+default	ikev2-ppk-static-03-no-insist-fail		good
+default	ikev2-ppk-static-04-insist-no-fail		good
+default	ikev2-ppk-static-05-insist-nokey-insist-fail	good
+default	ikev2-ppk-static-06-insist-insist-nokey-fail	good
+default	ikev2-ppk-static-07-large-id			good
+default	ikev2-ppk-static-08-no_ppk-responder		good
+default	ikev2-ppk-static-09-no_ppk-initiator		good
+default	ikev2-ppk-static-10-yes-no			good
+default	ikev2-ppk-static-11-multiple-ppk-ids		good
+default	ikev2-ppk-intermediate-01-insist-yes		good
+default	ikev2-ppk-intermediate-02-addke			good
 
 # REDIRECT
-kvmplutotest	ikev2-redirect-02-auth				good
-kvmplutotest	ikev2-redirect-01-global			good
-kvmplutotest	ikev2-redirect-03-auth-loop			good	github/1078
-kvmplutotest	ikev2-redirect-03-global-loop			good	github/1078
-kvmplutotest	ikev2-redirect-04-auth-down			good	github/1396
-kvmplutotest	ikev2-redirect-04-global-down			good	github/1396
-kvmplutotest	ikev2-redirect-06-roadwarriors			good
-kvmplutotest	ikev2-redirect-06-roadwarriors-reverse		wip	github/1641
-kvmplutotest	ikev2-redirect-01-global-load-balancer		good
-kvmplutotest	ikev2-redirect-07-global-pair			good	github/1405
-kvmplutotest	ikev2-redirect-07-auth-pair			good	github/1405
-kvmplutotest	ikev2-redirect-07-auth-split			good	github/1405
+default	ikev2-redirect-02-auth				good
+default	ikev2-redirect-01-global			good
+default	ikev2-redirect-03-auth-loop			good	github/1078
+default	ikev2-redirect-03-global-loop			good	github/1078
+default	ikev2-redirect-04-auth-down			good	github/1396
+default	ikev2-redirect-04-global-down			good	github/1396
+default	ikev2-redirect-06-roadwarriors			good
+default	ikev2-redirect-06-roadwarriors-reverse		wip	github/1641
+default	ikev2-redirect-01-global-load-balancer		good
+default	ikev2-redirect-07-global-pair			good	github/1405
+default	ikev2-redirect-07-auth-pair			good	github/1405
+default	ikev2-redirect-07-auth-split			good	github/1405
 
 # MOBIKE tests
-kvmplutotest	ikev2-mobike-01				good
-kvmplutotest	ikev2-mobike-02				good
-kvmplutotest	ikev2-mobike-03				good	github/527
-kvmplutotest	ikev2-mobike-04				good
-kvmplutotest	ikev2-mobike-05-gcm			good
-kvmplutotest	ikev2-mobike-06				good
-kvmplutotest	ikev2-mobike-07-unsolicited-response	good
-kvmplutotest	ikev2-mobike-08-nat-expire-liveness-east		good	github/1762
-kvmplutotest	ikev2-mobike-08-nat-expire-liveness-road-mobike-no	good	github/1762
-kvmplutotest	ikev2-mobike-08-nat-expire-liveness-road-mobike-yes	wip	github/1762
-kvmplutotest	ikev2-mobike-08-nat-expire-liveness-road-mobike-nat	wip	github/1762
-kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
-kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
-kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
+default	ikev2-mobike-01				good
+default	ikev2-mobike-02				good
+default	ikev2-mobike-03				good	github/527
+default	ikev2-mobike-04				good
+default	ikev2-mobike-05-gcm			good
+default	ikev2-mobike-06				good
+default	ikev2-mobike-07-unsolicited-response	good
+default	ikev2-mobike-08-nat-expire-liveness-east		good	github/1762
+default	ikev2-mobike-08-nat-expire-liveness-road-mobike-no	good	github/1762
+default	ikev2-mobike-08-nat-expire-liveness-road-mobike-yes	wip	github/1762
+default	ikev2-mobike-08-nat-expire-liveness-road-mobike-nat	wip	github/1762
+default	interop-ikev2-strongswan-38-mobike-pool		good
+default 	interop-ikev2-strongswan-38-mobike-initiator	good
+default 	interop-ikev2-strongswan-39-mobike-responder	good
 
 # IPTFS tests
-kvmplutotest	ikev2-iptfs-01					skiptest	github/1873
-kvmplutotest	ikev2-iptfs-02-mismatch				skiptest	github/1873
-kvmplutotest	ikev2-iptfs-03-on-demand			skiptest	github/1873
+default	ikev2-iptfs-01					good	github/1873
+default	ikev2-iptfs-02-mismatch				good	github/1873
+default	ikev2-iptfs-03-on-demand			good	github/1873
 
-kvmplutotest	bad-nexthop-01		wip
+default	bad-nexthop-01		wip
 
 # TCP tests and UDP encap tests
 
-kvmplutotest	ikev2-tcp-00-enable-tcp-default				good
-kvmplutotest	ikev2-tcp-00-enable-tcp-fallback			good
-kvmplutotest	ikev2-tcp-00-enable-tcp-no				good
-kvmplutotest	ikev2-tcp-00-enable-tcp-yes				good
-kvmplutotest	ikev2-tcp-01-listen-default				good
-kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-no			good
-kvmplutotest	ikev2-tcp-01-listen-tcp-no-udp-yes			good
-kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-no			good
-kvmplutotest	ikev2-tcp-01-listen-tcp-yes-udp-yes			good
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
-kvmplutotest	ikev2-tcp-04-ikeport-443				good
-kvmplutotest	ikev2-tcp-04-ikeport-500				wip
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie			good
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect			good
-kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication		good
-kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect			good
-kvmplutotest	ikev2-tcp-08-fail-eof					good
-kvmplutotest	ikev2-tcp-09-fail-timeout				good
-kvmplutotest	ikev2-tcp-10-rekey-child				good
-kvmplutotest	ikev2-tcp-10-rekey-ike					good
-kvmplutotest	ikev2-tcp-25-rw-nat					good
-kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
-kvmplutotest	ikev2-tcp-27-6in6					good	github/730
-kvmplutotest	ikev2-tcp-28-ondemand					good	github/1746,github/1156
-kvmplutotest	ikev2-tcp-29-CVE-2026-94453-unexpected-eof		good
+default	ikev2-tcp-00-enable-tcp-default				good
+default	ikev2-tcp-00-enable-tcp-fallback			good
+default	ikev2-tcp-00-enable-tcp-no				good
+default	ikev2-tcp-00-enable-tcp-yes				good
+default	ikev2-tcp-01-listen-default				good
+default	ikev2-tcp-01-listen-tcp-no-udp-no			good
+default	ikev2-tcp-01-listen-tcp-no-udp-yes			good
+default	ikev2-tcp-01-listen-tcp-yes-udp-no			good
+default	ikev2-tcp-01-listen-tcp-yes-udp-yes			good
+default	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
+default	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
+default	ikev2-tcp-04-ikeport-443				good
+default	ikev2-tcp-04-ikeport-500				wip
+default	ikev2-tcp-06-fail-ike-sa-init-cookie			good
+default	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
+default	ikev2-tcp-06-fail-ike-sa-init-redirect			good
+default	ikev2-tcp-07-fail-ike-auth-authentication		good
+default	ikev2-tcp-07-fail-ike-auth-redirect			good
+default	ikev2-tcp-08-fail-eof					good
+default	ikev2-tcp-09-fail-timeout				good
+default	ikev2-tcp-10-rekey-child				good
+default	ikev2-tcp-10-rekey-ike					good
+default	ikev2-tcp-25-rw-nat					good
+default	ikev2-tcp-26-rw-nat-keepalive				good
+default	ikev2-tcp-27-6in6					good	github/730
+default	ikev2-tcp-28-ondemand					good	github/1746,github/1156
+default	ikev2-tcp-29-CVE-2026-94453-unexpected-eof		good
 
-kvmplutotest	ikev2-tcp-05-transport-mode		wip	github/1133
-kvmplutotest	ikev2-udp-05-transport-mode 		good
+default	ikev2-tcp-05-transport-mode		wip	github/1133
+default	ikev2-udp-05-transport-mode 		good
 
 # Intermediary Exchange
-kvmplutotest	ikev2-intermediate-01-addke-connswitch				good
-kvmplutotest	ikev2-intermediate-03-unsolicited				good
-kvmplutotest	ikev2-intermediate-04-addke-modp8192				good
-kvmplutotest	ikev2-intermediate-04-addke-ml-kem-768				good
-kvmplutotest	ikev2-intermediate-04-addke-no-nss-flag				good
-kvmplutotest	ikev2-intermediate-05-addke-modp8192-ml-kem-768			good
-kvmplutotest	ikev2-intermediate-05-addke-duplicate				good	github/2370
-kvmplutotest	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
-kvmplutotest	ikev2-intermediate-07-fallback-no-intermediate			good
-kvmplutotest	ikev2-intermediate-08-addke-ml-kem-1024 			good
-kvmplutotest	ikev2-intermediate-09-max-size-hybrid				good
-kvmplutotest	ikev2-intermediate-10-rekey-ike					good
-kvmplutotest	ikev2-intermediate-11-rekey-ike-omit-addke-initiator		good
-kvmplutotest	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
+default	ikev2-intermediate-01-addke-connswitch				good
+default	ikev2-intermediate-03-unsolicited				good
+default	ikev2-intermediate-04-addke-modp8192				good
+default	ikev2-intermediate-04-addke-ml-kem-768				good
+default	ikev2-intermediate-04-addke-no-nss-flag				good
+default	ikev2-intermediate-05-addke-modp8192-ml-kem-768			good
+default	ikev2-intermediate-05-addke-duplicate				good	github/2370
+default	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
+default	ikev2-intermediate-07-fallback-no-intermediate			good
+default	ikev2-intermediate-08-addke-ml-kem-1024 			good
+default	ikev2-intermediate-09-max-size-hybrid				good
+default	ikev2-intermediate-10-rekey-ike					good
+default	ikev2-intermediate-11-rekey-ike-omit-addke-initiator		good
+default	ikev2-intermediate-12-rekey-ike-omit-addke-responder		good
 
-kvmplutotest	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
-kvmplutotest	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
-kvmplutotest	interop-ikev2-strongswan-49-intermediate-cert-initiator		good
+default	interop-ikev2-strongswan-49-intermediate-responder		good	github/2401,github/2958
+default	interop-ikev2-strongswan-49-intermediate-initiator		good	github/2401,github/2958
+default	interop-ikev2-strongswan-49-intermediate-cert-initiator		good
 
 # VPN System Roles - skip automated testing for now
-kvmplutotest	ikev2-systemrole-01-host-to-host	good
-kvmplutotest	ikev2-systemrole-02-net-to-net		good	github/1751
-kvmplutotest	ikev2-systemrole-03-certs		good	github/1751
-kvmplutotest	ikev2-systemrole-04-mesh		good	github/534,github/1751
+default	ikev2-systemrole-01-host-to-host	good
+default	ikev2-systemrole-02-net-to-net		good	github/1751
+default	ikev2-systemrole-03-certs		good	github/1751
+default	ikev2-systemrole-04-mesh		good	github/534,github/1751
 
-kvmplutotest	ikev1-policy-01-drop			good
-kvmplutotest	ikev1-policy-02-reject			good
+default	ikev1-policy-01-drop			good
+default	ikev1-policy-02-reject			good
 
-kvmplutotest	auto-keep-01-revival-through-nat-down-ikev2		good
-kvmplutotest	auto-keep-02-revival-through-nat-cleanfail-ikev2	good	github/992,github/1427
-kvmplutotest	auto-keep-03-revive-second-child-ikev1			good	github/1986
-kvmplutotest	auto-keep-03-revive-second-child-ikev2			good	github/1986
+default	auto-keep-01-revival-through-nat-down-ikev2		good
+default	auto-keep-02-revival-through-nat-cleanfail-ikev2	good	github/992,github/1427
+default	auto-keep-03-revive-second-child-ikev1			good	github/1986
+default	auto-keep-03-revive-second-child-ikev2			good	github/1986
 
 # crossing the stream race conditions
 
-kvmplutotest    crossing-streams-01-ikev2-github-1211	wip	github/1211
-kvmplutotest	crossing-streams-02-ikev2-conn-fight	wip	github/1231
+kvmonly    crossing-streams-01-ikev2-github-1211	wip	github/1211
+kvmonly	crossing-streams-02-ikev2-conn-fight	wip	github/1231
 
-kvmplutotest	crossing-streams-03-ikev2-delete-ike		good	github/1587
-kvmplutotest	crossing-streams-03-ikev2-delete-child		good	github/1586
-kvmplutotest	crossing-streams-03-ikev2-delete-ike-vs-child	good	github/1587,github/1586
-kvmplutotest	crossing-streams-03-ikev2-delete-child-vs-ike	good	github/1587,github/1586,github/1683
+default	crossing-streams-03-ikev2-delete-ike		good	github/1587
+default	crossing-streams-03-ikev2-delete-child		good	github/1586
+default	crossing-streams-03-ikev2-delete-ike-vs-child	good	github/1587,github/1586
+default	crossing-streams-03-ikev2-delete-child-vs-ike	good	github/1587,github/1586,github/1683
 
-kvmplutotest	crossing-streams-04-ikev2-initiator-child-up-ike-down			good
-kvmplutotest	crossing-streams-04-ikev2-initiator-ike-rekey-responder-child-up	wip
+default	crossing-streams-04-ikev2-initiator-child-up-ike-down			good
+default	crossing-streams-04-ikev2-initiator-ike-rekey-responder-child-up	wip
 
-kvmplutotest	crossing-streams-11-eewww-ikev2-permanent	wip	github/1684
-kvmplutotest	crossing-streams-11-eweww-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-11-ewwew-ikev2-permanent	good	github/557
-kvmplutotest	crossing-streams-11-ewwwe-ikev2-permanent	good	github/557
-kvmplutotest	crossing-streams-11-weeww-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-11-wewew-ikev2-permanent	good	github/557
-kvmplutotest	crossing-streams-11-wewwe-ikev2-permanent	good	github/557
-kvmplutotest	crossing-streams-11-wwewe-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-11-wwwee-ikev2-permanent	wip	github/557
+default	crossing-streams-11-eewww-ikev2-permanent	wip	github/1684
+default	crossing-streams-11-eweww-ikev2-permanent	wip	github/557
+default	crossing-streams-11-ewwew-ikev2-permanent	good	github/557
+default	crossing-streams-11-ewwwe-ikev2-permanent	good	github/557
+default	crossing-streams-11-weeww-ikev2-permanent	wip	github/557
+default	crossing-streams-11-wewew-ikev2-permanent	good	github/557
+default	crossing-streams-11-wewwe-ikev2-permanent	good	github/557
+default	crossing-streams-11-wwewe-ikev2-permanent	wip	github/557
+default	crossing-streams-11-wwwee-ikev2-permanent	wip	github/557
 
-kvmplutotest  crossing-streams-12-ikev2-permanent-ike-auth-east good github/2447
-kvmplutotest  crossing-streams-12-ikev2-permanent-ike-auth-west good github/2447
+default  crossing-streams-12-ikev2-permanent-ike-auth-east good github/2447
+default  crossing-streams-12-ikev2-permanent-ike-auth-west good github/2447
 
-kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-sa-init	good	github/1635
-kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-auth	good	github/1635
+default	crossing-streams-20-peer-restarts-ondemand-ike-sa-init	good	github/1635
+default	crossing-streams-20-peer-restarts-ondemand-ike-auth	good	github/1635
 
-kvmplutotest	crossing-streams-21-second-child-crypto-ikev2	good
-kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
-kvmplutotest	crossing-streams-23-conswitch-ike-sa-init-ikev2	good	github/1989
+default	crossing-streams-21-second-child-crypto-ikev2	good
+default	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
+default	crossing-streams-23-conswitch-ike-sa-init-ikev2	good	github/1989
 
-kvmplutotest	crossing-streams-24-ikev2-delete-connswitch-github-2101	good	github/2101
-kvmplutotest	crossing-streams-bootup-01	good	github/3002
+default	crossing-streams-24-ikev2-delete-connswitch-github-2101	good	github/2101
+default	crossing-streams-bootup-01	good	github/3002
 
 # uses the kernel-pfkeyv2.c code
 
-kvmplutotest	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-transport-4in4-ah-ikev2		good
-kvmplutotest	pfkeyv2-transport-4in4-esp-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-transport-4in4-esp-ikev2	good
+kvmonly	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	good
+kvmonly	pfkeyv2-transport-4in4-ah-ikev2		good
+kvmonly	pfkeyv2-transport-4in4-esp-ipcomp-ikev2	good
+kvmonly	pfkeyv2-transport-4in4-esp-ikev2	good
 
-kvmplutotest	pfkeyv2-transport-6in6-ah-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-transport-6in6-ah-ikev2		good
-kvmplutotest	pfkeyv2-transport-6in6-esp-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-transport-6in6-esp-ikev2	good
+kvmonly	pfkeyv2-transport-6in6-ah-ipcomp-ikev2	good
+kvmonly	pfkeyv2-transport-6in6-ah-ikev2		good
+kvmonly	pfkeyv2-transport-6in6-esp-ipcomp-ikev2	good
+kvmonly	pfkeyv2-transport-6in6-esp-ikev2	good
 
-kvmplutotest	pfkeyv2-tunnel-4in4-ah-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-tunnel-4in4-ah-ikev2		good
-kvmplutotest	pfkeyv2-tunnel-4in4-esp-ipcomp-ikev2	good
-kvmplutotest	pfkeyv2-tunnel-4in4-esp-ikev2		good
+kvmonly	pfkeyv2-tunnel-4in4-ah-ipcomp-ikev2	good
+kvmonly	pfkeyv2-tunnel-4in4-ah-ikev2		good
+kvmonly	pfkeyv2-tunnel-4in4-esp-ipcomp-ikev2	good
+kvmonly	pfkeyv2-tunnel-4in4-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ikev2		good
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ikev2		good
+kvmonly	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-4in6-ah-ikev2		good
+kvmonly	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-4in6-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ikev2		good
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ikev2		good
+kvmonly	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-6in4-ah-ikev2		good
+kvmonly	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-6in4-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-6in6-ah-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		good
-kvmplutotest	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	good	github/713
-kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		good
+kvmonly	pfkeyv2-tunnel-6in6-ah-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-6in6-ah-ikev2		good
+kvmonly	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	good	github/713
+kvmonly	pfkeyv2-tunnel-6in6-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-esn-esp-freebsd			good
-kvmplutotest	pfkeyv2-esn-ah-freebsd			good
+kvmonly	pfkeyv2-esn-esp-freebsd			good
+kvmonly	pfkeyv2-esn-ah-freebsd			good
 
-kvmplutotest	host-to-host-transport-freebsd		good	github/2602
-kvmplutotest	host-to-host-transport-linux		good
-kvmplutotest	host-to-host-transport-netbsd		good	github/2602
-kvmplutotest	host-to-host-transport-ondemand-freebsd	good
-kvmplutotest	host-to-host-transport-ondemand-linux	good
-kvmplutotest	host-to-host-transport-ondemand-netbsd	good
-kvmplutotest	host-to-host-transport-ondemand-openbsd	good
-kvmplutotest	host-to-host-transport-openbsd		good	github/2602
-kvmplutotest	host-to-host-tunnel-forward-freebsd	good
-kvmplutotest	host-to-host-tunnel-forward-linux	good
-kvmplutotest	host-to-host-tunnel-forward-netbsd	good
-kvmplutotest	host-to-host-tunnel-forward-openbsd	good
-kvmplutotest	host-to-host-tunnel-freebsd		good
-kvmplutotest	host-to-host-tunnel-linux		good
-kvmplutotest	host-to-host-tunnel-netbsd		good
-kvmplutotest	host-to-host-tunnel-ondemand-freebsd	good
-kvmplutotest	host-to-host-tunnel-ondemand-linux	good
-kvmplutotest	host-to-host-tunnel-ondemand-netbsd	good
-kvmplutotest	host-to-host-tunnel-ondemand-openbsd	good
-kvmplutotest	host-to-host-tunnel-openbsd		good
+kvmonly	host-to-host-transport-freebsd		good	github/2602
+kvmonly	host-to-host-transport-linux		good
+kvmonly	host-to-host-transport-netbsd		good	github/2602
+kvmonly	host-to-host-transport-ondemand-freebsd	good
+kvmonly	host-to-host-transport-ondemand-linux	good
+kvmonly	host-to-host-transport-ondemand-netbsd	good
+kvmonly	host-to-host-transport-ondemand-openbsd	good
+kvmonly	host-to-host-transport-openbsd		good	github/2602
+kvmonly	host-to-host-tunnel-forward-freebsd	good
+kvmonly	host-to-host-tunnel-forward-linux	good
+kvmonly	host-to-host-tunnel-forward-netbsd	good
+kvmonly	host-to-host-tunnel-forward-openbsd	good
+kvmonly	host-to-host-tunnel-freebsd		good
+kvmonly	host-to-host-tunnel-linux		good
+kvmonly	host-to-host-tunnel-netbsd		good
+kvmonly	host-to-host-tunnel-ondemand-freebsd	good
+kvmonly	host-to-host-tunnel-ondemand-linux	good
+kvmonly	host-to-host-tunnel-ondemand-netbsd	good
+kvmonly	host-to-host-tunnel-ondemand-openbsd	good
+kvmonly	host-to-host-tunnel-openbsd		good
 
 # Racoon interop
 
-kvmplutotest	interop-racoon-10-aggr-initiator-ikev1		good
-kvmplutotest	interop-racoon-11-aggr-responder-ikev1		good
-kvmplutotest	interop-racoon-20-main-initiator-ikev1		good
-kvmplutotest	interop-racoon-21-main-responder-ikev1		good
+kvmonly	interop-racoon-10-aggr-initiator-ikev1		good
+kvmonly	interop-racoon-11-aggr-responder-ikev1		good
+kvmonly	interop-racoon-20-main-initiator-ikev1		good
+kvmonly	interop-racoon-21-main-responder-ikev1		good
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01-iked-responder		good
-kvmplutotest	interop-ikev2-openbsd-02-iked-initiator		good
-kvmplutotest	interop-ikev2-openbsd-03-pluto-initiator	good
+kvmonly	interop-ikev2-openbsd-01-iked-responder		good
+kvmonly	interop-ikev2-openbsd-02-iked-initiator		good
+kvmonly	interop-ikev2-openbsd-03-pluto-initiator	good
 
 # trying to reproduce github bugs
 
-kvmplutotest	github-1210-ikev1-quick-mismatch	wip
-kvmplutotest	github-1188-lost-policy			wip
+default	github-1210-ikev1-quick-mismatch	wip
+default	github-1188-lost-policy			wip
 
 # real world interop configurations
-kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
-kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
+kvmonly	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
+default	 android-be-happy			skiptest # ANDROID simulator
 
 # flush startup and teardown
-kvmplutotest	flush-on-startup-pfkeyv2		good	github/1285
-kvmplutotest	flush-on-startup-xfrm			good	github/1284
-kvmplutotest	flush-on-shutdown-xfrm			good	github/1384
+kvmonly	flush-on-startup-pfkeyv2		good	github/1285
+default	flush-on-startup-xfrm			good	github/1284
+default	flush-on-shutdown-xfrm			good	github/1384
 
-kvmplutotest	impair-install-ipsec-sa-inbound-state-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-state-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-state-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-state-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-policy-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-policy-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-policy-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-inbound-policy-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-state-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-state-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-state-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-state-responder-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-policy-initiator-ikev2	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev1	wip
-kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
+default	impair-install-ipsec-sa-inbound-state-initiator-ikev1	wip
+default	impair-install-ipsec-sa-inbound-state-initiator-ikev2	wip
+default	impair-install-ipsec-sa-inbound-state-responder-ikev1	wip
+default	impair-install-ipsec-sa-inbound-state-responder-ikev2	wip
+default	impair-install-ipsec-sa-inbound-policy-initiator-ikev1	wip
+default	impair-install-ipsec-sa-inbound-policy-initiator-ikev2	wip
+default	impair-install-ipsec-sa-inbound-policy-responder-ikev1	wip
+default	impair-install-ipsec-sa-inbound-policy-responder-ikev2	wip
+default	impair-install-ipsec-sa-outbound-state-initiator-ikev1	wip
+default	impair-install-ipsec-sa-outbound-state-initiator-ikev2	wip
+default	impair-install-ipsec-sa-outbound-state-responder-ikev1	wip
+default	impair-install-ipsec-sa-outbound-state-responder-ikev2	wip
+default	impair-install-ipsec-sa-outbound-policy-initiator-ikev1	wip
+default	impair-install-ipsec-sa-outbound-policy-initiator-ikev2	wip
+default	impair-install-ipsec-sa-outbound-policy-responder-ikev1	wip
+default	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
 
-kvmplutotest	ikev1-29-quick-restart			wip	github/1531
-kvmplutotest	ikev2-aws-updown			good	github/1828
+default	ikev1-29-quick-restart			wip	github/1531
+default	ikev2-aws-updown			good	github/1828
 
-kvmplutotest	ikev2-resume-01-psk			good	github/436
-kvmplutotest	ikev2-resume-02-x509			good	github/436
-kvmplutotest	ikev2-resume-03-rollover		good	github/1949
-kvmplutotest	ikev2-resume-04-instance		good	github/1951
-kvmplutotest	ikev2-resume-05-full-transcript-auth	good
+default	ikev2-resume-01-psk			good	github/436
+default	ikev2-resume-02-x509			good	github/436
+default	ikev2-resume-03-rollover		good	github/1949
+default	ikev2-resume-04-instance		good	github/1951
+default	ikev2-resume-05-full-transcript-auth	good
 
-kvmplutotest	ikev2-routes-subnets-plural		good	github/1950
-kvmplutotest	ikev2-routes-subnets-singular		good	github/1950
-kvmplutotest       ikev1-policy-03-stats                  good
+default	ikev2-routes-subnets-plural		good	github/1950
+default	ikev2-routes-subnets-singular		good	github/1950
+default       ikev1-policy-03-stats                  good
 
-kvmplutotest	cve-2026-12413-max-payloads		  good
+default	cve-2026-12413-max-payloads		  good
 
 #################################################################
 # RFC 9593
 #################################################################
 
-kvmplutotest	ikev2-supported-auth-methods-01                 good
-kvmplutotest	ikev2-supported-auth-methods-02-intermediate    good
-kvmplutotest	ikev2-supported-auth-methods-03		            good
-kvmplutotest	ikev2-supported-auth-methods-03-fail		    good
-kvmplutotest	ikev2-supported-auth-methods-04		            wip
-kvmplutotest	ikev2-supported-auth-methods-05		            good
+default	ikev2-supported-auth-methods-01                 good
+default	ikev2-supported-auth-methods-02-intermediate    good
+default	ikev2-supported-auth-methods-03		            good
+default	ikev2-supported-auth-methods-03-fail		    good
+default	ikev2-supported-auth-methods-04		            wip
+default	ikev2-supported-auth-methods-05		            good

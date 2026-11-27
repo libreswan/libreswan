@@ -38,6 +38,8 @@ import operator
 import signal
 import socket
 import binascii
+import fcntl
+import tempfile
 import platform  # just for host name
 
 from fab import logutil
@@ -630,7 +632,7 @@ class TestList:
                 logger.error("****** invalid test %s: directory %s not found", testdir, tdir)
                 continue
             reason = self.skip_test(testtype, testdir, testexpect)
-            if reason and self.args.log_level == "debug":
+            if reason and (self.args.log_level == "debug" or testtype == "kvmonly"):
                 TestList.log_skip(testdir, reason, )
 
             if reason:
@@ -655,7 +657,13 @@ class TestList:
         if testexpect == "skiptest":
             return "type is skiptest"
 
-        if testtype != "dockerplutotest" and testtype != "kvmplutotest":
+        if testtype == "kvmonly" and self.args.testtype == "nsplutotest":
+            return "type is kvmonly (depends on KVM); skipped by namespace based testing"
+
+        if testtype == "nsonly" and self.args.testtype != "nsplutotest":
+            return "type is nsonly (depends on namespaces); skipped by non-namespace based testing"
+
+        if testtype not in ("default", "kvmonly", "nsonly", "dockerplutotest"):
             return "type %s yet to be migrated to kvm style" % testtype
 
         if self.args.include:
@@ -1450,49 +1458,7 @@ def find_other_hosts(test, test_hosts):
         logger.debug("add others %s", host.group(1))
 
 
-def get_tcpdump_cmds(args, test):
-
-    test_hosts = []
-    log_line = ''
-
-    if test.dom_prefix:
-        tcpdump_dev_192_1_2 = ["-w OUTPUT/%s -i %s" %
-                               ("swan12.pcap", test.dom_prefix + "192_1_2")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
-            "swan13.pcap", test.dom_prefix + "192_1_3")
-    else:
-        tcpdump_dev_192_1_2 = ["-w OUTPUT/%s -i %s" %
-                               ("swan12.pcap", "swan12")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
-
-    cmds = []
-
-    if test["type"] == 'kvmplutotest':
-        for iface in tcpdump_devs:
-            pcap_file = 'OUTPUT/' + iface + '.pcap'
-            # cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file,
-            # iface, tcpdump_filter)
-            cmd = args.tcpdump + " " + args.tcpdumpfilter + " " + iface
-            logger.debug(cmd)
-            cmds.append(cmd)
-
-        cmds = sorted(set(cmds))
-
-    find_other_hosts(test, test_hosts)
-
-    if "others" in test:
-        log_line = log_line + " also " + " ".join(test["others"])
-
-    logger.debug("test hosts are initiator %s responder %s %s",
-                 test["initiator"], test["responder"], log_line)
-
-    test["test_hosts"] = []
-    test["test_hosts"].extend(test_hosts)
-
-    return cmds, test_hosts
-
-
-def orient(args, test, prefix=None):
+def orient(args, test):
     test_hosts = []
     log_line = ''
     if os.path.exists("eastrun.sh"):
@@ -1512,15 +1478,6 @@ def orient(args, test, prefix=None):
         test_hosts.append(test["nic"])
         log_line = "and nic"
 
-    if prefix:
-        tcpdump_devs = ["-w OUTPUT/%s -i %s" %
-                        ("swan12.pcap", prefix + "192_1_2")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
-            "swan13.pcap", prefix + "192_1_3")
-    else:
-        tcpdump_devs = ["-w OUTPUT/%s -i %s" % ("swan12.pcap", "swan12")]
-        tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
-
     if os.path.exists("westrun.sh"):
         if os.path.exists("westinit.sh"):
             test["initiator"] = "west"
@@ -1530,14 +1487,12 @@ def orient(args, test, prefix=None):
     elif os.path.exists("roadrun.sh"):
         if os.path.exists("roadinit.sh"):
             test["initiator"] = "road"
-            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logger.error(
                 "ABORT can't identify INITIATOR: no %s/roadinit.sh, but there is roadrun.sh" % os.getcwd())
     elif os.path.exists("northrun.sh"):
         if os.path.exists("northinit.sh"):
             test["initiator"] = "north"
-            tcpdump_devs.append(tcpdump_dev_192_1_3)
         else:
             logger.error(
                 "ABORT can't identify INITIATOR: no %s/northinit.sh, but there is northrun.sh" % os.getcwd())
@@ -1553,19 +1508,6 @@ def orient(args, test, prefix=None):
     test_hosts.append(test["initiator"])
     test_hosts.append(test["responder"])
 
-    cmds = []
-
-    if test["type"] == 'kvmplutotest':
-        for iface in tcpdump_devs:
-            pcap_file = 'OUTPUT/' + iface + '.pcap'
-            # cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file,
-            # iface, tcpdump_filter)
-            cmd = args.tcpdump + " " + args.tcpdumpfilter + " " + iface
-            logger.debug(cmd)
-            cmds.append(cmd)
-
-        cmds = sorted(set(cmds))
-
     find_other_hosts(test, test_hosts)
 
     if "others" in test:
@@ -1577,7 +1519,7 @@ def orient(args, test, prefix=None):
     test["test_hosts"] = []
     test["test_hosts"].extend(test_hosts)
 
-    return cmds, test_hosts
+    return test_hosts
 
 
 def read_exec_shell_cmd(ex, filename, prompt, timer, hostname=""):
@@ -1967,6 +1909,9 @@ def cmdline():
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
 
+    parser.add_argument("--sa", default=False, action="store_true",
+                        help="accept any strongswan version; swan-prep skips the version check")
+
     parser.add_argument("--scancwd", default=False, action="store_true",
                         help="san/resanitize  results, run in cwd")
 
@@ -2020,6 +1965,10 @@ def cmdline():
 
     logutil.add_arguments(parser)
     args = parser.parse_args()
+
+    if args.sa:
+        # --preserve-env passes this through sudo and nsenter to swan-prep
+        DEF.sudo_c += " SWAN_STRONGSWAN_ANY=YES"
 
     if not args.with_prefix:
         args.prefix = []
@@ -2854,12 +2803,20 @@ def is_mount(mount_t, dirs):
 
 
 def ns_add_root_dirs(args, sudo):
+# parallel nsrun processes (namespace-runner.py -j) would race to
+# create the directories and to bind mount DEF.mountns_dir
+    lockfile = os.path.join(tempfile.gettempdir(), "nsrun-root-dirs.lock")
+    with open(lockfile, "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        ns_add_root_dirs_locked(args, sudo)
+
+def ns_add_root_dirs_locked(args, sudo):
 
     if not ns_isdir(DEF.nsroot_dir):
         raise Exception("missing ns root directory %s" % DEF.nsroot_dir)
 
     if not ns_isdir(DEF.mountns_dir):
-        cmd = "mkdir %s" % DEF.mountns_dir
+        cmd = "mkdir -p %s" % DEF.mountns_dir
         if sudo_shell_run(cmd, sudo):
             raise Exception("ERROR: %s" % cmd)
 
@@ -2875,12 +2832,12 @@ def ns_add_root_dirs(args, sudo):
             raise Exception("ERROR: %s" % (cmd))
 
     if not ns_isdir(DEF.netns_dir):
-        cmd = "mkdir %s" % DEF.netns_dir
+        cmd = "mkdir -p %s" % DEF.netns_dir
         if sudo_shell_run(cmd, sudo):
             raise Exception("ERROR: %s" % cmd)
 
     if not ns_isdir(DEF.utsns_dir):
-        cmd = "mkdir %s" % DEF.utsns_dir
+        cmd = "mkdir -p %s" % DEF.utsns_dir
         if sudo_shell_run(cmd, sudo):
             raise Exception("ERROR: %s" % cmd)
 
@@ -3200,6 +3157,8 @@ def setup_single_test(args, cwd=None):
             os.chdir(tdir)
         else:
             logger.error("given --testname %s and can't find directory %s" % (args.testname, tdir))
+            if exitcode:
+                sys.exit(1)
             return
 
     test = Test(args, cwd=cwd)
@@ -3245,6 +3204,9 @@ def do_single_test(args=None, test=None, tlr=None):
     e = None
 
     if test.do_test():
+        # the test aborted before it could run, never report a pass
+        if exitcode:
+            sys.exit(1)
         os.chdir("..")  # chdir end
         return True
 
@@ -3321,12 +3283,13 @@ def check_host_ns_support():
 
 
 def check_host_xfrm_stack():
-    # check if there is XFRM stack on the host
+    # check if there is XFRM stack on the host, ubuntu does not have CONFIG_XFRM_STATS :/
 
     v_line = runcmd("ipsec version")
-    if not os.path.isfile("/proc/net/xfrm_stat"):
+    if not os.path.isfile("/proc/sys/net/core/xfrm_acq_expires"):
         logger.error( "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
         return True
+    return False
 
 def check_host_networking():
 
@@ -3642,7 +3605,8 @@ class Namespace:
     def ns_add_testing_dir(self, testingdir, shell):
         d = "/testing"
         if not os.path.isdir(d):
-            cmd = "mkdir %s" % d
+            # -p, parallel tests race to create it
+            cmd = "mkdir -p %s" % d
             if sudo_shell_run(cmd, shell):
                 raise Exception("ERROR: %s" % cmd)
         cmd = "mount --bind %s /testing" % testingdir
@@ -4024,17 +3988,6 @@ class TestListRun():
         self.n = 0
         self.torun = 0
         self.notorun = 0
-        self.nsunsuported = 0
-        self.ns_skip_tests =  ["audit", "dnsoe", "fips", "ipseckey", "dnssec", "interop", "klips", "ocsp", "seccomp", "strongswan"]
-
-    def ns_skip_test(self, testdir):
-        for s in self.ns_skip_tests:
-            if re.search(s, testdir):
-                # TestList.log_skip(testdir, "namespace do not support. It matched pattern %s" % s)
-                self.nsunsuported += 1
-                return False
-
-        return True
 
     def do_test_list_new(self, tlr=None):
 
@@ -4063,14 +4016,11 @@ class TestListRun():
                 return (True)
 
             # **** short cut tests to nsplutotest with --ns ***
-            if testtype == 'kvmplutotest' and self.args.testtype == 'nsplutotest':
-                testtype = "nsplutotest"
-
-            if testtype == 'kvmplutotest' and self.args.testtype == 'dockerplutotest':
-                testtype = "dockerplutotest"
-
-            if self.args.testtype == 'nsplutotest' and not self.ns_skip_test(testdir):
-                continue
+            if testtype in ('default', 'kvmonly', 'nsonly'):
+                if self.args.testtype in ('nsplutotest', 'dockerplutotest'):
+                    testtype = self.args.testtype
+                else:
+                    testtype = 'kvmplutotest'
 
             r_file = self.odir + '/' + testdir + '/OUTPUT/RESULT'
             test_odir = self.odir + '/' + testdir + '/OUTPUT'
@@ -4117,10 +4067,6 @@ class TestListRun():
 
         self.torun = self.nstorun + self.ktorun + self.dtorun
         self.nottorun = self.nsnottorun + self.knottorun + self.dnottorun
-
-        if self.ns_skip_tests:
-            tlr_sum += " testtype %s ns unsupported %s skipped patterns %s" % (
-                self.args.testtype, self.nsunsuported, self.ns_skip_tests)
 
         logger.info(tlr_sum)
 

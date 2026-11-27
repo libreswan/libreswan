@@ -23,5 +23,8 @@
   s/ reqid [1-9][0-9]\{4,\} / reqid REQID /g
   # dir ... priority 2080718 ptype ...
   s/ priority [1-9][0-9]* ptype / priority PRIORITY ptype /
+  # without CONFIG_XFRM_SUB_POLICY the kernel doesn't report the
+  # (main) policy type
+  s/\(dir [a-z]* priority \)[1-9][0-9]*[ ]*$/\1PRIORITY ptype main/
 
 }

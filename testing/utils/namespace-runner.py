@@ -32,10 +32,15 @@ def task(test):
     global passed
     global failed
     global verbose
+    global strongswan
     output = ""
+    if strongswan:
+        sa = "--sa"
+    else:
+        sa = ""
     print("START: %s"%test)
     try:
-        output = subprocess.check_output("%s --ns --shutdown --exitcode --testname %s"%(nsrun,test), stderr=subprocess.STDOUT, shell=True)
+        output = subprocess.check_output("%s --ns --shutdown %s --exitcode --testname %s"%(nsrun, sa, test), stderr=subprocess.STDOUT, shell=True)
         print("   PASSED: %s"%test)
         passed.append(test)
     except:
@@ -49,6 +54,7 @@ def main():
     global nsrun
     global verbose
     global diff
+    global strongswan
 
     start = time.time()
 
@@ -61,6 +67,8 @@ def main():
         help="show verbose nsrun output - output will interleave with threads")
     parser.add_option("-d", "--diff", action="store_true", default=False, dest="diff",
         help="show diff output after all tests have run")
+    parser.add_option("-s", "--strongswan-any", action="store_true", default=False, dest="strongswan",
+        help="ignore strongswan version and use whatever strongswan is installed")
     (options, args) = parser.parse_args()
     if not args:
         parser.print_help()
@@ -69,13 +77,40 @@ def main():
     num = options.num
     verbose = options.verbose
     diff = options.diff
+    strongswan = options.strongswan
 
     # running the same test twice in parallel makes both copies fail
     # (shared namespaces and OUTPUT directory); run each test once
     tests = list()
     duplicates = dict()
+    plutodir = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "..", "pluto")
+    expanded = list()
     for i in args:
+        # a bare name (or wildcard) that isn't a directory is looked up
+        # in testing/pluto/
+        if not os.path.isdir(i) and '/' not in i:
+            matches = sorted(m for m in glob.glob(os.path.join(glob.escape(plutodir), i)) if os.path.isdir(m))
+            if not matches:
+                print("ERROR: %s is not a test directory and was not found in %s"%(i, os.path.normpath(plutodir)), file=sys.stderr)
+                sys.exit(1)
+            expanded.extend(matches)
+        else:
+            expanded.append(i)
+    # tests that depend on KVM can't be run using namespaces
+    kinds = dict()
+    try:
+        with open(os.path.join(plutodir, "TESTLIST")) as testlist:
+            for line in testlist:
+                fields = line.split("#")[0].split()
+                if len(fields) >= 2:
+                    kinds[fields[1]] = fields[0]
+    except OSError as e:
+        print("WARNING: cannot read TESTLIST, not skipping kvmonly tests: %s"%e, file=sys.stderr)
+    for i in expanded:
         test = os.path.basename(i)
+        if kinds.get(test) == "kvmonly":
+            print("WARNING: skipping test %s: it is kvmonly (depends on KVM)"%test, file=sys.stderr)
+            continue
         if test in tests:
             duplicates[test] = duplicates.get(test, 1) + 1
         else:

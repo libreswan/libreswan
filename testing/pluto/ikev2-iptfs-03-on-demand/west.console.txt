@@ -59,7 +59,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x00000000 reqid 0 mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	dir out
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
@@ -83,5 +83,5 @@ kernel: IPTFS SA supported by kernel
 "ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  grep -e '^[^|].*USE_AGGFRAG' /tmp/pluto.log
-"ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_AGGFRAG)} reassembled from N fragments
+"ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_AGGFRAG)}
 west #
