@@ -62,11 +62,75 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 		str_deltatime(served_delta, &db));
 }
 
+static void add_dns_pubkey_to_pluto(realtime_t install_time,
+				    const struct id *remote_id,
+				    struct p_dns_req *dnsr,
+				    const struct dns_pubkey *dns_pubkey,
+				    struct verbose verbose)
+{
+	/*
+	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
+	 * does not expire while negotiating
+	 */
+
+	uint32_t ttl = dns_pubkey->ttl;
+	uint32_t ttl_used = max(ttl, (uint32_t)deltasecs(RETRANSMIT_TIMEOUT_DEFAULT));
+	char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
+
+	if (ttl_used == ttl) {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
+	} else {
+		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
+			 ttl, ttl_used);
+	}
+
+	enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
+		DNSSEC_SECURE : DNSSEC_INSECURE;
+
+	if (remote_id->kind == ID_FQDN) {
+		id_buf thatidbuf;
+		name_buf ab;
+		vdbg("add IPSECKEY pluto as publickey %s %s %s",
+		     str_id(remote_id, &thatidbuf),
+		     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
+	} else {
+		id_buf thatidbuf;
+		name_buf ab;
+		vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+		     str_id(remote_id, &thatidbuf),
+		     dnsr->qname, ttl_buf,
+		     str_enum_long(&dns_auth_level_names, al, &ab));
+	}
+
+	struct pubkey *pubkey = NULL; /*must-delref*/
+	diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
+				     dns_pubkey->algorithm_type,
+				     install_time,
+				     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
+				     ttl,
+				     dns_pubkey->pubkey,
+				     &pubkey,
+				     dnsr->logger);
+	if (d != NULL) {
+		id_buf thatidbuf;
+		vlog("add %s publickey failed, %s: %s",
+		     str_id(remote_id, &thatidbuf),
+		     dnsr->log_buf,
+		     str_diag(d));
+		pfree_diag(&d);
+	}
+
+	/* not replace! */
+	add_pubkey(pubkey, &pluto_pubkeys); /*add-ref*/
+	pubkey_delref(&pubkey);
+}
+
 static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
 				     struct p_dns_req *dnsr,
-				     struct dns_pubkey *dns_pubkeys,
-				     struct verbose verbose)
+				     struct dns_pubkey **dns_pubkeys)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, dnsr->logger, "IPSECKEY");
+
 	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
 	vassert(dns_pubkeys != NULL);
 	vassert(ike != NULL);
@@ -78,184 +142,120 @@ static void add_dns_pubkeys_to_pluto(struct ike_sa *ike,
 	delete_public_keys(&pluto_pubkeys, remote_id, &pubkey_type_rsa);
 
 	realtime_t install_time = realnow();
-	for (struct dns_pubkey *dns_pubkey = dns_pubkeys;
-	     dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
+	while (*dns_pubkeys != NULL) {
+		struct dns_pubkey *dns_pubkey = *dns_pubkeys;
+		(*dns_pubkeys) = (*dns_pubkeys)->next;
 
-		/*
-		 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
-		 * does not expire while negotiating
-		 */
-
-		uint32_t ttl = dns_pubkey->ttl;
-		uint32_t ttl_used = max(ttl, (uint32_t)deltasecs(RETRANSMIT_TIMEOUT_DEFAULT));
-		char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
-
-		if (ttl_used == ttl) {
-			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
-		} else {
-			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
-				 ttl, ttl_used);
-		}
-
-		enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
-			DNSSEC_SECURE : DNSSEC_INSECURE;
-
-		if (remote_id->kind == ID_FQDN) {
-			id_buf thatidbuf;
-			name_buf ab;
-			vdbg("add IPSECKEY pluto as publickey %s %s %s",
-			     str_id(remote_id, &thatidbuf),
-			     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
-		} else {
-			id_buf thatidbuf;
-			name_buf ab;
-			vdbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			     str_id(remote_id, &thatidbuf),
-			     dnsr->qname, ttl_buf,
-			     str_enum_long(&dns_auth_level_names, al, &ab));
-		}
-
-		struct pubkey *pubkey = NULL; /*must-delref*/
-		diag_t d = unpack_dns_pubkey(remote_id, /*dns_auth_level*/al,
-					     dns_pubkey->algorithm_type,
-					     install_time,
-					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
-					     ttl,
-					     dns_pubkey->pubkey,
-					     &pubkey,
-					     dnsr->logger);
-		if (d != NULL) {
-			id_buf thatidbuf;
-			vlog("add %s publickey failed, %s: %s",
-			     str_id(remote_id, &thatidbuf),
-			     dnsr->log_buf,
-			     str_diag(d));
-			pfree_diag(&d);
-		}
-
-		/* not replace! */
-		add_pubkey(pubkey, &pluto_pubkeys); /*add-ref*/
-		pubkey_delref(&pubkey);
+		add_dns_pubkey_to_pluto(install_time, remote_id,
+					dnsr, dns_pubkey,
+					verbose);
+		pfreeany(dns_pubkey);
 	}
-}
-
-static void validate_address(struct ike_sa *ike,
-			     struct p_dns_req *dnsr,
-			     unsigned char *addr,
-			     struct verbose verbose)
-{
-	/* XXX: dnsr->logger, ike->sa.logger, and verbose.logger are the 'same' */
-	vassert(ike != NULL);
-
-	ip_address ipaddr;
-	const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
-
-	if (dnsr->qtype != LDNS_RR_TYPE_A) {
-		return;
-	}
-
-	/*
-	 * XXX: this is assuming that addr has .ip_size bytes!?!
-	 * Interface doesn't pass in actual length.
-	 */
-	diag_t diag = data_to_address(addr, afi->ip_size, afi, &ipaddr);
-	if (diag != NULL) {
-		llog(RC_LOG, dnsr->logger, "invalid address: %s", str_diag(diag));
-		pfree_diag(&diag);
-		return;
-	}
-
-	if (!endpoint_address_eq_address(ike->sa.st_remote_endpoint, ipaddr)) {
-		endpoint_buf ra;
-		address_buf rb;
-		vdbg("forward address of IDi %s do not match remote address %s != %s",
-		     dnsr->qname,
-		     str_endpoint(&ike->sa.st_remote_endpoint, &ra),
-		     str_address(&ipaddr, &rb));
-		return;
-	}
-
-	dnsr->fwd_addr_valid = true;
-	endpoint_buf ra;
-	vdbg("address of IDi %s match remote address %s",
-	     dnsr->qname, str_endpoint(&ike->sa.st_remote_endpoint, &ra));
 }
 
 static void initiator_fetch_idr_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-#if 0
-	/*
-	 * XXX: when there's a cache hit, this can be called directly
-	 * from unbound's start function; and the field will never be
-	 * set.
-	 */
-	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
-#endif
-
-	const char *parse_err = process_dns_resp(ike, dnsr);
-	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
 
-	if (dnsr->cache_hit) {
-		if (dnsr->rcode == 0 && parse_err == NULL) {
-			dnsr->dns_status = DNS_OK;
-		} else {
-			/* is there a better ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		}
+	bool larval = (dnsr->dns_status == DNS_LARVAL);
+
+	if (resp_err == NULL &&
+	    dnsr->pubkeys != NULL) {
+		/* also throws them away */
+		add_dns_pubkeys_to_pluto(ike, dnsr, &dnsr->pubkeys);
+		dnsr->dns_status = DNS_OK;
+	} else {
+#if 0
+		/*
+		 * XXX: initiator doesn't check address?  Must happen
+		 * elsewhere.
+		 *
+		 * Hence no need to cancel other request.
+		 */
+		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
+#else
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.address_request == NULL);
+#endif
+		dnsr->dns_status = DNS_FATAL;
+	}
+
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (larval) {
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.ipseckey_request == NULL);
 		return;
 	}
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
 
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.ipseckey_request = NULL;
+
 	free_ipseckey_dns(&dnsr);
 }
 
 static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike,
-				       struct msg_digest *md,
-				       bool err,
-				       stf_status(*callback)(struct ike_sa *ike,
-							     struct msg_digest *md,
-							     bool err))
+				       const struct p_dns_req *dnsr)
 {
-	complete_v2_state_transition(ike, md, callback(ike, md, err));
+	bool err = (dnsr->dns_status != DNS_OK);
+	ldbg(dnsr->logger, "resume id=%s err=%s", dnsr->qname, bool_str(err));
+	stf_status status = dnsr->callback(ike, dnsr->md, err);
+	complete_v2_state_transition(ike, dnsr->md, status);
 }
 
 static void idi_address_fetch_continue(struct ike_sa *ike,
 				       struct p_dns_req *dnsr)
 {
-	process_dns_resp(ike, dnsr);
-
-	if (!dnsr->fwd_addr_valid) {
-		llog(RC_LOG, dnsr->logger,
-		     "forward address validation failed %s",
-		     dnsr->log_buf);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
 
-	bool err;
-	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
-		err = false;
+	PEXPECT(dnsr->logger, dnsr->forward_address.ip.is_set);
+
+	bool larval = (dnsr->dns_status == DNS_LARVAL);
+
+
+	if (resp_err == NULL &&
+	    dnsr->forward_address_valid) {
+		address_buf ab;
+		ldbg(dnsr->logger, "forward address %s validated",
+		     str_address_sensitive(&dnsr->forward_address, &ab));
+		dnsr->dns_status = DNS_OK;
 	} else {
+		address_buf ab;
+		llog(RC_LOG, dnsr->logger,
+		     "forward address %s validation failed %s",
+		     str_address_sensitive(&dnsr->forward_address, &ab),
+		     dnsr->log_buf);
 		/* tells unbound to cancel the other request */
 		free_ipseckey_dns(&ike->sa.st_ipseckey.ipseckey_request);
-		err = true;
+		dnsr->dns_status = DNS_FATAL;
 	}
 
-	if (dnsr->cache_hit) {
-		if (err) {
-			/* is there a beeter ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		} else {
-			dnsr->dns_status = DNS_OK;
-		}
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (larval) {
+		PEXPECT(dnsr->logger, ike->sa.st_ipseckey.address_request == NULL);
 		return;
 	}
 
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.address_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.address_request = NULL;
 
+	/*
+	 * Other request outstanding?
+	 */
 	if (ike->sa.st_ipseckey.ipseckey_request != NULL) {
 		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
@@ -263,51 +263,48 @@ static void idi_address_fetch_continue(struct ike_sa *ike,
 		return;
 	}
 
-	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr);
 	free_ipseckey_dns(&dnsr);
 }
 
 static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 						  struct p_dns_req *dnsr)
 {
-#if 0
-	/*
-	 * XXX: when there's a cache hit, this can be called directly
-	 * from unbound's start function; and the field will never be
-	 * set.
-	 */
-	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
-#endif
-
-	const char *parse_err = process_dns_resp(ike, dnsr);
-	if (parse_err != NULL) {
-		ikev2_ipseckey_log_dns_err(ike, dnsr, parse_err);
+	const char *resp_err = process_dns_resp(ike, dnsr);
+	if (resp_err != NULL) {
+		ikev2_ipseckey_log_dns_err(ike, dnsr, resp_err);
 	}
 
-	bool err;
-	if (dnsr->rcode == 0 && parse_err == NULL) {
-		err = false;
+	if (resp_err == NULL &&
+	    dnsr->pubkeys != NULL) {
+		/* also throws them away */
+		add_dns_pubkeys_to_pluto(ike, dnsr, &dnsr->pubkeys);
+		dnsr->dns_status = DNS_OK;
 	} else {
-		/* tells unbound to cancel the other request */
+		/*
+		 * Tell unbound to cancel the other request; if there
+		 * is one.
+		 */
 		free_ipseckey_dns(&ike->sa.st_ipseckey.address_request);
-		err = true;
+		dnsr->dns_status = DNS_FATAL;
 	}
 
-	if (dnsr->cache_hit) {
-		if (err) {
-			/* is there a beeter ret status ? */
-			dnsr->dns_status = DNS_FATAL;
-		} else {
-			dnsr->dns_status = DNS_OK;
-		}
+	/*
+	 * Never suspended - instant callback with value from the
+	 * cache.  Hence, caller will free.
+	 */
+	if (ike->sa.st_ipseckey.ipseckey_request == NULL) {
 		return;
 	}
 
-	dnsr->ub_async_id = 0;	/* this query is done no need to cancel it */
-
+	/* this query is done no need to cancel it */
+	PEXPECT(dnsr->logger, dnsr == ike->sa.st_ipseckey.ipseckey_request);
+	dnsr->ub_async_id = 0;
 	ike->sa.st_ipseckey.ipseckey_request = NULL;
 
+	/*
+	 * Other request outstanding?  Wait for that to finish.
+	 */
 	if (ike->sa.st_ipseckey.address_request != NULL) {
 		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
@@ -315,8 +312,7 @@ static void responder_fetch_idi_ipseckey_continue(struct ike_sa *ike,
 		return;
 	}
 
-	llog(DEBUG_STREAM, dnsr->logger, "%s() unsuspend id=%s", __func__, dnsr->qname);
-	idi_ipseckey_resume_ike_sa(ike, dnsr->md, err, dnsr->callback);
+	idi_ipseckey_resume_ike_sa(ike, dnsr);
 	free_ipseckey_dns(&dnsr);
 }
 
@@ -417,8 +413,6 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 
 	p->qclass = LDNS_RR_CLASS_IN; /* aka C_IN; aka ns_c_in */
 	p->qtype = qtype;
-	p->cache_hit = true;
-	p->dns_status = DNS_SUSPEND;
 	p->cb = dnsr_cb;
 
 	p->next = pluto_dns_list;
@@ -439,7 +433,6 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike,
 	if (p == NULL) {
 		return NULL;
 	}
-	p->pubkeys_cb = add_dns_pubkeys_to_pluto;
 	return p;
 }
 
@@ -493,6 +486,8 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 							       struct msg_digest *md,
 							       bool err))
 {
+	struct verbose verbose  = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
+
 	/* ask for the DNS's IPSECKEY */
 	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(ike, md,
 							  responder_fetch_idi_ipseckey_continue,
@@ -523,14 +518,27 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	if (ike->sa.st_connection->config->dns_match_id) {
 		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
+			const struct ip_info *afi = endpoint_info(ike->sa.st_remote_endpoint);
+			if (vbad(afi == NULL)) {
+				return DNS_FATAL;
+			}
+
 			/* ask for the DNS's IPv4 address */
-			struct p_dns_req *dnsr_a = qry_st_init(ike, md, LDNS_RR_TYPE_A,
+			ldns_rr_type qtype = (afi == &ipv4_info ? LDNS_RR_TYPE_A :
+					      afi == &ipv6_info ? LDNS_RR_TYPE_AAAA :
+					      0);
+			if (vbad(qtype == 0)) {
+				return DNS_FATAL;
+			}
+
+			struct p_dns_req *dnsr_a = qry_st_init(ike, md, qtype,
 							       idi_address_fetch_continue,
 							       callback); /*must save/free*/
 			if (dnsr_a == NULL) {
 				return DNS_FATAL;
 			}
-			dnsr_a->validate_address_cb = validate_address;
+
+			dnsr_a->forward_address = endpoint_address(ike->sa.st_remote_endpoint);
 			const dns_status ret_a = dns_qry_start(dnsr_a);
 			if (ret_a == DNS_SUSPEND) {
 				ike->sa.st_ipseckey.address_request = dnsr_a;

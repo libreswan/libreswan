@@ -20,20 +20,8 @@ struct dns_pubkey {
 	shunk_t pubkey;
 };
 
-typedef void dnsr_pubkeys_cb_fn(struct ike_sa *ike,
-				struct p_dns_req *dnsr,
-				struct dns_pubkey *dns_pubkeys,
-				struct verbose verbose);
-
-typedef void dnsr_validate_address_cb_fn(struct ike_sa *ike,
-					 struct p_dns_req *dnsr,
-					 unsigned char *addr,
-					 struct verbose verbose);
-
 struct p_dns_req {
 	dns_status dns_status;
-
-	bool cache_hit;		/* libunbound hit cache/local, calledback immediately */
 
 	so_serial_t so_serial;	/* wake up the state when query returns */
 	struct msg_digest *md;	/* wake up message to resume */
@@ -55,8 +43,6 @@ struct p_dns_req {
 	int rcode;		/* libunbound dns query rcode */
 	const char *rcode_name; /* rcode return txt defined by ldns */
 
-	bool fwd_addr_valid;	/* additional check forward A/AAAA is valid */
-
 	/*
 	 * from unbound-event.h
 	 * void *wire with packet: a buffer with DNS wireformat packet with the answer.
@@ -72,8 +58,17 @@ struct p_dns_req {
 
 	dnsr_cb_fn *cb;	/* continue function for pluto, not the unbound cb */
 
-	dnsr_pubkeys_cb_fn *pubkeys_cb;	/* called when public keys are retrieved from IPSECKEY RR */
-	dnsr_validate_address_cb_fn *validate_address_cb; /* called when addresses are returned as A RR */
+	/*
+	 * Compared against when addresses are returned as A or AAAA
+	 * Resource Record.
+	 */
+	ip_address forward_address;
+	bool forward_address_valid;
+
+	/*
+	 * The extracted pubkeys.
+	 */
+	struct dns_pubkey *pubkeys;
 
 	struct p_dns_req *next;
 };

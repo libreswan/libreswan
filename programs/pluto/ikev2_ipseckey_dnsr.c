@@ -39,6 +39,7 @@
 #include "demux.h"		/* for md_delref() */
 #include "ikev2_ipseckey.h"	/* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
+#include "ip_info.h"
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
@@ -53,6 +54,12 @@ void free_ipseckey_dns(struct p_dns_req **dd)
 	if (d->ub_async_id != 0) {
 		ub_cancel(d->ctx, d->ub_async_id);
 		d->ub_async_id = 0;
+	}
+
+	while (d->pubkeys != NULL) {
+		struct dns_pubkey *tbd = d->pubkeys;
+		d->pubkeys = d->pubkeys->next;
+		pfree(tbd);
 	}
 
 	md_delref(&d->md);
@@ -274,128 +281,128 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 	return ugh == NULL;
 }
 
-static err_t parse_rr(struct ike_sa *ike,
-		      struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
-		      struct verbose verbose)
+static bool validate_address(struct p_dns_req *dnsr,
+			     ip_address valid_address,
+			     chunk_t addr)
+{
+	const struct ip_info *afi = address_info(valid_address);
+
+	/*
+	 * XXX: this is assuming that addr has .ip_size bytes!?!
+	 * Interface doesn't pass in actual length.
+	 */
+	ip_address ipaddr;
+	diag_t diag = hunk_to_address(addr, afi, &ipaddr);
+	if (diag != NULL) {
+		llog(RC_LOG, dnsr->logger, "invalid address: %s", str_diag(diag));
+		pfree_diag(&diag);
+		return false;
+	}
+
+	if (!address_eq_address(valid_address, ipaddr)) {
+		address_buf rb, ra;
+		ldbg(dnsr->logger, "address of IDi %s do not match remote address %s != %s",
+		     dnsr->qname,
+		     str_address(&valid_address, &ra),
+		     str_address(&ipaddr, &rb));
+		return false;
+	}
+
+	address_buf ra;
+	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
+	     dnsr->qname, str_address(&valid_address, &ra));
+	return true;
+}
+
+static void parse_rr(struct ike_sa *ike,
+		     struct p_dns_req *dnsr, ldns_pkt *ldnspkt,
+		     struct verbose verbose)
 {
 	vassert(ike != NULL);
 
 	ldns_rr_list *answers = ldns_pkt_answer(ldnspkt);
-	ldns_buffer *output = NULL;
-	size_t i;
-
 	dbg_log_dns_question(dnsr, ldnspkt);
 
-	struct dns_pubkey *dns_pubkeys = NULL;
+	unsigned level = verbose.level++;
 
-	for (i = 0; i < ldns_rr_list_rr_count(answers); i++) {
-		ldns_rr *ans = ldns_rr_list_rr(answers, i);
-		ldns_rr_type atype = ldns_rr_get_type(ans);
-		ldns_rr_class qclass = ldns_rr_get_class(ans);
-		ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes, qclass);
-		ldns_lookup_table *class_e = ldns_lookup_by_id(ldns_rr_classes, dnsr->qclass);
-		ldns_rdf *rdf;
-		ldns_status status = LDNS_STATUS_OK;
+	for (unsigned rr_nr = 0; rr_nr < ldns_rr_list_rr_count(answers); rr_nr++) {
 
-		if (output != NULL)
+		verbose.level = level + 1;
+		ldns_rr *ans = ldns_rr_list_rr(answers, rr_nr);
+
+		const unsigned rdf_nr = 0;
+		ldns_rdf *rdf = ldns_rr_rdf(ans, rdf_nr);
+		if (rdf == NULL) {
+			vdbg("RR %u, RDF %u: could not extract RDF",
+			     rr_nr, rdf_nr);
+			continue;
+		}
+
+		if (verbose.debug) {
+			ldns_buffer *output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
+			ldns_status status = ldns_rdf2buffer_str(output, rdf);
+			if (status == LDNS_STATUS_OK) {
+				VDBG_log("RR %u, RDF %u: %s", rr_nr, rdf_nr,
+					 ldns_buffer_begin(output));
+			} else {
+				VDBG_log("RR %u, RDF %u: invalid: %s (%d)",
+					 rr_nr, rdf_nr,
+					 ldns_get_errorstr_by_id(status),
+					 status);
+			}
 			ldns_buffer_free(output);
+			if (status != LDNS_STATUS_OK) {
+				continue;
+			}
+		}
 
-		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
+		verbose.level++;
 
+		ldns_rr_type qtype = ldns_rr_get_type(ans);
+		if (qtype != dnsr->qtype) {
+			/* dns server stuffed extra rr types, ignore */
+			name_buf db, qb;
+			vdbg("RR %u, RDF %u: qtype mismatch expect %s vs %s ignore this answer",
+			     rr_nr, rdf_nr, str_ldns_rr_type(dnsr->qtype, &db),
+			     str_ldns_rr_type(qtype, &qb));
+			continue;
+		}
+
+		ldns_rr_class qclass = ldns_rr_get_class(ans);
 		if (qclass != dnsr->qclass) {
-			vdbg("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
-			     i, class_e->name, class->name);
+			ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes, qclass);
+			ldns_lookup_table *dclass = ldns_lookup_by_id(ldns_rr_classes, dnsr->qclass);
+			vdbg("RR %u, RDF %u: qclass mismatch expect %s vs %s ignore the answer now",
+			     rr_nr, rdf_nr,
+			     (dclass != NULL ? dclass->name : "<dclass>"),
+			     (class != NULL ? class->name : "<class>"));
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
 		}
 
-		rdf = ldns_rr_rdf(ans, 0);
-		if (rdf == NULL) {
-			vdbg("dns answer %zu did not convert to rdf ignore this answer", i);
-			continue;
-		}
-
-		if (ldns_rr_owner(ans)) {
-			status = ldns_rdf2buffer_str_dname(output,
-					ldns_rr_owner(ans));
-		}
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " %u ", ldns_rr_ttl(ans));
-		status = ldns_rr_class2buffer_str(output,
-				ldns_rr_get_class(ans));
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " ");
-		/* would this explod on unknown types? */
-		status = ldns_rr_type2buffer_str(output, ldns_rr_get_type(ans));
-		if (status != LDNS_STATUS_OK) {
-			continue;
-		}
-		ldns_buffer_printf(output, " ");
-
-		/* let's parse and debug log the usual RR types */
-		switch (atype) {
+		switch (qtype) {
 		case LDNS_RR_TYPE_A:
-			ldns_rdf2buffer_str_a(output, rdf);
-			break;
-
 		case LDNS_RR_TYPE_AAAA:
-			ldns_rdf2buffer_str_aaaa(output, rdf);
+			vexpect(dnsr->forward_address.ip.is_set);
+			dnsr->forward_address_valid =
+				validate_address(dnsr, dnsr->forward_address,
+						 chunk2(ldns_rdf_data(rdf),
+							ldns_rdf_size(rdf)));
 			break;
-
-		case LDNS_RR_TYPE_TXT:
-			ldns_rdf2buffer_str_str(output, rdf);
-			break;
-
-		case LDNS_RR_TYPE_NS:
-			ldns_rdf2buffer_str_dname(output, rdf);
-			break;
-
 		case LDNS_RR_TYPE_IPSECKEY:
-			ldns_rdf2buffer_str_ipseckey(output, rdf);
+			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans),
+					   &dnsr->pubkeys);
 			break;
 		default:
-			ldns_buffer_free(output);
-			output = NULL;
-			continue;
+		{
+			name_buf qb;
+			vlog_pexpect(HERE, "RR %u, RDF %u: unexpected type %s",
+				     rr_nr, rdf_nr, str_ldns_rr_type(qtype, &qb));
+			break;
+		}
 		}
 
-		ldbg(dnsr->logger, "%s", ldns_buffer_begin(output));
-		ldns_buffer_free(output);
-		output = NULL;
-
-		if (dnsr->validate_address_cb) {
-			dnsr->validate_address_cb(ike, dnsr, ldns_rdf_data(rdf), verbose);
-		}
-
-		if (dnsr->qtype == atype && atype == LDNS_RR_TYPE_IPSECKEY) {
-			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans), &dns_pubkeys);
-		}
-
-		if (atype != dnsr->qtype) {
-			/* dns server stuffed extra rr types, ignore */
-			vdbg("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
-			     i, dnsr->qtype, atype);
-		}
 	}
-
-	if (dns_pubkeys == NULL) {
-		return "nothing to add";
-	}
-
-	if (dnsr->pubkeys_cb != NULL) {
-		dnsr->pubkeys_cb(ike, dnsr, dns_pubkeys, verbose);
-	}
-
-	while (dns_pubkeys != NULL) {
-		struct dns_pubkey *tbd = dns_pubkeys;
-		dns_pubkeys = dns_pubkeys->next;
-		pfree(tbd);
-	}
-	return NULL;
 }
 
 /* This is called when dns response arrives */
@@ -427,12 +434,14 @@ err_t process_dns_resp(struct ike_sa *ike, struct p_dns_req *dnsr)
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
 			llog(IMPAIR_STREAM, dnsr->logger, "allowing insecure DNS response");
-			return parse_rr(ike, dnsr, ldnspkt, verbose);
+			parse_rr(ike, dnsr, ldnspkt, verbose);
+			return NULL;
 		}
 		return "unbound returned INSECURE response - ignored";
 
 	case UB_EVENT_SECURE:
-		return parse_rr(ike, dnsr, ldnspkt, verbose);
+		parse_rr(ike, dnsr, ldnspkt, verbose);
+		return NULL;
 	}
 }
 
@@ -447,7 +456,7 @@ void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 		LDBG_log(logger, "%s returned %s cache=%s elapsed time %s seconds",
 			 dnsr->log_buf,
 			 dnsr->rcode_name,
-			 bool_str(dnsr->cache_hit),
+			 bool_str(dnsr->dns_status == 0),
 			 str_deltatime(served_delta, &db));
 
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
@@ -461,12 +470,13 @@ void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 	}
 }
 
-static void ipseckey_ub_cb(void* mydata, int rcode,
-		void *wire, int wire_len, int secure, char* why_bogus
+static void ipseckey_ub_cb(void *mydata, int rcode,
+			   void *wire, int wire_len,
+			   int secure, char* why_bogus
 #if (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR >= 8) || UNBOUND_VERSION_MAJOR > 1
-		, int was_ratelimited UNUSED
+			   , int was_ratelimited UNUSED
 #endif
-		)
+	)
 {
 	struct p_dns_req *dnsr = (struct p_dns_req *)mydata;
 	ldns_lookup_table *rcode_txt;
@@ -497,16 +507,22 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 
 dns_status dns_qry_start(struct p_dns_req *dnsr)
 {
-	int ub_ret;
-
 	PASSERT(dnsr->logger, dnsr->ctx != NULL);
 	ldbg(dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
+	/*
+	 * XXX: when there's a cache hit, this will call
+	 * IPSECKEY_UB_CB before returning.  That will then update
+	 * .dns_status.
+	 */
+
 	ldbg(dnsr->logger, "UB: %s submitted", dnsr->log_buf);
-	ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
-				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
+	dnsr->dns_status = DNS_LARVAL; /* reserved */
+	int ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
+				      dnsr->qclass, dnsr,
+				      ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {
 		llog(RC_LOG, dnsr->logger,
@@ -514,15 +530,21 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 		return DNS_FATAL;
 	}
 
-	dns_status ret = dnsr->dns_status;
-	if (dnsr->dns_status == DNS_SUSPEND) {
-		dnsr->cache_hit = false;
+	/*
+	 * If the above has already called the callback (because the
+	 * value was found in the cache), .dns_status will have been
+	 * updated to something other than DNS_LARVAL.
+	 */
+	if (dnsr->dns_status == DNS_LARVAL) {
+		dnsr->dns_status = DNS_SUSPEND;
 	}
 
+	dns_status ret = dnsr->dns_status;
 	ldbg(dnsr->logger, "UB: %s returned %d (%s)",
 	     dnsr->log_buf, ret,
 	     (ret == DNS_SUSPEND ? "suspend" :
 	      ret == DNS_OK ? "ok" :
+	      ret == DNS_FATAL ? "fatal" :
 	      "ERROR"));
 	return ret;
 }

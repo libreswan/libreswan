@@ -8,7 +8,6 @@ setup parameter seeddev is not documented
 conn parameter also is not documented
 conn parameter clones is not documented
 conn parameter connalias is not documented
-conn parameter dns-match-id, is not documented
 conn parameter groundhog is not documented
 conn parameter iptfs-packet-size is not documented
 conn parameter pfs-rekey-workaround is not documented
