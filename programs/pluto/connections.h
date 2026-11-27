@@ -845,6 +845,12 @@ struct connection {
 #define del_policy(C, POLICY)					\
 	set_policy(C, POLICY, false)
 
+	bool autoall_stale;
+	bool autoall_dry_stale;
+	bool autoall_dry_purged;
+	struct ro_hunk *autoall_config;
+	unsigned autoall_nr_roots;
+
 	struct sa_marks sa_marks;	/* contains a MARK values and
 					 * MASK value for IPsec SA
 					 * (per-connection) */
@@ -988,7 +994,8 @@ extern bool same_peer_ids(const struct connection *c,
 
 diag_t add_connection(const struct whack_message *wm,
 		      const struct host_addrs *extracted_host_addrs,
-		      const struct logger *logger);
+		      const struct logger *logger,
+		      struct connection **added);
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
 						      const struct host_addrs *resolved,

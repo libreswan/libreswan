@@ -1,0 +1,1 @@
+test that ipsec add --autoall --dry-run lists what would be replaced, added and swept, and changes nothing

@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"alpha" $1
+"beta" $2
+"delta/1x1" $4
+"delta/1x2" $5
+"gamma" $3
+west #
+ # nothing changes
+west #
+ ipsec add --autoall --dry-run --config /testing/pluto/addconn-64-autoall-reconcile-dry-run/west-modified.conf
+"beta": would be replaced
+"epsilon": would be added
+"gamma": would be swept
+dry run: 2 unchanged, 1 to replace, 1 to add, 1 to sweep
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"alpha" $1
+"beta" $2
+"delta/1x1" $4
+"delta/1x2" $5
+"gamma" $3
+west #
+ # the real run does what the dry run said
+west #
+ ipsec add --autoall --config /testing/pluto/addconn-64-autoall-reconcile-dry-run/west-modified.conf
+"alpha": unchanged
+"beta": added unoriented IKEv2 connection (neither left=2.3.4.5 nor right=6.7.8.10 match an interface)
+"delta/1x1": unchanged
+"delta/1x2": unchanged
+"epsilon": added unoriented IKEv2 connection (neither left=5.6.7.8 nor right=9.10.11.12 match an interface)
+"gamma": swept
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("[^"]*"\):   conn serial: \([^;]*\);.*/\1 \2/p' | sort
+"alpha" $1
+"beta" $6
+"delta/1x1" $4
+"delta/1x2" $5
+"epsilon" $7
+west #

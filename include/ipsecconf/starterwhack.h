@@ -29,5 +29,13 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   enum yn_options async,
 			   enum whack_noise noise);
 
+int starter_whack_autoall(const char *ctlsocket,
+			  const struct starter_config *cfg,
+			  struct logger *logger,
+			  bool dry_run,
+			  enum yn_options async,
+			  enum whack_noise noise,
+			  unsigned verbosity);
+
 #endif /* _STARTER_WHACK_H_ */
 

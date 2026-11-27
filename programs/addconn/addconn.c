@@ -510,6 +510,11 @@ int main(int argc, char *argv[])
 			exit(3);
 		}
 	} else {
+		if (autoall && configsetup.name != NULL) {
+			llog(ERROR_STREAM, logger, "--autoall conflicts with --configsetup=%s",
+			     configsetup.name);
+			exit(1);
+		}
 		cfg = confread_load(configfile, (configsetup.name != NULL), logger, verbose);
 		if (cfg == NULL) {
 			llog(ERROR_STREAM, logger, "loading config file '%s' failed", configfile);
@@ -543,51 +548,11 @@ int main(int argc, char *argv[])
 #endif
 
 	if (autoall) {
-		if (verbose > 0)
-			printf("loading all conns according to their auto= settings\n");
 
-		/*
-		 * Load all conns marked as auto=add or better.
-		 * First, do the auto=route and auto=add conns to quickly
-		 * get routes in place, then do auto=start as these can be
-		 * slower.
-		 * This mimics behaviour of the old _plutoload
-		 */
-		if (verbose > 0)
-			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
-
-		struct starter_conn *conn = NULL;
-		TAILQ_FOREACH(conn, &cfg->conns, link) {
-			enum autostart autostart = conn_auto(conn);
-			switch (autostart) {
-			case AUTOSTART_UNSET:
-			case AUTOSTART_IGNORE:
-#if 0
-				if (verbose > 0) {
-					printf("    %s ignored\n", conn->name);
-				}
-#endif
-				continue;
-			case AUTOSTART_ADD:
-			case AUTOSTART_ROUTE:
-			case AUTOSTART_ONDEMAND:
-			case AUTOSTART_KEEP:
-			case AUTOSTART_UP:
-				break;
-			}
-
-			if (verbose > 0) {
-				printf("    %s\n", conn->name);
-			}
-
-			starter_whack_add_conn(ctlsocket, conn, logger,
-					       /*dry_run*/false,
-					       /*async*/YN_YES,
-					       noise);
-		}
-
-		if (verbose > 0)
-			printf("\n");
+		exit_status = starter_whack_autoall(ctlsocket, cfg, logger,
+						    /*dry_run*/false,
+						    /*async*/YN_YES,
+						    noise, verbose);
 
 	} else if (name != NULL) {
 
