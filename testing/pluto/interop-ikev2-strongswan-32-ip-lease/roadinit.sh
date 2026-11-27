@@ -7,10 +7,10 @@
 # See https://github.com/strongswan/strongswan/issues/3013
 # See https://github.com/libreswan/libreswan/issues/2635
 
-test -r /usr/sbin/resolvconf && mv -v /usr/sbin/resolvconf{,.tmp}
+test -r /usr/sbin/resolvconf && mv /usr/sbin/resolvconf{,.tmp}
 
 ../../guestbin/strongswan-start.sh
 
-test -r /usr/sbin/resolvconf.tmp && mv -v /usr/sbin/resolvconf{.tmp,}
+test -r /usr/sbin/resolvconf.tmp && mv /usr/sbin/resolvconf{.tmp,}
 
 echo "initdone"

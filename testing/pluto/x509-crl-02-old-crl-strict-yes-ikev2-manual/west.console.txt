@@ -82,9 +82,9 @@ west #
  grep '^CRL: ' /tmp/pluto.log
 CRL: imported CRL 'http://nic.testing.libreswan.org/revoked.crl' signed by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org' after 1 attempt(s)
 west #
- test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
+ test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
 west #
- test -r /tmp/pluto.log && ipsec crlutil -L
+ test -r /run/pluto/pluto.ctl && ipsec crlutil -L
 CRL names                                CRL Type
 mainca                                   CRL  
 west #

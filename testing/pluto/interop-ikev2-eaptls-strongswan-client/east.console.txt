@@ -18,6 +18,8 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
+ ../../guestbin/wait-until-pluto-started
+east #
  ipsec auto --add rw-eap
 "rw-eap": added oriented IKEv2 connection
 east #

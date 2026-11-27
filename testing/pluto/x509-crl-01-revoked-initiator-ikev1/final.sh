@@ -1,2 +1,2 @@
-test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
-test -r /tmp/pluto.log && ipsec crlutil -L
+test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
+test -r /run/pluto/pluto.ctl && ipsec crlutil -L

@@ -106,11 +106,11 @@ IMPAIR: "nss-cert-crl": dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 IMPAIR: "nss-cert-crl" #2: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 "nss-cert-crl" #2: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
- test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
+ test -r /run/pluto/pluto.ctl && grep -e '^[^|].*ERROR' /tmp/pluto.log
 "nss-cert-crl" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.
 "nss-cert-crl" #2: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.
 west #
- test -r /tmp/pluto.log && ipsec crlutil -L
+ test -r /run/pluto/pluto.ctl && ipsec crlutil -L
 CRL names                                CRL Type
 mainca                                   CRL  
 west #

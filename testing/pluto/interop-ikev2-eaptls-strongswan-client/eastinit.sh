@@ -4,5 +4,6 @@
 /testing/x509/import.sh real/mainca/nic.end.cert
 
 ipsec start
+../../guestbin/wait-until-pluto-started
 ipsec auto --add rw-eap
 echo "initdone"
